@@ -12,7 +12,6 @@ import glob
 import os
 #import cv2
 
-
 #General configuration
 main_dir = r"C:\Users\LESIA-BAT\Desktop\Labview_IDL_routines\Package_EFC_THD_v2\\"
 Labview_dir= r"C:\Users\LESIA-BAT\Desktop\Labview_IDL_routines\Labview_routines\ITHD_v40\DATA\EFC\\"
