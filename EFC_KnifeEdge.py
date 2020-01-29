@@ -14,7 +14,8 @@ import glob
 import os
 import cv2
 #plt.rcParams['image.interpolation'] = 'nearest'
-# qsdqsd
+
+# I am doing a modification
 
 def custom_plot(pup, img):
     ''' --------------------------------------------------
