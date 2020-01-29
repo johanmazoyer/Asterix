@@ -10,7 +10,6 @@ def translationFFT(isz,a,b):
     masktot=np.exp(-1j*maskx)*np.exp(-1j*masky)
     return masktot
 
-
 def FQPM():
     phase= np.zeros((isz,isz))
     for i in np.arange(isz):

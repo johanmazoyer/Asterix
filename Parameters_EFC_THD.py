@@ -11,7 +11,6 @@ from astropy.io import fits
 import glob
 import os
 #import cv2
-# je modifie ici
 
 #General configuration
 main_dir = r"C:\Users\LESIA-BAT\Desktop\Labview_IDL_routines\Package_EFC_THD_v2\\"
