@@ -1,0 +1,3 @@
+#ignore file extension
+*.pyc
+*.fits
