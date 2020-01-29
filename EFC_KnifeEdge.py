@@ -1,7 +1,5 @@
 #10 Janvier 2019
 #Creation de la fonction ElectricFieldConjugation qui permet la visualisation directe des itérations.
-#COUCOUUUU
-    
     
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,7 +13,6 @@ import glob
 import os
 import cv2
 #plt.rcParams['image.interpolation'] = 'nearest'
-# qsdqsdqdqdqdqd
 
 def custom_plot(pup, img):
     ''' --------------------------------------------------
