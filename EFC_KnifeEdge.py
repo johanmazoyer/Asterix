@@ -1,7 +1,6 @@
 #10 Janvier 2019
 #Creation de la fonction ElectricFieldConjugation qui permet la visualisation directe des itérations.
-#COUCOUUUU
-    
+
     
 import numpy as np
 import matplotlib.pyplot as plt
