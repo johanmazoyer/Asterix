@@ -127,7 +127,11 @@ def create_interaction_matrices(parameter_file):
             
         pushact = fi.LoadImageFits(model_dir+'PushActInPup400.fits')
     
+<<<<<<< HEAD
     print(main_dir)
+=======
+    
+>>>>>>> 676cb01dd9df3008835ba4e79fd6cfe8d7a2ead7
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph =='fqpm':
