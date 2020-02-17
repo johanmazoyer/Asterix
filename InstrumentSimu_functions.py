@@ -1,5 +1,6 @@
 #Version 29 Janvier 2020
 import numpy as np
+import matplotlib.pyplot as plt
 import fits_functions as fi
 import processing_functions as proc
 
@@ -255,19 +256,8 @@ def creatingpushact(model_dir,file309,x309,y309,findxy309byhand,modelerror='NoEr
     
     
     
-def shotnoise(nbpix,num_photons):
-    ''' --------------------------------------------------
-    THIS FUNCTION HAS TO BE REWRITTEN
-    -------------------------------------------------- '''
-    mu_p        = num_photons * np.ones((nbpix,nbpix))
-    seed       = np.random.random_integers(1000)
-    rs         = np.random.RandomState(seed)
-    shot_noise = rs.poisson(num_photons, (nbpix, nbpix))
-    #return 0
-    return (shot_noise-mu_p)/num_photons
     
-    
-def createdifference(aberramp,aberrphase,posprobes,pushact,amplitude,entrancepupil,coro_mask,lyot_mask,reechpup,new,wavelength,perfect_coro=False,perfect_entrance_pupil=0,noise=False,numphot=2e2):
+def createdifference(aberramp,aberrphase,posprobes,pushact,amplitude,entrancepupil,coro_mask,lyot_mask,reechpup,new,wavelength,perfect_coro=False,perfect_entrance_pupil=0,noise=False,numphot=1e30):
     ''' --------------------------------------------------
     Simulate the acquisition of probe images (actuator pokes) and create their differences
     
@@ -287,7 +277,7 @@ def createdifference(aberramp,aberrphase,posprobes,pushact,amplitude,entrancepup
     perfect_coro: bool, set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
     perfect_entrance_pupil: 2D array, entrance pupil which should be nulled by the used coronagraph
     noise: boolean, if True, add photon noise. WARNING, the function shotnoise has to be rewritten before use
-    numphot: int, number of photons impacting the detector
+    numphot: int, number of photons entering the pupil
     
     Return:
     ------
@@ -298,24 +288,31 @@ def createdifference(aberramp,aberrphase,posprobes,pushact,amplitude,entrancepup
     Ikplus=np.zeros((isz,isz))
     Difference=np.zeros((len(posprobes),new,new))
     shot=1
+
+    PSF=np.abs(pupiltodetector(entrancepupil,1,lyot_mask,reechpup,new))
     
-    squaremaxPSF=np.amax(np.abs(pupiltodetector(entrancepupil,1,lyot_mask,reechpup,new)))
+    squaremaxPSF=np.amax(PSF)
     
-    if noise==True:
-        shot=(1+shotnoise(int(isz),numphot))
-    
+    contrast_to_photons=np.sum(entrancepupil)/np.sum(lyot_mask)*numphot*squaremaxPSF**2/np.sum(PSF)**2
+    #print(np.sum(contrast_to_photons*Ikplus*1e-9),np.sum(entrancepupil)/np.sum(lyot_mask))
     
     k=0
     for i in posprobes:
         probephase=amplitude*pushact[i]
         probephase=2*np.pi*probephase*1e-9/wavelength
         input_wavefront=entrancepupil*(1+aberramp)*np.exp(1j*(aberrphase-1*probephase))
-        Ikmoins=shot*np.abs(pupiltodetector(input_wavefront,coro_mask,lyot_mask,reechpup,new,perfect_coro,perfect_entrance_pupil))**2/squaremaxPSF**2 
+        Ikmoins=np.abs(pupiltodetector(input_wavefront,coro_mask,lyot_mask,reechpup,new,perfect_coro,perfect_entrance_pupil))**2/squaremaxPSF**2 
         input_wavefront=entrancepupil*(1+aberramp)*np.exp(1j*(aberrphase+1*probephase))
-        Ikplus=shot*np.abs(pupiltodetector(input_wavefront,coro_mask,lyot_mask,reechpup,new,perfect_coro,perfect_entrance_pupil))**2/squaremaxPSF**2 
+        Ikplus=np.abs(pupiltodetector(input_wavefront,coro_mask,lyot_mask,reechpup,new,perfect_coro,perfect_entrance_pupil))**2/squaremaxPSF**2
+
+        if noise==True:
+            Ikplus=np.random.poisson(Ikplus*contrast_to_photons)/contrast_to_photons
+            Ikmoins=np.random.poisson(Ikmoins*contrast_to_photons)/contrast_to_photons
+
         Difference[k]=(Ikplus-Ikmoins)
         k=k+1
-        
+    #plt.imshow(np.log10(Ikplus*contrast_to_photons))
+    #plt.show(block=True)
     return Difference
     
     

@@ -316,6 +316,8 @@ def CorrectionLoop(parameter_file):
     amplitude_abb = SIMUconfig['amplitude_abb']
     set_phase_abb=SIMUconfig['set_phase_abb']
     phase_abb = SIMUconfig['phase_abb']
+    photon_noise=SIMUconfig['photon_noise']
+    nb_photons=SIMUconfig['nb_photons']
     Nbiter=SIMUconfig['Nbiter']
     Nbiter=[int(i) for i in Nbiter]
     Nbmode=SIMUconfig['Nbmode']
@@ -392,7 +394,8 @@ def CorrectionLoop(parameter_file):
         lyot = instr.roundpupil(isz,lyotrad)
     
     perfect_entrance_pupil=entrancepupil
-    squaremaxPSF=np.amax(np.abs(instr.pupiltodetector(entrancepupil,1,lyot,reechpup,new)))
+    PSF=np.abs(instr.pupiltodetector(entrancepupil,1,lyot,reechpup,new))
+    squaremaxPSF=np.amax(PSF)
     
     ##Load matrices
     if estimation=='PairWise':
@@ -459,7 +462,7 @@ def CorrectionLoop(parameter_file):
     
         
     ## SIMU
-    
+    contrast_to_photons=np.sum(entrancepupil)/np.sum(lyot)*nb_photons*squaremaxPSF**2/np.sum(PSF)**2
     
     if error==0:
         pushactonDM=pushact
@@ -471,6 +474,10 @@ def CorrectionLoop(parameter_file):
     imagedetector=np.zeros((nbiter+1,isz,isz))
     input_wavefront=entrancepupil*(1+amplitude_abb)*np.exp(1j*phase_abb)
     imagedetector[0]=abs(instr.pupiltodetector(input_wavefront,coro,lyot,reechpup,isz,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil)/squaremaxPSF)**2
+    if photon_noise==True:
+        photondetector=np.zeros((nbiter+1,isz,isz))
+        photondetector[0]=np.random.poisson(imagedetector[0]*contrast_to_photons)
+        imagedetector[0]=photondetector[0]/contrast_to_photons
     plt.ion()
     plt.figure()
     previousmode=0
@@ -478,7 +485,7 @@ def CorrectionLoop(parameter_file):
     for mode in modevector:
         print(k,mode)
         if estimation=='PairWise':
-            Difference=instr.createdifference(amplitude_abb,phase_abb,posprobes,pushactonDM,amplitudeEFC,entrancepupil,coro,lyot,reechpup,new,wavelength,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil,noise=False)
+            Difference=instr.createdifference(amplitude_abb,phase_abb,posprobes,pushactonDM,amplitudeEFC,entrancepupil,coro,lyot,reechpup,new,wavelength,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil,noise=photon_noise,numphot=nb_photons)
             resultatestimation=wsc.FP_PWestimate(Difference,vectoressai)
             
         elif estimation=='Perfect':
@@ -496,6 +503,10 @@ def CorrectionLoop(parameter_file):
         phase_abb=phase_abb-gain*amplitudeEFC*np.dot(solution1,pushactonDM.reshape(1024,isz*isz)).reshape(isz,isz)*2*np.pi*1e-9/wavelength
         input_wavefront=entrancepupil*(1+amplitude_abb)*np.exp(1j*phase_abb)
         imagedetector[k+1]=abs(instr.pupiltodetector(input_wavefront,coro,lyot,reechpup,isz,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil)/squaremaxPSF)**2
+        if photon_noise==True:
+            photondetector[k+1]=np.random.poisson(imagedetector[k+1]*contrast_to_photons)
+            imagedetector[k+1]=photondetector[k+1]/contrast_to_photons
+            
         plt.clf()
         plt.imshow(np.log10(imagedetector[k+1]),vmin=-8,vmax=-5)
         plt.colorbar()
@@ -505,6 +516,8 @@ def CorrectionLoop(parameter_file):
         
     plt.show(block=True)    
     fi.SaveFits(imagedetector,[' ',0],main_dir,'EssaiCorrection',replace=True)
+    if photon_noise==True:
+        fi.SaveFits(photondetector,[' ',0],main_dir,'PhotonCorrection',replace=True)
         
     return phase_abb,imagedetector
 

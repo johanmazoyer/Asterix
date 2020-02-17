@@ -1,3 +1,7 @@
 #ignore file extension
 *.pyc
-
+Labview/*
+Interaction_Matrices/
+PushActInPup400.fits
+EssaiCorrection.fits
+PhotonCorrection.fits
