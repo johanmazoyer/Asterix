@@ -478,6 +478,7 @@ def CorrectionLoop(parameter_file):
     
     nbiter=len(modevector)
     imagedetector=np.zeros((nbiter+1,isz,isz))
+    phaseDM=np.zeros((nbiter+1,isz,isz))
     input_wavefront=entrancepupil*(1+amplitude_abb)*np.exp(1j*phase_abb)
     imagedetector[0]=abs(instr.pupiltodetector(input_wavefront,coro,lyot,reechpup,isz,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil)/squaremaxPSF)**2
     if photon_noise==True:
@@ -506,7 +507,9 @@ def CorrectionLoop(parameter_file):
             
             
         solution1=wsc.solutiontocorrect(maskDH,resultatestimation,invertGDH,WhichInPupil)
-        phase_abb=phase_abb-gain*amplitudeEFC*np.dot(solution1,pushactonDM.reshape(1024,isz*isz)).reshape(isz,isz)*2*np.pi*1e-9/wavelength
+        apply_on_DM=-gain*amplitudeEFC*np.dot(solution1,pushactonDM.reshape(1024,isz*isz)).reshape(isz,isz)*2*np.pi*1e-9/wavelength
+        phaseDM[k+1]=phaseDM[k]+apply_on_DM
+        phase_abb=phase_abb+apply_on_DM
         input_wavefront=entrancepupil*(1+amplitude_abb)*np.exp(1j*phase_abb)
         imagedetector[k+1]=abs(instr.pupiltodetector(input_wavefront,coro,lyot,reechpup,isz,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil)/squaremaxPSF)**2
         if photon_noise==True:
@@ -523,11 +526,14 @@ def CorrectionLoop(parameter_file):
     plt.show(block=True)
 
     header=fi.from_param_to_header(config)
-
+    cut_phaseDM=np.zeros((nbiter+1,2*prad,2*prad))
+    for it in np.arange(nbiter+1):
+        cut_phaseDM[it]=proc.cropimage(phaseDM[it],200,200,2*prad)
   
-    fi.SaveFits(imagedetector,header,result_dir,'EssaiCorrection',replace=True)
+    fi.SaveFits(imagedetector,header,result_dir,'Detector_Images',replace=True)
+    fi.SaveFits(cut_phaseDM,header,result_dir,'Phase_on_DM2',replace=True)
     if photon_noise==True:
-        fi.SaveFits(photondetector,header,result_dir,'PhotonCorrection',replace=True)
+        fi.SaveFits(photondetector,header,result_dir,'Photon_counting',replace=True)
 
 
 
