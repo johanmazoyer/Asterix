@@ -3,6 +3,8 @@
 #Correction 29/01/2019
 #Creates interaction matrices for PW+EFC on the THD2
 
+# coding: utf8
+
 from shortcuts import *
 
 
@@ -44,8 +46,6 @@ def create_interaction_matrices(parameter_file):
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
     
     ### CONFIG                         
-    
-    main_dir = config['main_dir']
     Labview_dir= config['Labview_dir']
 
     ### MODEL CONFIG
@@ -85,7 +85,7 @@ def create_interaction_matrices(parameter_file):
     regularization = EFCconfig['regularization']
     
     ##THEN DO
-
+    main_dir = os.getcwd()+'/'
     model_dir = main_dir+'Model/'
     lyot=lyotdiam/pdiam
     ld_p=ld_p*lyot
@@ -270,8 +270,6 @@ def CorrectionLoop(parameter_file):
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
     
     ### CONFIG                         
-    
-    main_dir = config['main_dir']
     Labview_dir= config['Labview_dir']
 
     ### MODEL CONFIG
@@ -312,6 +310,7 @@ def CorrectionLoop(parameter_file):
     
     ###SIMU CONFIG
     SIMUconfig = config['SIMUconfig']
+    Name_Experiment = SIMUconfig['Name_Experiment']
     set_amplitude_abb=SIMUconfig['set_amplitude_abb']
     amplitude_abb = SIMUconfig['amplitude_abb']
     set_phase_abb=SIMUconfig['set_phase_abb']
@@ -332,8 +331,15 @@ def CorrectionLoop(parameter_file):
         modevector=modevector+[Nbmode[i]]*Nbiter[i]
     
     ##THEN DO
-    
+    main_dir = os.getcwd()+'/'
     model_dir = main_dir+'Model/'
+    result_dir = main_dir + 'Results/' + Name_Experiment + '/'
+
+    if not os.path.exists(result_dir):
+        print('Creating directory ' + result_dir + ' ...')
+        os.makedirs(result_dir)
+
+
     lyot=lyotdiam/pdiam
     ld_p=ld_p*lyot
     mperpix = 6.5e-6 #Size pixel on detector in meter
@@ -514,10 +520,25 @@ def CorrectionLoop(parameter_file):
         previousmode=mode
         k=k+1
         
-    plt.show(block=True)    
-    fi.SaveFits(imagedetector,[' ',0],main_dir,'EssaiCorrection',replace=True)
+    plt.show(block=True)
+    
+
+    header=[]
+    for sect in config.sections:
+        #print(config[str(sect)])
+        for scalar in config[str(sect)].scalars:
+            parameter=np.array([str(scalar),config[str(sect)][str(scalar)]])
+            header.append(parameter)
+
+    
+
+  
+    fi.SaveFits(imagedetector,header,result_dir,'EssaiCorrection',replace=True)
     if photon_noise==True:
-        fi.SaveFits(photondetector,[' ',0],main_dir,'PhotonCorrection',replace=True)
-        
+        fi.SaveFits(photondetector,['',0],result_dir,'PhotonCorrection',replace=True)
+
+
+
+
     return phase_abb,imagedetector
 

@@ -40,7 +40,20 @@ def SaveFits(image,head,doc_dir2,name,replace=False):
     hdu=fits.PrimaryHDU(image)
     hdul = fits.HDUList([hdu])
     hdr=hdul[0].header
-    hdr.set(head[0],head[1])
+    head=np.array(head)
+    
+    if head.ndim>=2:
+        
+        for newline in np.arange(len(head)):
+            try:
+                hdr.set(head[newline,0][:8],str(head[newline,1]))
+            except ValueError:
+                print('Value error when Fits Saving:' , head[newline,0])
+                continue
+
+    else:
+        hdr.set(head[0][:8],str(head[1]))
+            
     hdu.writeto(doc_dir2+name+'.fits', overwrite=replace )
     
     
