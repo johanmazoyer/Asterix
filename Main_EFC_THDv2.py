@@ -521,21 +521,13 @@ def CorrectionLoop(parameter_file):
         k=k+1
         
     plt.show(block=True)
-    
 
-    header=[]
-    for sect in config.sections:
-        #print(config[str(sect)])
-        for scalar in config[str(sect)].scalars:
-            parameter=np.array([str(scalar),config[str(sect)][str(scalar)]])
-            header.append(parameter)
-
-    
+    header=fi.from_param_to_header(config)
 
   
     fi.SaveFits(imagedetector,header,result_dir,'EssaiCorrection',replace=True)
     if photon_noise==True:
-        fi.SaveFits(photondetector,['',0],result_dir,'PhotonCorrection',replace=True)
+        fi.SaveFits(photondetector,header,result_dir,'PhotonCorrection',replace=True)
 
 
 

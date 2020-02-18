@@ -115,3 +115,26 @@ def GetFluxmetreValue(fitspath):
     hdu=openfits[0].header
     fluxmetre=hdu['FLUX_W']
     return fluxmetre
+
+
+
+
+def from_param_to_header(config):
+    ''' --------------------------------------------------
+    Convert ConfigObj parameters to fits header type list
+    
+    Parameters:
+    ----------
+    config: config obj
+    
+    Return:
+    ------
+    header: list of parameters
+    -------------------------------------------------- '''
+    header=[]
+    for sect in config.sections:
+        #print(config[str(sect)])
+        for scalar in config[str(sect)].scalars:
+            parameter=np.array([str(scalar),config[str(sect)][str(scalar)]])
+            header.append(parameter)
+    return header
