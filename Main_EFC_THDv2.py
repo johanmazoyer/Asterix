@@ -492,7 +492,7 @@ def CorrectionLoop(parameter_file):
     for mode in modevector:
         print(k,mode)
         if estimation=='PairWise':
-            Difference=instr.createdifference(amplitude_abb,phase_abb,posprobes,pushactonDM,amplitudeEFC,entrancepupil,coro,lyot,reechpup,new,wavelength,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil,noise=photon_noise,numphot=nb_photons)
+            Difference=instr.createdifference(amplitude_abb,phase_abb,posprobes,pushactonDM,amplitudePW,entrancepupil,coro,lyot,reechpup,new,wavelength,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil,noise=photon_noise,numphot=nb_photons)
             resultatestimation=wsc.FP_PWestimate(Difference,vectoressai)
             
         elif estimation=='Perfect':
