@@ -497,7 +497,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     maskDHisz=wsc.creatingMaskDH(isz,'square',choosepixDH=[element*isz/dimimages for element in choosepix])
     input_wavefront=entrancepupil*(1+amplitude_abb)*np.exp(1j*phase_abb)
     imagedetector[0]=abs(instr.pupiltodetector(input_wavefront,coro,lyot,reechpup,isz,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil)/squaremaxPSF)**2
-    meancontrast[0]=np.mean(imagedetector[0][np.where(maskDHisz!=1)])
+    meancontrast[0]=np.mean(imagedetector[0][np.where(maskDHisz!=0)])
     print('Mean contrast in DH: ', meancontrast[0])
     if photon_noise==True:
         photondetector=np.zeros((nbiter+1,isz,isz))
