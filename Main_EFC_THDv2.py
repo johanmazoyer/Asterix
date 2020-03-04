@@ -34,7 +34,7 @@ from validate import Validator
 
 
 
-def create_interaction_matrices(parameter_file):
+def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig={}):
     
     
     
@@ -50,6 +50,7 @@ def create_interaction_matrices(parameter_file):
 
     ### MODEL CONFIG
     modelconfig = config['modelconfig']
+    modelconfig.update(NewMODELconfig)
     isz   = modelconfig['isz']
     wavelength = modelconfig['wavelength']
     pdiam = modelconfig['pdiam']
@@ -69,6 +70,7 @@ def create_interaction_matrices(parameter_file):
 
     ### PW CONFIG
     PWconfig=config['PWconfig']
+    PWconfig.update(NewPWconfig)
     amplitudePW = PWconfig['amplitudePW']
     posprobes = PWconfig['posprobes']
     posprobes=[int(i) for i in posprobes]
@@ -76,6 +78,7 @@ def create_interaction_matrices(parameter_file):
 
     ###EFC CONFIG
     EFCconfig=config['EFCconfig']
+    EFCconfig.update(NewEFCconfig)
     MinimumSurfaceRatioInThePupil = EFCconfig['MinimumSurfaceRatioInThePupil']
     choosepix = EFCconfig['choosepix']
     choosepix=[int(i) for i in choosepix]
@@ -258,7 +261,7 @@ def create_interaction_matrices(parameter_file):
     
     
 
-def CorrectionLoop(parameter_file): 
+def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig={},NewSIMUconfig={}): 
     
     
     
@@ -274,6 +277,7 @@ def CorrectionLoop(parameter_file):
 
     ### MODEL CONFIG
     modelconfig = config['modelconfig']
+    modelconfig.update(NewMODELconfig)
     isz   = modelconfig['isz']
     wavelength = modelconfig['wavelength']
     pdiam = modelconfig['pdiam']
@@ -290,9 +294,9 @@ def CorrectionLoop(parameter_file):
     y309= modelconfig['y309']
     x309= modelconfig['x309']
 
-
     ### PW CONFIG
     PWconfig=config['PWconfig']
+    PWconfig.update(NewPWconfig)
     amplitudePW = PWconfig['amplitudePW']
     posprobes = PWconfig['posprobes']
     posprobes=[int(i) for i in posprobes]
@@ -300,6 +304,7 @@ def CorrectionLoop(parameter_file):
 
     ###EFC CONFIG
     EFCconfig=config['EFCconfig']
+    EFCconfig.update(NewEFCconfig)
     MinimumSurfaceRatioInThePupil = EFCconfig['MinimumSurfaceRatioInThePupil']
     choosepix = EFCconfig['choosepix']
     choosepix=[int(i) for i in choosepix]
@@ -310,6 +315,7 @@ def CorrectionLoop(parameter_file):
     
     ###SIMU CONFIG
     SIMUconfig = config['SIMUconfig']
+    SIMUconfig.update(NewSIMUconfig)
     Name_Experiment = SIMUconfig['Name_Experiment']
     set_amplitude_abb=SIMUconfig['set_amplitude_abb']
     amplitude_abb = SIMUconfig['amplitude_abb']
@@ -325,7 +331,7 @@ def CorrectionLoop(parameter_file):
     errormodel = SIMUconfig['errormodel']
     error = SIMUconfig['error']
     estimation = SIMUconfig['estimation']
-    
+
     modevector=[]
     for i in np.arange(len(Nbiter)):
         modevector=modevector+[Nbmode[i]]*Nbiter[i]
@@ -465,8 +471,8 @@ def CorrectionLoop(parameter_file):
     
     amplitude_abb=ampfinal
     phase_abb=phase
+
     
-        
     ## SIMU
     contrast_to_photons=np.sum(entrancepupil)/np.sum(lyot)*nb_photons*squaremaxPSF**2/np.sum(PSF)**2
     
@@ -479,18 +485,23 @@ def CorrectionLoop(parameter_file):
     nbiter=len(modevector)
     imagedetector=np.zeros((nbiter+1,isz,isz))
     phaseDM=np.zeros((nbiter+1,isz,isz))
+    meancontrast=np.zeros(nbiter+1)
+    maskDHisz=wsc.creatingMaskDH(isz,'square',choosepixDH=[element*isz/dimimages for element in choosepix])
     input_wavefront=entrancepupil*(1+amplitude_abb)*np.exp(1j*phase_abb)
     imagedetector[0]=abs(instr.pupiltodetector(input_wavefront,coro,lyot,reechpup,isz,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil)/squaremaxPSF)**2
+    meancontrast[0]=np.mean(imagedetector[0][np.where(maskDHisz!=1)])
+    print('Mean contrast in DH: ', meancontrast[0])
     if photon_noise==True:
         photondetector=np.zeros((nbiter+1,isz,isz))
         photondetector[0]=np.random.poisson(imagedetector[0]*contrast_to_photons)
-        imagedetector[0]=photondetector[0]/contrast_to_photons
+        #imagedetector[0]=photondetector[0]/contrast_to_photons
     plt.ion()
     plt.figure()
     previousmode=0
     k=0
     for mode in modevector:
-        print(k,mode)
+        print('--------------------------------------------------')
+        print('Iteration number: ', k , ' EFC truncation: ' , mode )
         if estimation=='PairWise':
             Difference=instr.createdifference(amplitude_abb,phase_abb,posprobes,pushactonDM,amplitudePW,entrancepupil,coro,lyot,reechpup,new,wavelength,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil,noise=photon_noise,numphot=nb_photons)
             resultatestimation=wsc.FP_PWestimate(Difference,vectoressai)
@@ -512,9 +523,11 @@ def CorrectionLoop(parameter_file):
         phase_abb=phase_abb+apply_on_DM
         input_wavefront=entrancepupil*(1+amplitude_abb)*np.exp(1j*phase_abb)
         imagedetector[k+1]=abs(instr.pupiltodetector(input_wavefront,coro,lyot,reechpup,isz,perfect_coro=perfect_coro,perfect_entrance_pupil=perfect_entrance_pupil)/squaremaxPSF)**2
+        meancontrast[k+1]=np.mean(imagedetector[k+1][np.where(maskDHisz!=0)])
+        print('Mean contrast in DH: ',meancontrast[k+1])
         if photon_noise==True:
             photondetector[k+1]=np.random.poisson(imagedetector[k+1]*contrast_to_photons)
-            imagedetector[k+1]=photondetector[k+1]/contrast_to_photons
+            #imagedetector[k+1]=photondetector[k+1]/contrast_to_photons
             
         plt.clf()
         plt.imshow(np.log10(imagedetector[k+1]),vmin=-8,vmax=-5)
@@ -523,8 +536,10 @@ def CorrectionLoop(parameter_file):
         previousmode=mode
         k=k+1
         
-    plt.show(block=True)
+    plt.show()
 
+
+    ## SAVING...
     header=fi.from_param_to_header(config)
     cut_phaseDM=np.zeros((nbiter+1,2*prad,2*prad))
     for it in np.arange(nbiter+1):
@@ -532,8 +547,16 @@ def CorrectionLoop(parameter_file):
   
     fi.SaveFits(imagedetector,header,result_dir,'Detector_Images',replace=True)
     fi.SaveFits(cut_phaseDM,header,result_dir,'Phase_on_DM2',replace=True)
+    fi.SaveFits(meancontrast,header,result_dir,'Mean_Contrast_DH',replace=True)
     if photon_noise==True:
         fi.SaveFits(photondetector,header,result_dir,'Photon_counting',replace=True)
+    
+    plt.clf()    
+    plt.plot(meancontrast)
+    plt.yscale('log')
+    plt.xlabel('Number of iterations')
+    plt.ylabel('Mean contrast in Dark Hole')
+    plt.savefig(result_dir+'Mean_Contrast_DH.png')
 
 
 
