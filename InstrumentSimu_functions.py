@@ -314,6 +314,52 @@ def createdifference(aberramp,aberrphase,posprobes,pushact,amplitude,entrancepup
     #plt.imshow(np.log10(Ikplus*contrast_to_photons))
     #plt.show(block=True)
     return Difference
+
+
+
+
+def random_phase_map(isz,phaserms,rhoc,slope):
+    ''' --------------------------------------------------
+    Create a random phase map, whose PSD decrease in f^(-slope)
+    
+    Parameters:
+    ----------
+    isz: integer, size of the generated phase map
+    phaserms: float, level of aberration
+    rhoc: float, see Bordé et Traub 2006
+    slope: float, slope of the PSD
+    
+    Return:
+    ------
+    phase: 2D array, static random phase map (or OPD) generated 
+    -------------------------------------------------- '''
+    xx, yy = np.meshgrid(np.arange(isz)-isz/2, np.arange(isz)-isz/2)
+    rho=np.hypot(yy, xx)
+    PSD0=1
+    PSD=PSD0/(1+(rho/rhoc)**slope)
+    sqrtPSD=np.sqrt(2*PSD)
+    randomphase=2*np.pi * (np.random.rand(isz, isz) - 0.5)
+    product=shift(sqrtPSD*np.exp(1j*randomphase))
+    phase=np.real(ifft(product))
+    phase=phase/np.std(phase)*phaserms
+    return phase
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     
 

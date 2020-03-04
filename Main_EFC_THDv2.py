@@ -320,6 +320,10 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     set_amplitude_abb=SIMUconfig['set_amplitude_abb']
     amplitude_abb = SIMUconfig['amplitude_abb']
     set_phase_abb=SIMUconfig['set_phase_abb']
+    set_random_phase=SIMUconfig['set_random_phase']
+    phaserms = SIMUconfig['phaserms']
+    rhoc_phase = SIMUconfig['rhoc_phase']
+    slope_phase = SIMUconfig['slope_phase']
     phase_abb = SIMUconfig['phase_abb']
     photon_noise=SIMUconfig['photon_noise']
     nb_photons=SIMUconfig['nb_photons']
@@ -451,7 +455,11 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         
     ##Load aberration maps (A refaire proprement!!!)
     if set_phase_abb==True:
-        phase=fi.LoadImageFits(model_dir+phase_abb+'.fits')
+        if set_random_phase==True:
+            phase=instr.random_phase_map(isz,phaserms,rhoc_phase,slope_phase)
+        else:    
+            phase=fi.LoadImageFits(model_dir+phase_abb+'.fits')
+        
         phase=phase*2*np.pi/wavelength
     else:
         phase=0
