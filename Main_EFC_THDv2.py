@@ -146,7 +146,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         vectoressai=fi.LoadImageFits(intermatrix_dir + filePW + '.fits')
     else:
         print('Recording ' + filePW + ' ...')
-        vectoressai,showsvd = wsc.createvectorprobes(wavelength,entrancepupil,coro,lyot,amplitudePW,posprobes,pushact,dimimages,dimimages,cut)
+        vectoressai,showsvd = wsc.createvectorprobes(wavelength,entrancepupil,coro,lyot,amplitudePW,posprobes,pushact,dimimages,cut)
         fi.SaveFits(vectoressai , [' ',0] , intermatrix_dir , filePW)
     
         visuPWMap='MapEigenvaluesPW'+ '_' + '_'.join(map(str, posprobes)) + 'act_' + str(int(amplitudePW)) + 'nm'
