@@ -213,6 +213,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
             else:
                 print('Recording ' + fileMaskDH + ' ...')
                 maskDH = wsc.creatingMaskDH(dimimages,'square',choosepix)
+                #maskDH = wsc.creatingMaskDH(dimimages,'circle',inner=0 , outer=35 , xdecay= 8)
                 fi.SaveFits(maskDH,[' ',0],intermatrix_dir,fileMaskDH)
             
             #Creating Direct Matrix if does not exist
@@ -478,7 +479,8 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         pushactonDM=pushact
     else:
         print('Misregistration!')
-        pushactonDM=instr.creatingpushact(model_dir,file309,x309,y309,findxy309byhand,modelerror=errormodel)
+        file309=0
+        pushactonDM=instr.creatingpushact(model_dir,file309,x309,y309,findxy309byhand,isz,prad,pdiam,modelerror=errormodel,error=error)
     
     nbiter=len(modevector)
     imagedetector=np.zeros((nbiter+1,isz,isz))

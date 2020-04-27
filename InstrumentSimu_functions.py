@@ -1,6 +1,5 @@
 #Version 29 Janvier 2020
-import numpy as np
-import matplotlib.pyplot as plt
+from shortcuts import *
 import fits_functions as fi
 import processing_functions as proc
 
@@ -201,7 +200,7 @@ def pushact_function(which,grilleact, actshapeinpupilresized,xycent,xy309,modele
     return Psivector
     
     
-def creatingpushact(model_dir,file309,x309,y309,findxy309byhand,modelerror='NoError',error=0):
+def creatingpushact(model_dir,file309,x309,y309,findxy309byhand,isz,prad,pdiam,modelerror='NoError',error=0):
     ''' --------------------------------------------------
     Push the desired DM actuator in the pupil
     
@@ -222,9 +221,9 @@ def creatingpushact(model_dir,file309,x309,y309,findxy309byhand,modelerror='NoEr
     # It may not work at the moment
     if findxy309byhand==False:
         file309='Phase_estim_Act309_v20200107.fits'
-        im309size = len(LoadImageFits(model_dir+file309))
+        im309size = len(fi.LoadImageFits(model_dir+file309))
         act309 = np.zeros((isz,isz))
-        act309[int(isz/2-im309size/2):int(isz/2+im309size/2),int(isz/2-im309size/2):int(isz/2+im309size/2)] = LoadImageFits(model_dir+file309)
+        act309[int(isz/2-im309size/2):int(isz/2+im309size/2),int(isz/2-im309size/2):int(isz/2+im309size/2)] = fi.LoadImageFits(model_dir+file309)
         y309,x309 = np.unravel_index(abs(act309).argmax(), act309.shape)
     
     #shift by (0.5,0.5) pixel because the pupil is centerd between pixels
@@ -233,13 +232,13 @@ def creatingpushact(model_dir,file309,x309,y309,findxy309byhand,modelerror='NoEr
     xy309=[x309,y309]
     
     
-    grille = LoadImageFits(model_dir+'Grid_actu.fits')
-    actshape = LoadImageFits(model_dir+'Actu_DM32_field=6x6pitch_pitch=22pix.fits')
-    resizeactshape = skimage.transform.rescale(actshape, 2*prad0/pdiam*.3e-3/22, order=1,preserve_range=True,anti_aliasing=True,multichannel=False)
+    grille = fi.LoadImageFits(model_dir+'Grid_actu.fits')
+    actshape = fi.LoadImageFits(model_dir+'Actu_DM32_field=6x6pitch_pitch=22pix.fits')
+    resizeactshape = skimage.transform.rescale(actshape, 2*prad/pdiam*.3e-3/22, order=1,preserve_range=True,anti_aliasing=True,multichannel=False)
     
     #Gauss2Dfit for centering the rescaled influence function
     dx,dy = proc.gauss2Dfit(resizeactshape)
-    xycent = len(resizeactshape/2)
+    xycent = len(resizeactshape)/2
     resizeactshape=nd.interpolation.shift(resizeactshape,(xycent-dx,xycent-dy))
     
     #Put the centered influence function inside a larger array (400x400)
@@ -249,7 +248,6 @@ def creatingpushact(model_dir,file309,x309,y309,findxy309byhand,modelerror='NoEr
     pushact=np.zeros((1024,isz,isz))
     for i in np.arange(1024):
         pushact[i]=pushact_function(i,grille,actshapeinpupil,xycent,xy309,modelerror,error)
-    
     return pushact
     
     
@@ -358,4 +356,3 @@ def random_phase_map(isz,phaserms,rhoc,slope):
 
     
     
-
