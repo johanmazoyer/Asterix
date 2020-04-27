@@ -63,7 +63,7 @@ def invertSVD(matrix_to_invert,cut,goal='e',regul='truncation',visu=True,otherba
     
     
 
-def createvectorprobes(wavelength,entrancepupil,coro_mask,lyot_mask,amplitude,posprobes,pushact,reechpup,new,dimimages,cutsvd):
+def createvectorprobes(wavelength,entrancepupil,coro_mask,lyot_mask,amplitude,posprobes,pushact,dimimages,cutsvd):
     ''' --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
     
@@ -76,9 +76,7 @@ def createvectorprobes(wavelength,entrancepupil,coro_mask,lyot_mask,amplitude,po
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
     posprobes: 1D-array, index of the actuators to push and pull for pair-wise probing
     pushact: 3D-array, opd created by the pokes of all actuators in the DM.
-    reechpup: int, size of the cropped image before resempling in pixels
-    new: int, size of the output image after resampling in pixels
-    dimimages: int, size of the output image after resampling in pixels and cropping
+    dimimages: int, size of the output image after resampling in pixels
     cutsvd: float, value not to exceed for the inverse eigeinvalues at each pixels
     
     
@@ -88,22 +86,20 @@ def createvectorprobes(wavelength,entrancepupil,coro_mask,lyot_mask,amplitude,po
     SVD: 2D array, map of the inverse singular values for each pixels and before regularization
     -------------------------------------------------- '''
     isz=len(pushact[0])
-    new=dimimages
     numprobe=len(posprobes)
     deltapsik=np.zeros((numprobe,dimimages,dimimages),dtype=complex)
     probephase=np.zeros((numprobe,isz,isz))
     matrix=np.zeros((numprobe,2))
     PWVector=np.zeros((dimimages**2,2,numprobe))
     SVD=np.zeros((2,dimimages,dimimages))
-    squaremaxPSF=np.amax(np.abs(instr.pupiltodetector(entrancepupil,1,lyot_mask,reechpup,new)))
+    squaremaxPSF=np.amax(np.abs(instr.pupiltodetector(entrancepupil,1,lyot_mask)))
     k=0
     for i in posprobes:
         probephase[k]=amplitude*pushact[i]
         probephase[k]=2*np.pi*(probephase[k])*1e-9/wavelength
         inputwavefront=entrancepupil*(1+1j*probephase[k])
-        deltapsikbis=instr.pupiltodetector(inputwavefront,coro_mask,lyot_mask,reechpup,new,perfect_coro=True,perfect_entrance_pupil=entrancepupil)/squaremaxPSF
-        #deltapsikbis=pupiltodetector(inputwavefront,coro_mask,lyot_mask,reechpup,new)/squaremaxPSF-pupiltodetector(entrancepupil,coro_mask,lyot_mask,reechpup,new)/squaremaxPSF
-        deltapsik[k]=proc.cropimage(deltapsikbis,new/2,new/2,dimimages)
+        deltapsikbis=instr.pupiltodetector(inputwavefront,coro_mask,lyot_mask,perfect_coro=True,perfect_entrance_pupil=entrancepupil)/squaremaxPSF
+        deltapsik[k]=proc.resampling(deltapsikbis,dimimages)
         k=k+1
 
     l=0
@@ -185,7 +181,7 @@ def creatingMaskDH(dimimages,shape,choosepixDH=[0,0,0,0], inner=0, outer=0, xdec
 
 
 
-def creatingCorrectionmatrix(entrancepupil,coro_mask,lyot_mask,reechpup,new,wavelength,amplitude,pushact,mask,Whichact,otherbasis=False,basisDM3=0):
+def creatingCorrectionmatrix(entrancepupil,coro_mask,lyot_mask,dimimages,wavelength,amplitude,pushact,mask,Whichact,otherbasis=False,basisDM3=0):
     ''' --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
     
@@ -194,8 +190,7 @@ def creatingCorrectionmatrix(entrancepupil,coro_mask,lyot_mask,reechpup,new,wave
     entrancepupil: 2D-array, entrance pupil shape
     coro_mask: 2D array, can be complex. coronagraphic mask
     lyot_mask: 2D array, lyot mask
-    reechpup: int, size of the cropped image before resempling in pixels
-    new: int, size of the output image after resampling in pixels
+    dimimages: int, size of the output image after resampling in pixels
     wavelength: float, wavelength of the  incoming flux in meter
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
     pushact: 3D-array, opd created by the pokes of all actuators in the DM
@@ -216,7 +211,7 @@ def creatingCorrectionmatrix(entrancepupil,coro_mask,lyot_mask,reechpup,new,wave
     else:
         bas_fct = np.array([pushact[ind] for ind in Whichact])
         nb_fct=len(Whichact)
-    squaremaxPSF=np.amax(np.abs(instr.pupiltodetector(entrancepupil,1,lyot_mask,reechpup,new)))
+    squaremaxPSF=np.amax(np.abs(instr.pupiltodetector(entrancepupil,1,lyot_mask)))
     print('Start EFC')
     Gmatrixbis=np.zeros((2*int(np.sum(mask)),nb_fct))
     k=0
@@ -226,8 +221,8 @@ def creatingCorrectionmatrix(entrancepupil,coro_mask,lyot_mask,reechpup,new,wave
         Psivector=amplitude*bas_fct[i]
         Psivector=2*np.pi*(Psivector)*1e-9/wavelength
         inputwavefront=entrancepupil*(1+1j*Psivector)
-        Gvector=instr.pupiltodetector(inputwavefront,coro_mask,lyot_mask,reechpup,new,perfect_coro=True,perfect_entrance_pupil=entrancepupil)/squaremaxPSF
-        #Gvector=(pupiltodetector(inputwavefront,coro_mask,lyot_mask,reechpup,new))/squaremaxPSF-pupiltodetector(entrancepupil,coro_mask,lyot_mask,reechpup,new)/squaremaxPSF
+        Gvector=instr.pupiltodetector(inputwavefront,coro_mask,lyot_mask,perfect_coro=True,perfect_entrance_pupil=entrancepupil)/squaremaxPSF
+        Gvector=proc.resampling(Gvector,dimimages)
         Gmatrixbis[0:int(np.sum(mask)),k]=real(Gvector[np.where(mask==1)]).flatten()
         Gmatrixbis[int(np.sum(mask)):,k]=im(Gvector[np.where(mask==1)]).flatten()
         k=k+1
@@ -236,7 +231,7 @@ def creatingCorrectionmatrix(entrancepupil,coro_mask,lyot_mask,reechpup,new,wave
     
 
 
-def solutiontocorrect(mask,Result_Estimate,inversed_jacobian,WhichInPupil):
+def solutionEFC(mask,Result_Estimate,inversed_jacobian,WhichInPupil):
     ''' --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
@@ -256,10 +251,75 @@ def solutiontocorrect(mask,Result_Estimate,inversed_jacobian,WhichInPupil):
     Eab[0:int(np.sum(mask))]=real(Resultatbis).flatten()     
     Eab[int(np.sum(mask)):]=im(Resultatbis).flatten()
     cool=np.dot(inversed_jacobian,Eab)
+        
     
     solution=np.zeros(1024)
     solution[WhichInPupil]=cool
     return solution
+    
+    
+    
+    
+def solutionEM(mask,Result_Estimate,Hessian_Matrix,Jacobian,WhichInPupil):
+    ''' --------------------------------------------------
+    Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
+    
+    Parameters:
+    ----------
+    mask: Binary mask corresponding to the dark hole region
+    Result_Estimate: 2D array can be complex, focal plane electric field
+    Hessian_Matrix: 2D array , Hessian matrix of the DH energy
+    Jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
+    WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
+    
+    Return:
+    ------
+    solution: 1D array, voltage to apply on each deformable mirror actuator
+    -------------------------------------------------- '''
+    
+    
+    Eab=np.zeros(int(np.sum(mask)))
+    Resultatbis=(Result_Estimate[np.where(mask==1)])
+    Eab=np.real(np.dot(np.transpose(np.conjugate(Jacobian)),Resultatbis)).flatten()
+    cool=np.dot(Hessian_Matrix,Eab)
+        
+    
+    solution=np.zeros(1024)
+    solution[WhichInPupil]=cool
+    return solution
+    
+    
+    
+    
+def solutionSteepest(mask,Result_Estimate,Hessian_Matrix,Jacobian,WhichInPupil):
+    ''' --------------------------------------------------
+    Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
+    
+    Parameters:
+    ----------
+    mask: Binary mask corresponding to the dark hole region
+    Result_Estimate: 2D array can be complex, focal plane electric field
+    Hessian_Matrix: 2D array , Hessian matrix of the DH energy
+    Jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
+    WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
+    
+    Return:
+    ------
+    solution: 1D array, voltage to apply on each deformable mirror actuator
+    -------------------------------------------------- '''
+    
+    Eab=np.zeros(int(np.sum(mask)))
+    Resultatbis=(Result_Estimate[np.where(mask==1)])
+    Eab=np.real(np.dot(np.transpose(np.conjugate(Jacobian)),Resultatbis)).flatten()
+    pas=2e3
+    #cool=2*(np.dot(M0,sol)+np.real(np.dot(np.transpose(np.conjugate(G)),Resultatbis))).flatten()
+    cool=pas*2*Eab
+        
+    
+    solution=np.zeros(1024)
+    solution[WhichInPupil]=cool
+    return solution
+
 
     
     

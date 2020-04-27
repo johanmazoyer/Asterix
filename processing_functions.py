@@ -171,7 +171,7 @@ def gauss2Dfit(data):
     
     
     
-def resampling(image,reechpup,new):
+def resampling(image,new):
     ''' --------------------------------------------------
     Crop and then resample the focal plane image to create a 2D array with new dimensions
     
@@ -186,13 +186,13 @@ def resampling(image,reechpup,new):
     Gvector: 2D array, image resampled into new dimensions
     -------------------------------------------------- '''
     isz=len(image)
-    Gvectorbis=cropimage(image,isz/2,isz/2,reechpup)
-    Gvectorbis=ishift(Gvectorbis)  
+    Gvectorbis=ishift(image)  
     Gvectorbis=ifft(Gvectorbis)
     Gvectorbis=shift(Gvectorbis)
-    Gvector=cropimage(Gvectorbis,reechpup/2,reechpup/2,new)
+    Gvector=cropimage(Gvectorbis,isz/2,isz/2,new)
     Gvector=ishift(Gvector)
-    Gvector=fft(Gvector) #Image 160x160-3
+    Gvector=fft(Gvector)
+    Gvector=shift(Gvector)
     return Gvector
     
     
