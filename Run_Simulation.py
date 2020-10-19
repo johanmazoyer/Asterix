@@ -1,6 +1,6 @@
 import os
 from Main_EFC_THDv2 import *
-import Main_EFC_THDv2 as main
+import Main_EFC_THD as main
 
 #dict={'Name_Experiment': 'Experiment1'}
 main.create_interaction_matrices(os.getcwd()+'/Essai_param.ini')
