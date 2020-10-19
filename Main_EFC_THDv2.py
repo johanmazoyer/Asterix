@@ -102,6 +102,11 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     if not os.path.exists(intermatrix_dir):
         print('Creating directory ' + intermatrix_dir + ' ...')
         os.makedirs(intermatrix_dir)
+        
+        
+    if not os.path.exists(Labview_dir):
+        print('Creating directory ' + Labview_dir + ' ...')
+        os.makedirs(Labview_dir)
     
     
     if creating_pushact==True:
