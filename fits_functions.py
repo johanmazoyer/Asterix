@@ -70,7 +70,7 @@ def CubeFits(docs_dir):
     image_array: numpy array
     -------------------------------------------------- '''
     image_list = []
-    for filename in glob.glob(docs_dir+'*.fits'):
+    for filename in sorted(glob.glob(docs_dir+'*.fits')):
         image=LoadImageFits(filename)
         image_list.append(image)
         
