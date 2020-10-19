@@ -1,5 +1,5 @@
 import os
-from Main_EFC_THDv2 import *
+from Main_EFC_THD import *
 import Main_EFC_THD as main
 
 #dict={'Name_Experiment': 'Experiment1'}
