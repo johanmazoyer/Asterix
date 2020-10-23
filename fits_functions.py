@@ -135,6 +135,7 @@ def from_param_to_header(config):
     for sect in config.sections:
         #print(config[str(sect)])
         for scalar in config[str(sect)].scalars:
-            parameter=np.array([str(scalar),config[str(sect)][str(scalar)]])
+            
+            parameter=np.array([str(scalar),str(config[str(sect)][str(scalar)])])
             header.append(parameter)
     return header
