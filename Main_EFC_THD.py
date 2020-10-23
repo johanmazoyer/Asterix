@@ -33,7 +33,8 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
     
     ### CONFIG                         
-    Labview_dir= config['Labview_dir']
+    Labview_dir = config['Labview_dir']
+    Data_dir = config['Data_dir']
 
     ### MODEL CONFIG
     modelconfig = config['modelconfig']
@@ -97,7 +98,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         basistr = 'actu'
     else:
         basistr = 'fourier'
-    intermatrix_dir = config['main_dir'] + 'Interaction_Matrices/' + coronagraph+ '/'+ str(int(wavelength*1e9)) +'nm/p' + str(round(pdiam*1e3 , 2)) + '_l' + str(round(lyotdiam*1e3,1)) + '/ldp_'+str(round(ld_p/lyot,2))+'/basis_' + basistr+'/'
+    intermatrix_dir = Data_dir + 'Interaction_Matrices/' + coronagraph+ '/'+ str(int(wavelength*1e9)) +'nm/p' + str(round(pdiam*1e3 , 2)) + '_l' + str(round(lyotdiam*1e3,1)) + '/ldp_'+str(round(ld_p/lyot,2))+'/basis_' + basistr+'/'
     
     if not os.path.exists(intermatrix_dir):
         print('Creating directory ' + intermatrix_dir + ' ...')
@@ -105,9 +106,9 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         
     
     if Labview_dir == 'None':
-        print('Creating directory ' + config['main_dir']+'Labview/' + ' ...')
-        os.makedirs(config['main_dir']+'Labview/',exist_ok = True)
-        Labview_dir = config['main_dir']+'Labview/'
+        print('Creating directory ' + Data_dir+'Labview/' + ' ...')
+        os.makedirs(Data_dir+'Labview/',exist_ok = True)
+        Labview_dir = Data_dir+'Labview/'
     elif not os.path.exists(Labview_dir):
         print('Creating directory ' + Labview_dir + ' ...')
         os.makedirs(Labview_dir)
@@ -267,7 +268,8 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
     
     ### CONFIG                         
-    Labview_dir= config['Labview_dir']
+    Labview_dir = config['Labview_dir']
+    Data_dir = config['Data_dir']
 
     ### MODEL CONFIG
     modelconfig = config['modelconfig']
@@ -338,7 +340,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     
     model_dir = os.getcwd()+'/'+'Model/'
 
-    result_dir = config['main_dir'] + 'Results/' + Name_Experiment + '/'
+    result_dir = Data_dir + 'Results/' + Name_Experiment + '/'
 
     if not os.path.exists(result_dir):
         print('Creating directory ' + result_dir + ' ...')
@@ -366,7 +368,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         basistr = 'actu'
     else:
         basistr = 'fourier'
-    intermatrix_dir = config['main_dir'] + 'Interaction_Matrices/' + coronagraph+ '/'+ str(int(wavelength*1e9)) +'nm/p' + str(round(pdiam*1e3 , 2)) + '_l' + str(round(lyotdiam*1e3,1)) + '/ldp_'+str(round(ld_p/lyot,2))+'/basis_' + basistr+'/'
+    intermatrix_dir = Data_dir + 'Interaction_Matrices/' + coronagraph+ '/'+ str(int(wavelength*1e9)) +'nm/p' + str(round(pdiam*1e3 , 2)) + '_l' + str(round(lyotdiam*1e3,1)) + '/ldp_'+str(round(ld_p/lyot,2))+'/basis_' + basistr+'/'
     
         
     if otherbasis == True:
