@@ -93,6 +93,8 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     prad=int(prad)
     lyotrad=int(lyotrad)
     
+    if Data_dir == 'None': 
+        Data_dir = os.getcwd() + '/'
     
     if otherbasis == False:
         basistr = 'actu'
@@ -339,13 +341,14 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     ##THEN DO
     
     model_dir = os.getcwd()+'/'+'Model/'
-
+    
+    if Data_dir == 'None': 
+        Data_dir = os.getcwd() + '/'
     result_dir = Data_dir + 'Results/' + Name_Experiment + '/'
 
     if not os.path.exists(result_dir):
         print('Creating directory ' + result_dir + ' ...')
         os.makedirs(result_dir)
-
 
     lyot=lyotdiam/pdiam
     ld_p=ld_p*lyot
