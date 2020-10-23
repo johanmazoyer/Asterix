@@ -74,8 +74,8 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     regularization = EFCconfig['regularization']
     
     ##THEN DO
-    main_dir = os.getcwd()+'/'
-    model_dir = main_dir+'Model/'
+
+    model_dir = os.getcwd()+'/'+'Model/'
     lyot=lyotdiam/pdiam
     ld_p=ld_p*lyot
     mperpix = 6.5e-6 #Size pixel on detector in meter
@@ -97,7 +97,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         basistr = 'actu'
     else:
         basistr = 'fourier'
-    intermatrix_dir = main_dir + 'Interaction_Matrices/' + coronagraph+ '/'+ str(int(wavelength*1e9)) +'nm/p' + str(round(pdiam*1e3 , 2)) + '_l' + str(round(lyotdiam*1e3,1)) + '/ldp_'+str(round(ld_p/lyot,2))+'/basis_' + basistr+'/'
+    intermatrix_dir = config['main_dir'] + 'Interaction_Matrices/' + coronagraph+ '/'+ str(int(wavelength*1e9)) +'nm/p' + str(round(pdiam*1e3 , 2)) + '_l' + str(round(lyotdiam*1e3,1)) + '/ldp_'+str(round(ld_p/lyot,2))+'/basis_' + basistr+'/'
     
     if not os.path.exists(intermatrix_dir):
         print('Creating directory ' + intermatrix_dir + ' ...')
@@ -105,8 +105,9 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         
     
     if Labview_dir == 'None':
-        print('Creating directory ' + main_dir+'Labview/' + ' ...')
-        os.makedirs(main_dir+'Labview/')
+        print('Creating directory ' + config['main_dir']+'Labview/' + ' ...')
+        os.makedirs(config['main_dir']+'Labview/',exist_ok = True)
+        Labview_dir = config['main_dir']+'Labview/'
     elif not os.path.exists(Labview_dir):
         print('Creating directory ' + Labview_dir + ' ...')
         os.makedirs(Labview_dir)
@@ -334,9 +335,10 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         modevector=modevector+[Nbmode[i]]*Nbiter[i]
     
     ##THEN DO
-    main_dir = os.getcwd()+'/'
-    model_dir = main_dir+'Model/'
-    result_dir = main_dir + 'Results/' + Name_Experiment + '/'
+    
+    model_dir = os.getcwd()+'/'+'Model/'
+
+    result_dir = config['main_dir'] + 'Results/' + Name_Experiment + '/'
 
     if not os.path.exists(result_dir):
         print('Creating directory ' + result_dir + ' ...')
@@ -364,7 +366,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         basistr = 'actu'
     else:
         basistr = 'fourier'
-    intermatrix_dir = main_dir + 'Interaction_Matrices/' + coronagraph+ '/'+ str(int(wavelength*1e9)) +'nm/p' + str(round(pdiam*1e3 , 2)) + '_l' + str(round(lyotdiam*1e3,1)) + '/ldp_'+str(round(ld_p/lyot,2))+'/basis_' + basistr+'/'
+    intermatrix_dir = config['main_dir'] + 'Interaction_Matrices/' + coronagraph+ '/'+ str(int(wavelength*1e9)) +'nm/p' + str(round(pdiam*1e3 , 2)) + '_l' + str(round(lyotdiam*1e3,1)) + '/ldp_'+str(round(ld_p/lyot,2))+'/basis_' + basistr+'/'
     
         
     if otherbasis == True:
