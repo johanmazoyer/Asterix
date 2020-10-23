@@ -133,7 +133,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         perfect_coro=False
     elif coronagraph =='vortex':
         phasevortex=0# to be defined
-        coro = exp(1j*phasevortex)
+        coro = np.exp(1j*phasevortex)
         perfect_coro=True
         
     if obstructed_pupil==True:
@@ -388,7 +388,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         perfect_coro=False
     elif coronagraph =='vortex':
         phasevortex=0# to be defined
-        coro = exp(1j*phasevortex)
+        coro = np.exp(1j*phasevortex)
         perfect_coro=True
         
     if obstructed_pupil==True:
