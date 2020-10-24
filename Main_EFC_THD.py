@@ -119,8 +119,8 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     
     if creating_pushact==True:
         pushact=instr.creatingpushact(model_dir,file309,x309,y309)
-    
-        fi.SaveFits(pushact,['',0],model_dir,'PushActInPup400')
+        
+        fits.writeto(model_dir+'PushActInPup400.fits', pushact)
     else:
         if os.path.exists(model_dir+'PushActInPup400.fits') == False:
             print('Extracting data from zip file...')
@@ -160,12 +160,12 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     else:
         print('Recording ' + filePW + ' ...')
         vectoressai,showsvd = wsc.createvectorprobes(wavelength,entrancepupil,coro,lyot,amplitudePW,posprobes,pushact,dimimages,cut)
-        fi.SaveFits(vectoressai , [' ',0] , intermatrix_dir , filePW)
+        fits.writeto(intermatrix_dir + filePW + '.fits', vectoressai)
     
         visuPWMap='MapEigenvaluesPW'+ '_' + '_'.join(map(str, posprobes)) + 'act_' + str(int(amplitudePW)) + 'nm'
         if os.path.exists(intermatrix_dir + visuPWMap + '.fits' ) == False:
             print('Recording ' + visuPWMap + ' ...')
-            fi.SaveFits(showsvd[1] , [' ',0] , intermatrix_dir , visuPWMap)
+            fits.writeto(intermatrix_dir + visuPWMap+'.fits', showsvd[1])
                 
     #Saving PW matrices in Labview directory
     probes=np.zeros((len(posprobes),1024),dtype=np.float32)
@@ -175,10 +175,9 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         probes[i,posprobes[i]]=amplitudePW/17
         vectorPW[0,i*dimimages*dimimages:(i+1)*dimimages*dimimages]=vectoressai[:,0,i].flatten()
         vectorPW[1,i*dimimages*dimimages:(i+1)*dimimages*dimimages]=vectoressai[:,1,i].flatten()
-    fi.SaveFits(probes, [' ',0] , Labview_dir , 'Probes_EFC_default' , replace= True )
-    fi.SaveFits(vectorPW, [' ',0] , Labview_dir , 'Matr_mult_estim_PW' , replace= True )
+    fits.writeto(Labview_dir + 'Probes_EFC_default.fits', probes, overwrite=True)
+    fits.writeto(Labview_dir + 'Matr_mult_estim_PW.fits', vectorPW, overwrite=True)
             
-    
     
     ####Calculating and Recording EFC matrix
     print('TO SET ON LABVIEW: ',str(150/2+np.array(shift(choosepix))))    
@@ -193,7 +192,8 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
             WhichInPupil = wsc.creatingWhichinPupil(pushact,entrancepupil,MinimumSurfaceRatioInThePupil)
         else:
             WhichInPupil = np.arange(1024)
-        fi.SaveFits(WhichInPupil,[' ',0],intermatrix_dir,fileWhichInPup)
+        fits.writeto(intermatrix_dir + fileWhichInPup+'.fits', WhichInPupil)
+
         
         
     #Creating EFC matrix?
@@ -227,19 +227,21 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
                 print('Recording ' + fileMaskDH + ' ...')
                 maskDH = wsc.creatingMaskDH(dimimages,'square',choosepix)
                 #maskDH = wsc.creatingMaskDH(dimimages,'circle',inner=0 , outer=35 , xdecay= 8)
-                fi.SaveFits(maskDH,[' ',0],intermatrix_dir,fileMaskDH)
+                fits.writeto(intermatrix_dir + fileMaskDH+'.fits', maskDH)
+
             
             #Creating Direct Matrix if does not exist
             print('Recording ' + fileDirectMatrix + ' ...')
             Gmatrix = wsc.creatingCorrectionmatrix(entrancepupil,coro,lyot,dimimages,wavelength,amplitudeEFC,pushact,maskDH,WhichInPupil,otherbasis=otherbasis,basisDM3=basisDM3)
-            fi.SaveFits(Gmatrix,[' ',0],intermatrix_dir,fileDirectMatrix)
-            
+            fits.writeto(intermatrix_dir + fileDirectMatrix+'.fits', Gmatrix)
+
         
         
         #Recording EFC Matrix
         print('Recording ' + fileEFCMatrix + ' ...')
         SVD,SVD_trunc,invertGDH = wsc.invertSVD(Gmatrix,Nbmodes,goal='c',regul=regularization,otherbasis=otherbasis,basisDM3=basisDM3,intermatrix_dir=intermatrix_dir,)
-        fi.SaveFits(invertGDH,[' ',0],intermatrix_dir,fileEFCMatrix)
+        fits.writeto(intermatrix_dir + fileEFCMatrix+'.fits', invertGDH)
+
         plt.clf()
         plt.plot(SVD,'r.')
         plt.yscale('log')
@@ -251,7 +253,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     EFCmatrix = np.zeros((invertGDH.shape[1],1024),dtype=np.float32)
     for i in np.arange(len(WhichInPupil)):
         EFCmatrix[:,WhichInPupil[i]]=invertGDH[i,:]
-    fi.SaveFits(EFCmatrix, [' ',0] , Labview_dir , 'Matrix_control_EFC_DM3_default' , replace= True )
+    fits.writeto(Labview_dir + 'Matrix_control_EFC_DM3_default.fits', EFCmatrix, overwrite=True)
 
     return 0
     
@@ -585,12 +587,12 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         # plt.yticks([])
         # plt.savefig(result_dir+'image-'+str(2*it+1)+'.jpeg')
         # plt.close()
-  
-    fi.SaveFits(imagedetector,header,result_dir,'Detector_Images',replace=True)
-    fi.SaveFits(cut_phaseDM,header,result_dir,'Phase_on_DM2',replace=True)
-    fi.SaveFits(meancontrast,header,result_dir,'Mean_Contrast_DH',replace=True)
+    fits.writeto(result_dir + 'Detector_Images.fits', imagedetector, header, overwrite=True)
+    fits.writeto(result_dir + 'Phase_on_DM2.fits', cut_phaseDM, header, overwrite=True)
+    fits.writeto(result_dir + 'Mean_Contrast_DH.fits', meancontrast, header, overwrite=True)
+
     if photon_noise==True:
-        fi.SaveFits(photondetector,header,result_dir,'Photon_counting',replace=True)
+        fits.writeto(result_dir + 'Photon_counting.fits', photondetector, header, overwrite=True)
     
     plt.clf()    
     plt.plot(meancontrast)
