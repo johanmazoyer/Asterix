@@ -7,7 +7,7 @@ import os
 def LoadImageFits(docs_dir):
     ''' --------------------------------------------------
     Load fits file
-    
+    TO BE REPLACED BY astropy.io.fits FUNCTION DOING JUST THAT : getdata()
     Parameters:
     ----------
     docs_dir: Name of the file with extension
@@ -24,7 +24,8 @@ def LoadImageFits(docs_dir):
 def SaveFits(image,head,doc_dir2,name,replace=False):
     ''' --------------------------------------------------
     Save numpy array into a fits file
-    
+    TO BE REPLACED BY astropy.io.fits FUNCTION DOING JUST THAT : writeto()
+
     Parameters:
     ----------
     image: Array to be saved
