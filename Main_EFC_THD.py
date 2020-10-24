@@ -11,6 +11,7 @@ from shortcuts import *
 
 import processing_functions as proc
 import display_functions as disp
+from astropy.io import fits
 import fits_functions as fi
 import WSC_functions as wsc
 import InstrumentSimu_functions as instr
@@ -125,12 +126,12 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
             print('Extracting data from zip file...')
             ZipFile(model_dir+'PushActInPup400.zip', 'r').extractall(model_dir)
             
-        pushact = fi.LoadImageFits(model_dir+'PushActInPup400.fits')
+        pushact = fits.getdata(model_dir+'PushActInPup400.fits')
     
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph =='fqpm':
-        coro = fi.LoadImageFits(model_dir+'FQPM.fits')
+        coro = fits.getdata(model_dir+'FQPM.fits')
         perfect_coro=True
     elif coronagraph=='knife':
         coro = instr.KnifeEdgeCoro(isz,coro_position,1.2,ld_p)
@@ -142,8 +143,8 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         
     if obstructed_pupil==True:
         #Does not exist yet!!!
-        entrancepupil=fi.LoadImageFits(model_dir+'instrument_pupil.fits')
-        lyot=fi.LoadImageFits(model_dir+'lyot_pupil.fits')
+        entrancepupil=fits.getdata(model_dir+'instrument_pupil.fits')
+        lyot=fits.getdata(model_dir+'lyot_pupil.fits')
         
     else:
         entrancepupil=instr.roundpupil(isz,prad)
@@ -155,7 +156,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     filePW = 'MatrixPW_' + str(dimimages) + 'x' + str(dimimages) + '_' + '_'.join(map(str, posprobes)) + 'act_' + str(int(amplitudePW)) + 'nm_'  + str(int(cut)) + 'cutsvd'
     if os.path.exists(intermatrix_dir + filePW + '.fits') == True:
         print('The matrix ' + filePW + ' already exist')
-        vectoressai=fi.LoadImageFits(intermatrix_dir + filePW + '.fits')
+        vectoressai=fits.getdata(intermatrix_dir + filePW + '.fits')
     else:
         print('Recording ' + filePW + ' ...')
         vectoressai,showsvd = wsc.createvectorprobes(wavelength,entrancepupil,coro,lyot,amplitudePW,posprobes,pushact,dimimages,cut)
@@ -185,7 +186,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     fileWhichInPup = 'Whichactfor' + str(MinimumSurfaceRatioInThePupil)
     if os.path.exists(intermatrix_dir + fileWhichInPup + '.fits') == True:
         print('The matrix ' + fileWhichInPup + ' already exist')
-        WhichInPupil = fi.LoadImageFits(intermatrix_dir + fileWhichInPup + '.fits')
+        WhichInPupil = fits.getdata(intermatrix_dir + fileWhichInPup + '.fits')
     else:
         print('Recording' + fileWhichInPup + ' ...')
         if otherbasis==False:
@@ -200,12 +201,12 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
                 
     if os.path.exists(intermatrix_dir + fileEFCMatrix + '.fits') == True:
         print('The matrix ' + fileEFCMatrix + ' already exist')
-        invertGDH = fi.LoadImageFits(intermatrix_dir + fileEFCMatrix + '.fits')
+        invertGDH = fits.getdata(intermatrix_dir + fileEFCMatrix + '.fits')
     else:
         
     #Actuator basis or another one?
         if otherbasis == True:
-            basisDM3 = fi.LoadImageFits(Labview_dir+'Map_modes_DM3_foc.fits')
+            basisDM3 = fits.getdata(Labview_dir+'Map_modes_DM3_foc.fits')
         else:
             basisDM3=0
         
@@ -213,7 +214,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         fileDirectMatrix = 'DirectMatrix_' + '_'.join(map(str, choosepix)) + 'pix_' + str(amplitudeEFC) + 'nm_'
         if os.path.exists(intermatrix_dir + fileDirectMatrix + '.fits') == True:
             print('The matrix ' + fileDirectMatrix + ' already exist')
-            Gmatrix = fi.LoadImageFits(intermatrix_dir + fileDirectMatrix + '.fits')
+            Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix + '.fits')
         else:
             
             
@@ -221,7 +222,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
             fileMaskDH = 'MaskDH_' + str(dimimages) + 'x' + str(dimimages) + '_' + '_'.join(map(str, choosepix))
             if os.path.exists(intermatrix_dir + fileMaskDH + '.fits') == True:
                 print('The matrix ' + fileMaskDH + ' already exist')
-                maskDH = fi.LoadImageFits(intermatrix_dir+fileMaskDH+'.fits')
+                maskDH = fits.getdata(intermatrix_dir+fileMaskDH+'.fits')
             else:
                 print('Recording ' + fileMaskDH + ' ...')
                 maskDH = wsc.creatingMaskDH(dimimages,'square',choosepix)
@@ -375,7 +376,8 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     
         
     if otherbasis == True:
-        basisDM3 = fi.LoadImageFits(Labview_dir+'Map_modes_DM3_foc.fits')
+        basisDM3 = fits.getdata(Labview_dir+'Map_modes_DM3_foc.fits')
+        basisDM3 = fits.getdata(Labview_dir+'Map_modes_DM3_foc.fits')
     else:
         basisDM3=0
     
@@ -383,12 +385,12 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         print('Extracting data from zip file...')
         ZipFile(model_dir+'PushActInPup400.zip', 'r').extractall(model_dir)
         
-    pushact = fi.LoadImageFits(model_dir+'PushActInPup400.fits')
+    pushact = fits.getdata(model_dir+'PushActInPup400.fits')
     
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph =='fqpm':
-        coro = fi.LoadImageFits(model_dir+'FQPM.fits')
+        coro = fits.getdata(model_dir+'FQPM.fits')
         perfect_coro=True
     elif coronagraph=='knife':
         coro = instr.KnifeEdgeCoro(isz,coro_position,1.2,ld_p)
@@ -400,8 +402,8 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         
     if obstructed_pupil==True:
         #Does not exist yet!!!
-        entrancepupil=fi.LoadImageFits(model_dir+'instrument_pupil.fits')
-        lyot=fi.LoadImageFits(model_dir+'lyot_pupil.fits')
+        entrancepupil=fits.getdata(model_dir+'instrument_pupil.fits')
+        lyot=fits.getdata(model_dir+'lyot_pupil.fits')
         
     else:
         entrancepupil=instr.roundpupil(isz,prad)
@@ -415,7 +417,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     if estimation=='PairWise' or estimation=='pairwise' or estimation=='PW' or estimation=='pw':
         filePW = 'MatrixPW_' + str(dimimages) + 'x' + str(dimimages) + '_' + '_'.join(map(str, posprobes)) + 'act_' + str(int(amplitudePW)) + 'nm_'  + str(int(cut)) + 'cutsvd'
         if os.path.exists(intermatrix_dir + filePW + '.fits') == True:
-            vectoressai=fi.LoadImageFits(intermatrix_dir + filePW + '.fits')
+            vectoressai=fits.getdata(intermatrix_dir + filePW + '.fits')
         else:
             print('Please create PW matrix before correction')
             sys.exit()
@@ -425,7 +427,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         
     fileWhichInPup = 'Whichactfor' + str(MinimumSurfaceRatioInThePupil)
     if os.path.exists(intermatrix_dir + fileWhichInPup + '.fits') == True:
-        WhichInPupil = fi.LoadImageFits(intermatrix_dir + fileWhichInPup + '.fits')
+        WhichInPupil = fits.getdata(intermatrix_dir + fileWhichInPup + '.fits')
     else:
         print('Please create Whichactfor matrix before correction')
         sys.exit()
@@ -435,7 +437,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     
     fileDirectMatrix = 'DirectMatrix_' + '_'.join(map(str, choosepix)) + 'pix_' + str(amplitudeEFC) + 'nm_'
     if os.path.exists(intermatrix_dir + fileDirectMatrix + '.fits') == True:
-        Gmatrix = fi.LoadImageFits(intermatrix_dir + fileDirectMatrix + '.fits')
+        Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix + '.fits')
     else:
         print('Please create Direct matrix before correction')
         sys.exit()
@@ -445,7 +447,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     
     fileMaskDH = 'MaskDH_' + str(dimimages) + 'x' + str(dimimages) + '_' + '_'.join(map(str, choosepix))
     if os.path.exists(intermatrix_dir + fileMaskDH + '.fits') == True:
-        maskDH = fi.LoadImageFits(intermatrix_dir+fileMaskDH+'.fits')
+        maskDH = fits.getdata(intermatrix_dir+fileMaskDH+'.fits')
     else:
         print('Please create MaskDH matrix before correction')
         sys.exit()
@@ -464,14 +466,14 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         if set_random_phase==True:
             phase=instr.random_phase_map(isz,phaserms,rhoc_phase,slope_phase)
         else:    
-            phase=fi.LoadImageFits(model_dir+phase_abb+'.fits')
+            phase=fits.getdata(model_dir+phase_abb+'.fits')
         
         phase=phase*2*np.pi/wavelength
     else:
         phase=0
 
     if set_amplitude_abb==True:
-        oui=fi.LoadImageFits(model_dir+amplitude_abb+'.fits')#*roundpupil(isz,prad)
+        oui=fits.getdata(model_dir+amplitude_abb+'.fits')#*roundpupil(isz,prad)
         moy=np.mean(oui[np.where(oui!=0)])
         amp=oui/moy
         amp1=cv2.resize(amp, dsize=(int(2*prad/148*400),int(2*prad/148*400)),interpolation=cv2.INTER_AREA)

@@ -1,5 +1,6 @@
 #Version 29 Janvier 2020
 from shortcuts import *
+from astropy.io import fits
 import fits_functions as fi
 import processing_functions as proc
 
@@ -221,9 +222,9 @@ def creatingpushact(model_dir,file309,x309,y309,findxy309byhand,isz,prad,pdiam,m
     # It may not work at the moment
     if findxy309byhand==False:
         file309='Phase_estim_Act309_v20200107.fits'
-        im309size = len(fi.LoadImageFits(model_dir+file309))
+        im309size = len(fits.getdata(model_dir+file309))
         act309 = np.zeros((isz,isz))
-        act309[int(isz/2-im309size/2):int(isz/2+im309size/2),int(isz/2-im309size/2):int(isz/2+im309size/2)] = fi.LoadImageFits(model_dir+file309)
+        act309[int(isz/2-im309size/2):int(isz/2+im309size/2),int(isz/2-im309size/2):int(isz/2+im309size/2)] = fits.getdata(model_dir+file309)
         y309,x309 = np.unravel_index(abs(act309).argmax(), act309.shape)
     
     #shift by (0.5,0.5) pixel because the pupil is centerd between pixels
@@ -232,8 +233,8 @@ def creatingpushact(model_dir,file309,x309,y309,findxy309byhand,isz,prad,pdiam,m
     xy309=[x309,y309]
     
     
-    grille = fi.LoadImageFits(model_dir+'Grid_actu.fits')
-    actshape = fi.LoadImageFits(model_dir+'Actu_DM32_field=6x6pitch_pitch=22pix.fits')
+    grille = fits.getdata(model_dir+'Grid_actu.fits')
+    actshape = fits.getdata(model_dir+'Actu_DM32_field=6x6pitch_pitch=22pix.fits')
     resizeactshape = skimage.transform.rescale(actshape, 2*prad/pdiam*.3e-3/22, order=1,preserve_range=True,anti_aliasing=True,multichannel=False)
     
     #Gauss2Dfit for centering the rescaled influence function
