@@ -112,10 +112,11 @@ def GetFluxmetreValue(fitspath):
     ------
     fluxmetre: float
     -------------------------------------------------- '''
-    openfits=fits.open(fitspath)
-    hdu=openfits[0].header
-    fluxmetre=hdu['FLUX_W']
-    return fluxmetre
+    # openfits=fits.open(fitspath)
+    # hdu=openfits[0].header
+    # fluxmetre=hdu['FLUX_W']
+    # return fluxmetre
+    return fits.getval(fitspath,'FLUX_W')
 
 
 
