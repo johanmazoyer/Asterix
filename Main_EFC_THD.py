@@ -8,7 +8,7 @@
 from shortcuts import *
 
 
-
+import datetime
 import processing_functions as proc
 import display_functions as disp
 from astropy.io import fits
@@ -29,7 +29,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     
     ### CONFIGURATION FILE
     configspec_file   = 'Essai_param_configspec.ini'
-    config            = ConfigObj(parameter_file,configspec=configspec_file)
+    config            = ConfigObj(parameter_file,configspec=configspec_file, default_encoding='utf8')
     vtor              = Validator()
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
     
@@ -268,7 +268,7 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     
     ### CONFIGURATION FILE
     configspec_file   = 'Essai_param_configspec.ini'
-    config            = ConfigObj(parameter_file,configspec=configspec_file)
+    config            = ConfigObj(parameter_file,configspec=configspec_file, default_encoding='utf8')
     vtor              = Validator()
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
     
@@ -587,12 +587,17 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
         # plt.yticks([])
         # plt.savefig(result_dir+'image-'+str(2*it+1)+'.jpeg')
         # plt.close()
-    fits.writeto(result_dir + 'Detector_Images.fits', imagedetector, header, overwrite=True)
-    fits.writeto(result_dir + 'Phase_on_DM2.fits', cut_phaseDM, header, overwrite=True)
-    fits.writeto(result_dir + 'Mean_Contrast_DH.fits', meancontrast, header, overwrite=True)
+
+    current_time_str = datetime.datetime.today().strftime('%Y%m%d_%Hh%Mm%Ss')
+    fits.writeto(result_dir + 'Detector_Images_' +current_time_str+ '.fits', imagedetector, header, overwrite=True)
+    fits.writeto(result_dir + 'Phase_on_DM2_' +current_time_str+ '.fits', cut_phaseDM, header, overwrite=True)
+    fits.writeto(result_dir + 'Mean_Contrast_DH_' +current_time_str+ '.fits', meancontrast, header, overwrite=True)
+    config.filename = result_dir + 'Simulation_parameters_' +current_time_str+ '.ini'
+    config.write()
+    
 
     if photon_noise==True:
-        fits.writeto(result_dir + 'Photon_counting.fits', photondetector, header, overwrite=True)
+        fits.writeto(result_dir + 'Photon_counting_' +current_time_str+ '.fits', photondetector, header, overwrite=True)
     
     plt.clf()    
     plt.plot(meancontrast)
