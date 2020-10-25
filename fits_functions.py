@@ -133,11 +133,9 @@ def from_param_to_header(config):
     ------
     header: list of parameters
     -------------------------------------------------- '''
-    header=[]
+    header= fits.Header()
     for sect in config.sections:
         #print(config[str(sect)])
         for scalar in config[str(sect)].scalars:
-            
-            parameter=np.array([str(scalar),str(config[str(sect)][str(scalar)])])
-            header.append(parameter)
+            header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
     return header
