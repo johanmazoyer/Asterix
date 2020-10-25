@@ -2,7 +2,9 @@
 *.pyc
 Labview/*
 Interaction_Matrices/
+parameter_files/*
 Results/
 PushActInPup400.fits
 
 .DS_Store
+*.ini
