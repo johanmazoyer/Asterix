@@ -1,10 +1,10 @@
 
 import matplotlib.pyplot as plt
 
-from shortcuts import *
-import InstrumentSimu_functions as instr
+from Asterix.shortcuts import *
+import Asterix.InstrumentSimu_functions as instr
 
-import processing_functions as proc
+import Asterix.processing_functions as proc
 
 
 def invertSVD(matrix_to_invert,cut,goal='e',regul='truncation',visu=True,otherbasis=False,basisDM3=0,intermatrix_dir=''):

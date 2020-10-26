@@ -1,8 +1,10 @@
-#Version 29 Janvier 2020
-from shortcuts import *
+
 from astropy.io import fits
-import fits_functions as fi
-import processing_functions as proc
+from Asterix.shortcuts import *
+
+import Asterix.fits_functions as fi
+import Asterix.processing_functions as proc
+import skimage.transform
 
 #Raccourcis FFT
 fft = np.fft.fft2

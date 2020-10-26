@@ -1,6 +1,6 @@
 import os
-from Main_EFC_THD import *
-import Main_EFC_THD as main
+from Asterix.Main_EFC_THD import *
+import Asterix.Main_EFC_THD as main
 
 #dict={'Name_Experiment': 'Experiment1'}
 Asterixroot = os.path.dirname(os.path.realpath(__file__))

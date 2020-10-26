@@ -8,12 +8,12 @@ import os
 import datetime
 from astropy.io import fits
 
-from shortcuts import *
-import processing_functions as proc
-import display_functions as disp
-import fits_functions as fi
-import WSC_functions as wsc
-import InstrumentSimu_functions as instr
+from Asterix.shortcuts import *
+import Asterix.processing_functions as proc
+import Asterix.display_functions as disp
+import Asterix.fits_functions as fi
+import Asterix.WSC_functions as wsc
+import Asterix.InstrumentSimu_functions as instr
 
 
 from configobj import ConfigObj
@@ -31,7 +31,15 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     config            = ConfigObj(parameter_file,configspec=configspec_file, default_encoding='utf8')
     vtor              = Validator()
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
+    print(os.path.exists(configspec_file))
     
+    print(parameter_file)
+    if not os.path.exists(parameter_file):
+        raise Exception('The parameter file '+ parameter_file + ' cannot be found')
+
+    if not os.path.exists(configspec_file):
+        raise Exception('The parameter config file '+ configspec_file + ' cannot be found')
+
     ### CONFIG                         
     Data_dir = config['Data_dir']
 

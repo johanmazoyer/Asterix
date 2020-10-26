@@ -3,7 +3,6 @@ import numpy as np
 import scipy.signal as spsignal
 import scipy.optimize as opt
 import scipy.ndimage as nd
-import skimage.transform
 
 # Raccourcis FFT
 fft = np.fft.fft2

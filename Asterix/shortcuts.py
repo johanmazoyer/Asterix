@@ -7,7 +7,6 @@ import matplotlib.animation as animation
 import scipy.signal as spsignal
 import scipy.optimize as opt
 import scipy.ndimage as nd
-import skimage.transform
 from astropy.io import fits
 import cv2
 from zipfile import ZipFile

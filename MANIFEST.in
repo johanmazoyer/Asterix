@@ -1,2 +1,3 @@
-include Asterix/instruments/Model/*
-include Asterix/instruments/*
+include Asterix/Model/*.fits
+include Asterix/Model/*.zip
+include Asterix/*.ini
