@@ -56,7 +56,9 @@ def rotate_frame(img, angle, interpolation="lanczos4", cyx=None):
 
     if np.abs(angle) > 0:
         M = cv2.getRotationMatrix2D((cx, cy), angle, 1)
-        rotated_img = cv2.warpAffine(img.astype(np.float32), M, (nx, ny), flags=intp)
+        rotated_img = cv2.warpAffine(img.astype(np.float32),
+                                     M, (nx, ny),
+                                     flags=intp)
     else:
         rotated_img = img
 
@@ -83,7 +85,7 @@ def butterworth(image, order, length):
     isz = len(image)
     xx, yy = np.meshgrid(np.arange(isz) - isz / 2, np.arange(isz) - isz / 2)
     rr = np.hypot(yy, xx)
-    butt = 1 / (1 + (np.sqrt(2) - 1) * (rr / length) ** (2 * order))
+    butt = 1 / (1 + (np.sqrt(2) - 1) * (rr / length)**(2 * order))
     return image * butt
 
 
@@ -114,22 +116,14 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, h):
     xo = float(xo)
     yo = float(yo)
     theta = 0
-    a = (np.cos(theta) ** 2) / (2 * sigma_x ** 2) + (np.sin(theta) ** 2) / (
-        2 * sigma_y ** 2
-    )
-    b = -(np.sin(2 * theta)) / (4 * sigma_x ** 2) + (np.sin(2 * theta)) / (
-        4 * sigma_y ** 2
-    )
-    c = (np.sin(theta) ** 2) / (2 * sigma_x ** 2) + (np.cos(theta) ** 2) / (
-        2 * sigma_y ** 2
-    )
-    g = (
-        amplitude
-        * np.exp(
-            -(a * ((x - xo) ** 2) + 2 * b * (x - xo) * (y - yo) + c * ((y - yo) ** 2))
-        )
-        + h
-    )
+    a = (np.cos(theta)**2) / (2 * sigma_x**2) + (np.sin(theta)**
+                                                 2) / (2 * sigma_y**2)
+    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(
+        2 * theta)) / (4 * sigma_y**2)
+    c = (np.sin(theta)**2) / (2 * sigma_x**2) + (np.cos(theta)**
+                                                 2) / (2 * sigma_y**2)
+    g = (amplitude * np.exp(-(a * ((x - xo)**2) + 2 * b * (x - xo) *
+                              (y - yo) + c * ((y - yo)**2))) + h)
     return g.flatten()
 
 
@@ -155,7 +149,10 @@ def gauss2Dfit(data):
     initial_guess = (np.amax(data), 1, 1, len(data) / 2, len(data) / 2, 0)
 
     try:
-        popt, pcov = opt.curve_fit(twoD_Gaussian, xy, data.flatten(), p0=initial_guess)
+        popt, pcov = opt.curve_fit(twoD_Gaussian,
+                                   xy,
+                                   data.flatten(),
+                                   p0=initial_guess)
     except RuntimeError:
         print("Error - curve_fit failed")
 
@@ -203,8 +200,5 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
     Gvector: 2D array, squared image resampled into new dimensions
     -------------------------------------------------- """
     newimgs2 = newsizeimg / 2
-    return img[
-        int(ctr_x - newimgs2) : int(ctr_x + newimgs2),
-        int(ctr_y - newimgs2) : int(ctr_y + newimgs2),
-    ]
-
+    return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2),
+               int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]

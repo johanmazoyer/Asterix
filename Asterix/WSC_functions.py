@@ -1,4 +1,4 @@
-__author__ = 'Axel Potier'
+__author__ = "Axel Potier"
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,16 +7,14 @@ import Asterix.InstrumentSimu_functions as instr
 import Asterix.processing_functions as proc
 
 
-def invertSVD(
-    matrix_to_invert,
-    cut,
-    goal="e",
-    regul="truncation",
-    visu=True,
-    otherbasis=False,
-    basisDM3=0,
-    intermatrix_dir="",
-):
+def invertSVD(matrix_to_invert,
+              cut,
+              goal="e",
+              regul="truncation",
+              visu=True,
+              otherbasis=False,
+              basisDM3=0,
+              intermatrix_dir="./"):
     """ --------------------------------------------------
     Invert a matrix after a Singular Value Decomposition. The inversion can be regularized.
     
@@ -53,18 +51,20 @@ def invertSVD(
 
     if goal == "e":
         InvS_truncated[np.where(InvS_truncated > cut)] = 0
-        pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated), np.transpose(U))
+        pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated),
+                               np.transpose(U))
 
     if goal == "c":
         if regul == "truncation":
             InvS_truncated[cut:] = 0
         if regul == "tikhonov":
-            InvS_truncated = np.diag(s / (s ** 2 + s[cut] ** 2))
+            InvS_truncated = np.diag(s / (s**2 + s[cut]**2))
             if visu == True:
                 plt.plot(np.diag(InvS_truncated), "b.")
                 plt.yscale("log")
                 # plt.show()
-        pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated), np.transpose(U))
+        pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated),
+                               np.transpose(U))
 
     if otherbasis == True:
         pseudoinverse = np.dot(np.transpose(basisDM3), pseudoinverse)
@@ -72,17 +72,8 @@ def invertSVD(
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def createvectorprobes(
-    wavelength,
-    entrancepupil,
-    coro_mask,
-    lyot_mask,
-    amplitude,
-    posprobes,
-    pushact,
-    dimimages,
-    cutsvd,
-):
+def createvectorprobes(wavelength, entrancepupil, coro_mask, lyot_mask,
+                       amplitude, posprobes, pushact, dimimages, cutsvd):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
     
@@ -109,24 +100,22 @@ def createvectorprobes(
     deltapsik = np.zeros((numprobe, dimimages, dimimages), dtype=complex)
     probephase = np.zeros((numprobe, isz, isz))
     matrix = np.zeros((numprobe, 2))
-    PWVector = np.zeros((dimimages ** 2, 2, numprobe))
+    PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
-    squaremaxPSF = np.amax(np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_mask)))
+    squaremaxPSF = np.amax(
+        np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_mask)))
     k = 0
     for i in posprobes:
         probephase[k] = amplitude * pushact[i]
         probephase[k] = 2 * np.pi * (probephase[k]) * 1e-9 / wavelength
         inputwavefront = entrancepupil * (1 + 1j * probephase[k])
-        deltapsikbis = (
-            instr.pupiltodetector(
-                inputwavefront,
-                coro_mask,
-                lyot_mask,
-                perfect_coro=True,
-                perfect_entrance_pupil=entrancepupil,
-            )
-            / squaremaxPSF
-        )
+        deltapsikbis = (instr.pupiltodetector(
+            inputwavefront,
+            coro_mask,
+            lyot_mask,
+            perfect_coro=True,
+            perfect_entrance_pupil=entrancepupil,
+        ) / squaremaxPSF)
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -173,9 +162,12 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     return WhichInPupil
 
 
-def creatingMaskDH(
-    dimimages, shape, choosepixDH=[0, 0, 0, 0], inner=0, outer=0, xdecay=0
-):
+def creatingMaskDH(dimimages,
+                   shape,
+                   choosepixDH=[0, 0, 0, 0],
+                   inner=0,
+                   outer=0,
+                   xdecay=0):
     """ --------------------------------------------------
     Create a binary mask.
     
@@ -193,8 +185,8 @@ def creatingMaskDH(
     maskDH: 2D array, binary mask
     -------------------------------------------------- """
     xx, yy = np.meshgrid(
-        np.arange(dimimages) - (dimimages) / 2, np.arange(dimimages) - (dimimages) / 2
-    )
+        np.arange(dimimages) - (dimimages) / 2,
+        np.arange(dimimages) - (dimimages) / 2)
     rr = np.hypot(yy, xx)
     if shape == "square":
         maskDH = np.ones((dimimages, dimimages))
@@ -210,19 +202,17 @@ def creatingMaskDH(
     return maskDH
 
 
-def creatingCorrectionmatrix(
-    entrancepupil,
-    coro_mask,
-    lyot_mask,
-    dimimages,
-    wavelength,
-    amplitude,
-    pushact,
-    mask,
-    Whichact,
-    otherbasis=False,
-    basisDM3=0,
-):
+def creatingCorrectionmatrix(entrancepupil,
+                             coro_mask,
+                             lyot_mask,
+                             dimimages,
+                             wavelength,
+                             amplitude,
+                             pushact,
+                             mask,
+                             Whichact,
+                             otherbasis=False,
+                             basisDM3=0):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
     
@@ -247,14 +237,15 @@ def creatingCorrectionmatrix(
     # change basis if needed
     if otherbasis == True:
         nb_fct = basisDM3.shape[0]  # number of functions in the basis
-        tmp = pushact.reshape(pushact.shape[0], pushact.shape[1] * pushact.shape[2])
-        bas_fct = np.dot(basisDM3, tmp).reshape(
-            nb_fct, pushact.shape[1], pushact.shape[2]
-        )
+        tmp = pushact.reshape(pushact.shape[0],
+                              pushact.shape[1] * pushact.shape[2])
+        bas_fct = np.dot(basisDM3, tmp).reshape(nb_fct, pushact.shape[1],
+                                                pushact.shape[2])
     else:
         bas_fct = np.array([pushact[ind] for ind in Whichact])
         nb_fct = len(Whichact)
-    squaremaxPSF = np.amax(np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_mask)))
+    squaremaxPSF = np.amax(
+        np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_mask)))
     print("Start EFC")
     Gmatrixbis = np.zeros((2 * int(np.sum(mask)), nb_fct))
     k = 0
@@ -264,23 +255,18 @@ def creatingCorrectionmatrix(
         Psivector = amplitude * bas_fct[i]
         Psivector = 2 * np.pi * (Psivector) * 1e-9 / wavelength
         inputwavefront = entrancepupil * (1 + 1j * Psivector)
-        Gvector = (
-            instr.pupiltodetector(
-                inputwavefront,
-                coro_mask,
-                lyot_mask,
-                perfect_coro=True,
-                perfect_entrance_pupil=entrancepupil,
-            )
-            / squaremaxPSF
-        )
+        Gvector = (instr.pupiltodetector(
+            inputwavefront,
+            coro_mask,
+            lyot_mask,
+            perfect_coro=True,
+            perfect_entrance_pupil=entrancepupil,
+        ) / squaremaxPSF)
         Gvector = proc.resampling(Gvector, dimimages)
-        Gmatrixbis[0 : int(np.sum(mask)), k] = np.real(
-            Gvector[np.where(mask == 1)]
-        ).flatten()
-        Gmatrixbis[int(np.sum(mask)) :, k] = np.imag(
-            Gvector[np.where(mask == 1)]
-        ).flatten()
+        Gmatrixbis[0:int(np.sum(mask)),
+                   k] = np.real(Gvector[np.where(mask == 1)]).flatten()
+        Gmatrixbis[int(np.sum(mask)):,
+                   k] = np.imag(Gvector[np.where(mask == 1)]).flatten()
         k = k + 1
     print("End EFC")
     return Gmatrixbis
@@ -303,8 +289,8 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil):
     -------------------------------------------------- """
     Eab = np.zeros(2 * int(np.sum(mask)))
     Resultatbis = Result_Estimate[np.where(mask == 1)]
-    Eab[0 : int(np.sum(mask))] = np.real(Resultatbis).flatten()
-    Eab[int(np.sum(mask)) :] = np.imag(Resultatbis).flatten()
+    Eab[0:int(np.sum(mask))] = np.real(Resultatbis).flatten()
+    Eab[int(np.sum(mask)):] = np.imag(Resultatbis).flatten()
     cool = np.dot(inversed_jacobian, Eab)
 
     solution = np.zeros(1024)
@@ -331,7 +317,8 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil):
 
     Eab = np.zeros(int(np.sum(mask)))
     Resultatbis = Result_Estimate[np.where(mask == 1)]
-    Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)), Resultatbis)).flatten()
+    Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
+                         Resultatbis)).flatten()
     cool = np.dot(Hessian_Matrix, Eab)
 
     solution = np.zeros(1024)
@@ -339,7 +326,8 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil):
     return solution
 
 
-def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil):
+def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
+                     WhichInPupil):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
@@ -358,7 +346,8 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPup
 
     Eab = np.zeros(int(np.sum(mask)))
     Resultatbis = Result_Estimate[np.where(mask == 1)]
-    Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)), Resultatbis)).flatten()
+    Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
+                         Resultatbis)).flatten()
     pas = 2e3
     # cool=2*(np.dot(M0,sol)+np.real(np.dot(np.transpose(np.conjugate(G)),Resultatbis))).flatten()
     cool = pas * 2 * Eab
@@ -394,4 +383,3 @@ def FP_PWestimate(Difference, Vectorprobes):
 
             l = l + 1
     return Resultat / 4
-
