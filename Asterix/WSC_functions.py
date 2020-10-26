@@ -1,9 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# from Asterix.shortcuts import *
 import Asterix.InstrumentSimu_functions as instr
-
 import Asterix.processing_functions as proc
 
 
