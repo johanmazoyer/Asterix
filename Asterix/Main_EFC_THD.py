@@ -27,13 +27,11 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     Asterixroot = os.path.dirname(os.path.realpath(__file__))
     
     ### CONFIGURATION FILE
-    configspec_file   = Asterixroot + os.path.sep+ 'Test_param_configspec.ini'
+    configspec_file   = Asterixroot + os.path.sep+ 'Param_configspec.ini'
     config            = ConfigObj(parameter_file,configspec=configspec_file, default_encoding='utf8')
     vtor              = Validator()
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
-    print(os.path.exists(configspec_file))
-    
-    print(parameter_file)
+
     if not os.path.exists(parameter_file):
         raise Exception('The parameter file '+ parameter_file + ' cannot be found')
 
@@ -267,11 +265,18 @@ def correctionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     Asterixroot = os.path.dirname(os.path.realpath(__file__))
 
     ### CONFIGURATION FILE
-    configspec_file   = Asterixroot + os.path.sep+'Test_param_configspec.ini'
+    configspec_file   = Asterixroot + os.path.sep+'Param_configspec.ini'
     config            = ConfigObj(parameter_file,configspec=configspec_file, default_encoding='utf8')
     vtor              = Validator()
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
     
+    if not os.path.exists(parameter_file):
+        raise Exception('The parameter file '+ parameter_file + ' cannot be found')
+
+    if not os.path.exists(configspec_file):
+        raise Exception('The parameter config file '+ configspec_file + ' cannot be found')
+
+
     ### CONFIG                         
     Data_dir = config['Data_dir']
 

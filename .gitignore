@@ -1,16 +1,18 @@
 #ignore file extension
 *.pyc
-Labview/*
+
+#if someone run Asterix in the git repo, results are not synced
+*.fits
+Labview/
 Interaction_Matrices/
 Results/
 
+#ignore those for mac / vscode users
 .DS_Store
-*.ini
-*.fits
-
-#ignore auxiliary directories
-Asterix.egg-info/
 .vscode/
+
+#ignore auxiliary directories if built
+Asterix.egg-info/
 testing_scripts/
 build/
 dist/
