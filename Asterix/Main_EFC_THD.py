@@ -20,7 +20,7 @@ import InstrumentSimu_functions as instr
 from configobj import ConfigObj
 from validate import Validator
 
-
+__all__ = ['create_interaction_matrices', 'correctionLoop']
 
 def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig={}):
     
@@ -253,7 +253,7 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     
     
 
-def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig={},NewSIMUconfig={}): 
+def correctionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig={},NewSIMUconfig={}): 
     
     
     
