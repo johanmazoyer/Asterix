@@ -1,22 +1,7 @@
 # Version 29 Janvier 2020
 import numpy as np
-import scipy.signal as spsignal
 import scipy.optimize as opt
-import scipy.ndimage as nd
-
-# Raccourcis FFT
-fft = np.fft.fft2
-ifft = np.fft.ifft2
-shift = np.fft.fftshift
-ishift = np.fft.ifftshift
-
-# Raccourcis généraux
-abs = np.abs
-im = np.imag
-real = np.real
-mean = np.mean
-dot = np.dot
-amax = np.amax
+import cv2
 
 # Raccourcis conversions angles
 dtor = np.pi / 180.0  # degree to radian conversion factor
@@ -68,7 +53,7 @@ def rotate_frame(img, angle, interpolation="lanczos4", cyx=None):
     elif interpolation == "lanczos4":
         intp = cv2.INTER_LANCZOS4
 
-    if abs(angle) > 0:
+    if np.abs(angle) > 0:
         M = cv2.getRotationMatrix2D((cx, cy), angle, 1)
         rotated_img = cv2.warpAffine(img.astype(np.float32), M, (nx, ny), flags=intp)
     else:
@@ -191,13 +176,13 @@ def resampling(image, new):
     Gvector: 2D array, image resampled into new dimensions
     -------------------------------------------------- """
     isz = len(image)
-    Gvectorbis = ishift(image)
-    Gvectorbis = ifft(Gvectorbis)
-    Gvectorbis = shift(Gvectorbis)
+    Gvectorbis = np.fft.ifftshift(image)
+    Gvectorbis = np.fft.ifft2(Gvectorbis)
+    Gvectorbis = np.fft.fftshift(Gvectorbis)
     Gvector = cropimage(Gvectorbis, isz / 2, isz / 2, new)
-    Gvector = ishift(Gvector)
-    Gvector = fft(Gvector)
-    Gvector = shift(Gvector)
+    Gvector = np.fft.ifftshift(Gvector)
+    Gvector = np.fft.fft2(Gvector)
+    Gvector = np.fft.fftshift(Gvector)
     return Gvector
 
 
