@@ -4,7 +4,6 @@ Labview/*
 Interaction_Matrices/
 Results/
 
-*.fits
 .DS_Store
 
 #ignore auxiliary directories
