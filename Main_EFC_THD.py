@@ -28,13 +28,12 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     
     
     ### CONFIGURATION FILE
-    configspec_file   = 'Essai_param_configspec.ini'
+    configspec_file   = 'Test_param_configspec.ini'
     config            = ConfigObj(parameter_file,configspec=configspec_file, default_encoding='utf8')
     vtor              = Validator()
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
     
     ### CONFIG                         
-    Labview_dir = config['Labview_dir']
     Data_dir = config['Data_dir']
 
     ### MODEL CONFIG
@@ -94,9 +93,6 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     prad=int(prad)
     lyotrad=int(lyotrad)
     
-    if Data_dir == 'None': 
-        Data_dir = os.getcwd() + '/'
-    
     if otherbasis == False:
         basistr = 'actu'
     else:
@@ -108,15 +104,11 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
         os.makedirs(intermatrix_dir)
         
     
-    if Labview_dir == 'None':
-        print('Creating directory ' + Data_dir+'Labview/' + ' ...')
-        os.makedirs(Data_dir+'Labview/',exist_ok = True)
-        Labview_dir = Data_dir+'Labview/'
-    elif not os.path.exists(Labview_dir):
+    Labview_dir = Data_dir+'Labview/'
+    if not os.path.exists(Labview_dir):
         print('Creating directory ' + Labview_dir + ' ...')
         os.makedirs(Labview_dir)
-    
-    
+
     if creating_pushact==True:
         pushact=instr.creatingpushact(model_dir,file309,x309,y309)
         
@@ -267,13 +259,12 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     
     
     ### CONFIGURATION FILE
-    configspec_file   = 'Essai_param_configspec.ini'
+    configspec_file   = 'Test_param_configspec.ini'
     config            = ConfigObj(parameter_file,configspec=configspec_file, default_encoding='utf8')
     vtor              = Validator()
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
     
     ### CONFIG                         
-    Labview_dir = config['Labview_dir']
     Data_dir = config['Data_dir']
 
     ### MODEL CONFIG
@@ -345,10 +336,12 @@ def CorrectionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     
     model_dir = os.getcwd()+'/'+'Model/'
     
-    if Data_dir == 'None': 
-        Data_dir = os.getcwd() + '/'
-    result_dir = Data_dir + 'Results/' + Name_Experiment + '/'
+    Labview_dir = Data_dir+'Labview/'
+    if not os.path.exists(Labview_dir):
+        print('Creating directory ' + Labview_dir + ' ...')
+        os.makedirs(Labview_dir)
 
+    result_dir = Data_dir + 'Results/' + Name_Experiment + '/'
     if not os.path.exists(result_dir):
         print('Creating directory ' + result_dir + ' ...')
         os.makedirs(result_dir)
