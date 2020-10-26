@@ -1,4 +1,5 @@
-# Version 29 Janvier 2020
+__author__ = 'Axel Potier'
+
 import numpy as np
 import scipy.optimize as opt
 import cv2

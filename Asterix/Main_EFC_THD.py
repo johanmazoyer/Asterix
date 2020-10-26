@@ -1,8 +1,4 @@
-# Version 18/12/2019 A. Potier
-# Correction 26/12/2019
-# Correction 29/01/2020
-# Correction 22/01/2020
-# Creates interaction matrices for PW+EFC on the THD2
+__author__ = 'Axel Potier'
 
 import os
 import sys

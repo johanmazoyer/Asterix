@@ -1,3 +1,5 @@
+__author__ = 'Axel Potier'
+
 import glob
 import numpy as np
 from astropy.io import fits

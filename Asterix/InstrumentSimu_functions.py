@@ -1,3 +1,5 @@
+__author__ = 'Axel Potier'
+
 import numpy as np
 import scipy.ndimage as nd
 from astropy.io import fits
