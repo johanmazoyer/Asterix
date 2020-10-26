@@ -5,6 +5,8 @@ Interaction_Matrices/
 Results/
 
 .DS_Store
+*.ini
+*.fits
 
 #ignore auxiliary directories
 Asterix.egg-info/
