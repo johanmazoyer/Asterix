@@ -5,7 +5,6 @@ Interaction_Matrices/
 Results/
 
 *.fits
-*.ini
 .DS_Store
 
 #ignore auxiliary directories
