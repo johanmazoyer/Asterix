@@ -200,7 +200,7 @@ def pushact_function(which,grilleact, actshapeinpupilresized,xycent,xy309,modele
     
     return Psivector
     
-    
+     
 def creatingpushact(model_dir,file309,x309,y309,findxy309byhand,isz,prad,pdiam,modelerror='NoError',error=0):
     ''' --------------------------------------------------
     Push the desired DM actuator in the pupil
