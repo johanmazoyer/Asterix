@@ -1,1 +1,1 @@
-# FPWS
+# Package Asterix
