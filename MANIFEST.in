@@ -1,0 +1,2 @@
+include Asterix/instruments/Model/*
+include Asterix/instruments/*
