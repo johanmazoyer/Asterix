@@ -6,5 +6,11 @@ Results/
 
 *.fits
 *.ini
-
 .DS_Store
+
+#ignore auxiliary directories
+Asterix.egg-info/
+.vscode/
+testing_scripts/
+build/
+dist/

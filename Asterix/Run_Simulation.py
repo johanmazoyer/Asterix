@@ -3,5 +3,7 @@ from Main_EFC_THD import *
 import Main_EFC_THD as main
 
 #dict={'Name_Experiment': 'Experiment1'}
-main.create_interaction_matrices(os.getcwd()+'/Test_param.ini')
-main.phase,im=correctionLoop(os.getcwd()+'/Test_param.ini')#,NewSIMUconfig=dict
+Asterixroot = os.path.dirname(os.path.realpath(__file__))
+
+main.create_interaction_matrices(Asterixroot+os.path.sep+'Test_param.ini')
+main.phase,im=main.correctionLoop(Asterixroot+os.path.sep+'Test_param.ini')#,NewSIMUconfig=dict

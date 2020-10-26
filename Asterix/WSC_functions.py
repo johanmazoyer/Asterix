@@ -1,7 +1,9 @@
-#Version 29 Janvier 2020
+
+import matplotlib.pyplot as plt
+
 from shortcuts import *
 import InstrumentSimu_functions as instr
-import matplotlib.pyplot as plt
+
 import processing_functions as proc
 
 

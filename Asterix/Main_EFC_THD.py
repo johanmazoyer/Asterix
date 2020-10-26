@@ -4,14 +4,13 @@
 #Correction 22/01/2020
 #Creates interaction matrices for PW+EFC on the THD2
 
+import os
+import datetime
+from astropy.io import fits
 
 from shortcuts import *
-
-
-import datetime
 import processing_functions as proc
 import display_functions as disp
-from astropy.io import fits
 import fits_functions as fi
 import WSC_functions as wsc
 import InstrumentSimu_functions as instr
@@ -25,10 +24,10 @@ __all__ = ['create_interaction_matrices', 'correctionLoop']
 def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig={}):
     
     
-    
+    Asterixroot = os.path.dirname(os.path.realpath(__file__))
     
     ### CONFIGURATION FILE
-    configspec_file   = 'Test_param_configspec.ini'
+    configspec_file   = Asterixroot + os.path.sep+ 'Test_param_configspec.ini'
     config            = ConfigObj(parameter_file,configspec=configspec_file, default_encoding='utf8')
     vtor              = Validator()
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
@@ -76,7 +75,9 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
     
     ##THEN DO
 
-    model_dir = os.getcwd()+'/'+'Model/'
+    # model_dir = os.getcwd()+'/'+'Model/'
+    model_dir = Asterixroot + os.path.sep + 'Model'+ os.path.sep 
+
     lyot=lyotdiam/pdiam
     ld_p=ld_p*lyot
     mperpix = 6.5e-6 #Size pixel on detector in meter
@@ -255,11 +256,10 @@ def create_interaction_matrices(parameter_file,NewMODELconfig={},NewPWconfig={},
 
 def correctionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig={},NewSIMUconfig={}): 
     
-    
-    
-    
+    Asterixroot = os.path.dirname(os.path.realpath(__file__))
+
     ### CONFIGURATION FILE
-    configspec_file   = 'Test_param_configspec.ini'
+    configspec_file   = Asterixroot + os.path.sep+'Test_param_configspec.ini'
     config            = ConfigObj(parameter_file,configspec=configspec_file, default_encoding='utf8')
     vtor              = Validator()
     checks            = config.validate(vtor,copy=True) # copy=True for copying the comments     
@@ -334,7 +334,7 @@ def correctionLoop(parameter_file,NewMODELconfig={},NewPWconfig={},NewEFCconfig=
     
     ##THEN DO
     
-    model_dir = os.getcwd()+'/'+'Model/'
+    model_dir = Asterixroot + os.path.sep + 'Model' + os.path.sep 
     
     Labview_dir = Data_dir+'Labview/'
     if not os.path.exists(Labview_dir):

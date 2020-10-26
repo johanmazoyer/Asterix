@@ -1,9 +1,9 @@
-#Version 29 Janvier 2020
+import os
+import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
-import glob
-import os
+
 
 def custom_plot(pup, img):
     ''' --------------------------------------------------
