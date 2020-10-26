@@ -839,29 +839,29 @@ def correctionLoop(
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
     fits.writeto(
-        result_dir + "Detector_Images_" + current_time_str + ".fits",
+        result_dir + current_time_str + "_Detector_Images"  + ".fits",
         imagedetector,
         header,
         overwrite=True,
     )
     fits.writeto(
-        result_dir + "Phase_on_DM2_" + current_time_str + ".fits",
+        result_dir +  current_time_str + "_Phase_on_DM2"  + ".fits",
         cut_phaseDM,
         header,
         overwrite=True,
     )
     fits.writeto(
-        result_dir + "Mean_Contrast_DH_" + current_time_str + ".fits",
+        result_dir +  current_time_str + "_Mean_Contrast_DH"  + ".fits",
         meancontrast,
         header,
         overwrite=True,
     )
-    config.filename = result_dir + "Simulation_parameters_" + current_time_str + ".ini"
+    config.filename = result_dir +  current_time_str + "_Simulation_parameters"  + ".ini"
     config.write()
 
     if photon_noise == True:
         fits.writeto(
-            result_dir + "Photon_counting_" + current_time_str + ".fits",
+            result_dir + current_time_str +  "_Photon_counting"  + ".fits",
             photondetector,
             header,
             overwrite=True,
