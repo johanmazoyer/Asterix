@@ -155,7 +155,7 @@ def gauss2Dfit(data):
     Parameters:
     ----------
     data: 2D array, input image
-    
+     
     Return:
     ------
     popt[3],popt[4]: x and y position of the gaussian peak
