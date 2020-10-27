@@ -36,6 +36,7 @@ def four_plot(img1, img2, img3, img4):
 def determinecontrast(image, chiffre):
     """ --------------------------------------------------
     Determine contrast rms in one image, radially in the Dark Hole
+    chiffre : ring size
     -------------------------------------------------- """
     xx, yy = np.meshgrid(np.arange(isz) - (isz) / 2, np.arange(isz) - (isz) / 2)
     rr = np.hypot(yy, xx)
