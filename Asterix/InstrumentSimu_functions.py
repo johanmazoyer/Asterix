@@ -244,7 +244,8 @@ def pushact_function(which,
         x, y = np.mgrid[0:isz, 0:isz]
         xy = (x, y)
         xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
-        Psivector = twoD_Gaussian(xy, 1, 1 + devx, 1 + devx, xo, yo, 0, 0)
+        Psivector = proc.twoD_Gaussian(xy, 1, 1 + devx, 1 + devx, xo, yo, 0, 0)
+        # devx peut etre a remplacer par error pour la rotation
 
     Psivector[np.where(Psivector < 1e-4)] = 0
 
@@ -278,7 +279,7 @@ def creatingpushact(model_dir,
     ------
     pushact : 
     -------------------------------------------------- """
-    # It may not work at the moment
+    # TODO It may not work at the moment. Pour le faire
     if findxy309byhand == False:
         file309 = "Phase_estim_Act309_v20200107.fits"
         im309size = len(fits.getdata(model_dir + file309))
@@ -369,7 +370,6 @@ def createdifference(aberramp,
         Entrance pupil which should be nulled by the used coronagraph
     noise : boolean, optional
         If True, add photon noise. 
-        TODO WARNING, the function shotnoise has to be rewritten before noise can be used
     numphot : int, optional
         Number of photons entering the pupil
     

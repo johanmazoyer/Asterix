@@ -37,6 +37,7 @@ def determinecontrast(image, chiffre):
     """ --------------------------------------------------
     Determine contrast rms in one image, radially in the Dark Hole
     -------------------------------------------------- """
+    isz = image.size()[0]
     xx, yy = np.meshgrid(np.arange(isz) - (isz) / 2, np.arange(isz) - (isz) / 2)
     rr = np.hypot(yy, xx)
     contrast = np.zeros(int(isz / 2 / chiffre))
