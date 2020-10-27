@@ -133,7 +133,7 @@ def pupiltodetector(input_wavefront,
     Return:
     ------
     shift(sqrtimage): 2D array, focal plane electric field created by 
-    the input wavefront through the HCI instrument.
+    the input wavefront through the high-contrast instrument.
     -------------------------------------------------- """
     isz = len(input_wavefront)
     masktot = translationFFT(isz, 0.5, 0.5)
@@ -149,7 +149,7 @@ def pupiltodetector(input_wavefront,
     pupil2end = focal1end * coro_mask
     pupil2end = np.fft.ifft2(pupil2end)  # /shift(masktot)
 
-    # Intensité en sortie de SCC
+    # Intensite en sortie de Lyot
     focal2end = pupil2end * np.fft.fftshift(lyot_mask)
     focal2end = np.fft.fft2(focal2end)
     focal2end = np.fft.fftshift(focal2end)

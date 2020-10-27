@@ -1,0 +1,14 @@
+Ideas for Asterix improvements
+
+2 DM propagation (fresnel prop)
+2 DM correction (expland matrices and all)
+
+Other propagation methods :
+    -   MFT
+    -   FALCO trick
+
+Other coronagraphs (Vortex, Lyot, apodisers)
+Other estimation algorithms (SCC)
+
+polychromatic propagation
+polychromatic correction
