@@ -17,15 +17,19 @@ def translationFFT(isz, a, b):
     Create a phase ramp of size (isz,isz) which can be multiply by an image 
     to shift its fourier transform by (a,b) pixels
     
-    Parameters:
+    Parameters
     ----------
-    isz: int, size of the phase ramp (in pixels)
-    a: float, shift desired in the x direction (in pixels)
-    b: float, shift desired in the y direction (in pixels)
+    isz : int
+        Size of the phase ramp (in pixels)
+    a : float
+        Shift desired in the x direction (in pixels)
+    b : float
+        Shift desired in the y direction (in pixels)
     
-    Return:
+    Returns
     ------
-    masktot: 2D array, phase ramp
+    masktot : 2D array
+        Phase ramp
     -------------------------------------------------- """
     # Verify this function works
     maska = np.linspace(-np.pi * a, np.pi * a, isz)
@@ -39,13 +43,15 @@ def FQPM(isz):
     """ --------------------------------------------------
     Create a perfect Four Quadrant Phase Mask coronagraph of size (isz,isz)
     
-    Parameters:
+    Parameters
     ----------
-    isz: int, size of the coronagraph (in pixels)
+    isz : int
+        Size of the coronagraph (in pixels)
     
-    Return:
+    Returns
     ------
-    FQPM: 2D array, four quadrant phase mask coronagraph
+    FQPM : 2D array
+        Four quadrant phase mask coronagraph
     -------------------------------------------------- """
     phase = np.zeros((isz, isz))
     for i in np.arange(isz):
@@ -63,16 +69,21 @@ def KnifeEdgeCoro(isz, position, shiftinldp, ld_p):
     """ --------------------------------------------------
     Create a Knife edge coronagraph of size (isz,isz)
     
-    Parameters:
+    Parameters
     ----------
-    isz: int, size of the coronagraph (in pixels)
-    position: string, can be 'left', 'right', 'top' or 'bottom' to define the orientation of the coronagraph
-    shiftinldp: Position of the edge, with respect to the image center, in number of pixels per resolution element
-    ld_p: Number of pixels per resolution element
+    isz : int
+        Size of the coronagraph (in pixels)
+    position : string
+        Can be 'left', 'right', 'top' or 'bottom' to define the orientation of the coronagraph
+    shiftinldp : int 
+        Position of the edge, with respect to the image center, in number of pixels per resolution element
+    ld_p : float
+        Number of pixels per resolution element
     
-    Return:
+    Returns
     ------
-    shift(Knife): 2D array, Knife edge coronagraph, located at the four edges of the image
+    shift(Knife) : 2D array
+        Knife edge coronagraph, located at the four edges of the image
     -------------------------------------------------- """
     Knife = np.zeros((isz, isz))
     for i in np.arange(isz):
@@ -95,14 +106,17 @@ def roundpupil(isz, prad1):
     """ --------------------------------------------------
     Create a circular pupil. The center of the pupil is located between 4 pixels.
     
-    Parameters:
+    Parameters
     ----------
-    isz: int, size of the image (in pixels)
-    prad1: float, size of the pupil radius (in pixels)
+    isz : int  
+        Size of the image (in pixels)
+    prad1 : float 
+        Size of the pupil radius (in pixels)
     
-    Return:
+    Returns
     ------
-    pupilnormal: output circular pupil
+    pupilnormal : 2D array
+        Output circular pupil
     -------------------------------------------------- """
     xx, yy = np.meshgrid(
         np.arange(isz) - (isz) / 2,
@@ -122,18 +136,24 @@ def pupiltodetector(input_wavefront,
     Propagate a wavefront in a pupil plane through a high-contrast imaging instrument, until the science detector.
     The image is then cropped and resampled.
     
-    Parameters:
+    Parameters
     ----------
-    input_wavefront: 2D array, can be complex. Input wavefront
-    coro_mask: 2D array, can be complex. coronagraphic mask
-    lyot_mask: 2D array, lyot mask
-    perfect_coro: bool, set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
-    perfect_entrance_pupil: 2D array, entrance pupil which should be nulled by the used coronagraph
+    input_wavefront : 2D array,can be complex.  
+        Input wavefront,can be complex.
+    coro_mask : 2D array, can be complex. 
+        Coronagraphic mask
+    lyot_mask : 2D array 
+        Lyot mask
+    perfect_coro : bool, optional
+        Set to True if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
+    perfect_entrance_pupil : 2D array, optional 
+        Entrance pupil which should be nulled by the used coronagraph
     
-    Return:
+    Returns
     ------
-    shift(sqrtimage): 2D array, focal plane electric field created by 
-    the input wavefront through the high-contrast instrument.
+    shift(sqrtimage) : 2D array, 
+        Focal plane electric field created by 
+        the input wavefront through the high-contrast instrument.
     -------------------------------------------------- """
     isz = len(input_wavefront)
     masktot = translationFFT(isz, 0.5, 0.5)
@@ -167,20 +187,28 @@ def pushact_function(which,
     """ --------------------------------------------------
     Push the desired DM actuator in the pupil
     
-    Parameters:
+    Parameters
     ----------
-    which: int, index of the individual actuator to push
-    grilleact: 2D array, x and y position of all the DM actuator in the pupil
-    actshapeinpupilresized: well-sampled actuator to be translated to its true position
-    xycent: numpy array, position of the actuator in actshapeinpupilresized before translation
-    xy309: numpy array, position of the actuator 309 in pixels
-    modelerror: string, can be 'NoError', 'translationxy', 'translationx', 
-                'translationy', 'rotation', 'influence_function'
-    error: size of the error in pixels or in degrees
+    which : int 
+        Index of the individual actuator to push
+    grilleact: 2D array 
+        x and y position of all the DM actuator in the pupil
+    actshapeinpupilresized: 2D array
+        Well-sampled actuator to be translated to its true position
+    xycent : numpy array
+        Position of the actuator in actshapeinpupilresized before translation
+    xy309 : numpy array
+        Position of the actuator 309 in pixels
+    modelerror : string
+        Can be 'NoError', 'translationxy', 'translationx', 
+        'translationy', 'rotation', 'influence_function'
+    error : float 
+        Size of the error in pixels or in degrees
     
-    Return:
+    Returns
     ------
-    Psivector: 2D array, pupil plane phase with the opd created by the poke of the desired actuator
+    Psivector : 2D array
+        Pupil plane phase with the opd created by the poke of the desired actuator
     -------------------------------------------------- """
     isz = len(actshapeinpupilresized)
     x309 = xy309[0]
@@ -236,19 +264,19 @@ def creatingpushact(model_dir,
     """ --------------------------------------------------
     Push the desired DM actuator in the pupil
     
-    Parameters:
+    Parameters
     ----------
-    model_dir:
-    file309:
-    x309:
-    y309:
-    findxy309byhand:
-    modelerror:
-    error:
+    model_dir :
+    file309 :
+    x309 :
+    y309 :
+    findxy309byhand :
+    modelerror : , optional
+    error : , optional
     
-    Return:
+    Returns
     ------
-    pushact: 
+    pushact : 
     -------------------------------------------------- """
     # It may not work at the moment
     if findxy309byhand == False:
@@ -313,26 +341,42 @@ def createdifference(aberramp,
     """ --------------------------------------------------
     Simulate the acquisition of probe images (actuator pokes) and create their differences
     
-    Parameters:
+    Parameters
     ----------
-    aberramp: 0 or 2D-array, upstream amplitude aberration
-    aberrphase: 0 or 2D-array, upstream phase aberration
-    posprobes: 1D-array, index of the actuators to push and pull for pair-wise probing
-    pushact: 3D-array, opd created by the pokes of all actuators in the DM.
-    amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
-    entrancepupil: 2D-array, entrance pupil shape
-    coro_mask: 2D array, can be complex. coronagraphic mask
-    lyot_mask: 2D array, lyot mask
-    dimimages: int, size of the output image after resampling in pixels
-    wavelength: float, wavelength of the  incoming flux in meter
-    perfect_coro: bool, set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
-    perfect_entrance_pupil: 2D array, entrance pupil which should be nulled by the used coronagraph
-    noise: boolean, if True, add photon noise. WARNING, the function shotnoise has to be rewritten before use
-    numphot: int, number of photons entering the pupil
+    aberramp : 0 or 2D-array 
+        Upstream amplitude aberration
+    aberrphase : 0 or 2D-array 
+        Upstream phase aberration
+    posprobes : 1D-array
+        Index of the actuators to push and pull for pair-wise probing
+    pushact : 3D-array
+        OPD created by the pokes of all actuators in the DM.
+    amplitude : float
+        amplitude of the actuator pokes for pair(wise probing in nm
+    entrancepupil : 2D-array
+        Entrance pupil shape
+    coro_mask : 2D array, can be complex
+        Coronagraphic mask
+    lyot_mask : 2D array
+        Lyot mask
+    dimimages : int
+        Size of the output image after resampling in pixels
+    wavelength : float
+        Wavelength of the  incoming flux in meter
+    perfect_coro : bool, optional
+        Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
+    perfect_entrance_pupil: 2D array, optional
+        Entrance pupil which should be nulled by the used coronagraph
+    noise : boolean, optional
+        If True, add photon noise. 
+        TODO WARNING, the function shotnoise has to be rewritten before noise can be used
+    numphot : int, optional
+        Number of photons entering the pupil
     
-    Return:
+    Returns
     ------
-    Difference: 3D array, cube with image difference for each probes. Use for pair-wise probing
+    Difference : 3D array
+        Cube with image difference for each probes. Use for pair-wise probing
     -------------------------------------------------- """
     isz = len(entrancepupil)
     Ikmoins = np.zeros((isz, isz))
@@ -385,16 +429,21 @@ def random_phase_map(isz, phaserms, rhoc, slope):
     """ --------------------------------------------------
     Create a random phase map, whose PSD decrease in f^(-slope)
     
-    Parameters:
+    Parameters
     ----------
-    isz: integer, size of the generated phase map
-    phaserms: float, level of aberration
-    rhoc: float, see Bordé et Traub 2006
-    slope: float, slope of the PSD
+    isz : integer
+        Size of the generated phase map
+    phaserms : float
+        Level of aberration
+    rhoc : float
+        See Borde et Traub 2006
+    slope : float
+        Slope of the PSD
     
-    Return:
+    Returns
     ------
-    phase: 2D array, static random phase map (or OPD) generated 
+    phase : 2D array
+        Static random phase map (or OPD) generated 
     -------------------------------------------------- """
     xx, yy = np.meshgrid(np.arange(isz) - isz / 2, np.arange(isz) - isz / 2)
     rho = np.hypot(yy, xx)
