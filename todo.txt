@@ -10,5 +10,7 @@ Other propagation methods :
 Other coronagraphs (Vortex, Lyot, apodisers)
 Other estimation algorithms (SCC)
 
+Correction with repeated Jacobian
+
 polychromatic propagation
 polychromatic correction

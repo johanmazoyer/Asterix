@@ -127,7 +127,7 @@ def create_interaction_matrices(parameter_file,
 
     if creating_pushact == True:
         pushact = instr.creatingpushact(model_dir, file309, x309, y309)
-
+        # TODO ne marche pas
         fits.writeto(model_dir + "PushActInPup400.fits", pushact)
     else:
         if os.path.exists(model_dir + "PushActInPup400.fits") == False:
@@ -521,7 +521,7 @@ def correctionLoop(parameter_file,
         transposecomplexG = np.transpose(np.conjugate(G))
         M0 = np.real(np.dot(transposecomplexG, G))
 
-    ##Load aberration maps (A refaire proprement!!!)
+    ## TODO Load aberration maps (A checker, Amplitude sans doute a refaire proprement!!!)
     if set_phase_abb == True:
         if set_random_phase == True:
             phase = instr.random_phase_map(isz, phaserms, rhoc_phase,
