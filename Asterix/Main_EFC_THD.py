@@ -74,6 +74,7 @@ def create_interaction_matrices(parameter_file,
     knife_coro_offset = modelconfig["knife_coro_offset"]
 
     #DM model
+    pitchDM=modelconfig["pitchDM"]
     creating_pushact = modelconfig["creating_pushact"]
     x309 = modelconfig["x309"]
     y309 = modelconfig["y309"]    
@@ -135,7 +136,7 @@ def create_interaction_matrices(parameter_file,
         os.makedirs(Labview_dir)
 
     if creating_pushact == True:
-        pushact = instr.creatingpushact(model_dir, isz, pdiam, prad, xy309,
+        pushact = instr.creatingpushact(model_dir, isz, pdiam, prad, xy309,pitchDM=pitchDM
             filename_actu309=filename_actu309, filename_grid_actu=filename_grid_actu,
             filename_actu_infl_fct=filename_actu_infl_fct
         )
@@ -337,6 +338,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     knife_coro_offset = modelconfig["knife_coro_offset"]
 
     #DM model
+    pitchDM=modelconfig["pitchDM"]
     x309 = modelconfig["x309"]
     y309 = modelconfig["y309"]    
     xy309 = [x309,y309]
@@ -547,7 +549,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         pushactonDM = pushact
     else:
         print("Misregistration!")
-        pushactonDM = instr.creatingpushact(model_dir, isz, pdiam, prad, xy309,
+        pushactonDM = instr.creatingpushact(model_dir, isz, pdiam, prad, xy309,pitchDM=pitchDM,
             filename_actu309=filename_actu309, filename_grid_actu=filename_grid_actu,
             filename_actu_infl_fct=filename_actu_infl_fct,
             xerror=xerror,yerror=yerror,angerror=angerror,gausserror=gausserror

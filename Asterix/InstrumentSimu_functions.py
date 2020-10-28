@@ -237,7 +237,7 @@ def pushact_function(which,
     return Psivector
 
 
-def creatingpushact(model_dir, isz, pdiam,prad, xy309,
+def creatingpushact(model_dir, isz, pdiam,prad, xy309,pitchDM=0.3e-3,
                     filename_actu309="", filename_grid_actu="Grid_actu.fits",
                     filename_actu_infl_fct="Actu_DM32_field=6x6pitch_pitch=22pix.fits",
                     xerror=0,yerror=0,angerror=0,gausserror=0):
@@ -248,6 +248,7 @@ def creatingpushact(model_dir, isz, pdiam,prad, xy309,
     ----------
     model_dir :
     xy309 : center of the actuator #309 in pixels
+    pitchDM : pitch of the DM in meter
     filename_actu309 : filename of estimated phase when poking actuator #309
     filename_grid_actu : filename of the grid of actuator positions
     filename_actu_infl_fct : filename of the actuator influence function
@@ -277,7 +278,7 @@ def creatingpushact(model_dir, isz, pdiam,prad, xy309,
     grille = fits.getdata(model_dir + filename_grid_actu)
     actshape = fits.getdata(model_dir + filename_actu_infl_fct)
     resizeactshape = skimage.transform.rescale(actshape,
-                                               2 * prad / pdiam * 0.3e-3 / 22,
+                                               2 * prad / pdiam * pitchDM / 22,
                                                order=1,
                                                preserve_range=True,
                                                anti_aliasing=True,
