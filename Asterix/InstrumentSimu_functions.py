@@ -14,8 +14,8 @@ rad2mas = 3.6e6 / dtor  # radian to milliarcsecond conversion factor
 
 def translationFFT(isz, a, b):
     """ --------------------------------------------------
-    Create a phase ramp of size (isz,isz) which can be multiply by an image 
-    to shift its fourier transform by (a,b) pixels
+    Create a phase ramp of size (isz,isz) that can be used as follow
+    to shift one image by (a,b) pixels : shift_im = fft(im*exp(i phase ramp))
     
     Parameters
     ----------
@@ -133,7 +133,7 @@ def pupiltodetector(input_wavefront,
                     perfect_coro=False,
                     perfect_entrance_pupil=0):  # aberrationphase,prad1,prad2
     """ --------------------------------------------------
-    Propagate a wavefront in a pupil plane through a high-contrast imaging instrument, until the science detector.
+    Propagate a wavefront through a high-contrast imaging instrument, from pupil plane to focal plane.
     The image is then cropped and resampled.
     
     Parameters
@@ -182,8 +182,7 @@ def pushact_function(which,
                      actshapeinpupilresized,
                      xycent,
                      xy309,
-                     modelerror="NoError",
-                     error=0):
+                     xerror=0,yerror=0,angerror=0,gausserror=0):
     """ --------------------------------------------------
     Push the desired DM actuator in the pupil
     
@@ -199,11 +198,14 @@ def pushact_function(which,
         Position of the actuator in actshapeinpupilresized before translation
     xy309 : numpy array
         Position of the actuator 309 in pixels
-    modelerror : string
-        Can be 'NoError', 'translationxy', 'translationx', 
-        'translationy', 'rotation', 'influence_function'
-    error : float 
-        Size of the error in pixels or in degrees
+    xerror : float 
+        Size of the error in pixels for translation in x-direction
+    yerror : float 
+        Size of the error in pixels for translation in y-direction
+    angerror : float 
+        Size of the rotation error in degrees 
+    gausserror : float 
+        Error on the Influence function size (1 = 100% error)
     
     Returns
     ------
@@ -216,88 +218,64 @@ def pushact_function(which,
     xact = grilleact[0, which] + (x309 - grilleact[0, 309])
     yact = grilleact[1, which] + (y309 - grilleact[1, 309])
 
-    if modelerror == "NoError":
+    if gausserror == 0:
         Psivector = nd.interpolation.shift(actshapeinpupilresized,
-                                           (yact - xycent, xact - xycent))
-    if modelerror == "translationxy":
-        Psivector = nd.interpolation.shift(
-            actshapeinpupilresized,
-            (
-                yact - xycent + np.sqrt(error**2 / 2),
-                xact - xycent + np.sqrt(error**2 / 2),
-            ),
-        )
-    if modelerror == "translationx":
-        Psivector = nd.interpolation.shift(
-            actshapeinpupilresized, (yact - xycent, xact - xycent + error))
-    if modelerror == "translationy":
-        Psivector = nd.interpolation.shift(
-            actshapeinpupilresized, (yact - xycent + error, xact - xycent))
-    if modelerror == "rotation":
-        Psivector = proc.rotate_frame(Psivector,
-                                      devx,
-                                      interpolation="nearest",
-                                      cyx=None)
-    if modelerror == "influence_function":
+                (yact - xycent + yerror, xact - xycent + xerror))
+
+        if angerror != 0:
+                Psivector = proc.rotate_frame(Psivector, angerror, interpolation="nearest", cyx=None)
+    else:
         Psivector = nd.interpolation.shift(actshapeinpupilresized,
                                            (yact - xycent, xact - xycent))
         x, y = np.mgrid[0:isz, 0:isz]
         xy = (x, y)
-        xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
-        Psivector = proc.twoD_Gaussian(xy, 1, 1 + devx, 1 + devx, xo, yo, 0, 0)
-        # devx peut etre a remplacer par error pour la rotation
-
+        xo,yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
+        Psivector = proc.twoD_Gaussian(xy, 1, 1 + gausserror, 1 + gausserror, xo, yo, 0)
+        Psivector = Psivector.reshape(isz,isz)
     Psivector[np.where(Psivector < 1e-4)] = 0
 
     return Psivector
 
 
-def creatingpushact(model_dir,
-                    file309,
-                    x309,
-                    y309,
-                    findxy309byhand,
-                    isz,
-                    prad,
-                    pdiam,
-                    modelerror="NoError",
-                    error=0):
+def creatingpushact(model_dir, isz, pdiam,prad, xy309,
+                    filename_actu309="", filename_grid_actu="Grid_actu.fits",
+                    filename_actu_infl_fct="Actu_DM32_field=6x6pitch_pitch=22pix.fits",
+                    xerror=0,yerror=0,angerror=0,gausserror=0):
     """ --------------------------------------------------
     Push the desired DM actuator in the pupil
     
     Parameters
     ----------
     model_dir :
-    file309 :
-    x309 :
-    y309 :
-    findxy309byhand :
-    modelerror : , optional
-    error : , optional
-    
+    xy309 : center of the actuator #309 in pixels
+    filename_actu309 : filename of estimated phase when poking actuator #309
+    filename_grid_actu : filename of the grid of actuator positions
+    filename_actu_infl_fct : filename of the actuator influence function
+
+    Error on the model of the DM
+        xerror : x-direction translation in pixel
+        yerror : y-direction translation in pixel
+        angerror : rotation in degree
+        gausserror : influence function size (1=100% error)
+
     Returns
     ------
     pushact : 
     -------------------------------------------------- """
     # TODO It may not work at the moment. Pour le faire
-    if findxy309byhand == False:
-        file309 = "Phase_estim_Act309_v20200107.fits"
-        im309size = len(fits.getdata(model_dir + file309))
+    if filename_actu309 != "":
+        im309size = len(fits.getdata(model_dir + filename_actu309))
         act309 = np.zeros((isz, isz))
         act309[int(isz / 2 - im309size / 2):int(isz / 2 + im309size / 2),
-               int(isz / 2 -
-                   im309size / 2):int(isz / 2 + im309size /
-                                      2), ] = fits.getdata(model_dir + file309)
+               int(isz / 2 - im309size / 2):int(isz / 2 + im309size / 2), ] = fits.getdata(
+            model_dir + filename_actu309
+        )
         y309, x309 = np.unravel_index(np.abs(act309).argmax(), act309.shape)
+        # shift by (0.5,0.5) pixel because the pupil is centered between pixels
+        xy309 = [x309-0.5,y309-0.5]
 
-    # shift by (0.5,0.5) pixel because the pupil is centerd between pixels
-    y309 = y309 - 0.5
-    x309 = x309 - 0.5
-    xy309 = [x309, y309]
-
-    grille = fits.getdata(model_dir + "Grid_actu.fits")
-    actshape = fits.getdata(model_dir +
-                            "Actu_DM32_field=6x6pitch_pitch=22pix.fits")
+    grille = fits.getdata(model_dir + filename_grid_actu)
+    actshape = fits.getdata(model_dir + filename_actu_infl_fct)
     resizeactshape = skimage.transform.rescale(actshape,
                                                2 * prad / pdiam * 0.3e-3 / 22,
                                                order=1,
@@ -320,7 +298,8 @@ def creatingpushact(model_dir,
     pushact = np.zeros((1024, isz, isz))
     for i in np.arange(1024):
         pushact[i] = pushact_function(i, grille, actshapeinpupil, xycent,
-                                      xy309, modelerror, error)
+                                      xy309, xerror=xerror,yerror=yerror,angerror=angerror,
+                                      gausserror=gausserror)
     return pushact
 
 
