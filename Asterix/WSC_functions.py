@@ -100,8 +100,8 @@ def createvectorprobes(wavelength, entrancepupil, coro_mask, lyot_mask,
     matrix = np.zeros((numprobe, 2))
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
-    squaremaxPSF = np.amax(
-        np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_mask)))
+    maxPSF = np.amax(
+        np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_mask))**2)
     k = 0
     for i in posprobes:
         probephase[k] = amplitude * pushact[i]
@@ -110,7 +110,7 @@ def createvectorprobes(wavelength, entrancepupil, coro_mask, lyot_mask,
         deltapsikbis = (instr.pupiltodetector(
             inputwavefront, coro_mask, lyot_mask, perfect_coro=True,
             perfect_entrance_pupil=entrancepupil
-        ) / squaremaxPSF)
+        ) / np.square(maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -195,7 +195,7 @@ def creatingMaskDH(dimimages, shape, choosepixDH=[0, 0, 0, 0], inner=0,
 
 def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
                              dimimages, wavelength, amplitude, pushact,
-                             mask, Whichact, otherbasis=False, basisDM3=0):
+                             mask, Whichact, maxPSF, otherbasis=False, basisDM3=0):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
     
@@ -210,6 +210,7 @@ def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
     pushact: 3D-array, opd created by the pokes of all actuators in the DM
     mask: 2D array, binary mask whose pixel=1 will be taken into account
     Whichact: 1D array, index of the actuators taken into account to create the jacobian matrix
+    maxPSF: maximum of the PSF image (intensity)
     otherbasis:
     basisDM3:
     
@@ -229,8 +230,7 @@ def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
     else:
         bas_fct = np.array([pushact[ind] for ind in Whichact])
         nb_fct = len(Whichact)
-    squaremaxPSF = np.amax(
-        np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_mask)))
+
     print("Start EFC")
     Gmatrixbis = np.zeros((2 * int(np.sum(mask)), nb_fct))
     k = 0
@@ -246,7 +246,7 @@ def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
             lyot_mask,
             perfect_coro=True,
             perfect_entrance_pupil=entrancepupil,
-        ) / squaremaxPSF)
+        ) / np.square(maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()

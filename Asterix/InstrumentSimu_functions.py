@@ -12,7 +12,7 @@ dtor = np.pi / 180.0  # degree to radian conversion factor
 rad2mas = 3.6e6 / dtor  # radian to milliarcsecond conversion factor
 
 
-def translationFFT(dim_im, a, b):
+def shift_phase_ramp(dim_im, a, b):
     """ --------------------------------------------------
     Create a phase ramp of size (dim_im,dim_im) that can be used as follow
     to shift one image by (a,b) pixels : shift_im = fft(im*exp(i phase ramp))
@@ -37,8 +37,11 @@ def translationFFT(dim_im, a, b):
     xx, yy = np.meshgrid(maska, maskb)
     return np.exp(-1j * xx) * np.exp(-1j * yy)
 
+##############################################
+##############################################
+### CORONAGRAPHS
 
-def FQPM(dim_im):
+def FQPM(dim_im,err=0):
     """ --------------------------------------------------
     Create a perfect Four Quadrant Phase Mask coronagraph of size (dim_im,dim_im)
     
@@ -46,19 +49,20 @@ def FQPM(dim_im):
     ----------
     dim_im : int
         Size of the coronagraph (in pixels)
-    
+    err : phase error on the pi phase-shift in rad (default=0)
+
     Returns
     ------
-    FQPM : 2D array
-        Four quadrant phase mask coronagraph
+    FQPM : 2D array giving the complex transmission of the
+        FQPM mask, centered at the four edges of the image
     -------------------------------------------------- """
     phase = np.zeros((dim_im, dim_im))
     for i in np.arange(dim_im):
         for j in np.arange(dim_im):
             if i < dim_im / 2 and j < dim_im / 2:
-                phase[i, j] = np.pi
+                phase[i, j] = np.pi+err
             if i >= dim_im / 2 and j >= dim_im / 2:
-                phase[i, j] = np.pi
+                phase[i, j] = np.pi+err
     return np.exp(1j * phase)
 
 
@@ -98,6 +102,9 @@ def KnifeEdgeCoro(dim_im, position, shiftinldp, ld_p):
                 Knife[i, :] = 1
     return np.fft.fftshift(Knife)
 
+##############################################
+##############################################
+### Pupil
 
 def roundpupil(dim_im, prad1):
     """ --------------------------------------------------
@@ -123,10 +130,11 @@ def roundpupil(dim_im, prad1):
     pupilnormal[rr <= prad1] = 1.0
     return pupilnormal
 
+##############################################
+##############################################
+### Propagation through coronagraph
 
-def pupiltodetector(input_wavefront,
-                    coro_mask,
-                    lyot_mask,
+def pupiltodetector(input_wavefront, coro_mask, lyot_mask,
                     perfect_coro=False,
                     perfect_entrance_pupil=0):  # aberrationphase,prad1,prad2
     """ --------------------------------------------------
@@ -153,7 +161,7 @@ def pupiltodetector(input_wavefront,
         the input wavefront through the high-contrast instrument.
     -------------------------------------------------- """
 
-    maskshifthalfpix = translationFFT(len(input_wavefront), 0.5, 0.5)
+    maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
     # Focal plane 1
     if perfect_coro == True:
         input_wavefront = input_wavefront - perfect_entrance_pupil
@@ -168,12 +176,12 @@ def pupiltodetector(input_wavefront,
 
     return focal2end
 
+##############################################
+##############################################
+### Deformable mirror
 
-def pushact_function(which,
-                     grilleact,
-                     actshapeinpupilresized,
-                     xycent,
-                     xy309,
+def pushact_function(which, grilleact, actshapeinpupilresized,
+                     xycent, xy309,
                      xerror=0,yerror=0,angerror=0,gausserror=0):
     """ --------------------------------------------------
     Push the desired DM actuator in the pupil
@@ -296,22 +304,14 @@ def creatingpushact(model_dir, dim_im, pdiam,prad, xy309,pitchDM=0.3e-3,
                                       gausserror=gausserror)
     return pushact
 
+##############################################
+##############################################
+### Difference of images for Pair-Wise probing
 
-def createdifference(aberramp,
-                     aberrphase,
-                     posprobes,
-                     pushact,
-                     amplitude,
-                     entrancepupil,
-                     coro_mask,
-                     lyot_mask,
-                     PSF,
-                     dimimages,
-                     wavelength,
-                     perfect_coro=False,
-                     perfect_entrance_pupil=0,
-                     noise=False,
-                     numphot=1e30):
+def createdifference(aberramp, aberrphase, posprobes, pushact, amplitude,
+                     entrancepupil, coro_mask, lyot_mask, PSF, dimimages,
+                     wavelength, perfect_coro=False,
+                     perfect_entrance_pupil=0, noise=False, numphot=1e30):
     """ --------------------------------------------------
     Simulate the acquisition of probe images (actuator pokes) and create their differences
     
@@ -356,10 +356,10 @@ def createdifference(aberramp,
     Ikplus = np.zeros((dim_im, dim_im))
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
-    squaremaxPSF = np.amax(PSF)
+    maxPSF = np.amax(PSF)
 
     contrast_to_photons = (np.sum(entrancepupil) / np.sum(lyot_mask) *
-                           numphot * squaremaxPSF**2 / np.sum(PSF)**2)
+                           numphot * maxPSF / np.sum(PSF)))
 
     k = 0
     for i in posprobes:
@@ -368,19 +368,13 @@ def createdifference(aberramp,
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase - 1 * probephase)))
         Ikmoins = (np.abs(
-            pupiltodetector(
-                input_wavefront,
-                coro_mask,
-                lyot_mask,
-                perfect_coro,
-                perfect_entrance_pupil,
-            ))**2 / squaremaxPSF**2)
+            pupiltodetector( input_wavefront, coro_mask, lyot_mask,
+                perfect_coro, perfect_entrance_pupil ))**2 / maxPSF)
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase + 1 * probephase)))
         Ikplus = (np.abs(
             pupiltodetector(input_wavefront, coro_mask, lyot_mask,
-                            perfect_coro, perfect_entrance_pupil))**2 /
-                  squaremaxPSF**2)
+                perfect_coro, perfect_entrance_pupil))**2 / maxPSF)
 
         if noise == True:
             Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
@@ -397,6 +391,9 @@ def createdifference(aberramp,
 
     return Difference
 
+##############################################
+##############################################
+### Phase screen
 
 def random_phase_map(dim_im, phaserms, rhoc, slope):
     """ --------------------------------------------------

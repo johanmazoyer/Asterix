@@ -260,9 +260,11 @@ def create_interaction_matrices(parameter_file,
 
             # Creating Direct Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
+            maxPSF = np.amax(np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_pup))**2)
+
             Gmatrix = wsc.creatingCorrectionmatrix(
                 entrancepupil, coro,lyot_pup, dim_sampl, wavelength, amplitudeEFC,
-                pushact, maskDH, WhichInPupil, otherbasis=otherbasis, basisDM3=basisDM3,
+                pushact, maskDH, WhichInPupil, maxPSF, otherbasis=otherbasis, basisDM3=basisDM3,
             )
             fits.writeto(intermatrix_dir + fileDirectMatrix + ".fits", Gmatrix)
 
@@ -459,8 +461,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         lyot_pup = instr.roundpupil(dim_im, lyotrad)
 
     perfect_entrance_pupil = entrancepupil
-    PSF = np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_pup))
-    squaremaxPSF = np.amax(PSF)
+    PSF = np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_pup))**2
+    maxPSF = np.amax(PSF)
 
     ##Load matrices
     if (estimation == "PairWise" or estimation == "pairwise"
@@ -538,7 +540,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
 
     ## SIMU
     contrast_to_photons = (np.sum(entrancepupil) / np.sum(lyot_pup) * nb_photons *
-                           squaremaxPSF**2 / np.sum(PSF)**2)
+                           maxPSF / np.sum(PSF))#**2)
 
 
     if xerror == 0 and yerror == 0 and angerror == 0 and gausserror == 0:
@@ -562,7 +564,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb)
     imagedetector[0] = (abs(instr.pupiltodetector(input_wavefront, coro,
             lyot_pup, perfect_coro=perfect_coro, perfect_entrance_pupil=perfect_entrance_pupil
-        ) / squaremaxPSF)**2)
+        ))**2 / maxPSF)
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHdim != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
@@ -592,7 +594,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
                 input_wavefront, coro, lyot_pup,
                 perfect_coro=perfect_coro,
                 perfect_entrance_pupil=perfect_entrance_pupil
-            ) / squaremaxPSF)
+            ) / np.square(maxPSF))
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
         else:
@@ -639,7 +641,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
             instr.pupiltodetector(input_wavefront, coro, lyot_pup,
                 perfect_coro=perfect_coro,
                 perfect_entrance_pupil=perfect_entrance_pupil,
-            ) / squaremaxPSF)**2)
+            ))**2 / maxPSF)
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHdim != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])

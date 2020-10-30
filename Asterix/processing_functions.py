@@ -36,7 +36,8 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h,flatten=True
     ----------
     xy: Tuple object (2,dim1,dim2)  which can be created with:
         x, y = np.mgrid[0:dim1, 0:dim2]
-        xy=(x,y)    amplitude: Peak of the gaussian function
+        xy=(x,y)    
+    amplitude: Peak of the gaussian function
     sigma_x: Standard deviation of the gaussian function in the x direction
     sigma_y: Standard deviation of the gaussian function in the y direction
     xo: Position of the Gaussian peak in the x direction
