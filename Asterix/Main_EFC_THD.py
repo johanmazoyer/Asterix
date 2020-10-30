@@ -51,6 +51,10 @@ def create_interaction_matrices(parameter_file,
     ### MODEL CONFIG
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
+    
+    #On bench or numerical simulation
+    onbench = modelconfig["onbench"]
+
     #Image
     dim_im = modelconfig["dim_im"]                #image size on detector
     dim_sampl = modelconfig["dim_sampl"]    #image size after binning
@@ -124,10 +128,11 @@ def create_interaction_matrices(parameter_file,
         print("Creating directory " + intermatrix_dir + " ...")
         os.makedirs(intermatrix_dir)
 
-    Labview_dir = Data_dir + "Labview/"
-    if not os.path.exists(Labview_dir):
-        print("Creating directory " + Labview_dir + " ...")
-        os.makedirs(Labview_dir)
+    if onbench == True:
+        Labview_dir = Data_dir + "Labview/"
+        if not os.path.exists(Labview_dir):
+            print("Creating directory " + Labview_dir + " ...")
+            os.makedirs(Labview_dir)
 
     # Pupil and Lyot radii in pixels
     lyotrad = dim_im / 2 / science_sampling
@@ -136,8 +141,9 @@ def create_interaction_matrices(parameter_file,
 
     # DM influence functions
     if creating_pushact == True:
-        pushact = instr.creatingpushact(model_dir, dim_im, pdiam, prad, xy309,pitchDM=pitchDM,
-            filename_actu309=filename_actu309, filename_grid_actu=filename_grid_actu,
+        pushact = instr.creatingpushact(model_dir, dim_im, pdiam, prad, xy309,
+            pitchDM=pitchDM, filename_actu309=filename_actu309,
+            filename_grid_actu=filename_grid_actu,
             filename_actu_infl_fct=filename_actu_infl_fct
         )
         fits.writeto(model_dir + "PushActInPup"+str(int(dim_im))+".fits", pushact,overwrite=True)
@@ -161,6 +167,7 @@ def create_interaction_matrices(parameter_file,
         phasevortex = 0  # to be defined
         coro = np.exp(1j * phasevortex)
 
+    ## Entrance pupil and Lyot stop
     if filename_instr_pup != "" and filename_instr_lyot != "":
         entrancepupil = fits.getdata(model_dir + filename_instr_pup)
         lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
@@ -179,7 +186,7 @@ def create_interaction_matrices(parameter_file,
         print("Recording " + filePW + " ...")
         vectoressai, showsvd = wsc.createvectorprobes(
             wavelength, entrancepupil, coro, lyot_pup, amplitudePW,
-            posprobes, pushact, dim_sampl, cut,
+            posprobes, pushact, dim_sampl, cut
         )
         fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
@@ -190,24 +197,25 @@ def create_interaction_matrices(parameter_file,
             fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
 
     # Saving PW matrices in Labview directory
-    probes = np.zeros((len(posprobes), pushact.shape[0]), dtype=np.float32)
-    vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
-                        dtype=np.float32)
+    if onbench == True:
+        probes = np.zeros((len(posprobes), pushact.shape[0]), dtype=np.float32)
+        vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
+                            dtype=np.float32)
 
-    for i in np.arange(len(posprobes)):
-        probes[i, posprobes[i]] = amplitudePW / 17
-        vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                 dim_sampl] = vectoressai[:, 0, i].flatten()
-        vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                 dim_sampl] = vectoressai[:, 1, i].flatten()
-    fits.writeto(Labview_dir + "Probes_EFC_default.fits",
-                 probes, overwrite=True)
-    fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
-                 vectorPW, overwrite=True)
+        for i in np.arange(len(posprobes)):
+            probes[i, posprobes[i]] = amplitudePW / 17
+            vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
+                    dim_sampl] = vectoressai[:, 0, i].flatten()
+            vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
+                    dim_sampl] = vectoressai[:, 1, i].flatten()
+        fits.writeto(Labview_dir + "Probes_EFC_default.fits",
+                    probes, overwrite=True)
+        fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
+                    vectorPW, overwrite=True)
 
-    ####Calculating and Recording EFC matrix
-    print("TO SET ON LABVIEW: ",
-          str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
+        ####Calculating and Recording EFC matrix
+        print("TO SET ON LABVIEW: ",
+            str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
     # Creating WhichInPup?
     fileWhichInPup = "Whichactfor" + str(MinimumSurfaceRatioInThePupil)
 
@@ -286,13 +294,13 @@ def create_interaction_matrices(parameter_file,
                     "_".join(map(str, choosepix)) + "pix_" +
                     str(amplitudeEFC) + "nm_.png")
 
-    # Save EFC matrix in Labview directory
-    EFCmatrix = np.zeros((invertGDH.shape[1], pushact.shape[0]), dtype=np.float32)
-    for i in np.arange(len(WhichInPupil)):
-        EFCmatrix[:, WhichInPupil[i]] = invertGDH[i, :]
-    fits.writeto(Labview_dir + "Matrix_control_EFC_DM3_default.fits",
-                 EFCmatrix,
-                 overwrite=True)
+    if onbench == True:
+        # Save EFC matrix in Labview directory
+        EFCmatrix = np.zeros((invertGDH.shape[1], pushact.shape[0]), dtype=np.float32)
+        for i in np.arange(len(WhichInPupil)):
+            EFCmatrix[:, WhichInPupil[i]] = invertGDH[i, :]
+        fits.writeto(Labview_dir + "Matrix_control_EFC_DM3_default.fits",
+                    EFCmatrix, overwrite=True)
 
     return 0
 
@@ -322,6 +330,10 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
    ### MODEL CONFIG
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
+    
+    #On bench or numerical simulation
+    onbench = modelconfig["onbench"]
+
    #Image
     dim_im = modelconfig["dim_im"]                #image size on detector
     dim_sampl = modelconfig["dim_sampl"]    #image size after binning
@@ -409,10 +421,11 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
 
     model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
 
-    Labview_dir = Data_dir + "Labview/"
-    if not os.path.exists(Labview_dir):
-        print("Creating directory " + Labview_dir + " ...")
-        os.makedirs(Labview_dir)
+    if onbench == True:
+        Labview_dir = Data_dir + "Labview/"
+        if not os.path.exists(Labview_dir):
+            print("Creating directory " + Labview_dir + " ...")
+            os.makedirs(Labview_dir)
 
     result_dir = Data_dir + "Results/" + Name_Experiment + "/"
     if not os.path.exists(result_dir):

@@ -237,13 +237,12 @@ def creatingpushact(model_dir, dim_im, pdiam,prad, xy309,pitchDM=0.3e-3,
     ------
     pushact : 
     -------------------------------------------------- """
-    # TODO It may not work at the moment. Pour le faire
     if filename_actu309 != "":
         im309size = len(fits.getdata(model_dir + filename_actu309))
         act309 = np.zeros((dim_im, dim_im))
         act309[int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2),
-               int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2), ] = fits.getdata(
-            model_dir + filename_actu309
+               int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2)
+                ] = fits.getdata(model_dir + filename_actu309
         )
         y309, x309 = np.unravel_index(np.abs(act309).argmax(), act309.shape)
         # shift by (0.5,0.5) pixel because the pupil is centered between pixels
@@ -275,8 +274,8 @@ def creatingpushact(model_dir, dim_im, pdiam,prad, xy309,pitchDM=0.3e-3,
     pushact = np.zeros((grille.shape[1], dim_im, dim_im))
     for i in np.arange(pushact.shape[0]):
         pushact[i] = pushact_function(i, grille, actshapeinpupil, xycent,
-                                      xy309, xerror=xerror,yerror=yerror,angerror=angerror,
-                                      gausserror=gausserror)
+                    xy309, xerror=xerror,yerror=yerror,
+                    angerror=angerror, gausserror=gausserror)
     return pushact
 
 ##############################################
