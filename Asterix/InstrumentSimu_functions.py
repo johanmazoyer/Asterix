@@ -359,7 +359,7 @@ def createdifference(aberramp, aberrphase, posprobes, pushact, amplitude,
     maxPSF = np.amax(PSF)
 
     contrast_to_photons = (np.sum(entrancepupil) / np.sum(lyot_mask) *
-                           numphot * maxPSF / np.sum(PSF)))
+                           numphot * maxPSF / np.sum(PSF))
 
     k = 0
     for i in posprobes:
@@ -370,6 +370,7 @@ def createdifference(aberramp, aberrphase, posprobes, pushact, amplitude,
         Ikmoins = (np.abs(
             pupiltodetector( input_wavefront, coro_mask, lyot_mask,
                 perfect_coro, perfect_entrance_pupil ))**2 / maxPSF)
+       
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase + 1 * probephase)))
         Ikplus = (np.abs(
