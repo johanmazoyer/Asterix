@@ -21,8 +21,8 @@ from astropy.io import fits
 #     The input image is multiplied by the butterworth
 #     -------------------------------------------------- """
 
-#     isz = len(image)
-#     xx, yy = np.meshgrid(np.arange(isz) - isz / 2, np.arange(isz) - isz / 2)
+#     dim_im = len(image)
+#     xx, yy = np.meshgrid(np.arange(dim_im) - dim_im / 2, np.arange(dim_im) - dim_im / 2)
 #     rr = np.hypot(yy, xx)
 #     butt = 1 / (1 + (np.sqrt(2) - 1) * (rr / length)**(2 * order))
 #     return image * butt
@@ -110,9 +110,9 @@ def resampling(image, new):
     ------
     Gvector: 2D array, image resampled into new dimensions
     -------------------------------------------------- """
-    isz = len(image)
+    dim_im = len(image)
     Gvectorbis = np.fft.fftshift( np.fft.ifft2( np.fft.ifftshift(image) ) )
-    Gvector = cropimage(Gvectorbis, isz / 2, isz / 2, new)
+    Gvector = cropimage(Gvectorbis, dim_im / 2, dim_im / 2, new)
     Gvector = np.fft.fftshift( np.fft.fft2( np.fft.ifftshift(Gvector) ) )
     return Gvector
 

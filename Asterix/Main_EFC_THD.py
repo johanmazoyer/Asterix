@@ -11,7 +11,7 @@ from astropy.io import fits
 import skimage.transform
 
 from configobj import ConfigObj
-# from validate import Validator
+from validate import Validator
 
 import Asterix.processing_functions as proc
 import Asterix.WSC_functions as wsc
@@ -32,8 +32,8 @@ def create_interaction_matrices(parameter_file,
     configspec_file = Asterixroot + os.path.sep + "Param_configspec.ini"
     config = ConfigObj(parameter_file,configspec=configspec_file,
                        default_encoding="utf8")
-    # vtor = Validator()
-    # checks = config.validate(vtor, copy=True)  # copy=True for copying the comments
+    vtor = Validator()
+    checks = config.validate(vtor, copy=True)  # copy=True for copying the comments
 
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file +
@@ -52,7 +52,7 @@ def create_interaction_matrices(parameter_file,
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
     #Image
-    isz = modelconfig["isz"]                #image size on detector
+    dim_im = modelconfig["dim_im"]                #image size on detector
     dim_sampl = modelconfig["dim_sampl"]    #image size after binning
 
     #Lambda over D in pixels
@@ -128,30 +128,30 @@ def create_interaction_matrices(parameter_file,
         os.makedirs(Labview_dir)
 
 
-    lyotrad = isz / 2 / science_sampling
+    lyotrad = dim_im / 2 / science_sampling
     prad = int(np.ceil(lyotrad*pdiam/lyotdiam))
     lyotrad = int(np.ceil(lyotrad))
 
     if creating_pushact == True:
-        pushact = instr.creatingpushact(model_dir, isz, pdiam, prad, xy309,pitchDM=pitchDM,
+        pushact = instr.creatingpushact(model_dir, dim_im, pdiam, prad, xy309,pitchDM=pitchDM,
             filename_actu309=filename_actu309, filename_grid_actu=filename_grid_actu,
             filename_actu_infl_fct=filename_actu_infl_fct
         )
-        fits.writeto(model_dir + "PushActInPup"+str(int(isz))+".fits", pushact,overwrite=True)
+        fits.writeto(model_dir + "PushActInPup"+str(int(dim_im))+".fits", pushact,overwrite=True)
     else:
-        if os.path.exists(model_dir + "PushActInPup"+str(int(isz))+".fits") == False:
+        if os.path.exists(model_dir + "PushActInPup"+str(int(dim_im))+".fits") == False:
             print("Extracting data from zip file...")
-            ZipFile(model_dir + "PushActInPup"+str(int(isz))+".zip",
+            ZipFile(model_dir + "PushActInPup"+str(int(dim_im))+".zip",
                     "r").extractall(model_dir)
 
-        pushact = fits.getdata(model_dir + "PushActInPup"+str(int(isz))+".fits")
+        pushact = fits.getdata(model_dir + "PushActInPup"+str(int(dim_im))+".fits")
 
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
         coro = fits.getdata(model_dir + "FQPM.fits")
     elif coronagraph == "knife":
-        coro = instr.KnifeEdgeCoro(isz, coro_position, knife_coro_offset,
+        coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
             science_sampling * lyotdiam / pdiam
         )
     elif coronagraph == "vortex":
@@ -162,8 +162,8 @@ def create_interaction_matrices(parameter_file,
         entrancepupil = fits.getdata(model_dir + filename_instr_pup)
         lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
     else:
-        entrancepupil = instr.roundpupil(isz, prad)
-        lyot_pup = instr.roundpupil(isz, lyotrad)
+        entrancepupil = instr.roundpupil(dim_im, prad)
+        lyot_pup = instr.roundpupil(dim_im, lyotrad)
 
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
@@ -300,8 +300,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     ### CONFIGURATION FILE
     configspec_file = Asterixroot + os.path.sep + "Param_configspec.ini"
     config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
-    # vtor = Validator()
-    # checks = config.validate(vtor, copy=True)  # copy=True for copying the comments
+    vtor = Validator()
+    checks = config.validate(vtor, copy=True)  # copy=True for copying the comments
 
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file + " cannot be found")
@@ -318,7 +318,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
    #Image
-    isz = modelconfig["isz"]                #image size on detector
+    dim_im = modelconfig["dim_im"]                #image size on detector
     dim_sampl = modelconfig["dim_sampl"]    #image size after binning
 
     #Lambda over D in pixels
@@ -413,7 +413,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         print("Creating directory " + result_dir + " ...")
         os.makedirs(result_dir)
 
-    lyotrad = isz / 2 / science_sampling
+    lyotrad = dim_im / 2 / science_sampling
     prad = int(np.ceil(lyotrad*pdiam/lyotdiam))
     lyotrad = int(np.ceil(lyotrad))
 
@@ -432,11 +432,11 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     else:
         basisDM3 = 0
 
-    if os.path.exists(model_dir + "PushActInPup"+str(int(isz))+".fits") == False:
+    if os.path.exists(model_dir + "PushActInPup"+str(int(dim_im))+".fits") == False:
         print("Extracting data from zip file...")
-        ZipFile(model_dir + "PushActInPup"+str(int(isz))+".zip", "r").extractall(model_dir)
+        ZipFile(model_dir + "PushActInPup"+str(int(dim_im))+".zip", "r").extractall(model_dir)
 
-    pushact = fits.getdata(model_dir + "PushActInPup"+str(int(isz))+".fits")
+    pushact = fits.getdata(model_dir + "PushActInPup"+str(int(dim_im))+".fits")
     
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
@@ -444,7 +444,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         coro = fits.getdata(model_dir + "FQPM.fits")
         perfect_coro = True
     elif coronagraph == "knife":
-        coro = instr.KnifeEdgeCoro(isz, coro_position, knife_coro_offset, science_sampling * lyotdiam / pdiam)
+        coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset, science_sampling * lyotdiam / pdiam)
         perfect_coro = False
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
@@ -455,8 +455,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         entrancepupil = fits.getdata(model_dir + filename_instr_pup)
         lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
     else:
-        entrancepupil = instr.roundpupil(isz, prad)
-        lyot_pup = instr.roundpupil(isz, lyotrad)
+        entrancepupil = instr.roundpupil(dim_im, prad)
+        lyot_pup = instr.roundpupil(dim_im, lyotrad)
 
     perfect_entrance_pupil = entrancepupil
     PSF = np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_pup))
@@ -507,7 +507,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     ## TODO Load aberration maps (A checker, Amplitude sans doute a refaire proprement!!!)
     if set_phase_abb == True:
         if set_random_phase == True:
-            phase = instr.random_phase_map(isz, phaserms, rhoc_phase, slope_phase)
+            phase = instr.random_phase_map(dim_im, phaserms, rhoc_phase, slope_phase)
         else:
             phase = fits.getdata(model_dir + phase_abb + ".fits")
 
@@ -516,20 +516,20 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         phase = 0
 
     if set_amplitude_abb == True:
-        oui = fits.getdata(model_dir + amplitude_abb +".fits")  # *roundpupil(isz,prad)
+        oui = fits.getdata(model_dir + amplitude_abb +".fits")  # *roundpupil(dim_im,prad)
         moy = np.mean(oui[np.where(oui != 0)])
         amp = oui / moy
         amp1 = skimage.transform.rescale(amp,int(2 * prad / 148 * 400)/amp.shape[0],
                 preserve_range=True,anti_aliasing=True,multichannel=False)
-        ampfinal = np.zeros((isz, isz))
-        ampfinal[int(isz / 2 - len(amp1) / 2) +
-                 1:int(isz / 2 + len(amp1) / 2) + 1,
-                 int(isz / 2 - len(amp1) / 2) +
-                 1:int(isz / 2 + len(amp1) / 2) + 1, ] = amp1
-        ampfinal = (ampfinal) * instr.roundpupil(isz, prad - 1)
+        ampfinal = np.zeros((dim_im, dim_im))
+        ampfinal[int(dim_im / 2 - len(amp1) / 2) +
+                 1:int(dim_im / 2 + len(amp1) / 2) + 1,
+                 int(dim_im / 2 - len(amp1) / 2) +
+                 1:int(dim_im / 2 + len(amp1) / 2) + 1, ] = amp1
+        ampfinal = (ampfinal) * instr.roundpupil(dim_im, prad - 1)
         moy = np.mean(ampfinal[np.where(ampfinal != 0)])
         ampfinal = (ampfinal / moy - np.ones(
-            (isz, isz))) * instr.roundpupil(isz, prad - 1)  # /10
+            (dim_im, dim_im))) * instr.roundpupil(dim_im, prad - 1)  # /10
     else:
         ampfinal = 0
 
@@ -545,28 +545,28 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         pushactonDM = pushact
     else:
         print("Misregistration!")
-        pushactonDM = instr.creatingpushact(model_dir, isz, pdiam, prad, xy309,pitchDM=pitchDM,
+        pushactonDM = instr.creatingpushact(model_dir, dim_im, pdiam, prad, xy309,pitchDM=pitchDM,
             filename_actu309=filename_actu309, filename_grid_actu=filename_grid_actu,
             filename_actu_infl_fct=filename_actu_infl_fct,
             xerror=xerror,yerror=yerror,angerror=angerror,gausserror=gausserror
         )
 
     nbiter = len(modevector)
-    imagedetector = np.zeros((nbiter + 1, isz, isz))
-    phaseDM = np.zeros((nbiter + 1, isz, isz))
+    imagedetector = np.zeros((nbiter + 1, dim_im, dim_im))
+    phaseDM = np.zeros((nbiter + 1, dim_im, dim_im))
     meancontrast = np.zeros(nbiter + 1)
-    maskDHisz = wsc.creatingMaskDH(
-        isz,
+    maskDHdim = wsc.creatingMaskDH(
+        dim_im,
         "square",
-        choosepixDH=[element * isz / dim_sampl for element in choosepix])
+        choosepixDH=[element * dim_im / dim_sampl for element in choosepix])
     input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb)
     imagedetector[0] = (abs(instr.pupiltodetector(input_wavefront, coro,
             lyot_pup, perfect_coro=perfect_coro, perfect_entrance_pupil=perfect_entrance_pupil
         ) / squaremaxPSF)**2)
-    meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHisz != 0)])
+    meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHdim != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
-        photondetector = np.zeros((nbiter + 1, isz, isz))
+        photondetector = np.zeros((nbiter + 1, dim_im, dim_im))
         photondetector[0] = np.random.poisson(imagedetector[0] * contrast_to_photons)
 
     plt.ion()
@@ -629,7 +629,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
 
         apply_on_DM = (-gain * amplitudeEFC *
                        np.dot(solution1, pushactonDM.reshape(
-                           pushact.shape[0], isz * isz)).reshape(isz, isz) * 2 * np.pi *
+                           pushact.shape[0], dim_im * dim_im)).reshape(dim_im, dim_im) * 2 * np.pi *
                        1e-9 / wavelength)
         phaseDM[k + 1] = phaseDM[k] + apply_on_DM
         phase_abb = phase_abb + apply_on_DM
@@ -641,7 +641,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
                 perfect_entrance_pupil=perfect_entrance_pupil,
             ) / squaremaxPSF)**2)
         meancontrast[k + 1] = np.mean(
-            imagedetector[k + 1][np.where(maskDHisz != 0)])
+            imagedetector[k + 1][np.where(maskDHdim != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])
         if photon_noise == True:
             photondetector[k + 1] = np.random.poisson(imagedetector[k + 1] *

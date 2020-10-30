@@ -12,14 +12,14 @@ dtor = np.pi / 180.0  # degree to radian conversion factor
 rad2mas = 3.6e6 / dtor  # radian to milliarcsecond conversion factor
 
 
-def translationFFT(isz, a, b):
+def translationFFT(dim_im, a, b):
     """ --------------------------------------------------
-    Create a phase ramp of size (isz,isz) that can be used as follow
+    Create a phase ramp of size (dim_im,dim_im) that can be used as follow
     to shift one image by (a,b) pixels : shift_im = fft(im*exp(i phase ramp))
     
     Parameters
     ----------
-    isz : int
+    dim_im : int
         Size of the phase ramp (in pixels)
     a : float
         Shift desired in the x direction (in pixels)
@@ -32,19 +32,19 @@ def translationFFT(isz, a, b):
         Phase ramp
     -------------------------------------------------- """
     # Verify this function works
-    maska = np.linspace(-np.pi * a, np.pi * a, isz)
-    maskb = np.linspace(-np.pi * b, np.pi * b, isz)
+    maska = np.linspace(-np.pi * a, np.pi * a, dim_im)
+    maskb = np.linspace(-np.pi * b, np.pi * b, dim_im)
     xx, yy = np.meshgrid(maska, maskb)
     return np.exp(-1j * xx) * np.exp(-1j * yy)
 
 
-def FQPM(isz):
+def FQPM(dim_im):
     """ --------------------------------------------------
-    Create a perfect Four Quadrant Phase Mask coronagraph of size (isz,isz)
+    Create a perfect Four Quadrant Phase Mask coronagraph of size (dim_im,dim_im)
     
     Parameters
     ----------
-    isz : int
+    dim_im : int
         Size of the coronagraph (in pixels)
     
     Returns
@@ -52,23 +52,23 @@ def FQPM(isz):
     FQPM : 2D array
         Four quadrant phase mask coronagraph
     -------------------------------------------------- """
-    phase = np.zeros((isz, isz))
-    for i in np.arange(isz):
-        for j in np.arange(isz):
-            if i < isz / 2 and j < isz / 2:
+    phase = np.zeros((dim_im, dim_im))
+    for i in np.arange(dim_im):
+        for j in np.arange(dim_im):
+            if i < dim_im / 2 and j < dim_im / 2:
                 phase[i, j] = np.pi
-            if i >= isz / 2 and j >= isz / 2:
+            if i >= dim_im / 2 and j >= dim_im / 2:
                 phase[i, j] = np.pi
     return np.exp(1j * phase)
 
 
-def KnifeEdgeCoro(isz, position, shiftinldp, ld_p):
+def KnifeEdgeCoro(dim_im, position, shiftinldp, ld_p):
     """ --------------------------------------------------
-    Create a Knife edge coronagraph of size (isz,isz)
+    Create a Knife edge coronagraph of size (dim_im,dim_im)
     
     Parameters
     ----------
-    isz : int
+    dim_im : int
         Size of the coronagraph (in pixels)
     position : string
         Can be 'left', 'right', 'top' or 'bottom' to define the orientation of the coronagraph
@@ -82,30 +82,30 @@ def KnifeEdgeCoro(isz, position, shiftinldp, ld_p):
     shift(Knife) : 2D array
         Knife edge coronagraph, located at the four edges of the image
     -------------------------------------------------- """
-    Knife = np.zeros((isz, isz))
-    for i in np.arange(isz):
+    Knife = np.zeros((dim_im, dim_im))
+    for i in np.arange(dim_im):
         if position == "left":
-            if i > isz / 2 + shiftinldp * ld_p:
+            if i > dim_im / 2 + shiftinldp * ld_p:
                 Knife[:, i] = 1
         if position == "right":
-            if i < isz / 2 - shiftinldp * ld_p:
+            if i < dim_im / 2 - shiftinldp * ld_p:
                 Knife[:, i] = 1
         if position == "top":
-            if i > isz / 2 + shiftinldp * ld_p:
+            if i > dim_im / 2 + shiftinldp * ld_p:
                 Knife[i, :] = 1
         if position == "bottom":
-            if i < isz / 2 - shiftinldp * ld_p:
+            if i < dim_im / 2 - shiftinldp * ld_p:
                 Knife[i, :] = 1
     return np.fft.fftshift(Knife)
 
 
-def roundpupil(isz, prad1):
+def roundpupil(dim_im, prad1):
     """ --------------------------------------------------
     Create a circular pupil. The center of the pupil is located between 4 pixels.
     
     Parameters
     ----------
-    isz : int  
+    dim_im : int  
         Size of the image (in pixels)
     prad1 : float 
         Size of the pupil radius (in pixels)
@@ -116,10 +116,10 @@ def roundpupil(isz, prad1):
         Output circular pupil
     -------------------------------------------------- """
     xx, yy = np.meshgrid(
-        np.arange(isz) - (isz) / 2,
-        np.arange(isz) - (isz) / 2)
+        np.arange(dim_im) - (dim_im) / 2,
+        np.arange(dim_im) - (dim_im) / 2)
     rr = np.hypot(yy + 1 / 2, xx + 1 / 2)
-    pupilnormal = np.zeros((isz, isz))
+    pupilnormal = np.zeros((dim_im, dim_im))
     pupilnormal[rr <= prad1] = 1.0
     return pupilnormal
 
@@ -204,7 +204,7 @@ def pushact_function(which,
     Psivector : 2D array
         Pupil plane phase with the opd created by the poke of the desired actuator
     -------------------------------------------------- """
-    isz = len(actshapeinpupilresized)
+    dim_im = len(actshapeinpupilresized)
     xact = grilleact[0, which] + (xy309[0] - grilleact[0, 309])
     yact = grilleact[1, which] + (xy309[1] - grilleact[1, 309])
 
@@ -219,7 +219,7 @@ def pushact_function(which,
                                            (yact - xycent, xact - xycent))
 
         xo,yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
-        x, y = np.mgrid[0:isz, 0:isz]
+        x, y = np.mgrid[0:dim_im, 0:dim_im]
         xy = (x, y)
         Psivector = proc.twoD_Gaussian(xy, 1, 1 + gausserror, 1 + gausserror, xo,
                     yo, 0, 0, flatten=False)
@@ -228,7 +228,7 @@ def pushact_function(which,
     return Psivector
 
 
-def creatingpushact(model_dir, isz, pdiam,prad, xy309,pitchDM=0.3e-3,
+def creatingpushact(model_dir, dim_im, pdiam,prad, xy309,pitchDM=0.3e-3,
                     filename_actu309="", filename_grid_actu="Grid_actu.fits",
                     filename_actu_infl_fct="Actu_DM32_field=6x6pitch_pitch=22pix.fits",
                     xerror=0,yerror=0,angerror=0,gausserror=0):
@@ -257,9 +257,9 @@ def creatingpushact(model_dir, isz, pdiam,prad, xy309,pitchDM=0.3e-3,
     # TODO It may not work at the moment. Pour le faire
     if filename_actu309 != "":
         im309size = len(fits.getdata(model_dir + filename_actu309))
-        act309 = np.zeros((isz, isz))
-        act309[int(isz / 2 - im309size / 2):int(isz / 2 + im309size / 2),
-               int(isz / 2 - im309size / 2):int(isz / 2 + im309size / 2), ] = fits.getdata(
+        act309 = np.zeros((dim_im, dim_im))
+        act309[int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2),
+               int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2), ] = fits.getdata(
             model_dir + filename_actu309
         )
         y309, x309 = np.unravel_index(np.abs(act309).argmax(), act309.shape)
@@ -284,12 +284,12 @@ def creatingpushact(model_dir, isz, pdiam,prad, xy309,pitchDM=0.3e-3,
                                             (xycent - dx, xycent - dy))
 
     # Put the centered influence function inside a larger array (400x400)
-    actshapeinpupil = np.zeros((isz, isz))
+    actshapeinpupil = np.zeros((dim_im, dim_im))
     actshapeinpupil[
         0:len(resizeactshape),
         0:len(resizeactshape)] = resizeactshape / np.amax(resizeactshape)
 
-    pushact = np.zeros((grille.shape[1], isz, isz))
+    pushact = np.zeros((grille.shape[1], dim_im, dim_im))
     for i in np.arange(pushact.shape[0]):
         pushact[i] = pushact_function(i, grille, actshapeinpupil, xycent,
                                       xy309, xerror=xerror,yerror=yerror,angerror=angerror,
@@ -351,9 +351,9 @@ def createdifference(aberramp,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
     -------------------------------------------------- """
-    isz = len(entrancepupil)
-    Ikmoins = np.zeros((isz, isz))
-    Ikplus = np.zeros((isz, isz))
+    dim_im = len(entrancepupil)
+    Ikmoins = np.zeros((dim_im, dim_im))
+    Ikplus = np.zeros((dim_im, dim_im))
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
     squaremaxPSF = np.amax(PSF)
@@ -398,13 +398,13 @@ def createdifference(aberramp,
     return Difference
 
 
-def random_phase_map(isz, phaserms, rhoc, slope):
+def random_phase_map(dim_im, phaserms, rhoc, slope):
     """ --------------------------------------------------
     Create a random phase map, whose PSD decrease in f^(-slope)
     
     Parameters
     ----------
-    isz : integer
+    dim_im : integer
         Size of the generated phase map
     phaserms : float
         Level of aberration
@@ -418,12 +418,12 @@ def random_phase_map(isz, phaserms, rhoc, slope):
     phase : 2D array
         Static random phase map (or OPD) generated 
     -------------------------------------------------- """
-    xx, yy = np.meshgrid(np.arange(isz) - isz / 2, np.arange(isz) - isz / 2)
+    xx, yy = np.meshgrid(np.arange(dim_im) - dim_im / 2, np.arange(dim_im) - dim_im / 2)
     rho = np.hypot(yy, xx)
     PSD0 = 1
     PSD = PSD0 / (1 + (rho / rhoc)**slope)
     sqrtPSD = np.sqrt(2 * PSD)
-    randomphase = 2 * np.pi * (np.random.rand(isz, isz) - 0.5)
+    randomphase = 2 * np.pi * (np.random.rand(dim_im, dim_im) - 0.5)
     product = np.fft.fftshift(sqrtPSD * np.exp(1j * randomphase))
     phase = np.real(np.fft.ifft2(product))
     phase = phase / np.std(phase) * phaserms
