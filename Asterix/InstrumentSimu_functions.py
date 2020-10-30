@@ -35,8 +35,7 @@ def translationFFT(isz, a, b):
     maska = np.linspace(-np.pi * a, np.pi * a, isz)
     maskb = np.linspace(-np.pi * b, np.pi * b, isz)
     xx, yy = np.meshgrid(maska, maskb)
-    masktot = np.exp(-1j * xx) * np.exp(-1j * yy)
-    return masktot
+    return np.exp(-1j * xx) * np.exp(-1j * yy)
 
 
 def FQPM(isz):
@@ -60,9 +59,7 @@ def FQPM(isz):
                 phase[i, j] = np.pi
             if i >= isz / 2 and j >= isz / 2:
                 phase[i, j] = np.pi
-
-    FQPM = np.exp(1j * phase)
-    return FQPM
+    return np.exp(1j * phase)
 
 
 def KnifeEdgeCoro(isz, position, shiftinldp, ld_p):
@@ -155,24 +152,19 @@ def pupiltodetector(input_wavefront,
         Focal plane electric field created by 
         the input wavefront through the high-contrast instrument.
     -------------------------------------------------- """
-    isz = len(input_wavefront)
-    masktot = translationFFT(isz, 0.5, 0.5)
-    # Focale1
-    focal1end = np.fft.fftshift(input_wavefront * masktot)
+
+    maskshifthalfpix = translationFFT(len(input_wavefront), 0.5, 0.5)
+    # Focal plane 1
     if perfect_coro == True:
-        focal1end = focal1end - np.fft.fftshift(
-            perfect_entrance_pupil * masktot)
+        input_wavefront = input_wavefront - perfect_entrance_pupil
 
-    focal1end = np.fft.fft2(focal1end)
+    focal1end = np.fft.fft2(np.fft.fftshift(input_wavefront * maskshifthalfpix))
 
-    # Pupille2
-    pupil2end = focal1end * coro_mask
-    pupil2end = np.fft.ifft2(pupil2end)  # /shift(masktot)
+    # Lyot plane
+    pupil2end = np.fft.ifft2(focal1end * coro_mask)
 
-    # Intensite en sortie de Lyot
-    focal2end = pupil2end * np.fft.fftshift(lyot_mask)
-    focal2end = np.fft.fft2(focal2end)
-    focal2end = np.fft.fftshift(focal2end)
+    # Focal plane 2
+    focal2end = np.fft.fftshift(np.fft.fft2(pupil2end * np.fft.fftshift(lyot_mask)))
 
     return focal2end
 
@@ -213,25 +205,24 @@ def pushact_function(which,
         Pupil plane phase with the opd created by the poke of the desired actuator
     -------------------------------------------------- """
     isz = len(actshapeinpupilresized)
-    x309 = xy309[0]
-    y309 = xy309[1]
-    xact = grilleact[0, which] + (x309 - grilleact[0, 309])
-    yact = grilleact[1, which] + (y309 - grilleact[1, 309])
+    xact = grilleact[0, which] + (xy309[0] - grilleact[0, 309])
+    yact = grilleact[1, which] + (xy309[1] - grilleact[1, 309])
 
     if gausserror == 0:
         Psivector = nd.interpolation.shift(actshapeinpupilresized,
                 (yact - xycent + yerror, xact - xycent + xerror))
 
         if angerror != 0:
-                Psivector = proc.rotate_frame(Psivector, angerror, interpolation="nearest", cyx=None)
+                Psivector = nd.rotate(Psivector, angerror,order=5,cval=0)
     else:
         Psivector = nd.interpolation.shift(actshapeinpupilresized,
                                            (yact - xycent, xact - xycent))
+
+        xo,yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
         x, y = np.mgrid[0:isz, 0:isz]
         xy = (x, y)
-        xo,yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
-        Psivector = proc.twoD_Gaussian(xy, 1, 1 + gausserror, 1 + gausserror, xo, yo, 0)
-        Psivector = Psivector.reshape(isz,isz)
+        Psivector = proc.twoD_Gaussian(xy, 1, 1 + gausserror, 1 + gausserror, xo,
+                    yo, 0, 0, flatten=False)
     Psivector[np.where(Psivector < 1e-4)] = 0
 
     return Psivector
@@ -285,7 +276,9 @@ def creatingpushact(model_dir, isz, pdiam,prad, xy309,pitchDM=0.3e-3,
                                                multichannel=False)
 
     # Gauss2Dfit for centering the rescaled influence function
-    dx, dy = proc.gauss2Dfit(resizeactshape)
+    tmp = proc.gauss2Dfit(resizeactshape)
+    dx=tmp[3]
+    dy=tmp[4]
     xycent = len(resizeactshape) / 2
     resizeactshape = nd.interpolation.shift(resizeactshape,
                                             (xycent - dx, xycent - dy))
@@ -296,8 +289,8 @@ def creatingpushact(model_dir, isz, pdiam,prad, xy309,pitchDM=0.3e-3,
         0:len(resizeactshape),
         0:len(resizeactshape)] = resizeactshape / np.amax(resizeactshape)
 
-    pushact = np.zeros((1024, isz, isz))
-    for i in np.arange(1024):
+    pushact = np.zeros((grille.shape[1], isz, isz))
+    for i in np.arange(pushact.shape[0]):
         pushact[i] = pushact_function(i, grille, actshapeinpupil, xycent,
                                       xy309, xerror=xerror,yerror=yerror,angerror=angerror,
                                       gausserror=gausserror)

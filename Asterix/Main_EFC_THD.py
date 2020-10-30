@@ -8,16 +8,15 @@ from zipfile import ZipFile
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
-
-import cv2
+import skimage.transform
 
 from configobj import ConfigObj
-from validate import Validator
+# from validate import Validator
 
 import Asterix.processing_functions as proc
-import Asterix.fits_functions as fi
 import Asterix.WSC_functions as wsc
 import Asterix.InstrumentSimu_functions as instr
+import Asterix.fits_functions as AsFit
 
 __all__ = ["create_interaction_matrices", "correctionLoop"]
 
@@ -31,12 +30,10 @@ def create_interaction_matrices(parameter_file,
 
     ### CONFIGURATION FILE
     configspec_file = Asterixroot + os.path.sep + "Param_configspec.ini"
-    config = ConfigObj(parameter_file,
-                       configspec=configspec_file,
+    config = ConfigObj(parameter_file,configspec=configspec_file,
                        default_encoding="utf8")
-    vtor = Validator()
-    checks = config.validate(vtor,
-                             copy=True)  # copy=True for copying the comments
+    # vtor = Validator()
+    # checks = config.validate(vtor, copy=True)  # copy=True for copying the comments
 
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file +
@@ -49,14 +46,14 @@ def create_interaction_matrices(parameter_file,
     ### CONFIG
     Data_dir = config["Data_dir"]
 
-##################
-##################
+    ##################
+    ##################
     ### MODEL CONFIG
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
     #Image
     isz = modelconfig["isz"]                #image size on detector
-    dimimages = modelconfig["dimimages"]    #image size after binning
+    dim_sampl = modelconfig["dim_sampl"]    #image size after binning
 
     #Lambda over D in pixels
     wavelength = modelconfig["wavelength"]
@@ -83,8 +80,8 @@ def create_interaction_matrices(parameter_file,
     filename_grid_actu = modelconfig["filename_grid_actu"]
     filename_actu_infl_fct = modelconfig["filename_actu_infl_fct"]
 
-##################
-##################
+    ##################
+    ##################
     ### PW CONFIG
     PWconfig = config["PWconfig"]
     PWconfig.update(NewPWconfig)
@@ -93,8 +90,8 @@ def create_interaction_matrices(parameter_file,
     posprobes = [int(i) for i in posprobes]
     cut = PWconfig["cut"]
 
-##################
-##################
+    ##################
+    ##################
     ###EFC CONFIG
     EFCconfig = config["EFCconfig"]
     EFCconfig.update(NewEFCconfig)
@@ -108,13 +105,8 @@ def create_interaction_matrices(parameter_file,
 
     ##THEN DO
 
-    # model_dir = os.getcwd()+'/'+'Model/'
     model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
     
-    lyotrad = isz / 2 / science_sampling
-    prad = int(np.ceil(lyotrad*pdiam/lyotdiam))
-    lyotrad = int(np.ceil(lyotrad))
-
     if otherbasis == False:
         basistr = "actu"
     else:
@@ -135,8 +127,13 @@ def create_interaction_matrices(parameter_file,
         print("Creating directory " + Labview_dir + " ...")
         os.makedirs(Labview_dir)
 
+
+    lyotrad = isz / 2 / science_sampling
+    prad = int(np.ceil(lyotrad*pdiam/lyotdiam))
+    lyotrad = int(np.ceil(lyotrad))
+
     if creating_pushact == True:
-        pushact = instr.creatingpushact(model_dir, isz, pdiam, prad, xy309,pitchDM=pitchDM
+        pushact = instr.creatingpushact(model_dir, isz, pdiam, prad, xy309,pitchDM=pitchDM,
             filename_actu309=filename_actu309, filename_grid_actu=filename_grid_actu,
             filename_actu_infl_fct=filename_actu_infl_fct
         )
@@ -169,7 +166,7 @@ def create_interaction_matrices(parameter_file,
         lyot_pup = instr.roundpupil(isz, lyotrad)
 
     ####Calculating and Recording PW matrix
-    filePW = ("MatrixPW_" + str(dimimages) + "x" + str(dimimages) + "_" +
+    filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
               "_".join(map(str, posprobes)) + "act_" + str(int(amplitudePW)) +
               "nm_" + str(int(cut)) + "cutsvd")
     if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
@@ -179,7 +176,7 @@ def create_interaction_matrices(parameter_file,
         print("Recording " + filePW + " ...")
         vectoressai, showsvd = wsc.createvectorprobes(
             wavelength, entrancepupil, coro, lyot_pup, amplitudePW,
-            posprobes, pushact, dimimages, cut,
+            posprobes, pushact, dim_sampl, cut,
         )
         fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
@@ -190,16 +187,16 @@ def create_interaction_matrices(parameter_file,
             fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
 
     # Saving PW matrices in Labview directory
-    probes = np.zeros((len(posprobes), 1024), dtype=np.float32)
-    vectorPW = np.zeros((2, dimimages * dimimages * len(posprobes)),
+    probes = np.zeros((len(posprobes), pushact.shape[0]), dtype=np.float32)
+    vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
                         dtype=np.float32)
 
     for i in np.arange(len(posprobes)):
         probes[i, posprobes[i]] = amplitudePW / 17
-        vectorPW[0, i * dimimages * dimimages:(i + 1) * dimimages *
-                 dimimages] = vectoressai[:, 0, i].flatten()
-        vectorPW[1, i * dimimages * dimimages:(i + 1) * dimimages *
-                 dimimages] = vectoressai[:, 1, i].flatten()
+        vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
+                 dim_sampl] = vectoressai[:, 0, i].flatten()
+        vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
+                 dim_sampl] = vectoressai[:, 1, i].flatten()
     fits.writeto(Labview_dir + "Probes_EFC_default.fits",
                  probes, overwrite=True)
     fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
@@ -207,19 +204,21 @@ def create_interaction_matrices(parameter_file,
 
     ####Calculating and Recording EFC matrix
     print("TO SET ON LABVIEW: ",
-          str(dimimages / 2 + np.array(np.fft.fftshift(choosepix))))
+          str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
     # Creating WhichInPup?
     fileWhichInPup = "Whichactfor" + str(MinimumSurfaceRatioInThePupil)
+
     if os.path.exists(intermatrix_dir + fileWhichInPup + ".fits") == True:
         print("The matrix " + fileWhichInPup + " already exist")
         WhichInPupil = fits.getdata(intermatrix_dir + fileWhichInPup + ".fits")
     else:
         print("Recording" + fileWhichInPup + " ...")
+
         if otherbasis == False:
             WhichInPupil = wsc.creatingWhichinPupil(
                 pushact, entrancepupil, MinimumSurfaceRatioInThePupil)
         else:
-            WhichInPupil = np.arange(1024)
+            WhichInPupil = np.arange(pushact.shape[0])
         fits.writeto(intermatrix_dir + fileWhichInPup + ".fits", WhichInPupil)
 
     # Creating EFC matrix?
@@ -248,21 +247,21 @@ def create_interaction_matrices(parameter_file,
         else:
 
             # Creating MaskDH?
-            fileMaskDH = ("MaskDH_" + str(dimimages) + "x" + str(dimimages) +
+            fileMaskDH = ("MaskDH_" + str(dim_sampl) + "x" + str(dim_sampl) +
                           "_" + "_".join(map(str, choosepix)))
             if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
                 print("The matrix " + fileMaskDH + " already exist")
                 maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
             else:
                 print("Recording " + fileMaskDH + " ...")
-                maskDH = wsc.creatingMaskDH(dimimages, "square", choosepix)
-                # maskDH = wsc.creatingMaskDH(dimimages,'circle',inner=0 , outer=35 , xdecay= 8)
+                maskDH = wsc.creatingMaskDH(dim_sampl, "square", choosepix)
+                # maskDH = wsc.creatingMaskDH(dim_sampl,'circle',inner=0 , outer=35 , xdecay= 8)
                 fits.writeto(intermatrix_dir + fileMaskDH + ".fits", maskDH)
 
             # Creating Direct Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
             Gmatrix = wsc.creatingCorrectionmatrix(
-                entrancepupil, coro,lyot_pup, dimimages, wavelength, amplitudeEFC,
+                entrancepupil, coro,lyot_pup, dim_sampl, wavelength, amplitudeEFC,
                 pushact, maskDH, WhichInPupil, otherbasis=otherbasis, basisDM3=basisDM3,
             )
             fits.writeto(intermatrix_dir + fileDirectMatrix + ".fits", Gmatrix)
@@ -283,7 +282,7 @@ def create_interaction_matrices(parameter_file,
                     str(amplitudeEFC) + "nm_.png")
 
     # Save EFC matrix in Labview directory
-    EFCmatrix = np.zeros((invertGDH.shape[1], 1024), dtype=np.float32)
+    EFCmatrix = np.zeros((invertGDH.shape[1], pushact.shape[0]), dtype=np.float32)
     for i in np.arange(len(WhichInPupil)):
         EFCmatrix[:, WhichInPupil[i]] = invertGDH[i, :]
     fits.writeto(Labview_dir + "Matrix_control_EFC_DM3_default.fits",
@@ -301,8 +300,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     ### CONFIGURATION FILE
     configspec_file = Asterixroot + os.path.sep + "Param_configspec.ini"
     config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
-    vtor = Validator()
-    checks = config.validate(vtor, copy=True)  # copy=True for copying the comments
+    # vtor = Validator()
+    # checks = config.validate(vtor, copy=True)  # copy=True for copying the comments
 
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file + " cannot be found")
@@ -320,7 +319,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     modelconfig.update(NewMODELconfig)
    #Image
     isz = modelconfig["isz"]                #image size on detector
-    dimimages = modelconfig["dimimages"]    #image size after binning
+    dim_sampl = modelconfig["dim_sampl"]    #image size after binning
 
     #Lambda over D in pixels
     wavelength = modelconfig["wavelength"]
@@ -430,7 +429,6 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
 
     if otherbasis == True:
         basisDM3 = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
-        basisDM3 = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
     else:
         basisDM3 = 0
 
@@ -439,7 +437,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         ZipFile(model_dir + "PushActInPup"+str(int(isz))+".zip", "r").extractall(model_dir)
 
     pushact = fits.getdata(model_dir + "PushActInPup"+str(int(isz))+".fits")
-
+    
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
@@ -467,7 +465,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     ##Load matrices
     if (estimation == "PairWise" or estimation == "pairwise"
             or estimation == "PW" or estimation == "pw"):
-        filePW = ("MatrixPW_" + str(dimimages) + "x" + str(dimimages) + "_" +
+        filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
                   "_".join(map(str, posprobes)) + "act_" +
                   str(int(amplitudePW)) + "nm_" + str(int(cut)) + "cutsvd")
         if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
@@ -491,7 +489,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         print("Please create Direct matrix before correction")
         sys.exit()
 
-    fileMaskDH = ("MaskDH_" + str(dimimages) + "x" + str(dimimages) + "_" +
+    fileMaskDH = ("MaskDH_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
                   "_".join(map(str, choosepix)))
     if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
@@ -521,10 +519,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         oui = fits.getdata(model_dir + amplitude_abb +".fits")  # *roundpupil(isz,prad)
         moy = np.mean(oui[np.where(oui != 0)])
         amp = oui / moy
-        amp1 = cv2.resize(amp,
-            dsize=(int(2 * prad / 148 * 400), int(2 * prad / 148 * 400)),
-            interpolation=cv2.INTER_AREA,
-        )
+        amp1 = skimage.transform.rescale(amp,int(2 * prad / 148 * 400)/amp.shape[0],
+                preserve_range=True,anti_aliasing=True,multichannel=False)
         ampfinal = np.zeros((isz, isz))
         ampfinal[int(isz / 2 - len(amp1) / 2) +
                  1:int(isz / 2 + len(amp1) / 2) + 1,
@@ -562,7 +558,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     maskDHisz = wsc.creatingMaskDH(
         isz,
         "square",
-        choosepixDH=[element * isz / dimimages for element in choosepix])
+        choosepixDH=[element * isz / dim_sampl for element in choosepix])
     input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb)
     imagedetector[0] = (abs(instr.pupiltodetector(input_wavefront, coro,
             lyot_pup, perfect_coro=perfect_coro, perfect_entrance_pupil=perfect_entrance_pupil
@@ -584,7 +580,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
                 or estimation == "PW" or estimation == "pw"):
             Difference = instr.createdifference(
                 amplitude_abb, phase_abb, posprobes, pushactonDM, amplitudePW,
-                entrancepupil, coro, lyot_pup, PSF, dimimages, wavelength,
+                entrancepupil, coro, lyot_pup, PSF, dim_sampl, wavelength,
                 perfect_coro=perfect_coro,
                 perfect_entrance_pupil=perfect_entrance_pupil,
                 noise=photon_noise, numphot=nb_photons
@@ -597,7 +593,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
                 perfect_coro=perfect_coro,
                 perfect_entrance_pupil=perfect_entrance_pupil
             ) / squaremaxPSF)
-            resultatestimation = proc.resampling(resultatestimation, dimimages)
+            resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
         else:
             print("This estimation algorithm is not yet implemented")
@@ -613,7 +609,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
                 )[2]
 
             solution1 = wsc.solutionEFC(maskDH, resultatestimation, invertGDH,
-                                        WhichInPupil)
+                                        WhichInPupil,pushact.shape[0])
 
         if correction_algorithm == "EM":
 
@@ -625,15 +621,15 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
                 )[2]
 
             solution1 = wsc.solutionEM(maskDH, resultatestimation, invertM0, G,
-                                       WhichInPupil)
+                                       WhichInPupil,pushact.shape[0])
 
         if correction_algorithm == "steepest":
             solution1 = wsc.solutionSteepest(maskDH, resultatestimation, M0, G,
-                                             WhichInPupil)
+                                             WhichInPupil,pushact.shape[0])
 
         apply_on_DM = (-gain * amplitudeEFC *
                        np.dot(solution1, pushactonDM.reshape(
-                           1024, isz * isz)).reshape(isz, isz) * 2 * np.pi *
+                           pushact.shape[0], isz * isz)).reshape(isz, isz) * 2 * np.pi *
                        1e-9 / wavelength)
         phaseDM[k + 1] = phaseDM[k] + apply_on_DM
         phase_abb = phase_abb + apply_on_DM
@@ -661,7 +657,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     plt.show()
 
     ## SAVING...
-    header = fi.from_param_to_header(config)
+    header = AsFit.from_param_to_header(config)
     cut_phaseDM = np.zeros((nbiter + 1, 2 * prad, 2 * prad))
     for it in np.arange(nbiter + 1):
         cut_phaseDM[it] = proc.cropimage(phaseDM[it], 200, 200, 2 * prad)

@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import Asterix.InstrumentSimu_functions as instr
 import Asterix.processing_functions as proc
 
-
 def invertSVD(matrix_to_invert,
               cut,
               goal="e",
@@ -95,10 +94,9 @@ def createvectorprobes(wavelength, entrancepupil, coro_mask, lyot_mask,
     PWVector: 2D array, vector probe to be multiplied by the image difference matrix in order to retrieve the focal plane electric field
     SVD: 2D array, map of the inverse singular values for each pixels and before regularization
     -------------------------------------------------- """
-    isz = len(pushact[0])
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimimages, dimimages), dtype=complex)
-    probephase = np.zeros((numprobe, isz, isz))
+    probephase = np.zeros((numprobe, pushact.shape[1], pushact.shape[2]))
     matrix = np.zeros((numprobe, 2))
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
@@ -110,11 +108,8 @@ def createvectorprobes(wavelength, entrancepupil, coro_mask, lyot_mask,
         probephase[k] = 2 * np.pi * (probephase[k]) * 1e-9 / wavelength
         inputwavefront = entrancepupil * (1 + 1j * probephase[k])
         deltapsikbis = (instr.pupiltodetector(
-            inputwavefront,
-            coro_mask,
-            lyot_mask,
-            perfect_coro=True,
-            perfect_entrance_pupil=entrancepupil,
+            inputwavefront, coro_mask, lyot_mask, perfect_coro=True,
+            perfect_entrance_pupil=entrancepupil
         ) / squaremaxPSF)
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
@@ -152,7 +147,7 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     WhichInPupil: 1D array, index of all the actuators located inside the pupil
     -------------------------------------------------- """
     WhichInPupil = []
-    for i in np.arange(int(1024)):
+    for i in np.arange(pushact.shape[0]):
         Psivector = pushact[i]
         cut = cutinpupil * np.sum(Psivector)
         if np.sum(Psivector * entrancepupil) > cut:
@@ -162,12 +157,8 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     return WhichInPupil
 
 
-def creatingMaskDH(dimimages,
-                   shape,
-                   choosepixDH=[0, 0, 0, 0],
-                   inner=0,
-                   outer=0,
-                   xdecay=0):
+def creatingMaskDH(dimimages, shape, choosepixDH=[0, 0, 0, 0], inner=0,
+                   outer=0, xdecay=0):
     """ --------------------------------------------------
     Create a binary mask.
     
@@ -202,17 +193,9 @@ def creatingMaskDH(dimimages,
     return maskDH
 
 
-def creatingCorrectionmatrix(entrancepupil,
-                             coro_mask,
-                             lyot_mask,
-                             dimimages,
-                             wavelength,
-                             amplitude,
-                             pushact,
-                             mask,
-                             Whichact,
-                             otherbasis=False,
-                             basisDM3=0):
+def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
+                             dimimages, wavelength, amplitude, pushact,
+                             mask, Whichact, otherbasis=False, basisDM3=0):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
     
@@ -239,7 +222,9 @@ def creatingCorrectionmatrix(entrancepupil,
         nb_fct = basisDM3.shape[0]  # number of functions in the basis
         tmp = pushact.reshape(pushact.shape[0],
                               pushact.shape[1] * pushact.shape[2])
-        bas_fct = np.dot(basisDM3, tmp).reshape(nb_fct, pushact.shape[1],
+        # bas_fct = np.dot(basisDM3, tmp).reshape(nb_fct, pushact.shape[1],
+        #                                         pushact.shape[2])
+        bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
                                                 pushact.shape[2])
     else:
         bas_fct = np.array([pushact[ind] for ind in Whichact])
@@ -272,7 +257,7 @@ def creatingCorrectionmatrix(entrancepupil,
     return Gmatrixbis
 
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil):
+def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
@@ -282,23 +267,25 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil):
     Result_Estimate: 2D array can be complex, focal plane electric field
     inversed_jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
     WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
-    
+    nbDMactu:number of DM actuators
+
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
     -------------------------------------------------- """
+
     Eab = np.zeros(2 * int(np.sum(mask)))
     Resultatbis = Result_Estimate[np.where(mask == 1)]
     Eab[0:int(np.sum(mask))] = np.real(Resultatbis).flatten()
     Eab[int(np.sum(mask)):] = np.imag(Resultatbis).flatten()
     cool = np.dot(inversed_jacobian, Eab)
 
-    solution = np.zeros(1024)
+    solution = np.zeros(nbDMactu)
     solution[WhichInPupil] = cool
     return solution
 
 
-def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil):
+def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
@@ -309,7 +296,8 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil):
     Hessian_Matrix: 2D array , Hessian matrix of the DH energy
     Jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
     WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
-    
+    nbDMactu:number of DM actuators
+
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -321,13 +309,13 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil):
                          Resultatbis)).flatten()
     cool = np.dot(Hessian_Matrix, Eab)
 
-    solution = np.zeros(1024)
+    solution = np.zeros(nbDMactu)
     solution[WhichInPupil] = cool
     return solution
 
 
 def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
-                     WhichInPupil):
+                     WhichInPupil,nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
@@ -338,7 +326,8 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     Hessian_Matrix: 2D array , Hessian matrix of the DH energy
     Jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
     WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
-    
+    nbDMactu:number of DM actuators
+
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -352,7 +341,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     # cool=2*(np.dot(M0,sol)+np.real(np.dot(np.transpose(np.conjugate(G)),Resultatbis))).flatten()
     cool = pas * 2 * Eab
 
-    solution = np.zeros(1024)
+    solution = np.zeros(nbDMactu)
     solution[WhichInPupil] = cool
     return solution
 

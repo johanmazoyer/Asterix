@@ -64,7 +64,6 @@ from astropy.io import fits
 #     # return fluxmetre
 #     return fits.getval(fitspath, "FLUX_W")
 
-
 def from_param_to_header(config):
     """ --------------------------------------------------
     Convert ConfigObj parameters to fits header type list
@@ -83,3 +82,4 @@ def from_param_to_header(config):
         for scalar in config[str(sect)].scalars:
             header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
     return header
+
