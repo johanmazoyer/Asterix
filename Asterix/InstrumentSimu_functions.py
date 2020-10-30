@@ -11,32 +11,6 @@ import Asterix.processing_functions as proc
 dtor = np.pi / 180.0  # degree to radian conversion factor
 rad2mas = 3.6e6 / dtor  # radian to milliarcsecond conversion factor
 
-
-def shift_phase_ramp(dim_im, a, b):
-    """ --------------------------------------------------
-    Create a phase ramp of size (dim_im,dim_im) that can be used as follow
-    to shift one image by (a,b) pixels : shift_im = fft(im*exp(i phase ramp))
-    
-    Parameters
-    ----------
-    dim_im : int
-        Size of the phase ramp (in pixels)
-    a : float
-        Shift desired in the x direction (in pixels)
-    b : float
-        Shift desired in the y direction (in pixels)
-    
-    Returns
-    ------
-    masktot : 2D array
-        Phase ramp
-    -------------------------------------------------- """
-    # Verify this function works
-    maska = np.linspace(-np.pi * a, np.pi * a, dim_im)
-    maskb = np.linspace(-np.pi * b, np.pi * b, dim_im)
-    xx, yy = np.meshgrid(maska, maskb)
-    return np.exp(-1j * xx) * np.exp(-1j * yy)
-
 ##############################################
 ##############################################
 ### CORONAGRAPHS
@@ -138,8 +112,9 @@ def pupiltodetector(input_wavefront, coro_mask, lyot_mask,
                     perfect_coro=False,
                     perfect_entrance_pupil=0):  # aberrationphase,prad1,prad2
     """ --------------------------------------------------
-    Propagate a wavefront through a high-contrast imaging instrument, from pupil plane to focal plane.
-    The image is then cropped and resampled.
+    Propagate the electric field through a high-contrast imaging instrument,
+    from pupil plane to focal plane.
+    The output is cropped and resampled.
     
     Parameters
     ----------
@@ -184,8 +159,8 @@ def pushact_function(which, grilleact, actshapeinpupilresized,
                      xycent, xy309,
                      xerror=0,yerror=0,angerror=0,gausserror=0):
     """ --------------------------------------------------
-    Push the desired DM actuator in the pupil
-    
+    Phase map induced in the DM plane for one pushed actuator
+
     Parameters
     ----------
     which : int 
@@ -241,8 +216,8 @@ def creatingpushact(model_dir, dim_im, pdiam,prad, xy309,pitchDM=0.3e-3,
                     filename_actu_infl_fct="Actu_DM32_field=6x6pitch_pitch=22pix.fits",
                     xerror=0,yerror=0,angerror=0,gausserror=0):
     """ --------------------------------------------------
-    Push the desired DM actuator in the pupil
-    
+    Phase map induced in the DM plane for each actuator
+
     Parameters
     ----------
     model_dir :
@@ -313,7 +288,8 @@ def createdifference(aberramp, aberrphase, posprobes, pushact, amplitude,
                      wavelength, perfect_coro=False,
                      perfect_entrance_pupil=0, noise=False, numphot=1e30):
     """ --------------------------------------------------
-    Simulate the acquisition of probe images (actuator pokes) and create their differences
+    Simulate the acquisition of probe images using Pair-wise
+    and calculate the difference of images [I(+probe) - I(-probe)]
     
     Parameters
     ----------
@@ -395,6 +371,31 @@ def createdifference(aberramp, aberrphase, posprobes, pushact, amplitude,
 ##############################################
 ##############################################
 ### Phase screen
+
+def shift_phase_ramp(dim_im, a, b):
+    """ --------------------------------------------------
+    Create a phase ramp of size (dim_im,dim_im) that can be used as follow
+    to shift one image by (a,b) pixels : shift_im = fft(im*exp(i phase ramp))
+    
+    Parameters
+    ----------
+    dim_im : int
+        Size of the phase ramp (in pixels)
+    a : float
+        Shift desired in the x direction (in pixels)
+    b : float
+        Shift desired in the y direction (in pixels)
+    
+    Returns
+    ------
+    masktot : 2D array
+        Phase ramp
+    -------------------------------------------------- """
+    # Verify this function works
+    maska = np.linspace(-np.pi * a, np.pi * a, dim_im)
+    maskb = np.linspace(-np.pi * b, np.pi * b, dim_im)
+    xx, yy = np.meshgrid(maska, maskb)
+    return np.exp(-1j * xx) * np.exp(-1j * yy)
 
 def random_phase_map(dim_im, phaserms, rhoc, slope):
     """ --------------------------------------------------

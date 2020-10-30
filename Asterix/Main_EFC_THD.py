@@ -69,6 +69,7 @@ def create_interaction_matrices(parameter_file,
     coronagraph = modelconfig["coronagraph"]
     coro_position = modelconfig["coro_position"]
     knife_coro_offset = modelconfig["knife_coro_offset"]
+    err_fqpm = modelconfig["err_fqpm"]
 
     #DM model
     pitchDM=modelconfig["pitchDM"]
@@ -112,6 +113,7 @@ def create_interaction_matrices(parameter_file,
     else:
         basistr = "fourier"
 
+    # Directories for saving data
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" + coronagraph + "/" +
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
@@ -127,11 +129,12 @@ def create_interaction_matrices(parameter_file,
         print("Creating directory " + Labview_dir + " ...")
         os.makedirs(Labview_dir)
 
-
+    # Pupil and Lyot radii in pixels
     lyotrad = dim_im / 2 / science_sampling
     prad = int(np.ceil(lyotrad*pdiam/lyotdiam))
     lyotrad = int(np.ceil(lyotrad))
 
+    # DM influence functions
     if creating_pushact == True:
         pushact = instr.creatingpushact(model_dir, dim_im, pdiam, prad, xy309,pitchDM=pitchDM,
             filename_actu309=filename_actu309, filename_grid_actu=filename_grid_actu,
@@ -149,7 +152,7 @@ def create_interaction_matrices(parameter_file,
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
-        coro = fits.getdata(model_dir + "FQPM.fits")
+        coro = instr.FQPM(dim_im,err=err_fqpm)
     elif coronagraph == "knife":
         coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
             science_sampling * lyotdiam / pdiam
@@ -337,6 +340,7 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     coronagraph = modelconfig["coronagraph"]
     coro_position = modelconfig["coro_position"]
     knife_coro_offset = modelconfig["knife_coro_offset"]
+    err_fqpm = modelconfig["err_fqpm"]
 
     #DM model
     pitchDM=modelconfig["pitchDM"]
@@ -443,8 +447,11 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
-        coro = fits.getdata(model_dir + "FQPM.fits")
-        perfect_coro = True
+        coro = instr.FQPM(dim_im,err=err_fqpm)
+        if err_fqpm ==0:
+            perfect_coro = True
+        else:
+            perfect_coro = False
     elif coronagraph == "knife":
         coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset, science_sampling * lyotdiam / pdiam)
         perfect_coro = False
