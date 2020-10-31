@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import Asterix.InstrumentSimu_functions as instr
 import Asterix.processing_functions as proc
 
+
 def invertSVD(matrix_to_invert,
               cut,
               goal="e",
@@ -107,10 +108,13 @@ def createvectorprobes(wavelength, entrancepupil, coro_mask, lyot_mask,
         probephase[k] = amplitude * pushact[i]
         probephase[k] = 2 * np.pi * (probephase[k]) * 1e-9 / wavelength
         inputwavefront = entrancepupil * (1 + 1j * probephase[k])
-        deltapsikbis = (instr.pupiltodetector(
-            inputwavefront, coro_mask, lyot_mask, perfect_coro=True,
-            perfect_entrance_pupil=entrancepupil
-        ) / np.square(maxPSF))
+        deltapsikbis = (
+            instr.pupiltodetector(inputwavefront,
+                                  coro_mask,
+                                  lyot_mask,
+                                  perfect_coro=True,
+                                  perfect_entrance_pupil=entrancepupil) /
+            np.square(maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -199,15 +203,28 @@ def creatingMaskDH(dimimages, shape, choosepixDH=[8, 35, -35, 35], circ_rad = [8
     return maskDH
 
 
-def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
-                             dimimages, wavelength, amplitude, pushact,
-                             mask, Whichact, maxPSF, otherbasis=False, basisDM3=0):
+def creatingCorrectionmatrix(entrancepupil,
+                             amplitude_abb,
+                             phase_abb,
+                             coro_mask,
+                             lyot_mask,
+                             dimimages,
+                             wavelength,
+                             amplitude,
+                             pushact,
+                             mask,
+                             Whichact,
+                             maxPSF,
+                             otherbasis=False,
+                             basisDM3=0):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
     
     Parameters:
     ----------
     entrancepupil: 2D-array, entrance pupil shape
+    amplitude_abb: 2D-array, amplitude aberration in the first pupil plane
+    phase_abb: 2D-array, phase aberration in the first pupil plane
     coro_mask: 2D array, can be complex. coronagraphic mask
     lyot_mask: 2D array, lyot mask
     dimimages: int, size of the output image after resampling in pixels
@@ -216,7 +233,6 @@ def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
     pushact: 3D-array, opd created by the pokes of all actuators in the DM
     mask: 2D array, binary mask whose pixel=1 will be taken into account
     Whichact: 1D array, index of the actuators taken into account to create the jacobian matrix
-    maxPSF: maximum of the PSF image (intensity)
     otherbasis:
     basisDM3:
     
@@ -229,14 +245,11 @@ def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
         nb_fct = basisDM3.shape[0]  # number of functions in the basis
         tmp = pushact.reshape(pushact.shape[0],
                               pushact.shape[1] * pushact.shape[2])
-        # bas_fct = np.dot(basisDM3, tmp).reshape(nb_fct, pushact.shape[1],
-        #                                         pushact.shape[2])
         bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
-                                                pushact.shape[2])
+                                         pushact.shape[2])
     else:
         bas_fct = np.array([pushact[ind] for ind in Whichact])
         nb_fct = len(Whichact)
-
     print("Start EFC")
     Gmatrixbis = np.zeros((2 * int(np.sum(mask)), nb_fct))
     k = 0
@@ -245,12 +258,13 @@ def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
             print(i)
         Psivector = amplitude * bas_fct[i]
         Psivector = 2 * np.pi * (Psivector) * 1e-9 / wavelength
-        inputwavefront = entrancepupil * (1 + 1j * Psivector)
+        inputwavefront = entrancepupil * (1 + amplitude_abb) * np.exp(
+            1j * phase_abb) * 1j * Psivector
         Gvector = (instr.pupiltodetector(
             inputwavefront,
             coro_mask,
             lyot_mask,
-            perfect_coro=True,
+            perfect_coro=False,
             perfect_entrance_pupil=entrancepupil,
         ) / np.square(maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
@@ -263,7 +277,8 @@ def creatingCorrectionmatrix(entrancepupil, coro_mask, lyot_mask,
     return Gmatrixbis
 
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,nbDMactu):
+def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
+                nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
@@ -291,7 +306,8 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,nbDMactu)
     return solution
 
 
-def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,nbDMactu):
+def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
+               nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
@@ -321,7 +337,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,nbD
 
 
 def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
-                     WhichInPupil,nbDMactu):
+                     WhichInPupil, nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     

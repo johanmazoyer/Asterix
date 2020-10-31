@@ -29,5 +29,5 @@ setup(
         'Programming Language :: Python :: 3.6',
         ],
     keywords='KLIP PSF Subtraction Exoplanets Astronomy',
-    install_requires=['numpy', 'scipy', 'astropy', 'matplotlib','scikit-image','opencv-python','configobj']
+    install_requires=['numpy', 'scipy', 'astropy', 'matplotlib','scikit-image','configobj']
     )

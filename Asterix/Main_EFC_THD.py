@@ -33,10 +33,12 @@ def create_interaction_matrices(parameter_file,
 
     ### CONFIGURATION FILE
     configspec_file = Asterixroot + os.path.sep + "Param_configspec.ini"
-    config = ConfigObj(parameter_file,configspec=configspec_file,
+    config = ConfigObj(parameter_file,
+                       configspec=configspec_file,
                        default_encoding="utf8")
     vtor = Validator()
-    checks = config.validate(vtor, copy=True)  # copy=True for copying the comments
+    checks = config.validate(vtor, copy=True)
+    # copy=True for copying the comments
 
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file +
@@ -59,8 +61,8 @@ def create_interaction_matrices(parameter_file,
     onbench = modelconfig["onbench"]
 
     #Image
-    dim_im = modelconfig["dim_im"]                #image size on detector
-    dim_sampl = modelconfig["dim_sampl"]    #image size after binning
+    dim_im = modelconfig["dim_im"]  #image size on detector
+    dim_sampl = modelconfig["dim_sampl"]  #image size after binning
 
     #Lambda over D in pixels
     wavelength = modelconfig["wavelength"]
@@ -79,11 +81,11 @@ def create_interaction_matrices(parameter_file,
     err_fqpm = modelconfig["err_fqpm"]
 
     #DM model
-    pitchDM=modelconfig["pitchDM"]
+    pitchDM = modelconfig["pitchDM"]
     creating_pushact = modelconfig["creating_pushact"]
     x309 = modelconfig["x309"]
-    y309 = modelconfig["y309"]    
-    xy309 = [x309,y309]
+    y309 = modelconfig["y309"]
+    xy309 = [x309, y309]
     filename_actu309 = modelconfig["filename_actu309"]
     filename_grid_actu = modelconfig["filename_grid_actu"]
     filename_actu_infl_fct = modelconfig["filename_actu_infl_fct"]
@@ -119,7 +121,7 @@ def create_interaction_matrices(parameter_file,
     ##THEN DO
 
     model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
-    
+
     if otherbasis == False:
         basistr = "actu"
     else:
@@ -130,7 +132,8 @@ def create_interaction_matrices(parameter_file,
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
                        str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
-                       str(round(science_sampling, 2)) + "/basis_" + basistr + "/")
+                       str(round(science_sampling, 2)) + "/basis_" + basistr +
+                       "/")
 
     if not os.path.exists(intermatrix_dir):
         print("Creating directory " + intermatrix_dir + " ...")
@@ -144,7 +147,7 @@ def create_interaction_matrices(parameter_file,
 
     # Pupil and Lyot radii in pixels
     lyotrad = dim_im / 2 / science_sampling
-    prad = int(np.ceil(lyotrad*pdiam/lyotdiam))
+    prad = int(np.ceil(lyotrad * pdiam / lyotdiam))
     lyotrad = int(np.ceil(lyotrad))
 
     # DM influence functions
@@ -156,12 +159,14 @@ def create_interaction_matrices(parameter_file,
         )
         fits.writeto(model_dir + "PushActInPup"+str(int(dim_im))+".fits", pushact,overwrite=True)
     else:
-        if os.path.exists(model_dir + "PushActInPup"+str(int(dim_im))+".fits") == False:
+        if os.path.exists(model_dir + "PushActInPup" + str(int(dim_im)) +
+                          ".fits") == False:
             print("Extracting data from zip file...")
-            ZipFile(model_dir + "PushActInPup"+str(int(dim_im))+".zip",
+            ZipFile(model_dir + "PushActInPup" + str(int(dim_im)) + ".zip",
                     "r").extractall(model_dir)
 
-        pushact = fits.getdata(model_dir + "PushActInPup"+str(int(dim_im))+".fits")
+        pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
+                               ".fits")
 
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
@@ -169,8 +174,7 @@ def create_interaction_matrices(parameter_file,
         coro = instr.FQPM(dim_im,err=err_fqpm)
     elif coronagraph == "knife":
         coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
-            science_sampling * lyotdiam / pdiam
-        )
+                                   science_sampling * lyotdiam / pdiam)
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
         coro = np.exp(1j * phasevortex)
@@ -298,20 +302,38 @@ def create_interaction_matrices(parameter_file,
 
             # Creating EFC Interaction Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
-            maxPSF = np.amax(np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_pup))**2)
+            maxPSF = np.amax(
+                np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_pup))**2)
 
             Gmatrix = wsc.creatingCorrectionmatrix(
-                entrancepupil, coro,lyot_pup, dim_sampl, wavelength, amplitudeEFC,
-                pushact, maskDH, WhichInPupil, maxPSF, otherbasis=otherbasis, basisDM3=basisDM3,
+                entrancepupil,
+                0,
+                0,
+                coro,
+                lyot_pup,
+                dim_sampl,
+                wavelength,
+                amplitudeEFC,
+                pushact,
+                maskDH,
+                WhichInPupil,
+                maxPSF,
+                otherbasis=otherbasis,
+                basisDM3=basisDM3,
             )
+
             fits.writeto(intermatrix_dir + fileDirectMatrix + ".fits", Gmatrix)
 
         # Calculating and recording EFC Control Matrix
         print("Recording " + fileEFCMatrix + " ...")
         SVD, SVD_trunc, invertGDH = wsc.invertSVD(
-            Gmatrix, Nbmodes, goal="c", regul=regularization, otherbasis=otherbasis,
-            basisDM3=basisDM3, intermatrix_dir=intermatrix_dir
-        )
+            Gmatrix,
+            Nbmodes,
+            goal="c",
+            regul=regularization,
+            otherbasis=otherbasis,
+            basisDM3=basisDM3,
+            intermatrix_dir=intermatrix_dir)
         fits.writeto(intermatrix_dir + fileEFCMatrix + ".fits", invertGDH)
 
         plt.clf()
@@ -341,29 +363,37 @@ def create_interaction_matrices(parameter_file,
 #######################################################
 ######## Simulation of a correction loop
 
-def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
-                   NewEFCconfig={}, NewSIMUconfig={}):
+def correctionLoop(parameter_file,
+                   NewMODELconfig={},
+                   NewPWconfig={},
+                   NewEFCconfig={},
+                   NewSIMUconfig={}):
 
     Asterixroot = os.path.dirname(os.path.realpath(__file__))
 
     ### CONFIGURATION FILE
     configspec_file = Asterixroot + os.path.sep + "Param_configspec.ini"
-    config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
+    config = ConfigObj(parameter_file,
+                       configspec=configspec_file,
+                       default_encoding="utf8")
     vtor = Validator()
-    checks = config.validate(vtor, copy=True)  # copy=True for copying the comments
+    checks = config.validate(vtor, copy=True)
+    # copy=True for copying the comments
 
     if not os.path.exists(parameter_file):
-        raise Exception("The parameter file " + parameter_file + " cannot be found")
+        raise Exception("The parameter file " + parameter_file +
+                        " cannot be found")
 
     if not os.path.exists(configspec_file):
-        raise Exception("The parameter config file " + configspec_file +" cannot be found")
+        raise Exception("The parameter config file " + configspec_file +
+                        " cannot be found")
 
     ### CONFIG
     Data_dir = config["Data_dir"]
 
-##################
-##################
-   ### MODEL CONFIG
+    ##################
+    ##################
+    ### MODEL CONFIG
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
     
@@ -391,16 +421,16 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     err_fqpm = modelconfig["err_fqpm"]
 
     #DM model
-    pitchDM=modelconfig["pitchDM"]
+    pitchDM = modelconfig["pitchDM"]
     x309 = modelconfig["x309"]
-    y309 = modelconfig["y309"]    
-    xy309 = [x309,y309]
+    y309 = modelconfig["y309"]
+    xy309 = [x309, y309]
     filename_actu309 = modelconfig["filename_actu309"]
     filename_grid_actu = modelconfig["filename_grid_actu"]
     filename_actu_infl_fct = modelconfig["filename_actu_infl_fct"]
 
-##################
-##################
+    ##################
+    ##################
     ### PW CONFIG
     PWconfig = config["PWconfig"]
     PWconfig.update(NewPWconfig)
@@ -409,8 +439,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     posprobes = [int(i) for i in posprobes]
     cut = PWconfig["cut"]
 
-##################
-##################
+    ##################
+    ##################
     ###EFC CONFIG
     EFCconfig = config["EFCconfig"]
     EFCconfig.update(NewEFCconfig)
@@ -426,8 +456,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
 
-##################
-##################
+    ##################
+    ##################
     ###SIMU CONFIG
     SIMUconfig = config["SIMUconfig"]
     SIMUconfig.update(NewSIMUconfig)
@@ -443,10 +473,14 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
     correction_algorithm = SIMUconfig["correction_algorithm"]
+    Linearization = SIMUconfig["Linearization"]
     Nbiter_corr = SIMUconfig["Nbiter_corr"]
     Nbiter_corr = [int(i) for i in Nbiter_corr]
     Nbmode_corr = SIMUconfig["Nbmode_corr"]
     Nbmode_corr = [int(i) for i in Nbmode_corr]
+    Linesearch = SIMUconfig["Linesearch"]
+    Linesearchmode = SIMUconfig["Linesearchmode"]
+    Linesearchmode = [int(i) for i in Linesearchmode]
     gain = SIMUconfig["gain"]
     xerror = SIMUconfig["xerror"]
     yerror = SIMUconfig["yerror"]
@@ -484,7 +518,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
                        str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
-                       str(round(science_sampling, 2)) + "/basis_" + basistr + "/")
+                       str(round(science_sampling, 2)) + "/basis_" + basistr +
+                       "/")
 
     if otherbasis == True:
         basisDM3 = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
@@ -494,7 +529,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
 ## DM influence functions
     if os.path.exists(model_dir + "PushActInPup"+str(int(dim_im))+".fits") == False:
         print("Extracting data from zip file...")
-        ZipFile(model_dir + "PushActInPup"+str(int(dim_im))+".zip", "r").extractall(model_dir)
+        ZipFile(model_dir + "PushActInPup" + str(int(dim_im)) + ".zip",
+                "r").extractall(model_dir)
 
     pushact = fits.getdata(model_dir + "PushActInPup"+str(int(dim_im))+".fits")
     
@@ -507,7 +543,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         else:
             perfect_coro = False
     elif coronagraph == "knife":
-        coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset, science_sampling * lyotdiam / pdiam)
+        coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
+                                   science_sampling * lyotdiam / pdiam)
         perfect_coro = False
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
@@ -590,7 +627,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
 ## TODO Load aberration maps (A checker, Amplitude sans doute a refaire proprement!!!)
     if set_phase_abb == True:
         if set_random_phase == True:
-            phase = instr.random_phase_map(dim_im, phaserms, rhoc_phase, slope_phase)
+            phase = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
+                                           slope_phase)
         else:
             phase = fits.getdata(model_dir + phase_abb + ".fits")
 
@@ -599,11 +637,16 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         phase = 0
 
     if set_amplitude_abb == True:
-        oui = fits.getdata(model_dir + amplitude_abb +".fits")  # *roundpupil(dim_im,prad)
+        oui = fits.getdata(model_dir + amplitude_abb +
+                           ".fits")  # *roundpupil(dim_im,prad)
         moy = np.mean(oui[np.where(oui != 0)])
         amp = oui / moy
-        amp1 = skimage.transform.rescale(amp,int(2 * prad / 148 * 400)/amp.shape[0],
-                preserve_range=True,anti_aliasing=True,multichannel=False)
+        amp1 = skimage.transform.rescale(amp,
+                                         int(2 * prad / 148 * 400) /
+                                         amp.shape[0],
+                                         preserve_range=True,
+                                         anti_aliasing=True,
+                                         multichannel=False)
         ampfinal = np.zeros((dim_im, dim_im))
         ampfinal[int(dim_im / 2 - len(amp1) / 2) +
                  1:int(dim_im / 2 + len(amp1) / 2) + 1,
@@ -621,18 +664,27 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
 
 ## To convert in photon flux
     contrast_to_photons = (np.sum(entrancepupil) / np.sum(lyot_pup) * nb_photons *
-                           maxPSF / np.sum(PSF))#**2)
+                           maxPSF / np.sum(PSF))
 
 ## Adding error on the DM model?
     if xerror == 0 and yerror == 0 and angerror == 0 and gausserror == 0:
         pushactonDM = pushact
     else:
         print("Misregistration!")
-        pushactonDM = instr.creatingpushact(model_dir, dim_im, pdiam, prad, xy309,pitchDM=pitchDM,
-            filename_actu309=filename_actu309, filename_grid_actu=filename_grid_actu,
+        pushactonDM = instr.creatingpushact(
+            model_dir,
+            dim_im,
+            pdiam,
+            prad,
+            xy309,
+            pitchDM=pitchDM,
+            filename_actu309=filename_actu309,
+            filename_grid_actu=filename_grid_actu,
             filename_actu_infl_fct=filename_actu_infl_fct,
-            xerror=xerror,yerror=yerror,angerror=angerror,gausserror=gausserror
-        )
+            xerror=xerror,
+            yerror=yerror,
+            angerror=angerror,
+            gausserror=gausserror)
 
 ## Correction loop
     nbiter = len(modevector)
@@ -651,7 +703,8 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
         photondetector = np.zeros((nbiter + 1, dim_im, dim_im))
-        photondetector[0] = np.random.poisson(imagedetector[0] * contrast_to_photons)
+        photondetector[0] = np.random.poisson(imagedetector[0] *
+                                              contrast_to_photons)
 
     plt.ion()
     plt.figure()
@@ -663,20 +716,31 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         if (estimation == "PairWise" or estimation == "pairwise"
                 or estimation == "PW" or estimation == "pw"):
             Difference = instr.createdifference(
-                amplitude_abb, phase_abb, posprobes, pushactonDM, amplitudePW,
-                entrancepupil, coro, lyot_pup, PSF, dim_sampl, wavelength,
+                amplitude_abb,
+                phase_abb,
+                posprobes,
+                pushactonDM,
+                amplitudePW,
+                entrancepupil,
+                coro,
+                lyot_pup,
+                PSF,
+                dim_sampl,
+                wavelength,
                 perfect_coro=perfect_coro,
                 perfect_entrance_pupil=perfect_entrance_pupil,
-                noise=photon_noise, numphot=nb_photons
-            )
+                noise=photon_noise,
+                numphot=nb_photons)
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
         elif estimation == "Perfect":
             resultatestimation = (instr.pupiltodetector(
-                input_wavefront, coro, lyot_pup,
+                input_wavefront,
+                coro,
+                lyot_pup,
                 perfect_coro=perfect_coro,
-                perfect_entrance_pupil=perfect_entrance_pupil
-            ) / np.square(maxPSF))
+                perfect_entrance_pupil=perfect_entrance_pupil) /
+                                  np.square(maxPSF))
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
         else:
@@ -685,42 +749,136 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
 
         if correction_algorithm == "EFC":
 
-            if mode != previousmode:
+            if Linearization == True:
+
+                Gmatrix = wsc.creatingCorrectionmatrix(
+                    entrancepupil,
+                    amplitude_abb,
+                    phase_abb,
+                    coro,
+                    lyot_pup,
+                    dim_sampl,
+                    wavelength,
+                    amplitudeEFC,
+                    pushact,
+                    maskDH,
+                    WhichInPupil,
+                    maxPSF,
+                    otherbasis=otherbasis,
+                    basisDM3=basisDM3,
+                )
+
+            if Linesearch == False:
                 invertGDH = wsc.invertSVD(
-                    Gmatrix, mode, goal="c", visu=False, regul=regularization,
-                    otherbasis=otherbasis, basisDM3=basisDM3,
+                    Gmatrix,
+                    mode,
+                    goal="c",
+                    visu=False,
+                    regul=regularization,
+                    otherbasis=otherbasis,
+                    basisDM3=basisDM3,
+                    intermatrix_dir=intermatrix_dir,
+                )[2]
+
+            else:
+                meancontrasttemp = np.zeros(len(Linesearchmode))
+                b = 0
+                for mode in Linesearchmode:
+
+                    SVD, SVD_trunc, invertGDH = wsc.invertSVD(
+                        Gmatrix,
+                        mode,
+                        goal="c",
+                        visu=False,
+                        regul=regularization,
+                        otherbasis=otherbasis,
+                        basisDM3=basisDM3,
+                        intermatrix_dir=intermatrix_dir,
+                    )
+
+                    solution1 = wsc.solutionEFC(maskDH, resultatestimation,
+                                                invertGDH, WhichInPupil,
+                                                pushact.shape[0])
+
+                    apply_on_DM = (-gain * amplitudeEFC * np.dot(
+                        solution1, pushactonDM.reshape(
+                            1024, dim_im * dim_im)).reshape(dim_im, dim_im) *
+                                   2 * np.pi * 1e-9 / wavelength)
+
+                    input_wavefront = entrancepupil * (
+                        1 + amplitude_abb) * np.exp(1j *
+                                                    (phase_abb + apply_on_DM))
+
+                    imagedetectortemp = (abs(
+                        instr.pupiltodetector(
+                            input_wavefront,
+                            coro,
+                            lyot_pup,
+                            perfect_coro=perfect_coro,
+                            perfect_entrance_pupil=perfect_entrance_pupil,
+                        ))**2 / maxPSF)
+
+                    meancontrasttemp[b] = np.mean(
+                        imagedetectortemp[np.where(maskDH != 0)])
+
+                    print('contraste moyen avec regul ', mode, '=',
+                          meancontrasttemp[b])
+
+                    b = b + 1
+
+                bestcontrast = np.amin(meancontrasttemp)
+                bestregul = Linesearchmode[np.argmin(meancontrasttemp)]
+                print('Meilleur contraste= ', bestcontrast, ' Best regul= ',
+                      bestregul)
+
+                invertGDH = wsc.invertSVD(
+                    Gmatrix,
+                    bestregul,
+                    goal="c",
+                    visu=False,
+                    regul=regularization,
+                    otherbasis=otherbasis,
+                    basisDM3=basisDM3,
                     intermatrix_dir=intermatrix_dir,
                 )[2]
 
             solution1 = wsc.solutionEFC(maskDH, resultatestimation, invertGDH,
-                                        WhichInPupil,pushact.shape[0])
+                                        WhichInPupil, pushact.shape[0])
 
         if correction_algorithm == "EM":
 
             if mode != previousmode:
                 invertM0 = wsc.invertSVD(
-                    M0, mode, goal="c", visu=False, regul=regularization,
-                    otherbasis=otherbasis, basisDM3=basisDM3,
+                    M0,
+                    mode,
+                    goal="c",
+                    visu=False,
+                    regul=regularization,
+                    otherbasis=otherbasis,
+                    basisDM3=basisDM3,
                     intermatrix_dir=intermatrix_dir,
                 )[2]
 
             solution1 = wsc.solutionEM(maskDH, resultatestimation, invertM0, G,
-                                       WhichInPupil,pushact.shape[0])
+                                       WhichInPupil, pushact.shape[0])
 
         if correction_algorithm == "steepest":
             solution1 = wsc.solutionSteepest(maskDH, resultatestimation, M0, G,
-                                             WhichInPupil,pushact.shape[0])
+                                             WhichInPupil, pushact.shape[0])
 
-        apply_on_DM = (-gain * amplitudeEFC *
-                       np.dot(solution1, pushactonDM.reshape(
-                           pushact.shape[0], dim_im * dim_im)).reshape(dim_im, dim_im) * 2 * np.pi *
-                       1e-9 / wavelength)
+        apply_on_DM = (-gain * amplitudeEFC * np.dot(
+            solution1, pushactonDM.reshape(
+                pushact.shape[0], dim_im * dim_im)).reshape(dim_im, dim_im) *
+                       2 * np.pi * 1e-9 / wavelength)
         phaseDM[k + 1] = phaseDM[k] + apply_on_DM
         phase_abb = phase_abb + apply_on_DM
         input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(
             1j * phase_abb)
         imagedetector[k + 1] = (abs(
-            instr.pupiltodetector(input_wavefront, coro, lyot_pup,
+            instr.pupiltodetector(
+                input_wavefront,
+                coro,
+                lyot_pup,
                 perfect_coro=perfect_coro,
                 perfect_entrance_pupil=perfect_entrance_pupil,
             ))**2 / maxPSF)
@@ -754,26 +912,27 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
         # plt.close()
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
-    fits.writeto(
-        result_dir + current_time_str + "_Detector_Images" + ".fits",
-        imagedetector, header, overwrite=True
-    )
-    fits.writeto(
-        result_dir + current_time_str + "_Phase_on_DM2" + ".fits",
-        cut_phaseDM, header, overwrite=True
-    )
-    fits.writeto(
-        result_dir + current_time_str + "_Mean_Contrast_DH" + ".fits",
-        meancontrast, header, overwrite=True
-    )
+    fits.writeto(result_dir + current_time_str + "_Detector_Images" + ".fits",
+                 imagedetector,
+                 header,
+                 overwrite=True)
+    fits.writeto(result_dir + current_time_str + "_Phase_on_DM2" + ".fits",
+                 cut_phaseDM,
+                 header,
+                 overwrite=True)
+    fits.writeto(result_dir + current_time_str + "_Mean_Contrast_DH" + ".fits",
+                 meancontrast,
+                 header,
+                 overwrite=True)
     config.filename = result_dir + current_time_str + "_Simulation_parameters" + ".ini"
     config.write()
 
     if photon_noise == True:
-        fits.writeto(
-            result_dir + current_time_str + "_Photon_counting" + ".fits",
-            photondetector, header, overwrite=True
-        )
+        fits.writeto(result_dir + current_time_str + "_Photon_counting" +
+                     ".fits",
+                     photondetector,
+                     header,
+                     overwrite=True)
 
     plt.clf()
     plt.plot(meancontrast)
