@@ -262,10 +262,13 @@ def create_interaction_matrices(parameter_file,
             print("Recording " + fileDirectMatrix + " ...")
             maxPSF = np.amax(np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_pup))**2)
 
+            
             Gmatrix = wsc.creatingCorrectionmatrix(
-                entrancepupil, coro,lyot_pup, dim_sampl, wavelength, amplitudeEFC,
+                entrancepupil, 0, 0, coro,lyot_pup, dim_sampl, wavelength, amplitudeEFC,
                 pushact, maskDH, WhichInPupil, maxPSF, otherbasis=otherbasis, basisDM3=basisDM3,
             )
+            
+            
             fits.writeto(intermatrix_dir + fileDirectMatrix + ".fits", Gmatrix)
 
         # Recording EFC Matrix
@@ -386,10 +389,14 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
     correction_algorithm = SIMUconfig["correction_algorithm"]
+    Linearization = SIMUconfig["Linearization"]
     Nbiter_corr = SIMUconfig["Nbiter_corr"]
     Nbiter_corr = [int(i) for i in Nbiter_corr]
     Nbmode_corr = SIMUconfig["Nbmode_corr"]
     Nbmode_corr = [int(i) for i in Nbmode_corr]
+    Linesearch = SIMUconfig["Linesearch"]
+    Linesearchmode = SIMUconfig["Linesearchmode"]
+    Linesearchmode = [int(i) for i in Linesearchmode]
     gain = SIMUconfig["gain"]
     xerror = SIMUconfig["xerror"]
     yerror = SIMUconfig["yerror"]
@@ -602,16 +609,81 @@ def correctionLoop(parameter_file, NewMODELconfig={}, NewPWconfig={},
             sys.exit()
 
         if correction_algorithm == "EFC":
+            
+            if Linearization==True:
+                
+                Gmatrix = wsc.creatingCorrectionmatrix(
+                entrancepupil, amplitude_abb, phase_abb , coro,lyot_pup, dim_sampl, wavelength, amplitudeEFC,
+                pushact, maskDH, WhichInPupil, maxPSF, otherbasis=otherbasis, basisDM3=basisDM3,
+            )
+            
+            
 
-            if mode != previousmode:
+            if Linesearch==False:
                 invertGDH = wsc.invertSVD(
                     Gmatrix, mode, goal="c", visu=False, regul=regularization,
                     otherbasis=otherbasis, basisDM3=basisDM3,
                     intermatrix_dir=intermatrix_dir,
                 )[2]
 
+
+
+            else:
+                meancontrasttemp=np.zeros(len(Linesearchmode))
+                b=0
+                for mode in Linesearchmode:
+                    
+                    SVD, SVD_trunc,invertGDH = wsc.invertSVD(
+                        Gmatrix, mode, goal="c", visu=False, regul=regularization,
+                        otherbasis=otherbasis, basisDM3=basisDM3,
+                        intermatrix_dir=intermatrix_dir,
+                    )
+        
+                    solution1 = wsc.solutionEFC(maskDH, resultatestimation, invertGDH,
+                                                WhichInPupil,pushact.shape[0])
+                    
+                    apply_on_DM = (-gain * amplitudeEFC *
+                            np.dot(solution1, pushactonDM.reshape(
+                                1024, dim_im * dim_im)).reshape(dim_im, dim_im) * 2 * np.pi *
+                            1e-9 / wavelength)
+                    
+                    input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(
+                    1j * (phase_abb + apply_on_DM))
+                    
+                    imagedetectortemp = (abs(
+                        instr.pupiltodetector(input_wavefront, coro, lyot_pup,
+                        perfect_coro=perfect_coro,
+                        perfect_entrance_pupil=perfect_entrance_pupil,
+                    ))**2 / maxPSF)
+                    
+                    meancontrasttemp[b] = np.mean(
+                        imagedetectortemp[np.where(maskDHdim != 0)])
+                    
+                    print('contraste moyen avec regul ', mode , '=', meancontrasttemp[b])
+                    
+                    b=b+1
+                
+                bestcontrast = np.amin(meancontrasttemp)
+                bestregul = Linesearchmode[np.argmin(meancontrasttemp)]
+                print('Meilleur contraste= ', bestcontrast , ' Best regul= ' , bestregul)
+            
+                invertGDH = wsc.invertSVD(
+                        Gmatrix, bestregul , goal="c", visu=False, regul=regularization,
+                        otherbasis=otherbasis, basisDM3=basisDM3,
+                        intermatrix_dir=intermatrix_dir,
+                    )[2]
+        
+                
             solution1 = wsc.solutionEFC(maskDH, resultatestimation, invertGDH,
-                                        WhichInPupil,pushact.shape[0])
+                                                WhichInPupil,pushact.shape[0])
+
+
+
+
+
+
+
+
 
         if correction_algorithm == "EM":
 
