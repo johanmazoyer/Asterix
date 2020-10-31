@@ -157,8 +157,8 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     return WhichInPupil
 
 
-def creatingMaskDH(dimimages, shape, choosepixDH=[0, 0, 0, 0], inner=0,
-                   outer=0, xdecay=0):
+def creatingMaskDH(dimimages, shape, choosepixDH=[8, 35, -35, 35], circ_rad = [8,10],
+                circ_side="Full",circ_offset=8):
     """ --------------------------------------------------
     Create a binary mask.
     
@@ -167,10 +167,9 @@ def creatingMaskDH(dimimages, shape, choosepixDH=[0, 0, 0, 0], inner=0,
     dimimages: int, size of the output squared mask
     shape: string, can be 'square' or 'circle' , define the shape of the binary mask.
     choosepixDH: 1D array, if shape is 'square', define the edges of the binary mask in pixels.
-    inner: float, if shape is 'circle', define the inner edge of the binary mask
-    outer: float, if shape is 'circle', define the outer edge of the binary mask
-    xdecay: float, if shape is 'circle', can define to keep only one side of the circle
-    
+    circ_rad: 1D array, if shape is 'circle', define the inner and outer edge of the binary mask
+    circ_side: string, if shape is 'circle', can define to keep only one side of the circle
+    circ_offset : float, remove pixels that are closer than circ_offset if circ_side is set
     Return:
     ------
     maskDH: 2D array, binary mask
@@ -187,9 +186,16 @@ def creatingMaskDH(dimimages, shape, choosepixDH=[0, 0, 0, 0], inner=0,
         maskDH[yy > choosepixDH[3]] = 0
     if shape == "circle":
         maskDH = np.ones((dimimages, dimimages))
-        maskDH[rr >= outer] = 0
-        maskDH[rr < inner] = 0
-        maskDH[xx < xdecay] = 0
+        maskDH[rr >= circ_rad[1]] = 0
+        maskDH[rr < circ_rad[0]] = 0
+        if circ_side == "Right":
+            maskDH[xx < np.abs(circ_offset)] = 0
+        if circ_side == "Left":
+            maskDH[xx > -np.abs(circ_offset)] = 0
+        if circ_side == "Top":
+            maskDH[yy < np.abs(circ_offset)] = 0
+        if circ_side == "Bottom":
+            maskDH[yy > -np.abs(circ_offset)] = 0
     return maskDH
 
 
