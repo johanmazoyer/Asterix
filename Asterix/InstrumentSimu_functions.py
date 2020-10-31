@@ -37,11 +37,13 @@ def shift_phase_ramp(dim_im, a, b):
     xx, yy = np.meshgrid(maska, maskb)
     return np.exp(-1j * xx) * np.exp(-1j * yy)
 
+
 ##############################################
 ##############################################
 ### CORONAGRAPHS
 
-def FQPM(dim_im,err=0):
+
+def FQPM(dim_im, err=0):
     """ --------------------------------------------------
     Create a perfect Four Quadrant Phase Mask coronagraph of size (dim_im,dim_im)
     
@@ -60,9 +62,9 @@ def FQPM(dim_im,err=0):
     for i in np.arange(dim_im):
         for j in np.arange(dim_im):
             if i < dim_im / 2 and j < dim_im / 2:
-                phase[i, j] = np.pi+err
+                phase[i, j] = np.pi + err
             if i >= dim_im / 2 and j >= dim_im / 2:
-                phase[i, j] = np.pi+err
+                phase[i, j] = np.pi + err
     return np.exp(1j * phase)
 
 
@@ -102,9 +104,11 @@ def KnifeEdgeCoro(dim_im, position, shiftinldp, ld_p):
                 Knife[i, :] = 1
     return np.fft.fftshift(Knife)
 
+
 ##############################################
 ##############################################
 ### Pupil
+
 
 def roundpupil(dim_im, prad1):
     """ --------------------------------------------------
@@ -130,11 +134,15 @@ def roundpupil(dim_im, prad1):
     pupilnormal[rr <= prad1] = 1.0
     return pupilnormal
 
+
 ##############################################
 ##############################################
 ### Propagation through coronagraph
 
-def pupiltodetector(input_wavefront, coro_mask, lyot_mask,
+
+def pupiltodetector(input_wavefront,
+                    coro_mask,
+                    lyot_mask,
                     perfect_coro=False,
                     perfect_entrance_pupil=0):  # aberrationphase,prad1,prad2
     """ --------------------------------------------------
@@ -166,23 +174,33 @@ def pupiltodetector(input_wavefront, coro_mask, lyot_mask,
     if perfect_coro == True:
         input_wavefront = input_wavefront - perfect_entrance_pupil
 
-    focal1end = np.fft.fft2(np.fft.fftshift(input_wavefront * maskshifthalfpix))
+    focal1end = np.fft.fft2(np.fft.fftshift(input_wavefront *
+                                            maskshifthalfpix))
 
     # Lyot plane
     pupil2end = np.fft.ifft2(focal1end * coro_mask)
 
     # Focal plane 2
-    focal2end = np.fft.fftshift(np.fft.fft2(pupil2end * np.fft.fftshift(lyot_mask)))
+    focal2end = np.fft.fftshift(
+        np.fft.fft2(pupil2end * np.fft.fftshift(lyot_mask)))
 
     return focal2end
+
 
 ##############################################
 ##############################################
 ### Deformable mirror
 
-def pushact_function(which, grilleact, actshapeinpupilresized,
-                     xycent, xy309,
-                     xerror=0,yerror=0,angerror=0,gausserror=0):
+
+def pushact_function(which,
+                     grilleact,
+                     actshapeinpupilresized,
+                     xycent,
+                     xy309,
+                     xerror=0,
+                     yerror=0,
+                     angerror=0,
+                     gausserror=0):
     """ --------------------------------------------------
     Push the desired DM actuator in the pupil
     
@@ -217,29 +235,47 @@ def pushact_function(which, grilleact, actshapeinpupilresized,
     yact = grilleact[1, which] + (xy309[1] - grilleact[1, 309])
 
     if gausserror == 0:
-        Psivector = nd.interpolation.shift(actshapeinpupilresized,
-                (yact - xycent + yerror, xact - xycent + xerror))
+        Psivector = nd.interpolation.shift(
+            actshapeinpupilresized,
+            (yact - xycent + yerror, xact - xycent + xerror))
 
         if angerror != 0:
-                Psivector = nd.rotate(Psivector, angerror,order=5,cval=0)
+            Psivector = nd.rotate(Psivector, angerror, order=5, cval=0)
     else:
         Psivector = nd.interpolation.shift(actshapeinpupilresized,
                                            (yact - xycent, xact - xycent))
 
-        xo,yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
+        xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
         x, y = np.mgrid[0:dim_im, 0:dim_im]
         xy = (x, y)
-        Psivector = proc.twoD_Gaussian(xy, 1, 1 + gausserror, 1 + gausserror, xo,
-                    yo, 0, 0, flatten=False)
+        Psivector = proc.twoD_Gaussian(xy,
+                                       1,
+                                       1 + gausserror,
+                                       1 + gausserror,
+                                       xo,
+                                       yo,
+                                       0,
+                                       0,
+                                       flatten=False)
     Psivector[np.where(Psivector < 1e-4)] = 0
 
     return Psivector
 
 
-def creatingpushact(model_dir, dim_im, pdiam,prad, xy309,pitchDM=0.3e-3,
-                    filename_actu309="", filename_grid_actu="Grid_actu.fits",
-                    filename_actu_infl_fct="Actu_DM32_field=6x6pitch_pitch=22pix.fits",
-                    xerror=0,yerror=0,angerror=0,gausserror=0):
+def creatingpushact(
+        model_dir,
+        dim_im,
+        pdiam,
+        prad,
+        xy309,
+        pitchDM=0.3e-3,
+        filename_actu309="",
+        filename_grid_actu="Grid_actu.fits",
+        filename_actu_infl_fct="Actu_DM32_field=6x6pitch_pitch=22pix.fits",
+        xerror=0,
+        yerror=0,
+        angerror=0,
+        gausserror=0):
     """ --------------------------------------------------
     Push the desired DM actuator in the pupil
     
@@ -267,12 +303,13 @@ def creatingpushact(model_dir, dim_im, pdiam,prad, xy309,pitchDM=0.3e-3,
         im309size = len(fits.getdata(model_dir + filename_actu309))
         act309 = np.zeros((dim_im, dim_im))
         act309[int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2),
-               int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2), ] = fits.getdata(
-            model_dir + filename_actu309
-        )
+               int(dim_im / 2 -
+                   im309size / 2):int(dim_im / 2 + im309size /
+                                      2), ] = fits.getdata(model_dir +
+                                                           filename_actu309)
         y309, x309 = np.unravel_index(np.abs(act309).argmax(), act309.shape)
         # shift by (0.5,0.5) pixel because the pupil is centered between pixels
-        xy309 = [x309-0.5,y309-0.5]
+        xy309 = [x309 - 0.5, y309 - 0.5]
 
     grille = fits.getdata(model_dir + filename_grid_actu)
     actshape = fits.getdata(model_dir + filename_actu_infl_fct)
@@ -285,8 +322,8 @@ def creatingpushact(model_dir, dim_im, pdiam,prad, xy309,pitchDM=0.3e-3,
 
     # Gauss2Dfit for centering the rescaled influence function
     tmp = proc.gauss2Dfit(resizeactshape)
-    dx=tmp[3]
-    dy=tmp[4]
+    dx = tmp[3]
+    dy = tmp[4]
     xycent = len(resizeactshape) / 2
     resizeactshape = nd.interpolation.shift(resizeactshape,
                                             (xycent - dx, xycent - dy))
@@ -299,19 +336,38 @@ def creatingpushact(model_dir, dim_im, pdiam,prad, xy309,pitchDM=0.3e-3,
 
     pushact = np.zeros((grille.shape[1], dim_im, dim_im))
     for i in np.arange(pushact.shape[0]):
-        pushact[i] = pushact_function(i, grille, actshapeinpupil, xycent,
-                                      xy309, xerror=xerror,yerror=yerror,angerror=angerror,
+        pushact[i] = pushact_function(i,
+                                      grille,
+                                      actshapeinpupil,
+                                      xycent,
+                                      xy309,
+                                      xerror=xerror,
+                                      yerror=yerror,
+                                      angerror=angerror,
                                       gausserror=gausserror)
     return pushact
+
 
 ##############################################
 ##############################################
 ### Difference of images for Pair-Wise probing
 
-def createdifference(aberramp, aberrphase, posprobes, pushact, amplitude,
-                     entrancepupil, coro_mask, lyot_mask, PSF, dimimages,
-                     wavelength, perfect_coro=False,
-                     perfect_entrance_pupil=0, noise=False, numphot=1e30):
+
+def createdifference(aberramp,
+                     aberrphase,
+                     posprobes,
+                     pushact,
+                     amplitude,
+                     entrancepupil,
+                     coro_mask,
+                     lyot_mask,
+                     PSF,
+                     dimimages,
+                     wavelength,
+                     perfect_coro=False,
+                     perfect_entrance_pupil=0,
+                     noise=False,
+                     numphot=1e30):
     """ --------------------------------------------------
     Simulate the acquisition of probe images (actuator pokes) and create their differences
     
@@ -368,14 +424,14 @@ def createdifference(aberramp, aberrphase, posprobes, pushact, amplitude,
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase - 1 * probephase)))
         Ikmoins = (np.abs(
-            pupiltodetector( input_wavefront, coro_mask, lyot_mask,
-                perfect_coro, perfect_entrance_pupil ))**2 / maxPSF)
-       
+            pupiltodetector(input_wavefront, coro_mask, lyot_mask,
+                            perfect_coro, perfect_entrance_pupil))**2 / maxPSF)
+
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase + 1 * probephase)))
         Ikplus = (np.abs(
             pupiltodetector(input_wavefront, coro_mask, lyot_mask,
-                perfect_coro, perfect_entrance_pupil))**2 / maxPSF)
+                            perfect_coro, perfect_entrance_pupil))**2 / maxPSF)
 
         if noise == True:
             Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
@@ -392,9 +448,11 @@ def createdifference(aberramp, aberrphase, posprobes, pushact, amplitude,
 
     return Difference
 
+
 ##############################################
 ##############################################
 ### Phase screen
+
 
 def random_phase_map(dim_im, phaserms, rhoc, slope):
     """ --------------------------------------------------
@@ -416,7 +474,9 @@ def random_phase_map(dim_im, phaserms, rhoc, slope):
     phase : 2D array
         Static random phase map (or OPD) generated 
     -------------------------------------------------- """
-    xx, yy = np.meshgrid(np.arange(dim_im) - dim_im / 2, np.arange(dim_im) - dim_im / 2)
+    xx, yy = np.meshgrid(
+        np.arange(dim_im) - dim_im / 2,
+        np.arange(dim_im) - dim_im / 2)
     rho = np.hypot(yy, xx)
     PSD0 = 1
     PSD = PSD0 / (1 + (rho / rhoc)**slope)

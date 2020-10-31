@@ -6,15 +6,14 @@ from astropy.io import fits
 
 # def butterworth(image, order, length):
 #     """ --------------------------------------------------
-#     Multiply the image by a butterworth 
-    
+#     Multiply the image by a butterworth
+
 #     Parameters:
 #     ----------
 #     image: 2D-array, input image
 #     order: butterworth order
 #     length: butterworth length
-    
-    
+
 #     Return:
 #     ------
 #     image*butt: 2D array, same dimension as input frame
@@ -28,7 +27,15 @@ from astropy.io import fits
 #     return image * butt
 
 
-def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h,flatten=True):
+def twoD_Gaussian(xy,
+                  amplitude,
+                  sigma_x,
+                  sigma_y,
+                  xo,
+                  yo,
+                  theta,
+                  h,
+                  flatten=True):
     """ --------------------------------------------------
     Create a gaussian in 2D 
     
@@ -49,8 +56,8 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h,flatten=True
     ------
     The array is the created 2D gaussian function
     -------------------------------------------------- """
-    x=xy[0]
-    y=xy[1]
+    x = xy[0]
+    y = xy[1]
     xo = float(xo)
     yo = float(yo)
     a = (np.cos(theta)**2) / (2 * sigma_x**2) + (np.sin(theta)**
@@ -62,8 +69,9 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h,flatten=True
     g = (amplitude * np.exp(-(a * ((x - xo)**2) + 2 * b * (x - xo) *
                               (y - yo) + c * ((y - yo)**2))) + h)
     if flatten == True:
-        g=g.flatten()
+        g = g.flatten()
     return g
+
 
 def gauss2Dfit(data):
     """ --------------------------------------------------
@@ -112,9 +120,9 @@ def resampling(image, new):
     Gvector: 2D array, image resampled into new dimensions
     -------------------------------------------------- """
     dim_im = len(image)
-    Gvectorbis = np.fft.fftshift( np.fft.ifft2( np.fft.ifftshift(image) ) )
+    Gvectorbis = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image)))
     Gvector = cropimage(Gvectorbis, dim_im / 2, dim_im / 2, new)
-    Gvector = np.fft.fftshift( np.fft.fft2( np.fft.ifftshift(Gvector) ) )
+    Gvector = np.fft.fftshift(np.fft.fft2(np.fft.ifftshift(Gvector)))
     return Gvector
 
 

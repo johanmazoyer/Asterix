@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import Asterix.InstrumentSimu_functions as instr
 import Asterix.processing_functions as proc
 
+
 def invertSVD(matrix_to_invert,
               cut,
               goal="e",
@@ -107,10 +108,13 @@ def createvectorprobes(wavelength, entrancepupil, coro_mask, lyot_mask,
         probephase[k] = amplitude * pushact[i]
         probephase[k] = 2 * np.pi * (probephase[k]) * 1e-9 / wavelength
         inputwavefront = entrancepupil * (1 + 1j * probephase[k])
-        deltapsikbis = (instr.pupiltodetector(
-            inputwavefront, coro_mask, lyot_mask, perfect_coro=True,
-            perfect_entrance_pupil=entrancepupil
-        ) / np.square(maxPSF))
+        deltapsikbis = (
+            instr.pupiltodetector(inputwavefront,
+                                  coro_mask,
+                                  lyot_mask,
+                                  perfect_coro=True,
+                                  perfect_entrance_pupil=entrancepupil) /
+            np.square(maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -157,8 +161,12 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     return WhichInPupil
 
 
-def creatingMaskDH(dimimages, shape, choosepixDH=[0, 0, 0, 0], inner=0,
-                   outer=0, xdecay=0):
+def creatingMaskDH(dimimages,
+                   shape,
+                   choosepixDH=[0, 0, 0, 0],
+                   inner=0,
+                   outer=0,
+                   xdecay=0):
     """ --------------------------------------------------
     Create a binary mask.
     
@@ -236,7 +244,7 @@ def creatingCorrectionmatrix(entrancepupil,
         tmp = pushact.reshape(pushact.shape[0],
                               pushact.shape[1] * pushact.shape[2])
         bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
-                                                pushact.shape[2])
+                                         pushact.shape[2])
     else:
         bas_fct = np.array([pushact[ind] for ind in Whichact])
         nb_fct = len(Whichact)
@@ -248,7 +256,8 @@ def creatingCorrectionmatrix(entrancepupil,
             print(i)
         Psivector = amplitude * bas_fct[i]
         Psivector = 2 * np.pi * (Psivector) * 1e-9 / wavelength
-        inputwavefront = entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb) *  1j * Psivector
+        inputwavefront = entrancepupil * (1 + amplitude_abb) * np.exp(
+            1j * phase_abb) * 1j * Psivector
         Gvector = (instr.pupiltodetector(
             inputwavefront,
             coro_mask,
@@ -266,7 +275,8 @@ def creatingCorrectionmatrix(entrancepupil,
     return Gmatrixbis
 
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,nbDMactu):
+def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
+                nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
@@ -294,7 +304,8 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,nbDMactu)
     return solution
 
 
-def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,nbDMactu):
+def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
+               nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
@@ -324,7 +335,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,nbD
 
 
 def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
-                     WhichInPupil,nbDMactu):
+                     WhichInPupil, nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
     
