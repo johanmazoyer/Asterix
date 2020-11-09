@@ -292,7 +292,7 @@ def create_interaction_matrices(parameter_file,
                           +str(circ_side)+'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg')
 
             if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
-                print("The matrix " + fileMaskDH + " already exist")
+                print("Mask of DH " + fileMaskDH + " already exist")
                 maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
             else:
                 print("Recording " + fileMaskDH + " ...")
@@ -692,12 +692,15 @@ def correctionLoop(parameter_file,
     imagedetector = np.zeros((nbiter + 1, dim_im, dim_im))
     phaseDM = np.zeros((nbiter + 1, dim_im, dim_im))
     meancontrast = np.zeros(nbiter + 1)
-    maskDHcontrast = wsc.creatingMaskDH(dim_im, DHshape,
-                    choosepixDH=[element * dim_im / dim_sampl for element in choosepix],
-                    circ_rad=[element * dim_im / dim_sampl for element in circ_rad],
-                    circ_side=circ_side,circ_offset=circ_offset* dim_im / dim_sampl,
-                    circ_angle=circ_angle)
-    fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits", maskDHcontrast)
+    if os.path.exists(intermatrix_dir + fileMaskDH + "_contrast.fits") == True:
+        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH + "_contrast.fits")
+    else:
+        maskDHcontrast = wsc.creatingMaskDH(dim_im, DHshape,
+                choosepixDH=[element * dim_im / dim_sampl for element in choosepix],
+                circ_rad=[element * dim_im / dim_sampl for element in circ_rad],
+                circ_side=circ_side,circ_offset=circ_offset* dim_im / dim_sampl,
+                circ_angle=circ_angle)
+        fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits", maskDHcontrast)
 
     input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb)
     
