@@ -692,12 +692,19 @@ def correctionLoop(parameter_file,
     imagedetector = np.zeros((nbiter + 1, dim_im, dim_im))
     phaseDM = np.zeros((nbiter + 1, dim_im, dim_im))
     meancontrast = np.zeros(nbiter + 1)
+    maskDHcontrast = wsc.creatingMaskDH(dim_im, DHshape,
+                    choosepixDH=[element * dim_im / dim_sampl for element in choosepix],
+                    circ_rad=[element * dim_im / dim_sampl for element in circ_rad],
+                    circ_side=circ_side,circ_offset=circ_offset* dim_im / dim_sampl,
+                    circ_angle=circ_angle)
+    fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits", maskDHcontrast)
+
     input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb)
     
     imagedetector[0] = (abs(instr.pupiltodetector(input_wavefront, coro,
             lyot_pup, perfect_coro=perfect_coro, perfect_entrance_pupil=perfect_entrance_pupil
         ))**2 / maxPSF)
-    meancontrast[0] = np.mean(imagedetector[0][np.where(maskDH != 0)])
+    meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
         photondetector = np.zeros((nbiter + 1, dim_im, dim_im))
@@ -817,7 +824,7 @@ def correctionLoop(parameter_file,
                         ))**2 / maxPSF)
 
                     meancontrasttemp[b] = np.mean(
-                        imagedetectortemp[np.where(maskDH != 0)])
+                        imagedetectortemp[np.where(maskDHcontrast != 0)])
 
                     print('contraste moyen avec regul ', mode, '=',
                           meancontrasttemp[b])
@@ -881,7 +888,7 @@ def correctionLoop(parameter_file,
                 perfect_entrance_pupil=perfect_entrance_pupil,
             ))**2 / maxPSF)
         meancontrast[k + 1] = np.mean(
-            imagedetector[k + 1][np.where(maskDH != 0)])
+            imagedetector[k + 1][np.where(maskDHcontrast != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])
         if photon_noise == True:
             photondetector[k + 1] = np.random.poisson(imagedetector[k + 1] *
