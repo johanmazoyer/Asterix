@@ -610,7 +610,7 @@ def correctionLoop(parameter_file,
     else:
         fileMaskDH = fileMaskDH + ("r" + str(dim_sampl) +
             "_circle_" + "_".join(map(str, circ_rad)) + 'pix_'+str(circ_side)
-            +'_'+str(circ_offset)+'pix'+str(circ_angle)+'deg')
+            +'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg')
     if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
     else:
