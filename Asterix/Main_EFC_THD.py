@@ -113,6 +113,7 @@ def create_interaction_matrices(parameter_file,
     circ_rad =  [int(i) for i in circ_rad]
     circ_side = EFCconfig["circ_side"]
     circ_offset = EFCconfig["circ_offset"]
+    circ_angle = EFCconfig["circ_angle"]
     otherbasis = EFCconfig["otherbasis"]
     Nbmodes = EFCconfig["Nbmodes"]
     amplitudeEFC = EFCconfig["amplitudeEFC"]
@@ -251,7 +252,7 @@ def create_interaction_matrices(parameter_file,
                      str(amplitudeEFC) + "nm_" + str(Nbmodes) + "modes")
     else:
         fileEFCMatrix = ("MatrixEFC_circle_" + "_".join(map(str, circ_rad)) + "pix_" +
-                    str(circ_side)+'_'+str(circ_offset)+'pix_'
+                    str(circ_side)+'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg_'
                     +str(amplitudeEFC) + "nm_" + str(Nbmodes) + "modes")
 
     if os.path.exists(intermatrix_dir + fileEFCMatrix + ".fits") == True:
@@ -272,7 +273,7 @@ def create_interaction_matrices(parameter_file,
         else:
             fileDirectMatrix = ("DirectMatrix_circle_" + "_".join(map(str, circ_rad)) +
                             "pix_" +str(circ_side)+'_'+str(circ_offset)+'pix_'
-                            + str(amplitudeEFC) + "nm_")
+                            +str(circ_angle)+'deg_'+ str(amplitudeEFC) + "nm_")
         if os.path.exists(intermatrix_dir + fileDirectMatrix +
                           ".fits") == True:
             print("The matrix " + fileDirectMatrix + " already exist")
@@ -288,7 +289,7 @@ def create_interaction_matrices(parameter_file,
             else:
                 fileMaskDH = fileMaskDH + ("r" + str(dim_sampl) +
                           "_circle_" + "_".join(map(str, circ_rad))+ 'pix_'
-                          +str(circ_side)+'_'+str(circ_offset)+'pix')
+                          +str(circ_side)+'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg')
 
             if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
                 print("The matrix " + fileMaskDH + " already exist")
@@ -296,8 +297,7 @@ def create_interaction_matrices(parameter_file,
             else:
                 print("Recording " + fileMaskDH + " ...")
                 maskDH = wsc.creatingMaskDH(dim_sampl, DHshape, choosepixDH=choosepix,
-                        circ_rad=circ_rad,circ_side=circ_side,circ_offset=circ_offset)
-                # maskDH = wsc.creatingMaskDH(dim_sampl,'circle',inner=0 , outer=35 , xdecay= 8)
+                        circ_rad=circ_rad,circ_side=circ_side,circ_offset=circ_offset,circ_angle=circ_angle)
                 fits.writeto(intermatrix_dir + fileMaskDH + ".fits", maskDH)
 
             # Creating EFC Interaction Matrix if does not exist
@@ -346,7 +346,7 @@ def create_interaction_matrices(parameter_file,
         else:
             plt.savefig(intermatrix_dir + "invertSVDEFC_circle_" +
                     "_".join(map(str, circ_rad)) + "pix_" +
-                    str(circ_side)+'_'+str(circ_offset)+'pix_'
+                    str(circ_side)+'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg_'
                     + str(amplitudeEFC) + "nm_.png")
 
     if onbench == True:
@@ -452,6 +452,7 @@ def correctionLoop(parameter_file,
     circ_rad =  [int(i) for i in circ_rad]
     circ_side = EFCconfig["circ_side"]
     circ_offset = EFCconfig["circ_offset"]
+    circ_angle = EFCconfig["circ_angle"]
     otherbasis = EFCconfig["otherbasis"]
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
@@ -594,7 +595,7 @@ def correctionLoop(parameter_file,
                         "pix_" + str(amplitudeEFC) + "nm_")
     else:
         fileDirectMatrix = ("DirectMatrix_circle_" + "_".join(map(str, circ_rad)) +
-                        "pix_" +str(circ_side)+'_'+str(circ_offset)+'pix_'
+                        "pix_" +str(circ_side)+'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg_'
                         + str(amplitudeEFC) + "nm_")
     if os.path.exists(intermatrix_dir + fileDirectMatrix + ".fits") == True:
         Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix + ".fits")
@@ -609,7 +610,7 @@ def correctionLoop(parameter_file,
     else:
         fileMaskDH = fileMaskDH + ("r" + str(dim_sampl) +
             "_circle_" + "_".join(map(str, circ_rad)) + 'pix_'+str(circ_side)
-            +'_'+str(circ_offset)+'pix')
+            +'_'+str(circ_offset)+'pix'+str(circ_angle)+'deg')
     if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
     else:
@@ -691,9 +692,6 @@ def correctionLoop(parameter_file,
     imagedetector = np.zeros((nbiter + 1, dim_im, dim_im))
     phaseDM = np.zeros((nbiter + 1, dim_im, dim_im))
     meancontrast = np.zeros(nbiter + 1)
-    # maskDH = wsc.creatingMaskDH(dim_sampl, DHshape,
-    #     choosepixDH=choosepix, circ_rad=circ_rad, circ_side=circ_side,circ_offset=circ_offset)
-    #[element * dim_im / dim_sampl for element in choosepix
     input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb)
     
     imagedetector[0] = (abs(instr.pupiltodetector(input_wavefront, coro,

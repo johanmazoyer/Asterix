@@ -162,7 +162,7 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
 
 
 def creatingMaskDH(dimimages, shape, choosepixDH=[8, 35, -35, 35], circ_rad = [8,10],
-                circ_side="Full",circ_offset=8):
+                circ_side="Full",circ_offset=8, circ_angle=0):
     """ --------------------------------------------------
     Create a binary mask.
     
@@ -174,6 +174,8 @@ def creatingMaskDH(dimimages, shape, choosepixDH=[8, 35, -35, 35], circ_rad = [8
     circ_rad: 1D array, if shape is 'circle', define the inner and outer edge of the binary mask
     circ_side: string, if shape is 'circle', can define to keep only one side of the circle
     circ_offset : float, remove pixels that are closer than circ_offset if circ_side is set
+    circ_angle : float, if circ_side is set, remove pixels within a cone of angle circ_angle
+
     Return:
     ------
     maskDH: 2D array, binary mask
@@ -194,14 +196,25 @@ def creatingMaskDH(dimimages, shape, choosepixDH=[8, 35, -35, 35], circ_rad = [8
         maskDH[rr < circ_rad[0]] = 0
         if circ_side == "Right":
             maskDH[xx < np.abs(circ_offset)] = 0
+            if circ_angle != 0:
+                maskDH[yy - xx/np.tan(circ_angle*np.pi/180)  > 0] = 0
+                maskDH[yy + xx/np.tan(circ_angle*np.pi/180)  < 0] = 0
         if circ_side == "Left":
             maskDH[xx > -np.abs(circ_offset)] = 0
-        if circ_side == "Top":
-            maskDH[yy < np.abs(circ_offset)] = 0
+            if circ_angle != 0:
+                maskDH[yy - xx/np.tan(circ_angle*np.pi/180)  < 0] = 0
+                maskDH[yy + xx/np.tan(circ_angle*np.pi/180)  > 0] = 0
         if circ_side == "Bottom":
+            maskDH[yy < np.abs(circ_offset)] = 0
+            if circ_angle != 0:
+                maskDH[yy - xx*np.tan(circ_angle*np.pi/180)  < 0] = 0
+                maskDH[yy + xx*np.tan(circ_angle*np.pi/180)  < 0] = 0
+        if circ_side == "Top":
             maskDH[yy > -np.abs(circ_offset)] = 0
+            if circ_angle != 0:
+                maskDH[yy - xx*np.tan(circ_angle*np.pi/180)  > 0] = 0
+                maskDH[yy + xx*np.tan(circ_angle*np.pi/180)  > 0] = 0
     return maskDH
-
 
 def creatingCorrectionmatrix(entrancepupil,
                              amplitude_abb,
