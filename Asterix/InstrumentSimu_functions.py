@@ -124,14 +124,7 @@ def pupiltodetector(input_wavefront,
     ----------
     input_wavefront : 2D array,can be complex.  
         Input wavefront,can be complex.
-    coro : 2D array, can be complex. 
-        Coronagraphic mask
-    lyot_pup : 2D array 
-        Lyot mask
-    perfect_coro : bool, optional
-        Set to True if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
-    perfect_entrance_pupil : 2D array, optional 
-        Entrance pupil which should be nulled by the used coronagraph
+    Coronaconfig: coronagraph structure
     
     Returns
     ------
@@ -139,7 +132,6 @@ def pupiltodetector(input_wavefront,
         Focal plane electric field created by 
         the input wavefront through the high-contrast instrument.
     -------------------------------------------------- """
-
 
     maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
     # Focal plane 1
@@ -274,9 +266,10 @@ def creatingpushact(
         im309size = len(fits.getdata(model_dir + filename_actu309))
         act309 = np.zeros((dim_im, dim_im))
         act309[int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2),
-               int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2)
-                ] = fits.getdata(model_dir + filename_actu309
-        )
+               int(dim_im / 2 -
+                   im309size / 2):int(dim_im / 2 + im309size /
+                                      2)] = fits.getdata(model_dir +
+                                                         filename_actu309)
         y309, x309 = np.unravel_index(np.abs(act309).argmax(), act309.shape)
         # shift by (0.5,0.5) pixel because the pupil is centered between pixels
         xy309 = [x309 - 0.5, y309 - 0.5]
@@ -306,9 +299,15 @@ def creatingpushact(
 
     pushact = np.zeros((grille.shape[1], dim_im, dim_im))
     for i in np.arange(pushact.shape[0]):
-        pushact[i] = pushact_function(i, grille, actshapeinpupil, xycent,
-                    xy309, xerror=xerror,yerror=yerror,
-                    angerror=angerror, gausserror=gausserror)
+        pushact[i] = pushact_function(i,
+                                      grille,
+                                      actshapeinpupil,
+                                      xycent,
+                                      xy309,
+                                      xerror=xerror,
+                                      yerror=yerror,
+                                      angerror=angerror,
+                                      gausserror=gausserror)
     return pushact
 
 
@@ -347,10 +346,7 @@ def createdifference(aberramp,
         amplitude of the actuator pokes for pair(wise probing in nm
     entrancepupil : 2D-array
         Entrance pupil shape
-    coro : 2D array, can be complex
-        Coronagraphic mask
-    lyot_pup : 2D array
-        Lyot Pupil
+    Coronaconfig: coronagraph structure
     dimimages : int
         Size of the output image after resampling in pixels
     wavelength : float
@@ -376,8 +372,9 @@ def createdifference(aberramp,
 
     maxPSF = np.amax(PSF)
 
-    contrast_to_photons = (np.sum(entrancepupil) / np.sum(Coronaconfig.lyot_pup) *
-                           numphot * maxPSF / np.sum(PSF))
+    contrast_to_photons = (np.sum(entrancepupil) /
+                           np.sum(Coronaconfig.lyot_pup) * numphot * maxPSF /
+                           np.sum(PSF))
 
     k = 0
     for i in posprobes:
@@ -385,13 +382,13 @@ def createdifference(aberramp,
         probephase = 2 * np.pi * probephase * 1e-9 / wavelength
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase - 1 * probephase)))
-        Ikmoins = (np.abs(
-            pupiltodetector(input_wavefront, Coronaconfig))**2 / maxPSF)
+        Ikmoins = (np.abs(pupiltodetector(input_wavefront, Coronaconfig))**2 /
+                   maxPSF)
 
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase + 1 * probephase)))
-        Ikplus = (np.abs(
-            pupiltodetector(input_wavefront, Coronaconfig))**2 / maxPSF)
+        Ikplus = (np.abs(pupiltodetector(input_wavefront, Coronaconfig))**2 /
+                  maxPSF)
 
         if noise == True:
             Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
@@ -412,6 +409,7 @@ def createdifference(aberramp,
 ##############################################
 ##############################################
 ### Phase screen
+
 
 def shift_phase_ramp(dim_im, a, b):
     """ --------------------------------------------------
@@ -437,6 +435,7 @@ def shift_phase_ramp(dim_im, a, b):
     maskb = np.linspace(-np.pi * b, np.pi * b, dim_im)
     xx, yy = np.meshgrid(maska, maskb)
     return np.exp(-1j * xx) * np.exp(-1j * yy)
+
 
 def random_phase_map(dim_im, phaserms, rhoc, slope):
     """ --------------------------------------------------
@@ -472,7 +471,7 @@ def random_phase_map(dim_im, phaserms, rhoc, slope):
     return phase
 
 
-def mft(pup, dimft, nbres, xshift=0,yshift=0,inv=-1):
+def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
     """ --------------------------------------------------
     MFT  - Return the Matrix Direct Fourier transform (MFT) of pup
     (cf. Soummer et al. 2007, OSA)
@@ -513,22 +512,23 @@ def mft(pup, dimft, nbres, xshift=0,yshift=0,inv=-1):
     Initial revision (from MFT.pro written in IDL)
 
     -------------------------------------------------- """
-    
+
     dimpup = pup.shape[0]
 
-    xx0 = np.arange(dimpup)/dimpup - 0.5
-    uu0 = ((np.arange(dimft)-xshift)/dimft - 0.5)*nbres
-    uu1 = ((np.arange(dimft)-yshift)/dimft - 0.5)*nbres
-    
-    if inv == 1:
-        norm0 = (nbres/dimpup)**2
-    else:
-        norm0 = ((1.*nbres)**2/(1.*dimft)**2/(1.*dimpup)**2)
+    xx0 = np.arange(dimpup) / dimpup - 0.5
+    uu0 = ((np.arange(dimft) - xshift) / dimft - 0.5) * nbres
+    uu1 = ((np.arange(dimft) - yshift) / dimft - 0.5) * nbres
 
-    AA = np.exp(-inv*1j*2*np.pi*np.outer(uu0,xx0))
-    BB = np.exp(-inv*1j*2*np.pi*np.outer(xx0,uu1))
-    result = norm0*np.matmul(np.matmul(AA,pup),BB)
+    if inv == 1:
+        norm0 = (nbres / dimpup)**2
+    else:
+        norm0 = ((1. * nbres)**2 / (1. * dimft)**2 / (1. * dimpup)**2)
+
+    AA = np.exp(-inv * 1j * 2 * np.pi * np.outer(uu0, xx0))
+    BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx0, uu1))
+    result = norm0 * np.matmul(np.matmul(AA, pup), BB)
     return result
+
 
 def prop_fresnel(pup, lam, z, dx):
     """ --------------------------------------------------
@@ -564,28 +564,27 @@ def prop_fresnel(pup, lam, z, dx):
     Initial revision
 
     -------------------------------------------------- """
-# dimension of the input array   
-    dim=pup.shape[0]
+    # dimension of the input array
+    dim = pup.shape[0]
 
-# Zoom factor to get the same spatial scale in the input and output array
-    fac = dx**2/(lam*z)
+    # Zoom factor to get the same spatial scale in the input and output array
+    fac = dx**2 / (lam * z)
     if fac > 3e-3:
         print('need to increase lam or z or 1/dx')
         return -1
-    fac = fac*dim
+    fac = fac * dim
 
-# create a 2D-array of distances from the central pixel
-    u, v = np.meshgrid(
-    np.arange(dim) - dim / 2,
-    np.arange(dim) - dim / 2)
+    # create a 2D-array of distances from the central pixel
+    u, v = np.meshgrid(np.arange(dim) - dim / 2, np.arange(dim) - dim / 2)
     rho = np.hypot(v, u)
-# Fresnel factor that applies before Fourier transform
-    H = np.exp(-1j*np.pi*rho**2*fac/dim)
+    # Fresnel factor that applies before Fourier transform
+    H = np.exp(-1j * np.pi * rho**2 * fac / dim)
 
-# Fourier transform using MFT
-    result = mft(pup*H,dim,dim*fac)
+    # Fourier transform using MFT
+    result = mft(pup * H, dim, dim * fac)
 
-# Fresnel factor that applies after Fourier transform    
-    result = result*np.exp(1j*2*np.pi*z/lam)*np.exp(-1j*np.pi*rho**2/fac/dim)
+    # Fresnel factor that applies after Fourier transform
+    result = result * np.exp(1j * 2 * np.pi * z / lam) * np.exp(
+        -1j * np.pi * rho**2 / fac / dim)
 
     return result

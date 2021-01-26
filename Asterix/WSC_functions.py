@@ -72,8 +72,8 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def createvectorprobes(wavelength, entrancepupil, Coronaconfig,
-                       amplitude, posprobes, pushact, dimimages, cutsvd):
+def createvectorprobes(wavelength, entrancepupil, Coronaconfig, amplitude,
+                       posprobes, pushact, dimimages, cutsvd):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
     
@@ -81,8 +81,7 @@ def createvectorprobes(wavelength, entrancepupil, Coronaconfig,
     ----------
     wavelength: float, wavelength of the  incoming flux in meter
     entrancepupil: 2D-array, entrance pupil shape
-    coro_mask: 2D array, can be complex. coronagraphic mask
-    lyot_pup: 2D array, lyot mask
+    Coronaconfig: coronagraph structure
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
     posprobes: 1D-array, index of the actuators to push and pull for pair-wise probing
     pushact: 3D-array, opd created by the pokes of all actuators in the DM.
@@ -102,7 +101,11 @@ def createvectorprobes(wavelength, entrancepupil, Coronaconfig,
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
     ## Non coronagraphic PSF
-    PSF = np.abs(np.fft.fftshift(np.fft.fft2(np.fft.fftshift(Coronaconfig.entrancepupil*Coronaconfig.lyot_pup))))**2
+    PSF = np.abs(
+        np.fft.fftshift(
+            np.fft.fft2(
+                np.fft.fftshift(Coronaconfig.entrancepupil *
+                                Coronaconfig.lyot_pup))))**2
     maxPSF = np.amax(PSF)
 
     k = 0
@@ -110,10 +113,8 @@ def createvectorprobes(wavelength, entrancepupil, Coronaconfig,
         probephase[k] = amplitude * pushact[i]
         probephase[k] = 2 * np.pi * (probephase[k]) * 1e-9 / wavelength
         inputwavefront = entrancepupil * (1 + 1j * probephase[k])
-        deltapsikbis = (
-            instr.pupiltodetector(inputwavefront,
-                                  Coronaconfig) /
-            np.sqrt(maxPSF))
+        deltapsikbis = (instr.pupiltodetector(inputwavefront, Coronaconfig) /
+                        np.sqrt(maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -160,8 +161,13 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     return WhichInPupil
 
 
-def creatingMaskDH(dimimages, shape, choosepixDH=[8, 35, -35, 35], circ_rad = [8,10],
-                circ_side="Full",circ_offset=8, circ_angle=0):
+def creatingMaskDH(dimimages,
+                   shape,
+                   choosepixDH=[8, 35, -35, 35],
+                   circ_rad=[8, 10],
+                   circ_side="Full",
+                   circ_offset=8,
+                   circ_angle=0):
     """ --------------------------------------------------
     Create a binary mask.
     
@@ -196,24 +202,25 @@ def creatingMaskDH(dimimages, shape, choosepixDH=[8, 35, -35, 35], circ_rad = [8
         if circ_side == "Right":
             maskDH[xx < np.abs(circ_offset)] = 0
             if circ_angle != 0:
-                maskDH[yy - xx/np.tan(circ_angle*np.pi/180)  > 0] = 0
-                maskDH[yy + xx/np.tan(circ_angle*np.pi/180)  < 0] = 0
+                maskDH[yy - xx / np.tan(circ_angle * np.pi / 180) > 0] = 0
+                maskDH[yy + xx / np.tan(circ_angle * np.pi / 180) < 0] = 0
         if circ_side == "Left":
             maskDH[xx > -np.abs(circ_offset)] = 0
             if circ_angle != 0:
-                maskDH[yy - xx/np.tan(circ_angle*np.pi/180)  < 0] = 0
-                maskDH[yy + xx/np.tan(circ_angle*np.pi/180)  > 0] = 0
+                maskDH[yy - xx / np.tan(circ_angle * np.pi / 180) < 0] = 0
+                maskDH[yy + xx / np.tan(circ_angle * np.pi / 180) > 0] = 0
         if circ_side == "Bottom":
             maskDH[yy < np.abs(circ_offset)] = 0
             if circ_angle != 0:
-                maskDH[yy - xx*np.tan(circ_angle*np.pi/180)  < 0] = 0
-                maskDH[yy + xx*np.tan(circ_angle*np.pi/180)  < 0] = 0
+                maskDH[yy - xx * np.tan(circ_angle * np.pi / 180) < 0] = 0
+                maskDH[yy + xx * np.tan(circ_angle * np.pi / 180) < 0] = 0
         if circ_side == "Top":
             maskDH[yy > -np.abs(circ_offset)] = 0
             if circ_angle != 0:
-                maskDH[yy - xx*np.tan(circ_angle*np.pi/180)  > 0] = 0
-                maskDH[yy + xx*np.tan(circ_angle*np.pi/180)  > 0] = 0
+                maskDH[yy - xx * np.tan(circ_angle * np.pi / 180) > 0] = 0
+                maskDH[yy + xx * np.tan(circ_angle * np.pi / 180) > 0] = 0
     return maskDH
+
 
 def creatingCorrectionmatrix(entrancepupil,
                              amplitude_abb,
@@ -236,8 +243,7 @@ def creatingCorrectionmatrix(entrancepupil,
     entrancepupil: 2D-array, entrance pupil shape
     amplitude_abb: 2D-array, amplitude aberration in the first pupil plane
     phase_abb: 2D-array, phase aberration in the first pupil plane
-    coro_mask: 2D array, can be complex. coronagraphic mask
-    lyot_pup: 2D array, lyot mask
+    Coronaconfig: coronagraph structure
     dimimages: int, size of the output image after resampling in pixels
     wavelength: float, wavelength of the  incoming flux in meter
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm

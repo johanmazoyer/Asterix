@@ -24,6 +24,7 @@ __all__ = ["create_interaction_matrices", "correctionLoop"]
 #######################################################
 ######## Interaction/control matrices for PW and EFC
 
+
 def create_interaction_matrices(parameter_file,
                                 NewMODELconfig={},
                                 NewCoronaconfig={},
@@ -57,7 +58,7 @@ def create_interaction_matrices(parameter_file,
     ### MODEL CONFIG
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
-    
+
     #On bench or numerical simulation
     onbench = modelconfig["onbench"]
 
@@ -116,7 +117,7 @@ def create_interaction_matrices(parameter_file,
     choosepix = EFCconfig["choosepix"]
     choosepix = [int(i) for i in choosepix]
     circ_rad = EFCconfig["circ_rad"]
-    circ_rad =  [int(i) for i in circ_rad]
+    circ_rad = [int(i) for i in circ_rad]
     circ_side = EFCconfig["circ_side"]
     circ_offset = EFCconfig["circ_offset"]
     circ_angle = EFCconfig["circ_angle"]
@@ -159,12 +160,19 @@ def create_interaction_matrices(parameter_file,
 
     # DM influence functions
     if creating_pushact == True:
-        pushact = instr.creatingpushact(model_dir, dim_im, pdiam, prad, xy309,
-            pitchDM=pitchDM, filename_actu309=filename_actu309,
+        pushact = instr.creatingpushact(
+            model_dir,
+            dim_im,
+            pdiam,
+            prad,
+            xy309,
+            pitchDM=pitchDM,
+            filename_actu309=filename_actu309,
             filename_grid_actu=filename_grid_actu,
-            filename_actu_infl_fct=filename_actu_infl_fct
-        )
-        fits.writeto(model_dir + "PushActInPup"+str(int(dim_im))+".fits", pushact,overwrite=True)
+            filename_actu_infl_fct=filename_actu_infl_fct)
+        fits.writeto(model_dir + "PushActInPup" + str(int(dim_im)) + ".fits",
+                     pushact,
+                     overwrite=True)
     else:
         if os.path.exists(model_dir + "PushActInPup" + str(int(dim_im)) +
                           ".fits") == False:
@@ -176,16 +184,16 @@ def create_interaction_matrices(parameter_file,
                                ".fits")
 
     # Initialize coronagraphs:
-    
 
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
-        Coronaconfig.coro = instr.FQPM(dim_im,err=err_fqpm)
+        Coronaconfig.coro = instr.FQPM(dim_im, err=err_fqpm)
         Coronaconfig.perfect_coro = True
     elif coronagraph == "knife":
-        Coronaconfig.coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
-                                   science_sampling * lyotdiam / pdiam)
+        Coronaconfig.coro = instr.KnifeEdgeCoro(
+            dim_im, coro_position, knife_coro_offset,
+            science_sampling * lyotdiam / pdiam)
         Coronaconfig.perfect_coro = False
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
@@ -194,7 +202,8 @@ def create_interaction_matrices(parameter_file,
 
     ## Entrance pupil and Lyot stop
     if filename_instr_pup != "" and filename_instr_lyot != "":
-        Coronaconfig.entrancepupil = fits.getdata(model_dir + filename_instr_pup)
+        Coronaconfig.entrancepupil = fits.getdata(model_dir +
+                                                  filename_instr_pup)
         Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
     else:
         Coronaconfig.entrancepupil = instr.roundpupil(dim_im, prad)
@@ -213,8 +222,7 @@ def create_interaction_matrices(parameter_file,
         print("Recording " + filePW + " ...")
         vectoressai, showsvd = wsc.createvectorprobes(
             wavelength, Coronaconfig.entrancepupil, Coronaconfig, amplitudePW,
-            posprobes, pushact, dim_sampl, cut
-        )
+            posprobes, pushact, dim_sampl, cut)
         fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
         visuPWMap = ("MapEigenvaluesPW" + "_" + "_".join(map(str, posprobes)) +
@@ -232,18 +240,20 @@ def create_interaction_matrices(parameter_file,
         for i in np.arange(len(posprobes)):
             probes[i, posprobes[i]] = amplitudePW / 17
             vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                    dim_sampl] = vectoressai[:, 0, i].flatten()
+                     dim_sampl] = vectoressai[:, 0, i].flatten()
             vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                    dim_sampl] = vectoressai[:, 1, i].flatten()
+                     dim_sampl] = vectoressai[:, 1, i].flatten()
         fits.writeto(Labview_dir + "Probes_EFC_default.fits",
-                    probes, overwrite=True)
+                     probes,
+                     overwrite=True)
         fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
-                    vectorPW, overwrite=True)
+                     vectorPW,
+                     overwrite=True)
 
         ####Calculating and Recording EFC matrix
         if DHshape == "square":
             print("TO SET ON LABVIEW: ",
-                str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
+                  str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
     # Creating WhichInPup?
     fileWhichInPup = "Whichactfor" + str(MinimumSurfaceRatioInThePupil)
 
@@ -255,19 +265,22 @@ def create_interaction_matrices(parameter_file,
 
         if otherbasis == False:
             WhichInPupil = wsc.creatingWhichinPupil(
-                pushact, Coronaconfig.entrancepupil, MinimumSurfaceRatioInThePupil)
+                pushact, Coronaconfig.entrancepupil,
+                MinimumSurfaceRatioInThePupil)
         else:
             WhichInPupil = np.arange(pushact.shape[0])
         fits.writeto(intermatrix_dir + fileWhichInPup + ".fits", WhichInPupil)
 
     # Creating EFC control matrix?
     if DHshape == "square":
-        fileEFCMatrix = ("MatrixEFC_square_" + "_".join(map(str, choosepix)) + "pix_" +
-                     str(amplitudeEFC) + "nm_" + str(Nbmodes) + "modes")
+        fileEFCMatrix = ("MatrixEFC_square_" + "_".join(map(str, choosepix)) +
+                         "pix_" + str(amplitudeEFC) + "nm_" + str(Nbmodes) +
+                         "modes")
     else:
-        fileEFCMatrix = ("MatrixEFC_circle_" + "_".join(map(str, circ_rad)) + "pix_" +
-                    str(circ_side)+'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg_'
-                    +str(amplitudeEFC) + "nm_" + str(Nbmodes) + "modes")
+        fileEFCMatrix = ("MatrixEFC_circle_" + "_".join(map(str, circ_rad)) +
+                         "pix_" + str(circ_side) + '_' + str(circ_offset) +
+                         'pix_' + str(circ_angle) + 'deg_' +
+                         str(amplitudeEFC) + "nm_" + str(Nbmodes) + "modes")
 
     if os.path.exists(intermatrix_dir + fileEFCMatrix + ".fits") == True:
         print("The matrix " + fileEFCMatrix + " already exist")
@@ -282,12 +295,15 @@ def create_interaction_matrices(parameter_file,
 
         # Creating EFC Interaction matrix
         if DHshape == "square":
-            fileDirectMatrix = ("DirectMatrix_square_" + "_".join(map(str, choosepix)) +
-                            "pix_" + str(amplitudeEFC) + "nm_")
+            fileDirectMatrix = ("DirectMatrix_square_" +
+                                "_".join(map(str, choosepix)) + "pix_" +
+                                str(amplitudeEFC) + "nm_")
         else:
-            fileDirectMatrix = ("DirectMatrix_circle_" + "_".join(map(str, circ_rad)) +
-                            "pix_" +str(circ_side)+'_'+str(circ_offset)+'pix_'
-                            +str(circ_angle)+'deg_'+ str(amplitudeEFC) + "nm_")
+            fileDirectMatrix = ("DirectMatrix_circle_" +
+                                "_".join(map(str, circ_rad)) + "pix_" +
+                                str(circ_side) + '_' + str(circ_offset) +
+                                'pix_' + str(circ_angle) + 'deg_' +
+                                str(amplitudeEFC) + "nm_")
         if os.path.exists(intermatrix_dir + fileDirectMatrix +
                           ".fits") == True:
             print("The matrix " + fileDirectMatrix + " already exist")
@@ -298,26 +314,37 @@ def create_interaction_matrices(parameter_file,
             # Creating MaskDH?
             fileMaskDH = ("MaskDH_" + str(dim_sampl))
             if DHshape == "square":
-                fileMaskDH = fileMaskDH + ("x" + str(dim_sampl) +
-                          "_square_" + "_".join(map(str, choosepix))+"pix")
+                fileMaskDH = fileMaskDH + ("x" + str(dim_sampl) + "_square_" +
+                                           "_".join(map(str, choosepix)) +
+                                           "pix")
             else:
-                fileMaskDH = fileMaskDH + ("r" + str(dim_sampl) +
-                          "_circle_" + "_".join(map(str, circ_rad))+ 'pix_'
-                          +str(circ_side)+'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg')
+                fileMaskDH = fileMaskDH + (
+                    "r" + str(dim_sampl) + "_circle_" +
+                    "_".join(map(str, circ_rad)) + 'pix_' + str(circ_side) +
+                    '_' + str(circ_offset) + 'pix_' + str(circ_angle) + 'deg')
 
             if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
                 print("Mask of DH " + fileMaskDH + " already exist")
                 maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
             else:
                 print("Recording " + fileMaskDH + " ...")
-                maskDH = wsc.creatingMaskDH(dim_sampl, DHshape, choosepixDH=choosepix,
-                        circ_rad=circ_rad,circ_side=circ_side,circ_offset=circ_offset,circ_angle=circ_angle)
+                maskDH = wsc.creatingMaskDH(dim_sampl,
+                                            DHshape,
+                                            choosepixDH=choosepix,
+                                            circ_rad=circ_rad,
+                                            circ_side=circ_side,
+                                            circ_offset=circ_offset,
+                                            circ_angle=circ_angle)
                 fits.writeto(intermatrix_dir + fileMaskDH + ".fits", maskDH)
 
             # Creating EFC Interaction Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
             ## Non coronagraphic PSF
-            PSF = np.abs(np.fft.fftshift(np.fft.fft2(np.fft.fftshift(Coronaconfig.entrancepupil*Coronaconfig.lyot_pup))))**2
+            PSF = np.abs(
+                np.fft.fftshift(
+                    np.fft.fft2(
+                        np.fft.fftshift(Coronaconfig.entrancepupil *
+                                        Coronaconfig.lyot_pup))))**2
             maxPSF = np.amax(PSF)
 
             Gmatrix = wsc.creatingCorrectionmatrix(
@@ -355,27 +382,32 @@ def create_interaction_matrices(parameter_file,
         plt.yscale("log")
         if DHshape == "square":
             plt.savefig(intermatrix_dir + "invertSVDEFC_square_" +
-                    "_".join(map(str, choosepix)) + "pix_" +
-                    str(amplitudeEFC) + "nm_.png")
+                        "_".join(map(str, choosepix)) + "pix_" +
+                        str(amplitudeEFC) + "nm_.png")
         else:
             plt.savefig(intermatrix_dir + "invertSVDEFC_circle_" +
-                    "_".join(map(str, circ_rad)) + "pix_" +
-                    str(circ_side)+'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg_'
-                    + str(amplitudeEFC) + "nm_.png")
+                        "_".join(map(str, circ_rad)) + "pix_" +
+                        str(circ_side) + '_' + str(circ_offset) + 'pix_' +
+                        str(circ_angle) + 'deg_' + str(amplitudeEFC) +
+                        "nm_.png")
 
     if onbench == True:
         # Save EFC control matrix in Labview directory
-        EFCmatrix = np.zeros((invertGDH.shape[1], pushact.shape[0]), dtype=np.float32)
+        EFCmatrix = np.zeros((invertGDH.shape[1], pushact.shape[0]),
+                             dtype=np.float32)
         for i in np.arange(len(WhichInPupil)):
             EFCmatrix[:, WhichInPupil[i]] = invertGDH[i, :]
         fits.writeto(Labview_dir + "Matrix_control_EFC_DM3_default.fits",
-                    EFCmatrix, overwrite=True)
+                     EFCmatrix,
+                     overwrite=True)
 
     return 0
+
 
 #######################################################
 #######################################################
 ######## Simulation of a correction loop
+
 
 def correctionLoop(parameter_file,
                    NewMODELconfig={},
@@ -411,13 +443,13 @@ def correctionLoop(parameter_file,
     ### MODEL CONFIG
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
-    
+
     #On bench or numerical simulation
     onbench = modelconfig["onbench"]
 
-   #Image
-    dim_im = modelconfig["dim_im"]                #image size on detector
-    dim_sampl = modelconfig["dim_sampl"]    #image size after binning
+    #Image
+    dim_im = modelconfig["dim_im"]  #image size on detector
+    dim_sampl = modelconfig["dim_sampl"]  #image size after binning
 
     #Lambda over D in pixels
     wavelength = modelconfig["wavelength"]
@@ -438,7 +470,6 @@ def correctionLoop(parameter_file,
     filename_grid_actu = modelconfig["filename_grid_actu"]
     filename_actu_infl_fct = modelconfig["filename_actu_infl_fct"]
 
-
     ##################
     ##################
     ### coronagraph CONFIG
@@ -449,7 +480,6 @@ def correctionLoop(parameter_file,
     coro_position = Coronaconfig["coro_position"]
     knife_coro_offset = Coronaconfig["knife_coro_offset"]
     err_fqpm = Coronaconfig["err_fqpm"]
-
 
     ##################
     ##################
@@ -471,7 +501,7 @@ def correctionLoop(parameter_file,
     choosepix = EFCconfig["choosepix"]
     choosepix = [int(i) for i in choosepix]
     circ_rad = EFCconfig["circ_rad"]
-    circ_rad =  [int(i) for i in circ_rad]
+    circ_rad = [int(i) for i in circ_rad]
     circ_side = EFCconfig["circ_side"]
     circ_offset = EFCconfig["circ_offset"]
     circ_angle = EFCconfig["circ_angle"]
@@ -550,24 +580,27 @@ def correctionLoop(parameter_file,
         basisDM3 = 0
 
     ## DM influence functions
-    if os.path.exists(model_dir + "PushActInPup"+str(int(dim_im))+".fits") == False:
+    if os.path.exists(model_dir + "PushActInPup" + str(int(dim_im)) +
+                      ".fits") == False:
         print("Extracting data from zip file...")
         ZipFile(model_dir + "PushActInPup" + str(int(dim_im)) + ".zip",
                 "r").extractall(model_dir)
 
-    pushact = fits.getdata(model_dir + "PushActInPup"+str(int(dim_im))+".fits")
-    
+    pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
+                           ".fits")
+
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
-        Coronaconfig.coro = instr.FQPM(dim_im,err=err_fqpm)
-        if err_fqpm ==0:
+        Coronaconfig.coro = instr.FQPM(dim_im, err=err_fqpm)
+        if err_fqpm == 0:
             Coronaconfig.perfect_coro = True
         else:
             Coronaconfig.perfect_coro = False
     elif coronagraph == "knife":
-        Coronaconfig.coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
-                                   science_sampling * lyotdiam / pdiam)
+        Coronaconfig.coro = instr.KnifeEdgeCoro(
+            dim_im, coro_position, knife_coro_offset,
+            science_sampling * lyotdiam / pdiam)
         Coronaconfig.perfect_coro = False
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
@@ -576,11 +609,12 @@ def correctionLoop(parameter_file,
 
     ## Entrance pupil and Lyot stop
     lyotrad = dim_im / 2 / science_sampling
-    prad = int(np.ceil(lyotrad*pdiam/lyotdiam))
+    prad = int(np.ceil(lyotrad * pdiam / lyotdiam))
     lyotrad = int(np.ceil(lyotrad))
 
     if filename_instr_pup != "" and filename_instr_lyot != "":
-        Coronaconfig.entrancepupil = fits.getdata(model_dir + filename_instr_pup)
+        Coronaconfig.entrancepupil = fits.getdata(model_dir +
+                                                  filename_instr_pup)
         Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
     else:
         Coronaconfig.entrancepupil = instr.roundpupil(dim_im, prad)
@@ -590,7 +624,11 @@ def correctionLoop(parameter_file,
 
     ## Non coronagraphic PSF
     # PSF = np.abs(instr.pupiltodetector(Coronaconfig.entrancepupil , 1, Coronaconfig.lyot_pup))**2
-    PSF = np.abs(np.fft.fftshift(np.fft.fft2(np.fft.fftshift(Coronaconfig.entrancepupil*Coronaconfig.lyot_pup))))**2
+    PSF = np.abs(
+        np.fft.fftshift(
+            np.fft.fft2(
+                np.fft.fftshift(Coronaconfig.entrancepupil *
+                                Coronaconfig.lyot_pup))))**2
     maxPSF = np.amax(PSF)
 
     ##Load PW matrices
@@ -614,12 +652,15 @@ def correctionLoop(parameter_file,
 
     ## Load Control matrix
     if DHshape == "square":
-        fileDirectMatrix = ("DirectMatrix_square_" + "_".join(map(str, choosepix)) +
-                        "pix_" + str(amplitudeEFC) + "nm_")
+        fileDirectMatrix = ("DirectMatrix_square_" +
+                            "_".join(map(str, choosepix)) + "pix_" +
+                            str(amplitudeEFC) + "nm_")
     else:
-        fileDirectMatrix = ("DirectMatrix_circle_" + "_".join(map(str, circ_rad)) +
-                        "pix_" +str(circ_side)+'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg_'
-                        + str(amplitudeEFC) + "nm_")
+        fileDirectMatrix = ("DirectMatrix_circle_" +
+                            "_".join(map(str, circ_rad)) + "pix_" +
+                            str(circ_side) + '_' + str(circ_offset) + 'pix_' +
+                            str(circ_angle) + 'deg_' + str(amplitudeEFC) +
+                            "nm_")
     if os.path.exists(intermatrix_dir + fileDirectMatrix + ".fits") == True:
         Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix + ".fits")
     else:
@@ -628,12 +669,13 @@ def correctionLoop(parameter_file,
 
     fileMaskDH = ("MaskDH_" + str(dim_sampl))
     if DHshape == "square":
-        fileMaskDH = fileMaskDH + ("x" + str(dim_sampl) +
-            "_square_" + "_".join(map(str, choosepix))+'pix')
+        fileMaskDH = fileMaskDH + ("x" + str(dim_sampl) + "_square_" +
+                                   "_".join(map(str, choosepix)) + 'pix')
     else:
-        fileMaskDH = fileMaskDH + ("r" + str(dim_sampl) +
-            "_circle_" + "_".join(map(str, circ_rad)) + 'pix_'+str(circ_side)
-            +'_'+str(circ_offset)+'pix_'+str(circ_angle)+'deg')
+        fileMaskDH = fileMaskDH + ("r" + str(dim_sampl) + "_circle_" +
+                                   "_".join(map(str, circ_rad)) + 'pix_' +
+                                   str(circ_side) + '_' + str(circ_offset) +
+                                   'pix_' + str(circ_angle) + 'deg')
     if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
     else:
@@ -687,7 +729,8 @@ def correctionLoop(parameter_file,
     phase_abb = phase
 
     ## To convert in photon flux
-    contrast_to_photons = (np.sum(Coronaconfig.entrancepupil) / np.sum(Coronaconfig.lyot_pup) * nb_photons *
+    contrast_to_photons = (np.sum(Coronaconfig.entrancepupil) /
+                           np.sum(Coronaconfig.lyot_pup) * nb_photons *
                            maxPSF / np.sum(PSF))
 
     ## Adding error on the DM model?
@@ -716,19 +759,27 @@ def correctionLoop(parameter_file,
     phaseDM = np.zeros((nbiter + 1, dim_im, dim_im))
     meancontrast = np.zeros(nbiter + 1)
     if os.path.exists(intermatrix_dir + fileMaskDH + "_contrast.fits") == True:
-        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH + "_contrast.fits")
+        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH +
+                                      "_contrast.fits")
     else:
-        maskDHcontrast = wsc.creatingMaskDH(dim_im, DHshape,
-                choosepixDH=[element * dim_im / dim_sampl for element in choosepix],
-                circ_rad=[element * dim_im / dim_sampl for element in circ_rad],
-                circ_side=circ_side,circ_offset=circ_offset* dim_im / dim_sampl,
-                circ_angle=circ_angle)
-        fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits", maskDHcontrast)
+        maskDHcontrast = wsc.creatingMaskDH(
+            dim_im,
+            DHshape,
+            choosepixDH=[
+                element * dim_im / dim_sampl for element in choosepix
+            ],
+            circ_rad=[element * dim_im / dim_sampl for element in circ_rad],
+            circ_side=circ_side,
+            circ_offset=circ_offset * dim_im / dim_sampl,
+            circ_angle=circ_angle)
+        fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits",
+                     maskDHcontrast)
 
-    input_wavefront =Coronaconfig.entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb)
-    
-    imagedetector[0] = (abs(instr.pupiltodetector(input_wavefront, Coronaconfig
-        ))**2 / maxPSF)
+    input_wavefront = Coronaconfig.entrancepupil * (
+        1 + amplitude_abb) * np.exp(1j * phase_abb)
+
+    imagedetector[0] = (
+        abs(instr.pupiltodetector(input_wavefront, Coronaconfig))**2 / maxPSF)
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
@@ -745,27 +796,24 @@ def correctionLoop(parameter_file,
         print("Iteration number: ", k, " EFC truncation: ", mode)
         if (estimation == "PairWise" or estimation == "pairwise"
                 or estimation == "PW" or estimation == "pw"):
-            Difference = instr.createdifference(
-                amplitude_abb,
-                phase_abb,
-                posprobes,
-                pushactonDM,
-                amplitudePW,
-                Coronaconfig.entrancepupil,
-                Coronaconfig,
-                PSF,
-                dim_sampl,
-                wavelength,
-                noise=photon_noise,
-                numphot=nb_photons)
+            Difference = instr.createdifference(amplitude_abb,
+                                                phase_abb,
+                                                posprobes,
+                                                pushactonDM,
+                                                amplitudePW,
+                                                Coronaconfig.entrancepupil,
+                                                Coronaconfig,
+                                                PSF,
+                                                dim_sampl,
+                                                wavelength,
+                                                noise=photon_noise,
+                                                numphot=nb_photons)
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
         elif estimation == "Perfect":
-            resultatestimation =  instr.pupiltodetector(
-                            input_wavefront,
-                            Coronaconfig
-                        ) / np.sqrt(maxPSF)
-            
+            resultatestimation = instr.pupiltodetector(
+                input_wavefront, Coronaconfig) / np.sqrt(maxPSF)
+
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
         else:
@@ -834,10 +882,8 @@ def correctionLoop(parameter_file,
                                                     (phase_abb + apply_on_DM))
 
                     imagedetectortemp = (abs(
-                        instr.pupiltodetector(
-                            input_wavefront,
-                            Coronaconfig
-                        ))**2 / maxPSF)
+                        instr.pupiltodetector(input_wavefront, Coronaconfig))**
+                                         2 / maxPSF)
 
                     meancontrasttemp[b] = np.mean(
                         imagedetectortemp[np.where(maskDHcontrast != 0)])
@@ -893,13 +939,11 @@ def correctionLoop(parameter_file,
                        2 * np.pi * 1e-9 / wavelength)
         phaseDM[k + 1] = phaseDM[k] + apply_on_DM
         phase_abb = phase_abb + apply_on_DM
-        input_wavefront = Coronaconfig.entrancepupil * (1 + amplitude_abb) * np.exp(
-            1j * phase_abb)
-        imagedetector[k + 1] = (abs(
-            instr.pupiltodetector(
-                input_wavefront,
-                Coronaconfig
-            ))**2 / maxPSF)
+        input_wavefront = Coronaconfig.entrancepupil * (
+            1 + amplitude_abb) * np.exp(1j * phase_abb)
+        imagedetector[k + 1] = (
+            abs(instr.pupiltodetector(input_wavefront, Coronaconfig))**2 /
+            maxPSF)
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHcontrast != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])
