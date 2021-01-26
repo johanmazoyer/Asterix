@@ -614,12 +614,14 @@ def correctionLoop(parameter_file,
     prad = int(np.ceil(lyotrad * pdiam / lyotdiam))
     lyotrad = int(np.ceil(lyotrad))
 
-    if filename_instr_pup != "" and filename_instr_lyot != "":
-        entrancepupil = fits.getdata(model_dir +
-                                                  filename_instr_pup)
-        Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
+    if filename_instr_pup != "":
+        entrancepupil = fits.getdata(model_dir +filename_instr_pup)
     else:
         entrancepupil = instr.roundpupil(dim_im, prad)
+
+    if filename_instr_lyot != "":
+        Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
+    else:
         Coronaconfig.lyot_pup = instr.roundpupil(dim_im, lyotrad)
 
     Coronaconfig.perfect_entrance_pupil = entrancepupil
