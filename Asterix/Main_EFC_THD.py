@@ -623,7 +623,7 @@ def correctionLoop(parameter_file,
     if Coronaconfig.perfect_coro:
         Coronaconfig.perfect_Lyot_pupil = instr.pupiltolyot(entrancepupil,Coronaconfig)
 
-    ## Non coronagraphic PSF
+    ## Non coronagraphic PSF 
     # PSF = np.abs(instr.pupiltodetector(entrancepupil , 1, Coronaconfig.lyot_pup))**2
     PSF = np.abs(instr.lyottodetector(entrancepupil * Coronaconfig.lyot_pup, Coronaconfig))**2
     maxPSF = np.amax(PSF)
