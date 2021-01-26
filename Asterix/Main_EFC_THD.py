@@ -175,24 +175,32 @@ def create_interaction_matrices(parameter_file,
         pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
                                ".fits")
 
+    # Initialize coronagraphs:
+    
+
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
-        coro = instr.FQPM(dim_im,err=err_fqpm)
+        Coronaconfig.coro = instr.FQPM(dim_im,err=err_fqpm)
+        Coronaconfig.perfect_coro = True
     elif coronagraph == "knife":
-        coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
+        Coronaconfig.coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
                                    science_sampling * lyotdiam / pdiam)
+        Coronaconfig.perfect_coro = False
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
-        coro = np.exp(1j * phasevortex)
+        Coronaconfig.coro = np.exp(1j * phasevortex)
+        Coronaconfig.perfect_coro = True
 
     ## Entrance pupil and Lyot stop
     if filename_instr_pup != "" and filename_instr_lyot != "":
-        entrancepupil = fits.getdata(model_dir + filename_instr_pup)
-        lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
+        Coronaconfig.entrancepupil = fits.getdata(model_dir + filename_instr_pup)
+        Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
     else:
-        entrancepupil = instr.roundpupil(dim_im, prad)
-        lyot_pup = instr.roundpupil(dim_im, lyotrad)
+        Coronaconfig.entrancepupil = instr.roundpupil(dim_im, prad)
+        Coronaconfig.lyot_pup = instr.roundpupil(dim_im, lyotrad)
+
+    Coronaconfig.perfect_entrance_pupil = Coronaconfig.entrancepupil
 
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
@@ -204,7 +212,7 @@ def create_interaction_matrices(parameter_file,
     else:
         print("Recording " + filePW + " ...")
         vectoressai, showsvd = wsc.createvectorprobes(
-            wavelength, entrancepupil, coro, lyot_pup, amplitudePW,
+            wavelength, Coronaconfig.entrancepupil, Coronaconfig, amplitudePW,
             posprobes, pushact, dim_sampl, cut
         )
         fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
@@ -247,7 +255,7 @@ def create_interaction_matrices(parameter_file,
 
         if otherbasis == False:
             WhichInPupil = wsc.creatingWhichinPupil(
-                pushact, entrancepupil, MinimumSurfaceRatioInThePupil)
+                pushact, Coronaconfig.entrancepupil, MinimumSurfaceRatioInThePupil)
         else:
             WhichInPupil = np.arange(pushact.shape[0])
         fits.writeto(intermatrix_dir + fileWhichInPup + ".fits", WhichInPupil)
@@ -308,15 +316,15 @@ def create_interaction_matrices(parameter_file,
 
             # Creating EFC Interaction Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
-            maxPSF = np.amax(
-                np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_pup))**2)
+            ## Non coronagraphic PSF
+            PSF = np.abs(np.fft.fftshift(np.fft.fft2(np.fft.fftshift(Coronaconfig.entrancepupil*Coronaconfig.lyot_pup))))**2
+            maxPSF = np.amax(PSF)
 
             Gmatrix = wsc.creatingCorrectionmatrix(
-                entrancepupil,
+                Coronaconfig.entrancepupil,
                 0,
                 0,
-                coro,
-                lyot_pup,
+                Coronaconfig,
                 dim_sampl,
                 wavelength,
                 amplitudeEFC,
@@ -505,12 +513,12 @@ def correctionLoop(parameter_file,
 
     ##THEN DO
 
-## Number of modes that is used as a function of the iteration cardinal
+    ## Number of modes that is used as a function of the iteration cardinal
     modevector = []
     for i in np.arange(len(Nbiter_corr)):
         modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
-## Directories for saving the data
+    ## Directories for saving the data
     model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
 
     if onbench == True:
@@ -524,7 +532,7 @@ def correctionLoop(parameter_file,
         print("Creating directory " + result_dir + " ...")
         os.makedirs(result_dir)
 
-## Pair-wise probing directory
+    ## Pair-wise probing directory
     if otherbasis == False:
         basistr = "actu"
     else:
@@ -541,7 +549,7 @@ def correctionLoop(parameter_file,
     else:
         basisDM3 = 0
 
-## DM influence functions
+    ## DM influence functions
     if os.path.exists(model_dir + "PushActInPup"+str(int(dim_im))+".fits") == False:
         print("Extracting data from zip file...")
         ZipFile(model_dir + "PushActInPup" + str(int(dim_im)) + ".zip",
@@ -549,42 +557,43 @@ def correctionLoop(parameter_file,
 
     pushact = fits.getdata(model_dir + "PushActInPup"+str(int(dim_im))+".fits")
     
-## transmission of the phase mask (exp(i*phase))
-## centered on pixel [0.5,0.5]
+    ## transmission of the phase mask (exp(i*phase))
+    ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
-        coro = instr.FQPM(dim_im,err=err_fqpm)
+        Coronaconfig.coro = instr.FQPM(dim_im,err=err_fqpm)
         if err_fqpm ==0:
-            perfect_coro = True
+            Coronaconfig.perfect_coro = True
         else:
-            perfect_coro = False
+            Coronaconfig.perfect_coro = False
     elif coronagraph == "knife":
-        coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
+        Coronaconfig.coro = instr.KnifeEdgeCoro(dim_im, coro_position, knife_coro_offset,
                                    science_sampling * lyotdiam / pdiam)
-        perfect_coro = False
+        Coronaconfig.perfect_coro = False
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
-        coro = np.exp(1j * phasevortex)
-        perfect_coro = True
+        Coronaconfig.coro = np.exp(1j * phasevortex)
+        Coronaconfig.perfect_coro = True
 
-## Entrance pupil and Lyot stop
+    ## Entrance pupil and Lyot stop
     lyotrad = dim_im / 2 / science_sampling
     prad = int(np.ceil(lyotrad*pdiam/lyotdiam))
     lyotrad = int(np.ceil(lyotrad))
 
     if filename_instr_pup != "" and filename_instr_lyot != "":
-        entrancepupil = fits.getdata(model_dir + filename_instr_pup)
-        lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
+        Coronaconfig.entrancepupil = fits.getdata(model_dir + filename_instr_pup)
+        Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
     else:
-        entrancepupil = instr.roundpupil(dim_im, prad)
-        lyot_pup = instr.roundpupil(dim_im, lyotrad)
+        Coronaconfig.entrancepupil = instr.roundpupil(dim_im, prad)
+        Coronaconfig.lyot_pup = instr.roundpupil(dim_im, lyotrad)
 
-    perfect_entrance_pupil = entrancepupil
+    Coronaconfig.perfect_entrance_pupil = Coronaconfig.entrancepupil
 
-## Non coronagraphic PSF
-    PSF = np.abs(instr.pupiltodetector(entrancepupil, 1, lyot_pup))**2
+    ## Non coronagraphic PSF
+    # PSF = np.abs(instr.pupiltodetector(Coronaconfig.entrancepupil , 1, Coronaconfig.lyot_pup))**2
+    PSF = np.abs(np.fft.fftshift(np.fft.fft2(np.fft.fftshift(Coronaconfig.entrancepupil*Coronaconfig.lyot_pup))))**2
     maxPSF = np.amax(PSF)
 
-##Load PW matrices
+    ##Load PW matrices
     if (estimation == "PairWise" or estimation == "pairwise"
             or estimation == "PW" or estimation == "pw"):
         filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
@@ -603,7 +612,7 @@ def correctionLoop(parameter_file,
         print("Please create Whichactfor matrix before correction")
         sys.exit()
 
-## Load Control matrix
+    ## Load Control matrix
     if DHshape == "square":
         fileDirectMatrix = ("DirectMatrix_square_" + "_".join(map(str, choosepix)) +
                         "pix_" + str(amplitudeEFC) + "nm_")
@@ -638,8 +647,8 @@ def correctionLoop(parameter_file,
         transposecomplexG = np.transpose(np.conjugate(G))
         M0 = np.real(np.dot(transposecomplexG, G))
 
-## Phase map and amplitude map for the static aberrations
-## TODO Load aberration maps (A checker, Amplitude sans doute a refaire proprement!!!)
+    ## Phase map and amplitude map for the static aberrations
+    ## TODO Load aberration maps (A checker, Amplitude sans doute a refaire proprement!!!)
     if set_phase_abb == True:
         if set_random_phase == True:
             phase = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
@@ -677,11 +686,11 @@ def correctionLoop(parameter_file,
     amplitude_abb = ampfinal
     phase_abb = phase
 
-## To convert in photon flux
-    contrast_to_photons = (np.sum(entrancepupil) / np.sum(lyot_pup) * nb_photons *
+    ## To convert in photon flux
+    contrast_to_photons = (np.sum(Coronaconfig.entrancepupil) / np.sum(Coronaconfig.lyot_pup) * nb_photons *
                            maxPSF / np.sum(PSF))
 
-## Adding error on the DM model?
+    ## Adding error on the DM model?
     if xerror == 0 and yerror == 0 and angerror == 0 and gausserror == 0:
         pushactonDM = pushact
     else:
@@ -701,7 +710,7 @@ def correctionLoop(parameter_file,
             angerror=angerror,
             gausserror=gausserror)
 
-## Correction loop
+    ## Correction loop
     nbiter = len(modevector)
     imagedetector = np.zeros((nbiter + 1, dim_im, dim_im))
     phaseDM = np.zeros((nbiter + 1, dim_im, dim_im))
@@ -716,10 +725,9 @@ def correctionLoop(parameter_file,
                 circ_angle=circ_angle)
         fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits", maskDHcontrast)
 
-    input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb)
+    input_wavefront =Coronaconfig.entrancepupil * (1 + amplitude_abb) * np.exp(1j * phase_abb)
     
-    imagedetector[0] = (abs(instr.pupiltodetector(input_wavefront, coro,
-            lyot_pup, perfect_coro=perfect_coro, perfect_entrance_pupil=perfect_entrance_pupil
+    imagedetector[0] = (abs(instr.pupiltodetector(input_wavefront, Coronaconfig
         ))**2 / maxPSF)
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
@@ -743,26 +751,21 @@ def correctionLoop(parameter_file,
                 posprobes,
                 pushactonDM,
                 amplitudePW,
-                entrancepupil,
-                coro,
-                lyot_pup,
+                Coronaconfig.entrancepupil,
+                Coronaconfig,
                 PSF,
                 dim_sampl,
                 wavelength,
-                perfect_coro=perfect_coro,
-                perfect_entrance_pupil=perfect_entrance_pupil,
                 noise=photon_noise,
                 numphot=nb_photons)
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
         elif estimation == "Perfect":
-            resultatestimation = (instr.pupiltodetector(
-                input_wavefront,
-                coro,
-                lyot_pup,
-                perfect_coro=perfect_coro,
-                perfect_entrance_pupil=perfect_entrance_pupil) /
-                                  np.square(maxPSF))
+            resultatestimation =  instr.pupiltodetector(
+                            input_wavefront,
+                            Coronaconfig
+                        ) / np.sqrt(maxPSF)
+            
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
         else:
@@ -774,11 +777,10 @@ def correctionLoop(parameter_file,
             if Linearization == True:
 
                 Gmatrix = wsc.creatingCorrectionmatrix(
-                    entrancepupil,
+                    Coronaconfig.entrancepupil,
                     amplitude_abb,
                     phase_abb,
-                    coro,
-                    lyot_pup,
+                    Coronaconfig,
                     dim_sampl,
                     wavelength,
                     amplitudeEFC,
@@ -827,17 +829,14 @@ def correctionLoop(parameter_file,
                             1024, dim_im * dim_im)).reshape(dim_im, dim_im) *
                                    2 * np.pi * 1e-9 / wavelength)
 
-                    input_wavefront = entrancepupil * (
+                    input_wavefront = Coronaconfig.entrancepupil * (
                         1 + amplitude_abb) * np.exp(1j *
                                                     (phase_abb + apply_on_DM))
 
                     imagedetectortemp = (abs(
                         instr.pupiltodetector(
                             input_wavefront,
-                            coro,
-                            lyot_pup,
-                            perfect_coro=perfect_coro,
-                            perfect_entrance_pupil=perfect_entrance_pupil,
+                            Coronaconfig
                         ))**2 / maxPSF)
 
                     meancontrasttemp[b] = np.mean(
@@ -894,15 +893,12 @@ def correctionLoop(parameter_file,
                        2 * np.pi * 1e-9 / wavelength)
         phaseDM[k + 1] = phaseDM[k] + apply_on_DM
         phase_abb = phase_abb + apply_on_DM
-        input_wavefront = entrancepupil * (1 + amplitude_abb) * np.exp(
+        input_wavefront = Coronaconfig.entrancepupil * (1 + amplitude_abb) * np.exp(
             1j * phase_abb)
         imagedetector[k + 1] = (abs(
             instr.pupiltodetector(
                 input_wavefront,
-                coro,
-                lyot_pup,
-                perfect_coro=perfect_coro,
-                perfect_entrance_pupil=perfect_entrance_pupil,
+                Coronaconfig
             ))**2 / maxPSF)
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHcontrast != 0)])

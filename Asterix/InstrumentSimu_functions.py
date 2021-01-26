@@ -114,10 +114,7 @@ def roundpupil(dim_im, prad1):
 
 
 def pupiltodetector(input_wavefront,
-                    coro_mask,
-                    lyot_mask,
-                    perfect_coro=False,
-                    perfect_entrance_pupil=0):  # aberrationphase,prad1,prad2
+                    Coronaconfig):  # aberrationphase,prad1,prad2
     """ --------------------------------------------------
     Propagate the electric field through a high-contrast imaging instrument,
     from pupil plane to focal plane.
@@ -127,9 +124,9 @@ def pupiltodetector(input_wavefront,
     ----------
     input_wavefront : 2D array,can be complex.  
         Input wavefront,can be complex.
-    coro_mask : 2D array, can be complex. 
+    coro : 2D array, can be complex. 
         Coronagraphic mask
-    lyot_mask : 2D array 
+    lyot_pup : 2D array 
         Lyot mask
     perfect_coro : bool, optional
         Set to True if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
@@ -143,20 +140,21 @@ def pupiltodetector(input_wavefront,
         the input wavefront through the high-contrast instrument.
     -------------------------------------------------- """
 
+
     maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
     # Focal plane 1
-    if perfect_coro == True:
-        input_wavefront = input_wavefront - perfect_entrance_pupil
+    if Coronaconfig.perfect_coro == True:
+        input_wavefront = input_wavefront - Coronaconfig.perfect_entrance_pupil
 
     focal1end = np.fft.fft2(np.fft.fftshift(input_wavefront *
                                             maskshifthalfpix))
 
     # Lyot plane
-    pupil2end = np.fft.ifft2(focal1end * coro_mask)
+    pupil2end = np.fft.ifft2(focal1end * Coronaconfig.coro)
 
     # Focal plane 2
     focal2end = np.fft.fftshift(
-        np.fft.fft2(pupil2end * np.fft.fftshift(lyot_mask)))
+        np.fft.fft2(pupil2end * np.fft.fftshift(Coronaconfig.lyot_pup)))
 
     return focal2end
 
@@ -325,13 +323,10 @@ def createdifference(aberramp,
                      pushact,
                      amplitude,
                      entrancepupil,
-                     coro_mask,
-                     lyot_mask,
+                     Coronaconfig,
                      PSF,
                      dimimages,
                      wavelength,
-                     perfect_coro=False,
-                     perfect_entrance_pupil=0,
                      noise=False,
                      numphot=1e30):
     """ --------------------------------------------------
@@ -352,10 +347,10 @@ def createdifference(aberramp,
         amplitude of the actuator pokes for pair(wise probing in nm
     entrancepupil : 2D-array
         Entrance pupil shape
-    coro_mask : 2D array, can be complex
+    coro : 2D array, can be complex
         Coronagraphic mask
-    lyot_mask : 2D array
-        Lyot mask
+    lyot_pup : 2D array
+        Lyot Pupil
     dimimages : int
         Size of the output image after resampling in pixels
     wavelength : float
@@ -381,7 +376,7 @@ def createdifference(aberramp,
 
     maxPSF = np.amax(PSF)
 
-    contrast_to_photons = (np.sum(entrancepupil) / np.sum(lyot_mask) *
+    contrast_to_photons = (np.sum(entrancepupil) / np.sum(Coronaconfig.lyot_pup) *
                            numphot * maxPSF / np.sum(PSF))
 
     k = 0
@@ -391,14 +386,12 @@ def createdifference(aberramp,
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase - 1 * probephase)))
         Ikmoins = (np.abs(
-            pupiltodetector(input_wavefront, coro_mask, lyot_mask,
-                            perfect_coro, perfect_entrance_pupil))**2 / maxPSF)
+            pupiltodetector(input_wavefront, Coronaconfig))**2 / maxPSF)
 
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase + 1 * probephase)))
         Ikplus = (np.abs(
-            pupiltodetector(input_wavefront, coro_mask, lyot_mask,
-                            perfect_coro, perfect_entrance_pupil))**2 / maxPSF)
+            pupiltodetector(input_wavefront, Coronaconfig))**2 / maxPSF)
 
         if noise == True:
             Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
@@ -408,7 +401,7 @@ def createdifference(aberramp,
 
         Ikplus = np.abs(proc.resampling(Ikplus, dimimages))
         Ikmoins = np.abs(proc.resampling(Ikmoins, dimimages))
-        # print(np.sum(contrast_to_photons*Ikplus*1e-9),np.sum(entrancepupil)/np.sum(lyot_mask))
+        # print(np.sum(contrast_to_photons*Ikplus*1e-9),np.sum(entrancepupil)/np.sum(lyot_pup))
 
         Difference[k] = Ikplus - Ikmoins
         k = k + 1
