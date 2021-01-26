@@ -477,3 +477,122 @@ def random_phase_map(dim_im, phaserms, rhoc, slope):
     phase = np.real(np.fft.ifft2(product))
     phase = phase / np.std(phase) * phaserms
     return phase
+
+
+def mft(pup, dimft, nbres, xshift=0,yshift=0,inv=-1):
+    """ --------------------------------------------------
+    MFT  - Return the Matrix Direct Fourier transform (MFT) of pup
+    (cf. Soummer et al. 2007, OSA)
+
+    Parameters
+    ----------
+    pup : 2D array (complex or real)
+         Entrance pupil.
+         CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
+         where dimpup is the pup array dimension
+
+    dimft : integer
+           Dimension of the output
+
+    nbres : float
+           Number of spatial resolution elements
+
+    xshift : float
+            center of the output array in the x direction
+
+    yshift : float
+            center of the output array in the y direction    
+
+    inv : integer
+            direct MFT if 1
+            indirect MFT if -1 (default)
+
+    Returns
+    ------
+    result : 2D array (complex)
+            MFT of pup centered on the pixel (dimft/2D+1+xhift,dimft/2D+1+yxhift)
+            dimension is dimft x dimft
+
+    AUTHOR : Raphaël Galicher
+
+    REVISION HISTORY :
+    Revision 1.1  2020-01-22 Raphaël Galicher
+    Initial revision (from MFT.pro written in IDL)
+
+    -------------------------------------------------- """
+    
+    dimpup = pup.shape[0]
+
+    xx0 = np.arange(dimpup)/dimpup - 0.5
+    uu0 = ((np.arange(dimft)-xshift)/dimft - 0.5)*nbres
+    uu1 = ((np.arange(dimft)-yshift)/dimft - 0.5)*nbres
+    
+    if inv == 1:
+        norm0 = (nbres/dimpup)**2
+    else:
+        norm0 = ((1.*nbres)**2/(1.*dimft)**2/(1.*dimpup)**2)
+
+    AA = np.exp(-inv*1j*2*np.pi*np.outer(uu0,xx0))
+    BB = np.exp(-inv*1j*2*np.pi*np.outer(xx0,uu1))
+    result = norm0*np.matmul(np.matmul(AA,pup),BB)
+    return result
+
+def prop_fresnel(pup, lam, z, dx):
+    """ --------------------------------------------------
+    Fresnel propagation of pup along a distance z in a collimated beam
+    and in Free space
+
+    Parameters
+    ----------
+    pup : 2D array (complex or real)
+         electric field at z=0
+         CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
+         where dimpup is the pup array dimension
+
+    lam : float
+         wavelength in meter
+
+    z : float
+         distance of propagation
+
+    dx : float
+         pixel size in the pup array in meter
+
+    Returns
+    ------
+    pup_z : 2D array (complex)
+            electric field after propagating in free space along
+            a distance z
+
+    AUTHOR : Raphaël Galicher
+
+    REVISION HISTORY :
+    Revision 1.1  2020-01-22 Raphaël Galicher
+    Initial revision
+
+    -------------------------------------------------- """
+# dimension of the input array   
+    dim=pup.shape[0]
+
+# Zoom factor to get the same spatial scale in the input and output array
+    fac = dx**2/(lam*z)
+    if fac > 3e-3:
+        print('need to increase lam or z or 1/dx')
+        return -1
+    fac = fac*dim
+
+# create a 2D-array of distances from the central pixel
+    u, v = np.meshgrid(
+    np.arange(dim) - dim / 2,
+    np.arange(dim) - dim / 2)
+    rho = np.hypot(v, u)
+# Fresnel factor that applies before Fourier transform
+    H = np.exp(-1j*np.pi*rho**2*fac/dim)
+
+# Fourier transform using MFT
+    result = mft(pup*H,dim,dim*fac)
+
+# Fresnel factor that applies after Fourier transform    
+    result = result*np.exp(1j*2*np.pi*z/lam)*np.exp(-1j*np.pi*rho**2/fac/dim)
+
+    return result

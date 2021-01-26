@@ -898,7 +898,7 @@ def correctionLoop(parameter_file,
                                                       contrast_to_photons)
 
         plt.clf()
-        plt.imshow(np.log10(imagedetector[k + 1]), vmin=-10, vmax=-4)
+        plt.imshow(np.log10(imagedetector[k + 1]), vmin=-8, vmax=-5)
         plt.colorbar()
         plt.pause(0.01)
         previousmode = mode

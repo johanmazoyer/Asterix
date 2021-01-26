@@ -114,7 +114,7 @@ def createvectorprobes(wavelength, entrancepupil, coro_mask, lyot_mask,
                                   lyot_mask,
                                   perfect_coro=True,
                                   perfect_entrance_pupil=entrancepupil) /
-            np.sqrt(maxPSF))
+            np.square(maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -279,7 +279,7 @@ def creatingCorrectionmatrix(entrancepupil,
             lyot_mask,
             perfect_coro=False,
             perfect_entrance_pupil=entrancepupil,
-        ) / np.sqrt(maxPSF))
+        ) / np.square(maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()
