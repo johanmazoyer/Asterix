@@ -113,6 +113,28 @@ def roundpupil(dim_im, prad1):
 ### Propagation through coronagraph
 
 
+def lyottodetector(Lyot_plane_after_Lyot,
+                    Coronaconfig):  # aberrationphase,prad1,prad2
+    """ --------------------------------------------------
+    Propagate the electric field from Lyot plane after Lyot to Science focal plane.
+    The output is cropped and resampled.
+    
+    Parameters
+    ----------
+    Lyot_plane_after_Lyot : 2D array,can be complex.  
+        Input wavefront,can be complex.
+    Coronaconfig: coronagraph structure
+    
+    Returns
+    ------
+    science_focal_plane : 2D array, 
+        Focal plane electric field in the focal plane
+    -------------------------------------------------- """
+
+    science_focal_plane = np.fft.fftshift(np.fft.fft2(Lyot_plane_after_Lyot))
+
+    return science_focal_plane
+
 def pupiltodetector(input_wavefront,
                     Coronaconfig):  # aberrationphase,prad1,prad2
     """ --------------------------------------------------
@@ -145,8 +167,7 @@ def pupiltodetector(input_wavefront,
     pupil2end = np.fft.ifft2(focal1end * Coronaconfig.coro)
 
     # Focal plane 2
-    focal2end = np.fft.fftshift(
-        np.fft.fft2(pupil2end * np.fft.fftshift(Coronaconfig.lyot_pup)))
+    focal2end = lyottodetector(pupil2end*np.fft.fftshift(Coronaconfig.lyot_pup), Coronaconfig)
 
     return focal2end
 
