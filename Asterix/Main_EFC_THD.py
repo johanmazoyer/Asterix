@@ -26,6 +26,7 @@ __all__ = ["create_interaction_matrices", "correctionLoop"]
 
 def create_interaction_matrices(parameter_file,
                                 NewMODELconfig={},
+                                NewCoronaconfig={},
                                 NewPWconfig={},
                                 NewEFCconfig={}):
 
@@ -74,12 +75,6 @@ def create_interaction_matrices(parameter_file,
     filename_instr_pup = modelconfig["filename_instr_pup"]
     filename_instr_lyot = modelconfig["filename_instr_lyot"]
 
-    #coronagraph
-    coronagraph = modelconfig["coronagraph"]
-    coro_position = modelconfig["coro_position"]
-    knife_coro_offset = modelconfig["knife_coro_offset"]
-    err_fqpm = modelconfig["err_fqpm"]
-
     #DM model
     pitchDM = modelconfig["pitchDM"]
     creating_pushact = modelconfig["creating_pushact"]
@@ -89,6 +84,17 @@ def create_interaction_matrices(parameter_file,
     filename_actu309 = modelconfig["filename_actu309"]
     filename_grid_actu = modelconfig["filename_grid_actu"]
     filename_actu_infl_fct = modelconfig["filename_actu_infl_fct"]
+
+    ##################
+    ##################
+    ### coronagraph CONFIG
+    Coronaconfig = config["Coronaconfig"]
+    Coronaconfig.update(NewCoronaconfig)
+
+    coronagraph = Coronaconfig["coronagraph"]
+    coro_position = Coronaconfig["coro_position"]
+    knife_coro_offset = Coronaconfig["knife_coro_offset"]
+    err_fqpm = Coronaconfig["err_fqpm"]
 
     ##################
     ##################
@@ -365,6 +371,7 @@ def create_interaction_matrices(parameter_file,
 
 def correctionLoop(parameter_file,
                    NewMODELconfig={},
+                   NewCoronaconfig={},
                    NewPWconfig={},
                    NewEFCconfig={},
                    NewSIMUconfig={}):
@@ -414,12 +421,6 @@ def correctionLoop(parameter_file,
     filename_instr_pup = modelconfig["filename_instr_pup"]
     filename_instr_lyot = modelconfig["filename_instr_lyot"]
 
-    #coronagraph
-    coronagraph = modelconfig["coronagraph"]
-    coro_position = modelconfig["coro_position"]
-    knife_coro_offset = modelconfig["knife_coro_offset"]
-    err_fqpm = modelconfig["err_fqpm"]
-
     #DM model
     pitchDM = modelconfig["pitchDM"]
     x309 = modelconfig["x309"]
@@ -428,6 +429,19 @@ def correctionLoop(parameter_file,
     filename_actu309 = modelconfig["filename_actu309"]
     filename_grid_actu = modelconfig["filename_grid_actu"]
     filename_actu_infl_fct = modelconfig["filename_actu_infl_fct"]
+
+
+    ##################
+    ##################
+    ### coronagraph CONFIG
+    Coronaconfig = config["Coronaconfig"]
+    Coronaconfig.update(NewCoronaconfig)
+
+    coronagraph = Coronaconfig["coronagraph"]
+    coro_position = Coronaconfig["coro_position"]
+    knife_coro_offset = Coronaconfig["knife_coro_offset"]
+    err_fqpm = Coronaconfig["err_fqpm"]
+
 
     ##################
     ##################
