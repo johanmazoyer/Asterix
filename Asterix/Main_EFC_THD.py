@@ -96,6 +96,7 @@ def create_interaction_matrices(parameter_file,
     coro_position = Coronaconfig["coro_position"]
     knife_coro_offset = Coronaconfig["knife_coro_offset"]
     err_fqpm = Coronaconfig["err_fqpm"]
+    prop_lyot2science = Coronaconfig["prop_lyot2science"]
 
     ##################
     ##################
@@ -188,16 +189,17 @@ def create_interaction_matrices(parameter_file,
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
-        Coronaconfig.coro = instr.FQPM(dim_im, err=err_fqpm)
+        Coronaconfig.FPmsk = instr.FQPM(dim_im, err=err_fqpm)
         Coronaconfig.perfect_coro = True
+
     elif coronagraph == "knife":
-        Coronaconfig.coro = instr.KnifeEdgeCoro(
+        Coronaconfig.FPmsk = instr.KnifeEdgeCoro(
             dim_im, coro_position, knife_coro_offset,
             science_sampling * lyotdiam / pdiam)
         Coronaconfig.perfect_coro = False
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
-        Coronaconfig.coro = np.exp(1j * phasevortex)
+        Coronaconfig.FPmsk = np.exp(1j * phasevortex)
         Coronaconfig.perfect_coro = True
 
     ## Entrance pupil and Lyot stop
@@ -209,7 +211,8 @@ def create_interaction_matrices(parameter_file,
         entrancepupil = instr.roundpupil(dim_im, prad)
         Coronaconfig.lyot_pup = instr.roundpupil(dim_im, lyotrad)
 
-    Coronaconfig.perfect_entrance_pupil = entrancepupil
+    if Coronaconfig.perfect_coro:
+        Coronaconfig.perfect_Lyot_pupil = instr.pupiltolyot(entrancepupil,Coronaconfig)
 
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
@@ -340,11 +343,7 @@ def create_interaction_matrices(parameter_file,
             # Creating EFC Interaction Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
             ## Non coronagraphic PSF
-            PSF = np.abs(
-                np.fft.fftshift(
-                    np.fft.fft2(
-                        np.fft.fftshift(entrancepupil *
-                                        Coronaconfig.lyot_pup))))**2
+            PSF = np.abs(instr.lyottodetector(entrancepupil * Coronaconfig.lyot_pup, Coronaconfig))**2
             maxPSF = np.amax(PSF)
 
             Gmatrix = wsc.creatingCorrectionmatrix(
@@ -480,6 +479,7 @@ def correctionLoop(parameter_file,
     coro_position = Coronaconfig["coro_position"]
     knife_coro_offset = Coronaconfig["knife_coro_offset"]
     err_fqpm = Coronaconfig["err_fqpm"]
+    prop_lyot2science = Coronaconfig["prop_lyot2science"]
 
     ##################
     ##################
@@ -592,19 +592,16 @@ def correctionLoop(parameter_file,
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
     if coronagraph == "fqpm":
-        Coronaconfig.coro = instr.FQPM(dim_im, err=err_fqpm)
-        if err_fqpm == 0:
-            Coronaconfig.perfect_coro = True
-        else:
-            Coronaconfig.perfect_coro = False
+        Coronaconfig.FPmsk = instr.FQPM(dim_im, err=err_fqpm)
+        Coronaconfig.perfect_coro = True
     elif coronagraph == "knife":
-        Coronaconfig.coro = instr.KnifeEdgeCoro(
+        Coronaconfig.FPmsk = instr.KnifeEdgeCoro(
             dim_im, coro_position, knife_coro_offset,
             science_sampling * lyotdiam / pdiam)
         Coronaconfig.perfect_coro = False
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
-        Coronaconfig.coro = np.exp(1j * phasevortex)
+        Coronaconfig.FPmsk = np.exp(1j * phasevortex)
         Coronaconfig.perfect_coro = True
 
     ## Entrance pupil and Lyot stop
@@ -618,17 +615,17 @@ def correctionLoop(parameter_file,
         Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
     else:
         entrancepupil = instr.roundpupil(dim_im, prad)
-        Coronaconfig.lyot_pup = instr.roundpupil(dim_im, lyotrad)
+        if prop_lyot2science == 'fft':
+            Coronaconfig.lyot_pup = instr.roundpupil(dim_im, lyotrad)
+        if prop_lyot2science == 'mft':
+            Coronaconfig.lyot_pup = instr.roundpupil(2*lyotrad, dim_im//2)
 
-    Coronaconfig.perfect_entrance_pupil = entrancepupil
+    if Coronaconfig.perfect_coro:
+        Coronaconfig.perfect_Lyot_pupil = instr.pupiltolyot(entrancepupil,Coronaconfig)
 
     ## Non coronagraphic PSF
     # PSF = np.abs(instr.pupiltodetector(entrancepupil , 1, Coronaconfig.lyot_pup))**2
-    PSF = np.abs(
-        np.fft.fftshift(
-            np.fft.fft2(
-                np.fft.fftshift(entrancepupil *
-                                Coronaconfig.lyot_pup))))**2
+    PSF = np.abs(instr.lyottodetector(entrancepupil * Coronaconfig.lyot_pup, Coronaconfig))**2
     maxPSF = np.amax(PSF)
 
     ##Load PW matrices
