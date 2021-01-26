@@ -104,7 +104,7 @@ def createvectorprobes(wavelength, entrancepupil, Coronaconfig, amplitude,
     PSF = np.abs(
         np.fft.fftshift(
             np.fft.fft2(
-                np.fft.fftshift(Coronaconfig.entrancepupil *
+                np.fft.fftshift(entrancepupil *
                                 Coronaconfig.lyot_pup))))**2
     maxPSF = np.amax(PSF)
 
