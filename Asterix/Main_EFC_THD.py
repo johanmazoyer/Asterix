@@ -201,12 +201,14 @@ def create_interaction_matrices(parameter_file,
         Coronaconfig.perfect_coro = True
 
     ## Entrance pupil and Lyot stop
-    if filename_instr_pup != "" and filename_instr_lyot != "":
-        entrancepupil = fits.getdata(model_dir +
-                                                  filename_instr_pup)
-        Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
+    if filename_instr_pup != "":
+        entrancepupil = fits.getdata(model_dir + filename_instr_pup)
     else:
         entrancepupil = instr.roundpupil(dim_im, prad)
+
+    if filename_instr_lyot != "":
+        Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
+    else:
         Coronaconfig.lyot_pup = instr.roundpupil(dim_im, lyotrad)
 
     Coronaconfig.perfect_entrance_pupil = entrancepupil
@@ -693,20 +695,19 @@ def correctionLoop(parameter_file,
     ## TODO Load aberration maps (A checker, Amplitude sans doute a refaire proprement!!!)
     if set_phase_abb == True:
         if set_random_phase == True:
-            phase = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
+            print("Random phase aberrations upstream from coronagraph")
+            phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
                                            slope_phase)
         else:
-            phase = fits.getdata(model_dir + phase_abb + ".fits")
+            print("FITS file for phase aberrations upstream from coronagraph")
+            phase_up = fits.getdata(model_dir + phase_abb + ".fits")
 
-        phase = phase * 2 * np.pi / wavelength
+        phase_up = phase_up * 2 * np.pi / wavelength
     else:
-        phase = 0
+        phase_up = 0
 
     if set_amplitude_abb == True:
-        oui = fits.getdata(model_dir + amplitude_abb +
-                           ".fits")  # *roundpupil(dim_im,prad)
-        moy = np.mean(oui[np.where(oui != 0)])
-        amp = oui / moy
+        amp = fits.getdata(model_dir + amplitude_abb + ".fits")  # *roundpupil(dim_im,prad)
         amp1 = skimage.transform.rescale(amp,
                                          int(2 * prad / 148 * 400) /
                                          amp.shape[0],
@@ -718,15 +719,14 @@ def correctionLoop(parameter_file,
                  1:int(dim_im / 2 + len(amp1) / 2) + 1,
                  int(dim_im / 2 - len(amp1) / 2) +
                  1:int(dim_im / 2 + len(amp1) / 2) + 1, ] = amp1
-        ampfinal = (ampfinal) * instr.roundpupil(dim_im, prad - 1)
-        moy = np.mean(ampfinal[np.where(ampfinal != 0)])
-        ampfinal = (ampfinal / moy - np.ones(
-            (dim_im, dim_im))) * instr.roundpupil(dim_im, prad - 1)  # /10
+        tmp_pup=instr.roundpupil(dim_im, prad)
+        ampfinal = (ampfinal / np.mean(ampfinal[np.where(tmp_pup != 0)])
+                     - np.ones((dim_im, dim_im))) * tmp_pup  # /10
     else:
         ampfinal = 0
 
-    amplitude_abb = ampfinal
-    phase_abb = phase
+    amplitude_abb_up = ampfinal
+    phase_abb_up = phase_up
 
     ## To convert in photon flux
     contrast_to_photons = (np.sum(entrancepupil) /
@@ -776,7 +776,7 @@ def correctionLoop(parameter_file,
                      maskDHcontrast)
 
     input_wavefront = entrancepupil * (
-        1 + amplitude_abb) * np.exp(1j * phase_abb)
+        1 + amplitude_abb_up) * np.exp(1j * phase_abb)
 
     imagedetector[0] = (
         abs(instr.pupiltodetector(input_wavefront, Coronaconfig))**2 / maxPSF)
@@ -796,7 +796,7 @@ def correctionLoop(parameter_file,
         print("Iteration number: ", k, " EFC truncation: ", mode)
         if (estimation == "PairWise" or estimation == "pairwise"
                 or estimation == "PW" or estimation == "pw"):
-            Difference = instr.createdifference(amplitude_abb,
+            Difference = instr.createdifference(amplitude_abb_up,
                                                 phase_abb,
                                                 posprobes,
                                                 pushactonDM,
@@ -826,7 +826,7 @@ def correctionLoop(parameter_file,
 
                 Gmatrix = wsc.creatingCorrectionmatrix(
                     entrancepupil,
-                    amplitude_abb,
+                    amplitude_abb_up,
                     phase_abb,
                     Coronaconfig,
                     dim_sampl,
@@ -878,7 +878,7 @@ def correctionLoop(parameter_file,
                                    2 * np.pi * 1e-9 / wavelength)
 
                     input_wavefront = entrancepupil * (
-                        1 + amplitude_abb) * np.exp(1j *
+                        1 + amplitude_abb_up) * np.exp(1j *
                                                     (phase_abb + apply_on_DM))
 
                     imagedetectortemp = (abs(
@@ -938,9 +938,9 @@ def correctionLoop(parameter_file,
                 pushact.shape[0], dim_im * dim_im)).reshape(dim_im, dim_im) *
                        2 * np.pi * 1e-9 / wavelength)
         phaseDM[k + 1] = phaseDM[k] + apply_on_DM
-        phase_abb = phase_abb + apply_on_DM
+        phase_abb_up = phase_abb_up + apply_on_DM
         input_wavefront = entrancepupil * (
-            1 + amplitude_abb) * np.exp(1j * phase_abb)
+            1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
         imagedetector[k + 1] = (
             abs(instr.pupiltodetector(input_wavefront, Coronaconfig))**2 /
             maxPSF)
@@ -1002,4 +1002,4 @@ def correctionLoop(parameter_file,
     plt.xlabel("Number of iterations")
     plt.ylabel("Mean contrast in Dark Hole")
 
-    return phase_abb, imagedetector
+    return phase_abb_up, imagedetector
