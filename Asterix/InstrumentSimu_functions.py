@@ -571,7 +571,7 @@ def random_phase_map(dim_im, phaserms, rhoc, slope):
     return phase
 
 
-def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
+def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1, pupil_center = 'pixel'):
     """ --------------------------------------------------
     MFT  - Return the Matrix Direct Fourier transform (MFT) of pup
     (cf. Soummer et al. 2007, OSA)
@@ -598,6 +598,12 @@ def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
     inv : integer
             direct MFT if 1
             indirect MFT if -1 (default)
+    
+    pupil_center: string
+            'pixel': pupil is centered on pixel 
+                    pup has to be centered on (dimpup/2+1,dimpup/2+1)
+                    where dimpup is the pup array dimension
+            'nopixel' : pupil is centered between 4 pixels
 
     Returns
     ------
@@ -610,14 +616,22 @@ def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
     REVISION HISTORY :
     Revision 1.1  2020-01-22 Raphaël Galicher
     Initial revision (from MFT.pro written in IDL)
+    Revision 1.1  2020-01-27 Johan Mazoyer
+    added option for centered pupil
 
     -------------------------------------------------- """
 
     dimpup = pup.shape[0]
+    if pupil_center == 'pixel':
+        centering_value = 0.5
+    elif pupil_center == 'nopixel':
+        centering_value = 0.
+    else:
+        raise Exception("mft: keyword pupil_center must be pixel or nopixel")
 
-    xx0 = np.arange(dimpup) / dimpup - 0.5
-    uu0 = ((np.arange(dimft) - xshift) / dimft - 0.5) * nbres
-    uu1 = ((np.arange(dimft) - yshift) / dimft - 0.5) * nbres
+    xx0 = np.arange(dimpup) / dimpup - centering_value
+    uu0 = ((np.arange(dimft) - xshift) / dimft - centering_value) * nbres
+    uu1 = ((np.arange(dimft) - yshift) / dimft - centering_value) * nbres
 
     if inv == 1:
         norm0 = (nbres / dimpup)**2
@@ -657,10 +671,10 @@ def prop_fresnel(pup, lam, z, dx):
             electric field after propagating in free space along
             a distance z
 
-    AUTHOR : Raphaël Galicher
+    AUTHOR : Raphael Galicher
 
     REVISION HISTORY :
-    Revision 1.1  2020-01-22 Raphaël Galicher
+    Revision 1.1  2020-01-22 Raphael Galicher
     Initial revision
 
     -------------------------------------------------- """
