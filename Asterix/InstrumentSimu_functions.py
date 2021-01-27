@@ -1,5 +1,6 @@
 __author__ = 'Axel Potier'
 
+import os
 import numpy as np
 import scipy.ndimage as nd
 from astropy.io import fits
@@ -17,66 +18,221 @@ rad2mas = 3.6e6 / dtor  # radian to milliarcsecond conversion factor
 ### CORONAGRAPHS
 
 
-def FQPM(dim_im, err=0):
-    """ --------------------------------------------------
-    Create a perfect Four Quadrant Phase Mask coronagraph of size (dim_im,dim_im)
-    
-    Parameters
-    ----------
-    dim_im : int
-        Size of the coronagraph (in pixels)
-    err : phase error on the pi phase-shift in rad (default=0)
+class coronagraph:
+    def __init__(self, model_dir, modelconfig, coroconfig):
+        """ --------------------------------------------------
+        Initialize a coronograph objects : pupil, mask and Lyot stop
+        
+        Parameters
+        ----------
+        model_dir : is needed, we load the mask in this directory
+        modelconfig : general configuration parameters (sizes and dimensions)
+        coroconfig : coronagraph parameters
 
-    Returns
-    ------
-    FQPM : 2D array giving the complex transmission of the
-        FQPM mask, centered at the four edges of the image
-    -------------------------------------------------- """
-    phase = np.zeros((dim_im, dim_im))
-    for i in np.arange(dim_im):
-        for j in np.arange(dim_im):
-            if i < dim_im / 2 and j < dim_im / 2:
-                phase[i, j] = np.pi + err
-            if i >= dim_im / 2 and j >= dim_im / 2:
-                phase[i, j] = np.pi + err
-    return np.exp(1j * phase)
+        -------------------------------------------------- """
 
+        #Image
+        dim_im = modelconfig["dim_im"]  #image size on detector
+        #pupil and Lyot stop
+        pdiam = modelconfig["pdiam"]
+        lyotdiam = modelconfig["lyotdiam"]
+        filename_instr_pup = modelconfig["filename_instr_pup"]
+        filename_instr_lyot = modelconfig["filename_instr_lyot"]
 
-def KnifeEdgeCoro(dim_im, position, shiftinldp, ld_p):
-    """ --------------------------------------------------
-    Create a Knife edge coronagraph of size (dim_im,dim_im)
-    
-    Parameters
-    ----------
-    dim_im : int
-        Size of the coronagraph (in pixels)
-    position : string
-        Can be 'left', 'right', 'top' or 'bottom' to define the orientation of the coronagraph
-    shiftinldp : int 
-        Position of the edge, with respect to the image center, in number of pixels per resolution element
-    ld_p : float
-        Number of pixels per resolution element
-    
-    Returns
-    ------
-    shift(Knife) : 2D array
-        Knife edge coronagraph, located at the four edges of the image
-    -------------------------------------------------- """
-    Knife = np.zeros((dim_im, dim_im))
-    for i in np.arange(dim_im):
-        if position == "left":
-            if i > dim_im / 2 + shiftinldp * ld_p:
-                Knife[:, i] = 1
-        if position == "right":
-            if i < dim_im / 2 - shiftinldp * ld_p:
-                Knife[:, i] = 1
-        if position == "top":
-            if i > dim_im / 2 + shiftinldp * ld_p:
-                Knife[i, :] = 1
-        if position == "bottom":
-            if i < dim_im / 2 - shiftinldp * ld_p:
-                Knife[i, :] = 1
-    return np.fft.fftshift(Knife)
+        #Lambda over D in pixels
+        science_sampling = modelconfig["science_sampling"]
+
+        #coronagraph
+        self.corona_type = coroconfig["coronagraph"]
+        self.coro_position = coroconfig["coro_position"]
+        self.knife_coro_offset = coroconfig["knife_coro_offset"]
+        self.err_fqpm = coroconfig["err_fqpm"]
+        self.prop_lyot2science = coroconfig["prop_lyot2science"]
+
+        ## Entrance pupil and Lyot stop
+
+        lyotrad = dim_im / 2 / science_sampling
+        prad = int(np.ceil(lyotrad * pdiam / lyotdiam))
+        lyotrad = int(np.ceil(lyotrad))
+
+        self.dim_im = dim_im
+        self.pdiam = pdiam
+        self.lyotdiam = lyotdiam
+        self.science_sampling = science_sampling
+        self.lyotrad = lyotrad
+        self.prad = prad
+
+        ## transmission of the phase mask (exp(i*phase))
+        ## centered on pixel [0.5,0.5]
+        if self.corona_type == "fqpm":
+            self.FPmsk = self.FQPM()
+            self.perfect_coro = True
+        elif self.corona_type == "knife":
+            self.FPmsk = self.KnifeEdgeCoro()
+            self.perfect_coro = False
+        elif self.corona_type == "vortex":
+            phasevortex = 0  # to be defined
+            self.FPmsk = np.exp(1j * phasevortex)
+            self.perfect_coro = True
+
+        if filename_instr_pup != "" and filename_instr_lyot != "":
+            self.entrancepupil = fits.getdata(model_dir + filename_instr_pup)
+            self.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
+        else:
+            self.entrancepupil = roundpupil(dim_im, prad)
+            self.lyot_pup = roundpupil(dim_im, lyotrad)
+
+        if self.perfect_coro:
+            self.perfect_Lyot_pupil = self.pupiltolyot(self.entrancepupil)
+
+    def FQPM(self):
+        """ --------------------------------------------------
+        Create a perfect Four Quadrant Phase Mask coronagraph of size (dim_im,dim_im)
+        
+        Parameters
+        ----------
+        dim_im : int
+            Size of the coronagraph (in pixels)
+        err : phase error on the pi phase-shift in rad (default=0)
+
+        Returns
+        ------
+        FQPM : 2D array giving the complex transmission of the
+            FQPM mask, centered at the four edges of the image
+        -------------------------------------------------- """
+        phase = np.zeros((self.dim_im, self.dim_im))
+        for i in np.arange(self.dim_im):
+            for j in np.arange(self.dim_im):
+                if i < self.dim_im / 2 and j < self.dim_im / 2:
+                    phase[i, j] = np.pi + self.err_fqpm
+                if i >= self.dim_im / 2 and j >= self.dim_im / 2:
+                    phase[i, j] = np.pi + self.err_fqpm
+        return np.exp(1j * phase)
+
+    def KnifeEdgeCoro(self):
+        """ --------------------------------------------------
+        Create a Knife edge coronagraph of size (dim_im,dim_im)
+        
+        Parameters
+        ----------
+        dim_im : int
+            Size of the coronagraph (in pixels)
+        position : string
+            Can be 'left', 'right', 'top' or 'bottom' to define the orientation of the coronagraph
+        shiftinldp : int 
+            Position of the edge, with respect to the image center, in number of pixels per resolution element
+        ld_p : float
+            Number of pixels per resolution element
+        
+        Returns
+        ------
+        shift(Knife) : 2D array
+            Knife edge coronagraph, located at the four edges of the image
+        -------------------------------------------------- """
+
+        position = self.coro_position
+        shiftinldp = self.knife_coro_offset
+        ld_p = self.science_sampling * self.lyotdiam / self.pdiam
+
+        Knife = np.zeros((self.dim_im, self.dim_im))
+        for i in np.arange(self.dim_im):
+            if position == "left":
+                if i > self.dim_im / 2 + shiftinldp * ld_p:
+                    Knife[:, i] = 1
+            if position == "right":
+                if i < self.dim_im / 2 - shiftinldp * ld_p:
+                    Knife[:, i] = 1
+            if position == "top":
+                if i > self.dim_im / 2 + shiftinldp * ld_p:
+                    Knife[i, :] = 1
+            if position == "bottom":
+                if i < self.dim_im / 2 - shiftinldp * ld_p:
+                    Knife[i, :] = 1
+        return np.fft.fftshift(Knife)
+
+    ##############################################
+    ##############################################
+    ### Propagation through coronagraph
+
+    def lyottodetector(self,
+                       Lyot_plane_after_Lyot):  # aberrationphase,prad1,prad2
+        """ --------------------------------------------------
+        Propagate the electric field from Lyot plane after Lyot to Science focal plane.
+        The output is cropped and resampled.
+        
+        Parameters
+        ----------
+        Lyot_plane_after_Lyot : 2D array,can be complex.  
+            Input wavefront,can be complex.
+        
+        Returns
+        ------
+        science_focal_plane : 2D array, 
+            Focal plane electric field in the focal plane
+        -------------------------------------------------- """
+
+        science_focal_plane = np.fft.fftshift(
+            np.fft.fft2(Lyot_plane_after_Lyot))
+
+        return science_focal_plane
+
+    def pupiltolyot(self, input_wavefront):  # aberrationphase,prad1,prad2
+        """ --------------------------------------------------
+        Propagate the electric field from entrance pupil to Lyot plane after Lyot pupil
+
+        Parameters
+        ----------
+        input_wavefront : 2D array,can be complex.  
+            Input wavefront,can be complex.
+        
+        Returns
+        ------
+        science_focal_plane : 2D array, 
+            Focal plane electric field in the focal plane
+        -------------------------------------------------- """
+
+        maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
+
+        corono_focal_plane = np.fft.fft2(
+            np.fft.fftshift(input_wavefront * maskshifthalfpix))
+
+        # Focal plane
+        lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * self.FPmsk)
+
+        # Lyot plane
+        lyotplane_after_lyot = lyotplane_before_lyot * np.fft.fftshift(
+            self.lyot_pup)
+
+        return lyotplane_after_lyot
+
+    def pupiltodetector(self, input_wavefront):  # aberrationphase,prad1,prad2
+        """ --------------------------------------------------
+        Propagate the electric field through a high-contrast imaging instrument,
+        from pupil plane to focal plane.
+        The output is cropped and resampled.
+        
+        Parameters
+        ----------
+        input_wavefront : 2D array,can be complex.  
+            Input wavefront,can be complex.
+        
+        Returns
+        ------
+        shift(sqrtimage) : 2D array, 
+            Focal plane electric field created by 
+            the input wavefront through the high-contrast instrument.
+        -------------------------------------------------- """
+        # useful.quickfits(np.abs(input_wavefront), dir = '/Users/jmazoyer/Desktop/')
+
+        lyotplane_after_lyot = self.pupiltolyot(input_wavefront)
+
+        if self.perfect_coro:
+            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
+
+        # Science_focal_plane
+        science_focal_plane = self.lyottodetector(lyotplane_after_lyot)
+
+        return science_focal_plane
 
 
 ##############################################
@@ -107,98 +263,6 @@ def roundpupil(dim_im, prad1):
     pupilnormal = np.zeros((dim_im, dim_im))
     pupilnormal[rr <= prad1] = 1.0
     return pupilnormal
-
-
-##############################################
-##############################################
-### Propagation through coronagraph
-
-
-def lyottodetector(Lyot_plane_after_Lyot,
-                    Coronaconfig):  # aberrationphase,prad1,prad2
-    """ --------------------------------------------------
-    Propagate the electric field from Lyot plane after Lyot to Science focal plane.
-    The output is cropped and resampled.
-    
-    Parameters
-    ----------
-    Lyot_plane_after_Lyot : 2D array,can be complex.  
-        Input wavefront,can be complex.
-    Coronaconfig: coronagraph structure
-    
-    Returns
-    ------
-    science_focal_plane : 2D array, 
-        Focal plane electric field in the focal plane
-    -------------------------------------------------- """
-
-    science_focal_plane = np.fft.fftshift(np.fft.fft2(Lyot_plane_after_Lyot))
-
-    return science_focal_plane
-
-
-
-def pupiltolyot(input_wavefront,
-                    Coronaconfig):  # aberrationphase,prad1,prad2
-    """ --------------------------------------------------
-    Propagate the electric field from entrance pupil to Lyot plane after Lyot pupil
-
-    Parameters
-    ----------
-    input_wavefront : 2D array,can be complex.  
-        Input wavefront,can be complex.
-    Coronaconfig: coronagraph structure
-    
-    Returns
-    ------
-    science_focal_plane : 2D array, 
-        Focal plane electric field in the focal plane
-    -------------------------------------------------- """
-
-    
-    maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
-    
-    
-    corono_focal_plane  = np.fft.fft2(np.fft.fftshift(input_wavefront *
-                                            maskshifthalfpix))
-
-    # Focal plane 
-    lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * Coronaconfig.FPmsk)
-
-    # Lyot plane
-    lyotplane_after_lyot = lyotplane_before_lyot*np.fft.fftshift(Coronaconfig.lyot_pup)
-
-    return lyotplane_after_lyot
-
-def pupiltodetector(input_wavefront,
-                    Coronaconfig):  # aberrationphase,prad1,prad2
-    """ --------------------------------------------------
-    Propagate the electric field through a high-contrast imaging instrument,
-    from pupil plane to focal plane.
-    The output is cropped and resampled.
-    
-    Parameters
-    ----------
-    input_wavefront : 2D array,can be complex.  
-        Input wavefront,can be complex.
-    Coronaconfig: coronagraph structure
-    
-    Returns
-    ------
-    shift(sqrtimage) : 2D array, 
-        Focal plane electric field created by 
-        the input wavefront through the high-contrast instrument.
-    -------------------------------------------------- """
-
-    lyotplane_after_lyot = pupiltolyot(input_wavefront, Coronaconfig)
-
-    if Coronaconfig.perfect_coro:
-        lyotplane_after_lyot = lyotplane_after_lyot - Coronaconfig.perfect_Lyot_pupil
-    
-    # Science_focal_plane
-    science_focal_plane = lyottodetector(lyotplane_after_lyot, Coronaconfig)
-
-    return science_focal_plane
 
 
 ##############################################
@@ -372,7 +436,7 @@ def createdifference(aberramp,
                      pushact,
                      amplitude,
                      entrancepupil,
-                     Coronaconfig,
+                     corona_struct,
                      PSF,
                      dimimages,
                      wavelength,
@@ -396,7 +460,7 @@ def createdifference(aberramp,
         amplitude of the actuator pokes for pair(wise probing in nm
     entrancepupil : 2D-array
         Entrance pupil shape
-    Coronaconfig: coronagraph structure
+    corona_struct: coronagraph structure
     dimimages : int
         Size of the output image after resampling in pixels
     wavelength : float
@@ -423,7 +487,7 @@ def createdifference(aberramp,
     maxPSF = np.amax(PSF)
 
     contrast_to_photons = (np.sum(entrancepupil) /
-                           np.sum(Coronaconfig.lyot_pup) * numphot * maxPSF /
+                           np.sum(corona_struct.lyot_pup) * numphot * maxPSF /
                            np.sum(PSF))
 
     k = 0
@@ -432,12 +496,12 @@ def createdifference(aberramp,
         probephase = 2 * np.pi * probephase * 1e-9 / wavelength
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase - 1 * probephase)))
-        Ikmoins = (np.abs(pupiltodetector(input_wavefront, Coronaconfig))**2 /
+        Ikmoins = (np.abs(corona_struct.pupiltodetector(input_wavefront))**2 /
                    maxPSF)
 
         input_wavefront = (entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase + 1 * probephase)))
-        Ikplus = (np.abs(pupiltodetector(input_wavefront, Coronaconfig))**2 /
+        Ikplus = (np.abs(corona_struct.pupiltodetector(input_wavefront))**2 /
                   maxPSF)
 
         if noise == True:
