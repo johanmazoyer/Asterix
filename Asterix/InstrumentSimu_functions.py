@@ -19,6 +19,8 @@ rad2mas = 3.6e6 / dtor  # radian to milliarcsecond conversion factor
 
 
 class coronagraph:
+    
+    
     def __init__(self, model_dir, modelconfig, coroconfig):
         """ --------------------------------------------------
         Initialize a coronograph objects : pupil, mask and Lyot stop
@@ -39,8 +41,14 @@ class coronagraph:
         filename_instr_pup = modelconfig["filename_instr_pup"]
         filename_instr_lyot = modelconfig["filename_instr_lyot"]
 
-        #Lambda over D in pixels
+        #Lambda over D in pixels in the pupil plane
         science_sampling = modelconfig["science_sampling"]
+
+
+        ## define important measure of the coronagraph
+        lyotrad = dim_im / 2 / science_sampling
+        prad = int(np.ceil(lyotrad * pdiam / lyotdiam))
+        lyotrad = int(np.ceil(lyotrad))
 
         #coronagraph
         self.corona_type = coroconfig["coronagraph"]
@@ -48,12 +56,6 @@ class coronagraph:
         self.knife_coro_offset = coroconfig["knife_coro_offset"]
         self.err_fqpm = coroconfig["err_fqpm"]
         self.prop_lyot2science = coroconfig["prop_lyot2science"]
-
-        ## Entrance pupil and Lyot stop
-
-        lyotrad = dim_im / 2 / science_sampling
-        prad = int(np.ceil(lyotrad * pdiam / lyotdiam))
-        lyotrad = int(np.ceil(lyotrad))
 
         self.dim_im = dim_im
         self.pdiam = pdiam
@@ -89,11 +91,6 @@ class coronagraph:
         """ --------------------------------------------------
         Create a perfect Four Quadrant Phase Mask coronagraph of size (dim_im,dim_im)
         
-        Parameters
-        ----------
-        dim_im : int
-            Size of the coronagraph (in pixels)
-        err : phase error on the pi phase-shift in rad (default=0)
 
         Returns
         ------
@@ -112,17 +109,7 @@ class coronagraph:
     def KnifeEdgeCoro(self):
         """ --------------------------------------------------
         Create a Knife edge coronagraph of size (dim_im,dim_im)
-        
-        Parameters
-        ----------
-        dim_im : int
-            Size of the coronagraph (in pixels)
-        position : string
-            Can be 'left', 'right', 'top' or 'bottom' to define the orientation of the coronagraph
-        shiftinldp : int 
-            Position of the edge, with respect to the image center, in number of pixels per resolution element
-        ld_p : float
-            Number of pixels per resolution element
+    
         
         Returns
         ------
@@ -130,9 +117,9 @@ class coronagraph:
             Knife edge coronagraph, located at the four edges of the image
         -------------------------------------------------- """
 
-        position = self.coro_position
-        shiftinldp = self.knife_coro_offset
-        ld_p = self.science_sampling * self.lyotdiam / self.pdiam
+        position = self.coro_position # Can be 'left', 'right', 'top' or 'bottom' to define the orientation of the coronagraph
+        shiftinldp = self.knife_coro_offset #  Position of the edge, with respect to the image center, in number of pixels per resolution element
+        ld_p = self.science_sampling * self.lyotdiam / self.pdiam #  Number of pixels per resolution element
 
         Knife = np.zeros((self.dim_im, self.dim_im))
         for i in np.arange(self.dim_im):
@@ -222,7 +209,6 @@ class coronagraph:
             Focal plane electric field created by 
             the input wavefront through the high-contrast instrument.
         -------------------------------------------------- """
-        # useful.quickfits(np.abs(input_wavefront), dir = '/Users/jmazoyer/Desktop/')
 
         lyotplane_after_lyot = self.pupiltolyot(input_wavefront)
 
