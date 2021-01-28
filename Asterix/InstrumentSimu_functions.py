@@ -4,7 +4,6 @@ import numpy as np
 import scipy.ndimage as nd
 from astropy.io import fits
 import skimage.transform
-
 import Asterix.processing_functions as proc
 
 # Raccourcis conversions angles
@@ -435,7 +434,7 @@ def createdifference(aberramp,
 def shift_phase_ramp(dim_im, a, b):
     """ --------------------------------------------------
     Create a phase ramp of size (dim_im,dim_im) that can be used as follow
-    to shift one image by (a,b) pixels : shift_im = fft(im*exp(i phase ramp))
+    to shift one image by (a,b) pixels : shift_im = real(fft(ifft(im)*exp(i phase ramp)))
     
     Parameters
     ----------
@@ -545,13 +544,14 @@ def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
     else:
         norm0 = ((1. * nbres)**2 / (1. * dimft)**2 / (1. * dimpup)**2)
 
+
     AA = np.exp(-inv * 1j * 2 * np.pi * np.outer(uu0, xx0))
     BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx0, uu1))
     result = norm0 * np.matmul(np.matmul(AA, pup), BB)
     return result
 
 
-def prop_fresnel(pup, lam, z, dx):
+def prop_fresnel(pup, lam, z, rad, prad):
     """ --------------------------------------------------
     Fresnel propagation of pup along a distance z in a collimated beam
     and in Free space
@@ -569,8 +569,13 @@ def prop_fresnel(pup, lam, z, dx):
     z : float
          distance of propagation
 
-    dx : float
-         pixel size in the pup array in meter
+    rad : float
+         if z>0: entrance beam radius in meter
+         if z<0: output beam radius in meter
+
+    prad : float
+         if z>0: entrance beam radius in pixel
+         if z<0: output beam radius in pixel
 
     Returns
     ------
@@ -588,24 +593,110 @@ def prop_fresnel(pup, lam, z, dx):
     # dimension of the input array
     dim = pup.shape[0]
 
+    # if z<0, we consider we go back wrt the real path of the light
+    if np.sign(z) == 1:
+        sign=1
+    # Sampling in the input dim x dim array if FFT
+        dx = rad/prad
+    # Sampling in the output dim x dim array if FFT
+        dxout = np.abs(lam*z/(dx*dim))
     # Zoom factor to get the same spatial scale in the input and output array
-    fac = dx**2 / (lam * z)
-    if fac > 3e-3:
-        print('need to increase lam or z or 1/dx')
-        return -1
-    fac = fac * dim
+        fac = dx/dxout
+    else:
+        sign=-1
+    # Sampling in the output dim x dim array if FFT
+        dxout = rad/prad
+    # Sampling in the input dim x dim array if FFT
+        dx = np.abs(lam*z/(dxout*dim))
+    # Zoom factor to get the same spatial scale in the input and output array
+        fac = dxout/dx
+    
+   # print(dx,dxout,fac)
+   # print(300e-6/dx, 300e-6/dxout)
 
     # create a 2D-array of distances from the central pixel
     u, v = np.meshgrid(np.arange(dim) - dim / 2, np.arange(dim) - dim / 2)
     rho = np.hypot(v, u)
     # Fresnel factor that applies before Fourier transform
-    H = np.exp(-1j * np.pi * rho**2 * fac / dim)
+    H = np.exp(1j*sign*np.pi * rho**2/dim *dx/dxout)
+
+    if np.abs(fac) > 1.2:
+        print('need to increase lam or z or 1/dx')
+        return -1
 
     # Fourier transform using MFT
-    result = mft(pup * H, dim, dim * fac)
-
+#    result = mft(pup * H, dim, np.abs(dim * fac),inv=np.sign(z))
+#    if sign == 1:
+#        result = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(pup*H)))
+#    else:
+#        result = np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(pup*H)))
     # Fresnel factor that applies after Fourier transform
-    result = result * np.exp(1j * 2 * np.pi * z / lam) * np.exp(
-        -1j * np.pi * rho**2 / fac / dim)
+    result = mft(pup * H, dim, dim*fac,inv=sign)
 
+    result = result * np.exp(1j *sign* np.pi * rho**2/dim *dxout/dx)
+    if sign == -1:
+        result = result / fac**2
     return result
+
+def create_binary_pupil(direct,filename, dim, prad):
+    """ --------------------------------------------------
+    Create a binary pupil from a Fits file or create a round pupil
+
+    Parameters
+    ----------
+    direct : string
+         name of the directory where filename is
+
+    filename : string
+         name of the Fits file
+
+    dim : int
+         dimension in pixels of the output array
+
+    prad : int
+         radius in pixels of the round pupil mask
+
+    Returns
+    ------
+    pup_z : 2D array (float)
+            Binary pupil (used for entrance pupil and Lyot stop)
+
+    AUTHOR : Raphaël Galicher
+
+    REVISION HISTORY :
+    Revision 1.1  2020-01-26 Raphaël Galicher
+    Initial revision
+
+    -------------------------------------------------- """
+
+    if filename != "":
+        pupil = fits.getdata(direct+filename)
+    else:
+        pupil = roundpupil(dim, prad)
+
+    return pupil
+
+def psfNoAberr(pup):
+    """ --------------------------------------------------
+    Generate the PSF if no aberrations for a given pupil
+
+    Parameters
+    ----------
+    
+    pup : 2D array (complex)
+            pupil plane
+
+    Returns
+    ------
+    PSF : 2D array (float)
+            Intensity
+
+    AUTHOR : Raphaël Galicher
+
+    REVISION HISTORY :
+    Revision 1.1  2020-01-26 Raphaël Galicher
+    Initial revision
+
+    -------------------------------------------------- """
+    return np.abs(np.fft.fftshift(np.fft.fft2(
+                        np.fft.fftshift(pup))))**2

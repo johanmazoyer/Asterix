@@ -247,7 +247,7 @@ def creatingCorrectionmatrix(entrancepupil,
     dimimages: int, size of the output image after resampling in pixels
     wavelength: float, wavelength of the  incoming flux in meter
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
-    pushact: 3D-array, opd created by the pokes of all actuators in the DM
+    pushact: 3D-array, opd created by the pokes of each actuator of DM
     mask: 2D array, binary mask whose pixel=1 will be taken into account
     Whichact: 1D array, index of the actuators taken into account to create the jacobian matrix
     otherbasis:
