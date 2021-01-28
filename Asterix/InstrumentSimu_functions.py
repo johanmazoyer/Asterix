@@ -75,16 +75,16 @@ class coronagraph:
             self.FPmsk = np.exp(1j * phasevortex)
             self.perfect_coro = True
 
-        if filename_instr_pup != "" and filename_instr_lyot != "":
-            self.entrancepupil = fits.getdata(model_dir + filename_instr_pup)
-            self.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
-        else:
-            self.entrancepupil = roundpupil(dim_im, prad)
-            self.lyot_pup = roundpupil(dim_im, lyotrad)
+        self.entrancepupil = create_binary_pupil(
+                    model_dir, filename_instr_pup, dim_im, prad)
+        
+        self.lyot_pup = create_binary_pupil(
+                    model_dir, filename_instr_lyot, dim_im, lyotrad)
 
         if self.perfect_coro:
             self.perfect_Lyot_pupil = self.pupiltolyot(self.entrancepupil)
-
+        import matplotlib.pyplot as plt 
+            
     def FQPM(self):
         """ --------------------------------------------------
         Create a perfect Four Quadrant Phase Mask coronagraph of size (dim_im,dim_im)
