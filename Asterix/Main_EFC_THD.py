@@ -96,9 +96,9 @@ def create_interaction_matrices(parameter_file,
     ##################
     ##################
     ### coronagraph CONFIG
-    coroconfig = config["coroconfig"]
-    coroconfig.update(Newcoroconfig)
-    corona_type = coroconfig["coronagraph"]
+    Coronaconfig = config["Coronaconfig"]
+    Coronaconfig.update(NewCoronaconfig)
+    corona_type = Coronaconfig["coronagraph"]
 
     ##################
     ##################
@@ -157,7 +157,7 @@ def create_interaction_matrices(parameter_file,
             os.makedirs(Labview_dir)
 
     # Initialize coronagraphs:
-    corona_struct = coronagraph(model_dir, modelconfig, coroconfig)
+    corona_struct = coronagraph(model_dir, modelconfig, Coronaconfig)
 
     # DM influence functions
     if DM3_creating_pushact == True:
@@ -167,7 +167,7 @@ def create_interaction_matrices(parameter_file,
             pdiam,
             corona_struct.prad,
             DM3_xy309,
-            pitchDM=DM3_pitchDM,
+            pitchDM=DM3_pitch,
             filename_actu309=DM3_filename_actu309,
             filename_grid_actu=DM3_filename_grid_actu,
             filename_actu_infl_fct=DM3_filename_actu_infl_fct)
@@ -207,14 +207,14 @@ def create_interaction_matrices(parameter_file,
     ##############
     ## Binary entrance pupil
     entrancepupil = instr.create_binary_pupil(
-                    model_dir, filename_instr_pup, dim_im, prad)
+                    model_dir, filename_instr_pup, dim_im, corona_struct.prad)
 
     ##############
     ##AV
     ##############
     ## Binary Lyot stop
     Coronaconfig.lyot_pup = instr.create_binary_pupil(
-                    model_dir, filename_instr_lyot, dim_im, lyotrad)
+                    model_dir, filename_instr_lyot, dim_im, lyotdiam/2)
 
     if Coronaconfig.perfect_coro:
         Coronaconfig.perfect_Lyot_pupil = instr.pupiltolyot(entrancepupil,Coronaconfig)
@@ -485,10 +485,9 @@ def correctionLoop(parameter_file,
     ##################
     ##################
     ### coronagraph CONFIG
-    coroconfig = config["coroconfig"]
-    coroconfig.update(Newcoroconfig)
-
-    corona_type = coroconfig["coronagraph"]
+    Coronaconfig = config["Coronaconfig"]
+    Coronaconfig.update(NewCoronaconfig)
+    corona_type = Coronaconfig["coronagraph"]
 
     ##################
     ##################
@@ -584,7 +583,7 @@ def correctionLoop(parameter_file,
 #RG Version
 #intermatrix_dir = (Data_dir + "Interaction_Matrices/" + coronagraph + "/" +
 #JMa
-intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_type + "/" +
+    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_type + "/" +
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
                        str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
@@ -692,7 +691,7 @@ intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_type + "/" +
 
         #Rescale to the pupil size
         amp1 = skimage.transform.rescale(amp,
-                                         2*prad/148,
+                                         2*corona_struct.prad/148,
                                          preserve_range=True,
                                          anti_aliasing=True,
                                          multichannel=False)
