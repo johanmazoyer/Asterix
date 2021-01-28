@@ -43,7 +43,6 @@ class coronagraph:
         #Lambda over D in pixels in the pupil plane
         science_sampling = modelconfig["science_sampling"]
 
-
         ## define important measure of the coronagraph
         lyotrad = dim_im / 2 / science_sampling
         prad = int(np.ceil(lyotrad * pdiam / lyotdiam))
@@ -54,6 +53,7 @@ class coronagraph:
         self.coro_position = coroconfig["coro_position"]
         self.knife_coro_offset = coroconfig["knife_coro_offset"]
         self.err_fqpm = coroconfig["err_fqpm"]
+        self.perfect_coro = coroconfig["perfect_coro"]
         self.prop_lyot2science = coroconfig["prop_lyot2science"]
 
         self.dim_im = dim_im

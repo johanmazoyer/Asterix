@@ -99,7 +99,7 @@ def create_interaction_matrices(parameter_file,
     Coronaconfig = config["Coronaconfig"]
     Coronaconfig.update(NewCoronaconfig)
     corona_type = Coronaconfig["coronagraph"]
-
+    
     ##################
     ##################
     ### PW CONFIG
@@ -188,14 +188,19 @@ def create_interaction_matrices(parameter_file,
 
     ## transmission of the phase mask (exp(i*phase))
     ## centered on pixel [0.5,0.5]
+    Coronaconfig.perfect_coro = True
+
     if coronagraph == "fqpm":
-        Coronaconfig.FPmsk = instr.FQPM(dim_im, err=err_fqpm)
+        print('ffffffffffffffffffffffffffffffffffff')
+        #Coronaconfig.FPmsk = instr.FQPM(dim_im, err=corona_struct.err_fqpm)
+        Coronaconfig.FPmsk = corona_struct.FQPM()
         Coronaconfig.perfect_coro = True
 
     elif coronagraph == "knife":
-        Coronaconfig.FPmsk = instr.KnifeEdgeCoro(
-            dim_im, coro_position, knife_coro_offset,
-            science_sampling * lyotdiam / pdiam)
+        # Coronaconfig.FPmsk = instr.KnifeEdgeCoro(
+        #     dim_im, coro_position, knife_coro_offset,
+        #     science_sampling * lyotdiam / pdiam)
+        Coronaconfig.FPmsk = corona_struct.KnifeEdgeCoro()
         Coronaconfig.perfect_coro = False
     elif coronagraph == "vortex":
         phasevortex = 0  # to be defined
@@ -217,7 +222,7 @@ def create_interaction_matrices(parameter_file,
                     model_dir, filename_instr_lyot, dim_im, lyotdiam/2)
 
     if Coronaconfig.perfect_coro:
-        Coronaconfig.perfect_Lyot_pupil = instr.pupiltolyot(entrancepupil,Coronaconfig)
+        Coronaconfig.perfect_Lyot_pupil = corona_struct.pupiltolyot(entrancepupil)
 
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
@@ -465,8 +470,6 @@ def correctionLoop(parameter_file,
     #pupil and Lyot stop
     pdiam = modelconfig["pdiam"]
     lyotdiam = modelconfig["lyotdiam"]
-    filename_instr_pup = modelconfig["filename_instr_pup"]
-    filename_instr_lyot = modelconfig["filename_instr_lyot"]
 
     ##################
     ##################
@@ -601,7 +604,7 @@ def correctionLoop(parameter_file,
                            ".fits")
 
     # Initialize coronagraphs:
-    corona_struct = coronagraph(model_dir, modelconfig, coroconfig)
+    corona_struct = coronagraph(model_dir, modelconfig, Coronaconfig)
 
     ## Non coronagraphic PSF
     # PSF = np.abs(instr.pupiltodetector(entrancepupil , 1, corona_struct.lyot_pup))**2
@@ -707,8 +710,8 @@ def correctionLoop(parameter_file,
                 int(dim_im / 2 + len(amp1) / 2), ] = amp1
     
         #Set the average to 0 inside entrancepupil
-        ampfinal = (ampfinal / np.mean(ampfinal[np.where(entrancepupil != 0)])
-                     - np.ones((dim_im, dim_im))) * entrancepupil  # /10
+        ampfinal = (ampfinal / np.mean(ampfinal[np.where(corona_struct.entrancepupil != 0)])
+                     - np.ones((dim_im, dim_im))) * corona_struct.entrancepupil  # /10
     else:
         ampfinal = 0
 
@@ -731,7 +734,7 @@ def correctionLoop(parameter_file,
             pdiam,
             corona_struct.prad,
             DM3_xy309,
-            pitchDM=DM3_pitchDM,
+            pitchDM=DM3_pitch,
             filename_actu309=DM3_filename_actu309,
             filename_grid_actu=DM3_filename_grid_actu,
             filename_actu_infl_fct=DM3_filename_actu_infl_fct,
