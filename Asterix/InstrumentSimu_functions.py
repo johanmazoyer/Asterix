@@ -53,7 +53,6 @@ class coronagraph:
         self.coro_position = coroconfig["coro_position"]
         self.knife_coro_offset = coroconfig["knife_coro_offset"]
         self.err_fqpm = coroconfig["err_fqpm"]
-        self.perfect_coro = coroconfig["perfect_coro"]
         self.prop_lyot2science = coroconfig["prop_lyot2science"]
 
         self.dim_im = dim_im
@@ -210,7 +209,7 @@ class coronagraph:
         -------------------------------------------------- """
 
         lyotplane_after_lyot = self.pupiltolyot(input_wavefront)
-
+        
         if self.perfect_coro:
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
 
