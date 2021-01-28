@@ -5,6 +5,7 @@ import scipy.ndimage as nd
 from astropy.io import fits
 import skimage.transform
 import Asterix.processing_functions as proc
+import Asterix.fits_functions as useful
 
 # Raccourcis conversions angles
 dtor = np.pi / 180.0  # degree to radian conversion factor
@@ -134,6 +135,40 @@ def lyottodetector(Lyot_plane_after_Lyot,
 
     return science_focal_plane
 
+
+
+def pupiltolyot(input_wavefront,
+                    Coronaconfig):  # aberrationphase,prad1,prad2
+    """ --------------------------------------------------
+    Propagate the electric field from entrance pupil to Lyot plane after Lyot pupil
+
+    Parameters
+    ----------
+    input_wavefront : 2D array,can be complex.  
+        Input wavefront,can be complex.
+    Coronaconfig: coronagraph structure
+    
+    Returns
+    ------
+    science_focal_plane : 2D array, 
+        Focal plane electric field in the focal plane
+    -------------------------------------------------- """
+
+    
+    maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
+    
+    
+    corono_focal_plane  = np.fft.fft2(np.fft.fftshift(input_wavefront *
+                                            maskshifthalfpix))
+
+    # Focal plane 
+    lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * Coronaconfig.FPmsk)
+
+    # Lyot plane
+    lyotplane_after_lyot = lyotplane_before_lyot*np.fft.fftshift(Coronaconfig.lyot_pup)
+
+    return lyotplane_after_lyot
+
 def pupiltodetector(input_wavefront,
                     Coronaconfig):  # aberrationphase,prad1,prad2
     """ --------------------------------------------------
@@ -154,21 +189,15 @@ def pupiltodetector(input_wavefront,
         the input wavefront through the high-contrast instrument.
     -------------------------------------------------- """
 
-    maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
-    # Focal plane 1
-    if Coronaconfig.perfect_coro == True:
-        input_wavefront = input_wavefront - Coronaconfig.perfect_entrance_pupil
+    lyotplane_after_lyot = pupiltolyot(input_wavefront, Coronaconfig)
 
-    focal1end = np.fft.fft2(np.fft.fftshift(input_wavefront *
-                                            maskshifthalfpix))
+    if Coronaconfig.perfect_coro:
+        lyotplane_after_lyot = lyotplane_after_lyot - Coronaconfig.perfect_Lyot_pupil
+    
+    # Science_focal_plane
+    science_focal_plane = lyottodetector(lyotplane_after_lyot, Coronaconfig)
 
-    # Lyot plane
-    pupil2end = np.fft.ifft2(focal1end * Coronaconfig.coro)
-
-    # Focal plane 2
-    focal2end = lyottodetector(pupil2end*np.fft.fftshift(Coronaconfig.lyot_pup), Coronaconfig)
-
-    return focal2end
+    return science_focal_plane
 
 
 ##############################################
@@ -525,7 +554,7 @@ def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
             MFT of pup centered on the pixel (dimft/2D+1+xhift,dimft/2D+1+yxhift)
             dimension is dimft x dimft
 
-    AUTHOR : Raphaël Galicher
+    AUTHOR : Raphael Galicher
 
     REVISION HISTORY :
     Revision 1.1  2020-01-22 Raphaël Galicher

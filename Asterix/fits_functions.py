@@ -2,8 +2,62 @@ __author__ = 'Axel Potier'
 
 import glob
 import numpy as np
+import matplotlib.pyplot as plt
 from astropy.io import fits
 
+
+def quickshow(tab):
+    """
+    Function to quickly show an array.
+    tab: array to be shown
+    """
+
+
+    tmp = tab
+    # tmp = tmp.T
+    plt.axis('off')
+    plt.imshow(tmp, origin='lower', cmap='gray')
+    plt.show()
+
+
+def quickfits(tab, dir='.', name='tmp'):
+    """
+    Function to quickly save in fits. 
+    By default, it will save on the desktop with a random name to avoid overwriting
+    
+    tab: array to be saved
+    dir (optionnal): directory where to save the .fits
+    name (optionnal): name of the .fits. By defaut tmpsXX.fits where xx is a random number
+    """
+
+    from random import random
+    if name == 'tmp':
+        name = name + str(int(random() * 100))
+    fits.writeto(dir + name + '.fits', tab)
+
+
+def quickpng(tab, dir='.', name='tmp'):
+    """
+    Function to quickly save in .png. 
+    By default, it will save on the desktop with a random name
+
+    tab: array to be saved
+    dir (optionnal): directory where to save the .png
+    name (optionnal): name of the .png.  By defaut tmpXX.png where xx is a random number
+    """
+    from random import random
+    import matplotlib.pyplot as plt
+    import png
+
+    plt.figure(figsize=(10, 10))
+    tmp = tab
+    # tmp = tmp.T
+    plt.axis('off')
+    plt.imshow(tmp, origin='lower', cmap='gray')
+    if name == 'toto':
+        name = name + str(int(random() * 100))
+    plt.tight_layout()
+    plt.savefig(dir + name + '.png', dpi=300)
 
 # def CubeFits(docs_dir):
 #     """ --------------------------------------------------

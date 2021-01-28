@@ -101,11 +101,7 @@ def createvectorprobes(wavelength, entrancepupil, Coronaconfig, amplitude,
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
     ## Non coronagraphic PSF
-    PSF = np.abs(
-        np.fft.fftshift(
-            np.fft.fft2(
-                np.fft.fftshift(entrancepupil *
-                                Coronaconfig.lyot_pup))))**2
+    PSF = np.abs(instr.lyottodetector(entrancepupil * Coronaconfig.lyot_pup, Coronaconfig))**2
     maxPSF = np.amax(PSF)
 
     k = 0
