@@ -49,7 +49,7 @@ class coronagraph:
         lyotrad = int(np.ceil(lyotrad))
 
         #coronagraph
-        self.corona_type = coroconfig["coronagraph"]
+        self.corona_type = coroconfig["corona_type"]
         self.coro_position = coroconfig["coro_position"]
         self.knife_coro_offset = coroconfig["knife_coro_offset"]
         self.err_fqpm = coroconfig["err_fqpm"]

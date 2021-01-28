@@ -98,7 +98,6 @@ def create_interaction_matrices(parameter_file,
     ### coronagraph CONFIG
     Coronaconfig = config["Coronaconfig"]
     Coronaconfig.update(NewCoronaconfig)
-    corona_type = Coronaconfig["coronagraph"]
     
     ##################
     ##################
@@ -138,8 +137,11 @@ def create_interaction_matrices(parameter_file,
     else:
         basistr = "fourier"
 
+    # Initialize coronagraphs:
+    corona_struct = coronagraph(model_dir, modelconfig, Coronaconfig)
+
     # Directories for saving data
-    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_type + "/" +
+    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_struct.corona_type + "/" +
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
                        str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
@@ -155,9 +157,6 @@ def create_interaction_matrices(parameter_file,
         if not os.path.exists(Labview_dir):
             print("Creating directory " + Labview_dir + " ...")
             os.makedirs(Labview_dir)
-
-    # Initialize coronagraphs:
-    corona_struct = coronagraph(model_dir, modelconfig, Coronaconfig)
 
     # DM influence functions
     if DM3_creating_pushact == True:
@@ -190,19 +189,18 @@ def create_interaction_matrices(parameter_file,
     ## centered on pixel [0.5,0.5]
     Coronaconfig.perfect_coro = True
 
-    if coronagraph == "fqpm":
-        print('ffffffffffffffffffffffffffffffffffff')
+    if corona_struct.corona_type == "fqpm":
         #Coronaconfig.FPmsk = instr.FQPM(dim_im, err=corona_struct.err_fqpm)
         Coronaconfig.FPmsk = corona_struct.FQPM()
         Coronaconfig.perfect_coro = True
 
-    elif coronagraph == "knife":
+    elif corona_struct.corona_type == "knife":
         # Coronaconfig.FPmsk = instr.KnifeEdgeCoro(
         #     dim_im, coro_position, knife_coro_offset,
         #     science_sampling * lyotdiam / pdiam)
         Coronaconfig.FPmsk = corona_struct.KnifeEdgeCoro()
         Coronaconfig.perfect_coro = False
-    elif coronagraph == "vortex":
+    elif corona_struct.corona_type == "vortex":
         phasevortex = 0  # to be defined
         Coronaconfig.FPmsk = np.exp(1j * phasevortex)
         Coronaconfig.perfect_coro = True
@@ -490,7 +488,6 @@ def correctionLoop(parameter_file,
     ### coronagraph CONFIG
     Coronaconfig = config["Coronaconfig"]
     Coronaconfig.update(NewCoronaconfig)
-    corona_type = Coronaconfig["coronagraph"]
 
     ##################
     ##################
@@ -562,6 +559,10 @@ def correctionLoop(parameter_file,
     ## Directories for saving the data
     model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
 
+
+    # Initialize coronagraphs:
+    corona_struct = coronagraph(model_dir, modelconfig, Coronaconfig)
+
     if onbench == True:
         Labview_dir = Data_dir + "Labview/"
         if not os.path.exists(Labview_dir):
@@ -586,8 +587,8 @@ def correctionLoop(parameter_file,
 #RG Version
 #intermatrix_dir = (Data_dir + "Interaction_Matrices/" + coronagraph + "/" +
 #JMa
-    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_type + "/" +
-                       str(int(wavelength * 1e9)) + "nm/p" +
+    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_struct.corona_type
+                     + "/" + str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
                        str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
                        str(round(science_sampling, 2)) + "/basis_" + basistr +
@@ -602,9 +603,6 @@ def correctionLoop(parameter_file,
 
     DM3_pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
                            ".fits")
-
-    # Initialize coronagraphs:
-    corona_struct = coronagraph(model_dir, modelconfig, Coronaconfig)
 
     ## Non coronagraphic PSF
     # PSF = np.abs(instr.pupiltodetector(entrancepupil , 1, corona_struct.lyot_pup))**2
