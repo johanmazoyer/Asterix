@@ -692,12 +692,15 @@ def correctionLoop(parameter_file,
 
         #Rescale to the pupil size
         amp1 = skimage.transform.rescale(amp,
-                                         2*corona_struct.prad/148,
+                                         2*corona_struct.prad/148*1.03,
                                          preserve_range=True,
                                          anti_aliasing=True,
                                          multichannel=False)
         # Shift to center between 4 pixels
-        tmp_phase_ramp=np.fft.fftshift(instr.shift_phase_ramp(amp1.shape[0],-.5,-.5))
+        #tmp_phase_ramp=np.fft.fftshift(instr.shift_phase_ramp(amp1.shape[0],-.5,-.5))
+        #bidouille entre le grandissement 1.03 à la ligne au-dessus et le -1,-1 au lieu
+        #de -.5,-.5 C'est pour éviter un écran d'amplitude juste plus petit que la pupille
+        tmp_phase_ramp=np.fft.fftshift(instr.shift_phase_ramp(amp1.shape[0],-1.,-1.))
         amp1 = np.real(np.fft.fftshift(np.fft.fft2(np.fft.ifft2(amp1)*tmp_phase_ramp)))
 
         # Create the array with same size as the pupil
