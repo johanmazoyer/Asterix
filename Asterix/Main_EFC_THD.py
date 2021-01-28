@@ -75,8 +75,6 @@ def create_interaction_matrices(parameter_file,
     #pupil and Lyot stop
     pdiam = modelconfig["pdiam"]
     lyotdiam = modelconfig["lyotdiam"]
-    filename_instr_pup = modelconfig["filename_instr_pup"]
-    filename_instr_lyot = modelconfig["filename_instr_lyot"]
 
     ##################
     ##################
@@ -183,45 +181,6 @@ def create_interaction_matrices(parameter_file,
         DM3_pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
                                ".fits")
 
-    # Initialize coronagraphs:
-
-    ## transmission of the phase mask (exp(i*phase))
-    ## centered on pixel [0.5,0.5]
-    Coronaconfig.perfect_coro = True
-
-    if corona_struct.corona_type == "fqpm":
-        #Coronaconfig.FPmsk = instr.FQPM(dim_im, err=corona_struct.err_fqpm)
-        Coronaconfig.FPmsk = corona_struct.FQPM()
-        Coronaconfig.perfect_coro = True
-
-    elif corona_struct.corona_type == "knife":
-        # Coronaconfig.FPmsk = instr.KnifeEdgeCoro(
-        #     dim_im, coro_position, knife_coro_offset,
-        #     science_sampling * lyotdiam / pdiam)
-        Coronaconfig.FPmsk = corona_struct.KnifeEdgeCoro()
-        Coronaconfig.perfect_coro = False
-    elif corona_struct.corona_type == "vortex":
-        phasevortex = 0  # to be defined
-        Coronaconfig.FPmsk = np.exp(1j * phasevortex)
-        Coronaconfig.perfect_coro = True
-
-    ##############
-    ##AV
-    ##############
-    ## Binary entrance pupil
-    entrancepupil = instr.create_binary_pupil(
-                    model_dir, filename_instr_pup, dim_im, corona_struct.prad)
-
-    ##############
-    ##AV
-    ##############
-    ## Binary Lyot stop
-    Coronaconfig.lyot_pup = instr.create_binary_pupil(
-                    model_dir, filename_instr_lyot, dim_im, lyotdiam/2)
-
-    if Coronaconfig.perfect_coro:
-        Coronaconfig.perfect_Lyot_pupil = corona_struct.pupiltolyot(entrancepupil)
-
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
               "_".join(map(str, posprobes)) + "act_" + str(int(amplitudePW)) +
@@ -276,7 +235,7 @@ def create_interaction_matrices(parameter_file,
 
         if DM3_otherbasis == False:
             DM3_WhichInPupil = wsc.creatingWhichinPupil(
-                DM3_pushact, entrancepupil,
+                DM3_pushact, corona_struct.entrancepupil,
                 MinimumSurfaceRatioInThePupil)
         else:
             DM3_WhichInPupil = np.arange(DM3_pushact.shape[0])
@@ -581,12 +540,7 @@ def correctionLoop(parameter_file,
     else:
         basistr = "actu"
         DM3_basis = 0
-############
-## AV
-############
-#RG Version
-#intermatrix_dir = (Data_dir + "Interaction_Matrices/" + coronagraph + "/" +
-#JMa
+
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_struct.corona_type
                      + "/" + str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
@@ -604,8 +558,7 @@ def correctionLoop(parameter_file,
     DM3_pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
                            ".fits")
 
-    ## Non coronagraphic PSF
-    # PSF = np.abs(instr.pupiltodetector(entrancepupil , 1, corona_struct.lyot_pup))**2
+    ## Non coronagraphic PSF with no aberrations
     PSF = np.abs(
         corona_struct.lyottodetector(corona_struct.entrancepupil *
                                      corona_struct.lyot_pup))**2
