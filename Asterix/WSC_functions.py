@@ -72,7 +72,7 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def createvectorprobes(wavelength, entrancepupil, Coronaconfig, amplitude,
+def createvectorprobes(wavelength, entrancepupil, corona_struct, amplitude,
                        posprobes, pushact, dimimages, cutsvd):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
@@ -81,7 +81,7 @@ def createvectorprobes(wavelength, entrancepupil, Coronaconfig, amplitude,
     ----------
     wavelength: float, wavelength of the  incoming flux in meter
     entrancepupil: 2D-array, entrance pupil shape
-    Coronaconfig: coronagraph structure
+    corona_struct: coronagraph structure
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
     posprobes: 1D-array, index of the actuators to push and pull for pair-wise probing
     pushact: 3D-array, opd created by the pokes of all actuators in the DM.
@@ -101,7 +101,9 @@ def createvectorprobes(wavelength, entrancepupil, Coronaconfig, amplitude,
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
     ## Non coronagraphic PSF
-    PSF = np.abs(instr.lyottodetector(entrancepupil * Coronaconfig.lyot_pup, Coronaconfig))**2
+    PSF = np.abs(
+        corona_struct.lyottodetector(entrancepupil *
+                                     corona_struct.lyot_pup))**2
     maxPSF = np.amax(PSF)
 
     k = 0
@@ -109,7 +111,7 @@ def createvectorprobes(wavelength, entrancepupil, Coronaconfig, amplitude,
         probephase[k] = amplitude * pushact[i]
         probephase[k] = 2 * np.pi * (probephase[k]) * 1e-9 / wavelength
         inputwavefront = entrancepupil * (1 + 1j * probephase[k])
-        deltapsikbis = (instr.pupiltodetector(inputwavefront, Coronaconfig) /
+        deltapsikbis = (corona_struct.pupiltodetector(inputwavefront) /
                         np.sqrt(maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
@@ -221,7 +223,7 @@ def creatingMaskDH(dimimages,
 def creatingCorrectionmatrix(entrancepupil,
                              amplitude_abb,
                              phase_abb,
-                             Coronaconfig,
+                             corona_struct,
                              dimimages,
                              wavelength,
                              amplitude,
@@ -239,7 +241,7 @@ def creatingCorrectionmatrix(entrancepupil,
     entrancepupil: 2D-array, entrance pupil shape
     amplitude_abb: 2D-array, amplitude aberration in the first pupil plane
     phase_abb: 2D-array, phase aberration in the first pupil plane
-    Coronaconfig: coronagraph structure
+    corona_struct: coronagraph structure
     dimimages: int, size of the output image after resampling in pixels
     wavelength: float, wavelength of the  incoming flux in meter
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
@@ -273,10 +275,8 @@ def creatingCorrectionmatrix(entrancepupil,
         Psivector = 2 * np.pi * (Psivector) * 1e-9 / wavelength
         inputwavefront = entrancepupil * (1 + amplitude_abb) * np.exp(
             1j * phase_abb) * 1j * Psivector
-        Gvector = (instr.pupiltodetector(
-            inputwavefront,
-            Coronaconfig,
-        ) / np.sqrt(maxPSF))
+        Gvector = (corona_struct.pupiltodetector(inputwavefront, ) /
+                   np.sqrt(maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()
