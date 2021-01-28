@@ -15,8 +15,9 @@ from validate import Validator
 
 import Asterix.processing_functions as proc
 import Asterix.WSC_functions as wsc
+from Asterix.InstrumentSimu_functions import coronagraph
 import Asterix.InstrumentSimu_functions as instr
-import Asterix.fits_functions as AsFit
+import Asterix.fits_functions as useful
 
 __all__ = ["create_interaction_matrices", "correctionLoop"]
 
@@ -95,14 +96,9 @@ def create_interaction_matrices(parameter_file,
     ##################
     ##################
     ### coronagraph CONFIG
-    Coronaconfig = config["Coronaconfig"]
-    Coronaconfig.update(NewCoronaconfig)
-
-    coronagraph = Coronaconfig["coronagraph"]
-    coro_position = Coronaconfig["coro_position"]
-    knife_coro_offset = Coronaconfig["knife_coro_offset"]
-    err_fqpm = Coronaconfig["err_fqpm"]
-    prop_lyot2science = Coronaconfig["prop_lyot2science"]
+    coroconfig = config["coroconfig"]
+    coroconfig.update(Newcoroconfig)
+    corona_type = coroconfig["coronagraph"]
 
     ##################
     ##################
@@ -143,7 +139,7 @@ def create_interaction_matrices(parameter_file,
         basistr = "fourier"
 
     # Directories for saving data
-    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + coronagraph + "/" +
+    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_type + "/" +
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
                        str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
@@ -160,10 +156,8 @@ def create_interaction_matrices(parameter_file,
             print("Creating directory " + Labview_dir + " ...")
             os.makedirs(Labview_dir)
 
-    # Pupil and Lyot radii in pixels
-    lyotrad = dim_im / 2 / science_sampling
-    prad = int(np.ceil(lyotrad * pdiam / lyotdiam))
-    lyotrad = int(np.ceil(lyotrad))
+    # Initialize coronagraphs:
+    corona_struct = coronagraph(model_dir, modelconfig, coroconfig)
 
     # DM influence functions
     if DM3_creating_pushact == True:
@@ -171,9 +165,9 @@ def create_interaction_matrices(parameter_file,
             model_dir,
             dim_im,
             pdiam,
-            prad,
+            corona_struct.prad,
             DM3_xy309,
-            pitchDM=DM3_pitch,
+            pitchDM=DM3_pitchDM,
             filename_actu309=DM3_filename_actu309,
             filename_grid_actu=DM3_filename_grid_actu,
             filename_actu_infl_fct=DM3_filename_actu_infl_fct)
@@ -208,10 +202,16 @@ def create_interaction_matrices(parameter_file,
         Coronaconfig.FPmsk = np.exp(1j * phasevortex)
         Coronaconfig.perfect_coro = True
 
+    ##############
+    ##AV
+    ##############
     ## Binary entrance pupil
     entrancepupil = instr.create_binary_pupil(
                     model_dir, filename_instr_pup, dim_im, prad)
 
+    ##############
+    ##AV
+    ##############
     ## Binary Lyot stop
     Coronaconfig.lyot_pup = instr.create_binary_pupil(
                     model_dir, filename_instr_lyot, dim_im, lyotrad)
@@ -229,8 +229,8 @@ def create_interaction_matrices(parameter_file,
     else:
         print("Recording " + filePW + " ...")
         vectoressai, showsvd = wsc.createvectorprobes(
-            wavelength, entrancepupil, Coronaconfig, amplitudePW,
-            posprobes, DM3_pushact, dim_sampl, cut)
+            wavelength, corona_struct.entrancepupil, corona_struct,
+            amplitudePW, posprobes, DM3_pushact, dim_sampl, cut)
         fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
         visuPWMap = ("MapEigenvaluesPW" + "_" + "_".join(map(str, posprobes)) +
@@ -348,14 +348,16 @@ def create_interaction_matrices(parameter_file,
             # Creating EFC Interaction Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
             ## Non coronagraphic PSF
-            PSF = np.abs(instr.lyottodetector(entrancepupil * Coronaconfig.lyot_pup, Coronaconfig))**2
+            PSF = np.abs(
+                corona_struct.lyottodetector(corona_struct.entrancepupil *
+                                             corona_struct.lyot_pup))**2
             maxPSF = np.amax(PSF)
 
             Gmatrix = wsc.creatingCorrectionmatrix(
-                entrancepupil,
+                corona_struct.entrancepupil,
                 0,
                 0,
-                Coronaconfig,
+                corona_struct,
                 dim_sampl,
                 wavelength,
                 amplitudeEFC,
@@ -483,14 +485,10 @@ def correctionLoop(parameter_file,
     ##################
     ##################
     ### coronagraph CONFIG
-    Coronaconfig = config["Coronaconfig"]
-    Coronaconfig.update(NewCoronaconfig)
+    coroconfig = config["coroconfig"]
+    coroconfig.update(Newcoroconfig)
 
-    coronagraph = Coronaconfig["coronagraph"]
-    coro_position = Coronaconfig["coro_position"]
-    knife_coro_offset = Coronaconfig["knife_coro_offset"]
-    err_fqpm = Coronaconfig["err_fqpm"]
-    prop_lyot2science = Coronaconfig["prop_lyot2science"]
+    corona_type = coroconfig["coronagraph"]
 
     ##################
     ##################
@@ -580,7 +578,13 @@ def correctionLoop(parameter_file,
     else:
         basistr = "actu"
         DM3_basis = 0
-    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + coronagraph + "/" +
+############
+## AV
+############
+#RG Version
+#intermatrix_dir = (Data_dir + "Interaction_Matrices/" + coronagraph + "/" +
+#JMa
+intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_type + "/" +
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
                        str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
@@ -597,43 +601,14 @@ def correctionLoop(parameter_file,
     DM3_pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
                            ".fits")
 
-    ## transmission of the phase mask (exp(i*phase))
-    ## centered on pixel [0.5,0.5]
-    if coronagraph == "fqpm":
-        Coronaconfig.FPmsk = instr.FQPM(dim_im, err=err_fqpm)
-        Coronaconfig.perfect_coro = True
-    elif coronagraph == "knife":
-        Coronaconfig.FPmsk = instr.KnifeEdgeCoro(
-            dim_im, coro_position, knife_coro_offset,
-            science_sampling * lyotdiam / pdiam)
-        Coronaconfig.perfect_coro = False
-    elif coronagraph == "vortex":
-        phasevortex = 0  # to be defined
-        Coronaconfig.FPmsk = np.exp(1j * phasevortex)
-        Coronaconfig.perfect_coro = True
-
-    ## Entrance pupil and Lyot stop
-    lyotrad = dim_im / 2 / science_sampling
-    prad = int(np.ceil(lyotrad * pdiam / lyotdiam))
-    lyotrad = int(np.ceil(lyotrad))
-
-    if filename_instr_pup != "" and filename_instr_lyot != "":
-        entrancepupil = fits.getdata(model_dir +
-                                                  filename_instr_pup)
-        Coronaconfig.lyot_pup = fits.getdata(model_dir + filename_instr_lyot)
-    else:
-        entrancepupil = instr.roundpupil(dim_im, prad)
-        if prop_lyot2science == 'fft':
-            Coronaconfig.lyot_pup = instr.roundpupil(dim_im, lyotrad)
-        if prop_lyot2science == 'mft':
-            Coronaconfig.lyot_pup = instr.roundpupil(2*lyotrad, dim_im//2)
-
-    if Coronaconfig.perfect_coro:
-        Coronaconfig.perfect_Lyot_pupil = instr.pupiltolyot(entrancepupil,Coronaconfig)
+    # Initialize coronagraphs:
+    corona_struct = coronagraph(model_dir, modelconfig, coroconfig)
 
     ## Non coronagraphic PSF
-    # PSF = np.abs(instr.pupiltodetector(entrancepupil , 1, Coronaconfig.lyot_pup))**2
-    PSF = np.abs(instr.lyottodetector(entrancepupil * Coronaconfig.lyot_pup, Coronaconfig))**2
+    # PSF = np.abs(instr.pupiltodetector(entrancepupil , 1, corona_struct.lyot_pup))**2
+    PSF = np.abs(
+        corona_struct.lyottodetector(corona_struct.entrancepupil *
+                                     corona_struct.lyot_pup))**2
     maxPSF = np.amax(PSF)
 
     ##Load PW matrices
@@ -742,8 +717,8 @@ def correctionLoop(parameter_file,
     phase_abb_up = phase_up
 
     ## To convert in photon flux
-    contrast_to_photons = (np.sum(entrancepupil) /
-                           np.sum(Coronaconfig.lyot_pup) * nb_photons *
+    contrast_to_photons = (np.sum(corona_struct.entrancepupil) /
+                           np.sum(corona_struct.lyot_pup) * nb_photons *
                            maxPSF / np.sum(PSF))
 
     ## Adding error on the DM model?
@@ -755,9 +730,9 @@ def correctionLoop(parameter_file,
             model_dir,
             dim_im,
             pdiam,
-            prad,
+            corona_struct.prad,
             DM3_xy309,
-            pitchDM=DM3_pitch,
+            pitchDM=DM3_pitchDM,
             filename_actu309=DM3_filename_actu309,
             filename_grid_actu=DM3_filename_grid_actu,
             filename_actu_infl_fct=DM3_filename_actu_infl_fct,
@@ -787,12 +762,12 @@ def correctionLoop(parameter_file,
             circ_angle=circ_angle)
         fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits",
                      maskDHcontrast)
-    
-    input_wavefront = entrancepupil * (
+
+    input_wavefront = corona_struct.entrancepupil * (
         1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
     imagedetector[0] = (
-        abs(instr.pupiltodetector(input_wavefront, Coronaconfig))**2 / maxPSF)
+        abs(corona_struct.pupiltodetector(input_wavefront))**2 / maxPSF)
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
@@ -814,8 +789,8 @@ def correctionLoop(parameter_file,
                                                 posprobes,
                                                 pushactonDM,
                                                 amplitudePW,
-                                                entrancepupil,
-                                                Coronaconfig,
+                                                corona_struct.entrancepupil,
+                                                corona_struct,
                                                 PSF,
                                                 dim_sampl,
                                                 wavelength,
@@ -824,8 +799,8 @@ def correctionLoop(parameter_file,
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
         elif estimation == "Perfect":
-            resultatestimation = instr.pupiltodetector(
-                input_wavefront, Coronaconfig) / np.sqrt(maxPSF)
+            resultatestimation = corona_struct.pupiltodetector(
+                input_wavefront) / np.sqrt(maxPSF)
 
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
@@ -838,10 +813,10 @@ def correctionLoop(parameter_file,
             if Linearization == True:
 
                 Gmatrix = wsc.creatingCorrectionmatrix(
-                    entrancepupil,
+                    corona_struct.entrancepupil,
                     amplitude_abb_up,
                     phase_abb_up,
-                    Coronaconfig,
+                    corona_struct,
                     dim_sampl,
                     wavelength,
                     amplitudeEFC,
@@ -890,13 +865,13 @@ def correctionLoop(parameter_file,
                             1024, dim_im * dim_im)).reshape(dim_im, dim_im) *
                                    2 * np.pi * 1e-9 / wavelength)
 
-                    input_wavefront = entrancepupil * (
+                    input_wavefront = corona_struct.entrancepupil * (
                         1 + amplitude_abb_up) * np.exp(1j *
                                                     (phase_abb_up + apply_on_DM))
 
                     imagedetectortemp = (abs(
-                        instr.pupiltodetector(input_wavefront, Coronaconfig))**
-                                         2 / maxPSF)
+                        corona_struct.pupiltodetector(input_wavefront))**2 /
+                                         maxPSF)
 
                     meancontrasttemp[b] = np.mean(
                         imagedetectortemp[np.where(maskDHcontrast != 0)])
@@ -952,11 +927,11 @@ def correctionLoop(parameter_file,
                        2 * np.pi * 1e-9 / wavelength)
         phaseDM[k + 1] = phaseDM[k] + apply_on_DM
         phase_abb_up = phase_abb_up + apply_on_DM
-        input_wavefront = entrancepupil * (
+        input_wavefront = corona_struct.entrancepupil * (
             1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
+
         imagedetector[k + 1] = (
-            abs(instr.pupiltodetector(input_wavefront, Coronaconfig))**2 /
-            maxPSF)
+            abs(corona_struct.pupiltodetector(input_wavefront))**2 / maxPSF)
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHcontrast != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])
@@ -974,10 +949,12 @@ def correctionLoop(parameter_file,
     plt.show()
 
     ## SAVING...
-    header = AsFit.from_param_to_header(config)
-    cut_phaseDM = np.zeros((nbiter + 1, 2 * prad, 2 * prad))
+    header = useful.from_param_to_header(config)
+    cut_phaseDM = np.zeros(
+        (nbiter + 1, 2 * corona_struct.prad, 2 * corona_struct.prad))
     for it in np.arange(nbiter + 1):
-        cut_phaseDM[it] = proc.cropimage(phaseDM[it], 200, 200, 2 * prad)
+        cut_phaseDM[it] = proc.cropimage(phaseDM[it], 200, 200,
+                                         2 * corona_struct.prad)
         # plt.clf()
         # plt.figure(figsize=(3, 3))
         # plt.imshow(np.log10(imagedetector[it,100:300,100:300]),vmin=-8,vmax=-5,cmap='Blues_r')#CMRmap
