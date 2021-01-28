@@ -28,7 +28,8 @@ __all__ = ["create_interaction_matrices", "correctionLoop"]
 
 def create_interaction_matrices(parameter_file,
                                 NewMODELconfig={},
-                                Newcoroconfig={},
+                                NewDMconfig={},
+                                NewCoronaconfig={},
                                 NewPWconfig={},
                                 NewEFCconfig={}):
 
@@ -77,15 +78,20 @@ def create_interaction_matrices(parameter_file,
     filename_instr_pup = modelconfig["filename_instr_pup"]
     filename_instr_lyot = modelconfig["filename_instr_lyot"]
 
-    #DM model
-    pitchDM = modelconfig["pitchDM"]
-    creating_pushact = modelconfig["creating_pushact"]
-    x309 = modelconfig["x309"]
-    y309 = modelconfig["y309"]
-    xy309 = [x309, y309]
-    filename_actu309 = modelconfig["filename_actu309"]
-    filename_grid_actu = modelconfig["filename_grid_actu"]
-    filename_actu_infl_fct = modelconfig["filename_actu_infl_fct"]
+    ##################
+    ##################
+    ### DM CONFIG
+    DMconfig = config["DMconfig"]
+    DMconfig.update(NewDMconfig)
+
+    DM3_pitch = DMconfig["DM3_pitch"]
+    DM3_creating_pushact = DMconfig["DM3_creating_pushact"]
+    DM3_x309 = DMconfig["DM3_x309"]
+    DM3_y309 = DMconfig["DM3_y309"]
+    DM3_xy309 = [DM3_x309, DM3_y309]
+    DM3_filename_actu309 = DMconfig["DM3_filename_actu309"]
+    DM3_filename_grid_actu = DMconfig["DM3_filename_grid_actu"]
+    DM3_filename_actu_infl_fct = DMconfig["DM3_filename_actu_infl_fct"]
 
     ##################
     ##################
@@ -118,7 +124,7 @@ def create_interaction_matrices(parameter_file,
     circ_side = EFCconfig["circ_side"]
     circ_offset = EFCconfig["circ_offset"]
     circ_angle = EFCconfig["circ_angle"]
-    otherbasis = EFCconfig["otherbasis"]
+    DM3_otherbasis = EFCconfig["DM3_otherbasis"]
     Nbmodes = EFCconfig["Nbmodes"]
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
@@ -127,7 +133,7 @@ def create_interaction_matrices(parameter_file,
 
     model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
 
-    if otherbasis == False:
+    if DM3_otherbasis == False:
         basistr = "actu"
     else:
         basistr = "fourier"
@@ -154,19 +160,19 @@ def create_interaction_matrices(parameter_file,
     corona_struct = coronagraph(model_dir, modelconfig, coroconfig)
 
     # DM influence functions
-    if creating_pushact == True:
-        pushact = instr.creatingpushact(
+    if DM3_creating_pushact == True:
+        DM3_pushact = instr.creatingpushact(
             model_dir,
             dim_im,
             pdiam,
             corona_struct.prad,
-            xy309,
-            pitchDM=pitchDM,
-            filename_actu309=filename_actu309,
-            filename_grid_actu=filename_grid_actu,
-            filename_actu_infl_fct=filename_actu_infl_fct)
+            DM3_xy309,
+            pitchDM=DM3_pitchDM,
+            filename_actu309=DM3_filename_actu309,
+            filename_grid_actu=DM3_filename_grid_actu,
+            filename_actu_infl_fct=DM3_filename_actu_infl_fct)
         fits.writeto(model_dir + "PushActInPup" + str(int(dim_im)) + ".fits",
-                     pushact,
+                     DM3_pushact,
                      overwrite=True)
     else:
         if os.path.exists(model_dir + "PushActInPup" + str(int(dim_im)) +
@@ -175,8 +181,43 @@ def create_interaction_matrices(parameter_file,
             ZipFile(model_dir + "PushActInPup" + str(int(dim_im)) + ".zip",
                     "r").extractall(model_dir)
 
-        pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
+        DM3_pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
                                ".fits")
+
+    # Initialize coronagraphs:
+
+    ## transmission of the phase mask (exp(i*phase))
+    ## centered on pixel [0.5,0.5]
+    if coronagraph == "fqpm":
+        Coronaconfig.FPmsk = instr.FQPM(dim_im, err=err_fqpm)
+        Coronaconfig.perfect_coro = True
+
+    elif coronagraph == "knife":
+        Coronaconfig.FPmsk = instr.KnifeEdgeCoro(
+            dim_im, coro_position, knife_coro_offset,
+            science_sampling * lyotdiam / pdiam)
+        Coronaconfig.perfect_coro = False
+    elif coronagraph == "vortex":
+        phasevortex = 0  # to be defined
+        Coronaconfig.FPmsk = np.exp(1j * phasevortex)
+        Coronaconfig.perfect_coro = True
+
+    ##############
+    ##AV
+    ##############
+    ## Binary entrance pupil
+    entrancepupil = instr.create_binary_pupil(
+                    model_dir, filename_instr_pup, dim_im, prad)
+
+    ##############
+    ##AV
+    ##############
+    ## Binary Lyot stop
+    Coronaconfig.lyot_pup = instr.create_binary_pupil(
+                    model_dir, filename_instr_lyot, dim_im, lyotrad)
+
+    if Coronaconfig.perfect_coro:
+        Coronaconfig.perfect_Lyot_pupil = instr.pupiltolyot(entrancepupil,Coronaconfig)
 
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
@@ -189,7 +230,7 @@ def create_interaction_matrices(parameter_file,
         print("Recording " + filePW + " ...")
         vectoressai, showsvd = wsc.createvectorprobes(
             wavelength, corona_struct.entrancepupil, corona_struct,
-            amplitudePW, posprobes, pushact, dim_sampl, cut)
+            amplitudePW, posprobes, DM3_pushact, dim_sampl, cut)
         fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
         visuPWMap = ("MapEigenvaluesPW" + "_" + "_".join(map(str, posprobes)) +
@@ -200,7 +241,7 @@ def create_interaction_matrices(parameter_file,
 
     # Saving PW matrices in Labview directory
     if onbench == True:
-        probes = np.zeros((len(posprobes), pushact.shape[0]), dtype=np.float32)
+        probes = np.zeros((len(posprobes), DM3_pushact.shape[0]), dtype=np.float32)
         vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
                             dtype=np.float32)
 
@@ -222,21 +263,21 @@ def create_interaction_matrices(parameter_file,
             print("TO SET ON LABVIEW: ",
                   str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
     # Creating WhichInPup?
-    fileWhichInPup = "Whichactfor" + str(MinimumSurfaceRatioInThePupil)
+    DM3_fileWhichInPup = "DM3_Whichactfor" + str(MinimumSurfaceRatioInThePupil)
 
-    if os.path.exists(intermatrix_dir + fileWhichInPup + ".fits") == True:
-        print("The matrix " + fileWhichInPup + " already exist")
-        WhichInPupil = fits.getdata(intermatrix_dir + fileWhichInPup + ".fits")
+    if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
+        print("The matrix " + DM3_fileWhichInPup + " already exist")
+        DM3_WhichInPupil = fits.getdata(intermatrix_dir + DM3_fileWhichInPup + ".fits")
     else:
-        print("Recording" + fileWhichInPup + " ...")
+        print("Recording" + DM3_fileWhichInPup + " ...")
 
-        if otherbasis == False:
-            WhichInPupil = wsc.creatingWhichinPupil(
-                pushact, corona_struct.entrancepupil,
+        if DM3_otherbasis == False:
+            DM3_WhichInPupil = wsc.creatingWhichinPupil(
+                DM3_pushact, entrancepupil,
                 MinimumSurfaceRatioInThePupil)
         else:
-            WhichInPupil = np.arange(pushact.shape[0])
-        fits.writeto(intermatrix_dir + fileWhichInPup + ".fits", WhichInPupil)
+            DM3_WhichInPupil = np.arange(DM3_pushact.shape[0])
+        fits.writeto(intermatrix_dir + DM3_fileWhichInPup + ".fits", DM3_WhichInPupil)
 
     # Creating EFC control matrix?
     if DHshape == "square":
@@ -255,10 +296,10 @@ def create_interaction_matrices(parameter_file,
     else:
 
         # Actuator basis or another one?
-        if otherbasis == True:
-            basisDM3 = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
+        if DM3_otherbasis == True:
+            DM3_basis = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
         else:
-            basisDM3 = 0
+            DM3_basis = 0
 
         # Creating EFC Interaction matrix
         if DHshape == "square":
@@ -320,12 +361,12 @@ def create_interaction_matrices(parameter_file,
                 dim_sampl,
                 wavelength,
                 amplitudeEFC,
-                pushact,
+                DM3_pushact,
                 maskDH,
-                WhichInPupil,
+                DM3_WhichInPupil,
                 maxPSF,
-                otherbasis=otherbasis,
-                basisDM3=basisDM3,
+                otherbasis=DM3_otherbasis,
+                basisDM3=DM3_basis,
             )
 
             fits.writeto(intermatrix_dir + fileDirectMatrix + ".fits", Gmatrix)
@@ -337,8 +378,8 @@ def create_interaction_matrices(parameter_file,
             Nbmodes,
             goal="c",
             regul=regularization,
-            otherbasis=otherbasis,
-            basisDM3=basisDM3,
+            otherbasis=DM3_otherbasis,
+            basisDM3=DM3_basis,
             intermatrix_dir=intermatrix_dir)
         fits.writeto(intermatrix_dir + fileEFCMatrix + ".fits", invertGDH)
 
@@ -358,10 +399,10 @@ def create_interaction_matrices(parameter_file,
 
     if onbench == True:
         # Save EFC control matrix in Labview directory
-        EFCmatrix = np.zeros((invertGDH.shape[1], pushact.shape[0]),
+        EFCmatrix = np.zeros((invertGDH.shape[1], DM3_pushact.shape[0]),
                              dtype=np.float32)
-        for i in np.arange(len(WhichInPupil)):
-            EFCmatrix[:, WhichInPupil[i]] = invertGDH[i, :]
+        for i in np.arange(len(DM3_WhichInPupil)):
+            EFCmatrix[:, DM3_WhichInPupil[i]] = invertGDH[i, :]
         fits.writeto(Labview_dir + "Matrix_control_EFC_DM3_default.fits",
                      EFCmatrix,
                      overwrite=True)
@@ -376,7 +417,8 @@ def create_interaction_matrices(parameter_file,
 
 def correctionLoop(parameter_file,
                    NewMODELconfig={},
-                   Newcoroconfig={},
+                   NewDMconfig={},
+                   NewCoronaconfig={},
                    NewPWconfig={},
                    NewEFCconfig={},
                    NewSIMUconfig={}):
@@ -426,14 +468,19 @@ def correctionLoop(parameter_file,
     filename_instr_pup = modelconfig["filename_instr_pup"]
     filename_instr_lyot = modelconfig["filename_instr_lyot"]
 
-    #DM model
-    pitchDM = modelconfig["pitchDM"]
-    x309 = modelconfig["x309"]
-    y309 = modelconfig["y309"]
-    xy309 = [x309, y309]
-    filename_actu309 = modelconfig["filename_actu309"]
-    filename_grid_actu = modelconfig["filename_grid_actu"]
-    filename_actu_infl_fct = modelconfig["filename_actu_infl_fct"]
+    ##################
+    ##################
+    ### DM CONFIG
+    DMconfig = config["DMconfig"]
+    DMconfig.update(NewDMconfig)
+
+    DM3_pitch = DMconfig["DM3_pitch"]
+    DM3_x309 = DMconfig["DM3_x309"]
+    DM3_y309 = DMconfig["DM3_y309"]
+    DM3_xy309 = [DM3_x309, DM3_y309]
+    DM3_filename_actu309 = DMconfig["DM3_filename_actu309"]
+    DM3_filename_grid_actu = DMconfig["DM3_filename_grid_actu"]
+    DM3_filename_actu_infl_fct = DMconfig["DM3_filename_actu_infl_fct"]
 
     ##################
     ##################
@@ -467,7 +514,7 @@ def correctionLoop(parameter_file,
     circ_side = EFCconfig["circ_side"]
     circ_offset = EFCconfig["circ_offset"]
     circ_angle = EFCconfig["circ_angle"]
-    otherbasis = EFCconfig["otherbasis"]
+    DM3_otherbasis = EFCconfig["DM3_otherbasis"]
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
 
@@ -484,7 +531,7 @@ def correctionLoop(parameter_file,
     phaserms = SIMUconfig["phaserms"]
     rhoc_phase = SIMUconfig["rhoc_phase"]
     slope_phase = SIMUconfig["slope_phase"]
-    phase_abb = SIMUconfig["phase_abb"]
+    phase_abb_filename = SIMUconfig["phase_abb_filename"]
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
     correction_algorithm = SIMUconfig["correction_algorithm"]
@@ -524,22 +571,25 @@ def correctionLoop(parameter_file,
         print("Creating directory " + result_dir + " ...")
         os.makedirs(result_dir)
 
-    ## Pair-wise probing directory
-    if otherbasis == False:
-        basistr = "actu"
-    else:
+    ## Pair-wise probing directory    
+    if DM3_otherbasis == True:
         basistr = "fourier"
-    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_type + "/" +
+        DM3_basis = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
+    else:
+        basistr = "actu"
+        DM3_basis = 0
+############
+## AV
+############
+#RG Version
+#intermatrix_dir = (Data_dir + "Interaction_Matrices/" + coronagraph + "/" +
+#JMa
+intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_type + "/" +
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(pdiam * 1e3, 2)) + "_l" +
                        str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
                        str(round(science_sampling, 2)) + "/basis_" + basistr +
                        "/")
-
-    if otherbasis == True:
-        basisDM3 = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
-    else:
-        basisDM3 = 0
 
     ## DM influence functions
     if os.path.exists(model_dir + "PushActInPup" + str(int(dim_im)) +
@@ -548,7 +598,7 @@ def correctionLoop(parameter_file,
         ZipFile(model_dir + "PushActInPup" + str(int(dim_im)) + ".zip",
                 "r").extractall(model_dir)
 
-    pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
+    DM3_pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
                            ".fits")
 
     # Initialize coronagraphs:
@@ -573,11 +623,11 @@ def correctionLoop(parameter_file,
             print("Please create PW matrix before correction")
             sys.exit()
 
-    fileWhichInPup = "Whichactfor" + str(MinimumSurfaceRatioInThePupil)
-    if os.path.exists(intermatrix_dir + fileWhichInPup + ".fits") == True:
-        WhichInPupil = fits.getdata(intermatrix_dir + fileWhichInPup + ".fits")
+    DM3_fileWhichInPup = "DM3_Whichactfor" + str(MinimumSurfaceRatioInThePupil)
+    if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
+        DM3_WhichInPupil = fits.getdata(intermatrix_dir + DM3_fileWhichInPup + ".fits")
     else:
-        print("Please create Whichactfor matrix before correction")
+        print("Please create DM3 Whichactfor matrix before correction")
         sys.exit()
 
     ## Load Control matrix
@@ -613,7 +663,7 @@ def correctionLoop(parameter_file,
         sys.exit()
 
     if correction_algorithm == "EM" or correction_algorithm == "steepest":
-        G = np.zeros((int(np.sum(maskDH)), len(WhichInPupil)), dtype=complex)
+        G = np.zeros((int(np.sum(maskDH)), len(DM3_WhichInPupil)), dtype=complex)
         G = (Gmatrix[0:int(Gmatrix.shape[0] / 2), :] +
              1j * Gmatrix[int(Gmatrix.shape[0] / 2):, :])
         transposecomplexG = np.transpose(np.conjugate(G))
@@ -623,42 +673,48 @@ def correctionLoop(parameter_file,
     ## TODO Load aberration maps (A checker, Amplitude sans doute a refaire proprement!!!)
     if set_phase_abb == True:
         if set_random_phase == True:
-            phase = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
+            print("Random phase aberrations upstream from coronagraph")
+            phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
                                            slope_phase)
         else:
-            phase = fits.getdata(model_dir + phase_abb + ".fits")
+            print("FITS file for phase aberrations upstream from coronagraph")
+            phase_up = fits.getdata(model_dir + phase_abb_filename + ".fits")
 
-        phase = phase * 2 * np.pi / wavelength
+        phase_up = phase_up * 2 * np.pi / wavelength
     else:
-        phase = 0
+        phase_up = 0
 
     if set_amplitude_abb == True:
-        oui = fits.getdata(model_dir + amplitude_abb +
-                           ".fits")  # *roundpupil(dim_im,prad)
-        moy = np.mean(oui[np.where(oui != 0)])
-        amp = oui / moy
-        amp1 = skimage.transform.rescale(
-            amp,
-            int(2 * corona_struct.prad / 148 * 400) / amp.shape[0],
-            preserve_range=True,
-            anti_aliasing=True,
-            multichannel=False)
+        #File with amplitude aberrations in amplitude (not intensity)
+        # centered on the pixel dim/2+1, dim/2 +1 with dim = 2*[dim/2]
+        # diameter of the pupil is 148 pixels in this image
+        amp = np.fft.fftshift(fits.getdata(model_dir + amplitude_abb + ".fits"))
+
+        #Rescale to the pupil size
+        amp1 = skimage.transform.rescale(amp,
+                                         2*prad/148,
+                                         preserve_range=True,
+                                         anti_aliasing=True,
+                                         multichannel=False)
+        # Shift to center between 4 pixels
+        tmp_phase_ramp=np.fft.fftshift(instr.shift_phase_ramp(amp1.shape[0],-.5,-.5))
+        amp1 = np.real(np.fft.fftshift(np.fft.fft2(np.fft.ifft2(amp1)*tmp_phase_ramp)))
+
+        # Create the array with same size as the pupil
         ampfinal = np.zeros((dim_im, dim_im))
-        ampfinal[int(dim_im / 2 - len(amp1) / 2) +
-                 1:int(dim_im / 2 + len(amp1) / 2) + 1,
-                 int(dim_im / 2 - len(amp1) / 2) +
-                 1:int(dim_im / 2 + len(amp1) / 2) + 1, ] = amp1
-        ampfinal = (ampfinal) * instr.roundpupil(dim_im,
-                                                 corona_struct.prad - 1)
-        moy = np.mean(ampfinal[np.where(ampfinal != 0)])
-        ampfinal = (ampfinal / moy - np.ones(
-            (dim_im, dim_im))) * instr.roundpupil(
-                dim_im, corona_struct.prad - 1)  # /10
+        ampfinal[int(dim_im / 2 - len(amp1) / 2):
+                int(dim_im / 2 + len(amp1) / 2),
+                 int(dim_im / 2 - len(amp1) / 2):
+                int(dim_im / 2 + len(amp1) / 2), ] = amp1
+    
+        #Set the average to 0 inside entrancepupil
+        ampfinal = (ampfinal / np.mean(ampfinal[np.where(entrancepupil != 0)])
+                     - np.ones((dim_im, dim_im))) * entrancepupil  # /10
     else:
         ampfinal = 0
 
-    amplitude_abb = ampfinal
-    phase_abb = phase
+    amplitude_abb_up = ampfinal
+    phase_abb_up = phase_up
 
     ## To convert in photon flux
     contrast_to_photons = (np.sum(corona_struct.entrancepupil) /
@@ -667,7 +723,7 @@ def correctionLoop(parameter_file,
 
     ## Adding error on the DM model?
     if xerror == 0 and yerror == 0 and angerror == 0 and gausserror == 0:
-        pushactonDM = pushact
+        pushactonDM = DM3_pushact
     else:
         print("Misregistration!")
         pushactonDM = instr.creatingpushact(
@@ -675,11 +731,11 @@ def correctionLoop(parameter_file,
             dim_im,
             pdiam,
             corona_struct.prad,
-            xy309,
-            pitchDM=pitchDM,
-            filename_actu309=filename_actu309,
-            filename_grid_actu=filename_grid_actu,
-            filename_actu_infl_fct=filename_actu_infl_fct,
+            DM3_xy309,
+            pitchDM=DM3_pitchDM,
+            filename_actu309=DM3_filename_actu309,
+            filename_grid_actu=DM3_filename_grid_actu,
+            filename_actu_infl_fct=DM3_filename_actu_infl_fct,
             xerror=xerror,
             yerror=yerror,
             angerror=angerror,
@@ -708,7 +764,7 @@ def correctionLoop(parameter_file,
                      maskDHcontrast)
 
     input_wavefront = corona_struct.entrancepupil * (
-        1 + amplitude_abb) * np.exp(1j * phase_abb)
+        1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
     imagedetector[0] = (
         abs(corona_struct.pupiltodetector(input_wavefront))**2 / maxPSF)
@@ -728,8 +784,8 @@ def correctionLoop(parameter_file,
         print("Iteration number: ", k, " EFC truncation: ", mode)
         if (estimation == "PairWise" or estimation == "pairwise"
                 or estimation == "PW" or estimation == "pw"):
-            Difference = instr.createdifference(amplitude_abb,
-                                                phase_abb,
+            Difference = instr.createdifference(amplitude_abb_up,
+                                                phase_abb_up,
                                                 posprobes,
                                                 pushactonDM,
                                                 amplitudePW,
@@ -758,18 +814,18 @@ def correctionLoop(parameter_file,
 
                 Gmatrix = wsc.creatingCorrectionmatrix(
                     corona_struct.entrancepupil,
-                    amplitude_abb,
-                    phase_abb,
+                    amplitude_abb_up,
+                    phase_abb_up,
                     corona_struct,
                     dim_sampl,
                     wavelength,
                     amplitudeEFC,
-                    pushact,
+                    DM3_pushact,
                     maskDH,
-                    WhichInPupil,
+                    DM3_WhichInPupil,
                     maxPSF,
-                    otherbasis=otherbasis,
-                    basisDM3=basisDM3,
+                    otherbasis=DM3_otherbasis,
+                    basisDM3=DM3_basis,
                 )
 
             if Linesearch == False:
@@ -779,8 +835,8 @@ def correctionLoop(parameter_file,
                     goal="c",
                     visu=False,
                     regul=regularization,
-                    otherbasis=otherbasis,
-                    basisDM3=basisDM3,
+                    otherbasis=DM3_otherbasis,
+                    basisDM3=DM3_basis,
                     intermatrix_dir=intermatrix_dir,
                 )[2]
 
@@ -795,14 +851,14 @@ def correctionLoop(parameter_file,
                         goal="c",
                         visu=False,
                         regul=regularization,
-                        otherbasis=otherbasis,
-                        basisDM3=basisDM3,
+                        otherbasis=DM3_otherbasis,
+                        basisDM3=DM3_basis,
                         intermatrix_dir=intermatrix_dir,
                     )
 
                     solution1 = wsc.solutionEFC(maskDH, resultatestimation,
-                                                invertGDH, WhichInPupil,
-                                                pushact.shape[0])
+                                                invertGDH, DM3_WhichInPupil,
+                                                DM3_pushact.shape[0])
 
                     apply_on_DM = (-gain * amplitudeEFC * np.dot(
                         solution1, pushactonDM.reshape(
@@ -810,8 +866,8 @@ def correctionLoop(parameter_file,
                                    2 * np.pi * 1e-9 / wavelength)
 
                     input_wavefront = corona_struct.entrancepupil * (
-                        1 + amplitude_abb) * np.exp(1j *
-                                                    (phase_abb + apply_on_DM))
+                        1 + amplitude_abb_up) * np.exp(1j *
+                                                    (phase_abb_up + apply_on_DM))
 
                     imagedetectortemp = (abs(
                         corona_struct.pupiltodetector(input_wavefront))**2 /
@@ -836,13 +892,13 @@ def correctionLoop(parameter_file,
                     goal="c",
                     visu=False,
                     regul=regularization,
-                    otherbasis=otherbasis,
-                    basisDM3=basisDM3,
+                    otherbasis=DM3_otherbasis,
+                    basisDM3=DM3_basis,
                     intermatrix_dir=intermatrix_dir,
                 )[2]
 
             solution1 = wsc.solutionEFC(maskDH, resultatestimation, invertGDH,
-                                        WhichInPupil, pushact.shape[0])
+                                        DM3_WhichInPupil, DM3_pushact.shape[0])
 
         if correction_algorithm == "EM":
 
@@ -853,26 +909,27 @@ def correctionLoop(parameter_file,
                     goal="c",
                     visu=False,
                     regul=regularization,
-                    otherbasis=otherbasis,
-                    basisDM3=basisDM3,
+                    otherbasis=DM3_otherbasis,
+                    basisDM3=DM3_basis,
                     intermatrix_dir=intermatrix_dir,
                 )[2]
 
             solution1 = wsc.solutionEM(maskDH, resultatestimation, invertM0, G,
-                                       WhichInPupil, pushact.shape[0])
+                                       DM3_WhichInPupil, DM3_pushact.shape[0])
 
         if correction_algorithm == "steepest":
             solution1 = wsc.solutionSteepest(maskDH, resultatestimation, M0, G,
-                                             WhichInPupil, pushact.shape[0])
+                                             DM3_WhichInPupil, DM3_pushact.shape[0])
 
         apply_on_DM = (-gain * amplitudeEFC * np.dot(
             solution1, pushactonDM.reshape(
-                pushact.shape[0], dim_im * dim_im)).reshape(dim_im, dim_im) *
+                DM3_pushact.shape[0], dim_im * dim_im)).reshape(dim_im, dim_im) *
                        2 * np.pi * 1e-9 / wavelength)
         phaseDM[k + 1] = phaseDM[k] + apply_on_DM
-        phase_abb = phase_abb + apply_on_DM
+        phase_abb_up = phase_abb_up + apply_on_DM
         input_wavefront = corona_struct.entrancepupil * (
-            1 + amplitude_abb) * np.exp(1j * phase_abb)
+            1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
+
         imagedetector[k + 1] = (
             abs(corona_struct.pupiltodetector(input_wavefront))**2 / maxPSF)
         meancontrast[k + 1] = np.mean(
@@ -935,4 +992,4 @@ def correctionLoop(parameter_file,
     plt.xlabel("Number of iterations")
     plt.ylabel("Mean contrast in Dark Hole")
 
-    return phase_abb, imagedetector
+    return phase_abb_up, imagedetector
