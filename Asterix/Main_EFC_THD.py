@@ -82,14 +82,7 @@ def create_interaction_matrices(parameter_file,
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
 
-    DM3_pitch = DMconfig["DM3_pitch"]
     DM3_creating_pushact = DMconfig["DM3_creating_pushact"]
-    DM3_x309 = DMconfig["DM3_x309"]
-    DM3_y309 = DMconfig["DM3_y309"]
-    DM3_xy309 = [DM3_x309, DM3_y309]
-    DM3_filename_actu309 = DMconfig["DM3_filename_actu309"]
-    DM3_filename_grid_actu = DMconfig["DM3_filename_grid_actu"]
-    DM3_filename_actu_infl_fct = DMconfig["DM3_filename_actu_infl_fct"]
 
     ##################
     ##################
@@ -158,28 +151,21 @@ def create_interaction_matrices(parameter_file,
 
     # DM influence functions
     if DM3_creating_pushact == True:
-        DM3_pushact = instr.creatingpushact(
-            model_dir,
-            dim_im,
-            pdiam,
-            corona_struct.prad,
-            DM3_xy309,
-            pitchDM=DM3_pitch,
-            filename_actu309=DM3_filename_actu309,
-            filename_grid_actu=DM3_filename_grid_actu,
-            filename_actu_infl_fct=DM3_filename_actu_infl_fct)
-        fits.writeto(model_dir + "PushActInPup" + str(int(dim_im)) + ".fits",
-                     DM3_pushact,
-                     overwrite=True)
+        DM3_pushact = instr.creatingpushactv2(
+         model_dir,dim_im,pdiam,corona_struct.prad,
+         DMconfig,which_DM=3,
+         xerror=0,yerror=0,angerror=0,gausserror=0)
+        fits.writeto(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
+                 "_ray"+str(int(corona_struct.prad))+".fits",DM3_pushact,overwrite=True)
     else:
-        if os.path.exists(model_dir + "PushActInPup" + str(int(dim_im)) +
-                          ".fits") == False:
+        if os.path.exists(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
+                 "_ray"+str(int(corona_struct.prad))+".fits") == False:
             print("Extracting data from zip file...")
-            ZipFile(model_dir + "PushActInPup" + str(int(dim_im)) + ".zip",
-                    "r").extractall(model_dir)
+            ZipFile(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
+                 "_ray"+str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
 
-        DM3_pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
-                               ".fits")
+        DM3_pushact = fits.getdata(model_dir + "DM3__PushActInPup_dim" +
+             str(int(dim_im)) +"_ray"+str(int(corona_struct.prad))+".fits")
 
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
@@ -434,14 +420,6 @@ def correctionLoop(parameter_file,
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
 
-    DM3_pitch = DMconfig["DM3_pitch"]
-    DM3_x309 = DMconfig["DM3_x309"]
-    DM3_y309 = DMconfig["DM3_y309"]
-    DM3_xy309 = [DM3_x309, DM3_y309]
-    DM3_filename_actu309 = DMconfig["DM3_filename_actu309"]
-    DM3_filename_grid_actu = DMconfig["DM3_filename_grid_actu"]
-    DM3_filename_actu_infl_fct = DMconfig["DM3_filename_actu_infl_fct"]
-
     ##################
     ##################
     ### coronagraph CONFIG
@@ -549,14 +527,14 @@ def correctionLoop(parameter_file,
                        "/")
 
     ## DM influence functions
-    if os.path.exists(model_dir + "PushActInPup" + str(int(dim_im)) +
-                      ".fits") == False:
+    if os.path.exists(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
+                 "_ray"+str(int(corona_struct.prad))+ ".fits") == False:
         print("Extracting data from zip file...")
-        ZipFile(model_dir + "PushActInPup" + str(int(dim_im)) + ".zip",
-                "r").extractall(model_dir)
+        ZipFile(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
+                 "_ray"+str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
 
-    DM3_pushact = fits.getdata(model_dir + "PushActInPup" + str(int(dim_im)) +
-                           ".fits")
+    DM3_pushact = fits.getdata(model_dir + "DM3__PushActInPup_dim" +
+                str(int(dim_im)) +"_ray"+str(int(corona_struct.prad))+".fits")
 
     ## Non coronagraphic PSF with no aberrations
     PSF = np.abs(
@@ -679,28 +657,18 @@ def correctionLoop(parameter_file,
 
     ## Adding error on the DM model?
     if xerror == 0 and yerror == 0 and angerror == 0 and gausserror == 0:
-        pushactonDM = DM3_pushact
+        pushactonDM3 = DM3_pushact
     else:
         print("Misregistration!")
-        pushactonDM = instr.creatingpushact(
-            model_dir,
-            dim_im,
-            pdiam,
-            corona_struct.prad,
-            DM3_xy309,
-            pitchDM=DM3_pitch,
-            filename_actu309=DM3_filename_actu309,
-            filename_grid_actu=DM3_filename_grid_actu,
-            filename_actu_infl_fct=DM3_filename_actu_infl_fct,
-            xerror=xerror,
-            yerror=yerror,
-            angerror=angerror,
-            gausserror=gausserror)
+        pushactonDM3 = instr.creatingpushactv2(
+         model_dir,dim_im,pdiam,corona_struct.prad,
+         DMconfig,which_DM=3,
+         xerror=xerror,yerror=yerror,angerror=angerror,gausserror=gausserror)
 
     ## Correction loop
     nbiter = len(modevector)
     imagedetector = np.zeros((nbiter + 1, dim_im, dim_im))
-    phaseDM = np.zeros((nbiter + 1, dim_im, dim_im))
+    phaseDM3 = np.zeros((nbiter + 1, dim_im, dim_im))
     meancontrast = np.zeros(nbiter + 1)
     if os.path.exists(intermatrix_dir + fileMaskDH + "_contrast.fits") == True:
         maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH +
@@ -743,7 +711,7 @@ def correctionLoop(parameter_file,
             Difference = instr.createdifference(amplitude_abb_up,
                                                 phase_abb_up,
                                                 posprobes,
-                                                pushactonDM,
+                                                pushactonDM3,
                                                 amplitudePW,
                                                 corona_struct.entrancepupil,
                                                 corona_struct,
@@ -816,14 +784,14 @@ def correctionLoop(parameter_file,
                                                 invertGDH, DM3_WhichInPupil,
                                                 DM3_pushact.shape[0])
 
-                    apply_on_DM = (-gain * amplitudeEFC * np.dot(
-                        solution1, pushactonDM.reshape(
+                    apply_on_DM3 = (-gain * amplitudeEFC * np.dot(
+                        solution1, pushactonDM3.reshape(
                             1024, dim_im * dim_im)).reshape(dim_im, dim_im) *
                                    2 * np.pi * 1e-9 / wavelength)
 
                     input_wavefront = corona_struct.entrancepupil * (
                         1 + amplitude_abb_up) * np.exp(1j *
-                                                    (phase_abb_up + apply_on_DM))
+                                                    (phase_abb_up + apply_on_DM3))
 
                     imagedetectortemp = (abs(
                         corona_struct.pupiltodetector(input_wavefront))**2 /
@@ -877,12 +845,12 @@ def correctionLoop(parameter_file,
             solution1 = wsc.solutionSteepest(maskDH, resultatestimation, M0, G,
                                              DM3_WhichInPupil, DM3_pushact.shape[0])
 
-        apply_on_DM = (-gain * amplitudeEFC * np.dot(
-            solution1, pushactonDM.reshape(
+        apply_on_DM3 = (-gain * amplitudeEFC * np.dot(
+            solution1, pushactonDM3.reshape(
                 DM3_pushact.shape[0], dim_im * dim_im)).reshape(dim_im, dim_im) *
                        2 * np.pi * 1e-9 / wavelength)
-        phaseDM[k + 1] = phaseDM[k] + apply_on_DM
-        phase_abb_up = phase_abb_up + apply_on_DM
+        phaseDM3[k + 1] = phaseDM3[k] + apply_on_DM3
+        phase_abb_up = phase_abb_up + apply_on_DM3
         input_wavefront = corona_struct.entrancepupil * (
             1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
@@ -906,10 +874,10 @@ def correctionLoop(parameter_file,
 
     ## SAVING...
     header = useful.from_param_to_header(config)
-    cut_phaseDM = np.zeros(
+    cut_phaseDM3 = np.zeros(
         (nbiter + 1, 2 * corona_struct.prad, 2 * corona_struct.prad))
     for it in np.arange(nbiter + 1):
-        cut_phaseDM[it] = proc.cropimage(phaseDM[it], 200, 200,
+        cut_phaseDM3[it] = proc.cropimage(phaseDM3[it], 200, 200,
                                          2 * corona_struct.prad)
         # plt.clf()
         # plt.figure(figsize=(3, 3))
@@ -924,8 +892,8 @@ def correctionLoop(parameter_file,
                  imagedetector,
                  header,
                  overwrite=True)
-    fits.writeto(result_dir + current_time_str + "_Phase_on_DM2" + ".fits",
-                 cut_phaseDM,
+    fits.writeto(result_dir + current_time_str + "_Phase_on_DM3" + ".fits",
+                 cut_phaseDM3,
                  header,
                  overwrite=True)
     fits.writeto(result_dir + current_time_str + "_Mean_Contrast_DH" + ".fits",

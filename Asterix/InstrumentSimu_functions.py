@@ -253,100 +253,45 @@ def roundpupil(dim_im, prad1):
 ##############################################
 ### Deformable mirror
 
-
-def pushact_function(which,
-                     grilleact,
-                     actshapeinpupilresized,
-                     xycent,
-                     xy309,
-                     xerror=0,
-                     yerror=0,
-                     angerror=0,
-                     gausserror=0):
+def actuator_position(measured_grid,measured_ActuN,ActuN,sampling_simu_over_measured):
     """ --------------------------------------------------
-    Phase map induced in the DM plane for one pushed actuator
+    Convert the measred positions of actuators to positions for numerical simulation
 
     Parameters
     ----------
-    which : int 
-        Index of the individual actuator to push
-    grilleact: 2D array 
-        x and y position of all the DM actuator in the pupil
-    actshapeinpupilresized: 2D array
-        Well-sampled actuator to be translated to its true position
-    xycent : numpy array
-        Position of the actuator in actshapeinpupilresized before translation
-    xy309 : numpy array
-        Position of the actuator 309 in pixels
-    xerror : float 
-        Size of the error in pixels for translation in x-direction
-    yerror : float 
-        Size of the error in pixels for translation in y-direction
-    angerror : float 
-        Size of the rotation error in degrees 
-    gausserror : float 
-        Error on the Influence function size (1 = 100% error)
-    
+    measured_grid : 2D array (float) of shape is 2 x Nb_actuator
+                    x and y measured positions for each actuator (unit = pixel)
+    measured_ActuN: 1D array (float) of shape 2
+                    x and y positions of actuator ActuN
+    ActuN:          int
+                    Index of the actuator ActuN (corresponding to measured_ActuN) 
+    sampling_simu_over_meaasured : float
+                    Ratio of sampling in simulation grid over sampling in measured grid 
     Returns
     ------
-    Psivector : 2D array
-        Pupil plane phase with the opd created by the poke of the desired actuator
+    simu_grid : 2D array of shape is 2 x Nb_actuator
+                x and y positions of each actuator for simulation
+                same unit as measured_ActuN
     -------------------------------------------------- """
-    dim_im = len(actshapeinpupilresized)
-    xact = grilleact[0, which] + (xy309[0] - grilleact[0, 309])
-    yact = grilleact[1, which] + (xy309[1] - grilleact[1, 309])
+    simu_grid = measured_grid*0
+    for i in np.arange(measured_grid.shape[1]):
+        simu_grid[:,i] = (measured_grid[:, i]-
+                measured_grid[:, int(ActuN)])*sampling_simu_over_measured+ measured_ActuN
+    return simu_grid
 
-    if gausserror == 0:
-        Psivector = nd.interpolation.shift(
-            actshapeinpupilresized,
-            (yact - xycent + yerror, xact - xycent + xerror))
-
-        if angerror != 0:
-            Psivector = nd.rotate(Psivector, angerror, order=5, cval=0)
-    else:
-        Psivector = nd.interpolation.shift(actshapeinpupilresized,
-                                           (yact - xycent, xact - xycent))
-
-        xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
-        x, y = np.mgrid[0:dim_im, 0:dim_im]
-        xy = (x, y)
-        Psivector = proc.twoD_Gaussian(xy,
-                                       1,
-                                       1 + gausserror,
-                                       1 + gausserror,
-                                       xo,
-                                       yo,
-                                       0,
-                                       0,
-                                       flatten=False)
-    Psivector[np.where(Psivector < 1e-4)] = 0
-
-    return Psivector
-
-
-def creatingpushact(
-        model_dir,
-        dim_im,
-        pdiam,
-        prad,
-        xy309,
-        pitchDM=0.3e-3,
-        filename_actu309="",
-        filename_grid_actu="Grid_actu.fits",
-        filename_actu_infl_fct="Actu_DM32_field=6x6pitch_pitch=22pix.fits",
-        xerror=0,
-        yerror=0,
-        angerror=0,
-        gausserror=0):
+def creatingpushactv2(
+        model_dir,dim_im,pdiam,prad,
+        DMconfig,which_DM=3,
+        xerror=0,yerror=0,angerror=0,gausserror=0):
     """ --------------------------------------------------
     Phase map induced in the DM plane for each actuator
 
     Parameters
     ----------
     model_dir :
-    xy309 : center of the actuator #309 in pixels
+    xy_ActuN : center of the actuator #__ActuN in pixels
     pitchDM : pitch of the DM in meter
-    filename_actu309 : filename of estimated phase when poking actuator #309
+    filename_ActuN : filename of estimated phase when poking actuator #ActuN
     filename_grid_actu : filename of the grid of actuator positions
     filename_actu_infl_fct : filename of the actuator influence function
 
@@ -360,22 +305,49 @@ def creatingpushact(
     ------
     pushact : 
     -------------------------------------------------- """
-    if filename_actu309 != "":
-        im309size = len(fits.getdata(model_dir + filename_actu309))
-        act309 = np.zeros((dim_im, dim_im))
-        act309[int(dim_im / 2 - im309size / 2):int(dim_im / 2 + im309size / 2),
-               int(dim_im / 2 -
-                   im309size / 2):int(dim_im / 2 + im309size /
-                                      2)] = fits.getdata(model_dir +
-                                                         filename_actu309)
-        y309, x309 = np.unravel_index(np.abs(act309).argmax(), act309.shape)
-        # shift by (0.5,0.5) pixel because the pupil is centered between pixels
-        xy309 = [x309 - 0.5, y309 - 0.5]
+    if which_DM == 3:
+        namDM = "DM3_"
+    elif which_DM == 1:
+        namDM = "DM1_"
+    else:
+        namDM = "DM3_"
 
-    grille = fits.getdata(model_dir + filename_grid_actu)
+    pitchDM=DMconfig[namDM+"pitch"]
+    filename_ActuN=DMconfig[namDM+"filename_ActuN"]
+    filename_grid_actu = DMconfig[namDM+"filename_grid_actu"]
+    filename_actu_infl_fct = DMconfig[namDM+"filename_actu_infl_fct"]
+    ActuN = DMconfig[namDM+"ActuN"]
+    y_ActuN=DMconfig[namDM+"y_ActuN"]
+    x_ActuN=DMconfig[namDM+"x_ActuN"]
+    xy_ActuN = [x_ActuN,y_ActuN]
+
+
+    if filename_ActuN != "":
+        im_ActuN = fits.getdata(model_dir + filename_ActuN)
+        im_ActuN_dim = np.zeros((dim_im, dim_im))
+        im_ActuN_dim[int(dim_im / 2 - len(im_ActuN) / 2):
+                int(dim_im / 2 + len(im_ActuN) / 2),
+               int(dim_im / 2 - len(im_ActuN) / 2):
+               int(dim_im / 2 + len(im_ActuN) /2)] = im_ActuN
+        ytmp, xtmp = np.unravel_index(np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
+        # shift by (0.5,0.5) pixel because the pupil is centered between pixels
+        xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
+
+    #Measured positions for each actuator in pixel
+    measured_grid = fits.getdata(model_dir + filename_grid_actu)
+    #Ratio: pupil radius in the measured position over pupil radius in the numerical simulation 
+    sampling_simu_over_meaasured = prad/fits.getheader(model_dir + filename_grid_actu)['PRAD']
+    #Position for each actuator in pixel for the numerical simulation
+    simu_grid = actuator_position(measured_grid,xy_ActuN,ActuN,sampling_simu_over_meaasured)
+    
+    # Influence function and the pitch in pixels
     actshape = fits.getdata(model_dir + filename_actu_infl_fct)
+    pitch_actshape = fits.getheader(model_dir+filename_actu_infl_fct)['PITCH']
+    
+    # Scaling the influence function to the desired dimension
+    # for numerical simulation
     resizeactshape = skimage.transform.rescale(actshape,
-                                               2 * prad / pdiam * pitchDM / 22,
+                                               2 * prad / pdiam * pitchDM / pitch_actshape,
                                                order=1,
                                                preserve_range=True,
                                                anti_aliasing=True,
@@ -388,24 +360,41 @@ def creatingpushact(
     xycent = len(resizeactshape) / 2
     resizeactshape = nd.interpolation.shift(resizeactshape,
                                             (xycent - dx, xycent - dy))
-
-    # Put the centered influence function inside a larger array (400x400)
+    
+    # Put the centered influence function inside an array (dim_im x dim_im)
     actshapeinpupil = np.zeros((dim_im, dim_im))
-    actshapeinpupil[
-        0:len(resizeactshape),
-        0:len(resizeactshape)] = resizeactshape / np.amax(resizeactshape)
+    if len(resizeactshape) < dim_im:
+        actshapeinpupil[0:len(resizeactshape),0:len(resizeactshape)] = resizeactshape/ np.amax(resizeactshape)
+        xycenttmp=len(resizeactshape)/2
+    else:
+        actshapeinpupil = resizeactshape[0:dim_im,0:dim_im]/ np.amax(resizeactshape)
+        xycenttmp=dim_im/2
 
-    pushact = np.zeros((grille.shape[1], dim_im, dim_im))
+    # Fill an array with the influence functions of all actuators
+    pushact = np.zeros((simu_grid.shape[1], dim_im, dim_im))
     for i in np.arange(pushact.shape[0]):
-        pushact[i] = pushact_function(i,
-                                      grille,
-                                      actshapeinpupil,
-                                      xycent,
-                                      xy309,
-                                      xerror=xerror,
-                                      yerror=yerror,
-                                      angerror=angerror,
-                                      gausserror=gausserror)
+        if gausserror == 0:
+            Psivector = nd.interpolation.shift(actshapeinpupil,
+                        (simu_grid[1,i]-xycenttmp+yerror, simu_grid[0,i]-xycenttmp + xerror))
+
+            # Add an error on the orientation of the grid
+            if angerror != 0:
+                Psivector = nd.rotate(Psivector, angerror, order=5,
+                        cval=0,reshape=False)[0:dim_im,0:dim_im]
+        else:
+            # Add an error on the sizes of the influence functions
+            Psivector = nd.interpolation.shift(actshapeinpupil,
+                        (simu_grid[1,i]-xycenttmp, simu_grid[0,i]-xycenttmp))
+
+            xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
+            x, y = np.mgrid[0:dim_im, 0:dim_im]
+            xy = (x, y)
+            Psivector = proc.twoD_Gaussian(xy,1,1 + gausserror,
+                                       1 + gausserror,xo,yo,0,0,flatten=False)
+        Psivector[np.where(Psivector < 1e-4)] = 0
+
+        pushact[i] = Psivector
+
     return pushact
 
 
@@ -645,8 +634,8 @@ def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1, pupil_center = 'pixel'):
 
 def prop_fresnel(pup, lam, z, rad, prad):
     """ --------------------------------------------------
-    Fresnel propagation of pup along a distance z in a collimated beam
-    and in Free space
+    Fresnel propagation of electric field along a distance z
+    in a collimated beam and in Free space
 
     Parameters
     ----------
@@ -674,6 +663,8 @@ def prop_fresnel(pup, lam, z, rad, prad):
     pup_z : 2D array (complex)
             electric field after propagating in free space along
             a distance z
+    dxout : float
+            lateral sampling in the output array
 
     AUTHOR : Raphael Galicher
 
@@ -693,7 +684,7 @@ def prop_fresnel(pup, lam, z, rad, prad):
     # Sampling in the output dim x dim array if FFT
         dxout = np.abs(lam*z/(dx*dim))
     # Zoom factor to get the same spatial scale in the input and output array
-        fac = dx/dxout
+        #fac = dx/dxout
     else:
         sign=-1
     # Sampling in the output dim x dim array if FFT
@@ -701,11 +692,11 @@ def prop_fresnel(pup, lam, z, rad, prad):
     # Sampling in the input dim x dim array if FFT
         dx = np.abs(lam*z/(dxout*dim))
     # Zoom factor to get the same spatial scale in the input and output array
-        fac = dxout/dx
-    
-   # print(dx,dxout,fac)
-   # print(300e-6/dx, 300e-6/dxout)
+        #fac = dxout/dx
 
+    # The fac option is removed: not easy to use (aliasing and so on)
+    fac=1
+   
     # create a 2D-array of distances from the central pixel
     u, v = np.meshgrid(np.arange(dim) - dim / 2, np.arange(dim) - dim / 2)
     rho = np.hypot(v, u)
@@ -717,18 +708,13 @@ def prop_fresnel(pup, lam, z, rad, prad):
         return -1
 
     # Fourier transform using MFT
-#    result = mft(pup * H, dim, np.abs(dim * fac),inv=np.sign(z))
-#    if sign == 1:
-#        result = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(pup*H)))
-#    else:
-#        result = np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(pup*H)))
-    # Fresnel factor that applies after Fourier transform
     result = mft(pup * H, dim, dim*fac,inv=sign)
 
+    # Fresnel factor that applies after Fourier transform
     result = result * np.exp(1j *sign* np.pi * rho**2/dim *dxout/dx)
     if sign == -1:
         result = result / fac**2
-    return result
+    return result,dxout
 
 def create_binary_pupil(direct,filename, dim, prad):
     """ --------------------------------------------------
