@@ -66,12 +66,14 @@ def create_interaction_matrices(parameter_file,
 
     #Image
     dim_im = modelconfig["dim_im"]  #image size on detector
-    dim_sampl = modelconfig["dim_sampl"]  #image size after binning
 
     #Lambda over D in pixels
     wavelength = modelconfig["wavelength"]
     science_sampling = modelconfig["science_sampling"]
 
+    #image size after binning
+    dim_sampl = int(modelconfig["DH_sampling"]/science_sampling*dim_im/2)*2
+    
     #pupil and Lyot stop
     diam_pup_in_m = modelconfig["diam_pup_in_m"]
     diam_lyot_in_m = modelconfig["diam_lyot_in_m"]
@@ -438,11 +440,13 @@ def correctionLoop(parameter_file,
 
     #Image
     dim_im = modelconfig["dim_im"]  #image size on detector
-    dim_sampl = modelconfig["dim_sampl"]  #image size after binning
 
     #Lambda over D in pixels
     wavelength = modelconfig["wavelength"]
     science_sampling = modelconfig["science_sampling"]
+
+    #image size after binning
+    dim_sampl = int(modelconfig["DH_sampling"]/science_sampling*dim_im/2)*2
 
     #pupil and Lyot stop
     diam_pup_in_m = modelconfig["diam_pup_in_m"]
