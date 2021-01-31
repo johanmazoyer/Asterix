@@ -269,6 +269,7 @@ def creatingCorrectionmatrix(amplitude_abb,
         bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
                                          pushact.shape[2])
     else:
+        
         dim_pupover2 = int(corona_struct.entrancepupil.shape[1]/2)
         dim_pushover2 = int(pushact.shape[1]/2)
         probephase = np.zeros((pushact.shape[0],
@@ -287,8 +288,7 @@ def creatingCorrectionmatrix(amplitude_abb,
     for i in range(nb_fct):
         if i % 100 == 0:
             print(i)
-        Psivector = amplitude * bas_fct[i]
-        Psivector = 2 * np.pi * (Psivector) * 1e-9 / wavelength
+        Psivector = amplitude * bas_fct[i]*2 * np.pi * 1e-9 / wavelength
         inputwavefront = corona_struct.entrancepupil * (1 + amplitude_abb
             ) * np.exp(1j * phase_abb) * 1j * Psivector
         Gvector = (corona_struct.pupiltodetector(inputwavefront) /
