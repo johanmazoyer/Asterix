@@ -73,8 +73,8 @@ def create_interaction_matrices(parameter_file,
     science_sampling = modelconfig["science_sampling"]
 
     #pupil and Lyot stop
-    pdiam = modelconfig["pdiam"]
-    lyotdiam = modelconfig["lyotdiam"]
+    diam_pup_in_m = modelconfig["diam_pup_in_m"]
+    diam_lyot_in_m = modelconfig["diam_lyot_in_m"]
 
     ##################
     ##################
@@ -83,6 +83,8 @@ def create_interaction_matrices(parameter_file,
     DMconfig.update(NewDMconfig)
 
     DM3_creating_pushact = DMconfig["DM3_creating_pushact"]
+    DM1_creating_pushact = DMconfig["DM1_creating_pushact"]
+    DM1_z_position = DMconfig["DM1_z_position"]
 
     ##################
     ##################
@@ -134,8 +136,8 @@ def create_interaction_matrices(parameter_file,
     # Directories for saving data
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_struct.corona_type + "/" +
                        str(int(wavelength * 1e9)) + "nm/p" +
-                       str(round(pdiam * 1e3, 2)) + "_l" +
-                       str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
+                       str(round(diam_pup_in_m * 1e3, 2)) + "_l" +
+                       str(round(diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
                        str(round(science_sampling, 2)) + "/basis_" + basistr +
                        "/")
 
@@ -150,39 +152,64 @@ def create_interaction_matrices(parameter_file,
             os.makedirs(Labview_dir)
 
     # DM influence functions
+    dx,dxout = instr.prop_fresnel(dim_im,wavelength,DM1_z_position,
+    diam_pup_in_m/2,corona_struct.prad,retscale=1)
+    print('Ici')
+    print(dx/dxout)
+
+    if DM1_creating_pushact == True:
+        DM1_pushact = instr.creatingpushactv2(
+         model_dir,diam_pup_in_m,corona_struct.prad,#*dx/dxout,
+         DMconfig,which_DM=1,
+         xerror=0,yerror=0,angerror=0,gausserror=0)
+        fits.writeto(model_dir + "DM1_PushActInPup_ray" +
+                 str(int(corona_struct.prad))+".fits",DM1_pushact,overwrite=True)
+    else:
+        if os.path.exists(model_dir + "DM1_PushActInPup_ray" +
+                 str(int(corona_struct.prad))+".fits") == False:
+            print("Extracting data from zip file...")
+            ZipFile(model_dir + "DM1_PushActInPup_ray" +
+                 str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
+
+        DM1_pushact = fits.getdata(model_dir + "DM1_PushActInPup_ray" +
+             str(int(corona_struct.prad))+".fits")
+
+
     if DM3_creating_pushact == True:
         DM3_pushact = instr.creatingpushactv2(
-         model_dir,dim_im,pdiam,corona_struct.prad,
+         model_dir,diam_pup_in_m,corona_struct.prad,
          DMconfig,which_DM=3,
          xerror=0,yerror=0,angerror=0,gausserror=0)
-        fits.writeto(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
-                 "_ray"+str(int(corona_struct.prad))+".fits",DM3_pushact,overwrite=True)
+        fits.writeto(model_dir + "DM3_PushActInPup_ray"  +
+                 str(int(corona_struct.prad))+".fits",DM3_pushact,overwrite=True)
     else:
-        if os.path.exists(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
-                 "_ray"+str(int(corona_struct.prad))+".fits") == False:
+        if os.path.exists(model_dir + "DM3_PushActInPup_ray" +
+                 str(int(corona_struct.prad))+".fits") == False:
             print("Extracting data from zip file...")
-            ZipFile(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
-                 "_ray"+str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
+            ZipFile(model_dir + "DM3_PushActInPup_ray"+
+                 str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
 
-        DM3_pushact = fits.getdata(model_dir + "DM3__PushActInPup_dim" +
-             str(int(dim_im)) +"_ray"+str(int(corona_struct.prad))+".fits")
+        DM3_pushact = fits.getdata(model_dir + "DM3_PushActInPup_ray" +
+                str(int(corona_struct.prad))+".fits")
 
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
               "_".join(map(str, posprobes)) + "act_" + str(int(amplitudePW)) +
-              "nm_" + str(int(cut)) + "cutsvd")
+              "nm_" + str(int(cut)) + "cutsvd_dim"+
+                      str(dim_im)+'_raypup'+str(corona_struct.prad))
     if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
         print("The matrix " + filePW + " already exist")
         vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
     else:
         print("Recording " + filePW + " ...")
         vectoressai, showsvd = wsc.createvectorprobes(
-            wavelength, corona_struct.entrancepupil, corona_struct,
+            wavelength, corona_struct,
             amplitudePW, posprobes, DM3_pushact, dim_sampl, cut)
         fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
         visuPWMap = ("MapEigenvaluesPW" + "_" + "_".join(map(str, posprobes)) +
-                     "act_" + str(int(amplitudePW)) + "nm")
+                     "act_" + str(int(amplitudePW)) + "nm_dim"+
+                      str(dim_im)+'_raypup'+str(corona_struct.prad))
         if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
             print("Recording " + visuPWMap + " ...")
             fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
@@ -211,7 +238,7 @@ def create_interaction_matrices(parameter_file,
             print("TO SET ON LABVIEW: ",
                   str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
     # Creating WhichInPup?
-    DM3_fileWhichInPup = "DM3_Whichactfor" + str(MinimumSurfaceRatioInThePupil)
+    DM3_fileWhichInPup = "DM3_Whichactfor" + str(MinimumSurfaceRatioInThePupil)+'_raypup'+str(corona_struct.prad)
 
     if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
         print("The matrix " + DM3_fileWhichInPup + " already exist")
@@ -231,12 +258,14 @@ def create_interaction_matrices(parameter_file,
     if DHshape == "square":
         fileEFCMatrix = ("MatrixEFC_square_" + "_".join(map(str, choosepix)) +
                          "pix_" + str(amplitudeEFC) + "nm_" + str(Nbmodes) +
-                         "modes")
+                         "modes_dim"+str(dim_im)+
+                         '_raypup'+str(corona_struct.prad))
     else:
         fileEFCMatrix = ("MatrixEFC_circle_" + "_".join(map(str, circ_rad)) +
                          "pix_" + str(circ_side) + '_' + str(circ_offset) +
                          'pix_' + str(circ_angle) + 'deg_' +
-                         str(amplitudeEFC) + "nm_" + str(Nbmodes) + "modes")
+                         str(amplitudeEFC) + "nm_" + str(Nbmodes) + "modes_dim"+
+                         str(dim_im)+'_raypup'+str(corona_struct.prad))
 
     if os.path.exists(intermatrix_dir + fileEFCMatrix + ".fits") == True:
         print("The matrix " + fileEFCMatrix + " already exist")
@@ -253,13 +282,15 @@ def create_interaction_matrices(parameter_file,
         if DHshape == "square":
             fileDirectMatrix = ("DirectMatrix_square_" +
                                 "_".join(map(str, choosepix)) + "pix_" +
-                                str(amplitudeEFC) + "nm_")
+                                str(amplitudeEFC) + "nm_dim"+
+                      str(dim_im)+'_raypup'+str(corona_struct.prad))
         else:
             fileDirectMatrix = ("DirectMatrix_circle_" +
                                 "_".join(map(str, circ_rad)) + "pix_" +
                                 str(circ_side) + '_' + str(circ_offset) +
                                 'pix_' + str(circ_angle) + 'deg_' +
-                                str(amplitudeEFC) + "nm_")
+                                str(amplitudeEFC) + "nm_dim"+
+                      str(dim_im)+'_raypup'+str(corona_struct.prad))
         if os.path.exists(intermatrix_dir + fileDirectMatrix +
                           ".fits") == True:
             print("The matrix " + fileDirectMatrix + " already exist")
@@ -272,12 +303,14 @@ def create_interaction_matrices(parameter_file,
             if DHshape == "square":
                 fileMaskDH = fileMaskDH + ("x" + str(dim_sampl) + "_square_" +
                                            "_".join(map(str, choosepix)) +
-                                           "pix")
+                                           "pix_dim"+
+                    str(dim_im)+'_raypup'+str(corona_struct.prad))
             else:
                 fileMaskDH = fileMaskDH + (
                     "r" + str(dim_sampl) + "_circle_" +
                     "_".join(map(str, circ_rad)) + 'pix_' + str(circ_side) +
-                    '_' + str(circ_offset) + 'pix_' + str(circ_angle) + 'deg')
+                    '_' + str(circ_offset) + 'pix_' + str(circ_angle) + 'deg_dim'+
+                    str(dim_im)+'_raypup'+str(corona_struct.prad))
 
             if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
                 print("Mask of DH " + fileMaskDH + " already exist")
@@ -302,7 +335,6 @@ def create_interaction_matrices(parameter_file,
             maxPSF = np.amax(PSF)
 
             Gmatrix = wsc.creatingCorrectionmatrix(
-                corona_struct.entrancepupil,
                 0,
                 0,
                 corona_struct,
@@ -337,13 +369,15 @@ def create_interaction_matrices(parameter_file,
         if DHshape == "square":
             plt.savefig(intermatrix_dir + "invertSVDEFC_square_" +
                         "_".join(map(str, choosepix)) + "pix_" +
-                        str(amplitudeEFC) + "nm_.png")
+                        str(amplitudeEFC) + "nm_dim"+
+                      str(dim_im)+'_raypup'+str(corona_struct.prad)+".png")
         else:
             plt.savefig(intermatrix_dir + "invertSVDEFC_circle_" +
                         "_".join(map(str, circ_rad)) + "pix_" +
                         str(circ_side) + '_' + str(circ_offset) + 'pix_' +
                         str(circ_angle) + 'deg_' + str(amplitudeEFC) +
-                        "nm_.png")
+                        "nm_dim"+str(dim_im)+
+                        '_raypup'+str(corona_struct.prad)+".png")
 
     if onbench == True:
         # Save EFC control matrix in Labview directory
@@ -411,8 +445,8 @@ def correctionLoop(parameter_file,
     science_sampling = modelconfig["science_sampling"]
 
     #pupil and Lyot stop
-    pdiam = modelconfig["pdiam"]
-    lyotdiam = modelconfig["lyotdiam"]
+    diam_pup_in_m = modelconfig["diam_pup_in_m"]
+    diam_lyot_in_m = modelconfig["diam_lyot_in_m"]
 
     ##################
     ##################
@@ -521,20 +555,20 @@ def correctionLoop(parameter_file,
 
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_struct.corona_type
                      + "/" + str(int(wavelength * 1e9)) + "nm/p" +
-                       str(round(pdiam * 1e3, 2)) + "_l" +
-                       str(round(lyotdiam * 1e3, 1)) + "/ldp_" +
+                       str(round(diam_pup_in_m * 1e3, 2)) + "_l" +
+                       str(round(diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
                        str(round(science_sampling, 2)) + "/basis_" + basistr +
                        "/")
 
     ## DM influence functions
-    if os.path.exists(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
-                 "_ray"+str(int(corona_struct.prad))+ ".fits") == False:
+    if os.path.exists(model_dir + "DM3_PushActInPup_ray"  +
+                 str(int(corona_struct.prad))+ ".fits") == False:
         print("Extracting data from zip file...")
-        ZipFile(model_dir + "DM3__PushActInPup_dim" + str(int(dim_im)) +
-                 "_ray"+str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
+        ZipFile(model_dir + "DM3_PushActInPup_ray" +
+                 str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
 
-    DM3_pushact = fits.getdata(model_dir + "DM3__PushActInPup_dim" +
-                str(int(dim_im)) +"_ray"+str(int(corona_struct.prad))+".fits")
+    DM3_pushact = fits.getdata(model_dir + "DM3_PushActInPup_ray" +
+                str(int(corona_struct.prad))+".fits")
 
     ## Non coronagraphic PSF with no aberrations
     PSF = np.abs(
@@ -547,14 +581,15 @@ def correctionLoop(parameter_file,
             or estimation == "PW" or estimation == "pw"):
         filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
                   "_".join(map(str, posprobes)) + "act_" +
-                  str(int(amplitudePW)) + "nm_" + str(int(cut)) + "cutsvd")
+                  str(int(amplitudePW)) + "nm_" + str(int(cut)) + "cutsvd_dim"+
+                      str(dim_im)+'_raypup'+str(corona_struct.prad))
         if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
             vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
         else:
             print("Please create PW matrix before correction")
             sys.exit()
 
-    DM3_fileWhichInPup = "DM3_Whichactfor" + str(MinimumSurfaceRatioInThePupil)
+    DM3_fileWhichInPup = "DM3_Whichactfor" + str(MinimumSurfaceRatioInThePupil)+'_raypup'+str(corona_struct.prad)
     if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
         DM3_WhichInPupil = fits.getdata(intermatrix_dir + DM3_fileWhichInPup + ".fits")
     else:
@@ -565,13 +600,15 @@ def correctionLoop(parameter_file,
     if DHshape == "square":
         fileDirectMatrix = ("DirectMatrix_square_" +
                             "_".join(map(str, choosepix)) + "pix_" +
-                            str(amplitudeEFC) + "nm_")
+                            str(amplitudeEFC) + "nm_dim"+
+                      str(dim_im)+'_raypup'+str(corona_struct.prad))
     else:
         fileDirectMatrix = ("DirectMatrix_circle_" +
                             "_".join(map(str, circ_rad)) + "pix_" +
                             str(circ_side) + '_' + str(circ_offset) + 'pix_' +
                             str(circ_angle) + 'deg_' + str(amplitudeEFC) +
-                            "nm_")
+                            "nm_dim"+
+                      str(dim_im)+'_raypup'+str(corona_struct.prad))
     if os.path.exists(intermatrix_dir + fileDirectMatrix + ".fits") == True:
         Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix + ".fits")
     else:
@@ -581,12 +618,15 @@ def correctionLoop(parameter_file,
     fileMaskDH = ("MaskDH_" + str(dim_sampl))
     if DHshape == "square":
         fileMaskDH = fileMaskDH + ("x" + str(dim_sampl) + "_square_" +
-                                   "_".join(map(str, choosepix)) + 'pix')
+                      "_".join(map(str, choosepix)) + "pix_dim"+
+                      str(dim_im)+'_raypup'+str(corona_struct.prad))
     else:
-        fileMaskDH = fileMaskDH + ("r" + str(dim_sampl) + "_circle_" +
-                                   "_".join(map(str, circ_rad)) + 'pix_' +
-                                   str(circ_side) + '_' + str(circ_offset) +
-                                   'pix_' + str(circ_angle) + 'deg')
+        fileMaskDH = fileMaskDH + (
+                    "r" + str(dim_sampl) + "_circle_" +
+                    "_".join(map(str, circ_rad)) + 'pix_' + str(circ_side) +
+                    '_' + str(circ_offset) + 'pix_' + str(circ_angle) + 'deg_dim'+
+                    str(dim_im)+'_raypup'+str(corona_struct.prad))
+
     if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
     else:
@@ -661,7 +701,7 @@ def correctionLoop(parameter_file,
     else:
         print("Misregistration!")
         pushactonDM3 = instr.creatingpushactv2(
-         model_dir,dim_im,pdiam,corona_struct.prad,
+         model_dir,diam_pup_in_m,corona_struct.prad,
          DMconfig,which_DM=3,
          xerror=xerror,yerror=yerror,angerror=angerror,gausserror=gausserror)
 
@@ -713,7 +753,6 @@ def correctionLoop(parameter_file,
                                                 posprobes,
                                                 pushactonDM3,
                                                 amplitudePW,
-                                                corona_struct.entrancepupil,
                                                 corona_struct,
                                                 PSF,
                                                 dim_sampl,
@@ -737,7 +776,6 @@ def correctionLoop(parameter_file,
             if Linearization == True:
 
                 Gmatrix = wsc.creatingCorrectionmatrix(
-                    corona_struct.entrancepupil,
                     amplitude_abb_up,
                     phase_abb_up,
                     corona_struct,
@@ -780,6 +818,7 @@ def correctionLoop(parameter_file,
                         intermatrix_dir=intermatrix_dir,
                     )
 
+                    print('voir EFC main l807')
                     solution1 = wsc.solutionEFC(maskDH, resultatestimation,
                                                 invertGDH, DM3_WhichInPupil,
                                                 DM3_pushact.shape[0])
@@ -847,10 +886,17 @@ def correctionLoop(parameter_file,
 
         apply_on_DM3 = (-gain * amplitudeEFC * np.dot(
             solution1, pushactonDM3.reshape(
-                DM3_pushact.shape[0], dim_im * dim_im)).reshape(dim_im, dim_im) *
+                DM3_pushact.shape[0], pushactonDM3.shape[1] * pushactonDM3.shape[2])).reshape(pushactonDM3.shape[1], pushactonDM3.shape[2]) *
                        2 * np.pi * 1e-9 / wavelength)
-        phaseDM3[k + 1] = phaseDM3[k] + apply_on_DM3
-        phase_abb_up = phase_abb_up + apply_on_DM3
+        phaseDM3[k + 1,
+          int(dim_im/2-pushactonDM3.shape[1]/2):int(dim_im/2+pushactonDM3.shape[1]/2),
+          int(dim_im/2-pushactonDM3.shape[1]/2):int(dim_im/2+pushactonDM3.shape[1]/2)]= phaseDM3[k,
+           int(dim_im/2-pushactonDM3.shape[1]/2):int(dim_im/2+pushactonDM3.shape[1]/2),
+          int(dim_im/2-pushactonDM3.shape[1]/2):int(dim_im/2+pushactonDM3.shape[1]/2)]+ apply_on_DM3
+        phase_abb_up[int(dim_im/2-pushactonDM3.shape[1]/2):int(dim_im/2+pushactonDM3.shape[1]/2),
+          int(dim_im/2-pushactonDM3.shape[1]/2):int(dim_im/2+pushactonDM3.shape[1]/2)] = phase_abb_up[
+          int(dim_im/2-pushactonDM3.shape[1]/2):int(dim_im/2+pushactonDM3.shape[1]/2),
+          int(dim_im/2-pushactonDM3.shape[1]/2):int(dim_im/2+pushactonDM3.shape[1]/2)] + apply_on_DM3
         input_wavefront = corona_struct.entrancepupil * (
             1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
