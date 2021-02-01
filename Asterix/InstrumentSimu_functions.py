@@ -18,15 +18,13 @@ rad2mas = 3.6e6 / dtor  # radian to milliarcsecond conversion factor
 
 
 class coronagraph:
-    
-    
     def __init__(self, model_dir, modelconfig, coroconfig):
         """ --------------------------------------------------
         Initialize a coronograph objects : pupil, mask and Lyot stop
         
         Parameters
         ----------
-        model_dir : is needed, we load the mask in this directory
+        model_dir : if needed, we load the mask in this directory
         modelconfig : general configuration parameters (sizes and dimensions)
         coroconfig : coronagraph parameters
 
@@ -75,16 +73,16 @@ class coronagraph:
             self.FPmsk = np.exp(1j * phasevortex)
             self.perfect_coro = True
 
-        self.entrancepupil = create_binary_pupil(
-                    model_dir, filename_instr_pup, dim_im, prad)
-        
-        self.lyot_pup = create_binary_pupil(
-                    model_dir, filename_instr_lyot, dim_im, lyotrad)
+        self.entrancepupil = create_binary_pupil(model_dir, filename_instr_pup,
+                                                 dim_im, prad)
+
+        self.lyot_pup = create_binary_pupil(model_dir, filename_instr_lyot,
+                                            dim_im, lyotrad)
 
         if self.perfect_coro:
             self.perfect_Lyot_pupil = self.pupiltolyot(self.entrancepupil)
-        import matplotlib.pyplot as plt 
-            
+        import matplotlib.pyplot as plt
+
     def FQPM(self):
         """ --------------------------------------------------
         Create a perfect Four Quadrant Phase Mask coronagraph of size (dim_im,dim_im)
@@ -209,7 +207,7 @@ class coronagraph:
         -------------------------------------------------- """
 
         lyotplane_after_lyot = self.pupiltolyot(input_wavefront)
-        
+
         if self.perfect_coro:
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
 
@@ -561,7 +559,7 @@ def random_phase_map(dim_im, phaserms, rhoc, slope):
     return phase
 
 
-def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1, pupil_center = 'pixel'):
+def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1, pupil_center='pixel'):
     """ --------------------------------------------------
     MFT  - Return the Matrix Direct Fourier transform (MFT) of pup
     (cf. Soummer et al. 2007, OSA)
@@ -612,22 +610,15 @@ def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1, pupil_center = 'pixel'):
     -------------------------------------------------- """
 
     dimpup = pup.shape[0]
-    if pupil_center == 'pixel':
-        centering_value = 0.5
-    elif pupil_center == 'nopixel':
-        centering_value = 0.
-    else:
-        raise Exception("mft: keyword pupil_center must be pixel or nopixel")
 
-    xx0 = np.arange(dimpup) / dimpup - centering_value
-    uu0 = ((np.arange(dimft) - xshift) / dimft - centering_value) * nbres
-    uu1 = ((np.arange(dimft) - yshift) / dimft - centering_value) * nbres
+    xx0 = np.arange(dimpup) / dimpup - 0.5
+    uu0 = ((np.arange(dimft) - xshift) / dimft - 0.5) * nbres
+    uu1 = ((np.arange(dimft) - yshift) / dimft - 0.5) * nbres
 
     if inv == 1:
         norm0 = (nbres / dimpup)**2
     else:
         norm0 = ((1. * nbres)**2 / (1. * dimft)**2 / (1. * dimpup)**2)
-
 
     AA = np.exp(-inv * 1j * 2 * np.pi * np.outer(uu0, xx0))
     BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx0, uu1))
@@ -724,10 +715,11 @@ ELSE
     fac=1
    
     # create a 2D-array of distances from the central pixel
+
     u, v = np.meshgrid(np.arange(dim) - dim / 2, np.arange(dim) - dim / 2)
     rho = np.hypot(v, u)
     # Fresnel factor that applies before Fourier transform
-    H = np.exp(1j*sign*np.pi * rho**2/dim *dx/dxout)
+    H = np.exp(1j * sign * np.pi * rho**2 / dim * dx / dxout)
 
     if np.abs(fac) > 1.2:
         print('need to increase lam or z or 1/dx')
@@ -738,11 +730,13 @@ ELSE
 
     # Fresnel factor that applies after Fourier transform
     result = result * np.exp(1j *sign* np.pi * rho**2/dim *dxout/dx)
+
     if sign == -1:
         result = result / fac**2
     return result,dxout
 
-def create_binary_pupil(direct,filename, dim, prad):
+
+def create_binary_pupil(direct, filename, dim, prad):
     """ --------------------------------------------------
     Create a binary pupil from a Fits file or create a round pupil
 
@@ -774,7 +768,7 @@ def create_binary_pupil(direct,filename, dim, prad):
     -------------------------------------------------- """
 
     if filename != "":
-        pupil = fits.getdata(direct+filename)
+        pupil = fits.getdata(direct + filename)
     else:
         pupil = roundpupil(dim, prad)
 
