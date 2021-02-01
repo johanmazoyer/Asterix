@@ -136,12 +136,13 @@ def create_interaction_matrices(parameter_file,
     corona_struct = coronagraph(model_dir, modelconfig, Coronaconfig)
 
     # Directories for saving data
-    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_struct.corona_type + "/" +
+    intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
+                       corona_struct.corona_type + "/" +
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(diam_pup_in_m * 1e3, 2)) + "_l" +
                        str(round(diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
-                       str(round(science_sampling, 2)) + "/basis_" + basistr +
-                       "/")
+                       str(round(science_sampling, 2)) + "/basis_" +
+                       basistr + "/")
 
     if not os.path.exists(intermatrix_dir):
         print("Creating directory " + intermatrix_dir + " ...")
@@ -156,8 +157,10 @@ def create_interaction_matrices(parameter_file,
     # DM influence functions
     dx,dxout = instr.prop_fresnel(dim_im,wavelength,DM1_z_position,
     diam_pup_in_m/2,corona_struct.prad,retscale=1)
-    print('Ici')
-    print(dx/dxout)
+#    print('Ici')
+#    print(dx/dxout)
+#    print(corona_struct.diam_pup_in_m/corona_struct.prad/2* corona_struct.diam_pup_in_m/2/ (wavelength*DM1_z_position) * corona_struct.dim_im/corona_struct.prad)
+#    print(rad/prad* rad/ (lam*z) * dim_im/prad)
 
     if DM1_creating_pushact == True:
         DM1_pushact = instr.creatingpushactv2(
@@ -557,7 +560,8 @@ def correctionLoop(parameter_file,
         basistr = "actu"
         DM3_basis = 0
 
-    intermatrix_dir = (Data_dir + "Interaction_Matrices/" + corona_struct.corona_type
+    intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
+                       corona_struct.corona_type
                      + "/" + str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(diam_pup_in_m * 1e3, 2)) + "_l" +
                        str(round(diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
