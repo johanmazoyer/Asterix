@@ -5,7 +5,7 @@
 *.ini 
 
 #if someone run Asterix in the git repo, results are not synced
-# *.fits
+*.fits
 Labview/
 Interaction_Matrices/
 Results/
