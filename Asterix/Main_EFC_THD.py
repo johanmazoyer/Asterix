@@ -157,9 +157,9 @@ def create_interaction_matrices(parameter_file,
     # DM influence functions
     dx,dxout = instr.prop_fresnel(dim_im,wavelength,DM1_z_position,
     diam_pup_in_m/2,corona_struct.prad,retscale=1)
-#    print('Ici')
-#    print(dx/dxout)
-#    print(corona_struct.diam_pup_in_m/corona_struct.prad/2* corona_struct.diam_pup_in_m/2/ (wavelength*DM1_z_position) * corona_struct.dim_im/corona_struct.prad)
+    print('Ici')
+    print(dx/dxout)
+    print(corona_struct.diam_pup_in_m/corona_struct.prad/2* corona_struct.diam_pup_in_m/2/ (wavelength*DM1_z_position) * corona_struct.dim_im/corona_struct.prad)
 #    print(rad/prad* rad/ (lam*z) * dim_im/prad)
 
     if DM1_creating_pushact == True:
