@@ -125,8 +125,9 @@ def create_interaction_matrices(parameter_file,
 
     ##THEN DO
 
-    model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
-
+    #model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
+    model_dir = Data_dir+ os.path.sep +"Model"+ os.path.sep
+    
     if DM3_otherbasis == False:
         basistr = "actu"
     else:
@@ -535,7 +536,8 @@ def correctionLoop(parameter_file,
         modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
     ## Directories for saving the data
-    model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
+    #model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
+    model_dir = Data_dir + os.path.sep + "Model" + os.path.sep
 
 
     # Initialize coronagraphs:

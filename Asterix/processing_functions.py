@@ -2,7 +2,6 @@ __author__ = 'Axel Potier'
 
 import numpy as np
 import scipy.optimize as opt
-from astropy.io import fits
 
 # def butterworth(image, order, length):
 #     """ --------------------------------------------------
