@@ -582,6 +582,8 @@ def correctionLoop(parameter_file,
     PSF = np.abs(
         corona_struct.lyottodetector(corona_struct.entrancepupil *
                                      corona_struct.lyot_pup))**2
+
+    useful.quickfits(PSF)
     maxPSF = np.amax(PSF)
 
     ##Load PW matrices
