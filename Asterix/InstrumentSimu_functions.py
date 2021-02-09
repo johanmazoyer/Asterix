@@ -195,6 +195,8 @@ class coronagraph:
             science_focal_plane = np.fft.fftshift(
                 np.fft.fft2(np.fft.fftshift(Lyot_plane_after_Lyot)))
 
+        # useful.quickfits(np.abs(Lyot_plane_after_Lyot))
+        # asd
         return science_focal_plane
 
     def pupiltolyot(self, input_wavefront):  # aberrationphase,prad1,prad2
@@ -221,8 +223,7 @@ class coronagraph:
         lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * self.FPmsk)
 
         # Lyot mask
-        lyotplane_after_lyot = np.fft.fftshift(lyotplane_before_lyot *
-                                               np.fft.fftshift(self.lyot_pup))
+        lyotplane_after_lyot = np.fft.fftshift(lyotplane_before_lyot) * self.lyot_pup
 
         return lyotplane_after_lyot
 
