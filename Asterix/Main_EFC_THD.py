@@ -74,10 +74,6 @@ def create_interaction_matrices(parameter_file,
     #image size after binning
     dim_sampl = int(modelconfig["DH_sampling"]/science_sampling*dim_im/2)*2
     
-    #pupil and Lyot stop
-    diam_pup_in_m = modelconfig["diam_pup_in_m"]
-    diam_lyot_in_m = modelconfig["diam_lyot_in_m"]
-
     ##################
     ##################
     ### DM CONFIG
@@ -125,8 +121,8 @@ def create_interaction_matrices(parameter_file,
 
     ##THEN DO
 
-    model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
-
+    model_dir = Data_dir+ os.path.sep +"Model"+ os.path.sep
+    
     if DM3_otherbasis == False:
         basistr = "actu"
     else:
@@ -139,8 +135,8 @@ def create_interaction_matrices(parameter_file,
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
                        corona_struct.corona_type + "/" +
                        str(int(wavelength * 1e9)) + "nm/p" +
-                       str(round(diam_pup_in_m * 1e3, 2)) + "_l" +
-                       str(round(diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
+                       str(round(corona_struct.diam_pup_in_m * 1e3, 2)) + "_l" +
+                       str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
                        str(round(science_sampling, 2)) + "/basis_" +
                        basistr + "/")
 
@@ -156,15 +152,15 @@ def create_interaction_matrices(parameter_file,
 
     # DM influence functions
     dx,dxout = instr.prop_fresnel(dim_im,wavelength,DM1_z_position,
-    diam_pup_in_m/2,corona_struct.prad,retscale=1)
-#    print('Ici')
-#    print(dx/dxout)
-#    print(corona_struct.diam_pup_in_m/corona_struct.prad/2* corona_struct.diam_pup_in_m/2/ (wavelength*DM1_z_position) * corona_struct.dim_im/corona_struct.prad)
+    corona_struct.diam_pup_in_m/2,corona_struct.prad,retscale=1)
+    print('Ici')
+    print(dx/dxout)
+    print(corona_struct.diam_pup_in_m/corona_struct.prad/2* corona_struct.diam_pup_in_m/2/ (wavelength*DM1_z_position) * corona_struct.dim_im/corona_struct.prad)
 #    print(rad/prad* rad/ (lam*z) * dim_im/prad)
 
     if DM1_creating_pushact == True:
         DM1_pushact = instr.creatingpushactv2(
-         model_dir,diam_pup_in_m,corona_struct.prad,#*dx/dxout,
+         model_dir,corona_struct.diam_pup_in_m,corona_struct.prad,#*dx/dxout,
          DMconfig,which_DM=1,
          xerror=0,yerror=0,angerror=0,gausserror=0)
         fits.writeto(model_dir + "DM1_PushActInPup_ray" +
@@ -182,7 +178,7 @@ def create_interaction_matrices(parameter_file,
 
     if DM3_creating_pushact == True:
         DM3_pushact = instr.creatingpushactv2(
-         model_dir,diam_pup_in_m,corona_struct.prad,
+         model_dir,corona_struct.diam_pup_in_m,corona_struct.prad,
          DMconfig,which_DM=3,
          xerror=0,yerror=0,angerror=0,gausserror=0)
         fits.writeto(model_dir + "DM3_PushActInPup_ray"  +
@@ -452,10 +448,6 @@ def correctionLoop(parameter_file,
     #image size after binning
     dim_sampl = int(modelconfig["DH_sampling"]/science_sampling*dim_im/2)*2
 
-    #pupil and Lyot stop
-    diam_pup_in_m = modelconfig["diam_pup_in_m"]
-    diam_lyot_in_m = modelconfig["diam_lyot_in_m"]
-
     ##################
     ##################
     ### DM CONFIG
@@ -536,7 +528,7 @@ def correctionLoop(parameter_file,
         modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
     ## Directories for saving the data
-    model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
+    model_dir = Data_dir + os.path.sep + "Model" + os.path.sep
 
 
     # Initialize coronagraphs:
@@ -564,8 +556,8 @@ def correctionLoop(parameter_file,
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
                        corona_struct.corona_type
                      + "/" + str(int(wavelength * 1e9)) + "nm/p" +
-                       str(round(diam_pup_in_m * 1e3, 2)) + "_l" +
-                       str(round(diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
+                       str(round(corona_struct.diam_pup_in_m * 1e3, 2)) + "_l" +
+                       str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
                        str(round(science_sampling, 2)) + "/basis_" + basistr +
                        "/")
 
@@ -652,7 +644,6 @@ def correctionLoop(parameter_file,
         M0 = np.real(np.dot(transposecomplexG, G))
 
     ## Phase map and amplitude map for the static aberrations
-    ## TODO Load aberration maps (A checker, Amplitude sans doute a refaire proprement!!!)
     if set_phase_abb == True:
         if set_random_phase == True:
             print("Random phase aberrations upstream from coronagraph")
@@ -718,7 +709,7 @@ def correctionLoop(parameter_file,
     else:
         print("Misregistration!")
         pushactonDM3 = instr.creatingpushactv2(
-         model_dir,diam_pup_in_m,corona_struct.prad,
+         model_dir,corona_struct.diam_pup_in_m,corona_struct.prad,
          DMconfig,which_DM=3,
          xerror=xerror,yerror=yerror,angerror=angerror,gausserror=gausserror)
 

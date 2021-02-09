@@ -373,40 +373,42 @@ def creatingpushactv2(model_dir,
 
     #Measured positions for each actuator in pixel
     measured_grid = fits.getdata(model_dir + filename_grid_actu)
-    #Ratio: pupil radius in the measured position over pupil radius in the numerical simulation
-    sampling_simu_over_meaasured = prad / fits.getheader(
+    #Ratio: pupil radius in the measured position over
+    # pupil radius in the numerical simulation 
+    sampling_simu_over_meaasured = prad/fits.getheader(
         model_dir + filename_grid_actu)['PRAD']
 
-    dim_pushact = int(pitchDM * np.sqrt(measured_grid.shape[1]) /
-                      diam_pup_in_m * prad * 1.2) * 2
-
+    #dimension of the pushact array = size of the pupil
+    # plus 20% of margin in case the pupil is smaller than the DM
+    dim_pushact = int(pitchDM*np.sqrt(measured_grid.shape[1]
+                      )/diam_pup_in_m*prad*1.2)*2
+    
     if filename_ActuN != "":
         im_ActuN = fits.getdata(model_dir + filename_ActuN)
         im_ActuN_dim = np.zeros((dim_pushact, dim_pushact))
-        im_ActuN_dim[int(dim_pushact / 2 -
-                         len(im_ActuN) / 2):int(dim_pushact / 2 +
-                                                len(im_ActuN) / 2),
-                     int(dim_pushact / 2 -
-                         len(im_ActuN) / 2):int(dim_pushact / 2 +
-                                                len(im_ActuN) / 2)] = im_ActuN
-        ytmp, xtmp = np.unravel_index(
-            np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
-        # shift by (0.5,0.5) pixel because the pupil is centered between pixels
+        im_ActuN_dim[int(dim_pushact/2 - len(im_ActuN) / 2):
+                int(dim_pushact/2  + len(im_ActuN) / 2),
+               int(dim_pushact/2 - len(im_ActuN) / 2):
+               int(dim_pushact/2 + len(im_ActuN) /2)] = im_ActuN
+        ytmp, xtmp = np.unravel_index(np.abs(
+            im_ActuN_dim).argmax(), im_ActuN_dim.shape)
+        # shift by (0.5,0.5) pixel because the pupil is
+        # centered between pixels
         xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
 
     #Position for each actuator in pixel for the numerical simulation
-    simu_grid = actuator_position(measured_grid, xy_ActuN, ActuN,
-                                  sampling_simu_over_meaasured)
+    simu_grid = actuator_position(
+        measured_grid,xy_ActuN,ActuN,sampling_simu_over_meaasured)
     # Influence function and the pitch in pixels
     actshape = fits.getdata(model_dir + filename_actu_infl_fct)
-    pitch_actshape = fits.getheader(model_dir +
-                                    filename_actu_infl_fct)['PITCH']
-
+    pitch_actshape = fits.getheader(
+        model_dir+filename_actu_infl_fct)['PITCH']
+    
     # Scaling the influence function to the desired dimension
     # for numerical simulation
-    resizeactshape = skimage.transform.rescale(actshape,
-                                               2 * prad / diam_pup_in_m *
-                                               pitchDM / pitch_actshape,
+    resizeactshape = skimage.transform.rescale(
+        actshape,2 * prad / diam_pup_in_m * pitchDM / pitch_actshape,
+
                                                order=1,
                                                preserve_range=True,
                                                anti_aliasing=True,
@@ -424,13 +426,14 @@ def creatingpushactv2(model_dir,
     actshapeinpupil = np.zeros((dim_pushact, dim_pushact))
     if len(resizeactshape) < dim_pushact:
         actshapeinpupil[
-            0:len(resizeactshape),
-            0:len(resizeactshape)] = resizeactshape / np.amax(resizeactshape)
-        xycenttmp = len(resizeactshape) / 2
+
+            0:len(resizeactshape),0:len(resizeactshape)
+            ] = resizeactshape/ np.amax(resizeactshape)
+        xycenttmp=len(resizeactshape)/2
     else:
         actshapeinpupil = resizeactshape[
-            0:dim_pushact, 0:dim_pushact] / np.amax(resizeactshape)
-        xycenttmp = prad
+            0:dim_pushact,0:dim_pushact]/ np.amax(resizeactshape)
+        xycenttmp=prad
 
     # Fill an array with the influence functions of all actuators
     pushact = np.zeros((simu_grid.shape[1], dim_pushact, dim_pushact))
@@ -440,6 +443,7 @@ def creatingpushactv2(model_dir,
                 actshapeinpupil,
                 (simu_grid[1, i] + dim_pushact / 2 - xycenttmp + yerror,
                  simu_grid[0, i] + dim_pushact / 2 - xycenttmp + xerror))
+
             # Add an error on the orientation of the grid
             if angerror != 0:
                 Psivector = nd.rotate(Psivector,
@@ -450,23 +454,15 @@ def creatingpushactv2(model_dir,
                                                      0:dim_pushact]
         else:
             # Add an error on the sizes of the influence functions
-            Psivector = nd.interpolation.shift(
-                actshapeinpupil,
-                (simu_grid[1, i] + dim_pushact / 2 - xycenttmp,
-                 simu_grid[0, i] + dim_pushact / 2 - xycenttmp))
+            Psivector = nd.interpolation.shift(actshapeinpupil,
+                        (simu_grid[1,i]+dim_pushact/2-xycenttmp,
+                         simu_grid[0,i]+dim_pushact/2-xycenttmp))
 
             xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
             x, y = np.mgrid[0:dim_pushact, 0:dim_pushact]
             xy = (x, y)
-            Psivector = proc.twoD_Gaussian(xy,
-                                           1,
-                                           1 + gausserror,
-                                           1 + gausserror,
-                                           xo,
-                                           yo,
-                                           0,
-                                           0,
-                                           flatten=False)
+            Psivector = proc.twoD_Gaussian(xy,1,1 + gausserror,
+                            1 + gausserror,xo,yo,0,0,flatten=False)
         Psivector[np.where(Psivector < 1e-4)] = 0
 
         pushact[i] = Psivector
