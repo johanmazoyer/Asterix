@@ -1,9 +1,13 @@
 __author__ = 'Axel Potier'
-
+import os
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
+
+from random import random
+
+import png
 
 
 def quickshow(tab):
@@ -20,7 +24,7 @@ def quickshow(tab):
     plt.show()
 
 
-def quickfits(tab, dir='.', name='tmp'):
+def quickfits(tab, dir='', name='tmp'):
     """
     Function to quickly save in fits. 
     By default, it will save on the desktop with a random name to avoid overwriting
@@ -30,13 +34,16 @@ def quickfits(tab, dir='.', name='tmp'):
     name (optionnal): name of the .fits. By defaut tmpsXX.fits where xx is a random number
     """
 
-    from random import random
+    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop/') 
+    if dir == '': 
+        dir = desktop
+
     if name == 'tmp':
         name = name + str(int(random() * 100))
     fits.writeto(dir + name + '.fits', tab)
 
 
-def quickpng(tab, dir='.', name='tmp'):
+def quickpng(tab, dir='', name='tmp'):
     """
     Function to quickly save in .png. 
     By default, it will save on the desktop with a random name
@@ -45,10 +52,9 @@ def quickpng(tab, dir='.', name='tmp'):
     dir (optionnal): directory where to save the .png
     name (optionnal): name of the .png.  By defaut tmpXX.png where xx is a random number
     """
-    from random import random
-    import matplotlib.pyplot as plt
-    import png
-
+    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop') 
+    if dir == '': 
+        dir = desktop
     plt.figure(figsize=(10, 10))
     tmp = tab
     # tmp = tmp.T

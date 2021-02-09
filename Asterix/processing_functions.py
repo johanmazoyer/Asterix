@@ -132,9 +132,9 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
     Parameters:
     ----------
     img: 2D array, input image, can be non squared
-    ctr_x: Center of the input image in the x direction
-    ctr_y: Center of the input image in the y direction
-    newsizeimg: 
+    ctr_x: Center of the input image in the x direction around which you make the cut
+    ctr_y: Center of the input image in the y direction around which you make the cut
+    newsizeimg: int
     
     Return:
     ------
@@ -143,3 +143,4 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
     newimgs2 = newsizeimg / 2
     return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2),
                int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]
+

@@ -332,6 +332,7 @@ def create_interaction_matrices(parameter_file,
             ## Non coronagraphic PSF
             PSF = np.abs(
                 corona_struct.lyottodetector(corona_struct.entrancepupil *
+                                             corona_struct.apod_pup*
                                              corona_struct.lyot_pup))**2
             maxPSF = np.amax(PSF)
 
@@ -572,8 +573,10 @@ def correctionLoop(parameter_file,
 
     ## Non coronagraphic PSF with no aberrations
     PSF = np.abs(
-        corona_struct.lyottodetector(corona_struct.entrancepupil *
-                                     corona_struct.lyot_pup))**2
+                corona_struct.lyottodetector(corona_struct.entrancepupil *
+                                             corona_struct.apod_pup*
+                                             corona_struct.lyot_pup))**2
+
     maxPSF = np.amax(PSF)
 
     ##Load PW matrices
@@ -647,8 +650,14 @@ def correctionLoop(parameter_file,
             phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
                                            slope_phase)
         else:
-            print("FITS file for phase aberrations upstream from coronagraph")
-            phase_up = fits.getdata(model_dir + phase_abb_filename + ".fits")
+            if os.path.isfile(model_dir + phase_abb_filename + ".fits"):
+                phase_up = fits.getdata(model_dir + phase_abb_filename + ".fits")
+            else:
+                print("Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "+ phase_abb_filename + ".fits")
+                phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
+                                           slope_phase)
+                fits.writeto(model_dir + phase_abb_filename + ".fits", phase_up)
+            print("Fixed phase aberrations upstream from coronagraph, loaded from: " + phase_abb_filename + ".fits")
 
         phase_up = phase_up * 2 * np.pi / wavelength
     else:
@@ -730,7 +739,7 @@ def correctionLoop(parameter_file,
         1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
     imagedetector[0] = (
-        abs(corona_struct.pupiltodetector(input_wavefront))**2 / maxPSF)
+        abs(corona_struct.apodtodetector(input_wavefront))**2 / maxPSF)
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
@@ -761,7 +770,7 @@ def correctionLoop(parameter_file,
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
         elif estimation == "Perfect":
-            resultatestimation = corona_struct.pupiltodetector(
+            resultatestimation = corona_struct.apodtodetector(
                 input_wavefront) / np.sqrt(maxPSF)
 
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
@@ -832,7 +841,7 @@ def correctionLoop(parameter_file,
                                                     (phase_abb_up + apply_on_DM3))
 
                     imagedetectortemp = (abs(
-                        corona_struct.pupiltodetector(input_wavefront))**2 /
+                        corona_struct.apodtodetector(input_wavefront))**2 /
                                          maxPSF)
 
                     meancontrasttemp[b] = np.mean(
@@ -900,7 +909,7 @@ def correctionLoop(parameter_file,
             1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
         imagedetector[k + 1] = (
-            abs(corona_struct.pupiltodetector(input_wavefront))**2 / maxPSF)
+            abs(corona_struct.apodtodetector(input_wavefront))**2 / maxPSF)
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHcontrast != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])
