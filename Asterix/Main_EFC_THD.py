@@ -336,6 +336,7 @@ def create_interaction_matrices(parameter_file,
             ## Non coronagraphic PSF
             PSF = np.abs(
                 corona_struct.lyottodetector(corona_struct.entrancepupil *
+                                             corona_struct.apod_pup*
                                              corona_struct.lyot_pup))**2
             maxPSF = np.amax(PSF)
 
@@ -580,8 +581,9 @@ def correctionLoop(parameter_file,
 
     ## Non coronagraphic PSF with no aberrations
     PSF = np.abs(
-        corona_struct.lyottodetector(corona_struct.entrancepupil *
-                                     corona_struct.lyot_pup))**2
+                corona_struct.lyottodetector(corona_struct.entrancepupil *
+                                             corona_struct.apod_pup*
+                                             corona_struct.lyot_pup))**2
 
     maxPSF = np.amax(PSF)
 
