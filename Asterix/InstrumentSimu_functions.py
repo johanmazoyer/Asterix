@@ -82,15 +82,19 @@ class coronagraph:
             self.perfect_coro = True
             self.prop_apod2lyot = 'fft'
 
+        # Maybe should remove the entrance pupil from the coronostructure, 
+        # this is "before the DMs" so probably not relevant here.
         self.entrancepupil = create_binary_pupil(model_dir, filename_instr_pup,
+                                                 dim_im, prad)
+
+        self.apod_pup = create_binary_pupil(model_dir, filename_instr_pup,
                                                  dim_im, prad)
 
         self.lyot_pup = create_binary_pupil(model_dir, filename_instr_lyot,
                                             dim_im, lyotrad)
 
         if self.perfect_coro:
-            self.perfect_Lyot_pupil = self.pupiltolyot(self.entrancepupil)
-        import matplotlib.pyplot as plt
+            self.perfect_Lyot_pupil = self.apodtolyot(self.apod_pup)
 
     def FQPM(self):
         """ --------------------------------------------------
@@ -195,13 +199,11 @@ class coronagraph:
             science_focal_plane = np.fft.fftshift(
                 np.fft.fft2(np.fft.fftshift(Lyot_plane_after_Lyot)))
 
-        # useful.quickfits(np.abs(Lyot_plane_after_Lyot))
-        # asd
         return science_focal_plane
 
-    def pupiltolyot(self, input_wavefront):  # aberrationphase,prad1,prad2
+    def apodtolyot(self, input_wavefront):  # aberrationphase,prad1,prad2
         """ --------------------------------------------------
-        Propagate the electric field from entrance pupil to Lyot plane after Lyot pupil
+        Propagate the electric field from apod plane before the apod pupil to Lyot plane after Lyot pupil
 
         Parameters
         ----------
@@ -214,10 +216,12 @@ class coronagraph:
             Focal plane electric field in the focal plane
         -------------------------------------------------- """
 
+        input_wavefront_after_apod = input_wavefront*self.apod_pup
+
         maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
 
         corono_focal_plane = np.fft.fft2(
-            np.fft.fftshift(input_wavefront * maskshifthalfpix))
+            np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
 
         # Focal plane to Lyot plane
         lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * self.FPmsk)
@@ -227,10 +231,10 @@ class coronagraph:
 
         return lyotplane_after_lyot
 
-    def pupiltodetector(self, input_wavefront):  # aberrationphase,prad1,prad2
+    def apodtodetector(self, input_wavefront):  # aberrationphase,prad1,prad2
         """ --------------------------------------------------
         Propagate the electric field through a high-contrast imaging instrument,
-        from pupil plane to focal plane.
+        from the entrance of the coronagraph (pupil plane before apodization pupil) to final detector focal plane.
         The output is cropped and resampled.
         
         Parameters
@@ -245,7 +249,7 @@ class coronagraph:
             the input wavefront through the high-contrast instrument.
         -------------------------------------------------- """
 
-        lyotplane_after_lyot = self.pupiltolyot(input_wavefront)
+        lyotplane_after_lyot = self.apodtolyot(input_wavefront)
 
         if self.perfect_coro:
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
@@ -509,8 +513,6 @@ def createdifference(aberramp,
         Wavelength of the  incoming flux in meter
     perfect_coro : bool, optional
         Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
-    perfect_entrance_pupil: 2D array, optional
-        Entrance pupil which should be nulled by the used coronagraph
     noise : boolean, optional
         If True, add photon noise. 
     numphot : int, optional
@@ -531,7 +533,7 @@ def createdifference(aberramp,
                            np.sum(corona_struct.lyot_pup) * numphot * maxPSF /
                            np.sum(PSF))
 
-    dim_pup = corona_struct.entrancepupil.shape[1]
+    dim_pup = corona_struct.apod_pup.shape[1]
     dimpush = pushact.shape[1]
     probephase = np.zeros((dim_pup, dim_pup))
 
@@ -543,12 +545,12 @@ def createdifference(aberramp,
 
         input_wavefront = (corona_struct.entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase - 1 * probephase)))
-        Ikmoins = (np.abs(corona_struct.pupiltodetector(input_wavefront))**2 /
+        Ikmoins = (np.abs(corona_struct.apodtodetector(input_wavefront))**2 /
                    maxPSF)
 
         input_wavefront = (corona_struct.entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase + 1 * probephase)))
-        Ikplus = (np.abs(corona_struct.pupiltodetector(input_wavefront))**2 /
+        Ikplus = (np.abs(corona_struct.apodtodetector(input_wavefront))**2 /
                   maxPSF)
 
         if noise == True:
