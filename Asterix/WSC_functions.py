@@ -130,7 +130,7 @@ def createvectorprobes(wavelength, corona_struct, amplitude,
                 SVD[:, i, j] = inversion[0]
                 PWVector[l] = inversion[2]
             except:
-                print("Careful: Error! for l=" + str(l))
+                print("Careful: Error in invertSVD! for l=" + str(l))
                 SVD[:, i, j] = np.zeros(2)
                 PWVector[l] = np.zeros((2, numprobe))
             l = l + 1

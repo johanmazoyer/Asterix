@@ -46,6 +46,11 @@ class coronagraph:
         lyotrad = dim_im / 2 / science_sampling
         prad = int(np.ceil(lyotrad * diam_pup_in_m / diam_lyot_in_m))
         lyotrad = int(np.ceil(lyotrad))
+        prev_science_sampling = science_sampling
+        science_sampling = dim_im / 2 / lyotrad
+        print(
+            "Pupil resolution: 'Science Sampling' has been rounded up from {:.3f} to {:.3f} l/D"
+            .format(prev_science_sampling, science_sampling))
 
         #coronagraph
         self.corona_type = coroconfig["corona_type"]
@@ -58,7 +63,6 @@ class coronagraph:
         self.diam_pup_in_m = diam_pup_in_m
         self.diam_lyot_in_m = diam_lyot_in_m
         self.science_sampling = science_sampling
-        self.DH_sampling = DH_sampling
         self.lyotrad = lyotrad
         self.prad = prad
 
@@ -169,7 +173,10 @@ class coronagraph:
                                                        self.dim_im / 2,
                                                        2 * self.lyotrad)
 
-            science_focal_plane = mft(Lyot_plane_after_Lyot, self.dim_im, self.dim_im/self.science_sampling, inv=1)
+            science_focal_plane = mft(Lyot_plane_after_Lyot,
+                                      self.dim_im,
+                                      self.dim_im / self.science_sampling,
+                                      inv=1)
 
         if self.prop_lyot2science == "fft":
             if self.prop_apod2lyot == 'mft':
@@ -185,9 +192,8 @@ class coronagraph:
                           dim_lyot / 2 + 1] = Lyot_plane_after_Lyot
                 Lyot_plane_after_Lyot = ze_return
 
-
             science_focal_plane = np.fft.fftshift(
-                np.fft.fft2(Lyot_plane_after_Lyot))
+                np.fft.fft2(np.fft.fftshift(Lyot_plane_after_Lyot)))
 
         return science_focal_plane
 
@@ -215,8 +221,8 @@ class coronagraph:
         lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * self.FPmsk)
 
         # Lyot mask
-        lyotplane_after_lyot = lyotplane_before_lyot * np.fft.fftshift(
-            self.lyot_pup)
+        lyotplane_after_lyot = np.fft.fftshift(lyotplane_before_lyot *
+                                               np.fft.fftshift(self.lyot_pup))
 
         return lyotplane_after_lyot
 
@@ -666,7 +672,6 @@ def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
     Initial revision (from MFT.pro written in IDL)
 
     -------------------------------------------------- """
-
     dimpup = pup.shape[0]
 
     xx0 = np.arange(dimpup) / dimpup - 0.5
