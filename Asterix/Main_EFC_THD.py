@@ -583,7 +583,6 @@ def correctionLoop(parameter_file,
         corona_struct.lyottodetector(corona_struct.entrancepupil *
                                      corona_struct.lyot_pup))**2
 
-    useful.quickfits(PSF)
     maxPSF = np.amax(PSF)
 
     ##Load PW matrices
@@ -658,8 +657,14 @@ def correctionLoop(parameter_file,
             phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
                                            slope_phase)
         else:
-            print("FITS file for phase aberrations upstream from coronagraph")
-            phase_up = fits.getdata(model_dir + phase_abb_filename + ".fits")
+            print("Fixed phase aberrations upstream from coronagraph, loaded from: " + phase_abb_filename + ".fits")
+            if os.path.isfile(model_dir + phase_abb_filename + ".fits"):
+                phase_up = fits.getdata(model_dir + phase_abb_filename + ".fits")
+            else:
+                print("Fixed phase aberrations upstream from coronagraph, file do not exist yet, generate and save in "+ phase_abb_filename + ".fits")
+                phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
+                                           slope_phase)
+                fits.writeto(model_dir + phase_abb_filename + ".fits", phase_up)
 
         phase_up = phase_up * 2 * np.pi / wavelength
     else:
