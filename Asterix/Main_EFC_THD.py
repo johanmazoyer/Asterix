@@ -3,7 +3,6 @@ __author__ = 'Axel Potier'
 import os
 import sys
 import datetime
-from zipfile import ZipFile
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -120,8 +119,7 @@ def create_interaction_matrices(parameter_file,
     regularization = EFCconfig["regularization"]
 
     ##THEN DO
-
-    model_dir = Data_dir+ os.path.sep +"Model"+ os.path.sep
+    model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
     
     if DM3_otherbasis == False:
         basistr = "actu"
@@ -150,12 +148,17 @@ def create_interaction_matrices(parameter_file,
             print("Creating directory " + Labview_dir + " ...")
             os.makedirs(Labview_dir)
 
+    Model_local_dir = Data_dir + "Model_local/"
+    if not os.path.exists(Model_local_dir):
+            print("Creating directory " + Model_local_dir + " ...")
+            os.makedirs(Model_local_dir)
+
     # DM influence functions
     dx,dxout = instr.prop_fresnel(dim_im,wavelength,DM1_z_position,
     corona_struct.diam_pup_in_m/2,corona_struct.prad,retscale=1)
-    print('Ici')
-    print(dx/dxout)
-    print(corona_struct.diam_pup_in_m/corona_struct.prad/2* corona_struct.diam_pup_in_m/2/ (wavelength*DM1_z_position) * corona_struct.dim_im/corona_struct.prad)
+    #print('Ici')
+    #print(dx/dxout)
+    #print(corona_struct.diam_pup_in_m/corona_struct.prad/2* corona_struct.diam_pup_in_m/2/ (wavelength*DM1_z_position) * corona_struct.dim_im/corona_struct.prad)
 #    print(rad/prad* rad/ (lam*z) * dim_im/prad)
 
     if DM1_creating_pushact == True:
@@ -163,16 +166,16 @@ def create_interaction_matrices(parameter_file,
          model_dir,corona_struct.diam_pup_in_m,corona_struct.prad,#*dx/dxout,
          DMconfig,which_DM=1,
          xerror=0,yerror=0,angerror=0,gausserror=0)
-        fits.writeto(model_dir + "DM1_PushActInPup_ray" +
+        fits.writeto(Model_local_dir + "DM1_PushActInPup_ray" +
                  str(int(corona_struct.prad))+".fits",DM1_pushact,overwrite=True)
     else:
-        if os.path.exists(model_dir + "DM1_PushActInPup_ray" +
-                 str(int(corona_struct.prad))+".fits") == False:
-            print("Extracting data from zip file...")
-            ZipFile(model_dir + "DM1_PushActInPup_ray" +
-                 str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
+        # if os.path.exists(model_dir + "DM1_PushActInPup_ray" +
+        #          str(int(corona_struct.prad))+".fits") == False:
+        #     print("Extracting data from zip file...")
+        #     ZipFile(model_dir + "DM1_PushActInPup_ray" +
+        #          str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
 
-        DM1_pushact = fits.getdata(model_dir + "DM1_PushActInPup_ray" +
+        DM1_pushact = fits.getdata(Model_local_dir + "DM1_PushActInPup_ray" +
              str(int(corona_struct.prad))+".fits")
 
 
@@ -181,16 +184,16 @@ def create_interaction_matrices(parameter_file,
          model_dir,corona_struct.diam_pup_in_m,corona_struct.prad,
          DMconfig,which_DM=3,
          xerror=0,yerror=0,angerror=0,gausserror=0)
-        fits.writeto(model_dir + "DM3_PushActInPup_ray"  +
+        fits.writeto(Model_local_dir + "DM3_PushActInPup_ray"  +
                  str(int(corona_struct.prad))+".fits",DM3_pushact,overwrite=True)
     else:
-        if os.path.exists(model_dir + "DM3_PushActInPup_ray" +
-                 str(int(corona_struct.prad))+".fits") == False:
-            print("Extracting data from zip file...")
-            ZipFile(model_dir + "DM3_PushActInPup_ray"+
-                 str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
+        # if os.path.exists(Model_local_dir + "DM3_PushActInPup_ray" +
+        #          str(int(corona_struct.prad))+".fits") == False:
+        #     print("Extracting data from zip file...")
+            # ZipFile(Model_local_dir + "DM3_PushActInPup_ray"+
+            #      str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
 
-        DM3_pushact = fits.getdata(model_dir + "DM3_PushActInPup_ray" +
+        DM3_pushact = fits.getdata(Model_local_dir + "DM3_PushActInPup_ray" +
                 str(int(corona_struct.prad))+".fits")
 
     ####Calculating and Recording PW matrix
@@ -528,7 +531,8 @@ def correctionLoop(parameter_file,
         modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
     ## Directories for saving the data
-    model_dir = Data_dir + os.path.sep + "Model" + os.path.sep
+    model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
+    # model_dir = Data_dir + os.path.sep + "Model" + os.path.sep
 
 
     # Initialize coronagraphs:
@@ -539,6 +543,11 @@ def correctionLoop(parameter_file,
         if not os.path.exists(Labview_dir):
             print("Creating directory " + Labview_dir + " ...")
             os.makedirs(Labview_dir)
+    
+    Model_local_dir = Data_dir + "Model_local/"
+    if not os.path.exists(Model_local_dir):
+            print("Creating directory " + Model_local_dir + " ...")
+            os.makedirs(Model_local_dir)
 
     result_dir = Data_dir + "Results/" + Name_Experiment + "/"
     if not os.path.exists(result_dir):
@@ -562,13 +571,13 @@ def correctionLoop(parameter_file,
                        "/")
 
     ## DM influence functions
-    if os.path.exists(model_dir + "DM3_PushActInPup_ray"  +
-                 str(int(corona_struct.prad))+ ".fits") == False:
-        print("Extracting data from zip file...")
-        ZipFile(model_dir + "DM3_PushActInPup_ray" +
-                 str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
+    # if os.path.exists(Model_local_dir + "DM3_PushActInPup_ray"  +
+    #              str(int(corona_struct.prad))+ ".fits") == False:
+    #     print("Extracting data from zip file...")
+        # ZipFile(model_dir + "DM3_PushActInPup_ray" +
+        #          str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
 
-    DM3_pushact = fits.getdata(model_dir + "DM3_PushActInPup_ray" +
+    DM3_pushact = fits.getdata(Model_local_dir + "DM3_PushActInPup_ray" +
                 str(int(corona_struct.prad))+".fits")
 
     ## Non coronagraphic PSF with no aberrations
@@ -650,13 +659,13 @@ def correctionLoop(parameter_file,
             phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
                                            slope_phase)
         else:
-            if os.path.isfile(model_dir + phase_abb_filename + ".fits"):
-                phase_up = fits.getdata(model_dir + phase_abb_filename + ".fits")
+            if os.path.isfile(Model_local_dir + phase_abb_filename + ".fits"):
+                phase_up = fits.getdata(Model_local_dir + phase_abb_filename + ".fits")
             else:
                 print("Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "+ phase_abb_filename + ".fits")
                 phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
                                            slope_phase)
-                fits.writeto(model_dir + phase_abb_filename + ".fits", phase_up)
+                fits.writeto(Model_local_dir + phase_abb_filename + ".fits", phase_up)
             print("Fixed phase aberrations upstream from coronagraph, loaded from: " + phase_abb_filename + ".fits")
 
         phase_up = phase_up * 2 * np.pi / wavelength
