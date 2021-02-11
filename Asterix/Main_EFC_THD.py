@@ -1,8 +1,7 @@
 __author__ = 'Axel Potier'
 
 import os
-import sys
-import datetime
+import sysimport datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -576,16 +575,13 @@ def correctionLoop(parameter_file,
         if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
             vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
         else:
-            print("Please create PW matrix before correction")
-            sys.exit()
+            raise Exception("Please create PW matrix before correction")
 
     DM3_fileWhichInPup = "DM3_Whichactfor" + str(MinimumSurfaceRatioInThePupil)+'_raypup'+str(corona_struct.prad)
     if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
         DM3_WhichInPupil = fits.getdata(intermatrix_dir + DM3_fileWhichInPup + ".fits")
     else:
-        print("Please create DM3 Whichactfor matrix before correction")
-        sys.exit()
-
+        raise Exception("Please create DM3 Whichactfor matrix before correction")
     ## Load Control matrix
     if DHshape == "square":
         fileDirectMatrix = ("DirectMatrix_square_" +
@@ -603,7 +599,6 @@ def correctionLoop(parameter_file,
         Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix + ".fits")
     else:
         print("Please create Direct matrix before correction")
-        sys.exit()
 
     fileMaskDH = ("MaskDH_" + str(dim_sampl))
     if DHshape == "square":
@@ -621,7 +616,6 @@ def correctionLoop(parameter_file,
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
     else:
         print("Please create MaskDH matrix before correction")
-        sys.exit()
 
     if correction_algorithm == "EM" or correction_algorithm == "steepest":
         G = np.zeros((int(np.sum(maskDH)), len(DM3_WhichInPupil)), dtype=complex)
@@ -764,8 +758,7 @@ def correctionLoop(parameter_file,
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
         else:
-            print("This estimation algorithm is not yet implemented")
-            sys.exit()
+            raise Exception("This estimation algorithm is not yet implemented")
 
         if correction_algorithm == "EFC":
 
