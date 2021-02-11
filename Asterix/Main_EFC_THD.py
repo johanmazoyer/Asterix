@@ -935,6 +935,7 @@ def correctionLoop(parameter_file,
     cut_phaseDM3 = np.zeros(
         (nbiter + 1, 2 * corona_struct.prad, 2 * corona_struct.prad))
     for it in np.arange(nbiter + 1):
+        ## ATTENTION THIS IS HARD CODED CUT AT 200, 200 !! 
         cut_phaseDM3[it] = proc.cropimage(phaseDM3[it], 200, 200,
                                          2 * corona_struct.prad)
         # plt.clf()
