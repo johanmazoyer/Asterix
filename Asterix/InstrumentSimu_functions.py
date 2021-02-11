@@ -40,7 +40,6 @@ class coronagraph:
 
         #Lambda over D in pixels in the pupil plane
         science_sampling = modelconfig["science_sampling"]
-        DH_sampling = modelconfig["DH_sampling"]
 
         ## define important measure of the coronagraph
         lyotrad = dim_im / 2 / science_sampling
