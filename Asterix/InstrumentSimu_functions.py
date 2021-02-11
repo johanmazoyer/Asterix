@@ -82,29 +82,27 @@ class coronagraph:
             self.perfect_coro = True
             self.prop_apod2lyot = 'fft'
 
-        # Maybe should remove the entrance pupil from the coronostructure, 
+        # Maybe should remove the entrance pupil from the coronostructure,
         # this is "before the DMs" so probably not relevant here.
         self.entrancepupil = create_binary_pupil(model_dir, filename_instr_pup,
                                                  dim_im, prad)
 
-         #right now to be closer to THD2, the apodisation plane (entrance of the coronagraph) 
+        #right now to be closer to THD2, the apodisation plane (entrance of the coronagraph)
         # is not define, but can be changed
-        self.apod_pup = 1 
+        self.apod_pup = 1
         # self.apod_pup = create_binary_pupil(model_dir, filename_instr_apod,
         #                                     dim_im, prad)
 
         self.apod_pup = create_binary_pupil(model_dir, filename_instr_pup,
-                                                 dim_im, prad)
+                                            dim_im, prad)
 
         self.lyot_pup = create_binary_pupil(model_dir, filename_instr_lyot,
                                             dim_im, lyotrad)
 
         if self.perfect_coro:
             self.perfect_Lyot_pupil = self.apodtolyot(self.apod_pup)
-        print(self.max_sum_PSF())
 
         self.maxPSF, self.sumPSF = self.max_sum_PSF()
-
 
     def max_sum_PSF(self):
         """ --------------------------------------------------
@@ -114,10 +112,8 @@ class coronagraph:
         np.amax(PSF): max of the non-coronagraphic PSF
         np.sum(PSF): sum of the non-coronagraphic PSF
         -------------------------------------------------- """
-        PSF = np.abs(
-                self.apodtodetector(self.entrancepupil, noFPM=True))**2
+        PSF = np.abs(self.apodtodetector(self.entrancepupil, noFPM=True))**2
         return np.amax(PSF), np.sum(PSF)
-
 
     def FQPM(self):
         """ --------------------------------------------------
@@ -173,12 +169,11 @@ class coronagraph:
     ##############################################
     ### Propagation through coronagraph
 
-    def lyottodetector(
-            self,
-            Lyot_plane_after_Lyot,
-            propagation_method=None,
-            dim_focal_plane=None,
-            sampling_focal_plane=None): 
+    def lyottodetector(self,
+                       Lyot_plane_after_Lyot,
+                       propagation_method=None,
+                       dim_focal_plane=None,
+                       sampling_focal_plane=None):
         """ --------------------------------------------------
         Propagate the electric field from Lyot plane after Lyot to Science focal plane.
         The output is cropped and resampled.
@@ -225,10 +220,11 @@ class coronagraph:
                 # TODO To test, this is a rare case but not sure it works...
                 ze_return = np.zeros((dim_focal_plane, dim_focal_plane))
                 dim_lyot = Lyot_plane_after_Lyot.shape
-                ze_return[dim_focal_plane / 2 - dim_lyot / 2:dim_focal_plane / 2 +
-                          dim_lyot / 2 + 1,
-                          dim_focal_plane / 2 - dim_lyot / 2:dim_focal_plane / 2 +
-                          dim_lyot / 2 + 1] = Lyot_plane_after_Lyot
+                ze_return[dim_focal_plane / 2 -
+                          dim_lyot / 2:dim_focal_plane / 2 + dim_lyot / 2 + 1,
+                          dim_focal_plane / 2 -
+                          dim_lyot / 2:dim_focal_plane / 2 + dim_lyot / 2 +
+                          1] = Lyot_plane_after_Lyot
                 Lyot_plane_after_Lyot = ze_return
 
             science_focal_plane = np.fft.fftshift(
@@ -239,7 +235,9 @@ class coronagraph:
                 " is not a valid Lyot to Science plane propagation method")
         return science_focal_plane
 
-    def apodtolyot(self, input_wavefront, noFPM = False):  # aberrationphase,prad1,prad2
+    def apodtolyot(self,
+                   input_wavefront,
+                   noFPM=False):  # aberrationphase,prad1,prad2
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod pupil to Lyot plane after Lyot pupil
 
@@ -257,11 +255,11 @@ class coronagraph:
         -------------------------------------------------- """
 
         if noFPM:
-           FPmsk = 1.
+            FPmsk = 1.
         else:
             FPmsk = self.FPmsk
-        
-        input_wavefront_after_apod = input_wavefront*self.apod_pup
+
+        input_wavefront_after_apod = input_wavefront * self.apod_pup
 
         maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
 
@@ -272,11 +270,14 @@ class coronagraph:
         lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * FPmsk)
 
         # Lyot mask
-        lyotplane_after_lyot = np.fft.fftshift(lyotplane_before_lyot) * self.lyot_pup
+        lyotplane_after_lyot = np.fft.fftshift(
+            lyotplane_before_lyot) * self.lyot_pup
 
         return lyotplane_after_lyot
 
-    def apodtodetector(self, input_wavefront, noFPM = False):  # aberrationphase,prad1,prad2
+    def apodtodetector(self,
+                       input_wavefront,
+                       noFPM=False):  # aberrationphase,prad1,prad2
         """ --------------------------------------------------
         Propagate the electric field through a high-contrast imaging instrument,
         from the entrance of the coronagraph (pupil plane before apodization pupil) to final detector focal plane.
@@ -421,41 +422,43 @@ def creatingpushactv2(model_dir,
     #Measured positions for each actuator in pixel
     measured_grid = fits.getdata(model_dir + filename_grid_actu)
     #Ratio: pupil radius in the measured position over
-    # pupil radius in the numerical simulation 
-    sampling_simu_over_meaasured = prad/fits.getheader(
+    # pupil radius in the numerical simulation
+    sampling_simu_over_meaasured = prad / fits.getheader(
         model_dir + filename_grid_actu)['PRAD']
 
     #dimension of the pushact array = size of the pupil
     # plus 20% of margin in case the pupil is smaller than the DM
-    dim_pushact = int(pitchDM*np.sqrt(measured_grid.shape[1]
-                      )/diam_pup_in_m*prad*1.2)*2
-    
+    dim_pushact = int(pitchDM * np.sqrt(measured_grid.shape[1]) /
+                      diam_pup_in_m * prad * 1.2) * 2
+
     if filename_ActuN != "":
         im_ActuN = fits.getdata(model_dir + filename_ActuN)
         im_ActuN_dim = np.zeros((dim_pushact, dim_pushact))
-        im_ActuN_dim[int(dim_pushact/2 - len(im_ActuN) / 2):
-                int(dim_pushact/2  + len(im_ActuN) / 2),
-               int(dim_pushact/2 - len(im_ActuN) / 2):
-               int(dim_pushact/2 + len(im_ActuN) /2)] = im_ActuN
-        ytmp, xtmp = np.unravel_index(np.abs(
-            im_ActuN_dim).argmax(), im_ActuN_dim.shape)
+        im_ActuN_dim[int(dim_pushact / 2 -
+                         len(im_ActuN) / 2):int(dim_pushact / 2 +
+                                                len(im_ActuN) / 2),
+                     int(dim_pushact / 2 -
+                         len(im_ActuN) / 2):int(dim_pushact / 2 +
+                                                len(im_ActuN) / 2)] = im_ActuN
+        ytmp, xtmp = np.unravel_index(
+            np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
         # shift by (0.5,0.5) pixel because the pupil is
         # centered between pixels
         xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
 
     #Position for each actuator in pixel for the numerical simulation
-    simu_grid = actuator_position(
-        measured_grid,xy_ActuN,ActuN,sampling_simu_over_meaasured)
+    simu_grid = actuator_position(measured_grid, xy_ActuN, ActuN,
+                                  sampling_simu_over_meaasured)
     # Influence function and the pitch in pixels
     actshape = fits.getdata(model_dir + filename_actu_infl_fct)
-    pitch_actshape = fits.getheader(
-        model_dir+filename_actu_infl_fct)['PITCH']
-    
+    pitch_actshape = fits.getheader(model_dir +
+                                    filename_actu_infl_fct)['PITCH']
+
     # Scaling the influence function to the desired dimension
     # for numerical simulation
-    resizeactshape = skimage.transform.rescale(
-        actshape,2 * prad / diam_pup_in_m * pitchDM / pitch_actshape,
-
+    resizeactshape = skimage.transform.rescale(actshape,
+                                               2 * prad / diam_pup_in_m *
+                                               pitchDM / pitch_actshape,
                                                order=1,
                                                preserve_range=True,
                                                anti_aliasing=True,
@@ -473,14 +476,13 @@ def creatingpushactv2(model_dir,
     actshapeinpupil = np.zeros((dim_pushact, dim_pushact))
     if len(resizeactshape) < dim_pushact:
         actshapeinpupil[
-
-            0:len(resizeactshape),0:len(resizeactshape)
-            ] = resizeactshape/ np.amax(resizeactshape)
-        xycenttmp=len(resizeactshape)/2
+            0:len(resizeactshape),
+            0:len(resizeactshape)] = resizeactshape / np.amax(resizeactshape)
+        xycenttmp = len(resizeactshape) / 2
     else:
         actshapeinpupil = resizeactshape[
-            0:dim_pushact,0:dim_pushact]/ np.amax(resizeactshape)
-        xycenttmp=prad
+            0:dim_pushact, 0:dim_pushact] / np.amax(resizeactshape)
+        xycenttmp = prad
 
     # Fill an array with the influence functions of all actuators
     pushact = np.zeros((simu_grid.shape[1], dim_pushact, dim_pushact))
@@ -501,15 +503,23 @@ def creatingpushactv2(model_dir,
                                                      0:dim_pushact]
         else:
             # Add an error on the sizes of the influence functions
-            Psivector = nd.interpolation.shift(actshapeinpupil,
-                        (simu_grid[1,i]+dim_pushact/2-xycenttmp,
-                         simu_grid[0,i]+dim_pushact/2-xycenttmp))
+            Psivector = nd.interpolation.shift(
+                actshapeinpupil,
+                (simu_grid[1, i] + dim_pushact / 2 - xycenttmp,
+                 simu_grid[0, i] + dim_pushact / 2 - xycenttmp))
 
             xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
             x, y = np.mgrid[0:dim_pushact, 0:dim_pushact]
             xy = (x, y)
-            Psivector = proc.twoD_Gaussian(xy,1,1 + gausserror,
-                            1 + gausserror,xo,yo,0,0,flatten=False)
+            Psivector = proc.twoD_Gaussian(xy,
+                                           1,
+                                           1 + gausserror,
+                                           1 + gausserror,
+                                           xo,
+                                           yo,
+                                           0,
+                                           0,
+                                           flatten=False)
         Psivector[np.where(Psivector < 1e-4)] = 0
 
         pushact[i] = Psivector
@@ -571,8 +581,8 @@ def createdifference(aberramp,
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
     contrast_to_photons = (np.sum(corona_struct.entrancepupil) /
-                           np.sum(corona_struct.lyot_pup) * numphot * corona_struct.maxPSF /
-                           corona_struct.PSF)
+                           np.sum(corona_struct.lyot_pup) * numphot *
+                           corona_struct.maxPSF / corona_struct.PSF)
 
     dim_pup = corona_struct.apod_pup.shape[1]
     dimpush = pushact.shape[1]
@@ -660,8 +670,8 @@ def random_phase_map(dim_im, phaserms, rhoc, slope, prad):
     phase : 2D array
         Static random phase map (or OPD) generated 
     -------------------------------------------------- """
-    dim_pup = int(2* prad)
-    
+    dim_pup = int(2 * prad)
+
     xx, yy = np.meshgrid(
         np.arange(dim_pup) - dim_pup / 2,
         np.arange(dim_pup) - dim_pup / 2)
@@ -676,10 +686,9 @@ def random_phase_map(dim_im, phaserms, rhoc, slope, prad):
 
     phase_pad = np.zeros((dim_im, dim_im))
 
-    phase_pad[int(dim_im / 2 - dim_pup / 2):int(dim_im / 2 +
-                dim_pup / 2 ),
-                int(dim_im / 2 - dim_pup / 2):int(dim_im / 2 +
-                dim_pup / 2 )] = phase
+    phase_pad[int(dim_im / 2 - dim_pup / 2):int(dim_im / 2 + dim_pup / 2),
+              int(dim_im / 2 - dim_pup / 2):int(dim_im / 2 +
+                                                dim_pup / 2)] = phase
 
     return phase_pad
 

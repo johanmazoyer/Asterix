@@ -1,7 +1,7 @@
 __author__ = 'Axel Potier'
 
 import os
-import sysimport datetime
+import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
