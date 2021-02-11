@@ -190,10 +190,11 @@ class coronagraph:
                 # TODO To test, this is a rare case but not sure it works...
                 ze_return = np.zeros((self.dim_im, self.dim_im))
                 dim_lyot = Lyot_plane_after_Lyot.shape
-                ze_return[self.dim_im / 2 - dim_lyot / 2:self.dim_im / 2 +
-                          dim_lyot / 2 + 1,
-                          self.dim_im / 2 - dim_lyot / 2:self.dim_im / 2 +
-                          dim_lyot / 2 + 1] = Lyot_plane_after_Lyot
+
+                ze_return[int(self.dim_im / 2 - dim_lyot / 2):int(self.dim_im / 2 +
+                                dim_lyot / 2 ),
+                                int(self.dim_im / 2 - dim_lyot / 2):int(self.dim_im / 2 +
+                                dim_lyot / 2 )] = Lyot_plane_after_Lyot
                 Lyot_plane_after_Lyot = ze_return
 
             science_focal_plane = np.fft.fftshift(
@@ -595,7 +596,7 @@ def shift_phase_ramp(dim_im, a, b):
     return np.exp(-1j * xx) * np.exp(-1j * yy)
 
 
-def random_phase_map(dim_im, phaserms, rhoc, slope):
+def random_phase_map(dim_im, phaserms, rhoc, slope, prad):
     """ --------------------------------------------------
     Create a random phase map, whose PSD decrease in f^(-slope)
     
@@ -615,18 +616,28 @@ def random_phase_map(dim_im, phaserms, rhoc, slope):
     phase : 2D array
         Static random phase map (or OPD) generated 
     -------------------------------------------------- """
+    dim_pup = int(2* prad)
+    
     xx, yy = np.meshgrid(
-        np.arange(dim_im) - dim_im / 2,
-        np.arange(dim_im) - dim_im / 2)
+        np.arange(dim_pup) - dim_pup / 2,
+        np.arange(dim_pup) - dim_pup / 2)
     rho = np.hypot(yy, xx)
     PSD0 = 1
     PSD = PSD0 / (1 + (rho / rhoc)**slope)
     sqrtPSD = np.sqrt(2 * PSD)
-    randomphase = 2 * np.pi * (np.random.rand(dim_im, dim_im) - 0.5)
+    randomphase = 2 * np.pi * (np.random.rand(dim_pup, dim_pup) - 0.5)
     product = np.fft.fftshift(sqrtPSD * np.exp(1j * randomphase))
     phase = np.real(np.fft.ifft2(product))
     phase = phase / np.std(phase) * phaserms
-    return phase
+
+    phase_pad = np.zeros((dim_im, dim_im))
+
+    phase_pad[int(dim_im / 2 - dim_pup / 2):int(dim_im / 2 +
+                dim_pup / 2 ),
+                int(dim_im / 2 - dim_pup / 2):int(dim_im / 2 +
+                dim_pup / 2 )] = phase
+
+    return phase_pad
 
 
 def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):

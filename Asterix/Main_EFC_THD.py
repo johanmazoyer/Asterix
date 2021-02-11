@@ -650,16 +650,16 @@ def correctionLoop(parameter_file,
         if set_random_phase == True:
             print("Random phase aberrations upstream from coronagraph")
             phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
-                                           slope_phase)
+                                           slope_phase, corona_struct.prad)
         else:
             if phase_abb_filename == '':
-                phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}.fits".format(int(phaserms*1e9),int(slope_phase),rhoc_phase)
+                phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(int(phaserms*1e9),int(slope_phase),rhoc_phase,corona_struct.prad)
             if os.path.isfile(Model_local_dir + phase_abb_filename):
                 phase_up = fits.getdata(Model_local_dir + phase_abb_filename)
             else:
                 print("Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "+ phase_abb_filename)
                 phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
-                                           slope_phase)
+                                           slope_phase, corona_struct.prad)
                 fits.writeto(Model_local_dir + phase_abb_filename, phase_up)
             print("Fixed phase aberrations upstream from coronagraph, loaded from: " + phase_abb_filename)
 
