@@ -102,12 +102,8 @@ def createvectorprobes(wavelength, corona_struct, amplitude,
     matrix = np.zeros((numprobe, 2))
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
-    ## Non coronagraphic PSF
-    PSF = np.abs(
-                corona_struct.lyottodetector(corona_struct.entrancepupil *
-                                             corona_struct.entrancepupil*
-                                             corona_struct.lyot_pup))**2
-    maxPSF = np.amax(PSF)
+
+
 
     k = 0
     for i in posprobes:
@@ -116,7 +112,7 @@ def createvectorprobes(wavelength, corona_struct, amplitude,
                     ] = amplitude * 1e-9 * pushact[i] * 2*np.pi / wavelength
         inputwavefront = corona_struct.entrancepupil * (1+1j*probephase[k])
         deltapsikbis = (corona_struct.apodtodetector(inputwavefront) /
-                        np.sqrt(maxPSF))
+                        np.sqrt(corona_struct.maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -238,7 +234,6 @@ def creatingCorrectionmatrix(amplitude_abb,
                              pushact,
                              mask,
                              Whichact,
-                             maxPSF,
                              otherbasis=False,
                              basisDM3=0):
     """ --------------------------------------------------
@@ -293,7 +288,7 @@ def creatingCorrectionmatrix(amplitude_abb,
         inputwavefront = corona_struct.entrancepupil * (1 + amplitude_abb
             ) * np.exp(1j * phase_abb) * 1j * Psivector
         Gvector = (corona_struct.apodtodetector(inputwavefront) /
-                   np.sqrt(maxPSF))
+                   np.sqrt(corona_struct.maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()

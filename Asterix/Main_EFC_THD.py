@@ -332,12 +332,6 @@ def create_interaction_matrices(parameter_file,
 
             # Creating EFC Interaction Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
-            ## Non coronagraphic PSF
-            PSF = np.abs(
-                corona_struct.lyottodetector(corona_struct.entrancepupil *
-                                             corona_struct.apod_pup*
-                                             corona_struct.lyot_pup))**2
-            maxPSF = np.amax(PSF)
 
             Gmatrix = wsc.creatingCorrectionmatrix(
                 0,
@@ -349,7 +343,6 @@ def create_interaction_matrices(parameter_file,
                 DM3_pushact,
                 maskDH,
                 DM3_WhichInPupil,
-                maxPSF,
                 otherbasis=DM3_otherbasis,
                 basisDM3=DM3_basis,
             )
@@ -573,14 +566,6 @@ def correctionLoop(parameter_file,
     DM3_pushact = fits.getdata(Model_local_dir + "DM3_PushActInPup_ray" +
                 str(int(corona_struct.prad))+".fits")
 
-    ## Non coronagraphic PSF with no aberrations
-    PSF = np.abs(
-                corona_struct.lyottodetector(corona_struct.entrancepupil *
-                                             corona_struct.apod_pup*
-                                             corona_struct.lyot_pup))**2
-
-    maxPSF = np.amax(PSF)
-
     ##Load PW matrices
     if (estimation == "PairWise" or estimation == "pairwise"
             or estimation == "PW" or estimation == "pw"):
@@ -705,7 +690,7 @@ def correctionLoop(parameter_file,
     ## To convert in photon flux
     contrast_to_photons = (np.sum(corona_struct.entrancepupil) /
                            np.sum(corona_struct.lyot_pup) * nb_photons *
-                           maxPSF / np.sum(PSF))
+                           corona_struct.maxPSF / corona_struct.sumPSF)
 
     ## Adding error on the DM model?
     if xerror == 0 and yerror == 0 and angerror == 0 and gausserror == 0:
@@ -743,7 +728,7 @@ def correctionLoop(parameter_file,
         1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
     imagedetector[0] = (
-        abs(corona_struct.apodtodetector(input_wavefront))**2 / maxPSF)
+        abs(corona_struct.apodtodetector(input_wavefront))**2 / corona_struct.maxPSF)
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
@@ -766,7 +751,6 @@ def correctionLoop(parameter_file,
                                                 pushactonDM3,
                                                 amplitudePW,
                                                 corona_struct,
-                                                PSF,
                                                 dim_sampl,
                                                 wavelength,
                                                 noise=photon_noise,
@@ -775,7 +759,7 @@ def correctionLoop(parameter_file,
 
         elif estimation == "Perfect":
             resultatestimation = corona_struct.apodtodetector(
-                input_wavefront) / np.sqrt(maxPSF)
+                input_wavefront) / np.sqrt(corona_struct.maxPSF)
 
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
@@ -797,7 +781,6 @@ def correctionLoop(parameter_file,
                     DM3_pushact,
                     maskDH,
                     DM3_WhichInPupil,
-                    maxPSF,
                     otherbasis=DM3_otherbasis,
                     basisDM3=DM3_basis,
                 )
@@ -846,7 +829,7 @@ def correctionLoop(parameter_file,
 
                     imagedetectortemp = (abs(
                         corona_struct.apodtodetector(input_wavefront))**2 /
-                                         maxPSF)
+                                         corona_struct.maxPSF)
 
                     meancontrasttemp[b] = np.mean(
                         imagedetectortemp[np.where(maskDHcontrast != 0)])
@@ -913,7 +896,7 @@ def correctionLoop(parameter_file,
             1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
         imagedetector[k + 1] = (
-            abs(corona_struct.apodtodetector(input_wavefront))**2 / maxPSF)
+            abs(corona_struct.apodtodetector(input_wavefront))**2 / corona_struct.maxPSF)
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHcontrast != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])

@@ -87,6 +87,12 @@ class coronagraph:
         self.entrancepupil = create_binary_pupil(model_dir, filename_instr_pup,
                                                  dim_im, prad)
 
+         #right now to be closer to THD2, the apodisation plane (entrance of the coronagraph) 
+        # is not define, but can be changed
+        self.apod_pup = 1 
+        # self.apod_pup = create_binary_pupil(model_dir, filename_instr_apod,
+        #                                     dim_im, prad)
+
         self.apod_pup = create_binary_pupil(model_dir, filename_instr_pup,
                                                  dim_im, prad)
 
@@ -95,6 +101,23 @@ class coronagraph:
 
         if self.perfect_coro:
             self.perfect_Lyot_pupil = self.apodtolyot(self.apod_pup)
+        print(self.max_sum_PSF())
+
+        self.maxPSF, self.sumPSF = self.max_sum_PSF()
+
+
+    def max_sum_PSF(self):
+        """ --------------------------------------------------
+        Measure the non-coronagraphic PSF with no focal plane mask and return max and sum
+        Returns
+        ------
+        np.amax(PSF): max of the non-coronagraphic PSF
+        np.sum(PSF): sum of the non-coronagraphic PSF
+        -------------------------------------------------- """
+        PSF = np.abs(
+                self.apodtodetector(self.entrancepupil, noFPM=True))**2
+        return np.amax(PSF), np.sum(PSF)
+
 
     def FQPM(self):
         """ --------------------------------------------------
@@ -216,7 +239,7 @@ class coronagraph:
                 " is not a valid Lyot to Science plane propagation method")
         return science_focal_plane
 
-    def apodtolyot(self, input_wavefront):  # aberrationphase,prad1,prad2
+    def apodtolyot(self, input_wavefront, noFPM = False):  # aberrationphase,prad1,prad2
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod pupil to Lyot plane after Lyot pupil
 
@@ -224,6 +247,8 @@ class coronagraph:
         ----------
         input_wavefront : 2D array,can be complex.  
             Input wavefront,can be complex.
+        noFPM : bool (default: False)
+            if True, remove the FPM if one want to measure a un-obstructed PSF
         
         Returns
         ------
@@ -231,6 +256,11 @@ class coronagraph:
             Focal plane electric field in the focal plane
         -------------------------------------------------- """
 
+        if noFPM:
+           FPmsk = 1.
+        else:
+            FPmsk = self.FPmsk
+        
         input_wavefront_after_apod = input_wavefront*self.apod_pup
 
         maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
@@ -239,14 +269,14 @@ class coronagraph:
             np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
 
         # Focal plane to Lyot plane
-        lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * self.FPmsk)
+        lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * FPmsk)
 
         # Lyot mask
         lyotplane_after_lyot = np.fft.fftshift(lyotplane_before_lyot) * self.lyot_pup
 
         return lyotplane_after_lyot
 
-    def apodtodetector(self, input_wavefront):  # aberrationphase,prad1,prad2
+    def apodtodetector(self, input_wavefront, noFPM = False):  # aberrationphase,prad1,prad2
         """ --------------------------------------------------
         Propagate the electric field through a high-contrast imaging instrument,
         from the entrance of the coronagraph (pupil plane before apodization pupil) to final detector focal plane.
@@ -256,6 +286,8 @@ class coronagraph:
         ----------
         input_wavefront : 2D array,can be complex.  
             Input wavefront,can be complex.
+        noFPM : bool (default: False)
+            if True, remove the FPM if one want to measure a un-obstructed PSF
         
         Returns
         ------
@@ -264,9 +296,9 @@ class coronagraph:
             the input wavefront through the high-contrast instrument.
         -------------------------------------------------- """
 
-        lyotplane_after_lyot = self.apodtolyot(input_wavefront)
+        lyotplane_after_lyot = self.apodtolyot(input_wavefront, noFPM)
 
-        if self.perfect_coro:
+        if (self.perfect_coro) & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
 
         # Science_focal_plane
@@ -538,11 +570,9 @@ def createdifference(aberramp,
     Ikplus = np.zeros((corona_struct.dim_im, corona_struct.dim_im))
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
-    maxPSF = np.amax(PSF)
-
     contrast_to_photons = (np.sum(corona_struct.entrancepupil) /
-                           np.sum(corona_struct.lyot_pup) * numphot * maxPSF /
-                           np.sum(PSF))
+                           np.sum(corona_struct.lyot_pup) * numphot * corona_struct.maxPSF /
+                           corona_struct.PSF)
 
     dim_pup = corona_struct.apod_pup.shape[1]
     dimpush = pushact.shape[1]
@@ -557,12 +587,12 @@ def createdifference(aberramp,
         input_wavefront = (corona_struct.entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase - 1 * probephase)))
         Ikmoins = (np.abs(corona_struct.apodtodetector(input_wavefront))**2 /
-                   maxPSF)
+                   corona_struct.maxPSF)
 
         input_wavefront = (corona_struct.entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase + 1 * probephase)))
         Ikplus = (np.abs(corona_struct.apodtodetector(input_wavefront))**2 /
-                  maxPSF)
+                  corona_struct.maxPSF)
 
         if noise == True:
             Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
