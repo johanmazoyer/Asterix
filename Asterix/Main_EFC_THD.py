@@ -570,13 +570,6 @@ def correctionLoop(parameter_file,
                        str(round(science_sampling, 2)) + "/basis_" + basistr +
                        "/")
 
-    ## DM influence functions
-    # if os.path.exists(Model_local_dir + "DM3_PushActInPup_ray"  +
-    #              str(int(corona_struct.prad))+ ".fits") == False:
-    #     print("Extracting data from zip file...")
-        # ZipFile(model_dir + "DM3_PushActInPup_ray" +
-        #          str(int(corona_struct.prad)) + ".zip", "r").extractall(model_dir)
-
     DM3_pushact = fits.getdata(Model_local_dir + "DM3_PushActInPup_ray" +
                 str(int(corona_struct.prad))+".fits")
 
@@ -659,14 +652,16 @@ def correctionLoop(parameter_file,
             phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
                                            slope_phase)
         else:
-            if os.path.isfile(Model_local_dir + phase_abb_filename + ".fits"):
-                phase_up = fits.getdata(Model_local_dir + phase_abb_filename + ".fits")
+            if phase_abb_filename == '':
+                phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}.fits".format(int(phaserms*1e9),int(slope_phase),rhoc_phase)
+            if os.path.isfile(Model_local_dir + phase_abb_filename):
+                phase_up = fits.getdata(Model_local_dir + phase_abb_filename)
             else:
-                print("Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "+ phase_abb_filename + ".fits")
+                print("Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "+ phase_abb_filename)
                 phase_up = instr.random_phase_map(dim_im, phaserms, rhoc_phase,
                                            slope_phase)
-                fits.writeto(Model_local_dir + phase_abb_filename + ".fits", phase_up)
-            print("Fixed phase aberrations upstream from coronagraph, loaded from: " + phase_abb_filename + ".fits")
+                fits.writeto(Model_local_dir + phase_abb_filename, phase_up)
+            print("Fixed phase aberrations upstream from coronagraph, loaded from: " + phase_abb_filename)
 
         phase_up = phase_up * 2 * np.pi / wavelength
     else:
