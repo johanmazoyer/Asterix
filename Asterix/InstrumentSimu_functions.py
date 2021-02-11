@@ -150,8 +150,12 @@ class coronagraph:
     ##############################################
     ### Propagation through coronagraph
 
-    def lyottodetector(self,
-                       Lyot_plane_after_Lyot):  # aberrationphase,prad1,prad2
+    def lyottodetector(
+            self,
+            Lyot_plane_after_Lyot,
+            propagation_method=None,
+            dim_focal_plane=None,
+            sampling_focal_plane=None): 
         """ --------------------------------------------------
         Propagate the electric field from Lyot plane after Lyot to Science focal plane.
         The output is cropped and resampled.
@@ -166,40 +170,50 @@ class coronagraph:
         science_focal_plane : 2D array, 
             Focal plane electric field in the focal plane
         -------------------------------------------------- """
+        if propagation_method == None:
+            propagation_method = self.prop_lyot2science
 
-        if self.prop_lyot2science == "mft":
+        if dim_focal_plane == None:
+            dim_focal_plane = self.dim_im
+
+        if sampling_focal_plane == None:
+            sampling_focal_plane = self.science_sampling
+
+        if propagation_method == "mft":
             if self.prop_apod2lyot == 'fft':
                 # in this case, the Lyot pupil is padded, lets crop and propagate
                 # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
                 # For the moment, only in between 4 pixels.
                 Lyot_plane_after_Lyot = proc.cropimage(Lyot_plane_after_Lyot,
-                                                       self.dim_im / 2,
-                                                       self.dim_im / 2,
+                                                       dim_focal_plane / 2,
+                                                       dim_focal_plane / 2,
                                                        2 * self.lyotrad)
 
             science_focal_plane = mft(Lyot_plane_after_Lyot,
-                                      self.dim_im,
-                                      self.dim_im / self.science_sampling,
+                                      dim_focal_plane,
+                                      dim_focal_plane / sampling_focal_plane,
                                       inv=1)
 
-        if self.prop_lyot2science == "fft":
+        elif propagation_method == "fft":
             if self.prop_apod2lyot == 'mft':
                 # in this case, the Lyot pupil is not padded, lets pad it before propagate
                 # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
                 # For the moment, only in between 4 pixels.
                 # TODO To test, this is a rare case but not sure it works...
-                ze_return = np.zeros((self.dim_im, self.dim_im))
+                ze_return = np.zeros((dim_focal_plane, dim_focal_plane))
                 dim_lyot = Lyot_plane_after_Lyot.shape
-
-                ze_return[int(self.dim_im / 2 - dim_lyot / 2):int(self.dim_im / 2 +
-                                dim_lyot / 2 ),
-                                int(self.dim_im / 2 - dim_lyot / 2):int(self.dim_im / 2 +
-                                dim_lyot / 2 )] = Lyot_plane_after_Lyot
+                ze_return[dim_focal_plane / 2 - dim_lyot / 2:dim_focal_plane / 2 +
+                          dim_lyot / 2 + 1,
+                          dim_focal_plane / 2 - dim_lyot / 2:dim_focal_plane / 2 +
+                          dim_lyot / 2 + 1] = Lyot_plane_after_Lyot
                 Lyot_plane_after_Lyot = ze_return
 
             science_focal_plane = np.fft.fftshift(
                 np.fft.fft2(np.fft.fftshift(Lyot_plane_after_Lyot)))
-
+        else:
+            raise Exception(
+                propagation_method +
+                " is not a valid Lyot to Science plane propagation method")
         return science_focal_plane
 
     def apodtolyot(self, input_wavefront):  # aberrationphase,prad1,prad2
