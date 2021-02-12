@@ -92,15 +92,17 @@ class coronagraph:
         # self.apod_pup = create_binary_pupil(model_dir, filename_instr_apod,
         #                                     dim_im, prad)
 
-        self.apod_pup = create_binary_pupil(model_dir, filename_instr_pup,
-                                            dim_im, prad)
-
         self.lyot_pup = create_binary_pupil(model_dir, filename_instr_lyot,
                                             2 * lyotrad, lyotrad)
 
         if self.perfect_coro:
-            self.perfect_Lyot_pupil = self.apodtolyot(self.apod_pup)
+            # do a propagation once with self.perfect_Lyot_pupil = 0 to
+            # measure the Lyot pupil that will be removed after
+            self.perfect_Lyot_pupil = 0
 
+            self.perfect_Lyot_pupil = self.apodtolyot(self.entrancepupil)
+
+        # Measure the PSF and store max and Sum
         self.maxPSF, self.sumPSF = self.max_sum_PSF()
 
     def max_sum_PSF(self):
@@ -112,6 +114,7 @@ class coronagraph:
         np.sum(PSF): sum of the non-coronagraphic PSF
         -------------------------------------------------- """
         PSF = np.abs(self.apodtodetector(self.entrancepupil, noFPM=True))**2
+        # useful.quickfits(PSF)
         return np.amax(PSF), np.sum(PSF)
 
     def FQPM(self):
@@ -167,6 +170,89 @@ class coronagraph:
     ##############################################
     ##############################################
     ### Propagation through coronagraph
+
+
+    def apodtodetector(self,
+                       input_wavefront,
+                       noFPM=False):
+        """ --------------------------------------------------
+        Propagate the electric field through a high-contrast imaging instrument,
+        from the entrance of the coronagraph (pupil plane before apodization pupil) to final detector focal plane.
+        The output is cropped and resampled.
+        
+        Parameters
+        ----------
+        input_wavefront : 2D array,can be complex.  
+            Input wavefront,can be complex.
+        noFPM : bool (default: False)
+            if True, remove the FPM if one want to measure a un-obstructed PSF
+        
+        Returns
+        ------
+        shift(sqrtimage) : 2D array, 
+            Focal plane electric field created by 
+            the input wavefront through the high-contrast instrument.
+        -------------------------------------------------- """
+
+        lyotplane_after_lyot = self.apodtolyot(input_wavefront, noFPM)
+
+        # Science_focal_plane
+        science_focal_plane = self.lyottodetector(lyotplane_after_lyot)
+
+        return science_focal_plane
+
+
+    def apodtolyot(self,
+                   input_wavefront,
+                   noFPM=False):
+        """ --------------------------------------------------
+        Propagate the electric field from apod plane before the apod pupil to Lyot plane after Lyot pupil
+
+        Parameters
+        ----------
+        input_wavefront : 2D array,can be complex.  
+            Input wavefront,can be complex.
+        noFPM : bool (default: False)
+            if True, remove the FPM if one want to measure a un-obstructed PSF
+        
+        Returns
+        ------
+        science_focal_plane : 2D array, 
+            Focal plane electric field in the focal plane
+        -------------------------------------------------- """
+
+        if noFPM:
+            FPmsk = 1.
+        else:
+            FPmsk = self.FPmsk
+
+        input_wavefront_after_apod = input_wavefront * self.apod_pup
+
+        maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
+        maskshifthalfpix_inverse = shift_phase_ramp(len(input_wavefront), -0.5, -0.5)
+
+
+        corono_focal_plane = np.fft.fft2(
+            np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
+
+        # Focal plane to Lyot plane
+        lyotplane_before_lyot_pad = np.fft.fftshift(
+            np.fft.ifft2(corono_focal_plane * FPmsk))* maskshifthalfpix_inverse
+
+        # Lyot mask
+        
+        lyotplane_before_lyot = proc.cropimage(lyotplane_before_lyot_pad,
+                                               self.dim_im / 2,
+                                               self.dim_im / 2,
+                                               2 * self.lyotrad)
+
+        lyotplane_after_lyot = lyotplane_before_lyot * self.lyot_pup
+
+        if (self.perfect_coro) & (not noFPM):
+            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
+
+        return lyotplane_after_lyot
+
 
     def lyottodetector(self,
                        Lyot_plane_after_Lyot,
@@ -226,83 +312,6 @@ class coronagraph:
                 " is not a valid Lyot to Science plane propagation method")
         return science_focal_plane
 
-    def apodtolyot(self,
-                   input_wavefront,
-                   noFPM=False):  # aberrationphase,prad1,prad2
-        """ --------------------------------------------------
-        Propagate the electric field from apod plane before the apod pupil to Lyot plane after Lyot pupil
-
-        Parameters
-        ----------
-        input_wavefront : 2D array,can be complex.  
-            Input wavefront,can be complex.
-        noFPM : bool (default: False)
-            if True, remove the FPM if one want to measure a un-obstructed PSF
-        
-        Returns
-        ------
-        science_focal_plane : 2D array, 
-            Focal plane electric field in the focal plane
-        -------------------------------------------------- """
-
-        if noFPM:
-            FPmsk = 1.
-        else:
-            FPmsk = self.FPmsk
-
-        input_wavefront_after_apod = input_wavefront * self.apod_pup
-
-        maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
-
-        corono_focal_plane = np.fft.fft2(
-            np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
-
-        # Focal plane to Lyot plane
-        lyotplane_before_lyot_pad = np.fft.fftshift(
-            np.fft.ifft2(corono_focal_plane * FPmsk))
-
-        # Lyot mask
-
-        lyotplane_before_lyot = proc.cropimage(lyotplane_before_lyot_pad,
-                                               self.dim_im / 2,
-                                               self.dim_im / 2,
-                                               2 * self.lyotrad)
-
-        lyotplane_after_lyot = lyotplane_before_lyot * self.lyot_pup
-
-        return lyotplane_after_lyot
-
-    def apodtodetector(self,
-                       input_wavefront,
-                       noFPM=False):  # aberrationphase,prad1,prad2
-        """ --------------------------------------------------
-        Propagate the electric field through a high-contrast imaging instrument,
-        from the entrance of the coronagraph (pupil plane before apodization pupil) to final detector focal plane.
-        The output is cropped and resampled.
-        
-        Parameters
-        ----------
-        input_wavefront : 2D array,can be complex.  
-            Input wavefront,can be complex.
-        noFPM : bool (default: False)
-            if True, remove the FPM if one want to measure a un-obstructed PSF
-        
-        Returns
-        ------
-        shift(sqrtimage) : 2D array, 
-            Focal plane electric field created by 
-            the input wavefront through the high-contrast instrument.
-        -------------------------------------------------- """
-
-        lyotplane_after_lyot = self.apodtolyot(input_wavefront, noFPM)
-
-        if (self.perfect_coro) & (not noFPM):
-            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
-
-        # Science_focal_plane
-        science_focal_plane = self.lyottodetector(lyotplane_after_lyot)
-
-        return science_focal_plane
 
 
 ##############################################
@@ -535,7 +544,6 @@ def createdifference(aberramp,
                      pushact,
                      amplitude,
                      corona_struct,
-                     PSF,
                      dimimages,
                      wavelength,
                      noise=False,

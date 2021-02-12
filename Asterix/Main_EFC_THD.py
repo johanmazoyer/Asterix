@@ -466,10 +466,11 @@ def correctionLoop(parameter_file,
     #Lambda over D in pixels
     wavelength = modelconfig["wavelength"]
     science_sampling = modelconfig["science_sampling"]
+    DH_sampling = modelconfig["DH_sampling"] 
 
     #image size after binning
     dim_sampl = int(
-        modelconfig["DH_sampling"] / science_sampling * dim_im / 2) * 2
+        DH_sampling / science_sampling * dim_im / 2) * 2
 
     ##################
     ##################
@@ -803,8 +804,17 @@ def correctionLoop(parameter_file,
         elif estimation == "Perfect":
             resultatestimation = corona_struct.apodtodetector(
                 input_wavefront) / np.sqrt(corona_struct.maxPSF)
-
+            
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
+
+            # resultatestimation_afterLyot = corona_struct.apodtolyot(input_wavefront) 
+            # resultatestimation = corona_struct.lyottodetector(
+            #            resultatestimation_afterLyot,
+            #            propagation_method='mft',
+            #            dim_focal_plane=dim_sampl,
+            #            sampling_focal_plane=DH_sampling)/ np.sqrt(corona_struct.maxPSF)
+            
+
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
