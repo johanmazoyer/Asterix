@@ -96,7 +96,7 @@ class coronagraph:
                                             dim_im, prad)
 
         self.lyot_pup = create_binary_pupil(model_dir, filename_instr_lyot,
-                                            2*lyotrad, lyotrad)
+                                            2 * lyotrad, lyotrad)
 
         if self.perfect_coro:
             self.perfect_Lyot_pupil = self.apodtolyot(self.apod_pup)
@@ -197,7 +197,7 @@ class coronagraph:
             sampling_focal_plane = self.science_sampling
 
         if propagation_method == "mft":
-           
+
             # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
             # For the moment, only in between 4 pixels, but can be a pb
             science_focal_plane = mft(Lyot_plane_after_Lyot,
@@ -210,9 +210,13 @@ class coronagraph:
             # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
             # For the moment, only in between 4 pixels.
             # TODO To test, this is a rare case but not sure it works...
-            
+
             dim_lyot = Lyot_plane_after_Lyot.shape[0]
-            Lyot_plane_after_Lyot_padded = np.pad(Lyot_plane_after_Lyot, int(dim_focal_plane / 2 - dim_lyot / 2), mode='constant', constant_values=0)
+            Lyot_plane_after_Lyot_padded = np.pad(Lyot_plane_after_Lyot,
+                                                  int(dim_focal_plane / 2 -
+                                                      dim_lyot / 2),
+                                                  mode='constant',
+                                                  constant_values=0)
 
             science_focal_plane = np.fft.fftshift(
                 np.fft.fft2(np.fft.fftshift(Lyot_plane_after_Lyot_padded)))
@@ -254,15 +258,15 @@ class coronagraph:
             np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
 
         # Focal plane to Lyot plane
-        lyotplane_before_lyot_pad = np.fft.fftshift(np.fft.ifft2(corono_focal_plane * FPmsk))
+        lyotplane_before_lyot_pad = np.fft.fftshift(
+            np.fft.ifft2(corono_focal_plane * FPmsk))
 
         # Lyot mask
 
-        lyotplane_before_lyot =  proc.cropimage(lyotplane_before_lyot_pad,
-                                                       self.dim_im / 2,
-                                                       self.dim_im / 2,
-                                                       2 * self.lyotrad)
-
+        lyotplane_before_lyot = proc.cropimage(lyotplane_before_lyot_pad,
+                                               self.dim_im / 2,
+                                               self.dim_im / 2,
+                                               2 * self.lyotrad)
 
         lyotplane_after_lyot = lyotplane_before_lyot * self.lyot_pup
 
@@ -677,7 +681,10 @@ def random_phase_map(dim_im, phaserms, rhoc, slope, prad):
     phase = np.real(np.fft.ifft2(product))
     phase = phase / np.std(phase) * phaserms
 
-    phase_pad = np.pad(phase, int(dim_im / 2 - dim_pup / 2), mode='constant', constant_values=0)
+    phase_pad = np.pad(phase,
+                       int(dim_im / 2 - dim_pup / 2),
+                       mode='constant',
+                       constant_values=0)
 
     return phase_pad
 
