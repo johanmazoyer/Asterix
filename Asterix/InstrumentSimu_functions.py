@@ -114,7 +114,8 @@ class coronagraph:
         np.sum(PSF): sum of the non-coronagraphic PSF
         -------------------------------------------------- """
         PSF = np.abs(self.apodtodetector(self.entrancepupil, noFPM=True))**2
-        # useful.quickfits(PSF)
+        # useful.quickfits(PSF, name='fftpsf')
+        # asd
         return np.amax(PSF), np.sum(PSF)
 
     def FQPM(self):
@@ -676,7 +677,7 @@ def random_phase_map(dim_im, phaserms, rhoc, slope, prad):
         Static random phase map (or OPD) generated 
     -------------------------------------------------- """
     dim_pup = 2 * int(prad)
-
+    # dim_pup = dim_im # if we un comment, this will be previous version 
     xx, yy = np.meshgrid(
         np.arange(dim_pup) - dim_pup / 2,
         np.arange(dim_pup) - dim_pup / 2)
