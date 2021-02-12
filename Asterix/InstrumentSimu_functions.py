@@ -96,7 +96,7 @@ class coronagraph:
                                             dim_im, prad)
 
         self.lyot_pup = create_binary_pupil(model_dir, filename_instr_lyot,
-                                            dim_im, lyotrad)
+                                            2*lyotrad, lyotrad)
 
         if self.perfect_coro:
             self.perfect_Lyot_pupil = self.apodtolyot(self.apod_pup)
@@ -197,37 +197,29 @@ class coronagraph:
             sampling_focal_plane = self.science_sampling
 
         if propagation_method == "mft":
-            if self.prop_apod2lyot == 'fft':
-                # in this case, the Lyot pupil is padded, lets crop and propagate
-                # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
-                # For the moment, only in between 4 pixels.
-                Lyot_plane_after_Lyot = proc.cropimage(Lyot_plane_after_Lyot,
-                                                       dim_focal_plane / 2,
-                                                       dim_focal_plane / 2,
-                                                       2 * self.lyotrad)
-
+           
+            # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
+            # For the moment, only in between 4 pixels, but can be a pb
             science_focal_plane = mft(Lyot_plane_after_Lyot,
                                       dim_focal_plane,
                                       dim_focal_plane / sampling_focal_plane,
                                       inv=1)
 
         elif propagation_method == "fft":
-            if self.prop_apod2lyot == 'mft':
-                # in this case, the Lyot pupil is not padded, lets pad it before propagate
-                # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
-                # For the moment, only in between 4 pixels.
-                # TODO To test, this is a rare case but not sure it works...
-                ze_return = np.zeros((dim_focal_plane, dim_focal_plane))
-                dim_lyot = Lyot_plane_after_Lyot.shape
-                ze_return[dim_focal_plane / 2 -
-                          dim_lyot / 2:dim_focal_plane / 2 + dim_lyot / 2 + 1,
-                          dim_focal_plane / 2 -
-                          dim_lyot / 2:dim_focal_plane / 2 + dim_lyot / 2 +
-                          1] = Lyot_plane_after_Lyot
-                Lyot_plane_after_Lyot = ze_return
+            # in this case, the Lyot pupil is not padded, lets pad it before propagate
+            # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
+            # For the moment, only in between 4 pixels.
+            # TODO To test, this is a rare case but not sure it works...
+            Lyot_plane_after_Lyot_padded = np.zeros((dim_focal_plane, dim_focal_plane))
+            dim_lyot = Lyot_plane_after_Lyot.shape
+
+            Lyot_plane_after_Lyot_padded[dim_focal_plane / 2 -
+                        dim_lyot / 2:dim_focal_plane / 2 + dim_lyot / 2,
+                        dim_focal_plane / 2 -
+                        dim_lyot / 2:dim_focal_plane / 2 + dim_lyot / 2 ] = Lyot_plane_after_Lyot
 
             science_focal_plane = np.fft.fftshift(
-                np.fft.fft2(np.fft.fftshift(Lyot_plane_after_Lyot)))
+                np.fft.fft2(np.fft.fftshift(Lyot_plane_after_Lyot_padded)))
         else:
             raise Exception(
                 propagation_method +
@@ -266,11 +258,17 @@ class coronagraph:
             np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
 
         # Focal plane to Lyot plane
-        lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * FPmsk)
+        lyotplane_before_lyot_pad = np.fft.fftshift(np.fft.ifft2(corono_focal_plane * FPmsk))
 
         # Lyot mask
-        lyotplane_after_lyot = np.fft.fftshift(
-            lyotplane_before_lyot) * self.lyot_pup
+
+        lyotplane_before_lyot =  proc.cropimage(lyotplane_before_lyot_pad,
+                                                       self.dim_im / 2,
+                                                       self.dim_im / 2,
+                                                       2 * self.lyotrad)
+
+
+        lyotplane_after_lyot = lyotplane_before_lyot * self.lyot_pup
 
         return lyotplane_after_lyot
 
