@@ -149,16 +149,12 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     WhichInPupil: 1D array, index of all the actuators located inside the pupil
     -------------------------------------------------- """
     WhichInPupil = []
-    dim_pushover2 = int(pushact.shape[2] / 2)
-    dim_pupover2 = int(entrancepupil.shape[1] / 2)
-    tmp_entrancepupil = entrancepupil[dim_pupover2 -
-                                      dim_pushover2:dim_pupover2 +
-                                      dim_pushover2, dim_pupover2 -
-                                      dim_pushover2:dim_pupover2 +
-                                      dim_pushover2]
+    tmp_entrancepupil = instr.cut_image(entrancepupil,pushact.shape[2])
+
     for i in np.arange(pushact.shape[0]):
-        Psivector = pushact[i]
-        cut = cutinpupil * np.sum(Psivector)
+        Psivector=pushact[i]
+        cut = cutinpupil * np.sum(np.abs(Psivector))
+
         if np.sum(Psivector * tmp_entrancepupil) > cut:
             WhichInPupil.append(i)
 
@@ -225,6 +221,7 @@ def creatingMaskDH(dimimages,
                 maskDH[yy - xx * np.tan(circ_angle * np.pi / 180) > 0] = 0
                 maskDH[yy + xx * np.tan(circ_angle * np.pi / 180) > 0] = 0
     return maskDH
+
 
 
 def creatingCorrectionmatrix(amplitude_abb,
