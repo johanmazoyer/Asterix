@@ -100,6 +100,7 @@ class coronagraph:
             self.lyot_pup = create_binary_pupil(model_dir,
                                  filename_instr_lyot, dim_im, lyotrad)
         else:
+            print("Change instr. 103")
             self.entrancepupil = create_binary_pupil(model_dir,
                                 filename_instr_pup,int(prad*1.1)*2, prad)
 
