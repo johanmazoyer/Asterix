@@ -40,17 +40,20 @@ class coronagraph:
 
         #Lambda over D in pixels in the pupil plane
         science_sampling = modelconfig["science_sampling"]
-        DH_sampling = modelconfig["DH_sampling"]
+        self.prop_apod2lyot = coroconfig["prop_apod2lyot"]
 
         ## define important measure of the coronagraph
-        lyotrad = dim_im / 2 / science_sampling
-        prad = int(np.ceil(lyotrad * diam_pup_in_m / diam_lyot_in_m))
-        lyotrad = int(np.ceil(lyotrad))
-        prev_science_sampling = science_sampling
-        science_sampling = dim_im / 2 / lyotrad
-        print(
-            "Pupil resolution: 'Science Sampling' has been rounded up from {:.3f} to {:.3f} l/D"
-            .format(prev_science_sampling, science_sampling))
+        if self.prop_apod2lyot == "fft":
+            lyotrad = dim_im / 2 / science_sampling
+            prad = int(np.ceil(lyotrad * diam_pup_in_m / diam_lyot_in_m))
+            lyotrad = int(np.ceil(lyotrad))
+            prev_science_sampling = science_sampling
+            science_sampling = dim_im / 2 / lyotrad
+            print("Pupil resolution: 'Science Sampling' has been rounded up from {:.3f} to {:.3f} l/D"
+                .format(prev_science_sampling, science_sampling))
+        if self.prop_apod2lyot == "mft":
+            prad = int(modelconfig["diam_pup_in_pix"]/2)
+            lyotrad = int(prad * diam_lyot_in_m / diam_pup_in_m)
 
         #coronagraph
         self.corona_type = coroconfig["corona_type"]
@@ -65,34 +68,47 @@ class coronagraph:
         self.science_sampling = science_sampling
         self.lyotrad = lyotrad
         self.prad = prad
+        #radius of the pupil in pixel in DM1 plane
+        #(updated in Main_EFC_THD)
+        self.pradDM1 = prad
 
         ## transmission of the phase mask (exp(i*phase))
         ## centered on pixel [0.5,0.5]
         if self.corona_type == "fqpm":
             self.FPmsk = self.FQPM()
             self.perfect_coro = True
-            self.prop_apod2lyot = 'fft'
+            #self.prop_apod2lyot = 'fft'
         elif self.corona_type == "knife":
             self.FPmsk = self.KnifeEdgeCoro()
             self.perfect_coro = False
-            self.prop_apod2lyot = 'fft'
+            #self.prop_apod2lyot = 'fft'
         elif self.corona_type == "vortex":
             phasevortex = 0  # to be defined
             self.FPmsk = np.exp(1j * phasevortex)
             self.perfect_coro = True
-            self.prop_apod2lyot = 'fft'
+            #self.prop_apod2lyot = 'fft'
 
         # Maybe should remove the entrance pupil from the coronostructure, 
         # this is "before the DMs" so probably not relevant here.
-        self.entrancepupil = create_binary_pupil(model_dir, filename_instr_pup,
-                                                 dim_im, prad)
+        if self.prop_apod2lyot == 'fft':
+            self.entrancepupil = create_binary_pupil(model_dir,
+                                filename_instr_pup,dim_im, prad)
 
-        self.apod_pup = create_binary_pupil(model_dir, filename_instr_pup,
-                                                 dim_im, prad)
+            self.apod_pup = create_binary_pupil(model_dir,
+                                filename_instr_pup, dim_im, prad)
 
-        self.lyot_pup = create_binary_pupil(model_dir, filename_instr_lyot,
-                                            dim_im, lyotrad)
+            self.lyot_pup = create_binary_pupil(model_dir,
+                                 filename_instr_lyot, dim_im, lyotrad)
+        else:
+            self.entrancepupil = create_binary_pupil(model_dir,
+                                filename_instr_pup,int(prad*1.1)*2, prad)
 
+            self.apod_pup = create_binary_pupil(model_dir,
+                                filename_instr_pup, int(prad*1.1)*2, prad)
+
+            self.lyot_pup = create_binary_pupil(model_dir,
+                                 filename_instr_lyot, int(prad*1.1)*2, lyotrad)
+        
         if self.perfect_coro:
             self.perfect_Lyot_pupil = self.apodtolyot(self.apod_pup)
 
@@ -177,7 +193,7 @@ class coronagraph:
                                                        self.dim_im / 2,
                                                        2 * self.lyotrad)
 
-            science_focal_plane = mft(Lyot_plane_after_Lyot,
+            science_focal_plane = mft(Lyot_plane_after_Lyot,self.lyotrad*2,
                                       self.dim_im,
                                       self.dim_im / self.science_sampling,
                                       inv=1)
@@ -201,7 +217,7 @@ class coronagraph:
 
         return science_focal_plane
 
-    def apodtolyot(self, input_wavefront):  # aberrationphase,prad1,prad2
+    def apodtolyot(self, input_wavefront):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod pupil to Lyot plane after Lyot pupil
 
@@ -217,21 +233,41 @@ class coronagraph:
         -------------------------------------------------- """
 
         input_wavefront_after_apod = input_wavefront*self.apod_pup
+        
+        if self.prop_apod2lyot == "fft":
+            # Phase ramp to center focal plane between 4 pixels
+            maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
 
-        maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
-
-        corono_focal_plane = np.fft.fft2(
+            #Apod plane to focal plane
+            corono_focal_plane = np.fft.fft2(
             np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
 
-        # Focal plane to Lyot plane
-        lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * self.FPmsk)
+            # Focal plane to Lyot plane
+            lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * self.FPmsk)
 
-        # Lyot mask
-        lyotplane_after_lyot = np.fft.fftshift(lyotplane_before_lyot) * self.lyot_pup
+            # Lyot stop
+            lyotplane_after_lyot = np.fft.fftshift(lyotplane_before_lyot
+                                    ) * self.lyot_pup
+        if self.prop_apod2lyot == "mft":
+            #Apod plane to focal plane
+            corono_focal_plane = mft(input_wavefront_after_apod,
+                        self.prad*2,self.dim_im,
+                        self.dim_im/self.science_sampling,
+                        xshift=-.5,yshift=-.5,inv=1)
 
+            # Focal plane to Lyot plane
+            lyotplane_before_lyot = mft(corono_focal_plane * self.FPmsk,
+                            self.dim_im,2*self.prad,
+                            self.dim_im/self.science_sampling,inv=-1)
+
+            lyot_pup = cut_image(self.lyot_pup,lyotplane_before_lyot.shape[1])
+
+            # Lyot stop
+            lyotplane_after_lyot = lyotplane_before_lyot * lyot_pup
+        
         return lyotplane_after_lyot
 
-    def apodtodetector(self, input_wavefront):  # aberrationphase,prad1,prad2
+    def apodtodetector(self, input_wavefront):
         """ --------------------------------------------------
         Propagate the electric field through a high-contrast imaging instrument,
         from the entrance of the coronagraph (pupil plane before apodization pupil) to final detector focal plane.
@@ -324,17 +360,11 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     return simu_grid
 
 
-def creatingpushactv2(model_dir,
-                      diam_pup_in_m,
-                      prad,
-                      DMconfig,
-                      which_DM=3,
-                      xerror=0,
-                      yerror=0,
-                      angerror=0,
-                      gausserror=0):
+def creatingpushact(model_dir,diam_pup_in_m,prad,
+                      DMconfig,which_DM=3,xerror=0,yerror=0,
+                      angerror=0,gausserror=0):
     """ --------------------------------------------------
-    Phase map induced in the DM plane for each actuator
+    OPD map induced in the DM plane for each actuator
 
     Parameters
     ----------
@@ -355,9 +385,7 @@ def creatingpushactv2(model_dir,
     ------
     pushact : 
     -------------------------------------------------- """
-    if which_DM == 3:
-        namDM = "DM3_"
-    elif which_DM == 1:
+    if which_DM == 1:
         namDM = "DM1_"
     else:
         namDM = "DM3_"
@@ -380,9 +408,8 @@ def creatingpushactv2(model_dir,
 
     #dimension of the pushact array = size of the pupil
     # plus 20% of margin in case the pupil is smaller than the DM
-    dim_pushact = int(pitchDM*np.sqrt(measured_grid.shape[1]
-                      )/diam_pup_in_m*prad*1.2)*2
-    
+    dim_pushact = int(prad*1.1)*2
+
     if filename_ActuN != "":
         im_ActuN = fits.getdata(model_dir + filename_ActuN)
         im_ActuN_dim = np.zeros((dim_pushact, dim_pushact))
@@ -408,7 +435,6 @@ def creatingpushactv2(model_dir,
     # for numerical simulation
     resizeactshape = skimage.transform.rescale(
         actshape,2 * prad / diam_pup_in_m * pitchDM / pitch_actshape,
-
                                                order=1,
                                                preserve_range=True,
                                                anti_aliasing=True,
@@ -426,7 +452,6 @@ def creatingpushactv2(model_dir,
     actshapeinpupil = np.zeros((dim_pushact, dim_pushact))
     if len(resizeactshape) < dim_pushact:
         actshapeinpupil[
-
             0:len(resizeactshape),0:len(resizeactshape)
             ] = resizeactshape/ np.amax(resizeactshape)
         xycenttmp=len(resizeactshape)/2
@@ -469,6 +494,40 @@ def creatingpushactv2(model_dir,
 
     return pushact
 
+## Create the influence functions of an out-of-pupil DM
+## in the pupil plane
+def creatingpushact_inpup(DM_pushact,wavelength, corona_struct, z_position):
+    """ --------------------------------------------------
+    OPD map induced by out-of-pupil DM in the pupil plane for each actuator
+
+    Parameters
+    ----------
+    DM_pushact : OPD map induced by the DM in the DM plane
+    wavelength : wavelengtht in m
+    corona_struct : coronagraph structure (includes entrancepupil
+                    and the dimension of the pupil in meter)
+    z_position : distance of DM from the pupil
+
+    Returns
+    ------
+    pushact_inpup : Map of the complex phase induced in pupil plane
+    -------------------------------------------------- """
+    # Size of the array (diameter of the pupil * 125%)
+    dimtmp = int(corona_struct.prad*2*1.25)
+    tmp_entrance_pupil = cut_image(corona_struct.entrancepupil,dimtmp)
+
+    UDM1,dxout = prop_fresnel(tmp_entrance_pupil,wavelength,z_position,
+                    corona_struct.diam_pup_in_m/2,corona_struct.prad)
+    pushact_inpup = np.zeros((DM_pushact.shape[0], dimtmp,dimtmp),
+                     dtype=complex)
+
+    for i in np.arange(DM_pushact.shape[0]):
+        Upup,dxpup = prop_fresnel(UDM1*cut_image(DM_pushact[i],dimtmp),
+                wavelength,-z_position,
+                corona_struct.diam_pup_in_m/2,corona_struct.prad)
+        pushact_inpup[i] = Upup
+    
+    return pushact_inpup
 
 ##############################################
 ##############################################
@@ -541,12 +600,18 @@ def createdifference(aberramp,
 
         input_wavefront = (corona_struct.entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase - 1 * probephase)))
-        Ikmoins = (np.abs(corona_struct.apodtodetector(input_wavefront))**2 /
+        Ikmoins = (np.abs(corona_struct.apodtodetector(input_wavefront,
+                        corona_struct.prop_apod2lyot,
+                        dim_im=corona_struct.dim_im,
+                        science_sampling=corona_struct.science_sampling))**2 /
                    maxPSF)
 
         input_wavefront = (corona_struct.entrancepupil * (1 + aberramp) *
                            np.exp(1j * (aberrphase + 1 * probephase)))
-        Ikplus = (np.abs(corona_struct.apodtodetector(input_wavefront))**2 /
+        Ikplus = (np.abs(corona_struct.apodtodetector(input_wavefront,
+                        corona_struct.prop_apod2lyot,
+                        dim_im=corona_struct.dim_im,
+                        science_sampling=corona_struct.science_sampling))**2 /
                   maxPSF)
 
         if noise == True:
@@ -595,7 +660,7 @@ def shift_phase_ramp(dim_im, a, b):
     return np.exp(-1j * xx) * np.exp(-1j * yy)
 
 
-def random_phase_map(dim_im, phaserms, rhoc, slope):
+def random_phase_map(dim_im, phaserms, rhoc, slope, pupil):
     """ --------------------------------------------------
     Create a random phase map, whose PSD decrease in f^(-slope)
     
@@ -609,7 +674,9 @@ def random_phase_map(dim_im, phaserms, rhoc, slope):
         See Borde et Traub 2006
     slope : float
         Slope of the PSD
-    
+    pupil : 2D array
+        pupil over which phase rms = phaserms
+
     Returns
     ------
     phase : 2D array
@@ -622,14 +689,17 @@ def random_phase_map(dim_im, phaserms, rhoc, slope):
     PSD0 = 1
     PSD = PSD0 / (1 + (rho / rhoc)**slope)
     sqrtPSD = np.sqrt(2 * PSD)
-    randomphase = 2 * np.pi * (np.random.rand(dim_im, dim_im) - 0.5)
-    product = np.fft.fftshift(sqrtPSD * np.exp(1j * randomphase))
-    phase = np.real(np.fft.ifft2(product))
-    phase = phase / np.std(phase) * phaserms
+#    randomphase = 2 * np.pi * (np.random.rand(dim_im, dim_im) - 0.5)
+#    product = np.fft.fftshift(sqrtPSD * np.exp(1j * randomphase))
+    randomphase = np.random.randn(dim_im, dim_im
+                ) + 1j*np.random.randn(dim_im, dim_im)
+    phase = np.real(np.fft.ifft2(np.fft.fftshift(sqrtPSD * randomphase)))
+    phase = phase - np.mean(phase[np.where(pupil)])
+    phase = phase / np.std(phase[np.where(pupil)]) * phaserms
     return phase
 
 
-def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
+def mft(pup, dimpup, dimft, nbres, xshift=0, yshift=0, inv=-1):
     """ --------------------------------------------------
     MFT  - Return the Matrix Direct Fourier transform (MFT) of pup
     (cf. Soummer et al. 2007, OSA)
@@ -638,8 +708,12 @@ def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
     ----------
     pup : 2D array (complex or real)
          Entrance pupil.
-         CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
-         where dimpup is the pup array dimension
+         CAUTION : pup has to be centered on (dim0/2+1,dim0/2+1)
+         where dim0 is the pup array dimension
+
+    dimpup : integer
+            Diameter of the support in pup (can differ from dim0)
+            Example : dimpup = diameter of the pupil in pixel
 
     dimft : integer
            Dimension of the output
@@ -671,20 +745,22 @@ def mft(pup, dimft, nbres, xshift=0, yshift=0, inv=-1):
     Initial revision (from MFT.pro written in IDL)
 
     -------------------------------------------------- """
-    dimpup = pup.shape[0]
+    dim0 = pup.shape[0]
+    nbres = nbres * dim0/dimpup
 
-    xx0 = np.arange(dimpup) / dimpup - 0.5
+    xx0 = np.arange(dim0) / dim0 - 0.5
     uu0 = ((np.arange(dimft) - xshift) / dimft - 0.5) * nbres
     uu1 = ((np.arange(dimft) - yshift) / dimft - 0.5) * nbres
 
     if inv == 1:
-        norm0 = (nbres / dimpup)**2
+        norm0 = 1
     else:
-        norm0 = ((1. * nbres)**2 / (1. * dimft)**2 / (1. * dimpup)**2)
+        norm0 = ((1. * nbres)**2 / (1. * dimft)**2 / (1. * dim0)**2)
 
     AA = np.exp(-inv * 1j * 2 * np.pi * np.outer(uu0, xx0))
     BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx0, uu1))
     result = norm0 * np.matmul(np.matmul(AA, pup), BB)
+
     return result
 
 
@@ -786,9 +862,9 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     if np.abs(fac) > 1.2:
         print('need to increase lam or z or 1/dx')
         return -1
-
+    
     # Fourier transform using MFT
-    result = mft(pup * H, dim, dim * fac, inv=sign)
+    result = mft(pup * H, 2*prad, dim, 2*prad * fac, inv=sign)
 
     # Fresnel factor that applies after Fourier transform
     result = result * np.exp(1j * sign * np.pi * rho**2 / dim * dxout / dx)
@@ -835,3 +911,43 @@ def create_binary_pupil(direct, filename, dim, prad):
         pupil = roundpupil(dim, prad)
 
     return pupil
+
+
+def cut_image(image, dimout):
+    """ --------------------------------------------------
+    crop or add zero to a 2D image
+
+    Parameters
+    ----------
+    image : 2D array (float, double or complex)
+            dim x dim array
+
+    dimout : int
+         dimension of the output array
+
+    Returns
+    ------
+    im_out : 2D array (float)
+            if dimout < dim : cropped image around pixel (dim/2,dim/2)
+            if dimout > dim : image around pixel (dim/2,dim/2) surrounded by 0
+
+    AUTHOR : Raphaël Galicher
+
+    REVISION HISTORY :
+    Revision 1.1  2021-02-10 Raphaël Galicher
+    Initial revision
+
+    -------------------------------------------------- """
+
+    if dimout <= image.shape[0]:
+        im_out = np.zeros((image.shape[0], image.shape[1]), dtype=image.dtype)
+        im_out = image[int((image.shape[0]-dimout)/2):
+                    int((image.shape[0]+dimout)/2),
+            int((image.shape[1]-dimout)/2):int((image.shape[1]+dimout)/2)]
+    if dimout > image.shape[0]:
+        im_out = np.zeros((dimout, dimout), dtype=image.dtype)
+        im_out[int((dimout-image.shape[0])/2):
+                int((dimout+image.shape[0])/2),
+                int((dimout-image.shape[1])/2):
+                int((dimout+image.shape[1])/2)] = image
+    return im_out

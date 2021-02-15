@@ -104,8 +104,7 @@ def createvectorprobes(wavelength, corona_struct, amplitude,
     SVD = np.zeros((2, dimimages, dimimages))
     ## Non coronagraphic PSF
     PSF = np.abs(
-                corona_struct.lyottodetector(corona_struct.entrancepupil *
-                                             corona_struct.entrancepupil*
+                corona_struct.lyottodetector(corona_struct.entrancepupil*
                                              corona_struct.lyot_pup))**2
     maxPSF = np.amax(PSF)
 
@@ -153,14 +152,11 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     WhichInPupil: 1D array, index of all the actuators located inside the pupil
     -------------------------------------------------- """
     WhichInPupil = []
-    dim_pushover2 = int(pushact.shape[2]/2)
-    dim_pupover2  = int(entrancepupil.shape[1]/2)
-    tmp_entrancepupil = entrancepupil[dim_pupover2-dim_pushover2:
-      dim_pupover2+dim_pushover2,dim_pupover2-dim_pushover2:
-      dim_pupover2+dim_pushover2]
+    tmp_entrancepupil = instr.cut_image(entrancepupil,pushact.shape[2])
+
     for i in np.arange(pushact.shape[0]):
         Psivector=pushact[i]
-        cut = cutinpupil * np.sum(Psivector)
+        cut = cutinpupil * np.sum(np.abs(Psivector))
         if np.sum(Psivector * tmp_entrancepupil) > cut:
             WhichInPupil.append(i)
 
@@ -229,18 +225,10 @@ def creatingMaskDH(dimimages,
     return maskDH
 
 
-def creatingCorrectionmatrix(amplitude_abb,
-                             phase_abb,
-                             corona_struct,
-                             dimimages,
-                             wavelength,
-                             amplitude,
-                             pushact,
-                             mask,
-                             Whichact,
-                             maxPSF,
-                             otherbasis=False,
-                             basisDM3=0):
+def creatingCorrectionmatrix(amplitude_abb, phase_abb, corona_struct,
+                             dimimages, wavelength, amplitude,
+                             pushact, mask, Whichact, maxPSF,
+                             otherbasis=False, basisDM3=0):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
     
