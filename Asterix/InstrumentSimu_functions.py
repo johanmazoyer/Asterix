@@ -224,21 +224,20 @@ class coronagraph:
 
         if noFPM:
             FPmsk = 1.
+            maskshifthalfpix = 1.
         else:
             FPmsk = self.FPmsk
+            maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
 
         input_wavefront_after_apod = input_wavefront * self.apod_pup
-
-        maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
-        maskshifthalfpix_inverse = shift_phase_ramp(len(input_wavefront), -0.5, -0.5)
-
+            
 
         corono_focal_plane = np.fft.fft2(
             np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
 
         # Focal plane to Lyot plane
         lyotplane_before_lyot_pad = np.fft.fftshift(
-            np.fft.ifft2(corono_focal_plane * FPmsk))* maskshifthalfpix_inverse
+            np.fft.ifft2(corono_focal_plane * FPmsk))
 
         # Lyot mask
         
