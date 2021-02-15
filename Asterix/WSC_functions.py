@@ -72,8 +72,8 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def createvectorprobes(wavelength, corona_struct, amplitude,
-                       posprobes, pushact, dimimages, cutsvd):
+def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
+                       pushact, dimimages, cutsvd):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
     
@@ -95,27 +95,24 @@ def createvectorprobes(wavelength, corona_struct, amplitude,
     -------------------------------------------------- """
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimimages, dimimages), dtype=complex)
-    dim_pupover2 = int(corona_struct.entrancepupil.shape[1]/2)
-    dim_pushover2 = int(pushact.shape[2]/2)
+    dim_pupover2 = int(corona_struct.entrancepupil.shape[1] / 2)
+    dim_pushover2 = int(pushact.shape[2] / 2)
     probephase = np.zeros((numprobe, corona_struct.entrancepupil.shape[1],
-     corona_struct.entrancepupil.shape[1]))
+                           corona_struct.entrancepupil.shape[1]))
     matrix = np.zeros((numprobe, 2))
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
-    ## Non coronagraphic PSF
-    PSF = np.abs(
-                corona_struct.lyottodetector(corona_struct.entrancepupil*
-                                             corona_struct.lyot_pup))**2
-    maxPSF = np.amax(PSF)
 
     k = 0
     for i in posprobes:
-        probephase[k,dim_pupover2-dim_pushover2:dim_pupover2+dim_pushover2,
-                    dim_pupover2-dim_pushover2:dim_pupover2+dim_pushover2
-                    ] = amplitude * 1e-9 * pushact[i] * 2*np.pi / wavelength
-        inputwavefront = corona_struct.entrancepupil * (1+1j*probephase[k])
+        probephase[k,
+                   dim_pupover2 - dim_pushover2:dim_pupover2 + dim_pushover2,
+                   dim_pupover2 - dim_pushover2:dim_pupover2 +
+                   dim_pushover2] = amplitude * 1e-9 * pushact[
+                       i] * 2 * np.pi / wavelength
+        inputwavefront = corona_struct.entrancepupil * (1 + 1j * probephase[k])
         deltapsikbis = (corona_struct.apodtodetector(inputwavefront) /
-                        np.sqrt(maxPSF))
+                        np.sqrt(corona_struct.maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -157,6 +154,7 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     for i in np.arange(pushact.shape[0]):
         Psivector=pushact[i]
         cut = cutinpupil * np.sum(np.abs(Psivector))
+
         if np.sum(Psivector * tmp_entrancepupil) > cut:
             WhichInPupil.append(i)
 
@@ -225,10 +223,18 @@ def creatingMaskDH(dimimages,
     return maskDH
 
 
-def creatingCorrectionmatrix(amplitude_abb, phase_abb, corona_struct,
-                             dimimages, wavelength, amplitude,
-                             pushact, mask, Whichact, maxPSF,
-                             otherbasis=False, basisDM3=0):
+
+def creatingCorrectionmatrix(amplitude_abb,
+                             phase_abb,
+                             corona_struct,
+                             dimimages,
+                             wavelength,
+                             amplitude,
+                             pushact,
+                             mask,
+                             Whichact,
+                             otherbasis=False,
+                             basisDM3=0):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
     
@@ -258,17 +264,17 @@ def creatingCorrectionmatrix(amplitude_abb, phase_abb, corona_struct,
         bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
                                          pushact.shape[2])
     else:
-        
-        dim_pupover2 = int(corona_struct.entrancepupil.shape[1]/2)
-        dim_pushover2 = int(pushact.shape[1]/2)
-        probephase = np.zeros((pushact.shape[0],
-         corona_struct.entrancepupil.shape[1],
-         corona_struct.entrancepupil.shape[1]))
+
+        dim_pupover2 = int(corona_struct.entrancepupil.shape[1] / 2)
+        dim_pushover2 = int(pushact.shape[1] / 2)
+        probephase = np.zeros(
+            (pushact.shape[0], corona_struct.entrancepupil.shape[1],
+             corona_struct.entrancepupil.shape[1]))
         for k in range(pushact.shape[0]):
-            probephase[k,dim_pupover2-dim_pushover2:dim_pupover2+dim_pushover2,
-                    dim_pupover2-dim_pushover2:dim_pupover2+dim_pushover2
-                    ] = pushact[k]
-    
+            probephase[k, dim_pupover2 - dim_pushover2:dim_pupover2 +
+                       dim_pushover2, dim_pupover2 -
+                       dim_pushover2:dim_pupover2 + dim_pushover2] = pushact[k]
+
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")
@@ -277,11 +283,11 @@ def creatingCorrectionmatrix(amplitude_abb, phase_abb, corona_struct,
     for i in range(nb_fct):
         if i % 100 == 0:
             print(i)
-        Psivector = amplitude * bas_fct[i]*2 * np.pi * 1e-9 / wavelength
-        inputwavefront = corona_struct.entrancepupil * (1 + amplitude_abb
-            ) * np.exp(1j * phase_abb) * 1j * Psivector
+        Psivector = amplitude * bas_fct[i] * 2 * np.pi * 1e-9 / wavelength
+        inputwavefront = corona_struct.entrancepupil * (
+            1 + amplitude_abb) * np.exp(1j * phase_abb) * 1j * Psivector
         Gvector = (corona_struct.apodtodetector(inputwavefront) /
-                   np.sqrt(maxPSF))
+                   np.sqrt(corona_struct.maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()
