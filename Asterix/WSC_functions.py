@@ -95,8 +95,6 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
     -------------------------------------------------- """
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimimages, dimimages), dtype=complex)
-    dim_pupover2 = int(corona_struct.entrancepupil.shape[1] / 2)
-    dim_pushover2 = int(pushact.shape[2] / 2)
     probephase = np.zeros((numprobe, corona_struct.entrancepupil.shape[1],
                            corona_struct.entrancepupil.shape[1]))
     matrix = np.zeros((numprobe, 2))
@@ -105,11 +103,9 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
 
     k = 0
     for i in posprobes:
-        probephase[k,
-                   dim_pupover2 - dim_pushover2:dim_pupover2 + dim_pushover2,
-                   dim_pupover2 - dim_pushover2:dim_pupover2 +
-                   dim_pushover2] = amplitude * 1e-9 * pushact[
-                       i] * 2 * np.pi / wavelength
+        tmp = instr.cut_image(pushact[i],corona_struct.entrancepupil.shape[1])
+        probephase[k]=tmp*amplitude * 1e-9 *2 * np.pi / wavelength
+
         inputwavefront = corona_struct.entrancepupil * (1 + 1j * probephase[k])
         deltapsikbis = (corona_struct.apodtodetector(inputwavefront) /
                         np.sqrt(corona_struct.maxPSF))
@@ -265,16 +261,12 @@ def creatingCorrectionmatrix(amplitude_abb,
                                          pushact.shape[2])
     else:
 
-        dim_pupover2 = int(corona_struct.entrancepupil.shape[1] / 2)
-        dim_pushover2 = int(pushact.shape[1] / 2)
         probephase = np.zeros(
             (pushact.shape[0], corona_struct.entrancepupil.shape[1],
              corona_struct.entrancepupil.shape[1]))
         for k in range(pushact.shape[0]):
-            probephase[k, dim_pupover2 - dim_pushover2:dim_pupover2 +
-                       dim_pushover2, dim_pupover2 -
-                       dim_pushover2:dim_pupover2 + dim_pushover2] = pushact[k]
-
+            probephase[k]=instr.cut_image(
+                pushact[k],corona_struct.entrancepupil.shape[1])
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")

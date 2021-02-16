@@ -311,10 +311,8 @@ class coronagraph:
                 # in this case, the Lyot pupil is padded, lets crop and propagate
                 # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
                 # For the moment, only in between 4 pixels.
-                Lyot_plane_after_Lyot = proc.cropimage(Lyot_plane_after_Lyot,
-                                                       self.dim_im / 2,
-                                                       self.dim_im / 2,
-                                                       2 * self.lyotrad)
+                Lyot_plane_after_Lyot = cut_image(
+                    Lyot_plane_after_Lyot,self.lyotrad*2)
 
             science_focal_plane = mft(Lyot_plane_after_Lyot,self.lyotrad*2,
                                       self.dim_im,
