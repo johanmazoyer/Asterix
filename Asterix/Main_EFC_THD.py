@@ -233,7 +233,7 @@ def create_interaction_matrices(parameter_file,
         visuPWMap = ("MapEigenvaluesPW" + "_" + "_".join(map(str, posprobes)) +
                      "act_" + str(int(amplitudePW)) + "nm_dim"+
                       str(corona_struct.dim_im)+'_raypup'+str(corona_struct.prad))
-       if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
+        if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
             print("Recording " + visuPWMap + " ...")
             fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
 
@@ -331,7 +331,7 @@ def create_interaction_matrices(parameter_file,
                                 "_".join(map(str, choosepix)) + "pix_" +
                                 str(amplitudeEFC) + "nm_dim"+
                       str(corona_struct.dim_im)+'_raypup'+str(corona_struct.prad))
-       else:
+        else:
             fileDirectMatrix = ("DirectMatrix_circle_" +
                                 "_".join(map(str, circ_rad)) + "pix_" +
                                 str(circ_side) + '_' + str(circ_offset) +
@@ -341,8 +341,7 @@ def create_interaction_matrices(parameter_file,
         if DM1_active == True:
             fileDirectMatrix = fileDirectMatrix + "_2DM"
         
-       if os.path.exists(intermatrix_dir + fileDirectMatrix +
-                          ".fits") == True:
+        if os.path.exists(intermatrix_dir + fileDirectMatrix +".fits") == True:
             print("The matrix " + fileDirectMatrix + " already exist")
             Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix +
                                    ".fits")
@@ -415,7 +414,7 @@ def create_interaction_matrices(parameter_file,
                         "_".join(map(str, choosepix)) + "pix_" +
                         str(amplitudeEFC) + "nm_dim"+
                       str(corona_struct.dim_im)+'_raypup'+str(corona_struct.prad)+".png")
-       else:
+        else:
             plt.savefig(intermatrix_dir + "invertSVDEFC_circle_" +
                         "_".join(map(str, circ_rad)) + "pix_" +
                         str(circ_side) + '_' + str(circ_offset) + 'pix_' +
@@ -486,7 +485,6 @@ def correctionLoop(parameter_file,
     #Lambda over D in pixels
     wavelength = modelconfig["wavelength"]
     science_sampling = modelconfig["science_sampling"]
-    DH_sampling = modelconfig["DH_sampling"] 
 
     ##################
     ##################
@@ -631,7 +629,7 @@ def correctionLoop(parameter_file,
                   "_".join(map(str, posprobes)) + "act_" +
                   str(int(amplitudePW)) + "nm_" + str(int(cut)) + "cutsvd_dim"+
                       str(corona_struct.dim_im)+'_raypup'+str(corona_struct.prad))
-       if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
+        if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
             vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
         else:
             raise Exception("Please create PW matrix before correction")

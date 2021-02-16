@@ -242,7 +242,7 @@ class coronagraph:
         input_wavefront_after_apod = input_wavefront*self.apod_pup
         if noFPM:
             FPmsk = 1.
-        else
+        else:
             FPmsk = self.FPmsk
           
         if self.prop_apod2lyot == "fft":
@@ -506,7 +506,7 @@ def creatingpushact(model_dir,diam_pup_in_m,prad,
             0:len(resizeactshape),0:len(resizeactshape)
             ] = resizeactshape/ np.amax(resizeactshape)
         xycenttmp=len(resizeactshape)/2
-   else:
+    else:
         actshapeinpupil = resizeactshape[
             0:dim_pushact, 0:dim_pushact] / np.amax(resizeactshape)
         xycenttmp = prad
@@ -711,7 +711,7 @@ def shift_phase_ramp(dim_im, a, b):
 
 
 def random_phase_map(dim_im, phaserms, rhoc, slope, pupil):
-   """ --------------------------------------------------
+    """ --------------------------------------------------
     Create a random phase map, whose PSD decrease in f^(-slope)
     
     Parameters
@@ -732,8 +732,8 @@ def random_phase_map(dim_im, phaserms, rhoc, slope, pupil):
     phase : 2D array
         Static random phase map (or OPD) generated 
     -------------------------------------------------- """
-    dim_pup = 2 * int(prad)
-    # dim_pup = dim_im # if we un comment, this will be previous version 
+
+    dim_pup = pupil.shape[1]
     xx, yy = np.meshgrid(
         np.arange(dim_pup) - dim_pup / 2,
         np.arange(dim_pup) - dim_pup / 2)
