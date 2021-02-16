@@ -260,7 +260,6 @@ def creatingCorrectionmatrix(amplitude_abb,
         bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
                                          pushact.shape[2])
     else:
-
         probephase = np.zeros(
             (pushact.shape[0], corona_struct.entrancepupil.shape[1],
              corona_struct.entrancepupil.shape[1]))
