@@ -102,7 +102,7 @@ class coronagraph:
                                  filename_instr_lyot, dim_im, lyotrad)
         else:
             self.entrancepupil = create_binary_pupil(model_dir,
-                                filename_instr_pup,int(prad*1.1)*2, prad)
+                                filename_instr_pup,int(prad*1.25)*2, prad)
 
 #            self.apod_pup = create_binary_pupil(model_dir,
 #                                filename_instr_pup, int(prad*1.1)*2, prad)
@@ -407,20 +407,20 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     return simu_grid
 
 
-def creatingpushact(model_dir,diam_pup_in_m,prad,
-                      DMconfig,which_DM=3,xerror=0,yerror=0,
+def creatingpushact(model_dir,diam_pup_in_m,diam_pup_in_pix,
+                      DMconfig,dim_array,
+                      which_DM=3,xerror=0,yerror=0,
                       angerror=0,gausserror=0):
     """ --------------------------------------------------
     OPD map induced in the DM plane for each actuator
 
     Parameters
     ----------
-    model_dir :
-    xy_ActuN : center of the actuator #__ActuN in pixels
-    pitchDM : pitch of the DM in meter
-    filename_ActuN : filename of estimated phase when poking actuator #ActuN
-    filename_grid_actu : filename of the grid of actuator positions
-    filename_actu_infl_fct : filename of the actuator influence function
+    model_dir : directory where the influence function of the DM is recorded
+    diam_pup_in_m : diameter of the pupil in meter
+    diam_pup_in_pix : radius of the pupil in pixels
+    DMconfig : structure with all information on DMs
+    dim_array : dimension of the output array
 
     Error on the model of the DM
         xerror : x-direction translation in pixel
@@ -450,21 +450,17 @@ def creatingpushact(model_dir,diam_pup_in_m,prad,
     measured_grid = fits.getdata(model_dir + filename_grid_actu)
     #Ratio: pupil radius in the measured position over
     # pupil radius in the numerical simulation
-    sampling_simu_over_meaasured = prad / fits.getheader(
+    sampling_simu_over_meaasured = diam_pup_in_pix/2 / fits.getheader(
         model_dir + filename_grid_actu)['PRAD']
-
-    #dimension of the pushact array = size of the pupil
-    # plus 20% of margin in case the pupil is smaller than the DM
-    dim_pushact = int(prad*1.1)*2
 
     if filename_ActuN != "":
         im_ActuN = fits.getdata(model_dir + filename_ActuN)
-        im_ActuN_dim = np.zeros((dim_pushact, dim_pushact))
-        im_ActuN_dim[int(dim_pushact / 2 -
-                         len(im_ActuN) / 2):int(dim_pushact / 2 +
+        im_ActuN_dim = np.zeros((dim_array, dim_array))
+        im_ActuN_dim[int(dim_array / 2 -
+                         len(im_ActuN) / 2):int(dim_array / 2 +
                                                 len(im_ActuN) / 2),
-                     int(dim_pushact / 2 -
-                         len(im_ActuN) / 2):int(dim_pushact / 2 +
+                     int(dim_array / 2 -
+                         len(im_ActuN) / 2):int(dim_array / 2 +
                                                 len(im_ActuN) / 2)] = im_ActuN
         ytmp, xtmp = np.unravel_index(
             np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
@@ -483,7 +479,7 @@ def creatingpushact(model_dir,diam_pup_in_m,prad,
     # Scaling the influence function to the desired dimension
     # for numerical simulation
     resizeactshape = skimage.transform.rescale(
-        actshape,2 * prad / diam_pup_in_m * pitchDM / pitch_actshape,
+        actshape, diam_pup_in_pix / diam_pup_in_m * pitchDM / pitch_actshape,
                                              order=1,
                                                preserve_range=True,
                                                anti_aliasing=True,
@@ -498,25 +494,25 @@ def creatingpushact(model_dir,diam_pup_in_m,prad,
                                             (xycent - dx, xycent - dy))
 
     # Put the centered influence function inside an array (2*prad x 2*prad)
-    actshapeinpupil = np.zeros((dim_pushact, dim_pushact))
-    if len(resizeactshape) < dim_pushact:
+    actshapeinpupil = np.zeros((dim_array, dim_array))
+    if len(resizeactshape) < dim_array:
         actshapeinpupil[
             0:len(resizeactshape),0:len(resizeactshape)
             ] = resizeactshape/ np.amax(resizeactshape)
         xycenttmp=len(resizeactshape)/2
     else:
         actshapeinpupil = resizeactshape[
-            0:dim_pushact, 0:dim_pushact] / np.amax(resizeactshape)
-        xycenttmp = prad
+            0:dim_array, 0:dim_array] / np.amax(resizeactshape)
+        xycenttmp = dim_array/2
 
     # Fill an array with the influence functions of all actuators
-    pushact = np.zeros((simu_grid.shape[1], dim_pushact, dim_pushact))
+    pushact = np.zeros((simu_grid.shape[1], dim_array, dim_array))
     for i in np.arange(pushact.shape[0]):
         if gausserror == 0:
             Psivector = nd.interpolation.shift(
                 actshapeinpupil,
-                (simu_grid[1, i] + dim_pushact / 2 - xycenttmp + yerror,
-                 simu_grid[0, i] + dim_pushact / 2 - xycenttmp + xerror))
+                (simu_grid[1, i] + dim_array / 2 - xycenttmp + yerror,
+                 simu_grid[0, i] + dim_array / 2 - xycenttmp + xerror))
 
             # Add an error on the orientation of the grid
             if angerror != 0:
@@ -524,17 +520,17 @@ def creatingpushact(model_dir,diam_pup_in_m,prad,
                                       angerror,
                                       order=5,
                                       cval=0,
-                                      reshape=False)[0:dim_pushact,
-                                                     0:dim_pushact]
+                                      reshape=False)[0:dim_array,
+                                                     0:dim_array]
         else:
             # Add an error on the sizes of the influence functions
             Psivector = nd.interpolation.shift(
                 actshapeinpupil,
-                (simu_grid[1, i] + dim_pushact / 2 - xycenttmp,
-                 simu_grid[0, i] + dim_pushact / 2 - xycenttmp))
+                (simu_grid[1, i] + dim_array / 2 - xycenttmp,
+                 simu_grid[0, i] + dim_array / 2 - xycenttmp))
 
             xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
-            x, y = np.mgrid[0:dim_pushact, 0:dim_pushact]
+            x, y = np.mgrid[0:dim_array, 0:dim_array]
             xy = (x, y)
             Psivector = proc.twoD_Gaussian(xy,
                                            1,
@@ -570,10 +566,11 @@ def creatingpushact_inpup(DM_pushact,wavelength, corona_struct, z_position):
     pushact_inpup : Map of the complex phase induced in pupil plane
     -------------------------------------------------- """
     # Size of the array (diameter of the pupil * 125%)
-    dimtmp = int(corona_struct.prad*2*1.25)
-    tmp_entrance_pupil = cut_image(corona_struct.entrancepupil,dimtmp)
-
-    UDM1,dxout = prop_fresnel(tmp_entrance_pupil,wavelength,z_position,
+    # dimtmp = int(corona_struct.prad*2*1.25)
+    
+    dimtmp = corona_struct.entrancepupil.shape[1]
+    UDM1,dxout = prop_fresnel(corona_struct.entrancepupil,
+                    wavelength,z_position,
                     corona_struct.diam_pup_in_m/2,corona_struct.prad)
     pushact_inpup = np.zeros((DM_pushact.shape[0], dimtmp,dimtmp),
                      dtype=complex)
@@ -590,15 +587,11 @@ def creatingpushact_inpup(DM_pushact,wavelength, corona_struct, z_position):
 ##############################################
 ### Difference of images for Pair-Wise probing
 
-
-def createdifference(aberramp,
-                     aberrphase,
+def createdifference(input_wavefront,
                      posprobes,
                      pushact,
-                     amplitude,
                      corona_struct,
                      dimimages,
-                     wavelength,
                      noise=False,
                      numphot=1e30):
     """ --------------------------------------------------
@@ -607,21 +600,16 @@ def createdifference(aberramp,
     
     Parameters
     ----------
-    aberramp : 0 or 2D-array 
-        Upstream amplitude aberration
-    aberrphase : 0 or 2D-array 
-        Upstream phase aberration
+    input_wavefront : 2D-array (complex)
+        Input wavefront in pupil plane
     posprobes : 1D-array
         Index of the actuators to push and pull for pair-wise probing
     pushact : 3D-array
-        OPD created by the pokes of all actuators in the DM.
-    amplitude : float
-        amplitude of the actuator pokes for pair(wise probing in nm
+        OPD created by the pokes of all actuators in the DM
+        Unit = phase with the amplitude of the wished probe
     corona_struct: coronagraph structure
     dimimages : int
         Size of the output image after resampling in pixels
-    wavelength : float
-        Wavelength of the  incoming flux in meter
     perfect_coro : bool, optional
         Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
     noise : boolean, optional
@@ -640,27 +628,19 @@ def createdifference(aberramp,
 
     contrast_to_photons = (np.sum(corona_struct.entrancepupil) /
                            np.sum(corona_struct.lyot_pup) * numphot *
-                           corona_struct.maxPSF / corona_struct.PSF)
+                           corona_struct.maxPSF / corona_struct.sumPSF)
 
-    dim_pup = corona_struct.apod_pup.shape[1]
-    dimpush = pushact.shape[1]
-    probephase = np.zeros((dim_pup, dim_pup))
+    dim_pup = corona_struct.entrancepupil.shape[1]
 
     k = 0
     for i in posprobes:
-        probephase[dim_pup / 2 - dimpush / 2:dim_pup / 2 + dimpush / 2,
-                   dim_pup / 2 - dimpush / 2:dim_pup / 2 + dimpush /
-                   2] = amplitude * 1e-9 * pushact[i] * 2 * np.pi / wavelength
+        probephase = cut_image(pushact[i],dim_pup)
 
-        input_wavefront = (corona_struct.entrancepupil * (1 + aberramp) *
-                           np.exp(1j * (aberrphase - 1 * probephase)))
-        Ikmoins = (np.abs(corona_struct.apodtodetector(input_wavefront))**2 /
-                   corona_struct.maxPSF)
+        Ikmoins = np.abs(corona_struct.apodtodetector(input_wavefront*
+                        np.exp(-1j * probephase)))**2 / corona_struct.maxPSF
 
-        input_wavefront = (corona_struct.entrancepupil * (1 + aberramp) *
-                           np.exp(1j * (aberrphase + 1 * probephase)))
-        Ikplus = (np.abs(corona_struct.apodtodetector(input_wavefront))**2 /
-                  corona_struct.maxPSF)
+        Ikplus = np.abs(corona_struct.apodtodetector(input_wavefront*
+                        np.exp(1j * probephase)))**2 /corona_struct.maxPSF
 
         if noise == True:
             Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
@@ -1000,3 +980,16 @@ def cut_image(image, dimout):
                 int((dimout-image.shape[1])/2):
                 int((dimout+image.shape[1])/2)] = image
     return im_out
+
+def prop_pup_DM1_DM3(pupil,phase_DM1,wavelength,DM1_z_position,
+                        rad_pup_in_m,rad_pup_in_pixel):
+
+    # Propagation in DM1 plane
+    UDM1,dxout = prop_fresnel(pupil,wavelength,
+                            DM1_z_position,rad_pup_in_m,
+                            rad_pup_in_pixel)
+    # Add DM1 phase and propagate to next pupil plane (DM3 plane)
+    UDM3,dxpup = prop_fresnel(UDM1*np.exp(1j*phase_DM1),
+                            wavelength,-DM1_z_position,
+                            rad_pup_in_m,rad_pup_in_pixel)
+    return UDM3
