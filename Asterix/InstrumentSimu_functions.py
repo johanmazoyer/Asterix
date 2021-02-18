@@ -93,30 +93,21 @@ class coronagraph:
         if self.prop_apod2lyot == 'fft':
             self.entrancepupil = create_binary_pupil(model_dir,
                                 filename_instr_pup,dim_im, prad)
-
-#            self.apod_pup = create_binary_pupil(model_dir,
-#                                filename_instr_pup, dim_im, prad)
             self.apod_pup = 1
-
             self.lyot_pup = create_binary_pupil(model_dir,
                                  filename_instr_lyot, dim_im, lyotrad)
         else:
             self.entrancepupil = create_binary_pupil(model_dir,
                                 filename_instr_pup,int(prad*1.25)*2, prad)
-
-#            self.apod_pup = create_binary_pupil(model_dir,
-#                                filename_instr_pup, int(prad*1.1)*2, prad)
             self.apod_pup = 1
-
-
             self.lyot_pup = create_binary_pupil(model_dir,
-                                 filename_instr_lyot, int(prad*1.1)*2, lyotrad)
+                                 filename_instr_lyot, self.entrancepupil.shape[1]
+                                 , lyotrad)
         
         if self.perfect_coro:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
             # measure the Lyot pupil that will be removed after
             self.perfect_Lyot_pupil = 0
-
             self.perfect_Lyot_pupil = self.apodtolyot(self.entrancepupil)
 
         # Measure the PSF and store max and Sum
@@ -124,15 +115,15 @@ class coronagraph:
 
     def max_sum_PSF(self):
         """ --------------------------------------------------
-        Measure the non-coronagraphic PSF with no focal plane mask and return max and sum
+        Measure the non-coronagraphic PSF with no focal plane mask
+        and return max and sum
+        
         Returns
         ------
         np.amax(PSF): max of the non-coronagraphic PSF
         np.sum(PSF): sum of the non-coronagraphic PSF
         -------------------------------------------------- """
         PSF = np.abs(self.apodtodetector(self.entrancepupil, noFPM=True))**2
-        # useful.quickfits(PSF, name='fftpsf')
-        # asd
         return np.amax(PSF), np.sum(PSF)
 
     def FQPM(self):
@@ -145,29 +136,43 @@ class coronagraph:
         FQPM : 2D array giving the complex transmission of the
             FQPM mask, centered at the four edges of the image
         -------------------------------------------------- """
-        phase = np.zeros((self.dim_im, self.dim_im))
-        for i in np.arange(self.dim_im):
-            for j in np.arange(self.dim_im):
-                if i < self.dim_im / 2 and j < self.dim_im / 2:
-                    phase[i, j] = np.pi + self.err_fqpm
-                if i >= self.dim_im / 2 and j >= self.dim_im / 2:
-                    phase[i, j] = np.pi + self.err_fqpm
+        xx, yy = np.meshgrid(
+            np.arange(self.dim_im) - (self.dim_im) / 2,
+            np.arange(self.dim_im) - (self.dim_im) / 2)
+
+        tmp1 = xx*0
+        tmp1[:]=0
+        tmp1[np.where(xx<0)] = 1
+        tmp2 = xx*0
+        tmp2[:]=0
+        tmp2[np.where(yy>=0)] = 1
+        phase = tmp1-tmp2
+        phase[np.where(phase!=0)] = np.pi + self.err_fqpm
+            
         return np.exp(1j * phase)
 
     def KnifeEdgeCoro(self):
         """ --------------------------------------------------
         Create a Knife edge coronagraph of size (dim_im,dim_im)
     
-        
         Returns
         ------
         shift(Knife) : 2D array
             Knife edge coronagraph, located at the four edges of the image
         -------------------------------------------------- """
 
-        position = self.coro_position  # Can be 'left', 'right', 'top' or 'bottom' to define the orientation of the coronagraph
-        shiftinldp = self.knife_coro_offset  #  Position of the edge, with respect to the image center, in number of pixels per resolution element
-        ld_p = self.science_sampling * self.diam_lyot_in_m / self.diam_pup_in_m  #  Number of pixels per resolution element
+        # Can be 'left', 'right', 'top' or 'bottom'
+        # to define the orientation of the coronagraph
+        position = self.coro_position
+        #  Position of the edge, with respect to the image center,
+        #  in number of pixels per resolution element
+        shiftinldp = self.knife_coro_offset
+        #  Number of pixels per resolution element  
+        ld_p = self.science_sampling * self.diam_lyot_in_m / self.diam_pup_in_m  
+
+        # xx, yy = np.meshgrid(
+        #     np.arange(self.dim_im) - (self.dim_im) / 2,
+        #     np.arange(self.dim_im) - (self.dim_im) / 2)
 
         Knife = np.zeros((self.dim_im, self.dim_im))
         for i in np.arange(self.dim_im):
@@ -262,27 +267,28 @@ class coronagraph:
             # Lyot stop
             lyotplane_after_lyot = np.fft.fftshift(lyotplane_before_lyot
                                     ) * self.lyot_pup
+
         if self.prop_apod2lyot == "mft":
             #Apod plane to focal plane
             corono_focal_plane = mft(input_wavefront_after_apod,
                         self.prad*2,self.dim_im,
                         self.dim_im/self.science_sampling,
                         xshift=-.5,yshift=-.5,inv=1)
-
+            
             # Focal plane to Lyot plane
             lyotplane_before_lyot = mft(corono_focal_plane * FPmsk,
                             self.dim_im,2*self.prad,
                             self.dim_im/self.science_sampling,inv=-1)
 
-
+            # Lyot stop mask
             lyot_pup = cut_image(self.lyot_pup,lyotplane_before_lyot.shape[1])
 
-            # Lyot stop
+            # Field after filtering by Lyot stop
             lyotplane_after_lyot = lyotplane_before_lyot * lyot_pup
 
         if (self.perfect_coro) & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
-        
+
         return lyotplane_after_lyot
 
 
@@ -305,41 +311,13 @@ class coronagraph:
         science_focal_plane : 2D array, 
             Focal plane electric field in the focal plane
         -------------------------------------------------- """
+        if self.prop_apod2lyot == 'fft':
+            Lyot_plane_after_Lyot = cut_image(
+                Lyot_plane_after_Lyot,self.lyotrad*2)
 
-        if self.prop_lyot2science == "mft":
-            if self.prop_apod2lyot == 'fft':
-                # in this case, the Lyot pupil is padded, lets crop and propagate
-                # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
-                # For the moment, only in between 4 pixels.
-                Lyot_plane_after_Lyot = cut_image(
-                    Lyot_plane_after_Lyot,self.lyotrad*2)
+        science_focal_plane = mft(Lyot_plane_after_Lyot,self.lyotrad*2,
+            self.dim_im, self.dim_im / self.science_sampling, inv=1)
 
-            science_focal_plane = mft(Lyot_plane_after_Lyot,self.lyotrad*2,
-                                      self.dim_im,
-                                      self.dim_im / self.science_sampling,
-                                      inv=1)
-
-        elif self.prop_lyot2science == "fft":
-            if self.prop_apod2lyot == 'mft':
-                # in this case, the Lyot pupil is not padded, lets pad it before propagate
-                # TODO here, be careful if the pupil is center between 4 pixels or on a pixel.
-                # For the moment, only in between 4 pixels.
-                # TODO To test, this is a rare case but not sure it works...
-                ze_return = np.zeros((self.dim_im, self.dim_im))
-                dim_lyot = Lyot_plane_after_Lyot.shape
-                ze_return[self.dim_im / 2 - dim_lyot / 2:self.dim_im / 2 +
-                          dim_lyot / 2 + 1,
-                          self.dim_im / 2 - dim_lyot / 2:self.dim_im / 2 +
-                          dim_lyot / 2 + 1] = Lyot_plane_after_Lyot
-                Lyot_plane_after_Lyot = ze_return
-
-            science_focal_plane = np.fft.fftshift(
-                np.fft.fft2(np.fft.fftshift(Lyot_plane_after_Lyot)))
-   
-        else:
-            raise Exception(
-                propagation_method +
-                " is not a valid Lyot to Science plane propagation method")
         return science_focal_plane
 
 
