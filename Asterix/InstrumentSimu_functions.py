@@ -161,33 +161,28 @@ class coronagraph:
             Knife edge coronagraph, located at the four edges of the image
         -------------------------------------------------- """
 
-        # Can be 'left', 'right', 'top' or 'bottom'
+        # self.coro_position can be 'left', 'right', 'top' or 'bottom'
         # to define the orientation of the coronagraph
-        position = self.coro_position
-        #  Position of the edge, with respect to the image center,
-        #  in number of pixels per resolution element
-        shiftinldp = self.knife_coro_offset
+        
         #  Number of pixels per resolution element  
         ld_p = self.science_sampling * self.diam_lyot_in_m / self.diam_pup_in_m  
 
-        # xx, yy = np.meshgrid(
-        #     np.arange(self.dim_im) - (self.dim_im) / 2,
-        #     np.arange(self.dim_im) - (self.dim_im) / 2)
+        xx, yy = np.meshgrid(np.arange(self.dim_im),np.arange(self.dim_im))
 
         Knife = np.zeros((self.dim_im, self.dim_im))
-        for i in np.arange(self.dim_im):
-            if position == "left":
-                if i > self.dim_im / 2 + shiftinldp * ld_p:
-                    Knife[:, i] = 1
-            if position == "right":
-                if i < self.dim_im / 2 - shiftinldp * ld_p:
-                    Knife[:, i] = 1
-            if position == "top":
-                if i > self.dim_im / 2 + shiftinldp * ld_p:
-                    Knife[i, :] = 1
-            if position == "bottom":
-                if i < self.dim_im / 2 - shiftinldp * ld_p:
-                    Knife[i, :] = 1
+        if self.coro_position == "left":
+            Knife[np.where(xx> (self.dim_im / 2 +
+                            self.knife_coro_offset * ld_p))]=1
+        if self.coro_position == "right":
+            Knife[np.where(xx< (self.dim_im / 2 -
+                            self.knife_coro_offset * ld_p))]=1
+        if self.coro_position == "top":
+            Knife[np.where(yy> (self.dim_im / 2 +
+                            self.knife_coro_offset * ld_p))]=1
+        if self.coro_position == "bottom":
+            Knife[np.where(yy< (self.dim_im / 2 -
+                            self.knife_coro_offset * ld_p))]=1
+        
         return np.fft.fftshift(Knife)
 
     ##############################################
@@ -259,7 +254,7 @@ class coronagraph:
 
             #Apod plane to focal plane
             corono_focal_plane = np.fft.fft2(
-            np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
+                np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * FPmsk)

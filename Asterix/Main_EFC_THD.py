@@ -132,13 +132,14 @@ def create_interaction_matrices(parameter_file,
 
     # Directories for saving data
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
-                       corona_struct.corona_type + "/" +
+                       corona_struct.corona_type + "/")
+    if corona_struct.corona_type == 'knife':
+        intermatrix_dir = intermatrix_dir + corona_struct.coro_position +"/"
+    intermatrix_dir = (intermatrix_dir +
                        str(int(wavelength * 1e9)) + "nm/p" +
-                       str(round(corona_struct.diam_pup_in_m * 1e3, 2)) +
-                       "_l" +
-                       str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) +
-                       "/ldp_" + str(round(science_sampling, 2)) + "/basis_" +
-                       basistr + "/")
+                       str(round(corona_struct.diam_pup_in_m * 1e3, 2)) + "_l" +
+                       str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
+                       str(round(science_sampling, 2)) + "/basis_" + basistr + "/")
 
     if not os.path.exists(intermatrix_dir):
         print("Creating directory " + intermatrix_dir + " ...")
@@ -616,12 +617,14 @@ def correctionLoop(parameter_file,
         DM3_basis = 0
 
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
-                       corona_struct.corona_type
-                     + "/" + str(int(wavelength * 1e9)) + "nm/p" +
+                       corona_struct.corona_type + "/")
+    if corona_struct.corona_type == 'knife':
+        intermatrix_dir = intermatrix_dir + corona_struct.coro_position +"/"
+    intermatrix_dir = (intermatrix_dir +
+                       str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(corona_struct.diam_pup_in_m * 1e3, 2)) + "_l" +
                        str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
-                       str(round(science_sampling, 2)) + "/basis_" + basistr +
-                       "/")
+                       str(round(science_sampling, 2)) + "/basis_" + basistr + "/")
     
     if corona_struct.prop_apod2lyot == "mft":
         tmp_nam = "_dimpuparray"+str(
