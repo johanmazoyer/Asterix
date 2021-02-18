@@ -288,7 +288,8 @@ def create_interaction_matrices(parameter_file,
                          ".fits", DM1_WhichInPupil)
 
     # DM3
-    DM3_fileWhichInPup = "DM3_Whichactfor" + str(MinimumSurfaceRatioInThePupil)+'_raypup'+str(corona_struct.prad)
+    DM3_fileWhichInPup = "DM3_Whichactfor" + str(
+        MinimumSurfaceRatioInThePupil)+'_raypup'+str(corona_struct.prad)
 
     if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
         print("The matrix " + DM3_fileWhichInPup + " already exist")
@@ -773,38 +774,8 @@ def correctionLoop(parameter_file,
         phase_up = 0
 
     if set_amplitude_abb == True:
-        #File with amplitude aberrations in amplitude (not intensity)
-        # centered on the pixel dim/2+1, dim/2 +1 with dim = 2*[dim/2]
-        # diameter of the pupil is 148 pixels in this image
-        amp = np.fft.fftshift(fits.getdata(model_dir + amplitude_abb +
-                                           ".fits"))
-
-        #Rescale to the pupil size
-        amp1 = skimage.transform.rescale(amp,
-                                         2 * corona_struct.prad / 148 * 1.03,
-                                         preserve_range=True,
-                                         anti_aliasing=True,
-                                         multichannel=False)
-        # Shift to center between 4 pixels
-        #tmp_phase_ramp=np.fft.fftshift(instr.shift_phase_ramp(amp1.shape[0],-.5,-.5))
-        #bidouille entre le grandissement 1.03 à la ligne au-dessus et le -1,-1 au lieu
-        #de -.5,-.5 C'est pour éviter un écran d'amplitude juste plus petit que la pupille
-        tmp_phase_ramp = np.fft.fftshift(
-            instr.shift_phase_ramp(amp1.shape[0], -1., -1.))
-        amp1 = np.real(
-            np.fft.fftshift(np.fft.fft2(np.fft.ifft2(amp1) * tmp_phase_ramp)))
-
-        # Create the array with same size as the pupil
-
-        ampfinal = instr.cut_image(amp1,corona_struct.entrancepupil.shape[1])
-   
-        #Set the average to 0 inside entrancepupil
-        ampfinal = (ampfinal / np.mean(ampfinal[np.where(
-                    corona_struct.entrancepupil != 0)])
-                     - np.ones((corona_struct.entrancepupil.shape[1],
-                     corona_struct.entrancepupil.shape[1]))
-                     ) * corona_struct.entrancepupil
-
+        ampfinal = instr.scale_amplitude_abb(model_dir + amplitude_abb + ".fits",
+                corona_struct.prad,corona_struct.entrancepupil)
     else:
         ampfinal = 0
 
