@@ -349,15 +349,18 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
 def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
                      WhichInPupil, nbDMactu):
     """ --------------------------------------------------
-    Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
+    Voltage to apply on the deformable mirror in order to minimize
+    the speckle intensity in the dark hole region
     
     Parameters:
     ----------
     mask: Binary mask corresponding to the dark hole region
     Result_Estimate: 2D array can be complex, focal plane electric field
     Hessian_Matrix: 2D array , Hessian matrix of the DH energy
-    Jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
-    WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
+    Jacobian: 2D array, inverse of the jacobian matrix created with all
+                the actuators in WhichInPupil
+    WhichInPupil: 1D array, index of the actuators taken into account
+                to create the jacobian matrix
     nbDMactu:number of DM actuators
 
     Return:
@@ -370,7 +373,6 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
                          Resultatbis)).flatten()
     pas = 2e3
-    # cool=2*(np.dot(M0,sol)+np.real(np.dot(np.transpose(np.conjugate(G)),Resultatbis))).flatten()
     cool = pas * 2 * Eab
 
     solution = np.zeros(nbDMactu)
@@ -380,7 +382,8 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
 
 def FP_PWestimate(Difference, Vectorprobes):
     """ --------------------------------------------------
-    Calculate the focal plane electric field from the prone image differences and the modeled probe matrix
+    Calculate the focal plane electric field from the prone image
+    differences and the modeled probe matrix
     
     Parameters:
     ----------
@@ -389,7 +392,8 @@ def FP_PWestimate(Difference, Vectorprobes):
     
     Return:
     ------
-    Difference: 3D array, cube with image difference for each probes. Use for pair-wise probing
+    Difference: 3D array, cube with image difference for each probes.
+                Used for pair-wise probing
     -------------------------------------------------- """
     dimimages = len(Difference[0])
     numprobe = len(Vectorprobes[0, 0])
