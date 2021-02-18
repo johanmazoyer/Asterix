@@ -170,20 +170,20 @@ class coronagraph:
         xx, yy = np.meshgrid(np.arange(self.dim_im),np.arange(self.dim_im))
 
         Knife = np.zeros((self.dim_im, self.dim_im))
-        if self.coro_position == "left":
+        if self.coro_position == "right":
             Knife[np.where(xx> (self.dim_im / 2 +
                             self.knife_coro_offset * ld_p))]=1
-        if self.coro_position == "right":
+        if self.coro_position == "left":
             Knife[np.where(xx< (self.dim_im / 2 -
                             self.knife_coro_offset * ld_p))]=1
-        if self.coro_position == "top":
+        if self.coro_position == "bottom":
             Knife[np.where(yy> (self.dim_im / 2 +
                             self.knife_coro_offset * ld_p))]=1
-        if self.coro_position == "bottom":
+        if self.coro_position == "top":
             Knife[np.where(yy< (self.dim_im / 2 -
                             self.knife_coro_offset * ld_p))]=1
-        
-        return np.fft.fftshift(Knife)
+
+        return Knife
 
     ##############################################
     ##############################################
