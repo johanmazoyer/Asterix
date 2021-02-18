@@ -30,79 +30,74 @@ class coronagraph:
 
         -------------------------------------------------- """
 
-        #Image
-        dim_im = modelconfig["dim_im"]  #image size on detector
+        #image size on detector
+        self.dim_im = modelconfig["dim_im"]
+
         #pupil and Lyot stop
-        diam_pup_in_m = modelconfig["diam_pup_in_m"]
-        diam_lyot_in_m = modelconfig["diam_lyot_in_m"]
-        filename_instr_pup = modelconfig["filename_instr_pup"]
-        filename_instr_lyot = modelconfig["filename_instr_lyot"]
+        self.diam_pup_in_m = modelconfig["diam_pup_in_m"]
+        self.diam_lyot_in_m = modelconfig["diam_lyot_in_m"]
 
-        #Lambda over D in pixels in the pupil plane
-        science_sampling = modelconfig["science_sampling"]
+        #Lambda over D in pixels in the focal plane
+        # at the central wavelength
+        self.science_sampling = modelconfig["science_sampling"]
+        
+        # propagation from pupil to lyot plane
         self.prop_apod2lyot = coroconfig["prop_apod2lyot"]
-
-        ## define important measure of the coronagraph
-        if self.prop_apod2lyot == "fft":
-            lyotrad = dim_im / 2 / science_sampling
-            prad = int(np.ceil(lyotrad * diam_pup_in_m / diam_lyot_in_m))
-            lyotrad = int(np.ceil(lyotrad))
-            prev_science_sampling = science_sampling
-            science_sampling = dim_im / 2 / lyotrad
-            print("Pupil resolution: 'Science Sampling' has been rounded up from {:.3f} to {:.3f} l/D"
-                .format(prev_science_sampling, science_sampling))
-        if self.prop_apod2lyot == "mft":
-            prad = int(modelconfig["diam_pup_in_pix"]/2)
-            lyotrad = int(prad * diam_lyot_in_m / diam_pup_in_m)
 
         #coronagraph
         self.corona_type = coroconfig["corona_type"]
         self.coro_position = coroconfig["coro_position"]
         self.knife_coro_offset = coroconfig["knife_coro_offset"]
         self.err_fqpm = coroconfig["err_fqpm"]
-        self.prop_lyot2science = coroconfig["prop_lyot2science"]
-
-        self.dim_im = dim_im
-        self.diam_pup_in_m = diam_pup_in_m
-        self.diam_lyot_in_m = diam_lyot_in_m
-        self.science_sampling = science_sampling
-        self.lyotrad = lyotrad
-        self.prad = prad
-        #radius of the pupil in pixel in DM1 plane
-        #(updated in Main_EFC_THD)
-        self.pradDM1 = prad
 
         ## transmission of the phase mask (exp(i*phase))
         ## centered on pixel [0.5,0.5]
         if self.corona_type == "fqpm":
             self.FPmsk = self.FQPM()
             self.perfect_coro = True
-            #self.prop_apod2lyot = 'fft'
+            # self.prop_apod2lyot = 'fft'
         elif self.corona_type == "knife":
             self.FPmsk = self.KnifeEdgeCoro()
             self.perfect_coro = False
-            #self.prop_apod2lyot = 'fft'
+            # self.prop_apod2lyot = 'fft'
         elif self.corona_type == "vortex":
             phasevortex = 0  # to be defined
             self.FPmsk = np.exp(1j * phasevortex)
             self.perfect_coro = True
-            #self.prop_apod2lyot = 'fft'
+            # self.prop_apod2lyot = 'fft'
+
+        ## define important measure of the coronagraph
+        if self.prop_apod2lyot == "fft":
+            self.lyotrad = self.dim_im / 2 / self.science_sampling
+            self.prad = int(np.ceil(self.lyotrad * self.diam_pup_in_m / self.diam_lyot_in_m))
+            self.lyotrad = int(np.ceil(self.lyotrad))
+            prev_science_sampling = self.science_sampling
+            self.science_sampling = self.dim_im / 2 / self.lyotrad
+            print("Pupil resolution: 'Science Sampling' has been rounded up from {:.3f} to {:.3f} l/D"
+                .format(prev_science_sampling, self.science_sampling))
+        if self.prop_apod2lyot == "mft":
+            self.prad = int(modelconfig["diam_pup_in_pix"]/2)
+            self.lyotrad = int(self.prad * self.diam_lyot_in_m / self.diam_pup_in_m)
+
+        #radius of the pupil in pixel in DM1 plane
+        #(updated in Main_EFC_THD)
+        self.pradDM1 = self.prad
 
         # Maybe should remove the entrance pupil from the coronostructure,
         # this is "before the DMs" so probably not relevant here.
         if self.prop_apod2lyot == 'fft':
             self.entrancepupil = create_binary_pupil(model_dir,
-                                filename_instr_pup,dim_im, prad)
+                        modelconfig["filename_instr_pup"],self.dim_im, self.prad)
             self.apod_pup = 1
             self.lyot_pup = create_binary_pupil(model_dir,
-                                 filename_instr_lyot, dim_im, lyotrad)
+                        modelconfig["filename_instr_lyot"], self.dim_im, self.lyotrad)
         else:
             self.entrancepupil = create_binary_pupil(model_dir,
-                                filename_instr_pup,int(prad*1.25)*2, prad)
+                        modelconfig["filename_instr_pup"],int(self.prad*1.25)*2, self.prad)
             self.apod_pup = 1
             self.lyot_pup = create_binary_pupil(model_dir,
-                                 filename_instr_lyot, self.entrancepupil.shape[1]
-                                 , lyotrad)
+                        modelconfig["filename_instr_lyot"], self.entrancepupil.shape[1]
+                                 , self.lyotrad)
         
         if self.perfect_coro:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
@@ -170,20 +165,20 @@ class coronagraph:
         xx, yy = np.meshgrid(np.arange(self.dim_im),np.arange(self.dim_im))
 
         Knife = np.zeros((self.dim_im, self.dim_im))
-        if self.coro_position == "left":
+        if self.coro_position == "right":
             Knife[np.where(xx> (self.dim_im / 2 +
                             self.knife_coro_offset * ld_p))]=1
-        if self.coro_position == "right":
+        if self.coro_position == "left":
             Knife[np.where(xx< (self.dim_im / 2 -
                             self.knife_coro_offset * ld_p))]=1
-        if self.coro_position == "top":
+        if self.coro_position == "bottom":
             Knife[np.where(yy> (self.dim_im / 2 +
                             self.knife_coro_offset * ld_p))]=1
-        if self.coro_position == "bottom":
+        if self.coro_position == "top":
             Knife[np.where(yy< (self.dim_im / 2 -
                             self.knife_coro_offset * ld_p))]=1
-        
-        return np.fft.fftshift(Knife)
+
+        return Knife
 
     ##############################################
     ##############################################
