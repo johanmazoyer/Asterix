@@ -162,7 +162,7 @@ def creatingMaskDH(dimimages,
                    shape,
                    choosepixDH=[8, 35, -35, 35],
                    circ_rad=[8, 10],
-                   circ_side="Full",
+                   circ_side="full",
                    circ_offset=8,
                    circ_angle=0):
     """ --------------------------------------------------
@@ -196,22 +196,22 @@ def creatingMaskDH(dimimages,
         maskDH = np.ones((dimimages, dimimages))
         maskDH[rr >= circ_rad[1]] = 0
         maskDH[rr < circ_rad[0]] = 0
-        if circ_side == "Right":
+        if circ_side == "right":
             maskDH[xx < np.abs(circ_offset)] = 0
             if circ_angle != 0:
                 maskDH[yy - xx / np.tan(circ_angle * np.pi / 180) > 0] = 0
                 maskDH[yy + xx / np.tan(circ_angle * np.pi / 180) < 0] = 0
-        if circ_side == "Left":
+        if circ_side == "left":
             maskDH[xx > -np.abs(circ_offset)] = 0
             if circ_angle != 0:
                 maskDH[yy - xx / np.tan(circ_angle * np.pi / 180) < 0] = 0
                 maskDH[yy + xx / np.tan(circ_angle * np.pi / 180) > 0] = 0
-        if circ_side == "Bottom":
+        if circ_side == "bottom":
             maskDH[yy < np.abs(circ_offset)] = 0
             if circ_angle != 0:
                 maskDH[yy - xx * np.tan(circ_angle * np.pi / 180) < 0] = 0
                 maskDH[yy + xx * np.tan(circ_angle * np.pi / 180) < 0] = 0
-        if circ_side == "Top":
+        if circ_side == "top":
             maskDH[yy > -np.abs(circ_offset)] = 0
             if circ_angle != 0:
                 maskDH[yy - xx * np.tan(circ_angle * np.pi / 180) > 0] = 0

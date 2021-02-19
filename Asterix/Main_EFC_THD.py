@@ -110,7 +110,7 @@ def create_interaction_matrices(parameter_file,
     choosepix = [int(i) for i in choosepix]
     circ_rad = EFCconfig["circ_rad"]
     circ_rad = [int(i) for i in circ_rad]
-    circ_side = EFCconfig["circ_side"]
+    circ_side = EFCconfig["circ_side"].lower()
     circ_offset = EFCconfig["circ_offset"]
     circ_angle = EFCconfig["circ_angle"]
     DM1_otherbasis = EFCconfig["DM1_otherbasis"]
@@ -133,12 +133,18 @@ def create_interaction_matrices(parameter_file,
     # Directories for saving data
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
                        corona_struct.corona_type + "/")
+    if corona_struct.corona_type == 'fqpm':
+        if corona_struct.achrom_fqpm == True:
+            intermatrix_dir = intermatrix_dir+"Achromatic_phase_mask/"
+        else:
+            intermatrix_dir = intermatrix_dir+"Polychromatic_phase_mask/"
     if corona_struct.corona_type == 'knife':
-        intermatrix_dir = intermatrix_dir + corona_struct.coro_position +"/"
+        intermatrix_dir = (intermatrix_dir + corona_struct.coro_position
+                +"/offset_"+ str(corona_struct.knife_coro_offset)+"lop/")
     intermatrix_dir = (intermatrix_dir +
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(corona_struct.diam_pup_in_m * 1e3, 2)) + "_l" +
-                       str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
+                       str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) + "/lop_" +
                        str(round(science_sampling, 2)) + "/basis_" + basistr + "/")
 
     if not os.path.exists(intermatrix_dir):
@@ -339,7 +345,7 @@ def create_interaction_matrices(parameter_file,
         else:
             fileDirectMatrix = "DirectMatrix_circle_" +"_".join(
                     map(str, circ_rad)) + "pix_" + str(circ_side)+ '_' 
-            if circ_side != 'Full':
+            if circ_side != 'full':
                 fileDirectMatrix = fileDirectMatrix + str(circ_offset
                             ) + 'pix_' + str(circ_angle) + 'deg_'
         fileDirectMatrix = fileDirectMatrix + str(amplitudeEFC
@@ -363,7 +369,7 @@ def create_interaction_matrices(parameter_file,
                 fileMaskDH = fileMaskDH + "x" + str(dim_sampl
                     ) + "_circle_" +"_".join(map(str, circ_rad)
                     ) + 'pix_' + str(circ_side) + '_'
-                if circ_side != "Full":
+                if circ_side != "full":
                     fileMaskDH = fileMaskDH + str(circ_offset
                         ) + 'pix_' + str(circ_angle) + 'deg_'
                 fileMaskDH = fileMaskDH + 'dim'+str(
@@ -431,7 +437,7 @@ def create_interaction_matrices(parameter_file,
         else:
             figSVDEFC = intermatrix_dir + "invertSVDEFC_circle_" + "_".join(
                 map(str, circ_rad)) + "pix_" +str(circ_side)+ '_'
-            if circ_side != "Full":
+            if circ_side != "full":
                 figSVDEFC = figSVDEFC + str(circ_offset
                     ) +'pix_' + str(circ_angle) + 'deg_'
             figSVDEFC = figSVDEFC + str(amplitudeEFC) +"nm_dim"+str(
@@ -540,7 +546,7 @@ def correctionLoop(parameter_file,
     choosepix = [int(i) for i in choosepix]
     circ_rad = EFCconfig["circ_rad"]
     circ_rad = [int(i) for i in circ_rad]
-    circ_side = EFCconfig["circ_side"]
+    circ_side = EFCconfig["circ_side"].lower()
     circ_offset = EFCconfig["circ_offset"]
     circ_angle = EFCconfig["circ_angle"]
     DM3_otherbasis = EFCconfig["DM3_otherbasis"]
@@ -619,12 +625,18 @@ def correctionLoop(parameter_file,
 
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
                        corona_struct.corona_type + "/")
+    if corona_struct.corona_type == 'fqpm':
+        if corona_struct.achrom_fqpm == True:
+            intermatrix_dir = intermatrix_dir+"Achromatic_phase_mask/"
+        else:
+            intermatrix_dir = intermatrix_dir+"Polychromatic_phase_mask/"
     if corona_struct.corona_type == 'knife':
-        intermatrix_dir = intermatrix_dir + corona_struct.coro_position +"/"
+        intermatrix_dir = (intermatrix_dir + corona_struct.coro_position
+                +"/offset_"+ str(corona_struct.knife_coro_offset)+"lop/")
     intermatrix_dir = (intermatrix_dir +
                        str(int(wavelength * 1e9)) + "nm/p" +
                        str(round(corona_struct.diam_pup_in_m * 1e3, 2)) + "_l" +
-                       str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) + "/ldp_" +
+                       str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) + "/lop_" +
                        str(round(science_sampling, 2)) + "/basis_" + basistr + "/")
     
     if corona_struct.prop_apod2lyot == "mft":
@@ -698,7 +710,7 @@ def correctionLoop(parameter_file,
     else:
         fileDirectMatrix = "DirectMatrix_circle_" +"_".join(
             map(str, circ_rad)) + "pix_" + str(circ_side) + '_'
-        if circ_side != 'Full':
+        if circ_side != 'full':
             fileDirectMatrix = fileDirectMatrix + str(circ_offset
                         ) + 'pix_' + str(circ_angle) + 'deg_'
     fileDirectMatrix = fileDirectMatrix + str(amplitudeEFC
@@ -720,7 +732,7 @@ def correctionLoop(parameter_file,
         fileMaskDH = fileMaskDH + "x" + str(dim_sampl
                     ) + "_circle_" +"_".join(map(str, circ_rad)
                     ) + 'pix_' + str(circ_side)
-        if circ_side != 'Full':
+        if circ_side != 'full':
             fileMaskDH = fileMaskDH +'_' + str(circ_offset) + 'pix_' + str(
                     circ_angle) + 'deg'
         fileMaskDH = fileMaskDH + '_dim'+str(
@@ -802,8 +814,7 @@ def correctionLoop(parameter_file,
     imagedetector = np.zeros((nbiter + 1, corona_struct.dim_im, corona_struct.dim_im))
     phaseDM3 = np.zeros((nbiter + 1, corona_struct.entrancepupil.shape[1],
          corona_struct.entrancepupil.shape[1]))
-    if DM1_active == True:
-        phaseDM1 = np.zeros((nbiter + 1, corona_struct.entrancepupil.shape[1],
+    phaseDM1 = np.zeros((nbiter + 1, corona_struct.entrancepupil.shape[1],
          corona_struct.entrancepupil.shape[1]))
     meancontrast = np.zeros(nbiter + 1)
     if os.path.exists(intermatrix_dir + fileMaskDH + "_contrast.fits") == True:
@@ -824,11 +835,13 @@ def correctionLoop(parameter_file,
                      maskDHcontrast)
 
 # Initial wavefront in pupil plane
+    imagedetector[0] = (corona_struct.im_apodtodetector_chrom(
+                                amplitude_abb_up, phase_abb_up)/
+                                        corona_struct.maxPSF)
+
     input_wavefront = corona_struct.entrancepupil * (
-        1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
-# Initial image in detector plane
-    imagedetector[0] = (abs(corona_struct.apodtodetector(input_wavefront))**2 /
-                        corona_struct.maxPSF)
+                1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
+
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
@@ -847,6 +860,7 @@ def correctionLoop(parameter_file,
         print("Iteration number: ", k, " EFC truncation: ", mode)
         if (estimation == "PairWise" or estimation == "pairwise"
                 or estimation == "PW" or estimation == "pw"):
+                        
             Difference = instr.createdifference(input_wavefront,
                                 posprobes,
                                 pushactonDM3*amplitudePW*1e-9*2*np.pi/wavelength,
@@ -857,9 +871,14 @@ def correctionLoop(parameter_file,
 
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
-        elif estimation == "Perfect":
-            resultatestimation = corona_struct.apodtodetector(
-                input_wavefront) / np.sqrt(corona_struct.maxPSF)
+        elif estimation == "Perfect": 
+            # If polychromatic, assume a perfect estimation at one wavelength
+            resultatestimation = (corona_struct.im_apodtodetector_chrom(
+                        amplitude_abb_up, phase_abb_up,
+                        DM3_active = True, phaseDM3 = phaseDM3[k],
+                        DM1_active=DM1_active,phaseDM1=phaseDM1[k],
+                        DM1_z_position=DM1_z_position, retampl=True)
+                        /np.sqrt(corona_struct.maxPSF))
             
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
         else:
@@ -915,8 +934,8 @@ def correctionLoop(parameter_file,
         # (uses the interaction matrix calculated for a null input aberration)
                 meancontrasttemp = np.zeros(len(Linesearchmode))
                 b = 0
-                tmp_input_wavefront = input_wavefront
                 for mode in Linesearchmode:
+                    tmp_input_wavefront = input_wavefront
 
                     SVD, SVD_trunc, invertGDH = wsc.invertSVD(
                         Gmatrix,
@@ -940,8 +959,6 @@ def correctionLoop(parameter_file,
                             solution1[pushactonDM3.shape[0]:],DM1_pushact
                             )*(-gain * amplitudeEFC*2 * np.pi * 1e-9 / wavelength)
 
-                # Propagation in DM1 plane, add DM1 phase
-                # and propagate to next pupil plane (DM3 plane)
                         tmp_input_wavefront = instr.prop_pup_DM1_DM3(
                                 tmp_input_wavefront,
                                 apply_on_DM1,wavelength,DM1_z_position,
@@ -956,11 +973,21 @@ def correctionLoop(parameter_file,
                             solution1[0:pushactonDM3.shape[0]],pushactonDM3
                             )*(-gain * amplitudeEFC*2 * np.pi * 1e-9 / wavelength)
 
-                # Add DM3 phase
+                # Propagation in DM1 plane, add DM1 phase,
+                # propagate to next pupil plane (DM3 plane),
+                # add DM3 phase and propagate to detector
+                    # imagedetectortemp=(corona_struct.im_apodtodetector_chrom(
+                    #             amplitude_abb_up, phase_abb_up,
+                    #             DM3_active = True, phaseDM3 = apply_on_DM3,
+                    #             DM1_active=DM1_active,phaseDM1=apply_on_DM1,
+                    #             DM1_z_position=DM1_z_position)/corona_struct.maxPSF)
+
+
+                # # Add DM3 phase
                     tmp_input_wavefront = tmp_input_wavefront * np.exp(
                             1j * instr.cut_image(apply_on_DM3,
                             corona_struct.entrancepupil.shape[1]))
-
+                    
                     imagedetectortemp = (
                         abs(corona_struct.apodtodetector(
                             tmp_input_wavefront))**2 /corona_struct.maxPSF)
@@ -1042,8 +1069,8 @@ def correctionLoop(parameter_file,
                             )*(-gain * amplitudeEFC*2 * np.pi * 1e-9 / wavelength)
             phaseDM1[k + 1]  = phaseDM1[k] + instr.cut_image(apply_on_DM1,dim_pup)
 
-            # Propagation in DM1 plane, add DM1 phase
-            # and propagate to next pupil plane (DM3 plane)
+            # # Propagation in DM1 plane, add DM1 phase
+            # # and propagate to next pupil plane (DM3 plane)
             input_wavefront = instr.prop_pup_DM1_DM3(input_wavefront,apply_on_DM1,
                              wavelength,DM1_z_position,corona_struct.diam_pup_in_m/2.,
                              corona_struct.prad)
@@ -1058,9 +1085,20 @@ def correctionLoop(parameter_file,
         input_wavefront = input_wavefront*np.exp(1j *
                 instr.cut_image(apply_on_DM3,dim_pup))
 
-        imagedetector[k + 1] = (
-            abs(corona_struct.apodtodetector(input_wavefront))**2 /
-            corona_struct.maxPSF)
+        # imagedetector[k + 1] = (
+        #     abs(corona_struct.apodtodetector(input_wavefront))**2 /
+        #     corona_struct.maxPSF)
+
+        # Propagation in DM1 plane, add DM1 phase,
+        # propagate to next pupil plane (DM3 plane),
+                # add DM3 phase and propagate to detector
+        imagedetector[k + 1]=(corona_struct.im_apodtodetector_chrom(
+                        amplitude_abb_up, phase_abb_up,
+                        DM3_active = True, phaseDM3 = phaseDM3[k + 1],
+                        DM1_active=DM1_active,phaseDM1=phaseDM1[k + 1],
+                        DM1_z_position=DM1_z_position)/corona_struct.maxPSF)
+
+
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHcontrast != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])
