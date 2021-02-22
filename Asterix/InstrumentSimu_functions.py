@@ -52,7 +52,7 @@ class coronagraph:
             self.wav_vec=0
 
         # propagation from pupil to lyot plane
-        self.prop_apod2lyot = coroconfig["prop_apod2lyot"]
+        # self.prop_apod2lyot = coroconfig["prop_apod2lyot"]
 
         #coronagraph
         self.corona_type = coroconfig["corona_type"].lower()
@@ -66,16 +66,25 @@ class coronagraph:
         if self.corona_type == "fqpm":
             self.FPmsk = self.FQPM()
             self.perfect_coro = True
-            # self.prop_apod2lyot = 'fft'
+            self.prop_apod2lyot = 'fft'
+
+        elif self.corona_type == "classiclyot":
+            self.rad_lyot_fpm = modelconfig["rad_lyot_fpm"]
+            self.Lyot_fpm_sampling = 30 #arbitrarty chosen for now and hard coded.
+            self.FPmsk = self.ClassicalLyot()
+            self.perfect_coro = False
+            self.prop_apod2lyot = 'mft-babinet'
+
         elif self.corona_type == "knife":
             self.FPmsk = self.KnifeEdgeCoro()
             self.perfect_coro = False
-            # self.prop_apod2lyot = 'fft'
+            self.prop_apod2lyot = 'fft'
+
         elif self.corona_type == "vortex":
             phasevortex = 0  # to be defined
             self.FPmsk = np.exp(1j * phasevortex)
             self.perfect_coro = True
-            # self.prop_apod2lyot = 'fft'
+            self.prop_apod2lyot = 'fft'
 
         ## define important measure of the coronagraph
         if self.prop_apod2lyot == "fft":
@@ -86,7 +95,7 @@ class coronagraph:
             self.science_sampling = self.dim_im / 2 / self.lyotrad
             print("Pupil resolution: 'Science Sampling' has been rounded up from {:.3f} to {:.3f} l/D"
                 .format(prev_science_sampling, self.science_sampling))
-        if self.prop_apod2lyot == "mft":
+        if self.prop_apod2lyot == "mft" or self.prop_apod2lyot == "mft-babinet":
             self.prad = int(modelconfig["diam_pup_in_pix"]/2)
             self.lyotrad = int(self.prad * self.diam_lyot_in_m / self.diam_pup_in_m)
 
@@ -201,6 +210,26 @@ class coronagraph:
 
         return Knife
 
+    def ClassicalLyot(self):
+        """ --------------------------------------------------
+        Create a classical Lyot coronagraph of radius rad_LyotFP 0
+
+        rad_LyotFP : int, radius of the Lyot focal plane
+    
+        Returns
+        ------
+         classical Lyot : 2D array
+        -------------------------------------------------- """
+
+        
+        ld_p = self.Lyot_fpm_sampling * self.diam_lyot_in_m / self.diam_pup_in_m  
+
+        rad_LyotFP_pix =  self.rad_lyot_fpm*ld_p
+
+        self.dim_fpm = 2*int(rad_LyotFP_pix)
+        ClassicalLyotstop = roundpupil(self.dim_fpm, (rad_LyotFP_pix))
+
+        return ClassicalLyotstop
     ##############################################
     ##############################################
     ### Propagation through coronagraph
@@ -312,6 +341,26 @@ class coronagraph:
 
             # Field after filtering by Lyot stop
             lyotplane_after_lyot = lyotplane_before_lyot * lyot_pup
+        
+        if self.prop_apod2lyot == "mft-babinet":
+            #Apod plane to focal plane
+        
+            corono_focal_plane = mft(input_wavefront_after_apod,
+                    self.prad*2,self.dim_fpm,
+                    self.dim_fpm/self.Lyot_fpm_sampling*fac*fac,
+                    xshift=-.5,yshift=-.5,inv=1)
+            
+            # Focal plane to Lyot plane
+            lyotplane_before_lyot_central_part = mft(corono_focal_plane * FPmsk,
+                    self.dim_fpm,2*self.prad,
+                    self.dim_fpm/self.Lyot_fpm_sampling*fac,
+                    inv=-1)
+
+            # Lyot stop mask
+            lyot_pup = cut_image(self.lyot_pup,lyotplane_before_lyot.shape[1])
+
+            # BAbinet's trick and Lyot pup multiplication
+            lyotplane_after_lyot = (input_wavefront_after_apod - lyotplane_before_lyot_central_part) * lyot_pup
 
         if (self.perfect_coro) & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
