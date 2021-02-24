@@ -119,7 +119,7 @@ def resampling(image, new):
     Gvector: 2D array, image resampled into new dimensions
     -------------------------------------------------- """
     dim_im = len(image)
-    Gvectorbis = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image)))    
+    Gvectorbis = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image)))
     Gvector = cropimage(Gvectorbis, dim_im / 2, dim_im / 2, new)
     Gvector = np.fft.fftshift(np.fft.fft2(np.fft.ifftshift(Gvector)))
     return Gvector
@@ -143,8 +143,6 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
     newimgs2 = newsizeimg / 2
     return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2),
                int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]
-
-
 
 
 def crop_or_pad_image(image, dimout):
@@ -176,15 +174,14 @@ def crop_or_pad_image(image, dimout):
 
     if dimout <= image.shape[0]:
         im_out = np.zeros((image.shape[0], image.shape[1]), dtype=image.dtype)
-        im_out = image[int((image.shape[0]-dimout)/2):
-                    int((image.shape[0]+dimout)/2),
-            int((image.shape[1]-dimout)/2):int((image.shape[1]+dimout)/2)]
+        im_out = image[int((image.shape[0] - dimout) /
+                           2):int((image.shape[0] + dimout) / 2),
+                       int((image.shape[1] - dimout) /
+                           2):int((image.shape[1] + dimout) / 2)]
     if dimout > image.shape[0]:
         im_out = np.zeros((dimout, dimout), dtype=image.dtype)
-        im_out[int((dimout-image.shape[0])/2):
-                int((dimout+image.shape[0])/2),
-                int((dimout-image.shape[1])/2):
-                int((dimout+image.shape[1])/2)] = image
+        im_out[int((dimout - image.shape[0]) /
+                   2):int((dimout + image.shape[0]) / 2),
+               int((dimout - image.shape[1]) /
+                   2):int((dimout + image.shape[1]) / 2)] = image
     return im_out
-
-

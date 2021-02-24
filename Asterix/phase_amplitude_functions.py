@@ -32,7 +32,6 @@ def roundpupil(dim_im, prad1):
     return pupilnormal
 
 
-
 def load_or_create_binary_pupil(direct, filename, dim, prad):
     """ --------------------------------------------------
     Create a binary pupil from a Fits file or create a round pupil
@@ -72,6 +71,7 @@ def load_or_create_binary_pupil(direct, filename, dim, prad):
 
     return pupil
 
+
 def shift_phase_ramp(dim_im, a, b):
     """ --------------------------------------------------
     Create a phase ramp of size (dim_im,dim_im) that can be used as follow
@@ -91,9 +91,9 @@ def shift_phase_ramp(dim_im, a, b):
     masktot : 2D array
         Phase ramp
     -------------------------------------------------- """
-    if (a ==0) & (b == 0):
+    if (a == 0) & (b == 0):
         ramp = 1
-    else: 
+    else:
         maska = np.linspace(-np.pi * a, np.pi * a, dim_im)
         maskb = np.linspace(-np.pi * b, np.pi * b, dim_im)
         xx, yy = np.meshgrid(maska, maskb)
@@ -132,17 +132,17 @@ def random_phase_map(dim_im, phaserms, rhoc, slope, pupil):
     PSD0 = 1
     PSD = PSD0 / (1 + (rho / rhoc)**slope)
     sqrtPSD = np.sqrt(2 * PSD)
-#    randomphase = 2 * np.pi * (np.random.rand(dim_im, dim_im) - 0.5)
-#    product = np.fft.fftshift(sqrtPSD * np.exp(1j * randomphase))
-    randomphase = np.random.randn(dim_im, dim_im
-                ) + 1j*np.random.randn(dim_im, dim_im)
+    #    randomphase = 2 * np.pi * (np.random.rand(dim_im, dim_im) - 0.5)
+    #    product = np.fft.fftshift(sqrtPSD * np.exp(1j * randomphase))
+    randomphase = np.random.randn(
+        dim_im, dim_im) + 1j * np.random.randn(dim_im, dim_im)
     phase = np.real(np.fft.ifft2(np.fft.fftshift(sqrtPSD * randomphase)))
     phase = phase - np.mean(phase[np.where(pupil)])
     phase = phase / np.std(phase[np.where(pupil)]) * phaserms
     return phase
 
 
-def scale_amplitude_abb(filename,prad,pupil):
+def scale_amplitude_abb(filename, prad, pupil):
     """ --------------------------------------------------
     Scale the map of a recorded amplitude map
 
@@ -169,31 +169,31 @@ def scale_amplitude_abb(filename,prad,pupil):
     Initial revision
 
     -------------------------------------------------- """
-    
+
     #File with amplitude aberrations in amplitude (not intensity)
     # centered on the pixel dim/2+1, dim/2 +1 with dim = 2*[dim/2]
     # diameter of the pupil is 148 pixels in this image
     amp = np.fft.fftshift(fits.getdata(filename))
 
     #Rescale to the pupil size
-    amp1 = skimage.transform.rescale(amp,2 * prad / 148 * 1.03,
-                                         preserve_range=True,
-                                         anti_aliasing=True,
-                                         multichannel=False)
+    amp1 = skimage.transform.rescale(amp,
+                                     2 * prad / 148 * 1.03,
+                                     preserve_range=True,
+                                     anti_aliasing=True,
+                                     multichannel=False)
     # Shift to center between 4 pixels
     #tmp_phase_ramp=np.fft.fftshift(instr.shift_phase_ramp(amp1.shape[0],-.5,-.5))
     #bidouille entre le grandissement 1.03 à la ligne au-dessus et le -1,-1 au lieu
     #de -.5,-.5 C'est pour éviter un écran d'amplitude juste plus petit que la pupille
-    tmp_phase_ramp = np.fft.fftshift(
-            shift_phase_ramp(amp1.shape[0], -1., -1.))
+    tmp_phase_ramp = np.fft.fftshift(shift_phase_ramp(amp1.shape[0], -1., -1.))
     amp1 = np.real(
-            np.fft.fftshift(np.fft.fft2(np.fft.ifft2(amp1) * tmp_phase_ramp)))
+        np.fft.fftshift(np.fft.fft2(np.fft.ifft2(amp1) * tmp_phase_ramp)))
 
     # Create the array with same size as the pupil
 
-    ampfinal = proc.crop_or_pad_image(amp1,pupil.shape[1])
-   
+    ampfinal = proc.crop_or_pad_image(amp1, pupil.shape[1])
+
     #Set the average to 0 inside entrancepupil
-    ampfinal = (ampfinal / np.mean(ampfinal[np.where(pupil != 0)])
-                     - np.ones((pupil.shape[1],pupil.shape[1]))) * pupil
+    ampfinal = (ampfinal / np.mean(ampfinal[np.where(pupil != 0)]) - np.ones(
+        (pupil.shape[1], pupil.shape[1]))) * pupil
     return ampfinal

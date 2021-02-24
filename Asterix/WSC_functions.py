@@ -103,8 +103,9 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
 
     k = 0
     for i in posprobes:
-        tmp = proc.crop_or_pad_image(pushact[i],corona_struct.entrancepupil.shape[1])
-        probephase[k]=tmp*amplitude * 1e-9 *2 * np.pi / wavelength
+        tmp = proc.crop_or_pad_image(pushact[i],
+                                     corona_struct.entrancepupil.shape[1])
+        probephase[k] = tmp * amplitude * 1e-9 * 2 * np.pi / wavelength
 
         inputwavefront = corona_struct.entrancepupil * (1 + 1j * probephase[k])
         deltapsikbis = (corona_struct.apodtodetector(inputwavefront) /
@@ -145,10 +146,10 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     WhichInPupil: 1D array, index of all the actuators located inside the pupil
     -------------------------------------------------- """
     WhichInPupil = []
-    tmp_entrancepupil = proc.crop_or_pad_image(entrancepupil,pushact.shape[2])
+    tmp_entrancepupil = proc.crop_or_pad_image(entrancepupil, pushact.shape[2])
 
     for i in np.arange(pushact.shape[0]):
-        Psivector=pushact[i]
+        Psivector = pushact[i]
         cut = cutinpupil * np.sum(np.abs(Psivector))
 
         if np.sum(Psivector * tmp_entrancepupil) > cut:
@@ -219,7 +220,6 @@ def creatingMaskDH(dimimages,
     return maskDH
 
 
-
 def creatingCorrectionmatrix(input_wavefront,
                              corona_struct,
                              dimimages,
@@ -262,10 +262,11 @@ def creatingCorrectionmatrix(input_wavefront,
     else:
         probephase = np.zeros(
             (pushact.shape[0], corona_struct.entrancepupil.shape[1],
-             corona_struct.entrancepupil.shape[1]),dtype=complex)
+             corona_struct.entrancepupil.shape[1]),
+            dtype=complex)
         for k in range(pushact.shape[0]):
-            probephase[k]=proc.crop_or_pad_image(
-                pushact[k],corona_struct.entrancepupil.shape[1])
+            probephase[k] = proc.crop_or_pad_image(
+                pushact[k], corona_struct.entrancepupil.shape[1])
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")
@@ -274,9 +275,10 @@ def creatingCorrectionmatrix(input_wavefront,
     for i in range(nb_fct):
         if i % 100 == 0:
             print(i)
-        Psivector =  bas_fct[i]
-        Gvector = (corona_struct.apodtodetector(input_wavefront* 1j * Psivector) /
-                   np.sqrt(corona_struct.maxPSF))
+        Psivector = bas_fct[i]
+        Gvector = (
+            corona_struct.apodtodetector(input_wavefront * 1j * Psivector) /
+            np.sqrt(corona_struct.maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()
@@ -409,7 +411,8 @@ def FP_PWestimate(Difference, Vectorprobes):
             l = l + 1
     return Resultat / 4
 
-def apply_on_DM(actu_vect,DM_pushact):
+
+def apply_on_DM(actu_vect, DM_pushact):
     """ --------------------------------------------------
     Generate the phase applied on one DM for a give vector of actuator amplitude
     
@@ -424,6 +427,8 @@ def apply_on_DM(actu_vect,DM_pushact):
         2D array
         phase map in the same unit as actu_vect times DM_pushact)
     -------------------------------------------------- """
-    return np.dot(actu_vect,DM_pushact.reshape(DM_pushact.shape[0],
-                DM_pushact.shape[1]*DM_pushact.shape[1])).reshape(DM_pushact.shape[1],
-                DM_pushact.shape[1])
+    return np.dot(
+        actu_vect,
+        DM_pushact.reshape(DM_pushact.shape[0],
+                           DM_pushact.shape[1] * DM_pushact.shape[1])).reshape(
+                               DM_pushact.shape[1], DM_pushact.shape[1])
