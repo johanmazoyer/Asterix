@@ -110,12 +110,6 @@ def create_interaction_matrices(parameter_file,
     MinimumSurfaceRatioInThePupil = EFCconfig["MinimumSurfaceRatioInThePupil"]
     DHshape = EFCconfig["DHshape"]
     choosepix = EFCconfig["choosepix"]
-    choosepix = [int(i) for i in choosepix]
-    circ_rad = EFCconfig["circ_rad"]
-    circ_rad = [int(i) for i in circ_rad]
-    circ_side = EFCconfig["circ_side"].lower()
-    circ_offset = EFCconfig["circ_offset"]
-    circ_angle = EFCconfig["circ_angle"]
     DM1_otherbasis = EFCconfig["DM1_otherbasis"]
     DM3_otherbasis = EFCconfig["DM3_otherbasis"]
     Nbmodes = EFCconfig["Nbmodes"]
@@ -351,15 +345,9 @@ def create_interaction_matrices(parameter_file,
                      DM3_WhichInPupil)
 
     # Creating EFC control matrix
-    if DHshape == "square":
-        fileEFCMatrix = "MatrixEFC_square_" + "_".join(map(str,
-                                                           choosepix)) + "pix_"
-    else:
-        fileEFCMatrix = "MatrixEFC_circle_" + "_".join(map(
-            str, circ_rad)) + "pix_" + str(circ_side) + '_'
-        if circ_side != 'Full':
-            fileEFCMatrix = fileEFCMatrix + str(circ_offset) + 'pix_' + str(
-                circ_angle) + 'deg_'
+    string_dhshape = wsc.string_DHshape(EFCconfig)
+    fileEFCMatrix = "MatrixEFC" + string_dhshape
+    
     fileEFCMatrix = fileEFCMatrix + str(amplitudeEFC) + "nm_" + str(
         Nbmodes) + "modes_dim" + str(corona_struct.dim_im) + '_raypup' + str(
             corona_struct.prad) + nam2DM
@@ -376,15 +364,9 @@ def create_interaction_matrices(parameter_file,
             DM3_basis = 0
 
         # Creating EFC Interaction matrix
-        if DHshape == "square":
-            fileDirectMatrix = "DirectMatrix_square_" + "_".join(
-                map(str, choosepix)) + "pix_"
-        else:
-            fileDirectMatrix = "DirectMatrix_circle_" + "_".join(
-                map(str, circ_rad)) + "pix_" + str(circ_side) + '_'
-            if circ_side != 'full':
-                fileDirectMatrix = fileDirectMatrix + str(
-                    circ_offset) + 'pix_' + str(circ_angle) + 'deg_'
+        string_dhshape = wsc.string_DHshape(EFCconfig)
+        fileDirectMatrix = "DirectMatrix" + string_dhshape
+        
         fileDirectMatrix = fileDirectMatrix + str(
             amplitudeEFC) + "nm_dim" + str(
                 corona_struct.dim_im) + '_raypup' + str(
@@ -438,22 +420,15 @@ def create_interaction_matrices(parameter_file,
         plt.clf()
         plt.plot(SVD, "r.")
         plt.yscale("log")
-        if DHshape == "square":
-            plt.savefig(intermatrix_dir + "invertSVDEFC_square_" +
-                        "_".join(map(str, choosepix)) + "pix_" +
-                        str(amplitudeEFC) + "nm_dim" +
-                        str(corona_struct.dim_im) + '_raypup' +
-                        str(corona_struct.prad) + nam2DM + ".png")
-        else:
-            figSVDEFC = intermatrix_dir + "invertSVDEFC_circle_" + "_".join(
-                map(str, circ_rad)) + "pix_" + str(circ_side) + '_'
-            if circ_side != "full":
-                figSVDEFC = figSVDEFC + str(circ_offset) + 'pix_' + str(
-                    circ_angle) + 'deg_'
-            figSVDEFC = figSVDEFC + str(amplitudeEFC) + "nm_dim" + str(
-                corona_struct.dim_im) + '_raypup' + str(
-                    corona_struct.prad) + nam2DM + ".png"
-            plt.savefig(figSVDEFC)
+        
+        string_dhshape = wsc.string_DHshape(EFCconfig)
+        figSVDEFC = "invertSVDEFC_square" + string_dhshape
+    
+
+        figSVDEFC = figSVDEFC + str(amplitudeEFC) + "nm_dim" + str(
+            corona_struct.dim_im) + '_raypup' + str(
+                corona_struct.prad) + nam2DM + ".png"
+        plt.savefig(figSVDEFC)
 
     if onbench == True:
         # Save EFC control matrix in Labview directory
@@ -554,14 +529,6 @@ def correctionLoop(parameter_file,
     EFCconfig = config["EFCconfig"]
     EFCconfig.update(NewEFCconfig)
     MinimumSurfaceRatioInThePupil = EFCconfig["MinimumSurfaceRatioInThePupil"]
-    DHshape = EFCconfig["DHshape"]
-    choosepix = EFCconfig["choosepix"]
-    choosepix = [int(i) for i in choosepix]
-    circ_rad = EFCconfig["circ_rad"]
-    circ_rad = [int(i) for i in circ_rad]
-    circ_side = EFCconfig["circ_side"].lower()
-    circ_offset = EFCconfig["circ_offset"]
-    circ_angle = EFCconfig["circ_angle"]
     DM3_otherbasis = EFCconfig["DM3_otherbasis"]
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
@@ -730,15 +697,9 @@ def correctionLoop(parameter_file,
         nam2DM = ""
 
     ## Load Control matrix
-    if DHshape == "square":
-        fileDirectMatrix = "DirectMatrix_square_" + "_".join(
-            map(str, choosepix)) + "pix_"
-    else:
-        fileDirectMatrix = "DirectMatrix_circle_" + "_".join(map(
-            str, circ_rad)) + "pix_" + str(circ_side) + '_'
-        if circ_side != 'full':
-            fileDirectMatrix = fileDirectMatrix + str(
-                circ_offset) + 'pix_' + str(circ_angle) + 'deg_'
+    string_dhshape = wsc.string_DHshape(EFCconfig)
+    fileDirectMatrix = "DirectMatrix" + string_dhshape
+
     fileDirectMatrix = fileDirectMatrix + str(amplitudeEFC) + "nm_dim" + str(
         corona_struct.dim_im) + '_raypup' + str(corona_struct.prad) + nam2DM
 

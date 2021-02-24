@@ -160,6 +160,29 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     WhichInPupil = np.array(WhichInPupil)
     return WhichInPupil
 
+
+def string_DHshape(EFCconfig):
+
+    DHshape = EFCconfig["DHshape"]
+    choosepix = EFCconfig["choosepix"]
+    choosepix = [int(i) for i in choosepix]
+    circ_rad = EFCconfig["circ_rad"]
+    circ_rad = [int(i) for i in circ_rad]
+    circ_side = EFCconfig["circ_side"].lower()
+    circ_offset = EFCconfig["circ_offset"]
+    circ_angle = EFCconfig["circ_angle"]
+    
+    if DHshape == "square":
+        stringdh = "_square_" + "_".join(
+            map(str, choosepix)) + "pix_"
+    else:
+        stringdh = "_circle_" + "_".join(
+            map(str, circ_rad)) + "pix_" + str(circ_side) + '_'
+        if circ_side != 'full':
+            stringdh = stringdh + str(
+                circ_offset) + 'pix_' + str(circ_angle) + 'deg_'
+    return stringdh
+
 def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl,DH_sampling, dim_im, science_sampling):
 
     """ --------------------------------------------------
@@ -193,19 +216,9 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl,DH_sampling, dim_i
     circ_offset = EFCconfig["circ_offset"]
     circ_angle = EFCconfig["circ_angle"]
 
-    fileMaskDH = ("MaskDH_" + str(dim_sampl))
-    if DHshape == "square":
-        fileMaskDH = fileMaskDH + ("x" + str(dim_sampl) + "_square_" +
-                                    "_".join(map(str, choosepix)) +
-                                    "pix_dim" +
-                                    str(dim_im))
-    else:
-        fileMaskDH = fileMaskDH + "x" + str(
-            dim_sampl) + "_circle_" + "_".join(map(
-                str, circ_rad)) + 'pix_' + str(circ_side) + '_'
-        if circ_side != "full":
-            fileMaskDH = fileMaskDH + str(circ_offset) + 'pix_' + str(
-                circ_angle) + 'deg_'
+    stringdh = string_DHshape(EFCconfig)
+
+    fileMaskDH = "MaskDH" + stringdh
 
     fileMaskDH_sampl = fileMaskDH + 'dim' + str(dim_sampl) +'res{:.1f}'.format(DH_sampling)
     
