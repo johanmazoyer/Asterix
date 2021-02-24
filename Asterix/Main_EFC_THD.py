@@ -835,7 +835,7 @@ def correctionLoop(parameter_file,
                      maskDHcontrast)
 
     # Initial wavefront in pupil plane
-    imagedetector[0] = (corona_struct.im_apodtodetector_chrom(
+    imagedetector[0] = (corona_struct.entrancetodetector(
                                 amplitude_abb_up, phase_abb_up)/
                                         corona_struct.maxPSF)
 
@@ -873,7 +873,7 @@ def correctionLoop(parameter_file,
 
         elif estimation == "Perfect": 
             # If polychromatic, assume a perfect estimation at one wavelength
-            resultatestimation = (corona_struct.im_apodtodetector_chrom(
+            resultatestimation = (corona_struct.entrancetodetector(
                         amplitude_abb_up, phase_abb_up,
                         DM3_active = True, phaseDM3 = phaseDM3[k],
                         DM1_active=DM1_active,phaseDM1=phaseDM1[k],
@@ -976,7 +976,7 @@ def correctionLoop(parameter_file,
                 # Propagation in DM1 plane, add DM1 phase,
                 # propagate to next pupil plane (DM3 plane),
                 # add DM3 phase and propagate to detector
-                    # imagedetectortemp=(corona_struct.im_apodtodetector_chrom(
+                    # imagedetectortemp=(corona_struct.entrancetodetector(
                     #             amplitude_abb_up, phase_abb_up,
                     #             DM3_active = True, phaseDM3 = apply_on_DM3,
                     #             DM1_active=DM1_active,phaseDM1=apply_on_DM1,
@@ -1092,7 +1092,7 @@ def correctionLoop(parameter_file,
         # Propagation in DM1 plane, add DM1 phase,
         # propagate to next pupil plane (DM3 plane),
                 # add DM3 phase and propagate to detector
-        imagedetector[k + 1]=(corona_struct.im_apodtodetector_chrom(
+        imagedetector[k + 1]=(corona_struct.entrancetodetector(
                         amplitude_abb_up, phase_abb_up,
                         DM3_active = True, phaseDM3 = phaseDM3[k + 1],
                         DM1_active=DM1_active,phaseDM1=phaseDM1[k + 1],

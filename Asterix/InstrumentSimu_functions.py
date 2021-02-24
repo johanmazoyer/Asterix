@@ -132,9 +132,7 @@ class coronagraph:
         np.amax(PSF): max of the non-coronagraphic PSF
         np.sum(PSF): sum of the non-coronagraphic PSF
         -------------------------------------------------- """
-        # PSF = self.im_apodtodetector_chrom(0, 0,noFPM=True)
-
-        PSF = self.im_apodtodetector_chrom(0, 0,noFPM=True)
+        PSF = self.entrancetodetector(0, 0,noFPM=True)
 
         return np.amax(PSF), np.sum(PSF)
 
@@ -403,7 +401,7 @@ class coronagraph:
 
         return science_focal_plane
 
-    def im_apodtodetector_chrom(self, ampl_abb, phase_abb,noFPM=False,
+    def entrancetodetector(self, ampl_abb, phase_abb,noFPM=False,
                     DM3_active = False,phaseDM3=0,
                     DM1_active = False,phaseDM1=0,DM1_z_position=0,retampl=False):
     
@@ -490,6 +488,58 @@ def roundpupil(dim_im, prad1):
 ##############################################
 ##############################################
 ### Deformable mirror
+
+
+
+def prop_pup_DM1_DM3(pupil_wavefront,phase_DM1,wavelength,DM1_z_position,
+                        rad_pup_in_m,rad_pup_in_pixel):
+    """ --------------------------------------------------
+    Propagate the field towards an out-of-pupil plane (DM1 plane),
+    add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
+
+    Parameters
+    ----------
+    pupil_wavefront : 2D array (float, double or complex)
+                Wavefront in the pupil plane
+
+    phase_DM1 : 2D array
+                Phase introduced by DM1
+    
+    wavelength : float
+                wavelength
+    
+    DM1_z_position : float
+                distance between the pupil plane and DM1
+
+    rad_pup_in_m : float
+                radius of the pupil in meter
+
+    rad_pup_in_pix : int
+                radius of the pupil in pixel
+
+    Returns
+    ------
+    UDM3 : 2D array (complex)
+            Wavefront in the pupil plane after DM1
+            (corresponds to DM3 plane on THD2 bench)
+
+    AUTHOR : Raphaël Galicher
+
+    REVISION HISTORY :
+    Revision 1.1  2021-02-10 Raphaël Galicher
+    Initial revision
+
+    -------------------------------------------------- """
+
+    # Propagation in DM1 plane
+    UDM1,dxout = prop_fresnel(pupil_wavefront,wavelength,
+                            DM1_z_position,rad_pup_in_m,
+                            rad_pup_in_pixel)
+    # Add DM1 phase and propagate to next pupil plane (DM3 plane)
+    UDM3,dxpup = prop_fresnel(UDM1*np.exp(1j*phase_DM1),
+                            wavelength,-DM1_z_position,
+                            rad_pup_in_m,rad_pup_in_pixel)
+    return UDM3
 
 
 def actuator_position(measured_grid, measured_ActuN, ActuN,
@@ -765,10 +815,6 @@ def createdifference(input_wavefront,
     return Difference
 
 
-##############################################
-##############################################
-### Phase screen
-
 
 
 def mft(pup, dimpup, dimft, nbres, xshift=0, yshift=0, inv=-1):
@@ -983,53 +1029,3 @@ def create_binary_pupil(direct, filename, dim, prad):
         pupil = roundpupil(dim, prad)
 
     return pupil
-
-def prop_pup_DM1_DM3(pupil_wavefront,phase_DM1,wavelength,DM1_z_position,
-                        rad_pup_in_m,rad_pup_in_pixel):
-    """ --------------------------------------------------
-    Propagate the field towards an out-of-pupil plane (DM1 plane),
-    add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
-
-    Parameters
-    ----------
-    pupil_wavefront : 2D array (float, double or complex)
-                Wavefront in the pupil plane
-
-    phase_DM1 : 2D array
-                Phase introduced by DM1
-    
-    wavelength : float
-                wavelength
-    
-    DM1_z_position : float
-                distance between the pupil plane and DM1
-
-    rad_pup_in_m : float
-                radius of the pupil in meter
-
-    rad_pup_in_pix : int
-                radius of the pupil in pixel
-
-    Returns
-    ------
-    UDM3 : 2D array (complex)
-            Wavefront in the pupil plane after DM1
-            (corresponds to DM3 plane on THD2 bench)
-
-    AUTHOR : Raphaël Galicher
-
-    REVISION HISTORY :
-    Revision 1.1  2021-02-10 Raphaël Galicher
-    Initial revision
-
-    -------------------------------------------------- """
-
-    # Propagation in DM1 plane
-    UDM1,dxout = prop_fresnel(pupil_wavefront,wavelength,
-                            DM1_z_position,rad_pup_in_m,
-                            rad_pup_in_pixel)
-    # Add DM1 phase and propagate to next pupil plane (DM3 plane)
-    UDM3,dxpup = prop_fresnel(UDM1*np.exp(1j*phase_DM1),
-                            wavelength,-DM1_z_position,
-                            rad_pup_in_m,rad_pup_in_pixel)
-    return UDM3

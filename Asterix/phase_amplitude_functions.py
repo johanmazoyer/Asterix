@@ -22,7 +22,6 @@ def shift_phase_ramp(dim_im, a, b):
     masktot : 2D array
         Phase ramp
     -------------------------------------------------- """
-    # Verify this function works
     if (a ==0) & (b == 0):
         ramp = 1
     else: 
