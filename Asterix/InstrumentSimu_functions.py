@@ -311,7 +311,7 @@ class coronagraph:
 
         if self.prop_apod2lyot == "fft":
             
-            input_wavefront_pad = cut_image(input_wavefront,self.dim_fp_fft)
+            input_wavefront_pad = proc.crop_or_pad_image(input_wavefront,self.dim_fp_fft)
             # Phase ramp to center focal plane between 4 pixels
 
             maskshifthalfpix = shift_phase_ramp(len(input_wavefront_pad), -Psf_offset[0], -Psf_offset[1])
@@ -362,7 +362,7 @@ class coronagraph:
 
 
         # crop to the Lyot stop size
-        lyotplane_before_lyot_crop = cut_image(lyotplane_before_lyot,self.lyotrad*2)
+        lyotplane_before_lyot_crop = proc.crop_or_pad_image(lyotplane_before_lyot,self.lyotrad*2)
 
         # Field after filtering by Lyot stop
         lyotplane_after_lyot = lyotplane_before_lyot_crop * self.lyot_pup
@@ -418,7 +418,7 @@ class coronagraph:
                                 self.diam_pup_in_m/2,self.prad)
             if DM3_active == True:
                 input_wavefront = input_wavefront*np.exp(1j*
-                            cut_image(phaseDM3,
+                            proc.crop_or_pad_image(phaseDM3,
                             self.entrancepupil.shape[1]))
 
             if retampl == True:
@@ -445,7 +445,7 @@ class coronagraph:
                                 self.diam_pup_in_m/2,self.prad)
                 if DM3_active == True:
                     input_wavefront = input_wavefront*np.exp(1j*
-                            cut_image(phaseDM3/fac,
+                            proc.crop_or_pad_image(phaseDM3/fac,
                             self.entrancepupil.shape[1]))
 
                 # Pupil to Lyot
@@ -566,7 +566,7 @@ def creatingpushact(model_dir,diam_pup_in_m,diam_pup_in_pix,
         model_dir + filename_grid_actu)['PRAD']
     if filename_ActuN != "":
         im_ActuN = fits.getdata(model_dir + filename_ActuN)
-        im_ActuN_dim = cut_image(im_ActuN,dim_array)
+        im_ActuN_dim = proc.crop_or_pad_image(im_ActuN,dim_array)
 
         ytmp, xtmp = np.unravel_index(
             np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
@@ -682,7 +682,7 @@ def creatingpushact_inpup(DM_pushact,wavelength, corona_struct, z_position):
                      dtype=complex)
 
     for i in np.arange(DM_pushact.shape[0]):
-        Upup,dxpup = prop_fresnel(UDM1*cut_image(DM_pushact[i],dimtmp),
+        Upup,dxpup = prop_fresnel(UDM1*proc.crop_or_pad_image(DM_pushact[i],dimtmp),
                 wavelength,-z_position,
                 corona_struct.diam_pup_in_m/2,corona_struct.prad)
         pushact_inpup[i] = Upup
@@ -740,7 +740,7 @@ def createdifference(input_wavefront,
 
     k = 0
     for i in posprobes:
-        probephase = cut_image(pushact[i],dim_pup)
+        probephase = proc.crop_or_pad_image(pushact[i],dim_pup)
 
         Ikmoins = np.abs(corona_struct.apodtodetector(input_wavefront*
                         np.exp(-1j * probephase)))**2 / corona_struct.maxPSF
@@ -1010,46 +1010,6 @@ def create_binary_pupil(direct, filename, dim, prad):
 
     return pupil
 
-
-def cut_image(image, dimout):
-    """ --------------------------------------------------
-    crop or add zero to a 2D image
-
-    Parameters
-    ----------
-    image : 2D array (float, double or complex)
-            dim x dim array
-
-    dimout : int
-         dimension of the output array
-
-    Returns
-    ------
-    im_out : 2D array (float)
-            if dimout < dim : cropped image around pixel (dim/2,dim/2)
-            if dimout > dim : image around pixel (dim/2,dim/2) surrounded by 0
-
-    AUTHOR : Raphaël Galicher
-
-    REVISION HISTORY :
-    Revision 1.1  2021-02-10 Raphaël Galicher
-    Initial revision
-
-    -------------------------------------------------- """
-
-    if dimout <= image.shape[0]:
-        im_out = np.zeros((image.shape[0], image.shape[1]), dtype=image.dtype)
-        im_out = image[int((image.shape[0]-dimout)/2):
-                    int((image.shape[0]+dimout)/2),
-            int((image.shape[1]-dimout)/2):int((image.shape[1]+dimout)/2)]
-    if dimout > image.shape[0]:
-        im_out = np.zeros((dimout, dimout), dtype=image.dtype)
-        im_out[int((dimout-image.shape[0])/2):
-                int((dimout+image.shape[0])/2),
-                int((dimout-image.shape[1])/2):
-                int((dimout+image.shape[1])/2)] = image
-    return im_out
-
 def prop_pup_DM1_DM3(pupil_wavefront,phase_DM1,wavelength,DM1_z_position,
                         rad_pup_in_m,rad_pup_in_pixel):
     """ --------------------------------------------------
@@ -1190,7 +1150,7 @@ def scale_amplitude_abb(filename,prad,pupil):
 
     # Create the array with same size as the pupil
 
-    ampfinal = cut_image(amp1,pupil.shape[1])
+    ampfinal = proc.crop_or_pad_image(amp1,pupil.shape[1])
    
     #Set the average to 0 inside entrancepupil
     ampfinal = (ampfinal / np.mean(ampfinal[np.where(pupil != 0)])
