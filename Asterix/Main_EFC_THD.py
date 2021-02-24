@@ -96,9 +96,11 @@ def create_interaction_matrices(parameter_file,
     posprobes = [int(i) for i in posprobes]
     cut = PWconfig["cut"]
 
+    DH_sampling = PWconfig["DH_sampling"]
+
     #image size after binning
     dim_sampl = int(
-        PWconfig["DH_sampling"] / science_sampling * dim_im / 2) * 2
+        DH_sampling / science_sampling * dim_im / 2) * 2
 
     ##################
     ##################
@@ -394,56 +396,7 @@ def create_interaction_matrices(parameter_file,
             Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix +
                                    ".fits")
         else:
-
-            # Creating MaskDH?
-            fileMaskDH = ("MaskDH_" + str(dim_sampl))
-            if DHshape == "square":
-                fileMaskDH = fileMaskDH + ("x" + str(dim_sampl) + "_square_" +
-                                           "_".join(map(str, choosepix)) +
-                                           "pix_dim" +
-                                           str(corona_struct.dim_im) +
-                                           '_raypup' + str(corona_struct.prad))
-            else:
-                fileMaskDH = fileMaskDH + "x" + str(
-                    dim_sampl) + "_circle_" + "_".join(map(
-                        str, circ_rad)) + 'pix_' + str(circ_side) + '_'
-                if circ_side != "full":
-                    fileMaskDH = fileMaskDH + str(circ_offset) + 'pix_' + str(
-                        circ_angle) + 'deg_'
-                fileMaskDH = fileMaskDH + 'dim' + str(
-                    corona_struct.dim_im) + '_raypup' + str(corona_struct.prad)
-
-            if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
-                print("Mask of DH " + fileMaskDH + " already exist")
-                maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
-            else:
-                print("We measure and save " + fileMaskDH + " and " + fileMaskDH + "_contrast")
-                maskDH = wsc.creatingMaskDH(dim_sampl,
-                                            DHshape,
-                                            choosepixDH=choosepix,
-                                            circ_rad=circ_rad,
-                                            circ_side=circ_side,
-                                            circ_offset=circ_offset,
-                                            circ_angle=circ_angle)
-                fits.writeto(intermatrix_dir + fileMaskDH + ".fits", maskDH)
-
-                maskDHcontrast = wsc.creatingMaskDH(
-                    corona_struct.dim_im,
-                    DHshape,
-                    choosepixDH=[
-                        element * corona_struct.dim_im / dim_sampl
-                        for element in choosepix
-                    ],
-                    circ_rad=[
-                        element * corona_struct.dim_im / dim_sampl
-                        for element in circ_rad
-                    ],
-                    circ_side=circ_side,
-                    circ_offset=circ_offset * corona_struct.dim_im / dim_sampl,
-                    circ_angle=circ_angle)
-                
-                fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits",
-                            maskDHcontrast)
+            maskDH, _ = wsc.load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, dim_im, science_sampling)
 
             # Creating EFC Interaction Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
@@ -589,9 +542,11 @@ def correctionLoop(parameter_file,
     posprobes = PWconfig["posprobes"]
     posprobes = [int(i) for i in posprobes]
     cut = PWconfig["cut"]
+    DH_sampling = PWconfig["DH_sampling"]
+
     #image size after binning
     dim_sampl = int(
-        PWconfig["DH_sampling"] / science_sampling * dim_im / 2) * 2
+        DH_sampling / science_sampling * dim_im / 2) * 2
 
     ##################
     ##################
@@ -792,31 +747,9 @@ def correctionLoop(parameter_file,
     else:
         raise Exception("Please create Direct matrix before correction")
 
-    fileMaskDH = "MaskDH_" + str(dim_sampl)
-    if DHshape == "square":
-        fileMaskDH = fileMaskDH + ("x" + str(dim_sampl) + "_square_" +
-                                   "_".join(map(str, choosepix)) + "pix_dim" +
-                                   str(corona_struct.dim_im) + '_raypup' +
-                                   str(corona_struct.prad))
-    else:
-        fileMaskDH = fileMaskDH + "x" + str(dim_sampl) + "_circle_" + "_".join(
-            map(str, circ_rad)) + 'pix_' + str(circ_side)
-        if circ_side != 'full':
-            fileMaskDH = fileMaskDH + '_' + str(circ_offset) + 'pix_' + str(
-                circ_angle) + 'deg'
-        fileMaskDH = fileMaskDH + '_dim' + str(
-            corona_struct.dim_im) + '_raypup' + str(corona_struct.prad)
-
-    if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
-        maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
-    else:
-        raise Exception("Please create MaskDH file before correction")
     
-    if os.path.exists(intermatrix_dir + fileMaskDH + "_contrast.fits") == True:
-        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH +
-                                      "_contrast.fits")
-    else:
-        raise Exception("Please create MaskContrast file before correction")
+    maskDH, maskDHcontrast = wsc.load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, dim_im, science_sampling)
+
 
     if correction_algorithm == "EM" or correction_algorithm == "steepest":
 
