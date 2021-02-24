@@ -228,7 +228,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl,DH_sampling, dim_i
     
     if os.path.exists(intermatrix_dir + fileMaskDH_detect + ".fits") == True:
         print("Mask of DH " + fileMaskDH_detect + " already exist")
-        maskDH = fits.getdata(intermatrix_dir + fileMaskDH_detect + ".fits")
+        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH_detect + ".fits")
     else:
         print("We measure and save " + fileMaskDH_detect )
         maskDHcontrast = creatingMaskDH(
