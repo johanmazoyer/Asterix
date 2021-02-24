@@ -161,11 +161,14 @@ def create_interaction_matrices(parameter_file,
     if not os.path.exists(Model_local_dir):
         print("Creating directory " + Model_local_dir + " ...")
         os.makedirs(Model_local_dir)
-    if corona_struct.prop_apod2lyot == "mft":
-        tmp_nam = "_dimpuparray"+str(
+    tmp_nam = "_dimpuparray"+str(
             int(corona_struct.entrancepupil.shape[1]))
-    else:
-        tmp_nam=""
+    
+    # if corona_struct.prop_apod2lyot == "mft":
+    #     tmp_nam = "_dimpuparray"+str(
+    #         int(corona_struct.entrancepupil.shape[1]))
+    # else:
+    #     tmp_nam=""
 
     if DM1_active == True:
         nam2DM = "_2DM"
@@ -639,13 +642,15 @@ def correctionLoop(parameter_file,
                        str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) + "/lop_" +
                        str(round(science_sampling, 2)) + "/basis_" + basistr + "/")
     
-    if corona_struct.prop_apod2lyot == "mft":
-        tmp_nam = "_dimpuparray"+str(
-            int(corona_struct.entrancepupil.shape[1]))
-    else:
-        tmp_nam=""
+    tmp_nam = "_dimpuparray"+str(
+             int(corona_struct.entrancepupil.shape[1]))
+    # if corona_struct.prop_apod2lyot == "mft":
+    #     tmp_nam = "_dimpuparray"+str(
+    #         int(corona_struct.entrancepupil.shape[1]))
+    # else:
+    #     tmp_nam=""
 
-##Load PW matrices
+    ##Load PW matrices
     if (estimation == "PairWise" or estimation == "pairwise"
             or estimation == "PW" or estimation == "pw"):
         filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
@@ -657,7 +662,7 @@ def correctionLoop(parameter_file,
         else:
             raise Exception("Please create PW matrix before correction")
 
-#Load DM3 actuator functions
+    #Load DM3 actuator functions
     if os.path.exists(Model_local_dir + "DM3_PushActInPup_ray" +
                 str(int(corona_struct.prad))+tmp_nam+".fits") == True:
         DM3_pushact = fits.getdata(Model_local_dir + "DM3_PushActInPup_ray" +
@@ -665,7 +670,7 @@ def correctionLoop(parameter_file,
     else:
         raise Exception("Please create DM3_PushActInPup before correction")
 
-# List of DM3 actuators that are inside the pupil
+    # List of DM3 actuators that are inside the pupil
     DM3_fileWhichInPup = "DM3_Whichactfor" + str(
         MinimumSurfaceRatioInThePupil) + '_raypup' + str(corona_struct.prad)
     if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
@@ -678,7 +683,7 @@ def correctionLoop(parameter_file,
     if DM1_active == True:
         nam2DM = "_2DM"
 
-#Load DM1 actuator functions
+        #Load DM1 actuator functions
         if os.path.exists(Model_local_dir + "DM1_PushActInPup_ray" +
                     str(int(corona_struct.pradDM1))+tmp_nam+".fits") == True:
             DM1_pushact = fits.getdata(Model_local_dir + "DM1_PushActInPup_ray" +
@@ -691,7 +696,7 @@ def correctionLoop(parameter_file,
             DM1_pushact_inpup = fits.getdata(tmp+"_inPup_real.fits"
                  ) + 1j*fits.getdata(tmp+"_inPup_imaginary.fits")
 
-# List of DM1 actuators that are inside the pupil
+        # List of DM1 actuators that are inside the pupil
         DM1_fileWhichInPup = "DM1_Whichactfor" + str(
             MinimumSurfaceRatioInThePupil) + '_raypup' + str(corona_struct.prad)
         if os.path.exists(intermatrix_dir + DM1_fileWhichInPup + ".fits") == True:
@@ -756,15 +761,10 @@ def correctionLoop(parameter_file,
     if set_phase_abb == True:
         if set_random_phase == True:
             print("Random phase aberrations upstream from coronagraph")
-            if corona_struct.prop_apod2lyot == "fft":
-                phase_up = instr.random_phase_map(corona_struct.dim_im,
-                         phaserms, rhoc_phase, slope_phase,
-                         corona_struct.entrancepupil)
-            else:
-                phase_up = instr.random_phase_map(
-                        corona_struct.entrancepupil.shape[1],
-                        phaserms, rhoc_phase, slope_phase,
-                         corona_struct.entrancepupil)
+            phase_up = instr.random_phase_map(
+                    corona_struct.entrancepupil.shape[1],
+                    phaserms, rhoc_phase, slope_phase,
+                        corona_struct.entrancepupil)
         else:
             if phase_abb_filename == '':
                 phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
@@ -775,7 +775,7 @@ def correctionLoop(parameter_file,
                             phase_abb_filename + ".fits")
             else:
                 print("Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "+ phase_abb_filename + ".fits")
-                phase_up = instr.random_phase_map(corona_struct.dim_im,
+                phase_up = instr.random_phase_map(corona_struct.entrancepupil.shape[1],
                         phaserms, rhoc_phase, slope_phase,
                          corona_struct.entrancepupil)
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits", phase_up)
@@ -834,7 +834,7 @@ def correctionLoop(parameter_file,
         fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits",
                      maskDHcontrast)
 
-# Initial wavefront in pupil plane
+    # Initial wavefront in pupil plane
     imagedetector[0] = (corona_struct.im_apodtodetector_chrom(
                                 amplitude_abb_up, phase_abb_up)/
                                         corona_struct.maxPSF)

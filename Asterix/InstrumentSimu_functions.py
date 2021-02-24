@@ -51,8 +51,6 @@ class coronagraph:
         else:
             self.wav_vec=0
 
-        # propagation from pupil to lyot plane
-        # self.prop_apod2lyot = coroconfig["prop_apod2lyot"]
 
         #coronagraph
         self.corona_type = coroconfig["corona_type"].lower()
@@ -60,44 +58,43 @@ class coronagraph:
         self.knife_coro_offset = coroconfig["knife_coro_offset"]
         self.err_fqpm = coroconfig["err_fqpm"]
         self.achrom_fqpm = coroconfig["achrom_fqpm"]
+
+        self.prad = int(modelconfig["diam_pup_in_pix"]/2)
+        self.lyotrad = int(self.prad * self.diam_lyot_in_m / self.diam_pup_in_m)        
         
+        # only use if prop_apod2lyot == 'fft'
+        self.dim_fp_fft = int(self.prad *2* self.science_sampling* self.diam_lyot_in_m/ self.diam_pup_in_m)
+
         ## transmission of the phase mask (exp(i*phase))
         ## centered on pixel [0.5,0.5]
         if self.corona_type == "fqpm":
+            self.prop_apod2lyot = 'fft'
             self.FPmsk = self.FQPM()
             self.perfect_coro = True
-            self.prop_apod2lyot = 'fft'
+            
 
         elif self.corona_type == "classiclyot":
-            self.rad_lyot_fpm = modelconfig["rad_lyot_fpm"]
+            self.prop_apod2lyot = 'mft-babinet'
+            self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
             self.Lyot_fpm_sampling = 30 #arbitrarty chosen for now and hard coded.
             self.FPmsk = self.ClassicalLyot()
             self.perfect_coro = False
-            self.prop_apod2lyot = 'mft-babinet'
+            
 
         elif self.corona_type == "knife":
+            self.prop_apod2lyot = 'fft'
             self.FPmsk = self.KnifeEdgeCoro()
             self.perfect_coro = False
-            self.prop_apod2lyot = 'fft'
 
         elif self.corona_type == "vortex":
+            self.prop_apod2lyot = 'fft'
             phasevortex = 0  # to be defined
             self.FPmsk = np.exp(1j * phasevortex)
             self.perfect_coro = True
-            self.prop_apod2lyot = 'fft'
 
-        ## define important measure of the coronagraph
-        if self.prop_apod2lyot == "fft":
-            self.lyotrad = self.dim_im / 2 / self.science_sampling
-            self.prad = int(np.ceil(self.lyotrad * self.diam_pup_in_m / self.diam_lyot_in_m))
-            self.lyotrad = int(np.ceil(self.lyotrad))
-            prev_science_sampling = self.science_sampling
-            self.science_sampling = self.dim_im / 2 / self.lyotrad
-            print("Pupil resolution: 'Science Sampling' has been rounded up from {:.3f} to {:.3f} l/D"
-                .format(prev_science_sampling, self.science_sampling))
-        if self.prop_apod2lyot == "mft" or self.prop_apod2lyot == "mft-babinet":
-            self.prad = int(modelconfig["diam_pup_in_pix"]/2)
-            self.lyotrad = int(self.prad * self.diam_lyot_in_m / self.diam_pup_in_m)
+
+
+
 
         #radius of the pupil in pixel in DM1 plane
         #(updated in Main_EFC_THD)
@@ -105,19 +102,13 @@ class coronagraph:
 
         # Maybe should remove the entrance pupil from the coronostructure,
         # this is "before the DMs" so probably not relevant here.
-        if self.prop_apod2lyot == 'fft':
-            self.entrancepupil = create_binary_pupil(model_dir,
-                        modelconfig["filename_instr_pup"],self.dim_im, self.prad)
-            self.apod_pup = 1
-            self.lyot_pup = create_binary_pupil(model_dir,
-                        modelconfig["filename_instr_lyot"], self.dim_im, self.lyotrad)
-        else:
-            self.entrancepupil = create_binary_pupil(model_dir,
+        self.entrancepupil = create_binary_pupil(model_dir,
                         modelconfig["filename_instr_pup"],int(self.prad*1.25)*2, self.prad)
-            self.apod_pup = 1
-            self.lyot_pup = create_binary_pupil(model_dir,
-                        modelconfig["filename_instr_lyot"], self.entrancepupil.shape[1]
+        self.apod_pup = 1
+        self.lyot_pup = create_binary_pupil(model_dir,
+                        modelconfig["filename_instr_lyot"], self.lyotrad*2
                                  , self.lyotrad)
+        
         
         if self.perfect_coro:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
@@ -139,6 +130,8 @@ class coronagraph:
         np.amax(PSF): max of the non-coronagraphic PSF
         np.sum(PSF): sum of the non-coronagraphic PSF
         -------------------------------------------------- """
+        # PSF = self.im_apodtodetector_chrom(0, 0,noFPM=True)
+
         PSF = self.im_apodtodetector_chrom(0, 0,noFPM=True)
 
         return np.amax(PSF), np.sum(PSF)
@@ -153,24 +146,32 @@ class coronagraph:
         FQPM : 2D array giving the complex transmission of the
             FQPM mask, centered at the four edges of the image
         -------------------------------------------------- """
+        
+        if self.prop_apod2lyot == "fft":
+            dimension_array_fpm = self.dim_fp_fft
+        else: 
+            dimension_array_fpm = self.dim_im
+        
+        
+        
         xx, yy = np.meshgrid(
-            np.arange(self.dim_im) - (self.dim_im) / 2,
-            np.arange(self.dim_im) - (self.dim_im) / 2)
+            np.arange(dimension_array_fpm) - (dimension_array_fpm) / 2,
+            np.arange(dimension_array_fpm) - (dimension_array_fpm) / 2)
 
-        tmp1 = np.zeros((self.dim_im,self.dim_im))
+        tmp1 = np.zeros((dimension_array_fpm,dimension_array_fpm))
         tmp1[np.where(xx<0)] = 1
-        tmp2 = np.zeros((self.dim_im,self.dim_im))
+        tmp2 = np.zeros((dimension_array_fpm,dimension_array_fpm))
         tmp2[np.where(yy>=0)] = 1
         tmp1 = tmp1-tmp2
         
         if np.sum(self.wav_vec) == 0 or self.achrom_fqpm==True:
-            phase = np.zeros((self.dim_im,self.dim_im))
+            phase = np.zeros((dimension_array_fpm,dimension_array_fpm))
             phase[np.where(tmp1!=0)] = np.pi + self.err_fqpm
         else:
-            phase = np.zeros((self.wav_vec.shape[0],self.dim_im,self.dim_im))
+            phase = np.zeros((self.wav_vec.shape[0],dimension_array_fpm,dimension_array_fpm))
             i=0
             for wav in self.wav_vec:
-                tmp2 = np.zeros((self.dim_im,self.dim_im))
+                tmp2 = np.zeros((dimension_array_fpm,dimension_array_fpm))
                 tmp2[np.where(tmp1!=0)] = (np.pi+ self.err_fqpm)*self.wavelength/wav 
                 phase[i]=tmp2
                 i=i+1
@@ -230,11 +231,11 @@ class coronagraph:
         ClassicalLyotstop = roundpupil(self.dim_fpm, (rad_LyotFP_pix))
 
         return ClassicalLyotstop
-    ##############################################
+   
+   
+   ##############################################
     ##############################################
     ### Propagation through coronagraph
-
-
     def apodtodetector(self,
                        input_wavefront,
                        noFPM=False,wavelength=0):
@@ -290,11 +291,14 @@ class coronagraph:
         -------------------------------------------------- """
 
         input_wavefront_after_apod = input_wavefront*self.apod_pup
-        
+
         fac=1
+
         if noFPM:
             FPmsk = 1.
-        else:            
+            Psf_offset = (0,0)
+        else:
+            Psf_offset = (-0.5,-0.5)            
             if wavelength == 0:
                 FPmsk = self.FPmsk
             else:
@@ -306,61 +310,63 @@ class coronagraph:
                     FPmsk = self.FPmsk
 
         if self.prop_apod2lyot == "fft":
+            
+            input_wavefront_pad = cut_image(input_wavefront,self.dim_fp_fft)
             # Phase ramp to center focal plane between 4 pixels
-            if noFPM:
-                maskshifthalfpix = 1
-            else:
-                maskshifthalfpix = shift_phase_ramp(len(input_wavefront), 0.5, 0.5)
+
+            maskshifthalfpix = shift_phase_ramp(len(input_wavefront_pad), -Psf_offset[0], -Psf_offset[1])
 
             #Apod plane to focal plane
             corono_focal_plane = np.fft.fft2(
-                np.fft.fftshift(input_wavefront_after_apod * maskshifthalfpix))
-
+                np.fft.fftshift(input_wavefront_pad * maskshifthalfpix))
             # Focal plane to Lyot plane
-            lyotplane_before_lyot = np.fft.ifft2(corono_focal_plane * FPmsk)
+            lyotplane_before_lyot = np.fft.fftshift(np.fft.ifft2(corono_focal_plane * FPmsk))
 
-            # Lyot stop
-            lyotplane_after_lyot = np.fft.fftshift(lyotplane_before_lyot
-                                    ) * self.lyot_pup
 
         if self.prop_apod2lyot == "mft":
             #Apod plane to focal plane
+
             corono_focal_plane = mft(input_wavefront_after_apod,
                     self.prad*2,self.dim_im,
                     self.dim_im/self.science_sampling*fac,
-                    xshift=-.5,yshift=-.5,inv=1)
+                    xshift=Psf_offset[0],yshift=Psf_offset[1],inv=1)
             
             # Focal plane to Lyot plane
             lyotplane_before_lyot = mft(corono_focal_plane * FPmsk,
                     self.dim_im,2*self.prad,
                     self.dim_im/self.science_sampling*fac,
                     inv=-1)
-
-            # Lyot stop mask
-            lyot_pup = cut_image(self.lyot_pup,lyotplane_before_lyot.shape[1])
-
-            # Field after filtering by Lyot stop
-            lyotplane_after_lyot = lyotplane_before_lyot * lyot_pup
-        
-        if self.prop_apod2lyot == "mft-babinet":
-            #Apod plane to focal plane
-        
-            corono_focal_plane = mft(input_wavefront_after_apod,
-                    self.prad*2,self.dim_fpm,
-                    self.dim_fpm/self.Lyot_fpm_sampling*fac*fac,
-                    xshift=-.5,yshift=-.5,inv=1)
             
-            # Focal plane to Lyot plane
-            lyotplane_before_lyot_central_part = mft(corono_focal_plane * FPmsk,
-                    self.dim_fpm,2*self.prad,
-                    self.dim_fpm/self.Lyot_fpm_sampling*fac,
-                    inv=-1)
 
-            # Lyot stop mask
-            lyot_pup = cut_image(self.lyot_pup,lyotplane_before_lyot.shape[1])
+        
+        # if self.prop_apod2lyot == "mft-babinet":
+        #     #Apod plane to focal plane
+        
+        #     corono_focal_plane = mft(input_wavefront_after_apod,
+        #             self.prad*2,self.dim_fpm,
+        #             self.dim_fpm/self.Lyot_fpm_sampling*fac*fac,
+        #             xshift=-.5,yshift=-.5,inv=1)
+            
+        #     # Focal plane to Lyot plane
+        #     lyotplane_before_lyot_central_part = mft(corono_focal_plane * FPmsk,
+        #             self.dim_fpm,2*self.prad,
+        #             self.dim_fpm/self.Lyot_fpm_sampling*fac,
+        #             inv=-1)
 
-            # BAbinet's trick and Lyot pup multiplication
-            lyotplane_after_lyot = (input_wavefront_after_apod - lyotplane_before_lyot_central_part) * lyot_pup
+            # # Lyot stop mask
+            # lyot_pup = cut_image(self.lyot_pup,lyotplane_before_lyot_central_part.shape[1])
+            # input_wavefront_after_apod_crop = cut_image(input_wavefront_after_apod, lyotplane_before_lyot_central_part.shape[1])
+
+            # # BAbinet's trick and Lyot pup multiplication
+            # lyotplane_after_lyot = (input_wavefront_after_apod_crop - lyotplane_before_lyot_central_part) * lyot_pup
+
+
+        # crop to the Lyot stop size
+        lyotplane_before_lyot_crop = cut_image(lyotplane_before_lyot,self.lyotrad*2)
+
+        # Field after filtering by Lyot stop
+        lyotplane_after_lyot = lyotplane_before_lyot_crop * self.lyot_pup
+
 
         if (self.perfect_coro) & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
@@ -389,10 +395,6 @@ class coronagraph:
             fac=1
         else:
             fac = wavelength/self.wavelength
-
-        if self.prop_apod2lyot == 'fft':
-            Lyot_plane_after_Lyot = cut_image(
-                Lyot_plane_after_Lyot,self.lyotrad*2)
 
         science_focal_plane = mft(Lyot_plane_after_Lyot,self.lyotrad*2,
             self.dim_im, self.dim_im / self.science_sampling*fac, inv=1)
@@ -453,11 +455,11 @@ class coronagraph:
                 im += np.abs(self.lyottodetector(lyotplane_after_lyot,wav))**2
         return im
 
+
+
 ##############################################
 ##############################################
 ### Pupil
-
-
 def roundpupil(dim_im, prad1):
     """ --------------------------------------------------
     Create a circular pupil. The center of the pupil is located between 4 pixels.
@@ -786,10 +788,14 @@ def shift_phase_ramp(dim_im, a, b):
         Phase ramp
     -------------------------------------------------- """
     # Verify this function works
-    maska = np.linspace(-np.pi * a, np.pi * a, dim_im)
-    maskb = np.linspace(-np.pi * b, np.pi * b, dim_im)
-    xx, yy = np.meshgrid(maska, maskb)
-    return np.exp(-1j * xx) * np.exp(-1j * yy)
+    if (a ==0) & (b == 0):
+        ramp = 1
+    else: 
+        maska = np.linspace(-np.pi * a, np.pi * a, dim_im)
+        maskb = np.linspace(-np.pi * b, np.pi * b, dim_im)
+        xx, yy = np.meshgrid(maska, maskb)
+        ramp = np.exp(-1j * xx) * np.exp(-1j * yy)
+    return ramp
 
 def mft(pup, dimpup, dimft, nbres, xshift=0, yshift=0, inv=-1):
     """ --------------------------------------------------
