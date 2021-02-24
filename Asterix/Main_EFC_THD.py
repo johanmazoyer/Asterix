@@ -6,12 +6,12 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
-import skimage.transform
 
 from configobj import ConfigObj
 from validate import Validator
 
 import Asterix.processing_functions as proc
+import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.WSC_functions as wsc
 from Asterix.InstrumentSimu_functions import coronagraph
 import Asterix.InstrumentSimu_functions as instr
@@ -761,7 +761,7 @@ def correctionLoop(parameter_file,
     if set_phase_abb == True:
         if set_random_phase == True:
             print("Random phase aberrations upstream from coronagraph")
-            phase_up = instr.random_phase_map(
+            phase_up = phase_ampl.random_phase_map(
                     corona_struct.entrancepupil.shape[1],
                     phaserms, rhoc_phase, slope_phase,
                         corona_struct.entrancepupil)
@@ -775,7 +775,7 @@ def correctionLoop(parameter_file,
                             phase_abb_filename + ".fits")
             else:
                 print("Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "+ phase_abb_filename + ".fits")
-                phase_up = instr.random_phase_map(corona_struct.entrancepupil.shape[1],
+                phase_up = phase_ampl.random_phase_map(corona_struct.entrancepupil.shape[1],
                         phaserms, rhoc_phase, slope_phase,
                          corona_struct.entrancepupil)
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits", phase_up)
@@ -786,7 +786,7 @@ def correctionLoop(parameter_file,
         phase_up = 0
 
     if set_amplitude_abb == True:
-        ampfinal = instr.scale_amplitude_abb(model_dir + amplitude_abb + ".fits",
+        ampfinal = phase_ampl.scale_amplitude_abb(model_dir + amplitude_abb + ".fits",
                 corona_struct.prad,corona_struct.entrancepupil)
     else:
         ampfinal = 0
@@ -985,7 +985,7 @@ def correctionLoop(parameter_file,
 
                 # # Add DM3 phase
                     tmp_input_wavefront = tmp_input_wavefront * np.exp(
-                            1j * instr.cut_image(apply_on_DM3,
+                            1j * proc.crop_or_pad_image(apply_on_DM3,
                             corona_struct.entrancepupil.shape[1]))
                     
                     imagedetectortemp = (
@@ -1067,7 +1067,7 @@ def correctionLoop(parameter_file,
             apply_on_DM1 = wsc.apply_on_DM(
                             solution1[pushactonDM3.shape[0]:],DM1_pushact
                             )*(-gain * amplitudeEFC*2 * np.pi * 1e-9 / wavelength)
-            phaseDM1[k + 1]  = phaseDM1[k] + instr.cut_image(apply_on_DM1,dim_pup)
+            phaseDM1[k + 1]  = phaseDM1[k] + proc.crop_or_pad_image(apply_on_DM1,dim_pup)
 
             # # Propagation in DM1 plane, add DM1 phase
             # # and propagate to next pupil plane (DM3 plane)
@@ -1080,10 +1080,10 @@ def correctionLoop(parameter_file,
                 solution1[0:pushactonDM3.shape[0]],pushactonDM3
                 )*(-gain * amplitudeEFC*2 * np.pi * 1e-9 / wavelength)
 
-        phaseDM3[k + 1]  = phaseDM3[k] + instr.cut_image(apply_on_DM3,dim_pup)
+        phaseDM3[k + 1]  = phaseDM3[k] + proc.crop_or_pad_image(apply_on_DM3,dim_pup)
                 
         input_wavefront = input_wavefront*np.exp(1j *
-                instr.cut_image(apply_on_DM3,dim_pup))
+                proc.crop_or_pad_image(apply_on_DM3,dim_pup))
 
         # imagedetector[k + 1] = (
         #     abs(corona_struct.apodtodetector(input_wavefront))**2 /
@@ -1120,11 +1120,11 @@ def correctionLoop(parameter_file,
         cut_phaseDM1 = np.zeros(
             (nbiter + 1, 2 * corona_struct.prad, 2 * corona_struct.prad))
         for it in np.arange(nbiter + 1):
-            cut_phaseDM1[it] = instr.cut_image(phaseDM1[it], 2 * corona_struct.prad)
+            cut_phaseDM1[it] = proc.crop_or_pad_image(phaseDM1[it], 2 * corona_struct.prad)
     cut_phaseDM3 = np.zeros(
         (nbiter + 1, 2 * corona_struct.prad, 2 * corona_struct.prad))
     for it in np.arange(nbiter + 1):
-        cut_phaseDM3[it] = instr.cut_image(phaseDM3[it], 2 * corona_struct.prad)
+        cut_phaseDM3[it] = proc.crop_or_pad_image(phaseDM3[it], 2 * corona_struct.prad)
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
     fits.writeto(result_dir + current_time_str + "_Detector_Images" + ".fits",

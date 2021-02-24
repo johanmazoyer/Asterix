@@ -103,7 +103,7 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
 
     k = 0
     for i in posprobes:
-        tmp = instr.cut_image(pushact[i],corona_struct.entrancepupil.shape[1])
+        tmp = proc.crop_or_pad_image(pushact[i],corona_struct.entrancepupil.shape[1])
         probephase[k]=tmp*amplitude * 1e-9 *2 * np.pi / wavelength
 
         inputwavefront = corona_struct.entrancepupil * (1 + 1j * probephase[k])
@@ -145,7 +145,7 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     WhichInPupil: 1D array, index of all the actuators located inside the pupil
     -------------------------------------------------- """
     WhichInPupil = []
-    tmp_entrancepupil = instr.cut_image(entrancepupil,pushact.shape[2])
+    tmp_entrancepupil = proc.crop_or_pad_image(entrancepupil,pushact.shape[2])
 
     for i in np.arange(pushact.shape[0]):
         Psivector=pushact[i]
@@ -264,7 +264,7 @@ def creatingCorrectionmatrix(input_wavefront,
             (pushact.shape[0], corona_struct.entrancepupil.shape[1],
              corona_struct.entrancepupil.shape[1]),dtype=complex)
         for k in range(pushact.shape[0]):
-            probephase[k]=instr.cut_image(
+            probephase[k]=proc.crop_or_pad_image(
                 pushact[k],corona_struct.entrancepupil.shape[1])
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
