@@ -3,6 +3,75 @@ import skimage.transform
 from astropy.io import fits
 import Asterix.processing_functions as proc
 
+
+##############################################
+##############################################
+### Pupil
+def roundpupil(dim_im, prad1):
+    """ --------------------------------------------------
+    Create a circular pupil. The center of the pupil is located between 4 pixels.
+    
+    Parameters
+    ----------
+    dim_im : int  
+        Size of the image (in pixels)
+    prad1 : float 
+        Size of the pupil radius (in pixels)
+    
+    Returns
+    ------
+    pupilnormal : 2D array
+        Output circular pupil
+    -------------------------------------------------- """
+    xx, yy = np.meshgrid(
+        np.arange(dim_im) - (dim_im) / 2,
+        np.arange(dim_im) - (dim_im) / 2)
+    rr = np.hypot(yy + 1 / 2, xx + 1 / 2)
+    pupilnormal = np.zeros((dim_im, dim_im))
+    pupilnormal[rr <= prad1] = 1.0
+    return pupilnormal
+
+
+
+def load_or_create_binary_pupil(direct, filename, dim, prad):
+    """ --------------------------------------------------
+    Create a binary pupil from a Fits file or create a round pupil
+
+    Parameters
+    ----------
+    direct : string
+         name of the directory where filename is
+
+    filename : string
+         name of the Fits file
+
+    dim : int
+         dimension in pixels of the output array
+
+    prad : int
+         radius in pixels of the round pupil mask
+
+    Returns
+    ------
+    pup_z : 2D array (float)
+            Binary pupil (used for entrance pupil and Lyot stop)
+
+    AUTHOR : Raphael Galicher
+
+    REVISION HISTORY :
+    Revision 1.1  2020-01-26 Raphael Galicher
+    Initial revision
+    Revision 2.0  2020-02-24 Johan Mazoyer rename (ambiguous name)
+
+    -------------------------------------------------- """
+
+    if filename != "":
+        pupil = fits.getdata(direct + filename)
+    else:
+        pupil = roundpupil(dim, prad)
+
+    return pupil
+
 def shift_phase_ramp(dim_im, a, b):
     """ --------------------------------------------------
     Create a phase ramp of size (dim_im,dim_im) that can be used as follow
@@ -93,10 +162,10 @@ def scale_amplitude_abb(filename,prad,pupil):
     ampfinal : 2D array (float)
             amplitude aberrations (in amplitude, not intensity)
 
-    AUTHOR : Raphaël Galicher
+    AUTHOR : Raphael Galicher
 
     REVISION HISTORY :
-    Revision 1.1  2021-02-18 Raphaël Galicher
+    Revision 1.1  2021-02-18 Raphael Galicher
     Initial revision
 
     -------------------------------------------------- """

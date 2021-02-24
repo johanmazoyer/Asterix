@@ -104,10 +104,10 @@ class coronagraph:
 
         # Maybe should remove the entrance pupil from the coronostructure,
         # this is "before the DMs" so probably not relevant here.
-        self.entrancepupil = create_binary_pupil(model_dir,
+        self.entrancepupil = phase_ampl.load_or_create_binary_pupil(model_dir,
                         modelconfig["filename_instr_pup"],int(self.prad*1.25)*2, self.prad)
         self.apod_pup = 1
-        self.lyot_pup = create_binary_pupil(model_dir,
+        self.lyot_pup = phase_ampl.load_or_create_binary_pupil(model_dir,
                         modelconfig["filename_instr_lyot"], self.lyotrad*2
                                  , self.lyotrad)
         
@@ -228,7 +228,7 @@ class coronagraph:
         rad_LyotFP_pix =  self.rad_lyot_fpm*ld_p
 
         self.dim_fpm = 2*int(rad_LyotFP_pix)
-        ClassicalLyotstop = roundpupil(self.dim_fpm, (rad_LyotFP_pix))
+        ClassicalLyotstop = phase_ampl.roundpupil(self.dim_fpm, (rad_LyotFP_pix))
 
         return ClassicalLyotstop
    
@@ -457,32 +457,7 @@ class coronagraph:
 
 
 
-##############################################
-##############################################
-### Pupil
-def roundpupil(dim_im, prad1):
-    """ --------------------------------------------------
-    Create a circular pupil. The center of the pupil is located between 4 pixels.
-    
-    Parameters
-    ----------
-    dim_im : int  
-        Size of the image (in pixels)
-    prad1 : float 
-        Size of the pupil radius (in pixels)
-    
-    Returns
-    ------
-    pupilnormal : 2D array
-        Output circular pupil
-    -------------------------------------------------- """
-    xx, yy = np.meshgrid(
-        np.arange(dim_im) - (dim_im) / 2,
-        np.arange(dim_im) - (dim_im) / 2)
-    rr = np.hypot(yy + 1 / 2, xx + 1 / 2)
-    pupilnormal = np.zeros((dim_im, dim_im))
-    pupilnormal[rr <= prad1] = 1.0
-    return pupilnormal
+
 
 
 ##############################################
@@ -991,41 +966,3 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         result = result / fac**2
     return result, dxout
 
-
-def create_binary_pupil(direct, filename, dim, prad):
-    """ --------------------------------------------------
-    Create a binary pupil from a Fits file or create a round pupil
-
-    Parameters
-    ----------
-    direct : string
-         name of the directory where filename is
-
-    filename : string
-         name of the Fits file
-
-    dim : int
-         dimension in pixels of the output array
-
-    prad : int
-         radius in pixels of the round pupil mask
-
-    Returns
-    ------
-    pup_z : 2D array (float)
-            Binary pupil (used for entrance pupil and Lyot stop)
-
-    AUTHOR : Raphaël Galicher
-
-    REVISION HISTORY :
-    Revision 1.1  2020-01-26 Raphaël Galicher
-    Initial revision
-
-    -------------------------------------------------- """
-
-    if filename != "":
-        pupil = fits.getdata(direct + filename)
-    else:
-        pupil = roundpupil(dim, prad)
-
-    return pupil
