@@ -417,7 +417,7 @@ def create_interaction_matrices(parameter_file,
                 print("Mask of DH " + fileMaskDH + " already exist")
                 maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
             else:
-                print("Recording " + fileMaskDH + " ...")
+                print("We measure and save " + fileMaskDH + " and " + fileMaskDH + "_contrast")
                 maskDH = wsc.creatingMaskDH(dim_sampl,
                                             DHshape,
                                             choosepixDH=choosepix,
@@ -426,6 +426,24 @@ def create_interaction_matrices(parameter_file,
                                             circ_offset=circ_offset,
                                             circ_angle=circ_angle)
                 fits.writeto(intermatrix_dir + fileMaskDH + ".fits", maskDH)
+
+                maskDHcontrast = wsc.creatingMaskDH(
+                    corona_struct.dim_im,
+                    DHshape,
+                    choosepixDH=[
+                        element * corona_struct.dim_im / dim_sampl
+                        for element in choosepix
+                    ],
+                    circ_rad=[
+                        element * corona_struct.dim_im / dim_sampl
+                        for element in circ_rad
+                    ],
+                    circ_side=circ_side,
+                    circ_offset=circ_offset * corona_struct.dim_im / dim_sampl,
+                    circ_angle=circ_angle)
+                
+                fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits",
+                            maskDHcontrast)
 
             # Creating EFC Interaction Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
@@ -772,7 +790,7 @@ def correctionLoop(parameter_file,
     if os.path.exists(intermatrix_dir + fileDirectMatrix + ".fits") == True:
         Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix + ".fits")
     else:
-        print("Please create Direct matrix before correction")
+        raise Exception("Please create Direct matrix before correction")
 
     fileMaskDH = "MaskDH_" + str(dim_sampl)
     if DHshape == "square":
@@ -792,7 +810,13 @@ def correctionLoop(parameter_file,
     if os.path.exists(intermatrix_dir + fileMaskDH + ".fits") == True:
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH + ".fits")
     else:
-        print("Please create MaskDH matrix before correction")
+        raise Exception("Please create MaskDH file before correction")
+    
+    if os.path.exists(intermatrix_dir + fileMaskDH + "_contrast.fits") == True:
+        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH +
+                                      "_contrast.fits")
+    else:
+        raise Exception("Please create MaskContrast file before correction")
 
     if correction_algorithm == "EM" or correction_algorithm == "steepest":
 
@@ -875,26 +899,7 @@ def correctionLoop(parameter_file,
     phaseDM1 = np.zeros((nbiter + 1, corona_struct.entrancepupil.shape[1],
                          corona_struct.entrancepupil.shape[1]))
     meancontrast = np.zeros(nbiter + 1)
-    if os.path.exists(intermatrix_dir + fileMaskDH + "_contrast.fits") == True:
-        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH +
-                                      "_contrast.fits")
-    else:
-        maskDHcontrast = wsc.creatingMaskDH(
-            corona_struct.dim_im,
-            DHshape,
-            choosepixDH=[
-                element * corona_struct.dim_im / dim_sampl
-                for element in choosepix
-            ],
-            circ_rad=[
-                element * corona_struct.dim_im / dim_sampl
-                for element in circ_rad
-            ],
-            circ_side=circ_side,
-            circ_offset=circ_offset * corona_struct.dim_im / dim_sampl,
-            circ_angle=circ_angle)
-        fits.writeto(intermatrix_dir + fileMaskDH + "_contrast.fits",
-                     maskDHcontrast)
+
 
     # Initial wavefront in pupil plane
     imagedetector[0] = (
