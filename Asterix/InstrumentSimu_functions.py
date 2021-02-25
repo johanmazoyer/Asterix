@@ -41,17 +41,21 @@ class coronagraph:
 
         #Wavelength and spectral band pass in m
         self.wavelength_0 = modelconfig["wavelength_0"]
+        self.Delta_wav = modelconfig["Delta_wav"]
 
 
         # should not be done here, this is larger than the coronagraph system
-        if modelconfig["Delta_wav"] != 0:
+        if self.Delta_wav != 0:
+            if modelconfig["nb_wav"] % 2 == 0:
+                raise Exception("please set nb_wav parameter to an odd number")
+            
             self.wav_vec = np.linspace(
-                self.wavelength_0 - modelconfig["Delta_wav"] / 2,
-                self.wavelength_0 + modelconfig["Delta_wav"] / 2,
-                int(int(modelconfig["nb_wav"] / 2) * 2) +
-                1)[0:int(int(modelconfig["nb_wav"] / 2) * 2)]
+                self.wavelength_0 - self.Delta_wav / 2,
+                self.wavelength_0 + self.Delta_wav / 2,
+                num = modelconfig["nb_wav"],
+                endpoint=True)
         else:
-            self.wav_vec = 0
+            self.wav_vec = [self.wavelength_0]
 
         self.prad = int(modelconfig["diam_pup_in_pix"] / 2)
         self.lyotrad = int(self.prad * self.diam_lyot_in_m /
@@ -102,6 +106,7 @@ class coronagraph:
         self.entrancepupil = phase_ampl.load_or_create_binary_pupil(
             model_dir, modelconfig["filename_instr_pup"],
             int(self.prad * 1.25) * 2, self.prad)
+        # ARGH ! 1.25 parameter should not be hardcoded here !!! 
         self.apod_pup = 1
         self.lyot_pup = phase_ampl.load_or_create_binary_pupil(
             model_dir, modelconfig["filename_instr_lyot"], self.lyotrad * 2,
@@ -133,7 +138,7 @@ class coronagraph:
 
     def FQPM(self):
         """ --------------------------------------------------
-        Create a perfect Four Quadrant Phase Mask coronagraph of size (dim_im,dim_im)
+        Create a Four Quadrant Phase Mask coronagraph 
         
 
         Returns
@@ -157,7 +162,7 @@ class coronagraph:
         tmp2[np.where(yy >= 0)] = 1
         tmp1 = tmp1 - tmp2
 
-        if np.sum(self.wav_vec) == 0 or self.achrom_fqpm == True:
+        if self.Delta_wav == 0 or self.achrom_fqpm == True:
             phase = np.zeros((dimension_array_fpm, dimension_array_fpm))
             phase[np.where(tmp1 != 0)] = np.pi + self.err_fqpm
         else:
@@ -263,7 +268,7 @@ class coronagraph:
 
         return science_focal_plane
 
-    def apodtolyot(self, input_wavefront, noFPM=False, wavelength=0):
+    def apodtolyot(self, input_wavefront, noFPM=False, wavelength=None):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod
         pupil to Lyot plane after Lyot pupil
@@ -282,25 +287,25 @@ class coronagraph:
             Focal plane electric field in the focal plane
         -------------------------------------------------- """
 
-        input_wavefront_after_apod = input_wavefront * self.apod_pup
-
-        fac = 1
+        if wavelength == None:
+            wavelength = self.wavelength_0
+        lambda_ratio = wavelength / self.wavelength_0
 
         if noFPM:
             FPmsk = 1.
             Psf_offset = (0, 0)
         else:
             Psf_offset = (-0.5, -0.5)
-            if wavelength == 0:
-                FPmsk = self.FPmsk
+            # not sure to understand what is done here ? Should probably be done in FQPM() not here. 
+            # This function should be kept geneal to avoid subcase for each coronagraph + this should not be done at every use of this function
+            if self.corona_type == 'fqpm' and self.achrom_fqpm == False and wavelength != self.wavelength_0:
+                FPmsk = self.FPmsk[np.where(
+                    wavelength == self.wav_vec)].reshape(
+                        (self.FPmsk.shape[1], self.FPmsk.shape[2]))
             else:
-                fac = wavelength / self.wavelength_0
-                if self.corona_type == 'fqpm' and self.achrom_fqpm == False:
-                    FPmsk = self.FPmsk[np.where(
-                        wavelength == self.wav_vec)].reshape(
-                            (self.FPmsk.shape[1], self.FPmsk.shape[2]))
-                else:
-                    FPmsk = self.FPmsk
+                FPmsk = self.FPmsk
+
+        input_wavefront_after_apod = input_wavefront * self.apod_pup
 
         if self.prop_apod2lyot == "fft":
 
@@ -324,7 +329,7 @@ class coronagraph:
             corono_focal_plane = mft(input_wavefront_after_apod,
                                      self.prad * 2,
                                      self.dim_im,
-                                     self.dim_im / self.science_sampling * fac,
+                                     self.dim_im / self.science_sampling * lambda_ratio,
                                      xshift=Psf_offset[0],
                                      yshift=Psf_offset[1],
                                      inv=1)
@@ -334,7 +339,7 @@ class coronagraph:
                                         self.dim_im,
                                         2 * self.prad,
                                         self.dim_im / self.science_sampling *
-                                        fac,
+                                        lambda_ratio,
                                         inv=-1)
 
         # if self.prop_apod2lyot == "mft-babinet":
@@ -370,7 +375,7 @@ class coronagraph:
 
         return lyotplane_after_lyot
 
-    def lyottodetector(self, Lyot_plane_after_Lyot, wavelength=0):
+    def lyottodetector(self, Lyot_plane_after_Lyot, wavelength=None):
         """ --------------------------------------------------
         Propagate the electric field from Lyot plane after Lyot to Science focal plane.
         
@@ -386,15 +391,15 @@ class coronagraph:
         science_focal_plane : 2D array, 
             Focal plane electric field in the focal plane
         -------------------------------------------------- """
-        if wavelength == 0:
-            fac = 1
-        else:
-            fac = wavelength / self.wavelength_0
+        if wavelength == None:
+            wavelength = self.wavelength_0
+        
+        lambda_ratio = wavelength / self.wavelength_0
 
         science_focal_plane = mft(Lyot_plane_after_Lyot,
                                   self.lyotrad * 2,
                                   self.dim_im,
-                                  self.dim_im / self.science_sampling * fac,
+                                  self.dim_im / self.science_sampling * lambda_ratio,
                                   inv=1)
 
         return science_focal_plane
@@ -409,8 +414,19 @@ class coronagraph:
                            phaseDM1=0,
                            DM1_z_position=0,
                            retampl=False):
+        # this is not well coded. We should define this function in monochromatic and then call it in a for loop if necessary 
+        # The way tthis is coded use ifs and copy past that can be avoided
 
-        if np.sum(self.wav_vec) == 0 or retampl == True:
+        # why suddenly separate phase_abb and ampl_abb and not use input_wavefront ? This should be done in a different function
+        
+        # this function should not be part of the coronagraph class. 
+        # Coronagraph clases initilaze and describe behavior in the coronagraph system (in the apod plane to the Lyot plane)
+        # should be in the form 
+        # def entrancetodetector(coronagraph_structure, DM_structure, input_wavefront, lambda (optional), phaseDM (optional), phaseDM3 (optional))
+
+        # what is retampl ? 
+
+        if self.Delta_wav == 0 == 0 or retampl == True:
             # Entrance pupil
             input_wavefront = self.entrancepupil * (1 + ampl_abb) * np.exp(
                 1j * phase_abb)
@@ -427,6 +443,7 @@ class coronagraph:
                     1j * proc.crop_or_pad_image(phaseDM3,
                                                 self.entrancepupil.shape[1]))
 
+            # please 
             if retampl == True:
                 return self.apodtodetector(input_wavefront,
                                            noFPM,
@@ -469,6 +486,8 @@ class coronagraph:
 ##############################################
 ### Deformable mirror
 
+# These function should be part of a DMsystem class that inlc
+# initilaze and describe behavior in the DM system (from entrance pupil to Apod plane)
 
 def prop_pup_DM1_DM3(pupil_wavefront, phase_DM1, wavelength, DM1_z_position,
                      rad_pup_in_m, rad_pup_in_pixel):
