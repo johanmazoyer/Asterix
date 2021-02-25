@@ -66,7 +66,7 @@ def create_interaction_matrices(parameter_file,
     dim_im = modelconfig["dim_im"]  #image size on detector
 
     #Lambda over D in pixels
-    wavelength = modelconfig["wavelength"]
+    wavelength_0 = modelconfig["wavelength_0"]
     science_sampling = modelconfig["science_sampling"]
 
     ##################
@@ -139,7 +139,7 @@ def create_interaction_matrices(parameter_file,
         intermatrix_dir = (intermatrix_dir + corona_struct.coro_position +
                            "/offset_" + str(corona_struct.knife_coro_offset) +
                            "lop/")
-    intermatrix_dir = (intermatrix_dir + str(int(wavelength * 1e9)) + "nm/p" +
+    intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) + "nm/p" +
                        str(round(corona_struct.diam_pup_in_m * 1e3, 2)) +
                        "_l" +
                        str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) +
@@ -173,7 +173,7 @@ def create_interaction_matrices(parameter_file,
 
         # DM influence functions
         dx, dxout = instr.prop_fresnel(corona_struct.prad * 2 * 1.25,
-                                       wavelength,
+                                       wavelength_0,
                                        DM1_z_position,
                                        corona_struct.diam_pup_in_m / 2,
                                        corona_struct.prad,
@@ -206,7 +206,7 @@ def create_interaction_matrices(parameter_file,
             # Influence functions of DM1 in pupil plane
             # used to create the EFC matrix ()
             DM1_pushact_inpup = instr.creatingpushact_inpup(
-                DM1_pushact, wavelength, corona_struct,
+                DM1_pushact, wavelength_0, corona_struct,
                 DMconfig["DM1_z_position"])
             fits.writeto(Model_local_dir + "DM1_PushActInPup_ray" +
                          str(int(corona_struct.pradDM1)) + tmp_nam +
@@ -261,7 +261,7 @@ def create_interaction_matrices(parameter_file,
         vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
     else:
         print("Recording " + filePW + " ...")
-        vectoressai, showsvd = wsc.createvectorprobes(wavelength,
+        vectoressai, showsvd = wsc.createvectorprobes(wavelength_0,
                                                       corona_struct,
                                                       amplitudePW, posprobes,
                                                       DM3_pushact, dim_sampl,
@@ -396,7 +396,7 @@ def create_interaction_matrices(parameter_file,
                 corona_struct.entrancepupil,
                 corona_struct,
                 dim_sampl,
-                DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 / wavelength,
+                DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
                 maskDH,
                 DM_WhichInPupil,
                 otherbasis=DM3_otherbasis,
@@ -491,7 +491,7 @@ def correctionLoop(parameter_file,
     dim_im = modelconfig["dim_im"]  #image size on detector
 
     #Lambda over D in pixels
-    wavelength = modelconfig["wavelength"]
+    wavelength_0 = modelconfig["wavelength_0"]
     science_sampling = modelconfig["science_sampling"]
 
     ##################
@@ -614,7 +614,7 @@ def correctionLoop(parameter_file,
         intermatrix_dir = (intermatrix_dir + corona_struct.coro_position +
                            "/offset_" + str(corona_struct.knife_coro_offset) +
                            "lop/")
-    intermatrix_dir = (intermatrix_dir + str(int(wavelength * 1e9)) + "nm/p" +
+    intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) + "nm/p" +
                        str(round(corona_struct.diam_pup_in_m * 1e3, 2)) +
                        "_l" +
                        str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) +
@@ -748,7 +748,7 @@ def correctionLoop(parameter_file,
                 "Fixed phase aberrations upstream from coronagraph, loaded from: "
                 + phase_abb_filename + ".fits")
 
-        phase_up = phase_up * 2 * np.pi / wavelength
+        phase_up = phase_up * 2 * np.pi / wavelength_0
     else:
         phase_up = 0
 
@@ -825,7 +825,7 @@ def correctionLoop(parameter_file,
             Difference = instr.createdifference(input_wavefront,
                                                 posprobes,
                                                 pushactonDM3 * amplitudePW *
-                                                1e-9 * 2 * np.pi / wavelength,
+                                                1e-9 * 2 * np.pi / wavelength_0,
                                                 corona_struct,
                                                 dim_sampl,
                                                 noise=photon_noise,
@@ -864,7 +864,7 @@ def correctionLoop(parameter_file,
                         corona_struct,
                         dim_sampl,
                         np.concatenate((DM3_pushact, DM1_pushact_inpup)) *
-                        amplitudeEFC * 2 * np.pi * 1e-9 / wavelength,
+                        amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
                         maskDH,
                         np.concatenate(
                             (DM3_WhichInPupil,
@@ -877,7 +877,7 @@ def correctionLoop(parameter_file,
                         corona_struct,
                         dim_sampl,
                         DM3_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
-                        wavelength,
+                        wavelength_0,
                         maskDH,
                         DM3_WhichInPupil,
                         otherbasis=DM3_otherbasis,
@@ -927,10 +927,10 @@ def correctionLoop(parameter_file,
                         apply_on_DM1 = wsc.apply_on_DM(
                             solution1[pushactonDM3.shape[0]:],
                             DM1_pushact) * (-gain * amplitudeEFC * 2 * np.pi *
-                                            1e-9 / wavelength)
+                                            1e-9 / wavelength_0)
 
                         tmp_input_wavefront = instr.prop_pup_DM1_DM3(
-                            tmp_input_wavefront, apply_on_DM1, wavelength,
+                            tmp_input_wavefront, apply_on_DM1, wavelength_0,
                             DM1_z_position, corona_struct.diam_pup_in_m / 2,
                             corona_struct.prad)
                     else:
@@ -943,7 +943,7 @@ def correctionLoop(parameter_file,
                     apply_on_DM3 = wsc.apply_on_DM(
                         solution1[0:pushactonDM3.shape[0]],
                         pushactonDM3) * (-gain * amplitudeEFC * 2 * np.pi *
-                                         1e-9 / wavelength)
+                                         1e-9 / wavelength_0)
 
                     # Propagation in DM1 plane, add DM1 phase,
                     # propagate to next pupil plane (DM3 plane),
@@ -1039,20 +1039,20 @@ def correctionLoop(parameter_file,
             # Phase to apply on DM1
             apply_on_DM1 = wsc.apply_on_DM(
                 solution1[pushactonDM3.shape[0]:], DM1_pushact) * (
-                    -gain * amplitudeEFC * 2 * np.pi * 1e-9 / wavelength)
+                    -gain * amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0)
             phaseDM1[k + 1] = phaseDM1[k] + proc.crop_or_pad_image(
                 apply_on_DM1, dim_pup)
 
             # # Propagation in DM1 plane, add DM1 phase
             # # and propagate to next pupil plane (DM3 plane)
             input_wavefront = instr.prop_pup_DM1_DM3(
-                input_wavefront, apply_on_DM1, wavelength, DM1_z_position,
+                input_wavefront, apply_on_DM1, wavelength_0, DM1_z_position,
                 corona_struct.diam_pup_in_m / 2., corona_struct.prad)
 
         # Phase to apply on DM3
         apply_on_DM3 = wsc.apply_on_DM(
             solution1[0:pushactonDM3.shape[0]], pushactonDM3) * (
-                -gain * amplitudeEFC * 2 * np.pi * 1e-9 / wavelength)
+                -gain * amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0)
 
         phaseDM3[k + 1] = phaseDM3[k] + proc.crop_or_pad_image(
             apply_on_DM3, dim_pup)

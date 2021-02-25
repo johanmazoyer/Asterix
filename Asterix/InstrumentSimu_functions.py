@@ -10,10 +10,6 @@ import Asterix.processing_functions as proc
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.fits_functions as useful
 
-# Raccourcis conversions angles
-dtor = np.pi / 180.0  # degree to radian conversion factor
-rad2mas = 3.6e6 / dtor  # radian to milliarcsecond conversion factor
-
 
 ##############################################
 ##############################################
@@ -44,12 +40,14 @@ class coronagraph:
         self.science_sampling = modelconfig["science_sampling"]
 
         #Wavelength and spectral band pass in m
-        # should not be done here, this is independant from the coronagraph system
-        self.wavelength = modelconfig["wavelength"]
+        self.wavelength_0 = modelconfig["wavelength_0"]
+
+
+        # should not be done here, this is larger than the coronagraph system
         if modelconfig["Delta_wav"] != 0:
             self.wav_vec = np.linspace(
-                self.wavelength - modelconfig["Delta_wav"] / 2,
-                self.wavelength + modelconfig["Delta_wav"] / 2,
+                self.wavelength_0 - modelconfig["Delta_wav"] / 2,
+                self.wavelength_0 + modelconfig["Delta_wav"] / 2,
                 int(int(modelconfig["nb_wav"] / 2) * 2) +
                 1)[0:int(int(modelconfig["nb_wav"] / 2) * 2)]
         else:
@@ -114,7 +112,7 @@ class coronagraph:
             # measure the Lyot pupil that will be removed after
             self.perfect_Lyot_pupil = 0
             self.perfect_Lyot_pupil = self.apodtolyot(
-                self.entrancepupil, wavelength=self.wavelength)
+                self.entrancepupil, wavelength=self.wavelength_0)
 
         # Measure the PSF and store max and Sum
         self.maxPSF, self.sumPSF = self.max_sum_PSF()
@@ -170,7 +168,7 @@ class coronagraph:
                 tmp2 = np.zeros((dimension_array_fpm, dimension_array_fpm))
                 tmp2[np.where(
                     tmp1 != 0)] = (np.pi +
-                                   self.err_fqpm) * self.wavelength / wav
+                                   self.err_fqpm) * self.wavelength_0 / wav
                 phase[i] = tmp2
                 i = i + 1
         return np.exp(1j * phase)
@@ -296,7 +294,7 @@ class coronagraph:
             if wavelength == 0:
                 FPmsk = self.FPmsk
             else:
-                fac = wavelength / self.wavelength
+                fac = wavelength / self.wavelength_0
                 if self.corona_type == 'fqpm' and self.achrom_fqpm == False:
                     FPmsk = self.FPmsk[np.where(
                         wavelength == self.wav_vec)].reshape(
@@ -391,7 +389,7 @@ class coronagraph:
         if wavelength == 0:
             fac = 1
         else:
-            fac = wavelength / self.wavelength
+            fac = wavelength / self.wavelength_0
 
         science_focal_plane = mft(Lyot_plane_after_Lyot,
                                   self.lyotrad * 2,
@@ -420,7 +418,7 @@ class coronagraph:
                 # Propagation in DM1 plane, add DM1 phase
                 # and propagate to next pupil plane (DM3 plane)
                 input_wavefront = prop_pup_DM1_DM3(input_wavefront, phaseDM1,
-                                                   self.wavelength,
+                                                   self.wavelength_0,
                                                    DM1_z_position,
                                                    self.diam_pup_in_m / 2,
                                                    self.prad)
@@ -432,14 +430,14 @@ class coronagraph:
             if retampl == True:
                 return self.apodtodetector(input_wavefront,
                                            noFPM,
-                                           wavelength=self.wavelength)
+                                           wavelength=self.wavelength_0)
             else:
                 im = (abs(self.apodtodetector(input_wavefront, noFPM))**2)
         else:
 
             im = np.zeros((self.dim_im, self.dim_im))
             for wav in self.wav_vec:
-                fac = wav / self.wavelength
+                fac = wav / self.wavelength_0
 
                 # Entrance pupil
                 input_wavefront = self.entrancepupil * (1 + ampl_abb) * np.exp(
