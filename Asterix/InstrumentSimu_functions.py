@@ -186,27 +186,31 @@ class coronagraph:
             Knife edge coronagraph, located at the four edges of the image
         -------------------------------------------------- """
 
+        if self.Delta_wav != 0:
+            raise Exception("KnifeEdgeCoro only working in monochromatic as of now")
+        maxdimension_array_fpm = np.max(self.dim_fp_fft)
+           
         # self.coro_position can be 'left', 'right', 'top' or 'bottom'
         # to define the orientation of the coronagraph
 
-        #  Number of pixels per resolution element
-        ld_p = self.science_sampling * self.diam_lyot_in_m / self.diam_pup_in_m
+        #  Number of pixels per resolution element at central wavelength 
+        ld_p_0 = self.science_sampling * self.diam_lyot_in_m / self.diam_pup_in_m
 
-        xx, yy = np.meshgrid(np.arange(self.dim_im), np.arange(self.dim_im))
+        xx, yy = np.meshgrid(np.arange(maxdimension_array_fpm), np.arange(maxdimension_array_fpm))
 
-        Knife = np.zeros((self.dim_im, self.dim_im))
+        Knife = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
         if self.coro_position == "right":
             Knife[np.where(
-                xx > (self.dim_im / 2 + self.knife_coro_offset * ld_p))] = 1
+                xx > (maxdimension_array_fpm / 2 + self.knife_coro_offset * ld_p_0))] = 1
         if self.coro_position == "left":
             Knife[np.where(
-                xx < (self.dim_im / 2 - self.knife_coro_offset * ld_p))] = 1
+                xx < (maxdimension_array_fpm / 2 - self.knife_coro_offset * ld_p_0))] = 1
         if self.coro_position == "bottom":
             Knife[np.where(
-                yy > (self.dim_im / 2 + self.knife_coro_offset * ld_p))] = 1
+                yy > (maxdimension_array_fpm / 2 + self.knife_coro_offset * ld_p_0))] = 1
         if self.coro_position == "top":
             Knife[np.where(
-                yy < (self.dim_im / 2 - self.knife_coro_offset * ld_p))] = 1
+                yy < (maxdimension_array_fpm / 2 - self.knife_coro_offset * ld_p_0))] = 1
 
         return Knife
 
