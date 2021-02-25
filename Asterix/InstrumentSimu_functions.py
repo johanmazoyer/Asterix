@@ -135,9 +135,7 @@ class coronagraph:
         np.sum(PSF): sum of the non-coronagraphic PSF
         -------------------------------------------------- """
         # PSF = self.entrancetodetector(0, 0, noFPM=True)
-        PSF = np.zeros((self.dim_im,dim_im))
-        maxPSF = 0
-        sumPSF = 0
+        PSF = np.zeros((self.dim_im,self.dim_im))
 
         for wav in self.wav_vec:
             PSF += np.abs(self.apodtodetector(self.entrancepupil, noFPM=True, wavelength=wav))**2
