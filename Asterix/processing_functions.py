@@ -171,17 +171,18 @@ def crop_or_pad_image(image, dimout):
     
 
     -------------------------------------------------- """
-
-    if dimout <= image.shape[0]:
+    if float(dimout) < image.shape[0]:
         im_out = np.zeros((image.shape[0], image.shape[1]), dtype=image.dtype)
         im_out = image[int((image.shape[0] - dimout) /
                            2):int((image.shape[0] + dimout) / 2),
                        int((image.shape[1] - dimout) /
                            2):int((image.shape[1] + dimout) / 2)]
-    if dimout > image.shape[0]:
+    elif dimout > image.shape[0]:
         im_out = np.zeros((dimout, dimout), dtype=image.dtype)
         im_out[int((dimout - image.shape[0]) /
                    2):int((dimout + image.shape[0]) / 2),
                int((dimout - image.shape[1]) /
                    2):int((dimout + image.shape[1]) / 2)] = image
+    else: 
+        im_out = image
     return im_out

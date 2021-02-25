@@ -43,11 +43,10 @@ class coronagraph:
         self.wavelength_0 = modelconfig["wavelength_0"]
         self.Delta_wav = modelconfig["Delta_wav"]
 
-
         # should not be done here, this is larger than the coronagraph system
         if self.Delta_wav != 0:
-            if modelconfig["nb_wav"] % 2 == 0:
-                raise Exception("please set nb_wav parameter to an odd number")
+            if (modelconfig["nb_wav"] % 2 == 0) or modelconfig["nb_wav"] < 2:
+                raise Exception("please set nb_wav parameter to an odd number > 1")
             
             self.wav_vec = np.linspace(
                 self.wavelength_0 - self.Delta_wav / 2,
@@ -55,7 +54,7 @@ class coronagraph:
                 num = modelconfig["nb_wav"],
                 endpoint=True)
         else:
-            self.wav_vec = [self.wavelength_0]
+            self.wav_vec = np.array([self.wavelength_0])
 
         self.prad = int(modelconfig["diam_pup_in_pix"] / 2)
         self.lyotrad = int(self.prad * self.diam_lyot_in_m /
@@ -68,9 +67,12 @@ class coronagraph:
         self.err_fqpm = coroconfig["err_fqpm"]
         self.achrom_fqpm = coroconfig["achrom_fqpm"]
 
-        # only use if prop_apod2lyot == 'fft'
-        self.dim_fp_fft = int(self.prad * 2 * self.science_sampling *
-                              self.diam_lyot_in_m / self.diam_pup_in_m)
+        # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
+
+        self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype =np.int)
+        for i, wav in enumerate(self.wav_vec):
+            self.dim_fp_fft[i] = int(self.prad * self.science_sampling *
+                            self.diam_lyot_in_m / self.diam_pup_in_m*self.wavelength_0/wav) *2
 
         ## transmission of the phase mask (exp(i*phase))
         ## centered on pixel [0.5,0.5]
@@ -148,35 +150,31 @@ class coronagraph:
         -------------------------------------------------- """
 
         if self.prop_apod2lyot == "fft":
-            dimension_array_fpm = self.dim_fp_fft
+            maxdimension_array_fpm = np.max(self.dim_fp_fft)
         else:
-            dimension_array_fpm = self.dim_im
+            raise Exception("FQPM shuold not be simuated wit MFT")
 
         xx, yy = np.meshgrid(
-            np.arange(dimension_array_fpm) - (dimension_array_fpm) / 2,
-            np.arange(dimension_array_fpm) - (dimension_array_fpm) / 2)
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
 
-        tmp1 = np.zeros((dimension_array_fpm, dimension_array_fpm))
+        tmp1 = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
         tmp1[np.where(xx < 0)] = 1
-        tmp2 = np.zeros((dimension_array_fpm, dimension_array_fpm))
+        tmp2 = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
         tmp2[np.where(yy >= 0)] = 1
         tmp1 = tmp1 - tmp2
 
-        if self.Delta_wav == 0 or self.achrom_fqpm == True:
-            phase = np.zeros((dimension_array_fpm, dimension_array_fpm))
-            phase[np.where(tmp1 != 0)] = np.pi + self.err_fqpm
-        else:
-            phase = np.zeros((self.wav_vec.shape[0], dimension_array_fpm,
-                              dimension_array_fpm))
-            i = 0
-            for wav in self.wav_vec:
-                tmp2 = np.zeros((dimension_array_fpm, dimension_array_fpm))
-                tmp2[np.where(
-                    tmp1 != 0)] = (np.pi +
-                                   self.err_fqpm) * self.wavelength_0 / wav
-                phase[i] = tmp2
-                i = i + 1
-        return np.exp(1j * phase)
+        fqpm = list()
+        for i, wav in enumerate(self.wav_vec):
+            phase = np.zeros((self.dim_fp_fft[i], self.dim_fp_fft[i]))
+            tmp1_cut = proc.crop_or_pad_image(tmp1, self.dim_fp_fft[i])
+            phase[np.where(tmp1_cut != 0)] = (np.pi +
+                                self.err_fqpm) 
+            if self.achrom_fqpm == False:
+                    phase = phase* self.wavelength_0 / wav
+            fqpm.append(np.exp(1j * phase))
+            
+        return fqpm
 
     def KnifeEdgeCoro(self):
         """ --------------------------------------------------
@@ -237,7 +235,7 @@ class coronagraph:
 ##############################################
 ### Propagation through coronagraph
 
-    def apodtodetector(self, input_wavefront, noFPM=False, wavelength=0):
+    def apodtodetector(self, input_wavefront, noFPM=False, wavelength=None):
         """ --------------------------------------------------
         Propagate the electric field through a high-contrast imaging instrument,
         from the entrance of the coronagraph (pupil plane before apodization pupil) to final detector focal plane.
@@ -264,7 +262,7 @@ class coronagraph:
                                                wavelength=wavelength)
 
         # Science_focal_plane
-        science_focal_plane = self.lyottodetector(lyotplane_after_lyot)
+        science_focal_plane = self.lyottodetector(lyotplane_after_lyot, wavelength=wavelength)
 
         return science_focal_plane
 
@@ -289,32 +287,26 @@ class coronagraph:
 
         if wavelength == None:
             wavelength = self.wavelength_0
-        lambda_ratio = wavelength / self.wavelength_0
 
         if noFPM:
             FPmsk = 1.
             Psf_offset = (0, 0)
         else:
             Psf_offset = (-0.5, -0.5)
-            # not sure to understand what is done here ? Should probably be done in FQPM() not here. 
-            # This function should be kept geneal to avoid subcase for each coronagraph + this should not be done at every use of this function
-            if self.corona_type == 'fqpm' and self.achrom_fqpm == False and wavelength != self.wavelength_0:
-                FPmsk = self.FPmsk[np.where(
-                    wavelength == self.wav_vec)].reshape(
-                        (self.FPmsk.shape[1], self.FPmsk.shape[2]))
-            else:
-                FPmsk = self.FPmsk
+            FPmsk = self.FPmsk[self.wav_vec.tolist().index(wavelength)]        
 
+        lambda_ratio = wavelength / self.wavelength_0
+        
         input_wavefront_after_apod = input_wavefront * self.apod_pup
 
         if self.prop_apod2lyot == "fft":
-
+            dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(wavelength)]
             input_wavefront_pad = proc.crop_or_pad_image(
-                input_wavefront, self.dim_fp_fft)
+                input_wavefront, dim_fp_fft_here)
             # Phase ramp to center focal plane between 4 pixels
 
             maskshifthalfpix = phase_ampl.shift_phase_ramp(
-                len(input_wavefront_pad), -Psf_offset[0], -Psf_offset[1])
+                dim_fp_fft_here, -Psf_offset[0], -Psf_offset[1])
 
             #Apod plane to focal plane
             corono_focal_plane = np.fft.fft2(
