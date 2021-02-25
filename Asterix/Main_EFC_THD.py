@@ -172,7 +172,7 @@ def create_interaction_matrices(parameter_file,
         nam2DM = "_2DM"
 
         # DM influence functions  # ARGH ! Not to be hardcoded here !!!  
-        dx, dxout = instr.prop_fresnel(corona_struct.prad * 2 * 1.25,
+        dx, dxout = prop.prop_fresnel(corona_struct.prad * 2 * 1.25,
                                        wavelength_0,
                                        DM1_z_position,
                                        corona_struct.diam_pup_in_m / 2,
