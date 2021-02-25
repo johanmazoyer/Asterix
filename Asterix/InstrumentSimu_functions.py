@@ -134,7 +134,13 @@ class coronagraph:
         np.amax(PSF): max of the non-coronagraphic PSF
         np.sum(PSF): sum of the non-coronagraphic PSF
         -------------------------------------------------- """
-        PSF = self.entrancetodetector(0, 0, noFPM=True)
+        # PSF = self.entrancetodetector(0, 0, noFPM=True)
+        PSF = np.zeros((self.dim_im,dim_im))
+        maxPSF = 0
+        sumPSF = 0
+
+        for wav in self.wav_vec:
+            PSF += np.abs(self.apodtodetector(self.entrancepupil, noFPM=True, wavelength=wav))**2
 
         return np.amax(PSF), np.sum(PSF)
 
@@ -343,13 +349,13 @@ class coronagraph:
 
         #     corono_focal_plane = mft(input_wavefront_after_apod,
         #             self.prad*2,self.dim_fpm,
-        #             self.dim_fpm/self.Lyot_fpm_sampling*fac*fac,
+        #             self.dim_fpm/self.Lyot_fpm_sampling*lambda_ratio,
         #             xshift=-.5,yshift=-.5,inv=1)
 
         #     # Focal plane to Lyot plane
         #     lyotplane_before_lyot_central_part = mft(corono_focal_plane * FPmsk,
         #             self.dim_fpm,2*self.prad,
-        #             self.dim_fpm/self.Lyot_fpm_sampling*fac,
+        #             self.dim_fpm/self.Lyot_fpm_sampling*lambda_ratio,
         #             inv=-1)
 
         # # Lyot stop mask
@@ -422,7 +428,7 @@ class coronagraph:
 
         # what is retampl ? 
 
-        if self.Delta_wav == 0 == 0 or retampl == True:
+        if self.Delta_wav == 0 or retampl == True:
             # Entrance pupil
             input_wavefront = self.entrancepupil * (1 + ampl_abb) * np.exp(
                 1j * phase_abb)
@@ -439,7 +445,6 @@ class coronagraph:
                     1j * proc.crop_or_pad_image(phaseDM3,
                                                 self.entrancepupil.shape[1]))
 
-            # please 
             if retampl == True:
                 return self.apodtodetector(input_wavefront,
                                            noFPM,
@@ -450,24 +455,24 @@ class coronagraph:
 
             im = np.zeros((self.dim_im, self.dim_im))
             for wav in self.wav_vec:
-                fac = wav / self.wavelength_0
+                lambda_ratio = wav / self.wavelength_0
 
                 # Entrance pupil
                 input_wavefront = self.entrancepupil * (1 + ampl_abb) * np.exp(
-                    1j * phase_abb / fac)
+                    1j * phase_abb / lambda_ratio)
 
                 if DM1_active == True:
                     # Propagation in DM1 plane, add DM1 phase
                     # and propagate to next pupil plane (DM3 plane)
                     input_wavefront = prop_pup_DM1_DM3(input_wavefront,
-                                                       phaseDM1 / fac, wav,
+                                                       phaseDM1 / lambda_ratio, wav,
                                                        DM1_z_position,
                                                        self.diam_pup_in_m / 2,
                                                        self.prad)
                 if DM3_active == True:
                     input_wavefront = input_wavefront * np.exp(
                         1j * proc.crop_or_pad_image(
-                            phaseDM3 / fac, self.entrancepupil.shape[1]))
+                            phaseDM3 / lambda_ratio, self.entrancepupil.shape[1]))
 
                 # Pupil to Lyot
                 lyotplane_after_lyot = self.apodtolyot(input_wavefront, noFPM,
