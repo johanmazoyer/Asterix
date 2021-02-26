@@ -110,7 +110,7 @@ class coronagraph:
             model_dir, modelconfig["filename_instr_lyot"],
             self.dim_overpad_pupil, self.lyotrad)
 
-        if self.perfect_coro:
+        if self.perfect_coro == True:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
             # measure the Lyot pupil that will be removed after
             self.perfect_Lyot_pupil = 0
@@ -687,7 +687,7 @@ def creatingpushact(model_dir,
                     diam_pup_in_pix,
                     DMconfig,
                     dim_array,
-                    which_DM=3):
+                    Name_DM= 'DM1_'):
     """ --------------------------------------------------
     OPD map induced in the DM plane for each actuator
 
@@ -707,10 +707,7 @@ def creatingpushact(model_dir,
     -------------------------------------------------- """
 
     # this is not ideal if we want to have DMs with other names
-    if which_DM == 1:
-        namDM = "DM1_"
-    else:
-        namDM = "DM3_"
+    namDM = Name_DM + '_'
 
     pitchDM = DMconfig[namDM + "pitch"]
     filename_ActuN = DMconfig[namDM + "filename_ActuN"]
@@ -721,12 +718,17 @@ def creatingpushact(model_dir,
     x_ActuN = DMconfig[namDM + "x_ActuN"]
     xy_ActuN = [x_ActuN, y_ActuN]
 
-    xerror =  DMconfig[namDM + "xerror"] 
-    yerror = DMconfig[namDM + "yerror"] 
-    angerror = DMconfig[namDM + "angerror"] 
-    gausserror = DMconfig[namDM + "gausserror"] 
-
-
+    misregistration = DMconfig[namDM + "misregistration"] 
+    if misregistration == True:
+        xerror =  DMconfig[namDM + "xerror"] 
+        yerror = DMconfig[namDM + "yerror"] 
+        angerror = DMconfig[namDM + "angerror"] 
+        gausserror = DMconfig[namDM + "gausserror"]
+    else:
+        xerror =  0.
+        yerror = 0.
+        angerror =  0.
+        gausserror =  0.
 
     #Measured positions for each actuator in pixel
     measured_grid = fits.getdata(model_dir + filename_grid_actu)

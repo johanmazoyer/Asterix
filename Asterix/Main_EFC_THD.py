@@ -81,6 +81,9 @@ def create_interaction_matrices(parameter_file,
     DM1_creating_pushact = DMconfig["DM1_creating_pushact"]
     DM1_z_position = DMconfig["DM1_z_position"]
 
+    DMconfig["DM1_misregistration"] = False # initially no misregistration, only in the correction part
+    DMconfig["DM3_misregistration"] = False # initially no misregistration, only in the correction part
+
     ##################
     ##################
     ### coronagraph CONFIG
@@ -194,7 +197,7 @@ def create_interaction_matrices(parameter_file,
                 2 * corona_struct.pradDM1,
                 DMconfig,
                 corona_struct.entrancepupil.shape[1],
-                which_DM=1)
+                Name_DM='DM1')
             fits.writeto(Model_local_dir + "DM1_PushActInPup_ray" +
                          str(int(corona_struct.pradDM1)) + tmp_nam + ".fits",
                          DM1_pushact,
@@ -234,7 +237,7 @@ def create_interaction_matrices(parameter_file,
             2 * corona_struct.prad,
             DMconfig,
             corona_struct.entrancepupil.shape[1],
-            which_DM=3)
+            Name_DM='DM3')
         fits.writeto(Model_local_dir + "DM3_PushActInPup_ray" +
                      str(int(corona_struct.prad)) + tmp_nam + ".fits",
                      DM3_pushact,
@@ -495,6 +498,7 @@ def correctionLoop(parameter_file,
     DMconfig.update(NewDMconfig)
     DM1_active = DMconfig["DM1_active"]
     DM1_z_position = DMconfig["DM1_z_position"]
+    DM1_misregistration = DMconfig["DM1_misregistration"]
     DM3_misregistration = DMconfig["DM3_misregistration"]
 
     ##################
@@ -768,7 +772,7 @@ def correctionLoop(parameter_file,
             2 * corona_struct.prad,
             DMconfig,
             corona_struct.entrancepupil.shape[1],
-            which_DM=3)
+            Name_DM='DM3')
     else:
         pushactonDM3 = DM3_pushact
 
