@@ -100,8 +100,7 @@ def create_interaction_matrices(parameter_file,
     DH_sampling = PWconfig["DH_sampling"]
 
     #image size after binning
-    dim_sampl = int(
-        DH_sampling / science_sampling * dim_im / 2) * 2
+    dim_sampl = int(DH_sampling / science_sampling * dim_im / 2) * 2
 
     ##################
     ##################
@@ -140,7 +139,8 @@ def create_interaction_matrices(parameter_file,
         intermatrix_dir = (intermatrix_dir + corona_struct.coro_position +
                            "/offset_" + str(corona_struct.knife_coro_offset) +
                            "lop/")
-    intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) + "nm/p" +
+    intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) +
+                       "nm/p" +
                        str(round(corona_struct.diam_pup_in_m * 1e3, 2)) +
                        "_l" +
                        str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) +
@@ -172,13 +172,13 @@ def create_interaction_matrices(parameter_file,
     if DM1_active == True:
         nam2DM = "_2DM"
 
-        # DM influence functions  # ARGH ! Not to be hardcoded here !!!  
+        # DM influence functions  # ARGH ! Not to be hardcoded here !!!
         dx, dxout = prop.prop_fresnel(corona_struct.prad * 2 * 1.25,
-                                       wavelength_0,
-                                       DM1_z_position,
-                                       corona_struct.diam_pup_in_m / 2,
-                                       corona_struct.prad,
-                                       retscale=1)
+                                      wavelength_0,
+                                      DM1_z_position,
+                                      corona_struct.diam_pup_in_m / 2,
+                                      corona_struct.prad,
+                                      retscale=1)
         corona_struct.pradDM1 = corona_struct.prad * dx / dxout
 
         if DM1_creating_pushact == True:
@@ -348,7 +348,7 @@ def create_interaction_matrices(parameter_file,
     # Creating EFC control matrix
     string_dhshape = wsc.string_DHshape(EFCconfig)
     fileEFCMatrix = "MatrixEFC" + string_dhshape
-    
+
     fileEFCMatrix = fileEFCMatrix + str(amplitudeEFC) + "nm_" + str(
         Nbmodes) + "modes_dim" + str(corona_struct.dim_im) + '_raypup' + str(
             corona_struct.prad) + nam2DM
@@ -367,7 +367,7 @@ def create_interaction_matrices(parameter_file,
         # Creating EFC Interaction matrix
         string_dhshape = wsc.string_DHshape(EFCconfig)
         fileDirectMatrix = "DirectMatrix" + string_dhshape
-        
+
         fileDirectMatrix = fileDirectMatrix + str(
             amplitudeEFC) + "nm_dim" + str(
                 corona_struct.dim_im) + '_raypup' + str(
@@ -379,7 +379,9 @@ def create_interaction_matrices(parameter_file,
             Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix +
                                    ".fits")
         else:
-            maskDH, _ = wsc.load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, dim_im, science_sampling)
+            maskDH, _ = wsc.load_or_save_maskDH(intermatrix_dir, EFCconfig,
+                                                dim_sampl, DH_sampling, dim_im,
+                                                science_sampling)
 
             # Creating EFC Interaction Matrix if does not exist
             print("Recording " + fileDirectMatrix + " ...")
@@ -421,10 +423,9 @@ def create_interaction_matrices(parameter_file,
         plt.clf()
         plt.plot(SVD, "r.")
         plt.yscale("log")
-        
+
         string_dhshape = wsc.string_DHshape(EFCconfig)
         figSVDEFC = "invertSVDEFC_square" + string_dhshape
-    
 
         figSVDEFC = figSVDEFC + str(amplitudeEFC) + "nm_dim" + str(
             corona_struct.dim_im) + '_raypup' + str(
@@ -521,8 +522,7 @@ def correctionLoop(parameter_file,
     DH_sampling = PWconfig["DH_sampling"]
 
     #image size after binning
-    dim_sampl = int(
-        DH_sampling / science_sampling * dim_im / 2) * 2
+    dim_sampl = int(DH_sampling / science_sampling * dim_im / 2) * 2
 
     ##################
     ##################
@@ -615,7 +615,8 @@ def correctionLoop(parameter_file,
         intermatrix_dir = (intermatrix_dir + corona_struct.coro_position +
                            "/offset_" + str(corona_struct.knife_coro_offset) +
                            "lop/")
-    intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) + "nm/p" +
+    intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) +
+                       "nm/p" +
                        str(round(corona_struct.diam_pup_in_m * 1e3, 2)) +
                        "_l" +
                        str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) +
@@ -709,9 +710,10 @@ def correctionLoop(parameter_file,
     else:
         raise Exception("Please create Direct matrix before correction")
 
-    
-    maskDH, maskDHcontrast = wsc.load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, dim_im, science_sampling)
-
+    maskDH, maskDHcontrast = wsc.load_or_save_maskDH(intermatrix_dir,
+                                                     EFCconfig, dim_sampl,
+                                                     DH_sampling, dim_im,
+                                                     science_sampling)
 
     if correction_algorithm == "EM" or correction_algorithm == "steepest":
 
@@ -795,14 +797,12 @@ def correctionLoop(parameter_file,
                          corona_struct.entrancepupil.shape[1]))
     meancontrast = np.zeros(nbiter + 1)
 
-
     # Initial wavefront in pupil plane
-    imagedetector[0] = (
-        corona_struct.entrancetodetector_Intensity(amplitude_abb_up, phase_abb_up) /
-        corona_struct.maxPSF)
-    
-    # TODO Not good. We should do the creation of a WF from phase + abb at one place only, 
-    # either inside entrancetodetector fucntion or in a separate functions. 
+    imagedetector[0] = (corona_struct.entrancetodetector_Intensity(
+        amplitude_abb_up, phase_abb_up) / corona_struct.maxPSF)
+
+    # TODO Not good. We should do the creation of a WF from phase + abb at one place only,
+    # either inside entrancetodetector fucntion or in a separate functions.
     # I would adovcate doing it in a separate functions becasue we use it at different places
     input_wavefront = corona_struct.entrancepupil * (
         1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
@@ -826,28 +826,27 @@ def correctionLoop(parameter_file,
         if (estimation == "PairWise" or estimation == "pairwise"
                 or estimation == "PW" or estimation == "pw"):
 
-            Difference = instr.createdifference(input_wavefront,
-                                                posprobes,
-                                                pushactonDM3 * amplitudePW *
-                                                1e-9 * 2 * np.pi / wavelength_0,
-                                                corona_struct,
-                                                dim_sampl,
-                                                noise=photon_noise,
-                                                numphot=nb_photons)
+            Difference = instr.createdifference(
+                input_wavefront,
+                posprobes,
+                pushactonDM3 * amplitudePW * 1e-9 * 2 * np.pi / wavelength_0,
+                corona_struct,
+                dim_sampl,
+                noise=photon_noise,
+                numphot=nb_photons)
 
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
         elif estimation == "Perfect":
             # If polychromatic, assume a perfect estimation at one wavelength
-            resultatestimation = (
-                corona_struct.entrancetodetector(amplitude_abb_up,
-                                                phase_abb_up,
-                                                DM1_active=DM1_active,
-                                                phaseDM1=phaseDM1[k],
-                                                DM3_active=True,
-                                                phaseDM3=phaseDM3[k],
-                                                DM1_z_position=DM1_z_position) /
-                np.sqrt(corona_struct.maxPSF))
+            resultatestimation = (corona_struct.entrancetodetector(
+                amplitude_abb_up,
+                phase_abb_up,
+                DM1_active=DM1_active,
+                phaseDM1=phaseDM1[k],
+                DM3_active=True,
+                phaseDM3=phaseDM3[k],
+                DM1_z_position=DM1_z_position) / np.sqrt(corona_struct.maxPSF))
 
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
         else:
@@ -1072,15 +1071,14 @@ def correctionLoop(parameter_file,
         # Propagation in DM1 plane, add DM1 phase,
         # propagate to next pupil plane (DM3 plane),
         # add DM3 phase and propagate to detector
-        imagedetector[k + 1] = (
-            corona_struct.entrancetodetector_Intensity(amplitude_abb_up,
-                                             phase_abb_up,
-                                             DM1_active=DM1_active,
-                                             phaseDM1=phaseDM1[k + 1],
-                                             DM3_active=True,
-                                             phaseDM3=phaseDM3[k + 1],
-                                             DM1_z_position=DM1_z_position) /
-            corona_struct.maxPSF)
+        imagedetector[k + 1] = (corona_struct.entrancetodetector_Intensity(
+            amplitude_abb_up,
+            phase_abb_up,
+            DM1_active=DM1_active,
+            phaseDM1=phaseDM1[k + 1],
+            DM3_active=True,
+            phaseDM3=phaseDM3[k + 1],
+            DM1_z_position=DM1_z_position) / corona_struct.maxPSF)
 
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHcontrast != 0)])

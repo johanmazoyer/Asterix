@@ -171,20 +171,20 @@ def string_DHshape(EFCconfig):
     circ_side = EFCconfig["circ_side"].lower()
     circ_offset = EFCconfig["circ_offset"]
     circ_angle = EFCconfig["circ_angle"]
-    
+
     if DHshape == "square":
-        stringdh = "_square_" + "_".join(
-            map(str, choosepix)) + "pix_"
+        stringdh = "_square_" + "_".join(map(str, choosepix)) + "pix_"
     else:
-        stringdh = "_circle_" + "_".join(
-            map(str, circ_rad)) + "pix_" + str(circ_side) + '_'
+        stringdh = "_circle_" + "_".join(map(
+            str, circ_rad)) + "pix_" + str(circ_side) + '_'
         if circ_side != 'full':
-            stringdh = stringdh + str(
-                circ_offset) + 'pix_' + str(circ_angle) + 'deg_'
+            stringdh = stringdh + str(circ_offset) + 'pix_' + str(
+                circ_angle) + 'deg_'
     return stringdh
 
-def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl,DH_sampling, dim_im, science_sampling):
 
+def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
+                        dim_im, science_sampling):
     """ --------------------------------------------------
         define at a single place the complicated file name of the mask and do the saving
         and loading depending in existence
@@ -220,49 +220,46 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl,DH_sampling, dim_i
 
     fileMaskDH = "MaskDH" + stringdh
 
-    fileMaskDH_sampl = fileMaskDH + 'dim' + str(dim_sampl) +'res{:.1f}'.format(DH_sampling)
-    
+    fileMaskDH_sampl = fileMaskDH + 'dim' + str(
+        dim_sampl) + 'res{:.1f}'.format(DH_sampling)
+
     if os.path.exists(intermatrix_dir + fileMaskDH_sampl + ".fits") == True:
         print("Mask of DH " + fileMaskDH + " already exist")
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH_sampl + ".fits")
     else:
-        print("We measure and save " + fileMaskDH_sampl )
+        print("We measure and save " + fileMaskDH_sampl)
         maskDH = creatingMaskDH(dim_sampl,
-                                    DHshape,
-                                    choosepixDH=choosepix,
-                                    circ_rad=circ_rad,
-                                    circ_side=circ_side,
-                                    circ_offset=circ_offset,
-                                    circ_angle=circ_angle)
+                                DHshape,
+                                choosepixDH=choosepix,
+                                circ_rad=circ_rad,
+                                circ_side=circ_side,
+                                circ_offset=circ_offset,
+                                circ_angle=circ_angle)
         fits.writeto(intermatrix_dir + fileMaskDH_sampl + ".fits", maskDH)
 
-    
-    fileMaskDH_detect = fileMaskDH + 'dim' + str(dim_im) +'res{:.1f}'.format(science_sampling)
-    
+    fileMaskDH_detect = fileMaskDH + 'dim' + str(dim_im) + 'res{:.1f}'.format(
+        science_sampling)
+
     if os.path.exists(intermatrix_dir + fileMaskDH_detect + ".fits") == True:
         print("Mask of DH " + fileMaskDH_detect + " already exist")
-        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH_detect + ".fits")
+        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH_detect +
+                                      ".fits")
     else:
-        print("We measure and save " + fileMaskDH_detect )
+        print("We measure and save " + fileMaskDH_detect)
         maskDHcontrast = creatingMaskDH(
             dim_im,
             DHshape,
             choosepixDH=[
-                element * dim_im / dim_sampl
-                for element in choosepix
+                element * dim_im / dim_sampl for element in choosepix
             ],
-            circ_rad=[
-                element * dim_im / dim_sampl
-                for element in circ_rad
-            ],
+            circ_rad=[element * dim_im / dim_sampl for element in circ_rad],
             circ_side=circ_side,
             circ_offset=circ_offset * dim_im / dim_sampl,
             circ_angle=circ_angle)
-        
-        fits.writeto(intermatrix_dir + fileMaskDH_detect + ".fits",
-                    maskDHcontrast)
-    return maskDH, maskDHcontrast
 
+        fits.writeto(intermatrix_dir + fileMaskDH_detect + ".fits",
+                     maskDHcontrast)
+    return maskDH, maskDHcontrast
 
 
 def creatingMaskDH(dimimages,

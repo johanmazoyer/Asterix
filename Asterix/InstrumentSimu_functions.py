@@ -53,11 +53,11 @@ class coronagraph:
         # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
         self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
         for i, wav in enumerate(self.wav_vec):
-            self.dim_fp_fft[i] = int(np.ceil(
-                self.prad * self.science_sampling * self.diam_lyot_in_m /
-                self.diam_pup_in_m * self.wavelength_0 / wav)) * 2 
-                # we take the ceil to be sure that we measure at least the good resolution
-                # We do not need to be exact, the mft in science_focal_plane will be
+            self.dim_fp_fft[i] = int(
+                np.ceil(self.prad * self.science_sampling * self.diam_lyot_in_m
+                        / self.diam_pup_in_m * self.wavelength_0 / wav)) * 2
+            # we take the ceil to be sure that we measure at least the good resolution
+            # We do not need to be exact, the mft in science_focal_plane will be
 
         ## transmission of the phase mask (exp(i*phase))
         ## centered on pixel [0.5,0.5]
@@ -267,12 +267,12 @@ class coronagraph:
         -------------------------------------------------- """
 
         lyotplane_after_lyot = self.apodtolyot(input_wavefront,
-                                               noFPM =  noFPM,
+                                               noFPM=noFPM,
                                                wavelength=wavelength)
 
         # Science_focal_plane
         science_focal_plane = self.lyottodetector(lyotplane_after_lyot,
-                                                    noFPM =  noFPM,
+                                                  noFPM=noFPM,
                                                   wavelength=wavelength)
 
         return science_focal_plane
@@ -327,7 +327,8 @@ class coronagraph:
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = np.fft.fftshift(
-                np.fft.ifft2(corono_focal_plane * FPmsk))*maskshifthalfpix_invert
+                np.fft.ifft2(
+                    corono_focal_plane * FPmsk)) * maskshifthalfpix_invert
 
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
@@ -349,7 +350,6 @@ class coronagraph:
                 -0.5 / self.Lyot_fpm_sampling * lambda_ratio,
                 -0.5 / self.Lyot_fpm_sampling * lambda_ratio)
 
-
             input_wavefront_after_apod_shifted = input_wavefront_after_apod * maskshifthalfpix_fpm
 
             corono_focal_plane = prop.mft(
@@ -358,7 +358,6 @@ class coronagraph:
                 self.dim_fpm,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                 inv=1)
-            
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot_central_part = prop.mft(
@@ -369,10 +368,9 @@ class coronagraph:
                 inv=-1)
 
             # Babinet's trick
-            lyotplane_before_lyot = (
-                input_wavefront_after_apod_shifted -
-                lyotplane_before_lyot_central_part
-            ) * maskshifthalfpix_fpm_inverse 
+            lyotplane_before_lyot = (input_wavefront_after_apod_shifted -
+                                     lyotplane_before_lyot_central_part
+                                     ) * maskshifthalfpix_fpm_inverse
             # this is ugly as sh*t but it works to be coherent with other convention in the code
 
         # elif self.prop_apod2lyot == "mft":
@@ -408,11 +406,14 @@ class coronagraph:
         lyotplane_after_lyot = lyotplane_before_lyot_crop * self.lyot_pup
 
         if (self.perfect_coro) & (not noFPM):
-            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil*0.
+            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil * 0.
 
         return lyotplane_after_lyot
 
-    def lyottodetector(self, Lyot_plane_after_Lyot, noFPM = False, wavelength=None):
+    def lyottodetector(self,
+                       Lyot_plane_after_Lyot,
+                       noFPM=False,
+                       wavelength=None):
         """ --------------------------------------------------
         Propagate the electric field from Lyot plane after Lyot to Science focal plane.
         
@@ -430,12 +431,12 @@ class coronagraph:
         -------------------------------------------------- """
         if wavelength == None:
             wavelength = self.wavelength_0
-        
+
         if noFPM:
             Psf_offset = (0, 0)
         else:
             Psf_offset = (-0.5, -0.5)
-            
+
         lambda_ratio = wavelength / self.wavelength_0
 
         science_focal_plane = prop.mft(Lyot_plane_after_Lyot,
@@ -443,8 +444,8 @@ class coronagraph:
                                        self.dim_im,
                                        self.dim_im / self.science_sampling *
                                        lambda_ratio,
-                                        xshift=Psf_offset[0],
-                                        yshift=Psf_offset[1],
+                                       xshift=Psf_offset[0],
+                                       yshift=Psf_offset[1],
                                        inv=1)
 
         return science_focal_plane

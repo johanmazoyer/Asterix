@@ -183,6 +183,6 @@ def crop_or_pad_image(image, dimout):
                    2):int((dimout + image.shape[0]) / 2),
                int((dimout - image.shape[1]) /
                    2):int((dimout + image.shape[1]) / 2)] = image
-    else: 
+    else:
         im_out = image
     return im_out
