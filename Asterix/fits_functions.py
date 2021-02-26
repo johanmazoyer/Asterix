@@ -16,7 +16,6 @@ def quickshow(tab):
     tab: array to be shown
     """
 
-
     tmp = tab
     # tmp = tmp.T
     plt.axis('off')
@@ -34,8 +33,8 @@ def quickfits(tab, dir='', name='tmp'):
     name (optionnal): name of the .fits. By defaut tmpsXX.fits where xx is a random number
     """
 
-    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop/') 
-    if dir == '': 
+    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop/')
+    if dir == '':
         dir = desktop
 
     if name == 'tmp':
@@ -52,8 +51,8 @@ def quickpng(tab, dir='', name='tmp'):
     dir (optionnal): directory where to save the .png
     name (optionnal): name of the .png.  By defaut tmpXX.png where xx is a random number
     """
-    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop') 
-    if dir == '': 
+    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+    if dir == '':
         dir = desktop
     plt.figure(figsize=(10, 10))
     tmp = tab
@@ -65,14 +64,15 @@ def quickpng(tab, dir='', name='tmp'):
     plt.tight_layout()
     plt.savefig(dir + name + '.png', dpi=300)
 
+
 # def CubeFits(docs_dir):
 #     """ --------------------------------------------------
 #     Load all the fits images from a directory into a cube
-    
+
 #     Parameters:
 #     ----------
 #     doc_dir: Input directory
-    
+
 #     Return:
 #     ------
 #     image_array: numpy array
@@ -85,15 +85,14 @@ def quickpng(tab, dir='', name='tmp'):
 #     image_array = np.array(image_list)
 #     return image_array
 
-
 # def AverageFits(docs_dir):
 #     """ --------------------------------------------------
 #     Load all the fits from a directory and create an averaged numpy array
-    
+
 #     Parameters:
 #     ----------
 #     doc_dir: Input directory
-    
+
 #     Return:
 #     ------
 #     imagemoyenne: numpy array
@@ -105,15 +104,14 @@ def quickpng(tab, dir='', name='tmp'):
 #     imagemoyenne = Sommeimage / Cubeimage.shape[0]
 #     return imagemoyenne
 
-
 # def GetFluxmetreValue(fitspath):
 #     """ --------------------------------------------------
 #     Extract measured flux recorded in fits header by the THD2 experiment
-    
+
 #     Parameters:
 #     ----------
 #     fitspath: Name of the file with extension
-    
+
 #     Return:
 #     ------
 #     fluxmetre: float
@@ -123,6 +121,7 @@ def quickpng(tab, dir='', name='tmp'):
 #     # fluxmetre=hdu['FLUX_W']
 #     # return fluxmetre
 #     return fits.getval(fitspath, "FLUX_W")
+
 
 def from_param_to_header(config):
     """ --------------------------------------------------
@@ -142,4 +141,3 @@ def from_param_to_header(config):
         for scalar in config[str(sect)].scalars:
             header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
     return header
-

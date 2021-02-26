@@ -1,7 +1,9 @@
 __author__ = "Axel Potier"
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
+from astropy.io import fits
 
 import Asterix.InstrumentSimu_functions as instr
 import Asterix.processing_functions as proc
@@ -103,8 +105,9 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
 
     k = 0
     for i in posprobes:
-        tmp = instr.cut_image(pushact[i],corona_struct.entrancepupil.shape[1])
-        probephase[k]=tmp*amplitude * 1e-9 *2 * np.pi / wavelength
+        tmp = proc.crop_or_pad_image(pushact[i],
+                                     corona_struct.entrancepupil.shape[1])
+        probephase[k] = tmp * amplitude * 1e-9 * 2 * np.pi / wavelength
 
         inputwavefront = corona_struct.entrancepupil * (1 + 1j * probephase[k])
         deltapsikbis = (corona_struct.apodtodetector(inputwavefront) /
@@ -145,10 +148,10 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     WhichInPupil: 1D array, index of all the actuators located inside the pupil
     -------------------------------------------------- """
     WhichInPupil = []
-    tmp_entrancepupil = instr.cut_image(entrancepupil,pushact.shape[2])
+    tmp_entrancepupil = proc.crop_or_pad_image(entrancepupil, pushact.shape[2])
 
     for i in np.arange(pushact.shape[0]):
-        Psivector=pushact[i]
+        Psivector = pushact[i]
         cut = cutinpupil * np.sum(np.abs(Psivector))
 
         if np.sum(Psivector * tmp_entrancepupil) > cut:
@@ -156,6 +159,107 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
 
     WhichInPupil = np.array(WhichInPupil)
     return WhichInPupil
+
+
+def string_DHshape(EFCconfig):
+
+    DHshape = EFCconfig["DHshape"]
+    choosepix = EFCconfig["choosepix"]
+    choosepix = [int(i) for i in choosepix]
+    circ_rad = EFCconfig["circ_rad"]
+    circ_rad = [int(i) for i in circ_rad]
+    circ_side = EFCconfig["circ_side"].lower()
+    circ_offset = EFCconfig["circ_offset"]
+    circ_angle = EFCconfig["circ_angle"]
+
+    if DHshape == "square":
+        stringdh = "_square_" + "_".join(map(str, choosepix)) + "pix_"
+    else:
+        stringdh = "_circle_" + "_".join(map(
+            str, circ_rad)) + "pix_" + str(circ_side) + '_'
+        if circ_side != 'full':
+            stringdh = stringdh + str(circ_offset) + 'pix_' + str(
+                circ_angle) + 'deg_'
+    return stringdh
+
+
+def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
+                        dim_im, science_sampling):
+    """ --------------------------------------------------
+        define at a single place the complicated file name of the mask and do the saving
+        and loading depending in existence
+
+        THIS IS BAD, THE DH SHOULD BE CODED IN l/D and not in pixel in the DH_sampling sampling.
+        ONCE CORRECTED THIS FUNCTION CAN BE SIMPLIFIED A LOT and loaded twice, once for each dimension
+        
+        Parameters:
+        ----------
+        intermatrix_dir: Directory where to save the fits
+        EFCconfig: all the EFC parameters containing shape and size of the DH.
+        dim_sampl: dimension of the re-sampled focal plane
+        DH_sampling : sampling of the re-sampled DH
+        dim_im: dimension of the FP in the detector focal plane
+        science_sampling : sampling of the FP in the detector focal plane
+
+        
+        Return:
+        ------
+        the 2 dark hole mask in each dimensions
+    -------------------------------------------------- """
+
+    DHshape = EFCconfig["DHshape"]
+    choosepix = EFCconfig["choosepix"]
+    choosepix = [int(i) for i in choosepix]
+    circ_rad = EFCconfig["circ_rad"]
+    circ_rad = [int(i) for i in circ_rad]
+    circ_side = EFCconfig["circ_side"].lower()
+    circ_offset = EFCconfig["circ_offset"]
+    circ_angle = EFCconfig["circ_angle"]
+
+    stringdh = string_DHshape(EFCconfig)
+
+    fileMaskDH = "MaskDH" + stringdh
+
+    fileMaskDH_sampl = fileMaskDH + 'dim' + str(
+        dim_sampl) + 'res{:.1f}'.format(DH_sampling)
+
+    if os.path.exists(intermatrix_dir + fileMaskDH_sampl + ".fits") == True:
+        print("Mask of DH " + fileMaskDH + " already exist")
+        maskDH = fits.getdata(intermatrix_dir + fileMaskDH_sampl + ".fits")
+    else:
+        print("We measure and save " + fileMaskDH_sampl)
+        maskDH = creatingMaskDH(dim_sampl,
+                                DHshape,
+                                choosepixDH=choosepix,
+                                circ_rad=circ_rad,
+                                circ_side=circ_side,
+                                circ_offset=circ_offset,
+                                circ_angle=circ_angle)
+        fits.writeto(intermatrix_dir + fileMaskDH_sampl + ".fits", maskDH)
+
+    fileMaskDH_detect = fileMaskDH + 'dim' + str(dim_im) + 'res{:.1f}'.format(
+        science_sampling)
+
+    if os.path.exists(intermatrix_dir + fileMaskDH_detect + ".fits") == True:
+        print("Mask of DH " + fileMaskDH_detect + " already exist")
+        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH_detect +
+                                      ".fits")
+    else:
+        print("We measure and save " + fileMaskDH_detect)
+        maskDHcontrast = creatingMaskDH(
+            dim_im,
+            DHshape,
+            choosepixDH=[
+                element * dim_im / dim_sampl for element in choosepix
+            ],
+            circ_rad=[element * dim_im / dim_sampl for element in circ_rad],
+            circ_side=circ_side,
+            circ_offset=circ_offset * dim_im / dim_sampl,
+            circ_angle=circ_angle)
+
+        fits.writeto(intermatrix_dir + fileMaskDH_detect + ".fits",
+                     maskDHcontrast)
+    return maskDH, maskDHcontrast
 
 
 def creatingMaskDH(dimimages,
@@ -219,7 +323,6 @@ def creatingMaskDH(dimimages,
     return maskDH
 
 
-
 def creatingCorrectionmatrix(input_wavefront,
                              corona_struct,
                              dimimages,
@@ -262,10 +365,11 @@ def creatingCorrectionmatrix(input_wavefront,
     else:
         probephase = np.zeros(
             (pushact.shape[0], corona_struct.entrancepupil.shape[1],
-             corona_struct.entrancepupil.shape[1]),dtype=complex)
+             corona_struct.entrancepupil.shape[1]),
+            dtype=complex)
         for k in range(pushact.shape[0]):
-            probephase[k]=instr.cut_image(
-                pushact[k],corona_struct.entrancepupil.shape[1])
+            probephase[k] = proc.crop_or_pad_image(
+                pushact[k], corona_struct.entrancepupil.shape[1])
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")
@@ -274,9 +378,10 @@ def creatingCorrectionmatrix(input_wavefront,
     for i in range(nb_fct):
         if i % 100 == 0:
             print(i)
-        Psivector =  bas_fct[i]
-        Gvector = (corona_struct.apodtodetector(input_wavefront* 1j * Psivector) /
-                   np.sqrt(corona_struct.maxPSF))
+        Psivector = bas_fct[i]
+        Gvector = (
+            corona_struct.apodtodetector(input_wavefront * 1j * Psivector) /
+            np.sqrt(corona_struct.maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()
@@ -409,7 +514,8 @@ def FP_PWestimate(Difference, Vectorprobes):
             l = l + 1
     return Resultat / 4
 
-def apply_on_DM(actu_vect,DM_pushact):
+
+def apply_on_DM(actu_vect, DM_pushact):
     """ --------------------------------------------------
     Generate the phase applied on one DM for a give vector of actuator amplitude
     
@@ -424,6 +530,8 @@ def apply_on_DM(actu_vect,DM_pushact):
         2D array
         phase map in the same unit as actu_vect times DM_pushact)
     -------------------------------------------------- """
-    return np.dot(actu_vect,DM_pushact.reshape(DM_pushact.shape[0],
-                DM_pushact.shape[1]*DM_pushact.shape[1])).reshape(DM_pushact.shape[1],
-                DM_pushact.shape[1])
+    return np.dot(
+        actu_vect,
+        DM_pushact.reshape(DM_pushact.shape[0],
+                           DM_pushact.shape[1] * DM_pushact.shape[1])).reshape(
+                               DM_pushact.shape[1], DM_pushact.shape[1])

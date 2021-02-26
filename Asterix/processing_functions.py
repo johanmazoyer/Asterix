@@ -119,7 +119,7 @@ def resampling(image, new):
     Gvector: 2D array, image resampled into new dimensions
     -------------------------------------------------- """
     dim_im = len(image)
-    Gvectorbis = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image)))    
+    Gvectorbis = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image)))
     Gvector = cropimage(Gvectorbis, dim_im / 2, dim_im / 2, new)
     Gvector = np.fft.fftshift(np.fft.fft2(np.fft.ifftshift(Gvector)))
     return Gvector
@@ -144,3 +144,45 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
     return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2),
                int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]
 
+
+def crop_or_pad_image(image, dimout):
+    """ --------------------------------------------------
+    crop or padd with zero to a 2D image
+
+    Parameters
+    ----------
+    image : 2D array (float, double or complex)
+            dim x dim array
+
+    dimout : int
+         dimension of the output array
+
+    Returns
+    ------
+    im_out : 2D array (float)
+            if dimout < dim : cropped image around pixel (dim/2,dim/2)
+            if dimout > dim : image around pixel (dim/2,dim/2) surrounded by 0
+
+    AUTHOR : Raphaël Galicher
+
+    REVISION HISTORY :
+    Revision 1.1  2021-02-10 Raphaël Galicher Initial revision
+    Revision 2.0  2021-02-24. Rename because cut_image was innacurate
+    
+
+    -------------------------------------------------- """
+    if float(dimout) < image.shape[0]:
+        im_out = np.zeros((image.shape[0], image.shape[1]), dtype=image.dtype)
+        im_out = image[int((image.shape[0] - dimout) /
+                           2):int((image.shape[0] + dimout) / 2),
+                       int((image.shape[1] - dimout) /
+                           2):int((image.shape[1] + dimout) / 2)]
+    elif dimout > image.shape[0]:
+        im_out = np.zeros((dimout, dimout), dtype=image.dtype)
+        im_out[int((dimout - image.shape[0]) /
+                   2):int((dimout + image.shape[0]) / 2),
+               int((dimout - image.shape[1]) /
+                   2):int((dimout + image.shape[1]) / 2)] = image
+    else:
+        im_out = image
+    return im_out

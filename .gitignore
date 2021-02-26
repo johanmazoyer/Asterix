@@ -1,5 +1,6 @@
 #ignore file extension
 *.pyc
+*.png
 
 # to avoid that people sync their own param file in the git dir
 #*.ini 
