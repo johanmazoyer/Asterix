@@ -11,6 +11,7 @@ from configobj import ConfigObj
 from validate import Validator
 
 import Asterix.processing_functions as proc
+import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.WSC_functions as wsc
 from Asterix.InstrumentSimu_functions import coronagraph
@@ -797,9 +798,12 @@ def correctionLoop(parameter_file,
 
     # Initial wavefront in pupil plane
     imagedetector[0] = (
-        corona_struct.entrancetodetector(amplitude_abb_up, phase_abb_up) /
+        corona_struct.entrancetodetector_Intensity(amplitude_abb_up, phase_abb_up) /
         corona_struct.maxPSF)
-
+    
+    # TODO Not good. We should do the creation of a WF from phase + abb at one place only, 
+    # either inside entrancetodetector fucntion or in a separate functions. 
+    # I would adovcate doing it in a separate functions becasue we use it at different places
     input_wavefront = corona_struct.entrancepupil * (
         1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
@@ -837,13 +841,12 @@ def correctionLoop(parameter_file,
             # If polychromatic, assume a perfect estimation at one wavelength
             resultatestimation = (
                 corona_struct.entrancetodetector(amplitude_abb_up,
-                                                 phase_abb_up,
-                                                 DM3_active=True,
-                                                 phaseDM3=phaseDM3[k],
-                                                 DM1_active=DM1_active,
-                                                 phaseDM1=phaseDM1[k],
-                                                 DM1_z_position=DM1_z_position,
-                                                 retampl=True) /
+                                                phase_abb_up,
+                                                DM1_active=DM1_active,
+                                                phaseDM1=phaseDM1[k],
+                                                DM3_active=True,
+                                                phaseDM3=phaseDM3[k],
+                                                DM1_z_position=DM1_z_position) /
                 np.sqrt(corona_struct.maxPSF))
 
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
@@ -948,7 +951,7 @@ def correctionLoop(parameter_file,
                     # Propagation in DM1 plane, add DM1 phase,
                     # propagate to next pupil plane (DM3 plane),
                     # add DM3 phase and propagate to detector
-                    # imagedetectortemp=(corona_struct.entrancetodetector(
+                    # imagedetectortemp=(corona_struct.entrancetodetector_Intensity(
                     #             amplitude_abb_up, phase_abb_up,
                     #             DM3_active = True, phaseDM3 = apply_on_DM3,
                     #             DM1_active=DM1_active,phaseDM1=apply_on_DM1,
@@ -1045,6 +1048,7 @@ def correctionLoop(parameter_file,
 
             # # Propagation in DM1 plane, add DM1 phase
             # # and propagate to next pupil plane (DM3 plane)
+            # TODO Not good, 2 very different stuff (wavefront before and after the DM system) have the same name
             input_wavefront = instr.prop_pup_DM1_DM3(
                 input_wavefront, apply_on_DM1, wavelength_0, DM1_z_position,
                 corona_struct.diam_pup_in_m / 2., corona_struct.prad)
@@ -1057,6 +1061,7 @@ def correctionLoop(parameter_file,
         phaseDM3[k + 1] = phaseDM3[k] + proc.crop_or_pad_image(
             apply_on_DM3, dim_pup)
 
+        # TODO Not good, 2  different stuff have the same name
         input_wavefront = input_wavefront * np.exp(
             1j * proc.crop_or_pad_image(apply_on_DM3, dim_pup))
 
@@ -1068,12 +1073,12 @@ def correctionLoop(parameter_file,
         # propagate to next pupil plane (DM3 plane),
         # add DM3 phase and propagate to detector
         imagedetector[k + 1] = (
-            corona_struct.entrancetodetector(amplitude_abb_up,
+            corona_struct.entrancetodetector_Intensity(amplitude_abb_up,
                                              phase_abb_up,
-                                             DM3_active=True,
-                                             phaseDM3=phaseDM3[k + 1],
                                              DM1_active=DM1_active,
                                              phaseDM1=phaseDM1[k + 1],
+                                             DM3_active=True,
+                                             phaseDM3=phaseDM3[k + 1],
                                              DM1_z_position=DM1_z_position) /
             corona_struct.maxPSF)
 

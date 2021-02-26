@@ -145,8 +145,8 @@ class coronagraph:
 
         Returns
         ------
-        FQPM : 2D array giving the complex transmission of the
-            FQPM mask, centered at the four edges of the image
+        FQPM : list of len(self.wav_vec) 2D arrays giving the complex transmission of the
+            FQPM mask
         -------------------------------------------------- """
 
         if self.prop_apod2lyot == "fft":
@@ -252,8 +252,7 @@ class coronagraph:
             Input wavefront,can be complex.
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
-        wavelength : float
-            wavelength in m (used if polychromatic case)
+        wavelength : current wavelength in m
         
         Returns
         ------
@@ -283,7 +282,7 @@ class coronagraph:
             Input wavefront,can be complex.
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
-        wavelength : current wavelength
+        wavelength : current wavelength in m. Default is the reference wavelength of the coronagraph
 
         Returns
         ------
@@ -384,7 +383,7 @@ class coronagraph:
         Lyot_plane_after_Lyot : 2D array,can be complex.  
             Input wavefront,can be complex.
 
-        wavelength : current wavelength
+        wavelength : current wavelength in m. Default is the reference wavelength of the coronagraph
 
         Returns
         ------
@@ -406,88 +405,154 @@ class coronagraph:
         return science_focal_plane
 
     def entrancetodetector(self,
-                           ampl_abb,
-                           phase_abb,
-                           noFPM=False,
-                           DM3_active=False,
-                           phaseDM3=0,
-                           DM1_active=False,
-                           phaseDM1=0,
-                           DM1_z_position=0,
-                           retampl=False):
-        # this is not well coded. We should define this function in monochromatic and then call it in a for loop if necessary
-        # The way tthis is coded use ifs and copy past that can be avoided
+                            ampl_abb,
+                            phase_abb,
+                            wavelength = None,
+                            noFPM=False,
+                            DM1_active=False,
+                            phaseDM1=0,
+                            DM3_active=False,
+                            phaseDM3=0,
+                            DM1_z_position=0):
 
-        # why suddenly separate phase_abb and ampl_abb and not use input_wavefront ? This should be done in a different function
+        """ --------------------------------------------------
+        Propagate the electric field through the entire instrument (from Entrance pupil plane to Science focal plane) 
+        for a given wavelength
+        
+        Parameters
+        ----------
+        ampl_abb: amplitude aberrations
+        phase_abb: phase aberrations
+        wavelength : current wavelength in m. Default is the reference wavelength of the coronagraph
+        noFPM : bool (default=False)
+            if True, remove the FPM if one want to measure a un-obstructed PSF
+        DM1_active : bool (default=False). If true we use DM1
+        phase_DM1 : 2D array (default=0)
+                Phase introduced by DM1
+        DM3_active: bool (default=False). If true we use DM3
+        phase_DM3 : 2D array(default=0)
+                Phase introduced by DM3
+        DM1_z_position : float
+                distance between the pupil plane and DM1
 
+        TODO
         # this function should not be part of the coronagraph class.
-        # Coronagraph clases initilaze and describe behavior in the coronagraph system (in the apod plane to the Lyot plane)
+        # Coronagraph clases initilaze and describe behavior in the coronagraph system (from the apod plane to the Lyot plane)
         # should be in the form
-        # def entrancetodetector(coronagraph_structure, DM_structure, input_wavefront, lambda (optional), phaseDM (optional), phaseDM3 (optional))
+        # def entrancetodetector(coronagraph_structure, DM_structure, input_wavefront, wavelength (optional), phaseDM (optional), phaseDM3 (optional))
 
-        # what is retampl ?
+        Returns
+        ------
+        science_focal_plane : 2D array, 
+            Focal plane electric field in the focal plane
+        -------------------------------------------------- """
 
-        if len(self.wav_vec) == 1 or retampl == True:
-            # Entrance pupil
-            input_wavefront = self.entrancepupil * (1 + ampl_abb) * np.exp(
-                1j * phase_abb)
-            if DM1_active == True:
-                # Propagation in DM1 plane, add DM1 phase
-                # and propagate to next pupil plane (DM3 plane)
-                input_wavefront = prop_pup_DM1_DM3(input_wavefront, phaseDM1,
-                                                   self.wavelength_0,
-                                                   DM1_z_position,
-                                                   self.diam_pup_in_m / 2,
-                                                   self.prad)
-            if DM3_active == True:
-                input_wavefront = input_wavefront * np.exp(
-                    1j * proc.crop_or_pad_image(phaseDM3,
-                                                self.entrancepupil.shape[1]))
 
-            if retampl == True:
-                return self.apodtodetector(input_wavefront,
-                                           noFPM,
-                                           wavelength=self.wavelength_0)
-            else:
-                im = (abs(self.apodtodetector(input_wavefront, noFPM))**2)
+        if wavelength == None:
+            wavelength = self.wavelength_0
+        
+        lambda_ratio = wavelength / self.wavelength_0
+
+        # Entrance pupil
+        input_wavefront = self.entrancepupil * (1 + ampl_abb) * np.exp(
+            1j * phase_abb / lambda_ratio)
+
+        if DM1_active == True:
+            # Propagation in DM1 plane, add DM1 phase
+            # and propagate to next pupil plane (DM3 plane)
+            input_wavefront = prop_pup_DM1_DM3(input_wavefront,
+                                                phaseDM1 / lambda_ratio,
+                                                wavelength, DM1_z_position,
+                                                self.diam_pup_in_m / 2,
+                                                self.prad)
+        if DM3_active == True:
+            input_wavefront = input_wavefront * np.exp(
+                1j *
+                proc.crop_or_pad_image(phaseDM3 / lambda_ratio,
+                                        self.entrancepupil.shape[1]))
+
+        # Pupil to Lyot
+        lyotplane_after_lyot = self.apodtolyot(input_wavefront, noFPM = noFPM,
+                                                wavelength= wavelength)
+
+        # Science_focal_plane
+        science_focal_plane = self.lyottodetector(lyotplane_after_lyot, wavelength= wavelength)
+
+        return science_focal_plane
+    
+    def entrancetodetector_Intensity(self,
+                                    ampl_abb,
+                                    phase_abb,
+                                    wavelengths = 'all',
+                                    noFPM=False,
+                                    DM3_active=False,
+                                    phaseDM3=0,
+                                    DM1_active=False,
+                                    phaseDM1=0,
+                                    DM1_z_position=0):
+        """ --------------------------------------------------
+        Propagate the electric field through the entire instrument (from Entrance pupil plane to Science focal plane) 
+        for a given wavelength
+        
+        Parameters
+        ----------
+        ampl_abb: amplitude aberrations
+        phase_abb: phase aberrations
+        wavelengths : string. defautl 'all'
+                    if 'all': all wavelength
+                    if 'ref': only the reference wavelength
+                            Default is a one element vector containing the reference wavelength of the coronagraph
+        noFPM : bool (default=False)
+            if True, remove the FPM if one want to measure a un-obstructed PSF
+        DM1_active : bool (default=False). If true we use DM1
+        phase_DM1 : 2D array (default=0)
+                Phase introduced by DM1
+        DM3_active: bool (default=False). If true we use DM3
+        phase_DM3 : 2D array(default=0)
+                Phase introduced by DM3
+        DM1_z_position : float
+                distance between the pupil plane and DM1
+
+        TODO
+        # Not super satisfied with this function. This should be generalized by a function doing Optical_system.to_Intensity(phase) function 
+
+        Returns
+        ------
+        Intensity_science_focal_plane : 2D array, 
+            Intensity in the focal plane
+        -------------------------------------------------- """
+        
+        if wavelengths == 'all':
+            wavelength_vec = self.wav_vec
+        elif wavelengths == 'ref':
+           wavelength_vec = [self.wavelength_0]
         else:
+            raise Exception("'wavelengths' keyword can only be 'all' or 'ref'")
 
-            im = np.zeros((self.dim_im, self.dim_im))
-            for wav in self.wav_vec:
-                lambda_ratio = wav / self.wavelength_0
 
-                # Entrance pupil
-                input_wavefront = self.entrancepupil * (1 + ampl_abb) * np.exp(
-                    1j * phase_abb / lambda_ratio)
+        Intensity = np.zeros((self.dim_im, self.dim_im))
 
-                if DM1_active == True:
-                    # Propagation in DM1 plane, add DM1 phase
-                    # and propagate to next pupil plane (DM3 plane)
-                    input_wavefront = prop_pup_DM1_DM3(input_wavefront,
-                                                       phaseDM1 / lambda_ratio,
-                                                       wav, DM1_z_position,
-                                                       self.diam_pup_in_m / 2,
-                                                       self.prad)
-                if DM3_active == True:
-                    input_wavefront = input_wavefront * np.exp(
-                        1j *
-                        proc.crop_or_pad_image(phaseDM3 / lambda_ratio,
-                                               self.entrancepupil.shape[1]))
+        for wav in wavelength_vec:
+            Intensity += np.abs(
+                self.entrancetodetector(ampl_abb,
+                                        phase_abb,
+                                        wavelength=wav,
+                                        noFPM=noFPM,
+                                        DM3_active = DM3_active,
+                                        phaseDM3 = phaseDM3,
+                                        DM1_active= DM1_active,
+                                        phaseDM1=phaseDM1,
+                                        DM1_z_position=DM1_z_position))**2
 
-                # Pupil to Lyot
-                lyotplane_after_lyot = self.apodtolyot(input_wavefront, noFPM,
-                                                       wav)
+        return Intensity
 
-                # Science_focal_plane
-                im += np.abs(self.lyottodetector(lyotplane_after_lyot, wav))**2
-        return im
-
+    
 
 ##############################################
 ##############################################
 ### Deformable mirror
-
-# These function should be part of a DMsystem class that inlc
+#TODO
+# These functions should be part of a DMsystem class that inlc
 # initilaze and describe behavior in the DM system (from entrance pupil to Apod plane)
 
 
@@ -828,7 +893,7 @@ def createdifference(input_wavefront,
 
 def create_wave_ref_and_vec(modelconfig):
     """ --------------------------------------------------
-     from the parameter file return the "reference" wavelength and the wave vector containing all the wavelentghs.
+     from the parameter file return the "reference" wavelength and the wave vector containing all the wavelengths.
      As of now, reference is the central_wavelength
 
      If we want to change the reference (the smallest one or the largest one of the middle one) we can do it once here.
@@ -840,8 +905,8 @@ def create_wave_ref_and_vec(modelconfig):
     
     Returns
     ------
-    wavelength_0, wavevec : the reference wavelenght for the simulation
-    1D vector with the wavelenghts used in this simulation
+    wavelength_0, wavevec : the reference wavelength for the simulation
+    1D vector with the wavelengths used in this simulation
     -------------------------------------------------- """
 
     Delta_wav = modelconfig["Delta_wav"]
