@@ -158,17 +158,17 @@ class coronagraph:
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
 
-        tmp1 = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
-        tmp1[np.where(xx < 0)] = 1
-        tmp2 = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
-        tmp2[np.where(yy >= 0)] = 1
-        tmp1 = tmp1 - tmp2
+        fqpm_thick_vert = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
+        fqpm_thick_vert[np.where(xx < 0)] = 1
+        fqpm_thick_hor = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
+        fqpm_thick_hor[np.where(yy >= 0)] = 1
+        fqpm_thick = fqpm_thick_vert - fqpm_thick_hor
 
         fqpm = list()
         for i, wav in enumerate(self.wav_vec):
             phase = np.zeros((self.dim_fp_fft[i], self.dim_fp_fft[i]))
-            tmp1_cut = proc.crop_or_pad_image(tmp1, self.dim_fp_fft[i])
-            phase[np.where(tmp1_cut != 0)] = (np.pi + self.err_fqpm)
+            fqpm_thick_cut = proc.crop_or_pad_image(fqpm_thick, self.dim_fp_fft[i])
+            phase[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
             if self.achrom_fqpm == False:
                 phase = phase * self.wavelength_0 / wav
             fqpm.append(np.exp(1j * phase))
@@ -716,9 +716,9 @@ def creatingpushact(model_dir,
         multichannel=False)
 
     # Gauss2Dfit for centering the rescaled influence function
-    tmp = proc.gauss2Dfit(resizeactshape)
-    dx = tmp[3]
-    dy = tmp[4]
+    Gaussian_fit_param = proc.gauss2Dfit(resizeactshape)
+    dx = Gaussian_fit_param[3]
+    dy = Gaussian_fit_param[4]
     xycent = len(resizeactshape) / 2
     resizeactshape = nd.interpolation.shift(resizeactshape,
                                             (xycent - dx, xycent - dy))
@@ -781,6 +781,7 @@ def creatingpushact(model_dir,
 def creatingpushact_inpup(DM_pushact, wavelength, corona_struct, z_position):
     """ --------------------------------------------------
     OPD map induced by out-of-pupil DM in the pupil plane for each actuator
+    TODO: could be merged with creatingpushact to be more general for all z_position
 
     Parameters
     ----------
@@ -797,17 +798,17 @@ def creatingpushact_inpup(DM_pushact, wavelength, corona_struct, z_position):
     # Size of the array (diameter of the pupil * 125%)
     # dimtmp = int(corona_struct.prad*2*1.25)
 
-    dimtmp = corona_struct.entrancepupil.shape[1]
+    dim_entrancepupil = corona_struct.entrancepupil.shape[1]
     UDM1, dxout = prop.prop_fresnel(corona_struct.entrancepupil, wavelength,
                                     z_position,
                                     corona_struct.diam_pup_in_m / 2,
                                     corona_struct.prad)
-    pushact_inpup = np.zeros((DM_pushact.shape[0], dimtmp, dimtmp),
+    pushact_inpup = np.zeros((DM_pushact.shape[0], dim_entrancepupil, dim_entrancepupil),
                              dtype=complex)
 
     for i in np.arange(DM_pushact.shape[0]):
         Upup, dxpup = prop.prop_fresnel(
-            UDM1 * proc.crop_or_pad_image(DM_pushact[i], dimtmp), wavelength,
+            UDM1 * proc.crop_or_pad_image(DM_pushact[i], dim_entrancepupil), wavelength,
             -z_position, corona_struct.diam_pup_in_m / 2, corona_struct.prad)
         pushact_inpup[i] = Upup
 
