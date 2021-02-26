@@ -128,7 +128,7 @@ def create_interaction_matrices(parameter_file,
         basistr = "fourier"
 
     # Initialize coronagraphs:
-    corona_struct = coronagraph(model_dir, modelconfig, Coronaconfig)
+    corona_struct = coronagraph(modelconfig, Coronaconfig, model_dir)
 
     # Directories for saving data
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
@@ -571,7 +571,7 @@ def correctionLoop(parameter_file,
     # model_dir = Data_dir + os.path.sep + "Model" + os.path.sep
 
     # Initialize coronagraphs:
-    corona_struct = coronagraph(model_dir, modelconfig, Coronaconfig)
+    corona_struct = coronagraph(modelconfig, Coronaconfig, model_dir)
 
     if onbench == True:
         Labview_dir = Data_dir + "Labview/"

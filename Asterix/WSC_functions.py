@@ -110,7 +110,7 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
         probephase[k] = tmp * amplitude * 1e-9 * 2 * np.pi / wavelength
 
         inputwavefront = corona_struct.entrancepupil * (1 + 1j * probephase[k])
-        deltapsikbis = (corona_struct.apodtodetector(inputwavefront) /
+        deltapsikbis = (corona_struct.todetector(inputwavefront) /
                         np.sqrt(corona_struct.maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
@@ -380,7 +380,7 @@ def creatingCorrectionmatrix(input_wavefront,
             print(i)
         Psivector = bas_fct[i]
         Gvector = (
-            corona_struct.apodtodetector(input_wavefront * 1j * Psivector) /
+            corona_struct.todetector(input_wavefront * 1j * Psivector) /
             np.sqrt(corona_struct.maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
