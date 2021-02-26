@@ -329,7 +329,10 @@ class coronagraph:
             lyotplane_before_lyot = np.fft.fftshift(
                 np.fft.ifft2(
                     corono_focal_plane * FPmsk)) * maskshifthalfpix_invert
-
+            # we take the convention that when we are in pupil plane the field must be 
+            # "non-shifted". Because the shift in pupil plane is resolution dependent
+            # which depend on the method (fft is not exactly science resolution because 
+            # of rounding issues, mft-babinet does not use the science resolution, etc).
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
 
@@ -684,11 +687,7 @@ def creatingpushact(model_dir,
                     diam_pup_in_pix,
                     DMconfig,
                     dim_array,
-                    which_DM=3,
-                    xerror=0,
-                    yerror=0,
-                    angerror=0,
-                    gausserror=0):
+                    which_DM=3):
     """ --------------------------------------------------
     OPD map induced in the DM plane for each actuator
 
@@ -701,11 +700,7 @@ def creatingpushact(model_dir,
     dim_array : dimension of the output array
 
     Error on the model of the DM
-        xerror : x-direction translation in pixel
-        yerror : y-direction translation in pixel
-        angerror : rotation in degree
-        gausserror : influence function size (1=100% error)
-
+        
     Returns
     ------
     pushact : 
@@ -725,6 +720,13 @@ def creatingpushact(model_dir,
     y_ActuN = DMconfig[namDM + "y_ActuN"]
     x_ActuN = DMconfig[namDM + "x_ActuN"]
     xy_ActuN = [x_ActuN, y_ActuN]
+
+    xerror =  DMconfig[namDM + "xerror"] 
+    yerror = DMconfig[namDM + "yerror"] 
+    angerror = DMconfig[namDM + "angerror"] 
+    gausserror = DMconfig[namDM + "gausserror"] 
+
+
 
     #Measured positions for each actuator in pixel
     measured_grid = fits.getdata(model_dir + filename_grid_actu)
