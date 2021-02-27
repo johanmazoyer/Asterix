@@ -233,13 +233,12 @@ def create_interaction_matrices(parameter_file,
         nam2DM = ""
 
     if DM3_creating_pushact == True:
-        DM3_pushact = instr.creatingpushact(
-            model_dir,
-            corona_struct.diam_pup_in_m,
-            2 * corona_struct.prad,
-            DMconfig,
-            corona_struct.dim_overpad_pupil,
-            Name_DM='DM3')
+        DM3_pushact = instr.creatingpushact(model_dir,
+                                            corona_struct.diam_pup_in_m,
+                                            2 * corona_struct.prad,
+                                            DMconfig,
+                                            corona_struct.dim_overpad_pupil,
+                                            Name_DM='DM3')
         fits.writeto(Model_local_dir + "DM3_PushActInPup_ray" +
                      str(int(corona_struct.prad)) + tmp_nam + ".fits",
                      DM3_pushact,
@@ -768,13 +767,12 @@ def correctionLoop(parameter_file,
     ## Adding error on the DM model?
     if DM3_misregistration == True:
         print("DM Misregistration!")
-        pushactonDM3 = instr.creatingpushact(
-            model_dir,
-            corona_struct.diam_pup_in_m,
-            2 * corona_struct.prad,
-            DMconfig,
-            corona_struct.dim_overpad_pupil,
-            Name_DM='DM3')
+        pushactonDM3 = instr.creatingpushact(model_dir,
+                                             corona_struct.diam_pup_in_m,
+                                             2 * corona_struct.prad,
+                                             DMconfig,
+                                             corona_struct.dim_overpad_pupil,
+                                             Name_DM='DM3')
     else:
         pushactonDM3 = DM3_pushact
 
@@ -838,7 +836,7 @@ def correctionLoop(parameter_file,
                 DM3_active=True,
                 phaseDM3=phaseDM3[k],
                 DM1_z_position=DM1_z_position) / np.sqrt(corona_struct.maxPSF))
-            
+
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
         else:
@@ -951,12 +949,11 @@ def correctionLoop(parameter_file,
                     # # Add DM3 phase
                     tmp_input_wavefront = tmp_input_wavefront * np.exp(
                         1j * proc.crop_or_pad_image(
-                            apply_on_DM3,
-                            corona_struct.dim_overpad_pupil))
+                            apply_on_DM3, corona_struct.dim_overpad_pupil))
 
-                    imagedetectortemp = (abs(
-                        corona_struct.todetector(tmp_input_wavefront))**2 /
-                                         corona_struct.maxPSF)
+                    imagedetectortemp = (
+                        abs(corona_struct.todetector(tmp_input_wavefront))**2 /
+                        corona_struct.maxPSF)
 
                     meancontrasttemp[b] = np.mean(
                         imagedetectortemp[np.where(maskDHcontrast != 0)])
