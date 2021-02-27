@@ -115,7 +115,7 @@ class Optical_System:
 
     def todetector(self,
                    entrance_EF=1.,
-                   wavelength=0.,
+                   wavelength=None,
                    center_on_pixel=False,
                    **kwargs):
         """ --------------------------------------------------
@@ -156,12 +156,15 @@ class Optical_System:
         else:
             Psf_offset = (-0.5, -0.5)
 
+        if wavelength == None:
+            wavelength = self.wavelength_0
+
         lambda_ratio = wavelength / self.wavelength_0
 
         exit_EF = self.EF_through(entrance_EF=entrance_EF,
                                   wavelength=wavelength,
                                   **kwargs)
-
+        
         focal_plane_EF = prop.mft(exit_EF,
                                   self.exitpup_rad * 2,
                                   self.dim_im,
@@ -175,7 +178,7 @@ class Optical_System:
 
     def todetector_Intensity(self,
                              entrance_EF=1.,
-                             wavelengths=[0.],
+                             wavelengths=None,
                              center_on_pixel=False,
                              **kwargs):
         """ --------------------------------------------------
@@ -208,7 +211,7 @@ class Optical_System:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        if wavelengths == [0.]:
+        if wavelengths == None:
             wavelength_vec = self.wav_vec
 
         elif isinstance(wavelengths, float) or isinstance(
@@ -397,7 +400,7 @@ class pupil(Optical_System):
             if noPup == False:
                 self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
 
-    def EF_through(self, entrance_EF=1., wavelength=0.):
+    def EF_through(self, entrance_EF=1., wavelength=None):
         """ --------------------------------------------------
         Propagate the electric field through the pupil
 
@@ -423,7 +426,7 @@ class pupil(Optical_System):
         entrance_EF = super().EF_through(entrance_EF=entrance_EF,
                                          wavelength=wavelength)
 
-        if wavelength == 0.:
+        if wavelength == None:
             wavelength = self.wavelength_0
 
         if len(self.pup.shape) == 2:
@@ -689,7 +692,7 @@ class coronagraph(Optical_System):
     ##############################################
     ### Propagation through coronagraph
 
-    def EF_through(self, entrance_EF=1., wavelength=0., noFPM=False):
+    def EF_through(self, entrance_EF=1., wavelength=None, noFPM=False):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod
         pupil to Lyot plane after Lyot pupil
@@ -720,7 +723,7 @@ class coronagraph(Optical_System):
         entrance_EF = super().EF_through(entrance_EF=entrance_EF,
                                          wavelength=wavelength)
 
-        if wavelength == 0.:
+        if wavelength == None:
             wavelength = self.wavelength_0
 
         if noFPM:
@@ -844,7 +847,7 @@ class coronagraph(Optical_System):
     def entrancetodetector(self,
                            ampl_abb,
                            phase_abb,
-                           wavelength=0.,
+                           wavelength=None,
                            noFPM=False,
                            DM1_active=False,
                            phaseDM1=0,
@@ -885,7 +888,7 @@ class coronagraph(Optical_System):
         Author: Johan Mazoyer
         -------------------------------------------------- """
 
-        if wavelength == 0.:
+        if wavelength == None:
             wavelength = self.wavelength_0
 
         lambda_ratio = wavelength / self.wavelength_0
