@@ -7,6 +7,7 @@ from astropy.io import fits
 
 import Asterix.InstrumentSimu_functions as instr
 import Asterix.processing_functions as proc
+import Asterix.fits_functions as useful
 
 
 def invertSVD(matrix_to_invert,
