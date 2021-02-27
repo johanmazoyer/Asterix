@@ -97,8 +97,8 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
     -------------------------------------------------- """
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimimages, dimimages), dtype=complex)
-    probephase = np.zeros((numprobe, corona_struct.entrancepupil.shape[1],
-                           corona_struct.entrancepupil.shape[1]))
+    probephase = np.zeros((numprobe, corona_struct.dim_overpad_pupil,
+                           corona_struct.dim_overpad_pupil))
     matrix = np.zeros((numprobe, 2))
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
@@ -106,10 +106,10 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
     k = 0
     for i in posprobes:
         tmp = proc.crop_or_pad_image(pushact[i],
-                                     corona_struct.entrancepupil.shape[1])
+                                     corona_struct.dim_overpad_pupil)
         probephase[k] = tmp * amplitude * 1e-9 * 2 * np.pi / wavelength
 
-        inputwavefront = corona_struct.entrancepupil * (1 + 1j * probephase[k])
+        inputwavefront = corona_struct.entrancepupil.pup * (1 + 1j * probephase[k])
         deltapsikbis = (corona_struct.todetector(inputwavefront) /
                         np.sqrt(corona_struct.maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
@@ -188,7 +188,6 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
     """ --------------------------------------------------
         define at a single place the complicated file name of the mask and do the saving
         and loading depending in existence
-
         THIS IS BAD, THE DH SHOULD BE CODED IN l/D and not in pixel in the DH_sampling sampling.
         ONCE CORRECTED THIS FUNCTION CAN BE SIMPLIFIED A LOT and loaded twice, once for each dimension
         
@@ -200,7 +199,6 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
         DH_sampling : sampling of the re-sampled DH
         dim_im: dimension of the FP in the detector focal plane
         science_sampling : sampling of the FP in the detector focal plane
-
         
         Return:
         ------
@@ -281,7 +279,6 @@ def creatingMaskDH(dimimages,
     circ_side: string, if shape is 'circle', can define to keep only one side of the circle
     circ_offset : float, remove pixels that are closer than circ_offset if circ_side is set
     circ_angle : float, if circ_side is set, remove pixels within a cone of angle circ_angle
-
     Return:
     ------
     maskDH: 2D array, binary mask
@@ -364,12 +361,12 @@ def creatingCorrectionmatrix(input_wavefront,
                                          pushact.shape[2])
     else:
         probephase = np.zeros(
-            (pushact.shape[0], corona_struct.entrancepupil.shape[1],
-             corona_struct.entrancepupil.shape[1]),
+            (pushact.shape[0], corona_struct.dim_overpad_pupil,
+             corona_struct.dim_overpad_pupil),
             dtype=complex)
         for k in range(pushact.shape[0]):
             probephase[k] = proc.crop_or_pad_image(
-                pushact[k], corona_struct.entrancepupil.shape[1])
+                pushact[k], corona_struct.dim_overpad_pupil)
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")
@@ -404,7 +401,6 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
     inversed_jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
     WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
     nbDMactu:number of DM actuators
-
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -434,7 +430,6 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
     Jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
     WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
     nbDMactu:number of DM actuators
-
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -467,7 +462,6 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     WhichInPupil: 1D array, index of the actuators taken into account
                 to create the jacobian matrix
     nbDMactu:number of DM actuators
-
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator

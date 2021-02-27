@@ -13,10 +13,15 @@ import Asterix.fits_functions as useful
 ##############################################
 ##############################################
 ### Optical_System
-# Super class Optical_System allows to pass parameters to all sub class. We can then creat blocks inside this super class
-# We take the convention that an Optical_System start and end in the pupil plane so that they can be easily assemble
-#  The entrance and  pupil plane is always of the same size (dim_overpad_pupil).
 class Optical_System:
+    """ --------------------------------------------------
+    Super class Optical_System allows to pass parameters to all sub class. We can then creat blocks inside this super class
+    An Optical_System start and end in the pupil plane. 
+    The entrance and exit pupil plane must always of the same size (dim_overpad_pupil)    
+    With these convention, they can be easily assemble to create complex optical systems. 
+    
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
     def __init__(self, modelconfig):
         """ --------------------------------------------------
         Initialize Optical_System objects 
@@ -70,16 +75,19 @@ class Optical_System:
     #We define functions that all Optical_System object can use.
     # These can be overwritten for a subclass if need be
 
-    def EF_through(self, entrance_EF, wavelength, **kwargs):
+    def EF_through(self, entrance_EF=1., **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from entrance pupil to exit pupil
 
         Parameters
         ----------
-        entrance_EF : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] ,can be complex.  
-        Electric field in the pupil plane a the entrance of the system
+        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+        Electric field in the pupil plane a the entrance of the system. 
 
-        wavelength : float. current wavelength in m. 
+        wavelength : float. Default is self.wavelength_0 the reference wavelength
+                current wavelength in m. 
 
         **kwargs: other kw parameters can be passed
 
@@ -93,12 +101,21 @@ class Optical_System:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
+        if isinstance(entrance_EF, float) or isinstance(entrance_EF, np.float):
+            entrance_EF = np.full(
+                (self.dim_overpad_pupil, self.dim_overpad_pupil),
+                np.float(entrance_EF))
+
+        if isinstance(entrance_EF, np.ndarray) == False:
+            raise Exception(
+                "entrance_EF should be a float of a numpy array of floats")
+
         exit_EF = entrance_EF
         return exit_EF
 
     def todetector(self,
-                   entrance_EF,
-                   wavelength=None,
+                   entrance_EF=1.,
+                   wavelength=0.,
                    center_on_pixel=False,
                    **kwargs):
         """ --------------------------------------------------
@@ -109,11 +126,13 @@ class Optical_System:
         
         Parameters
         ----------
-        entrance_EF : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] ,can be complex.  
-            Electric field in the pupil plane a the entrance of the system
+        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+        Electric field in the pupil plane a the entrance of the system. 
 
-        wavelength : float. Default is the reference self.wavelength_0
-             current wavelength in m. 
+        wavelength : float. Default is self.wavelength_0 the reference wavelength
+                current wavelength in m. 
 
         center_on_pixel : bool Default False
             If True, the PSF will be centered on a pixel
@@ -131,8 +150,6 @@ class Optical_System:
         
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
-        if wavelength == None:
-            wavelength = self.wavelength_0
 
         if center_on_pixel == True:
             Psf_offset = (0, 0)
@@ -141,7 +158,7 @@ class Optical_System:
 
         lambda_ratio = wavelength / self.wavelength_0
 
-        exit_EF = self.EF_through(entrance_EF, wavelength, **kwargs)
+        exit_EF = self.EF_through(entrance_EF=entrance_EF, wavelength = wavelength, **kwargs)
 
         focal_plane_EF = prop.mft(exit_EF,
                                   self.exitpup_rad * 2,
@@ -155,7 +172,7 @@ class Optical_System:
         return focal_plane_EF
 
     def todetector_Intensity(self,
-                             entrance_EF,
+                             entrance_EF=1.,
                              wavelengths=[0.],
                              center_on_pixel=False,
                              **kwargs):
@@ -165,8 +182,10 @@ class Optical_System:
 
         Parameters
         ----------
-        entrance_EF : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] ,can be complex.  
-            Electric field in the pupil plane a the entrance of the system
+        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+        Electric field in the pupil plane a the entrance of the system. 
 
         wavelengths : float or float array of wavelength in m. Default is all wavelenthg in self.wav_vec
 
@@ -189,6 +208,7 @@ class Optical_System:
 
         if wavelengths == [0.]:
             wavelength_vec = self.wav_vec
+
         elif isinstance(wavelengths, float) or isinstance(
                 wavelengths, np.float):
             wavelength_vec = [wavelengths]
@@ -201,35 +221,41 @@ class Optical_System:
 
         for wav in wavelength_vec:
             focal_plane_Intensity += np.abs(
-                self.todetector(entrance_EF,
+                self.todetector(entrance_EF=entrance_EF,
                                 wavelength=wav,
                                 center_on_pixel=center_on_pixel,
                                 **kwargs))**2
 
         return focal_plane_Intensity
 
-    def throughput_loss(self, **kwargs):
+    def transmission(self, **kwargs):
         """
-        measure ratio of photons lost during when
-        crossing the system
+        measure ratio of photons lost when
+        crossing the system compared to a clear aperture of radius self.prad
 
         **kwargs: other kw parameters can be passed direclty to self.EF_through function
         
         Returns
         ------ 
-        float is the ratio exit flux  / entrance flux
+        float is the ratio exit flux  / clear entrance pupil flux
     
         AUTHOR : Johan Mazoyer
 
         """
-        entrance_EF = np.ones((self.dim_overpad_pupil, self.dim_overpad_pupil))
-        exit_EF = self.EF_through(entrance_EF, **kwargs)
+        clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil,
+                                                     self.prad)
 
-        throughput_loss = np.sum(np.abs(exit_EF)) / np.sum(entrance_EF)
+        exit_EF = self.EF_through(**kwargs)
+
+        throughput_loss = np.sum(
+            np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
 
         return throughput_loss
-    
-    def from_phase_and_ampl_to_EF(self, phase_abb = 0, ampl_abb = 0, wavelength = None):
+
+    def from_phase_and_ampl_to_EF(self,
+                                  phase_abb=0,
+                                  ampl_abb=0,
+                                  wavelength=None):
         """ --------------------------------------------------
         Create an electrical field from an phase and amplitude aberrations
         
@@ -253,7 +279,10 @@ class Optical_System:
         
         AUTHOR : Johan Mazoyer
         """
-        
+        if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
+            raise Exception(
+                "phase_abb and ampl_abb must be real arrays, not complex")
+
         if phase_abb == 0 and ampl_abb == 0:
             return np.onse((self.dim_overpad_pupil, self.dim_overpad_pupil))
         else:
@@ -261,33 +290,67 @@ class Optical_System:
                 wavelength = self.wavelength_0
             lambda_ratio = wavelength / self.wavelength_0
 
-            return (1 + ampl_abb) * np.exp(
-                1j * phase_abb / lambda_ratio)
+            return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
 
 
 ##############################################
 ##############################################
 ### PUPIL
-# initilaze and describe behavior of single pupil
-# pupil is a sub class of Optical_System
 
 
 class pupil(Optical_System):
-    def __init__(self, modelconfig, prad, directory="", filename=""):
+    """ --------------------------------------------------
+    initialize and describe the behavior of single pupil
+    pupil is a sub class of Optical_System.  
+    
+    Obviously you can define your pupil
+    withot that with 2d arrray multiplication (this is a fairly simple object).
+    
+    The main advantage of defining them using Optical_System is that you can 
+    use default Optical_System functions to obtain PSF, transmission, etc... 
+    and concatenate them with other elements
+    
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    def __init__(self,
+                 modelconfig,
+                 prad,
+                 directory="",
+                 filename="",
+                 noPup=False):
         """ --------------------------------------------------
-        Initialize a pupil object
+        Initialize a pupil object.
+
+
         
         Parameters
         ----------
+        modelconfig : general configuration parameters (sizes and dimensions) 
+                        to initialize Optical_System class
 
         prad : int
             radius in pixels of the round pupil mask
         
-        directory : string
+        directory : string (default "")
             name of the directory where filename is
 
-        filename : string
-            name of the Fits file
+        filename : string (default "")
+            name of the .fits file
+            The pupil .fits files should be be 2D and square([dim_fits,dim_fits]) 
+            and assumed to be centered between 4 pixels.
+            if dim_fits < dim_overpad_pupil then the pupil is zero-padded
+            if dim_fits > dim_overpad_pupil we raise an Exception
+        
+        noPup : bool (default False).
+                if True this is clear pupil plane (no pupil). 
+                Can be usefull is we have a clear pupil plane but still want to 
+                defined a radius to define a lambda / D for the todetector function
+
+            TODO: include here function random_phase_map, scale_amplitude_abb, shift_phase_ramp 
+            TODO: include an SCC Lyot pupil function here !
+            TODO: for now pupil .fits are monochromatic but the pupil propagation EF_through 
+            use wavelenght as a parameter
+
         
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
@@ -297,15 +360,27 @@ class pupil(Optical_System):
         self.exitpup_rad = prad
         self.radius = prad
 
-        if filename == "":
-            self.pup = fits.getdata(os.path.join(directory, filename))
-        else:
+        self.pup = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
+                           1.)
+
+        if filename != "":
+
+            # we start by a bunch of tests to check
+            # that pupil has a certain acceptable form.
             print("we load the pupil: " + filename)
             print("we assume center between 4 pixels")
-            pup_fits = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
+            pup_fits = fits.getdata(os.path.join(directory, filename))
+
+            if len(pup_fits.shape) != 2:
+                raise Exception("file " + filename + " should be a 2D array")
+
             if pup_fits.shape[0] != pup_fits.shape[1]:
                 raise Exception("file " + filename +
                                 " appears to be not square")
+
+            if pup_fits.shape[0] == self.dim_overpad_pupil:
+                self.pup = pup_fits
+
             elif pup_fits.shape[0] > self.dim_overpad_pupil:
                 raise Exception(
                     "file " + filename +
@@ -316,26 +391,70 @@ class pupil(Optical_System):
                 print("we pad the pupil to be at the correct size")
                 self.pup = proc.crop_or_pad_image(pup_fits,
                                                   self.dim_overpad_pupil)
+        else:  # no filename
+            if noPup == False:
+                self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
 
-    def EF_through(self, entrance_EF, wavelength):
-        if isinstance(entrance_EF, float) or isinstance(entrance_EF, np.float):
-            entrance_EF = np.zeros(
-                (self.dim_overpad_pupil,
-                 self.dim_overpad_pupil)) + np.float(entrance_EF)
+    def EF_through(self, entrance_EF=1., wavelength=0.):
+        """ --------------------------------------------------
+        Propagate the electric field through the pupil
 
-        if isinstance(entrance_EF, np.ndarray) == False:
-            raise Exception(
-                "entrance_EF should be a float of a numpy array of floats")
+        Parameters
+        ----------
+        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+        Electric field in the pupil plane a the entrance of the system. 
 
-        return entrance_EF * self.pup
+        wavelength : float. Default is self.wavelength_0 the reference wavelength
+                current wavelength in m. 
+
+        Returns
+        ------
+        exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] 
+            Electric field in the pupil plane a the exit of the system
+
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+
+        # call the Optical_System super function to check and format the variables entrance_EF and wavelength
+        entrance_EF = super().EF_through(entrance_EF=entrance_EF,
+                                         wavelength=wavelength)
+
+        if wavelength == 0.:
+            wavelength = self.wavelength_0
+
+        if len(self.pup.shape) == 2:
+            return entrance_EF * self.pup
+
+        elif len(self.pup.shape) == 3:
+            if self.pup.shape != self.nb_wav:
+                raise Exception(
+                    "I'm confused, your pupil seem to be polychromatic" +
+                    "(pup.shape=3) but the # of WL (pup.shape[0]={}) ".format(
+                        self.pup.shape[0]) +
+                    "is different from the system # of WL (nb_wav={})".format(
+                        self.nb_wav))
+            else:
+                return entrance_EF * self.pup[self.wav_vec.tolist().index(
+                    wavelength)]
+        else:
+            raise Exception("pupil dimension are not acceptable")
 
 
 ##############################################
 ##############################################
 ### CORONAGRAPHS
-# initilaze and describe behavior in the coronagraph system (from apod plane to the Lyot plane)/
-# coronagraph is a sub class of Optical_System
+
+
 class coronagraph(Optical_System):
+    """ --------------------------------------------------
+    initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
+    coronagraph is a sub class of Optical_System.  
+    
+
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
     def __init__(self, modelconfig, coroconfig, model_dir):
         """ --------------------------------------------------
         Initialize a coronograph object
@@ -359,7 +478,7 @@ class coronagraph(Optical_System):
         self.lyotrad = int(self.prad * self.diam_lyot_in_m /
                            self.diam_pup_in_m)
 
-        self.exitpup_rad = self.prad
+        self.exitpup_rad = self.lyotrad
 
         #coronagraph
         self.corona_type = coroconfig["corona_type"].lower()
@@ -401,27 +520,36 @@ class coronagraph(Optical_System):
             self.perfect_coro = True
 
         #radius of the pupil in pixel in DM1 plane
-        #(updated in Main_EFC_THD) Should not be there
+        #(updated in Main_EFC_THD) Should not be there !
         self.pradDM1 = self.prad
 
-        # Maybe should remove the entrance pupil from the coronostructure,
+        # We define all the pupil
+        # We should remove the entrance pupil from the coronostructure,
         # this is "before the DMs" so probably not relevant here.
-        self.entrancepupil = pupil(modelconfig, self.prad, directory= model_dir, filename=modelconfig["filename_instr_pup"])
-
+        self.entrancepupil = pupil(modelconfig,
+                                   self.prad,
+                                   directory=model_dir,
+                                   filename=modelconfig["filename_instr_pup"])
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        self.apod_pup = pupil(modelconfig, self.prad*20., directory= model_dir, filename=modelconfig["filename_apod_pup"])
+        self.apod_pup = pupil(modelconfig,
+                              self.prad,
+                              directory=model_dir,
+                              filename=modelconfig["filename_instr_apod"],
+                              noPup=True)
 
-        self.lyot_pup = pupil(modelconfig, self.lyotrad, directory= model_dir, filename=modelconfig["filename_instr_lyot"])
-
+        self.lyot_pup = pupil(modelconfig,
+                              self.lyotrad,
+                              directory=model_dir,
+                              filename=modelconfig["filename_instr_lyot"])
 
         if self.perfect_coro == True:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
             # measure the Lyot pupil that will be removed after
             self.perfect_Lyot_pupil = 0
-            self.perfect_Lyot_pupil = self.EF_through(self.entrancepupil,
-                                                      self.wavelength_0)
+            self.perfect_Lyot_pupil = self.EF_through(
+                self.entrancepupil.EF_through())
 
         # Measure the PSF and store max and Sum
         self.maxPSF, self.sumPSF = self.max_sum_PSF()
@@ -439,9 +567,10 @@ class coronagraph(Optical_System):
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
         # PSF = self.entrancetodetector(0, 0, noFPM=True)
-        PSF = self.todetector_Intensity(self.entrancepupil,
-                                        center_on_pixel=True,
-                                        noFPM=True)
+        PSF = self.todetector_Intensity(
+            entrance_EF=self.entrancepupil.EF_through(),
+            center_on_pixel=True,
+            noFPM=True)
 
         return np.amax(PSF), np.sum(PSF)
 
@@ -558,16 +687,21 @@ class coronagraph(Optical_System):
     ##############################################
     ### Propagation through coronagraph
 
-    def EF_through(self, entrance_EF, wavelength, noFPM=False):
+    def EF_through(self, entrance_EF=1., wavelength=0., noFPM=False):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod
         pupil to Lyot plane after Lyot pupil
 
         Parameters
         ----------
-        entrance_EF : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] ,can be complex.  
-            Electric field in the pupil plane a the entrance of the system
-        wavelength : current wavelength in m. Default is the reference wavelength of the coronagraph
+        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+        Electric field in the pupil plane a the entrance of the system. 
+
+        wavelength : float. Default is self.wavelength_0 the reference wavelength
+                current wavelength in m. 
+        
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
 
@@ -580,14 +714,12 @@ class coronagraph(Optical_System):
         AUTHOR : Johan Mazoyer 
         -------------------------------------------------- """
 
-        if isinstance(entrance_EF, float) or isinstance(entrance_EF, np.float):
-            entrance_EF = np.zeros(
-                (self.dim_overpad_pupil,
-                 self.dim_overpad_pupil)) + np.float(entrance_EF)
+        # call the Optical_System super function to check and format the variables entrance_EF and wavelength
+        entrance_EF = super().EF_through(entrance_EF=entrance_EF,
+                                         wavelength=wavelength)
 
-        if isinstance(entrance_EF, np.ndarray) == False:
-            raise Exception(
-                "entrance_EF should be a float of a numpy array of floats")
+        if wavelength == 0.:
+            wavelength = self.wavelength_0
 
         if noFPM:
             FPmsk = 1.
@@ -596,7 +728,8 @@ class coronagraph(Optical_System):
 
         lambda_ratio = wavelength / self.wavelength_0
 
-        input_wavefront_after_apod = self.apod_pup.EF_through(entrance_EF, wavelength)
+        input_wavefront_after_apod = self.apod_pup.EF_through(
+            entrance_EF, wavelength)
 
         if self.prop_apod2lyot == "fft":
             dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(
@@ -622,6 +755,9 @@ class coronagraph(Optical_System):
             # "non-shifted". Because the shift in pupil plane is resolution dependent
             # which depend on the method (fft is not exactly science resolution because
             # of rounding issues, mft-babinet does not use the science resolution, etc).
+            # these shift in both direction should be included in apod and pup multiplication
+            # to save time
+
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
 
@@ -695,17 +831,18 @@ class coronagraph(Optical_System):
             lyotplane_before_lyot, self.dim_overpad_pupil)
 
         # Field after filtering by Lyot stop
-        lyotplane_after_lyot =  self.lyot_pup.EF_through(lyotplane_before_lyot_crop, wavelength)
+        lyotplane_after_lyot = self.lyot_pup.EF_through(
+            lyotplane_before_lyot_crop, wavelength)
 
         if (self.perfect_coro) & (not noFPM):
-            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil * 0.
+            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
 
         return lyotplane_after_lyot
 
     def entrancetodetector(self,
                            ampl_abb,
                            phase_abb,
-                           wavelength=None,
+                           wavelength=0.,
                            noFPM=False,
                            DM1_active=False,
                            phaseDM1=0,
@@ -746,14 +883,15 @@ class coronagraph(Optical_System):
         Author: Johan Mazoyer
         -------------------------------------------------- """
 
-        if wavelength == None:
+        if wavelength == 0.:
             wavelength = self.wavelength_0
 
         lambda_ratio = wavelength / self.wavelength_0
 
         # Entrance pupil
-        input_wavefront = self.entrancepupil * (1 + ampl_abb) * np.exp(
+        input_wavefront = self.entrancepupil.pup * (1 + ampl_abb) * np.exp(
             1j * phase_abb / lambda_ratio)
+        
 
         if DM1_active == True:
             # Propagation in DM1 plane, add DM1 phase
@@ -769,9 +907,8 @@ class coronagraph(Optical_System):
                                             self.dim_overpad_pupil))
 
         # Science_focal_plane
-        science_focal_plane = self.todetector(input_wavefront,
+        science_focal_plane = self.todetector(entrance_EF=input_wavefront,
                                               wavelength=wavelength)
-
         return science_focal_plane
 
     def entrancetodetector_Intensity(self,
@@ -1159,8 +1296,11 @@ def createdifference(input_wavefront,
     Ikplus = np.zeros((corona_struct.dim_im, corona_struct.dim_im))
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
-    contrast_to_photons = (np.sum(corona_struct.entrancepupil) /
-                           np.sum(corona_struct.lyot_pup) * numphot *
+    ## To convert in photon flux
+    # This will be replaced by transmission!
+
+    contrast_to_photons = (np.sum(corona_struct.entrancepupil.pup) /
+                           np.sum(corona_struct.lyot_pup.pup) * numphot *
                            corona_struct.maxPSF / corona_struct.sumPSF)
 
     dim_pup = corona_struct.entrancepupil.shape[1]
