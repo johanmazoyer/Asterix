@@ -406,7 +406,7 @@ class coronagraph:
         lyotplane_after_lyot = lyotplane_before_lyot_crop * self.lyot_pup
 
         if (self.perfect_coro) & (not noFPM):
-            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil * 0.
+            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
 
         return lyotplane_after_lyot
 
