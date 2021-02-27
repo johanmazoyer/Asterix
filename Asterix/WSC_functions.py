@@ -110,7 +110,7 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
         probephase[k] = tmp * amplitude * 1e-9 * 2 * np.pi / wavelength
 
         inputwavefront = corona_struct.entrancepupil.pup * (1 + 1j * probephase[k])
-        deltapsikbis = (corona_struct.todetector(inputwavefront) /
+        deltapsikbis = (corona_struct.todetector(entrance_EF=inputwavefront) /
                         np.sqrt(corona_struct.maxPSF))
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
