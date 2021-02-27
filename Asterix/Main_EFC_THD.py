@@ -838,10 +838,7 @@ def correctionLoop(parameter_file,
                 DM3_active=True,
                 phaseDM3=phaseDM3[k],
                 DM1_z_position=DM1_z_position) / np.sqrt(corona_struct.maxPSF))
-            useful.quickfits(np.abs(resultatestimation))
-            resultatestimation = proc.resampling(resultatestimation, dim_sampl)
-            useful.quickfits(np.abs(resultatestimation))
-            asd
+
         else:
             raise Exception("This estimation algorithm is not yet implemented")
 

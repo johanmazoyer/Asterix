@@ -909,6 +909,8 @@ class coronagraph(Optical_System):
         # Science_focal_plane
         science_focal_plane = self.todetector(entrance_EF=input_wavefront,
                                               wavelength=wavelength)
+
+
         return science_focal_plane
 
     def entrancetodetector_Intensity(self,
