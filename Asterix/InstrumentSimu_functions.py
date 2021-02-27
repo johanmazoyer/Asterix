@@ -1238,8 +1238,8 @@ def creatingpushact_inpup(DM_pushact, wavelength, corona_struct, z_position):
     # Size of the array (diameter of the pupil * 125%)
     # dimtmp = int(corona_struct.prad*2*1.25)
 
-    dim_entrancepupil = corona_struct.entrancepupil.shape[1]
-    UDM1, dxout = prop.prop_fresnel(corona_struct.entrancepupil, wavelength,
+    dim_entrancepupil = corona_struct.dim_overpad_pupil
+    UDM1, dxout = prop.prop_fresnel(corona_struct.entrancepupil.pup, wavelength,
                                     z_position,
                                     corona_struct.diam_pup_in_m / 2,
                                     corona_struct.prad)

@@ -178,7 +178,7 @@ def create_interaction_matrices(parameter_file,
         nam2DM = "_2DM"
 
         # DM influence functions  # ARGH ! Not to be hardcoded here !!!
-        dx, dxout = prop.prop_fresnel(corona_struct.prad * 2 * 1.25,
+        dx, dxout = prop.prop_fresnel(corona_struct.dim_overpad_pupil,
                                       wavelength_0,
                                       DM1_z_position,
                                       corona_struct.diam_pup_in_m / 2,
@@ -314,7 +314,7 @@ def create_interaction_matrices(parameter_file,
 
             if DM1_otherbasis == False:
                 DM1_WhichInPupil = wsc.creatingWhichinPupil(
-                    DM1_pushact_inpup, corona_struct.entrancepupil,
+                    DM1_pushact_inpup, corona_struct.entrancepupil.pup,
                     MinimumSurfaceRatioInThePupil)
             else:
                 DM1_WhichInPupil = np.arange(DM1_pushact_inpup.shape[0])
@@ -659,15 +659,24 @@ def correctionLoop(parameter_file,
 
     if DM1_active == True:
         nam2DM = "_2DM"
+        dx, dxout = prop.prop_fresnel(corona_struct.dim_overpad_pupil,
+                                      wavelength_0,
+                                      DM1_z_position,
+                                      corona_struct.diam_pup_in_m / 2,
+                                      corona_struct.prad,
+                                      retscale=1)
+        corona_struct.pradDM1 = corona_struct.prad * dx / dxout
 
         #Load DM1 actuator functions
-        if os.path.exists(Model_local_dir + "DM1_PushActInPup_ray" +
-                          str(int(corona_struct.pradDM1)) + tmp_nam +
-                          ".fits") == True:
+        if os.path.exists(Model_local_dir +
+                                       "DM1_PushActInPup_ray" +
+                                       str(int(corona_struct.pradDM1)) +
+                                       tmp_nam + ".fits") == True:
             DM1_pushact = fits.getdata(Model_local_dir +
                                        "DM1_PushActInPup_ray" +
                                        str(int(corona_struct.pradDM1)) +
                                        tmp_nam + ".fits")
+
         else:
             raise Exception("Please create DM1_PushActInPup before correction")
         tmp = Model_local_dir + "DM1_PushActInPup_ray" + str(
