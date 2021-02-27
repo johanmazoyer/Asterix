@@ -549,7 +549,7 @@ class coronagraph(Optical_System):
             # measure the Lyot pupil that will be removed after
             self.perfect_Lyot_pupil = 0
             self.perfect_Lyot_pupil = self.EF_through(
-                self.entrancepupil.EF_through())
+                entrance_EF = self.entrancepupil.EF_through())
 
         # Measure the PSF and store max and Sum
         self.maxPSF, self.sumPSF = self.max_sum_PSF()
@@ -729,7 +729,7 @@ class coronagraph(Optical_System):
         lambda_ratio = wavelength / self.wavelength_0
 
         input_wavefront_after_apod = self.apod_pup.EF_through(
-            entrance_EF, wavelength)
+            entrance_EF= entrance_EF, wavelength= wavelength)
 
         if self.prop_apod2lyot == "fft":
             dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(
@@ -832,11 +832,12 @@ class coronagraph(Optical_System):
 
         # Field after filtering by Lyot stop
         lyotplane_after_lyot = self.lyot_pup.EF_through(
-            lyotplane_before_lyot_crop, wavelength)
+            entrance_EF= lyotplane_before_lyot_crop, wavelength= wavelength)
+        
 
         if (self.perfect_coro) & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
-
+        
         return lyotplane_after_lyot
 
     def entrancetodetector(self,
@@ -909,7 +910,6 @@ class coronagraph(Optical_System):
         # Science_focal_plane
         science_focal_plane = self.todetector(entrance_EF=input_wavefront,
                                               wavelength=wavelength)
-
 
         return science_focal_plane
 
