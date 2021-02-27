@@ -81,8 +81,10 @@ def create_interaction_matrices(parameter_file,
     DM1_creating_pushact = DMconfig["DM1_creating_pushact"]
     DM1_z_position = DMconfig["DM1_z_position"]
 
-    DMconfig["DM1_misregistration"] = False # initially no misregistration, only in the correction part
-    DMconfig["DM3_misregistration"] = False # initially no misregistration, only in the correction part
+    DMconfig[
+        "DM1_misregistration"] = False  # initially no misregistration, only in the correction part
+    DMconfig[
+        "DM3_misregistration"] = False  # initially no misregistration, only in the correction part
 
     ##################
     ##################
@@ -616,10 +618,10 @@ def correctionLoop(parameter_file,
                        "/lop_" + str(round(science_sampling, 2)) + "/basis_" +
                        basistr + "/")
 
-    tmp_nam = "_dimpuparray" + str(int(corona_struct.entrancepupil.shape[1]))
+    tmp_nam = "_dimpuparray" + str(int(corona_struct.dim_overpad_pupil))
     # if corona_struct.prop_apod2lyot == "mft":
     #     tmp_nam = "_dimpuparray"+str(
-    #         int(corona_struct.entrancepupil.shape[1]))
+    #         int(corona_struct.dim_overpad_pupil))
     # else:
     #     tmp_nam=""
 
@@ -721,7 +723,7 @@ def correctionLoop(parameter_file,
         if set_random_phase == True:
             print("Random phase aberrations upstream from coronagraph")
             phase_up = phase_ampl.random_phase_map(
-                corona_struct.entrancepupil.shape[1], phaserms, rhoc_phase,
+                corona_struct.dim_overpad_pupil, phaserms, rhoc_phase,
                 slope_phase, corona_struct.entrancepupil)
         else:
             if phase_abb_filename == '':
@@ -736,7 +738,7 @@ def correctionLoop(parameter_file,
                     "Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "
                     + phase_abb_filename + ".fits")
                 phase_up = phase_ampl.random_phase_map(
-                    corona_struct.entrancepupil.shape[1], phaserms, rhoc_phase,
+                    corona_struct.dim_overpad_pupil, phaserms, rhoc_phase,
                     slope_phase, corona_struct.entrancepupil)
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
                              phase_up)
@@ -771,7 +773,7 @@ def correctionLoop(parameter_file,
             corona_struct.diam_pup_in_m,
             2 * corona_struct.prad,
             DMconfig,
-            corona_struct.entrancepupil.shape[1],
+            corona_struct.dim_overpad_pupil,
             Name_DM='DM3')
     else:
         pushactonDM3 = DM3_pushact
@@ -780,10 +782,10 @@ def correctionLoop(parameter_file,
     nbiter = len(modevector)
     imagedetector = np.zeros(
         (nbiter + 1, corona_struct.dim_im, corona_struct.dim_im))
-    phaseDM3 = np.zeros((nbiter + 1, corona_struct.entrancepupil.shape[1],
-                         corona_struct.entrancepupil.shape[1]))
-    phaseDM1 = np.zeros((nbiter + 1, corona_struct.entrancepupil.shape[1],
-                         corona_struct.entrancepupil.shape[1]))
+    phaseDM3 = np.zeros((nbiter + 1, corona_struct.dim_overpad_pupil,
+                         corona_struct.dim_overpad_pupil))
+    phaseDM1 = np.zeros((nbiter + 1, corona_struct.dim_overpad_pupil,
+                         corona_struct.dim_overpad_pupil))
     meancontrast = np.zeros(nbiter + 1)
 
     # Initial wavefront in pupil plane
@@ -808,7 +810,7 @@ def correctionLoop(parameter_file,
     plt.figure()
     previousmode = modevector[0]
     k = 0
-    dim_pup = corona_struct.entrancepupil.shape[1]
+    dim_pup = corona_struct.dim_overpad_pupil
     for mode in modevector:
         print("--------------------------------------------------")
         print("Iteration number: ", k, " EFC truncation: ", mode)
@@ -949,10 +951,10 @@ def correctionLoop(parameter_file,
                     tmp_input_wavefront = tmp_input_wavefront * np.exp(
                         1j * proc.crop_or_pad_image(
                             apply_on_DM3,
-                            corona_struct.entrancepupil.shape[1]))
+                            corona_struct.dim_overpad_pupil))
 
                     imagedetectortemp = (abs(
-                        corona_struct.apodtodetector(tmp_input_wavefront))**2 /
+                        corona_struct.todetector(tmp_input_wavefront))**2 /
                                          corona_struct.maxPSF)
 
                     meancontrasttemp[b] = np.mean(

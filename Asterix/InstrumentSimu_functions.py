@@ -92,7 +92,7 @@ class Optical_System:
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
-        
+
         exit_EF = entrance_EF
         return exit_EF
 
@@ -105,7 +105,7 @@ class Optical_System:
         Propagate the electric field from entrance plane through the system and then
         to Science focal plane.
         TODO can be made polychromatic but maybe not because people 
-        will do bad things with it like the intensity of summed EF :-p
+        will do bad things with it like the intensity of summed EF :-)
         
         Parameters
         ----------
@@ -144,13 +144,13 @@ class Optical_System:
         exit_EF = self.EF_through(entrance_EF, wavelength, **kwargs)
 
         focal_plane_EF = prop.mft(exit_EF,
-                                       self.exitpup_rad * 2,
-                                       self.dim_im,
-                                       self.dim_im / self.science_sampling *
-                                       lambda_ratio,
-                                       xshift=Psf_offset[0],
-                                       yshift=Psf_offset[1],
-                                       inv=1)
+                                  self.exitpup_rad * 2,
+                                  self.dim_im,
+                                  self.dim_im / self.science_sampling *
+                                  lambda_ratio,
+                                  xshift=Psf_offset[0],
+                                  yshift=Psf_offset[1],
+                                  inv=1)
 
         return focal_plane_EF
 
@@ -194,7 +194,7 @@ class Optical_System:
             wavelength_vec = [wavelengths]
         else:
             wavelength_vec = wavelengths
-        #TODO check if wavelengths have good format float array and raise 
+        #TODO check if wavelengths have good format float array and raise
         # exception if not
 
         focal_plane_Intensity = np.zeros((self.dim_im, self.dim_im))
@@ -223,11 +223,47 @@ class Optical_System:
 
         """
         entrance_EF = np.ones((self.dim_overpad_pupil, self.dim_overpad_pupil))
-        exit_EF = self.EF_through( entrance_EF, **kwargs)
+        exit_EF = self.EF_through(entrance_EF, **kwargs)
 
-        throughput_loss = np.sum(np.abs(exit_EF))/np.sum(entrance_EF)
+        throughput_loss = np.sum(np.abs(exit_EF)) / np.sum(entrance_EF)
 
         return throughput_loss
+    
+    def from_phase_and_ampl_to_EF(self, phase_abb = 0, ampl_abb = 0, wavelength = None):
+        """ --------------------------------------------------
+        Create an electrical field from an phase and amplitude aberrations
+        
+        Parameters
+        ----------
+        phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
+            if 0, no phase aberration (default)  
+        
+        phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
+            if 0, no amplitude aberration (default)  
+            
+
+        wavelength : float. Default is the reference self.wavelength_0
+             current wavelength in m. 
+
+
+        Returns
+        ------
+        EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] 
+            Electric field in the pupil plane a the exit of the system
+        
+        AUTHOR : Johan Mazoyer
+        """
+        
+        if phase_abb == 0 and ampl_abb == 0:
+            return np.onse((self.dim_overpad_pupil, self.dim_overpad_pupil))
+        else:
+            if wavelength == None:
+                wavelength = self.wavelength_0
+            lambda_ratio = wavelength / self.wavelength_0
+
+            return (1 + ampl_abb) * np.exp(
+                1j * phase_abb / lambda_ratio)
+
 
 ##############################################
 ##############################################
@@ -235,6 +271,63 @@ class Optical_System:
 # initilaze and describe behavior of single pupil
 # pupil is a sub class of Optical_System
 
+
+class pupil(Optical_System):
+    def __init__(self, modelconfig, prad, directory="", filename=""):
+        """ --------------------------------------------------
+        Initialize a pupil object
+        
+        Parameters
+        ----------
+
+        prad : int
+            radius in pixels of the round pupil mask
+        
+        directory : string
+            name of the directory where filename is
+
+        filename : string
+            name of the Fits file
+        
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+        # Initialize the Optical_System class and inherit properties
+        super().__init__(modelconfig)
+
+        self.exitpup_rad = prad
+        self.radius = prad
+
+        if filename == "":
+            self.pup = fits.getdata(os.path.join(directory, filename))
+        else:
+            print("we load the pupil: " + filename)
+            print("we assume center between 4 pixels")
+            pup_fits = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
+            if pup_fits.shape[0] != pup_fits.shape[1]:
+                raise Exception("file " + filename +
+                                " appears to be not square")
+            elif pup_fits.shape[0] > self.dim_overpad_pupil:
+                raise Exception(
+                    "file " + filename +
+                    " size ({} pix)  is larger".format(pup_fits.shape[0]) +
+                    "than the expected size of pupil size arrays ({} pix)".
+                    format(self.dim_overpad_pupil))
+            else:
+                print("we pad the pupil to be at the correct size")
+                self.pup = proc.crop_or_pad_image(pup_fits,
+                                                  self.dim_overpad_pupil)
+
+    def EF_through(self, entrance_EF, wavelength):
+        if isinstance(entrance_EF, float) or isinstance(entrance_EF, np.float):
+            entrance_EF = np.zeros(
+                (self.dim_overpad_pupil,
+                 self.dim_overpad_pupil)) + np.float(entrance_EF)
+
+        if isinstance(entrance_EF, np.ndarray) == False:
+            raise Exception(
+                "entrance_EF should be a float of a numpy array of floats")
+
+        return entrance_EF * self.pup
 
 
 ##############################################
@@ -256,7 +349,6 @@ class coronagraph(Optical_System):
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-
         # Initialize the Optical_System class and inherit properties
         super().__init__(modelconfig)
 
@@ -266,7 +358,7 @@ class coronagraph(Optical_System):
         #Lyot stop in pixel
         self.lyotrad = int(self.prad * self.diam_lyot_in_m /
                            self.diam_pup_in_m)
-        
+
         self.exitpup_rad = self.prad
 
         #coronagraph
@@ -314,25 +406,22 @@ class coronagraph(Optical_System):
 
         # Maybe should remove the entrance pupil from the coronostructure,
         # this is "before the DMs" so probably not relevant here.
-        self.entrancepupil = phase_ampl.load_or_create_binary_pupil(
-            model_dir, modelconfig["filename_instr_pup"],
-            self.dim_overpad_pupil, self.prad)
+        self.entrancepupil = pupil(modelconfig, self.prad, directory= model_dir, filename=modelconfig["filename_instr_pup"])
+
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        self.apod_pup = 1
+        self.apod_pup = pupil(modelconfig, self.prad*20., directory= model_dir, filename=modelconfig["filename_apod_pup"])
 
-        # Lyot plane
-        self.lyot_pup = phase_ampl.load_or_create_binary_pupil(
-            model_dir, modelconfig["filename_instr_lyot"],
-            self.dim_overpad_pupil, self.lyotrad)
+        self.lyot_pup = pupil(modelconfig, self.lyotrad, directory= model_dir, filename=modelconfig["filename_instr_lyot"])
+
 
         if self.perfect_coro == True:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
             # measure the Lyot pupil that will be removed after
             self.perfect_Lyot_pupil = 0
-            self.perfect_Lyot_pupil = self.EF_through(
-                self.entrancepupil, self.wavelength_0)
+            self.perfect_Lyot_pupil = self.EF_through(self.entrancepupil,
+                                                      self.wavelength_0)
 
         # Measure the PSF and store max and Sum
         self.maxPSF, self.sumPSF = self.max_sum_PSF()
@@ -350,7 +439,9 @@ class coronagraph(Optical_System):
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
         # PSF = self.entrancetodetector(0, 0, noFPM=True)
-        PSF = self.todetector_Intensity(self.entrancepupil,center_on_pixel= True, noFPM=True)
+        PSF = self.todetector_Intensity(self.entrancepupil,
+                                        center_on_pixel=True,
+                                        noFPM=True)
 
         return np.amax(PSF), np.sum(PSF)
 
@@ -467,40 +558,6 @@ class coronagraph(Optical_System):
     ##############################################
     ### Propagation through coronagraph
 
-    # def apodtodetector(self, input_wavefront, noFPM=False, wavelength=None):
-    #     """ --------------------------------------------------
-    #     Propagate the electric field through a high-contrast imaging instrument,
-    #     from the entrance of the coronagraph (pupil plane before apodization pupil) to final detector focal plane.
-    #     The output is cropped and resampled.
-        
-    #     Parameters
-    #     ----------
-    #     input_wavefront : 2D array,can be complex.  
-    #         Input wavefront,can be complex.
-    #     noFPM : bool (default: False)
-    #         if True, remove the FPM if one want to measure a un-obstructed PSF
-    #     wavelength : current wavelength in m
-        
-    #     Returns
-    #     ------
-    #     shift(sqrtimage) : 2D array, 
-    #         Focal plane electric field created by 
-    #         the input wavefront through the high-contrast instrument.
-        
-    #        AUTHOR : Johan Mazoyer 
-    #     -------------------------------------------------- """
-
-    #     lyotplane_after_lyot = self.apodtolyot(input_wavefront,
-    #                                            noFPM=noFPM,
-    #                                            wavelength=wavelength)
-
-    #     # Science_focal_plane
-    #     science_focal_plane = self.lyottodetector(lyotplane_after_lyot,
-    #                                               noFPM=noFPM,
-    #                                               wavelength=wavelength)
-
-    #     return science_focal_plane
-
     def EF_through(self, entrance_EF, wavelength, noFPM=False):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod
@@ -523,7 +580,15 @@ class coronagraph(Optical_System):
         AUTHOR : Johan Mazoyer 
         -------------------------------------------------- """
 
-    
+        if isinstance(entrance_EF, float) or isinstance(entrance_EF, np.float):
+            entrance_EF = np.zeros(
+                (self.dim_overpad_pupil,
+                 self.dim_overpad_pupil)) + np.float(entrance_EF)
+
+        if isinstance(entrance_EF, np.ndarray) == False:
+            raise Exception(
+                "entrance_EF should be a float of a numpy array of floats")
+
         if noFPM:
             FPmsk = 1.
         else:
@@ -531,7 +596,7 @@ class coronagraph(Optical_System):
 
         lambda_ratio = wavelength / self.wavelength_0
 
-        input_wavefront_after_apod = entrance_EF * self.apod_pup
+        input_wavefront_after_apod = self.apod_pup.EF_through(entrance_EF, wavelength)
 
         if self.prop_apod2lyot == "fft":
             dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(
@@ -625,59 +690,17 @@ class coronagraph(Optical_System):
                 self.prop_apod2lyot +
                 " is not a known prop_apod2lyot propagation mehtod")
 
-        # crop to the Lyot stop size
+        # crop to the dim_overpad_pupil expeted size
         lyotplane_before_lyot_crop = proc.crop_or_pad_image(
-            lyotplane_before_lyot, self.lyot_pup.shape[0])
+            lyotplane_before_lyot, self.dim_overpad_pupil)
 
         # Field after filtering by Lyot stop
-        lyotplane_after_lyot = lyotplane_before_lyot_crop * self.lyot_pup
+        lyotplane_after_lyot =  self.lyot_pup.EF_through(lyotplane_before_lyot_crop, wavelength)
 
         if (self.perfect_coro) & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil * 0.
 
         return lyotplane_after_lyot
-
-    # def lyottodetector(self,
-    #                    Lyot_plane_after_Lyot,
-    #                    noFPM=False,
-    #                    wavelength=None):
-    #     """ --------------------------------------------------
-    #     Propagate the electric field from Lyot plane after Lyot to Science focal plane.
-        
-    #     Parameters
-    #     ----------
-    #     Lyot_plane_after_Lyot : 2D array,can be complex.  
-    #         Input wavefront,can be complex.
-
-    #     wavelength : current wavelength in m. Default is the reference wavelength of the coronagraph
-
-    #     Returns
-    #     ------
-    #     science_focal_plane : 2D array, 
-    #         Focal plane electric field in the focal plane
-    #     
-    #     AUTHOR : Johan Mazoyer 
-    #     -------------------------------------------------- """
-    #     if wavelength == None:
-    #         wavelength = self.wavelength_0
-
-    #     if noFPM:
-    #         Psf_offset = (0, 0)
-    #     else:
-    #         Psf_offset = (-0.5, -0.5)
-
-    #     lambda_ratio = wavelength / self.wavelength_0
-
-    #     science_focal_plane = prop.mft(Lyot_plane_after_Lyot,
-    #                                    self.lyotrad * 2,
-    #                                    self.dim_im,
-    #                                    self.dim_im / self.science_sampling *
-    #                                    lambda_ratio,
-    #                                    xshift=Psf_offset[0],
-    #                                    yshift=Psf_offset[1],
-    #                                    inv=1)
-
-    #     return science_focal_plane
 
     def entrancetodetector(self,
                            ampl_abb,
@@ -743,11 +766,11 @@ class coronagraph(Optical_System):
         if DM3_active == True:
             input_wavefront = input_wavefront * np.exp(
                 1j * proc.crop_or_pad_image(phaseDM3 / lambda_ratio,
-                                            self.entrancepupil.shape[1]))
+                                            self.dim_overpad_pupil))
 
         # Science_focal_plane
         science_focal_plane = self.todetector(input_wavefront,
-                                                  wavelength=wavelength)
+                                              wavelength=wavelength)
 
         return science_focal_plane
 

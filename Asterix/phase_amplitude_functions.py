@@ -22,6 +22,8 @@ def roundpupil(dim_im, prad1):
     ------
     pupilnormal : 2D array
         Output circular pupil
+    
+    AUTHOR : Axel Pottier
     -------------------------------------------------- """
     xx, yy = np.meshgrid(
         np.arange(dim_im) - (dim_im) / 2,
@@ -32,44 +34,44 @@ def roundpupil(dim_im, prad1):
     return pupilnormal
 
 
-def load_or_create_binary_pupil(direct, filename, dim, prad):
-    """ --------------------------------------------------
-    Create a binary pupil from a Fits file or create a round pupil
+# def load_or_create_binary_pupil(direct, filename, dim, prad):
+#     """ --------------------------------------------------
+#     Create a binary pupil from a Fits file or create a round pupil
 
-    Parameters
-    ----------
-    direct : string
-         name of the directory where filename is
+#     Parameters
+#     ----------
+#     direct : string
+#          name of the directory where filename is
 
-    filename : string
-         name of the Fits file
+#     filename : string
+#          name of the Fits file
 
-    dim : int
-         dimension in pixels of the output array
+#     dim : int
+#          dimension in pixels of the output array
 
-    prad : int
-         radius in pixels of the round pupil mask
+#     prad : int
+#          radius in pixels of the round pupil mask
 
-    Returns
-    ------
-    pup_z : 2D array (float)
-            Binary pupil (used for entrance pupil and Lyot stop)
+#     Returns
+#     ------
+#     pup_z : 2D array (float)
+#             Binary pupil (used for entrance pupil and Lyot stop)
 
-    AUTHOR : Raphael Galicher
+#     AUTHOR : Raphael Galicher
 
-    REVISION HISTORY :
-    Revision 1.1  2020-01-26 Raphael Galicher
-    Initial revision
-    Revision 2.0  2020-02-24 Johan Mazoyer rename (ambiguous name)
+#     REVISION HISTORY :
+#     Revision 1.1  2020-01-26 Raphael Galicher
+#     Initial revision
+#     Revision 2.0  2020-02-24 Johan Mazoyer rename (ambiguous name)
 
-    -------------------------------------------------- """
+#     -------------------------------------------------- """
 
-    if filename != "":
-        pupil = fits.getdata(direct + filename)
-    else:
-        pupil = roundpupil(dim, prad)
+#     if filename != "":
+#         pupil = fits.getdata(direct + filename)
+#     else:
+#         pupil = roundpupil(dim, prad)
 
-    return pupil
+#     return pupil
 
 
 def shift_phase_ramp(dim_im, a, b):
