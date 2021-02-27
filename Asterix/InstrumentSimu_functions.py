@@ -839,7 +839,7 @@ class coronagraph(Optical_System):
         lyotplane_after_lyot = self.lyot_pup.EF_through(
             entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
 
-        if (self.perfect_coro) & (not noFPM):
+        if (self.perfect_coro == True) & (noFPM == False):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
 
         return lyotplane_after_lyot
