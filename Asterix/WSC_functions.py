@@ -377,7 +377,7 @@ def creatingCorrectionmatrix(input_wavefront,
             print(i)
         Psivector = bas_fct[i]
         Gvector = (
-            corona_struct.todetector(input_wavefront * 1j * Psivector) /
+            corona_struct.todetector(entrance_EF= input_wavefront * 1j * Psivector) /
             np.sqrt(corona_struct.maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),

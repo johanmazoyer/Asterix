@@ -952,7 +952,7 @@ def correctionLoop(parameter_file,
                             apply_on_DM3, corona_struct.dim_overpad_pupil))
 
                     imagedetectortemp = (
-                        abs(corona_struct.todetector(tmp_input_wavefront))**2 /
+                        abs(corona_struct.todetector(entrance_EF= tmp_input_wavefront))**2 /
                         corona_struct.maxPSF)
 
                     meancontrasttemp[b] = np.mean(
