@@ -75,15 +75,15 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
-                       pushact, dimimages, cutsvd):
+def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
+                       dimimages, cutsvd):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
     
     Parameters:
     ----------
     wavelength: float, wavelength of the  incoming flux in meter
-    corona_struct: coronagraph structure
+    testbed: testbed structure
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
     posprobes: 1D-array, index of the actuators to push and pull for pair-wise probing
     pushact: 3D-array, opd created by the pokes of all actuators in the DM.
@@ -98,21 +98,27 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
     -------------------------------------------------- """
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimimages, dimimages), dtype=complex)
-    probephase = np.zeros((numprobe, corona_struct.entrancepupil.shape[1],
-                           corona_struct.entrancepupil.shape[1]))
+    probephase = np.zeros(
+        (numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
     matrix = np.zeros((numprobe, 2))
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
 
     k = 0
     for i in posprobes:
-        tmp = proc.crop_or_pad_image(pushact[i],
-                                     corona_struct.entrancepupil.shape[1])
+
+        #
+        # lines inputwavefront = and deltapsikbis = need to be replace by
+        # testbed.todetector(DM3phase = probephase[k])/ np.sqrt(testbed.maxPSF)
+        # but chaque chose en son temps donc laissons comme ca now
+
+        tmp = proc.crop_or_pad_image(pushact[i], testbed.dim_overpad_pupil)
         probephase[k] = tmp * amplitude * 1e-9 * 2 * np.pi / wavelength
 
-        inputwavefront = corona_struct.entrancepupil * (1 + 1j * probephase[k])
-        deltapsikbis = (corona_struct.apodtodetector(inputwavefront) /
-                        np.sqrt(corona_struct.maxPSF))
+        inputwavefront = testbed.entrancepupil.pup * (1 + 1j * probephase[k])
+        deltapsikbis = (testbed.corono.todetector(entrance_EF=inputwavefront) /
+                        np.sqrt(testbed.maxPSF))
+
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -134,35 +140,27 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
     return [PWVector, SVD]
 
 
-def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
+def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
+                        dim_im, science_sampling):
     """ --------------------------------------------------
-    Create a vector with the index of all the actuators located in the entrance pupil
-    
-    Parameters:
-    ----------
-    pushact: 3D-array, opd created by the pokes of all actuators in the DM.
-    entrancepupil: 2D-array, entrance pupil shape
-    cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account (between 0 and 1, in ratio of an actuator perfectly centered in the entrance pupil)
-    
-    Return:
-    ------
-    WhichInPupil: 1D array, index of all the actuators located inside the pupil
+        define at a single place the complicated file name of the mask and do the saving
+        and loading depending in existence
+        THIS IS BAD, THE DH SHOULD BE CODED IN l/D and not in pixel in the DH_sampling sampling.
+        ONCE CORRECTED THIS FUNCTION CAN BE SIMPLIFIED A LOT and loaded twice, once for each dimension
+        
+        Parameters:
+        ----------
+        intermatrix_dir: Directory where to save the fits
+        EFCconfig: all the EFC parameters containing shape and size of the DH.
+        dim_sampl: dimension of the re-sampled focal plane
+        DH_sampling : sampling of the re-sampled DH
+        dim_im: dimension of the FP in the detector focal plane
+        science_sampling : sampling of the FP in the detector focal plane
+        
+        Return:
+        ------
+        the 2 dark hole mask in each dimensions and the string name
     -------------------------------------------------- """
-    WhichInPupil = []
-    tmp_entrancepupil = proc.crop_or_pad_image(entrancepupil, pushact.shape[2])
-
-    for i in np.arange(pushact.shape[0]):
-        Psivector = pushact[i]
-        cut = cutinpupil * np.sum(np.abs(Psivector))
-
-        if np.sum(Psivector * tmp_entrancepupil) > cut:
-            WhichInPupil.append(i)
-
-    WhichInPupil = np.array(WhichInPupil)
-    return WhichInPupil
-
-
-def string_DHshape(EFCconfig):
 
     DHshape = EFCconfig["DHshape"]
     choosepix = EFCconfig["choosepix"]
@@ -181,43 +179,6 @@ def string_DHshape(EFCconfig):
         if circ_side != 'full':
             stringdh = stringdh + str(circ_offset) + 'pix_' + str(
                 circ_angle) + 'deg_'
-    return stringdh
-
-
-def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
-                        dim_im, science_sampling):
-    """ --------------------------------------------------
-        define at a single place the complicated file name of the mask and do the saving
-        and loading depending in existence
-
-        THIS IS BAD, THE DH SHOULD BE CODED IN l/D and not in pixel in the DH_sampling sampling.
-        ONCE CORRECTED THIS FUNCTION CAN BE SIMPLIFIED A LOT and loaded twice, once for each dimension
-        
-        Parameters:
-        ----------
-        intermatrix_dir: Directory where to save the fits
-        EFCconfig: all the EFC parameters containing shape and size of the DH.
-        dim_sampl: dimension of the re-sampled focal plane
-        DH_sampling : sampling of the re-sampled DH
-        dim_im: dimension of the FP in the detector focal plane
-        science_sampling : sampling of the FP in the detector focal plane
-
-        
-        Return:
-        ------
-        the 2 dark hole mask in each dimensions
-    -------------------------------------------------- """
-
-    DHshape = EFCconfig["DHshape"]
-    choosepix = EFCconfig["choosepix"]
-    choosepix = [int(i) for i in choosepix]
-    circ_rad = EFCconfig["circ_rad"]
-    circ_rad = [int(i) for i in circ_rad]
-    circ_side = EFCconfig["circ_side"].lower()
-    circ_offset = EFCconfig["circ_offset"]
-    circ_angle = EFCconfig["circ_angle"]
-
-    stringdh = string_DHshape(EFCconfig)
 
     fileMaskDH = "MaskDH" + stringdh
 
@@ -260,7 +221,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
 
         fits.writeto(intermatrix_dir + fileMaskDH_detect + ".fits",
                      maskDHcontrast)
-    return maskDH, maskDHcontrast
+    return maskDH, maskDHcontrast, stringdh
 
 
 def creatingMaskDH(dimimages,
@@ -282,7 +243,6 @@ def creatingMaskDH(dimimages,
     circ_side: string, if shape is 'circle', can define to keep only one side of the circle
     circ_offset : float, remove pixels that are closer than circ_offset if circ_side is set
     circ_angle : float, if circ_side is set, remove pixels within a cone of angle circ_angle
-
     Return:
     ------
     maskDH: 2D array, binary mask
@@ -325,7 +285,7 @@ def creatingMaskDH(dimimages,
 
 
 def creatingCorrectionmatrix(input_wavefront,
-                             corona_struct,
+                             testbed,
                              dimimages,
                              pushact,
                              mask,
@@ -339,8 +299,8 @@ def creatingCorrectionmatrix(input_wavefront,
     ----------
     input_wavefront: 2D-array complex
         input wavefront in pupil plane
-    corona_struct: structure
-        coronagraph structure
+    testbed: Optical_element
+        testbed structure
     dimimages: int
         size of the output image after resampling in pixels
     pushact: 3D-array
@@ -364,13 +324,12 @@ def creatingCorrectionmatrix(input_wavefront,
         bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
                                          pushact.shape[2])
     else:
-        probephase = np.zeros(
-            (pushact.shape[0], corona_struct.entrancepupil.shape[1],
-             corona_struct.entrancepupil.shape[1]),
-            dtype=complex)
+        probephase = np.zeros((pushact.shape[0], testbed.dim_overpad_pupil,
+                               testbed.dim_overpad_pupil),
+                              dtype=complex)
         for k in range(pushact.shape[0]):
-            probephase[k] = proc.crop_or_pad_image(
-                pushact[k], corona_struct.entrancepupil.shape[1])
+            probephase[k] = proc.crop_or_pad_image(pushact[k],
+                                                   testbed.dim_overpad_pupil)
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")
@@ -380,9 +339,18 @@ def creatingCorrectionmatrix(input_wavefront,
         if i % 100 == 0:
             print(i)
         Psivector = bas_fct[i]
-        Gvector = (
-            corona_struct.apodtodetector(input_wavefront * 1j * Psivector) /
-            np.sqrt(corona_struct.maxPSF))
+        # TODO : RAPHAEL we really need to check I think there is a major problem:
+        # is it a phase or a the EF (exp(j phase)) ? input_wavefront is an EF,
+        # I think it should be input_wavefront * exp(1j * Psivector)
+        #
+        # for now we only keep the corono structure,
+        # we should use testbed.todetector(entrance_EF= input_wavefront, DMXX = Psivector)
+        # directly
+        #
+        # also i and k are the same indice I think :-)
+        Gvector = (testbed.corono.todetector(entrance_EF=input_wavefront * 1j *
+                                             Psivector) /
+                   np.sqrt(testbed.maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()
@@ -405,7 +373,6 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
     inversed_jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
     WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
     nbDMactu:number of DM actuators
-
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -435,7 +402,6 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
     Jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
     WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
     nbDMactu:number of DM actuators
-
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -468,7 +434,6 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     WhichInPupil: 1D array, index of the actuators taken into account
                 to create the jacobian matrix
     nbDMactu:number of DM actuators
-
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -536,3 +501,87 @@ def apply_on_DM(actu_vect, DM_pushact):
         DM_pushact.reshape(DM_pushact.shape[0],
                            DM_pushact.shape[1] * DM_pushact.shape[1])).reshape(
                                DM_pushact.shape[1], DM_pushact.shape[1])
+
+
+##############################################
+##############################################
+### Difference of images for Pair-Wise probing
+### Need to go in WSC_functions.py
+
+
+def createdifference(input_wavefront,
+                     posprobes,
+                     pushact,
+                     testbed,
+                     dimimages,
+                     noise=False,
+                     numphot=1e30):
+    """ --------------------------------------------------
+    Simulate the acquisition of probe images using Pair-wise
+    and calculate the difference of images [I(+probe) - I(-probe)]
+    
+    Parameters
+    ----------
+    input_wavefront : 2D-array (complex)
+        Input wavefront in pupil plane
+    posprobes : 1D-array
+        Index of the actuators to push and pull for pair-wise probing
+    pushact : 3D-array
+        OPD created by the pokes of all actuators in the DM
+        Unit = phase with the amplitude of the wished probe
+    testbed: Optical system structure
+    dimimages : int
+        Size of the output image after resampling in pixels
+    perfect_coro : bool, optional
+        Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
+    noise : boolean, optional
+        If True, add photon noise. 
+    numphot : int, optional
+        Number of photons entering the pupil
+    
+    Returns
+    ------
+    Difference : 3D array
+        Cube with image difference for each probes. Use for pair-wise probing
+    -------------------------------------------------- """
+    Ikmoins = np.zeros((testbed.dim_im, testbed.dim_im))
+    Ikplus = np.zeros((testbed.dim_im, testbed.dim_im))
+    Difference = np.zeros((len(posprobes), dimimages, dimimages))
+
+    ## To convert in photon flux
+    # This will be replaced by transmission!
+
+    contrast_to_photons = (np.sum(testbed.entrancepupil.pup) /
+                           np.sum(testbed.corono.lyot_pup.pup) * numphot *
+                           testbed.maxPSF / testbed.sumPSF)
+
+    dim_pup = testbed.dim_overpad_pupil
+
+    k = 0
+    for i in posprobes:
+        probephase = proc.crop_or_pad_image(pushact[i], dim_pup)
+
+        Ikmoins = testbed.todetector_Intensity(
+            entrance_EF=input_wavefront, PhaseDM3=-probephase) / testbed.maxPSF
+        # Ikmoins = np.abs(corona_struct.apodtodetector(input_wavefront * np.exp(
+        #         -1j * probephase)))**2 / corona_struct.maxPSF
+
+        Ikplus = testbed.todetector_Intensity(
+            entrance_EF=input_wavefront, PhaseDM3=probephase) / testbed.maxPSF
+        # Ikplus = np.abs(
+        #     corona_struct.apodtodetector(input_wavefront * np.exp(
+        #         1j * probephase)))**2 / corona_struct.maxPSF
+
+        if noise == True:
+            Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
+                      contrast_to_photons)
+            Ikmoins = (np.random.poisson(Ikmoins * contrast_to_photons) /
+                       contrast_to_photons)
+
+        Ikplus = np.abs(proc.resampling(Ikplus, dimimages))
+        Ikmoins = np.abs(proc.resampling(Ikmoins, dimimages))
+
+        Difference[k] = Ikplus - Ikmoins
+        k = k + 1
+
+    return Difference
