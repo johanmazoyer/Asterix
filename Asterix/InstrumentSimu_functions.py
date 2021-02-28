@@ -9,6 +9,7 @@ import Asterix.processing_functions as proc
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.fits_functions as useful
 
+
 ##############################################
 ##############################################
 ### Optical_System
@@ -866,7 +867,8 @@ class deformable_mirror(Optical_System):
 
         self.z_position = DMconfig[Name_DM + "_z_position"]
         self.active = DMconfig[Name_DM + "_active"]
-        self.MinimumSurfaceRatioInThePupil = DMconfig["MinimumSurfaceRatioInThePupil"]
+        self.MinimumSurfaceRatioInThePupil = DMconfig[
+            "MinimumSurfaceRatioInThePupil"]
 
         if self.active == False:
             return
@@ -897,7 +899,7 @@ class deformable_mirror(Optical_System):
         Name_pushact = Name_DM + "_PushActInPup_ray" + str(int(
             self.pradDM)) + "_dimpuparray" + str(int(self.dim_overpad_pupil))
 
-        Name_WhichInPup = Name_DM +"_Whichactfor" + str(
+        Name_WhichInPup = Name_DM + "_Whichactfor" + str(
             self.MinimumSurfaceRatioInThePupil) + '_raypup' + str(self.prad)
 
         if Measure_and_save == True:
@@ -932,11 +934,11 @@ class deformable_mirror(Optical_System):
                 self.DM_pushact_inpup = self.DM_pushact
                 # This is a repetition but coherent and
                 # allows you to easily concatenate wherever are the DMs
-            
+
             self.WhichInPupil = creatingWhichinPupil(
                 self.DM_pushact_inpup, self.clearpup.pup,
                 self.MinimumSurfaceRatioInThePupil)
-            
+
             fits.writeto(Model_local_dir + Name_WhichInPup + '.fits',
                          self.WhichInPupil,
                          overwrite=True)
@@ -1423,6 +1425,7 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     simu_grid = simu_grid * sampling_simu_over_measured
     return simu_grid
 
+
 def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
     """ --------------------------------------------------
     Create a vector with the index of all the actuators located in the entrance pupil
@@ -1449,236 +1452,3 @@ def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
 
     WhichInPupil = np.array(WhichInPupil)
     return WhichInPupil
-
-# def creatingpushact(model_dir,
-#                     diam_pup_in_m,
-#                     diam_pup_in_pix,
-#                     DMconfig,
-#                     dim_array,
-#                     Name_DM='DM1_'):
-#     """ --------------------------------------------------
-#     OPD map induced in the DM plane for each actuator
-#     # TODO useless to comment
-#     Parameters
-#     ----------
-#     model_dir : directory where the influence function of the DM is saved
-#     diam_pup_in_m : diameter of the pupil in meter
-#     diam_pup_in_pix : radius of the pupil in pixels
-#     DMconfig : structure with all information on DMs
-#     dim_array : dimension of the output array
-
-#     Error on the model of the DM
-
-#     Returns
-#     ------
-#     pushact :
-#     -------------------------------------------------- """
-
-#     # this is not ideal if we want to have DMs with other names
-#     namDM = Name_DM + '_'
-
-#     pitchDM = DMconfig[namDM + "pitch"]
-#     filename_ActuN = DMconfig[namDM + "filename_ActuN"]
-#     filename_grid_actu = DMconfig[namDM + "filename_grid_actu"]
-#     filename_actu_infl_fct = DMconfig[namDM + "filename_actu_infl_fct"]
-#     ActuN = DMconfig[namDM + "ActuN"]
-#     y_ActuN = DMconfig[namDM + "y_ActuN"]
-#     x_ActuN = DMconfig[namDM + "x_ActuN"]
-#     xy_ActuN = [x_ActuN, y_ActuN]
-
-#     misregistration = DMconfig[namDM + "misregistration"]
-#     if misregistration == True:
-#         xerror = DMconfig[namDM + "xerror"]
-#         yerror = DMconfig[namDM + "yerror"]
-#         angerror = DMconfig[namDM + "angerror"]
-#         gausserror = DMconfig[namDM + "gausserror"]
-#     else:
-#         xerror = 0.
-#         yerror = 0.
-#         angerror = 0.
-#         gausserror = 0.
-
-#     #Measured positions for each actuator in pixel
-#     measured_grid = fits.getdata(model_dir + filename_grid_actu)
-#     #Ratio: pupil radius in the measured position over
-#     # pupil radius in the numerical simulation
-#     sampling_simu_over_meaasured = diam_pup_in_pix / 2 / fits.getheader(
-#         model_dir + filename_grid_actu)['PRAD']
-#     if filename_ActuN != "":
-#         im_ActuN = fits.getdata(model_dir + filename_ActuN)
-#         im_ActuN_dim = proc.crop_or_pad_image(im_ActuN, dim_array)
-
-#         ytmp, xtmp = np.unravel_index(
-#             np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
-#         # shift by (0.5,0.5) pixel because the pupil is
-#         # centered between pixels
-#         xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
-
-#     #Position for each actuator in pixel for the numerical simulation
-#     simu_grid = actuator_position(measured_grid, xy_ActuN, ActuN,
-#                                   sampling_simu_over_meaasured)
-#     # Influence function and the pitch in pixels
-#     actshape = fits.getdata(model_dir + filename_actu_infl_fct)
-#     pitch_actshape = fits.getheader(model_dir +
-#                                     filename_actu_infl_fct)['PITCH']
-
-#     # Scaling the influence function to the desired dimension
-#     # for numerical simulation
-#     resizeactshape = skimage.transform.rescale(
-#         actshape,
-#         diam_pup_in_pix / diam_pup_in_m * pitchDM / pitch_actshape,
-#         order=1,
-#         preserve_range=True,
-#         anti_aliasing=True,
-#         multichannel=False)
-
-#     # Gauss2Dfit for centering the rescaled influence function
-#     Gaussian_fit_param = proc.gauss2Dfit(resizeactshape)
-#     dx = Gaussian_fit_param[3]
-#     dy = Gaussian_fit_param[4]
-#     xycent = len(resizeactshape) / 2
-#     resizeactshape = nd.interpolation.shift(resizeactshape,
-#                                             (xycent - dx, xycent - dy))
-
-#     # Put the centered influence function inside an array (2*prad x 2*prad)
-#     actshapeinpupil = np.zeros((dim_array, dim_array))
-#     if len(resizeactshape) < dim_array:
-#         actshapeinpupil[
-#             0:len(resizeactshape),
-#             0:len(resizeactshape)] = resizeactshape / np.amax(resizeactshape)
-#         xycenttmp = len(resizeactshape) / 2
-#     else:
-#         actshapeinpupil = resizeactshape[0:dim_array,
-#                                          0:dim_array] / np.amax(resizeactshape)
-#         xycenttmp = dim_array / 2
-
-#     # Fill an array with the influence functions of all actuators
-#     pushact = np.zeros((simu_grid.shape[1], dim_array, dim_array))
-#     for i in np.arange(pushact.shape[0]):
-#         if gausserror == 0:
-#             Psivector = nd.interpolation.shift(
-#                 actshapeinpupil,
-#                 (simu_grid[1, i] + dim_array / 2 - xycenttmp + yerror,
-#                  simu_grid[0, i] + dim_array / 2 - xycenttmp + xerror))
-
-#             # Add an error on the orientation of the grid
-#             if angerror != 0:
-#                 Psivector = nd.rotate(Psivector,
-#                                       angerror,
-#                                       order=5,
-#                                       cval=0,
-#                                       reshape=False)[0:dim_array, 0:dim_array]
-#         else:
-#             # Add an error on the sizes of the influence functions
-#             Psivector = nd.interpolation.shift(
-#                 actshapeinpupil, (simu_grid[1, i] + dim_array / 2 - xycenttmp,
-#                                   simu_grid[0, i] + dim_array / 2 - xycenttmp))
-
-#             xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
-#             x, y = np.mgrid[0:dim_array, 0:dim_array]
-#             xy = (x, y)
-#             Psivector = proc.twoD_Gaussian(xy,
-#                                            1,
-#                                            1 + gausserror,
-#                                            1 + gausserror,
-#                                            xo,
-#                                            yo,
-#                                            0,
-#                                            0,
-#                                            flatten=False)
-#         Psivector[np.where(Psivector < 1e-4)] = 0
-
-#         pushact[i] = Psivector
-
-#     return pushact
-
-# ## Create the influence functions of an out-of-pupil DM
-# ## in the pupil plane
-# def creatingpushact_inpup(DM_pushact, wavelength, corona_struct, z_position):
-#     """ --------------------------------------------------
-#     OPD map induced by out-of-pupil DM in the pupil plane for each actuator
-#     TODO useless to comment
-
-#     Parameters
-#     ----------
-#     DM_pushact : OPD map induced by the DM in the DM plane
-#     wavelength : wavelengtht in m
-#     corona_struct : coronagraph structure (includes entrancepupil
-#                     and the dimension of the pupil in meter)
-#     z_position : distance of DM from the pupil
-
-#     Returns
-#     ------
-#     pushact_inpup : Map of the complex phase induced in pupil plane
-#     -------------------------------------------------- """
-#     # Size of the array (diameter of the pupil * 125%)
-#     # dimtmp = int(corona_struct.prad*2*1.25)
-
-#     dim_entrancepupil = corona_struct.dim_overpad_pupil
-#     UDM1, dxout = prop.prop_fresnel(corona_struct.entrancepupil.pup,
-#                                     wavelength, z_position,
-#                                     corona_struct.diam_pup_in_m / 2,
-#                                     corona_struct.prad)
-#     pushact_inpup = np.zeros(
-#         (DM_pushact.shape[0], dim_entrancepupil, dim_entrancepupil),
-#         dtype=complex)
-
-#     for i in np.arange(DM_pushact.shape[0]):
-#         Upup, dxpup = prop.prop_fresnel(
-#             UDM1 * proc.crop_or_pad_image(DM_pushact[i], dim_entrancepupil),
-#             wavelength, -z_position, corona_struct.diam_pup_in_m / 2,
-#             corona_struct.prad)
-#         pushact_inpup[i] = Upup
-
-#     return pushact_inpup
-
-# def prop_pup_DM1_DM3(pupil_wavefront, phase_DM1, wavelength, DM1_z_position,
-#                      rad_pup_in_m, rad_pup_in_pixel):
-#     """ --------------------------------------------------
-#     Propagate the field towards an out-of-pupil plane (DM1 plane),
-#     add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
-#     TODO : useless, to comment
-
-#     Parameters
-#     ----------
-#     pupil_wavefront : 2D array (float, double or complex)
-#                 Wavefront in the pupil plane
-
-#     phase_DM1 : 2D array
-#                 Phase introduced by DM1
-
-#     wavelength : float
-#                 wavelength
-
-#     DM1_z_position : float
-#                 distance between the pupil plane and DM1
-
-#     rad_pup_in_m : float
-#                 radius of the pupil in meter
-
-#     rad_pup_in_pix : int
-#                 radius of the pupil in pixel
-
-#     Returns
-#     ------
-#     UDM3 : 2D array (complex)
-#             Wavefront in the pupil plane after DM1
-#             (corresponds to DM3 plane on THD2 bench)
-
-#     AUTHOR : Raphaël Galicher
-
-#     REVISION HISTORY :
-#     Revision 1.1  2021-02-10 Raphaël Galicher
-#     Initial revision
-
-#     -------------------------------------------------- """
-
-#     # Propagation in DM1 plane
-#     UDM1, dxout = prop.prop_fresnel(pupil_wavefront, wavelength,
-#                                     DM1_z_position, rad_pup_in_m,
-#                                     rad_pup_in_pixel)
-#     # Add DM1 phase and propagate to next pupil plane (DM3 plane)
-#     UDM3, dxpup = prop.prop_fresnel(UDM1 * np.exp(1j * phase_DM1), wavelength,
-#                                     -DM1_z_position, rad_pup_in_m,
-#                                     rad_pup_in_pixel)
-#     return UDM3

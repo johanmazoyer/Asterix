@@ -75,7 +75,7 @@ def create_interaction_matrices(parameter_file,
     ### DM CONFIG
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
-    
+
     DMconfig[
         "DM1_misregistration"] = False  # initially no misregistration, only in the correction part
     DMconfig[
@@ -109,6 +109,12 @@ def create_interaction_matrices(parameter_file,
     EFCconfig.update(NewEFCconfig)
     DHshape = EFCconfig["DHshape"]
     choosepix = EFCconfig["choosepix"]
+    choosepix = [int(i) for i in choosepix]
+    circ_rad = EFCconfig["circ_rad"]
+    circ_rad = [int(i) for i in circ_rad]
+    circ_side = EFCconfig["circ_side"].lower()
+    circ_offset = EFCconfig["circ_offset"]
+    circ_angle = EFCconfig["circ_angle"]
     DM1_otherbasis = EFCconfig["DM1_otherbasis"]
     DM3_otherbasis = EFCconfig["DM3_otherbasis"]
     Nbmodes = EFCconfig["Nbmodes"]
@@ -173,27 +179,28 @@ def create_interaction_matrices(parameter_file,
     else:
         nam2DM = ""
 
-    ####Calculating and Recording PW matrix
-    filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
-              "_".join(map(str, posprobes)) + "act_" + str(int(amplitudePW)) +
-              "nm_" + str(int(cut)) + "cutsvd_dim" + str(thd2.dim_im) +
-              '_raypup' + str(thd2.prad))
+    string_dims_PWMatrix = "_".join(map(str, posprobes)) + "act_" + str(
+        int(amplitudePW)) + "nm_" + str(
+            int(cut)) + "cutsvd_dim_sampl_" + str(dim_sampl) + "_dim" + str(
+                thd2.dim_im) + '_radpup' + str(thd2.prad)
+    ####Calculating and Saving PW matrix
+
+    filePW = "MatrixPW_" + string_dims_PWMatrix
     if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
         print("The matrix " + filePW + " already exist")
         vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
     else:
-        print("Recording " + filePW + " ...")
+        print("Saving " + filePW + " ...")
         vectoressai, showsvd = wsc.createvectorprobes(wavelength_0, thd2,
                                                       amplitudePW, posprobes,
                                                       thd2.DM3.DM_pushact,
                                                       dim_sampl, cut)
         fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
-        visuPWMap = ("MapEigenvaluesPW" + "_" + "_".join(map(str, posprobes)) +
-                     "act_" + str(int(amplitudePW)) + "nm_dim" +
-                     str(thd2.dim_im) + '_raypup' + str(thd2.prad))
+        visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
+
         if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
-            print("Recording " + visuPWMap + " ...")
+            print("Saving " + visuPWMap + " ...")
             fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
 
     # Saving PW matrices in Labview directory
@@ -216,17 +223,17 @@ def create_interaction_matrices(parameter_file,
                      vectorPW,
                      overwrite=True)
 
-        ####Calculating and Recording EFC matrix
+        ####Calculating and Saving EFC matrix
         if DHshape == "square":
             print("TO SET ON LABVIEW: ",
                   str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
 
-    # Creating WhichInPup. 
+    # Creating WhichInPup.
     # if DM3_otherbasis = False, this is done inside the DM class
-    # if not, I am a bit weary to put all DMX_otherbasis stuff which are clearly 
-    # EFC stuff inside the optical models class. 
+    # if not, I am a bit weary to put all DMX_otherbasis stuff which are clearly
+    # EFC stuff inside the optical models class.
     # I think currently the name of the actuator inside the pupil is
-    # used as the basis, which is not ideal at all, these are 2 different things. 
+    # used as the basis, which is not ideal at all, these are 2 different things.
 
     # DM1
     if DM1_otherbasis == True:
@@ -236,14 +243,18 @@ def create_interaction_matrices(parameter_file,
     if DM3_otherbasis == True:
         thd2.DM1.WhichInPupil = np.arange(thd2.DM3.DM_pushact.shape[0])
 
+    #measure the masks
+    maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
+        intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, dim_im,
+        science_sampling)
+
+    #useful string
+    string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
+        Nbmodes) + "modes_dim" + str(thd2.dim_im) + '_radpup' + str(
+            thd2.prad) + nam2DM
 
     # Creating EFC control matrix
-    string_dhshape = wsc.string_DHshape(EFCconfig)
-    fileEFCMatrix = "MatrixEFC" + string_dhshape
-
-    fileEFCMatrix = fileEFCMatrix + str(amplitudeEFC) + "nm_" + str(
-        Nbmodes) + "modes_dim" + str(thd2.dim_im) + '_raypup' + str(
-            thd2.prad) + nam2DM
+    fileEFCMatrix = "MatrixEFC" + string_dhshape + string_dims_EFCMatrix
 
     if os.path.exists(intermatrix_dir + fileEFCMatrix + ".fits") == True:
         print("The matrix " + fileEFCMatrix + " already exist")
@@ -257,12 +268,7 @@ def create_interaction_matrices(parameter_file,
             DM3_basis = 0
 
         # Creating EFC Interaction matrix
-        string_dhshape = wsc.string_DHshape(EFCconfig)
-        fileDirectMatrix = "DirectMatrix" + string_dhshape
-
-        fileDirectMatrix = fileDirectMatrix + str(
-            amplitudeEFC) + "nm_dim" + str(thd2.dim_im) + '_raypup' + str(
-                thd2.prad) + nam2DM
+        fileDirectMatrix = "DirectMatrix" + string_dhshape + string_dims_EFCMatrix
 
         if os.path.exists(intermatrix_dir + fileDirectMatrix +
                           ".fits") == True:
@@ -270,9 +276,6 @@ def create_interaction_matrices(parameter_file,
             Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix +
                                    ".fits")
         else:
-            maskDH, _ = wsc.load_or_save_maskDH(intermatrix_dir, EFCconfig,
-                                                dim_sampl, DH_sampling, dim_im,
-                                                science_sampling)
 
             # Creating EFC Interaction Matrix if does not exist
             print("Saving " + fileDirectMatrix + " ...")
@@ -302,7 +305,7 @@ def create_interaction_matrices(parameter_file,
             fits.writeto(intermatrix_dir + fileDirectMatrix + ".fits", Gmatrix)
 
         # Calculating and saving EFC Control Matrix
-        print("Recording " + fileEFCMatrix + " ...")
+        print("Saving " + fileEFCMatrix + " ...")
         SVD, SVD_trunc, invertGDH = wsc.invertSVD(
             Gmatrix,
             Nbmodes,
@@ -317,11 +320,8 @@ def create_interaction_matrices(parameter_file,
         plt.plot(SVD, "r.")
         plt.yscale("log")
 
-        string_dhshape = wsc.string_DHshape(EFCconfig)
-        figSVDEFC = "invertSVDEFC_square" + string_dhshape
+        figSVDEFC = "invertSVDEFC_square" + string_dhshape + string_dims_EFCMatrix + ".png"
 
-        figSVDEFC = figSVDEFC + str(amplitudeEFC) + "nm_dim" + str(
-            thd2.dim_im) + '_raypup' + str(thd2.prad) + nam2DM + ".png"
         plt.savefig(figSVDEFC)
 
     if onbench == True:
@@ -424,8 +424,18 @@ def correctionLoop(parameter_file,
     EFCconfig = config["EFCconfig"]
     EFCconfig.update(NewEFCconfig)
 
+    Nbmodes = EFCconfig["Nbmodes"]
     DM1_otherbasis = EFCconfig["DM1_otherbasis"]
     DM3_otherbasis = EFCconfig["DM3_otherbasis"]
+
+    DHshape = EFCconfig["DHshape"]
+    choosepix = EFCconfig["choosepix"]
+    choosepix = [int(i) for i in choosepix]
+    circ_rad = EFCconfig["circ_rad"]
+    circ_rad = [int(i) for i in circ_rad]
+    circ_side = EFCconfig["circ_side"].lower()
+    circ_offset = EFCconfig["circ_offset"]
+    circ_angle = EFCconfig["circ_angle"]
 
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
@@ -525,37 +535,40 @@ def correctionLoop(parameter_file,
     ##Load PW matrices
     if (estimation == "PairWise" or estimation == "pairwise"
             or estimation == "PW" or estimation == "pw"):
-        filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
-                  "_".join(map(str, posprobes)) + "act_" +
-                  str(int(amplitudePW)) + "nm_" + str(int(cut)) +
-                  "cutsvd_dim" + str(thd2.dim_im) + '_raypup' + str(thd2.prad))
+
+        string_dims_PWMatrix = "_".join(map(str, posprobes)) + "act_" + str(
+            int(amplitudePW)) + "nm_" + str(int(
+                cut)) + "cutsvd_dim_sampl_" + str(dim_sampl) + "_dim" + str(
+                    thd2.dim_im) + '_radpup' + str(thd2.prad)
+
+        filePW = ("MatrixPW_" + string_dims_PWMatrix)
         if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
             vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
         else:
             raise Exception("Please create PW matrix before correction")
-
 
     if thd2.DM1.active == True:
         nam2DM = "_2DM"
     else:
         nam2DM = ""
 
-    ## Load Control matrix
-    string_dhshape = wsc.string_DHshape(EFCconfig)
-    fileDirectMatrix = "DirectMatrix" + string_dhshape
+    #usefull string
+    maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
+        intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, dim_im,
+        science_sampling)
 
-    fileDirectMatrix = fileDirectMatrix + str(amplitudeEFC) + "nm_dim" + str(
-        thd2.dim_im) + '_raypup' + str(thd2.prad) + nam2DM
+    string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
+        Nbmodes) + "modes_dim" + str(thd2.dim_im) + '_radpup' + str(
+            thd2.prad) + nam2DM
+
+    ## Load Control matrix
+    fileDirectMatrix = "DirectMatrix" + string_dhshape + string_dims_EFCMatrix
 
     if os.path.exists(intermatrix_dir + fileDirectMatrix + ".fits") == True:
         Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix + ".fits")
     else:
+        print(fileDirectMatrix)
         raise Exception("Please create Direct matrix before correction")
-
-    maskDH, maskDHcontrast = wsc.load_or_save_maskDH(intermatrix_dir,
-                                                     EFCconfig, dim_sampl,
-                                                     DH_sampling, dim_im,
-                                                     science_sampling)
 
     if correction_algorithm == "EM" or correction_algorithm == "steepest":
 
@@ -645,8 +658,8 @@ def correctionLoop(parameter_file,
     imagedetector[0] = thd2.todetector_Intensity(
         entrance_EF=input_wavefront) / thd2.maxPSF
     #     imagedetector[0] = (corona_struct.im_apodtodetector_chrom(
-                                # amplitude_abb_up, phase_abb_up)/
-                                #         corona_struct.maxPSF)
+    # amplitude_abb_up, phase_abb_up)/
+    #         corona_struct.maxPSF)
 
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
@@ -715,9 +728,9 @@ def correctionLoop(parameter_file,
                             (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
                         amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
                         maskDH,
-                        np.concatenate(
-                            (thd2.DM3.WhichInPupil,
-                             thd2.DM3.DM_pushact.shape[0] + DM1.WhichInPupil)),
+                        np.concatenate((thd2.DM3.WhichInPupil,
+                                        thd2.DM3.DM_pushact.shape[0] +
+                                        thd2.DM1.WhichInPupil)),
                         otherbasis=DM3_otherbasis,
                         basisDM3=DM3_basis)
                 else:
@@ -785,10 +798,10 @@ def correctionLoop(parameter_file,
                             solution1[pushactonDM3.shape[0]:],
                             thd2.DM1.DM_pushact) * (-gain * amplitudeEFC * 2 *
                                                     np.pi * 1e-9 /
-                                                    wavelength_0) 
-                            # TODO dividing by wl here is dangerous 
-                            # WONT WORK WHEN POLYCHROME
-                            # TO CHANGE ! 
+                                                    wavelength_0)
+                        # TODO dividing by wl here is dangerous
+                        # WONT WORK WHEN POLYCHROME
+                        # TO CHANGE !
 
                         # tmp_input_wavefront = instr.prop_pup_DM1_DM3(
                         #     tmp_input_wavefront, apply_on_DM1, wavelength_0,
@@ -797,16 +810,17 @@ def correctionLoop(parameter_file,
                     else:
                         solution1 = wsc.solutionEFC(
                             maskDH, resultatestimation, invertGDH,
-                            thd2.DM3.WhichInPupil, thd2.DM3.DM_pushact.shape[0])
+                            thd2.DM3.WhichInPupil,
+                            thd2.DM3.DM_pushact.shape[0])
 
                 # Phase to apply on DM3
                     apply_on_DM3 = wsc.apply_on_DM(
                         solution1[0:pushactonDM3.shape[0]],
                         pushactonDM3) * (-gain * amplitudeEFC * 2 * np.pi *
                                          1e-9 / wavelength_0)
-                            # TODO dividing by wl here is dangerous 
-                            # WONT WORK WHEN POLYCHROME
-                            # TO CHANGE ! 
+                    # TODO dividing by wl here is dangerous
+                    # WONT WORK WHEN POLYCHROME
+                    # TO CHANGE !
 
                     # Propagation in DM1 plane, add DM1 phase,
                     # propagate to next pupil plane (DM3 plane),
@@ -873,8 +887,8 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionEFC(
                     maskDH, resultatestimation, invertGDH,
                     np.concatenate(
-                        (thd2.DM3.WhichInPupil,
-                         thd2.DM3.DM_pushact.shape[0] + thd2.DM1.WhichInPupil)),
+                        (thd2.DM3.WhichInPupil, thd2.DM3.DM_pushact.shape[0] +
+                         thd2.DM1.WhichInPupil)),
                     thd2.DM3.DM_pushact.shape[0] +
                     thd2.DM1.DM_pushact.shape[0])
                 # Concatenate should be done in the THD2 structure
@@ -901,8 +915,8 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionEM(
                     maskDH, resultatestimation, invertM0, G,
                     np.concatenate(
-                        (thd2.DM3.WhichInPupil,
-                         thd2.DM3.DM_pushact.shape[0] + thd2.DM1.WhichInPupil)),
+                        (thd2.DM3.WhichInPupil, thd2.DM3.DM_pushact.shape[0] +
+                         thd2.DM1.WhichInPupil)),
                     thd2.DM3.DM_pushact.shape[0] +
                     thd2.DM1.DM_pushact.shape[0])
                 # Concatenate should be done in the THD2 structure
@@ -916,8 +930,8 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionSteepest(
                     maskDH, resultatestimation, M0, G,
                     np.concatenate(
-                        (thd2.DM3.WhichInPupil,
-                         thd2.DM3.DM_pushact.shape[0] + thd2.DM1.WhichInPupil)),
+                        (thd2.DM3.WhichInPupil, thd2.DM3.DM_pushact.shape[0] +
+                         thd2.DM1.WhichInPupil)),
                     thd2.DM3.DM_pushact.shape[0] +
                     thd2.DM1.DM_pushact.shape[0])
                 # Concatenate should be done in the THD2 structure

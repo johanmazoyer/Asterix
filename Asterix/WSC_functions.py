@@ -140,29 +140,6 @@ def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
     return [PWVector, SVD]
 
 
-
-def string_DHshape(EFCconfig):
-
-    DHshape = EFCconfig["DHshape"]
-    choosepix = EFCconfig["choosepix"]
-    choosepix = [int(i) for i in choosepix]
-    circ_rad = EFCconfig["circ_rad"]
-    circ_rad = [int(i) for i in circ_rad]
-    circ_side = EFCconfig["circ_side"].lower()
-    circ_offset = EFCconfig["circ_offset"]
-    circ_angle = EFCconfig["circ_angle"]
-
-    if DHshape == "square":
-        stringdh = "_square_" + "_".join(map(str, choosepix)) + "pix_"
-    else:
-        stringdh = "_circle_" + "_".join(map(
-            str, circ_rad)) + "pix_" + str(circ_side) + '_'
-        if circ_side != 'full':
-            stringdh = stringdh + str(circ_offset) + 'pix_' + str(
-                circ_angle) + 'deg_'
-    return stringdh
-
-
 def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
                         dim_im, science_sampling):
     """ --------------------------------------------------
@@ -182,7 +159,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
         
         Return:
         ------
-        the 2 dark hole mask in each dimensions
+        the 2 dark hole mask in each dimensions and the string name
     -------------------------------------------------- """
 
     DHshape = EFCconfig["DHshape"]
@@ -194,7 +171,14 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
     circ_offset = EFCconfig["circ_offset"]
     circ_angle = EFCconfig["circ_angle"]
 
-    stringdh = string_DHshape(EFCconfig)
+    if DHshape == "square":
+        stringdh = "_square_" + "_".join(map(str, choosepix)) + "pix_"
+    else:
+        stringdh = "_circle_" + "_".join(map(
+            str, circ_rad)) + "pix_" + str(circ_side) + '_'
+        if circ_side != 'full':
+            stringdh = stringdh + str(circ_offset) + 'pix_' + str(
+                circ_angle) + 'deg_'
 
     fileMaskDH = "MaskDH" + stringdh
 
@@ -237,7 +221,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
 
         fits.writeto(intermatrix_dir + fileMaskDH_detect + ".fits",
                      maskDHcontrast)
-    return maskDH, maskDHcontrast
+    return maskDH, maskDHcontrast, stringdh
 
 
 def creatingMaskDH(dimimages,
@@ -578,14 +562,12 @@ def createdifference(input_wavefront,
         probephase = proc.crop_or_pad_image(pushact[i], dim_pup)
 
         Ikmoins = testbed.todetector_Intensity(
-            entrance_EF=input_wavefront,
-            PhaseDM3= - probephase) / testbed.maxPSF
+            entrance_EF=input_wavefront, PhaseDM3=-probephase) / testbed.maxPSF
         # Ikmoins = np.abs(corona_struct.apodtodetector(input_wavefront * np.exp(
         #         -1j * probephase)))**2 / corona_struct.maxPSF
 
         Ikplus = testbed.todetector_Intensity(
-            entrance_EF=input_wavefront,
-            PhaseDM3=probephase) / testbed.maxPSF
+            entrance_EF=input_wavefront, PhaseDM3=probephase) / testbed.maxPSF
         # Ikplus = np.abs(
         #     corona_struct.apodtodetector(input_wavefront * np.exp(
         #         1j * probephase)))**2 / corona_struct.maxPSF
