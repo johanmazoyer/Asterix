@@ -164,7 +164,7 @@ class Optical_System:
         exit_EF = self.EF_through(entrance_EF=entrance_EF,
                                   wavelength=wavelength,
                                   **kwargs)
-        
+
         focal_plane_EF = prop.mft(exit_EF,
                                   self.exitpup_rad * 2,
                                   self.dim_im,
@@ -345,11 +345,6 @@ class pupil(Optical_System):
             and assumed to be centered between 4 pixels.
             if dim_fits < dim_overpad_pupil then the pupil is zero-padded
             if dim_fits > dim_overpad_pupil we raise an Exception
-        
-        noPup : bool (default False).
-                if True this is clear pupil plane (no pupil). 
-                Can be usefull is we have a clear pupil plane but still want to 
-                defined a radius to define a lambda / D for the todetector function
 
             TODO: include here function random_phase_map, scale_amplitude_abb, shift_phase_ramp 
             TODO: include an SCC Lyot pupil function here !
@@ -422,9 +417,8 @@ class pupil(Optical_System):
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variables entrance_EF and wavelength
-        entrance_EF = super().EF_through(entrance_EF=entrance_EF,
-                                         wavelength=wavelength)
+        # call the Optical_System super function to check and format the variables entrance_EF
+        entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -713,15 +707,14 @@ class coronagraph(Optical_System):
 
         Returns
         ------
-        science_focal_plane : 2D array, 
-            Focal plane electric field in the focal plane
+        exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] 
+            Electric field in the pupil plane a the exit of the system
 
         AUTHOR : Johan Mazoyer 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variables entrance_EF and wavelength
-        entrance_EF = super().EF_through(entrance_EF=entrance_EF,
-                                         wavelength=wavelength)
+        # call the Optical_System super function to check and format the variables entrance_EF
+        entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -874,16 +867,11 @@ class coronagraph(Optical_System):
         DM1_z_position : float
                 distance between the pupil plane and DM1
 
-        TODO
-        # this function should not be part of the coronagraph class.
-        # Coronagraph clases initilaze and describe behavior in the coronagraph system (from the apod plane to the Lyot plane)
-        # should be in the form
-        # def entrancetodetector(coronagraph_structure, DM_structure, input_wavefront, wavelength (optional), phaseDM (optional), phaseDM3 (optional))
-
+        TODO: useless to remove
         Returns
         ------
-        science_focal_plane : 2D array, 
-            Focal plane electric field in the focal plane
+        exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] 
+            Electric field in the pupil plane a the exit of the system
         
         Author: Johan Mazoyer
         -------------------------------------------------- """
@@ -929,6 +917,7 @@ class coronagraph(Optical_System):
         """ --------------------------------------------------
         Propagate the electric field through the entire instrument (from Entrance pupil plane to Science focal plane) 
         for a given wavelength
+        TODO: useless to remove
         
         Parameters
         ----------
@@ -988,9 +977,457 @@ class coronagraph(Optical_System):
 ##############################################
 ##############################################
 ### Deformable mirror
-#TODO
-# These functions should be part of a DMsystem class that inlc
-# initilaze and describe behavior in the DM system (from entrance pupil to Apod plane)
+
+
+class deformable_mirror(Optical_System):
+    """ --------------------------------------------------
+    initialize and describe the behavior of a deformable mirror 
+    (in pupil plane or out of pupil plane)
+    coronagraph is a sub class of Optical_System.  
+    
+
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    def __init__(self, modelconfig, DMconfig, Name_DM='DM1', model_dir=''):
+        """ --------------------------------------------------
+        Initialize a deformable mirror object
+        
+        Parameters
+        ----------
+        modelconfig : general configuration parameters (sizes and dimensions)
+        DMconfig : DM parameters
+        Name_DM : the name of the DM, which allows to find it in the parameter file
+        model_dir: directory to find Measured positions for each actuator in pixel 
+                    and influence fun
+                    
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+
+        # Initialize the Optical_System class and inherit properties
+        super().__init__(modelconfig)
+
+        self.exitpup_rad = self.prad
+
+        #radius of the pupil in pixel in the DM plane
+        self.pradDM = self.prad
+
+        self.z_position = DMconfig[Name_DM + "_z_position"]
+
+        # I need a pupil in creatingpushact_inpup() but do I really ???
+        self.entrancepupil = pupil(modelconfig,
+                                   self.prad,
+                                   directory=model_dir,
+                                   filename=modelconfig["filename_instr_pup"])
+
+        # we initialize the DM
+        self.DM_pushact = self.creatingpushact(model_dir,
+                                               DMconfig,
+                                               Name_DM=Name_DM)
+        #do the saving / loading of the fits here
+
+        if self.z_position != 0:
+            dx, dxout = prop.prop_fresnel(self.dim_overpad_pupil,
+                                          self.wavelength_0,
+                                          self.z_position,
+                                          self.diam_pup_in_m / 2,
+                                          self.prad,
+                                          retscale=1)
+            self.pradDM = self.prad * dx / dxout
+
+            self.DM_pushact_inpup = self.creatingpushact_inpup()
+        else:
+            self.pradDM = self.prad
+
+    def EF_through(self, entrance_EF=1., wavelength=None, DMphase=0.):
+        """ --------------------------------------------------
+        Propagate the electric field through the DM.
+        if z_DM = 0, then it's just a phase multiplication
+        if z_DM != 0, this is where we do the fresnel
+
+        Parameters
+        ----------
+        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+        Electric field in the pupil plane a the entrance of the system. 
+
+        wavelength : float. Default is self.wavelength_0 the reference wavelength
+                current wavelength in m. 
+        
+        DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                    Can also be a float scalar in which case DM_phase is constant
+                    default is 0. 
+                    
+        TODO: Maybe we can put the electrical field directly ? 
+        TODO: do all the annoying saving and loading of fits in the initialization here
+
+
+        Returns
+        ------
+        exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] 
+            Electric field in the pupil plane a the exit of the system
+
+        AUTHOR : Johan Mazoyer 
+        -------------------------------------------------- """
+
+        # call the Optical_System super function to check and format the variables entrance_EF
+        entrance_EF = super().EF_through(entrance_EF=entrance_EF)
+
+        if wavelength == None:
+            wavelength = self.wavelength_0
+
+        if isinstance(DMphase, float) or isinstance(DMphase, np.float):
+            DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
+                              np.float(DMphase))
+
+        lambda_ratio = wavelength / self.wavelength_0
+
+        if self.z_position == 0:
+            return entrance_EF * np.exp(1j * DMphase / lambda_ratio)
+        else:
+            return self.prop_pup_to_DM_and_back(entrance_EF,
+                                                DMphase / lambda_ratio,
+                                                wavelength)
+
+    def creatingpushact(self, model_dir, DMconfig, Name_DM='DM1'):
+        """ --------------------------------------------------
+        OPD map induced in the DM plane for each actuator
+
+        Parameters
+        ----------
+        model_dir : directory where the influence function of the DM is recorded
+        diam_pup_in_m : diameter of the pupil in meter
+        diam_pup_in_pix : radius of the pupil in pixels
+        DMconfig : structure with all information on DMs
+        dim_array : dimension of the output array
+
+        Error on the model of the DM
+
+        This function needs to be severely cleaned (names and comment). 
+        I do it quickly to show how the  DM class is a good idea but leave 
+        the cleaning for later (it's late and saturday night)
+            
+        Returns
+        ------
+        pushact : 
+        -------------------------------------------------- """
+
+        diam_pup_in_pix = 2 * self.prad
+        diam_pup_in_m = self.diam_pup_in_m
+        dim_array = self.dim_overpad_pupil
+
+        pitchDM = DMconfig[Name_DM + "_pitch"]
+        filename_ActuN = DMconfig[Name_DM + "_filename_ActuN"]
+        filename_grid_actu = DMconfig[Name_DM + "_filename_grid_actu"]
+        filename_actu_infl_fct = DMconfig[Name_DM + "_filename_actu_infl_fct"]
+        ActuN = DMconfig[Name_DM + "_ActuN"]
+        y_ActuN = DMconfig[Name_DM + "_y_ActuN"]
+        x_ActuN = DMconfig[Name_DM + "_x_ActuN"]
+        xy_ActuN = [x_ActuN, y_ActuN]
+
+        misregistration = DMconfig[Name_DM + "_misregistration"]
+        if misregistration == True:
+            xerror = DMconfig[Name_DM + "_xerror"]
+            yerror = DMconfig[Name_DM + "_yerror"]
+            angerror = DMconfig[Name_DM + "_angerror"]
+            gausserror = DMconfig[Name_DM + "_gausserror"]
+        else:
+            xerror = 0.
+            yerror = 0.
+            angerror = 0.
+            gausserror = 0.
+
+        #Measured positions for each actuator in pixel
+        measured_grid = fits.getdata(model_dir + filename_grid_actu)
+        #Ratio: pupil radius in the measured position over
+        # pupil radius in the numerical simulation
+        sampling_simu_over_meaasured = diam_pup_in_pix / 2 / fits.getheader(
+            model_dir + filename_grid_actu)['PRAD']
+        if filename_ActuN != "":
+            im_ActuN = fits.getdata(model_dir + filename_ActuN)
+            im_ActuN_dim = proc.crop_or_pad_image(im_ActuN, dim_array)
+
+            ytmp, xtmp = np.unravel_index(
+                np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
+            # shift by (0.5,0.5) pixel because the pupil is
+            # centered between pixels
+            xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
+
+        #Position for each actuator in pixel for the numerical simulation
+        simu_grid = actuator_position(measured_grid, xy_ActuN, ActuN,
+                                      sampling_simu_over_meaasured)
+        # Influence function and the pitch in pixels
+        actshape = fits.getdata(model_dir + filename_actu_infl_fct)
+        pitch_actshape = fits.getheader(model_dir +
+                                        filename_actu_infl_fct)['PITCH']
+
+        # Scaling the influence function to the desired dimension
+        # for numerical simulation
+        resizeactshape = skimage.transform.rescale(
+            actshape,
+            diam_pup_in_pix / diam_pup_in_m * pitchDM / pitch_actshape,
+            order=1,
+            preserve_range=True,
+            anti_aliasing=True,
+            multichannel=False)
+
+        # Gauss2Dfit for centering the rescaled influence function
+        Gaussian_fit_param = proc.gauss2Dfit(resizeactshape)
+        dx = Gaussian_fit_param[3]
+        dy = Gaussian_fit_param[4]
+        xycent = len(resizeactshape) / 2
+        resizeactshape = nd.interpolation.shift(resizeactshape,
+                                                (xycent - dx, xycent - dy))
+
+        # Put the centered influence function inside an array (2*prad x 2*prad)
+        actshapeinpupil = np.zeros((dim_array, dim_array))
+        if len(resizeactshape) < dim_array:
+            actshapeinpupil[0:len(resizeactshape),
+                            0:len(resizeactshape
+                                  )] = resizeactshape / np.amax(resizeactshape)
+            xycenttmp = len(resizeactshape) / 2
+        else:
+            actshapeinpupil = resizeactshape[
+                0:dim_array, 0:dim_array] / np.amax(resizeactshape)
+            xycenttmp = dim_array / 2
+
+        # Fill an array with the influence functions of all actuators
+        pushact = np.zeros((simu_grid.shape[1], dim_array, dim_array))
+        for i in np.arange(pushact.shape[0]):
+            if gausserror == 0:
+                Psivector = nd.interpolation.shift(
+                    actshapeinpupil,
+                    (simu_grid[1, i] + dim_array / 2 - xycenttmp + yerror,
+                     simu_grid[0, i] + dim_array / 2 - xycenttmp + xerror))
+
+                # Add an error on the orientation of the grid
+                if angerror != 0:
+                    Psivector = nd.rotate(Psivector,
+                                          angerror,
+                                          order=5,
+                                          cval=0,
+                                          reshape=False)[0:dim_array,
+                                                         0:dim_array]
+            else:
+                # Add an error on the sizes of the influence functions
+                Psivector = nd.interpolation.shift(
+                    actshapeinpupil,
+                    (simu_grid[1, i] + dim_array / 2 - xycenttmp,
+                     simu_grid[0, i] + dim_array / 2 - xycenttmp))
+
+                xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
+                x, y = np.mgrid[0:dim_array, 0:dim_array]
+                xy = (x, y)
+                Psivector = proc.twoD_Gaussian(xy,
+                                               1,
+                                               1 + gausserror,
+                                               1 + gausserror,
+                                               xo,
+                                               yo,
+                                               0,
+                                               0,
+                                               flatten=False)
+            Psivector[np.where(Psivector < 1e-4)] = 0
+
+            pushact[i] = Psivector
+
+        return pushact
+
+    def creatingpushact_inpup(self):
+        """ --------------------------------------------------
+        OPD map induced by out-of-pupil DM in the pupil plane for each actuator
+        ## Create the influence functions of an out-of-pupil DM
+        ## in the pupil plane
+
+        TODO: Can use prop_pup_to_DM_and_back function to avoid repetition
+
+        Parameters
+        ----------
+        DM_pushact : OPD map induced by the DM in the DM plane
+
+        Returns
+        ------
+        pushact_inpup : Map of the complex phase induced in pupil plane
+        -------------------------------------------------- """
+
+        dim_entrancepupil = self.dim_overpad_pupil
+        # do we really need a pupil here ?!? seems to me it would be more general
+        # with all the actuators and not really shorter.
+        EF_inDMplane, dxout = prop.prop_fresnel(self.entrancepupil.pup,
+                                                self.wavelength_0,
+                                                self.z_position,
+                                                self.diam_pup_in_m / 2,
+                                                self.prad)
+        pushact_inpup = np.zeros(
+            (self.DM_pushact.shape[0], dim_entrancepupil, dim_entrancepupil),
+            dtype=complex)
+
+        for i in np.arange(self.DM_pushact.shape[0]):
+            EF_back_in_pup_plane, dxpup = prop.prop_fresnel(
+                EF_inDMplane *
+                proc.crop_or_pad_image(self.DM_pushact[i], dim_entrancepupil),
+                self.wavelength_0, -self.z_position, self.diam_pup_in_m / 2,
+                self.prad)
+            pushact_inpup[i] = EF_back_in_pup_plane
+
+        return pushact_inpup
+
+    def prop_pup_to_DM_and_back(self, entrance_EF, phase_DM, wavelength):
+        """ --------------------------------------------------
+        Propagate the field towards an out-of-pupil plane (DM1 plane),
+        add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
+
+        Parameters
+        ----------
+        pupil_wavefront : 2D array (float, double or complex)
+                    Wavefront in the pupil plane
+
+        phase_DM1 : 2D array
+                    Phase introduced by DM1
+        
+        wavelength : float
+                    wavelength in m
+        
+        Returns
+        ------
+        UDM3 : 2D array (complex)
+                Wavefront in the pupil plane after DM1
+                (corresponds to DM3 plane on THD2 bench)
+
+        AUTHOR : Raphaël Galicher
+
+        REVISION HISTORY :
+        Revision 1.1  2021-02-10 Raphaël Galicher
+            Initial revision
+        Revision 2.0 2021-02-28 Johan Mazoyer 
+            Make it more general for all DMs, put in the struc
+        -------------------------------------------------- """
+
+        # Propagation in DM plane out of pupil
+        EF_inDMplane, dxout = prop.prop_fresnel(entrance_EF, wavelength,
+                                                self.z_position,
+                                                self.diam_pup_in_m / 2.,
+                                                self.prad)
+
+        # Add DM phase
+        EF_inDMplane_after_DM = EF_inDMplane * np.exp(1j * phase_DM)
+        # and propagate to next pupil plane
+        EF_back_in_pup_plane, dxpup = prop.prop_fresnel(
+            EF_inDMplane_after_DM, wavelength, -self.z_position,
+            self.diam_pup_in_m / 2., self.prad)
+        return EF_back_in_pup_plane
+
+
+class THD2_testbed(Optical_System):
+    """ --------------------------------------------------
+    initialize and describe the behavior of the THD testbed 
+    
+
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    def __init__(self, modelconfig, DMconfig, coroconfig, model_dir=''):
+        """ --------------------------------------------------
+        Initialize a the DM system and the coronagraph
+        
+        Parameters
+        ----------
+        modelconfig : general configuration parameters (sizes and dimensions)
+        DMconfig : DM parameters
+        coroconfig : coronagraph parameters
+        model_dir: directory to find Measured positions for each actuator in pixel 
+                    and influence fun and pup files 
+                    
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+
+        # Initialize the Optical_System class and inherit properties
+        super().__init__(modelconfig)
+
+        self.entrancepupil = pupil(modelconfig,
+                                   self.prad,
+                                   directory=model_dir,
+                                   filename=modelconfig["filename_instr_pup"])
+        self.DM1 = deformable_mirror(modelconfig,
+                                     DMconfig,
+                                     Name_DM='DM1',
+                                     model_dir=model_dir)
+        self.DM3 = deformable_mirror(modelconfig,
+                                     DMconfig,
+                                     Name_DM='DM3',
+                                     model_dir=model_dir)
+        self.corono = coronagraph(modelconfig, coroconfig, model_dir=model_dir)
+
+        self.exitpup_rad = self.corono.lyotrad
+
+    def EF_through(self,
+                   entrance_EF=1.,
+                   wavelength=None,
+                   DM1phase=0.,
+                   DM3phase=0.,
+                   noFPM=False):
+        """ --------------------------------------------------
+        Propagate the electric field through the 2 DMs and the coronograph
+
+        Parameters
+        ----------
+        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+        Electric field in the pupil plane a the entrance of the system. 
+
+        wavelength : float. Default is self.wavelength_0 the reference wavelength
+                current wavelength in m. 
+        
+        DM1phase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                    Can also be a float scalar in which case DM1phase is constant
+                    default is 0. 
+        
+        DM3phase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+            Can also be a float scalar in which case DM3phase is constant
+            default is 0. 
+        
+        noFPM : bool (default: False)
+            if True, remove the FPM if one want to measure a un-obstructed PSF
+                    
+
+        Returns
+        ------
+        exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] 
+            Electric field in the pupil plane a the exit of the system
+
+
+        AUTHOR : Johan Mazoyer 
+        -------------------------------------------------- """
+
+        # call the Optical_System super function to check and format the variables entrance_EF
+        entrance_EF = super().EF_through(entrance_EF=entrance_EF)
+
+        if wavelength == None:
+            wavelength = self.wavelength_0
+
+        if isinstance(DM1phase, float) or isinstance(DM1phase, np.float):
+            DM1phase = np.full(
+                (self.dim_overpad_pupil, self.dim_overpad_pupil),
+                np.float(DM1phase))
+
+        if isinstance(DM3phase, float) or isinstance(DM3phase, np.float):
+            DM3phase = np.full(
+                (self.dim_overpad_pupil, self.dim_overpad_pupil),
+                np.float(DM3phase))
+
+        EF_afterentrancepup = self.entrancepupil.EF_through(
+            entrance_EF=entrance_EF, wavelength=wavelength)
+
+        EF_afterDM1 = self.DM1.EF_through(entrance_EF=EF_afterentrancepup,
+                                          wavelength=wavelength,
+                                          DMphase=DM1phase)
+        EF_afterDM3 = self.DM3.EF_through(entrance_EF=EF_afterDM1,
+                                          wavelength=wavelength,
+                                          DMphase=DM3phase)
+        EF_afterCorono = self.corono.EF_through(entrance_EF=EF_afterDM3,
+                                                wavelength=wavelength,
+                                                noFPM=noFPM)
+        return EF_afterCorono
 
 
 def prop_pup_DM1_DM3(pupil_wavefront, phase_DM1, wavelength, DM1_z_position,
@@ -998,6 +1435,7 @@ def prop_pup_DM1_DM3(pupil_wavefront, phase_DM1, wavelength, DM1_z_position,
     """ --------------------------------------------------
     Propagate the field towards an out-of-pupil plane (DM1 plane),
     add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
+    TODO : useless, to comment
 
     Parameters
     ----------
@@ -1048,7 +1486,6 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
                       sampling_simu_over_measured):
     """ --------------------------------------------------
     Convert the measred positions of actuators to positions for numerical simulation
-
     Parameters
     ----------
     measured_grid : 2D array (float) of shape is 2 x Nb_actuator
@@ -1081,7 +1518,7 @@ def creatingpushact(model_dir,
                     Name_DM='DM1_'):
     """ --------------------------------------------------
     OPD map induced in the DM plane for each actuator
-
+    # TODO useless to comment
     Parameters
     ----------
     model_dir : directory where the influence function of the DM is recorded
@@ -1221,7 +1658,7 @@ def creatingpushact(model_dir,
 def creatingpushact_inpup(DM_pushact, wavelength, corona_struct, z_position):
     """ --------------------------------------------------
     OPD map induced by out-of-pupil DM in the pupil plane for each actuator
-    TODO: could be merged with creatingpushact to be more general for all z_position
+    TODO useless to comment
 
     Parameters
     ----------
@@ -1239,8 +1676,8 @@ def creatingpushact_inpup(DM_pushact, wavelength, corona_struct, z_position):
     # dimtmp = int(corona_struct.prad*2*1.25)
 
     dim_entrancepupil = corona_struct.dim_overpad_pupil
-    UDM1, dxout = prop.prop_fresnel(corona_struct.entrancepupil.pup, wavelength,
-                                    z_position,
+    UDM1, dxout = prop.prop_fresnel(corona_struct.entrancepupil.pup,
+                                    wavelength, z_position,
                                     corona_struct.diam_pup_in_m / 2,
                                     corona_struct.prad)
     pushact_inpup = np.zeros(
@@ -1255,116 +1692,3 @@ def creatingpushact_inpup(DM_pushact, wavelength, corona_struct, z_position):
         pushact_inpup[i] = Upup
 
     return pushact_inpup
-
-
-##############################################
-##############################################
-### Difference of images for Pair-Wise probing
-
-
-def createdifference(input_wavefront,
-                     posprobes,
-                     pushact,
-                     corona_struct,
-                     dimimages,
-                     noise=False,
-                     numphot=1e30):
-    """ --------------------------------------------------
-    Simulate the acquisition of probe images using Pair-wise
-    and calculate the difference of images [I(+probe) - I(-probe)]
-    
-    Parameters
-    ----------
-    input_wavefront : 2D-array (complex)
-        Input wavefront in pupil plane
-    posprobes : 1D-array
-        Index of the actuators to push and pull for pair-wise probing
-    pushact : 3D-array
-        OPD created by the pokes of all actuators in the DM
-        Unit = phase with the amplitude of the wished probe
-    corona_struct: coronagraph structure
-    dimimages : int
-        Size of the output image after resampling in pixels
-    perfect_coro : bool, optional
-        Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
-    noise : boolean, optional
-        If True, add photon noise. 
-    numphot : int, optional
-        Number of photons entering the pupil
-    
-    Returns
-    ------
-    Difference : 3D array
-        Cube with image difference for each probes. Use for pair-wise probing
-    -------------------------------------------------- """
-    Ikmoins = np.zeros((corona_struct.dim_im, corona_struct.dim_im))
-    Ikplus = np.zeros((corona_struct.dim_im, corona_struct.dim_im))
-    Difference = np.zeros((len(posprobes), dimimages, dimimages))
-
-    ## To convert in photon flux
-    # This will be replaced by transmission!
-
-    contrast_to_photons = (np.sum(corona_struct.entrancepupil.pup) /
-                           np.sum(corona_struct.lyot_pup.pup) * numphot *
-                           corona_struct.maxPSF / corona_struct.sumPSF)
-
-    dim_pup = corona_struct.entrancepupil.shape[1]
-
-    k = 0
-    for i in posprobes:
-        probephase = proc.crop_or_pad_image(pushact[i], dim_pup)
-
-        Ikmoins = np.abs(
-            corona_struct.apodtodetector(input_wavefront * np.exp(
-                -1j * probephase)))**2 / corona_struct.maxPSF
-
-        Ikplus = np.abs(
-            corona_struct.apodtodetector(input_wavefront * np.exp(
-                1j * probephase)))**2 / corona_struct.maxPSF
-
-        if noise == True:
-            Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
-                      contrast_to_photons)
-            Ikmoins = (np.random.poisson(Ikmoins * contrast_to_photons) /
-                       contrast_to_photons)
-
-        Ikplus = np.abs(proc.resampling(Ikplus, dimimages))
-        Ikmoins = np.abs(proc.resampling(Ikmoins, dimimages))
-
-        Difference[k] = Ikplus - Ikmoins
-        k = k + 1
-
-    return Difference
-
-
-# def create_wave_ref_and_vec(modelconfig):
-#     """ --------------------------------------------------
-#      from the parameter file return the "reference" wavelength and the wave vector containing all the wavelengths.
-#      As of now, reference is the central_wavelength
-
-#      If we want to change the reference (the smallest one or the largest one of the middle one) we can do it once here.
-
-#     Parameters
-#     ----------
-#     modelconfig : the config defined from the parameter file
-
-#     Returns
-#     ------
-#     wavelength_0, wavevec : the reference wavelength for the simulation
-#     1D vector with the wavelengths used in this simulation
-#     -------------------------------------------------- """
-
-#     Delta_wav = modelconfig["Delta_wav"]
-#     nb_wav = modelconfig["nb_wav"]
-#     wavelength_0 = modelconfig["wavelength_0"]
-
-#     if Delta_wav != 0:
-#         if (nb_wav % 2 == 0) or nb_wav < 2:
-#             raise Exception("please set nb_wav parameter to an odd number > 1")
-
-#         return wavelength_0, np.linspace(wavelength_0 - Delta_wav / 2,
-#                                          wavelength_0 + Delta_wav / 2,
-#                                          num=nb_wav,
-#                                          endpoint=True)
-#     else:
-#         return wavelength_0, np.array([wavelength_0])

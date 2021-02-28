@@ -530,3 +530,84 @@ def apply_on_DM(actu_vect, DM_pushact):
         DM_pushact.reshape(DM_pushact.shape[0],
                            DM_pushact.shape[1] * DM_pushact.shape[1])).reshape(
                                DM_pushact.shape[1], DM_pushact.shape[1])
+    
+
+##############################################
+##############################################
+### Difference of images for Pair-Wise probing
+### Need to go in WSC_functions.py
+
+
+def createdifference(input_wavefront,
+                     posprobes,
+                     pushact,
+                     corona_struct,
+                     dimimages,
+                     noise=False,
+                     numphot=1e30):
+    """ --------------------------------------------------
+    Simulate the acquisition of probe images using Pair-wise
+    and calculate the difference of images [I(+probe) - I(-probe)]
+    
+    Parameters
+    ----------
+    input_wavefront : 2D-array (complex)
+        Input wavefront in pupil plane
+    posprobes : 1D-array
+        Index of the actuators to push and pull for pair-wise probing
+    pushact : 3D-array
+        OPD created by the pokes of all actuators in the DM
+        Unit = phase with the amplitude of the wished probe
+    corona_struct: coronagraph structure
+    dimimages : int
+        Size of the output image after resampling in pixels
+    perfect_coro : bool, optional
+        Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
+    noise : boolean, optional
+        If True, add photon noise. 
+    numphot : int, optional
+        Number of photons entering the pupil
+    
+    Returns
+    ------
+    Difference : 3D array
+        Cube with image difference for each probes. Use for pair-wise probing
+    -------------------------------------------------- """
+    Ikmoins = np.zeros((corona_struct.dim_im, corona_struct.dim_im))
+    Ikplus = np.zeros((corona_struct.dim_im, corona_struct.dim_im))
+    Difference = np.zeros((len(posprobes), dimimages, dimimages))
+
+    ## To convert in photon flux
+    # This will be replaced by transmission!
+
+    contrast_to_photons = (np.sum(corona_struct.entrancepupil.pup) /
+                           np.sum(corona_struct.lyot_pup.pup) * numphot *
+                           corona_struct.maxPSF / corona_struct.sumPSF)
+
+    dim_pup = corona_struct.entrancepupil.shape[1]
+
+    k = 0
+    for i in posprobes:
+        probephase = proc.crop_or_pad_image(pushact[i], dim_pup)
+
+        Ikmoins = np.abs(
+            corona_struct.apodtodetector(input_wavefront * np.exp(
+                -1j * probephase)))**2 / corona_struct.maxPSF
+
+        Ikplus = np.abs(
+            corona_struct.apodtodetector(input_wavefront * np.exp(
+                1j * probephase)))**2 / corona_struct.maxPSF
+
+        if noise == True:
+            Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
+                      contrast_to_photons)
+            Ikmoins = (np.random.poisson(Ikmoins * contrast_to_photons) /
+                       contrast_to_photons)
+
+        Ikplus = np.abs(proc.resampling(Ikplus, dimimages))
+        Ikmoins = np.abs(proc.resampling(Ikmoins, dimimages))
+
+        Difference[k] = Ikplus - Ikmoins
+        k = k + 1
+
+    return Difference

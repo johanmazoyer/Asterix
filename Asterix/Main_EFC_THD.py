@@ -177,7 +177,6 @@ def create_interaction_matrices(parameter_file,
     if DM1_active == True:
         nam2DM = "_2DM"
 
-        # DM influence functions  # ARGH ! Not to be hardcoded here !!!
         dx, dxout = prop.prop_fresnel(corona_struct.dim_overpad_pupil,
                                       wavelength_0,
                                       DM1_z_position,
@@ -310,7 +309,7 @@ def create_interaction_matrices(parameter_file,
             DM1_WhichInPupil = fits.getdata(intermatrix_dir +
                                             DM1_fileWhichInPup + ".fits")
         else:
-            print("Recording" + DM1_fileWhichInPup + " ...")
+            print("Saving " + DM1_fileWhichInPup + " ...")
 
             if DM1_otherbasis == False:
                 DM1_WhichInPupil = wsc.creatingWhichinPupil(
@@ -824,7 +823,7 @@ def correctionLoop(parameter_file,
         if (estimation == "PairWise" or estimation == "pairwise"
                 or estimation == "PW" or estimation == "pw"):
 
-            Difference = instr.createdifference(
+            Difference = wsc.createdifference(
                 input_wavefront,
                 posprobes,
                 pushactonDM3 * amplitudePW * 1e-9 * 2 * np.pi / wavelength_0,
