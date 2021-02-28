@@ -257,10 +257,7 @@ class Optical_System:
 
         return throughput_loss
 
-    def from_phase_and_ampl_to_EF(self,
-                                  phase_abb=0,
-                                  ampl_abb=0,
-                                  wavelength=None):
+    def EF_from_phase_and_ampl(self, phase_abb=0, ampl_abb=0, wavelength=None):
         """ --------------------------------------------------
         Create an electrical field from an phase and amplitude aberrations
         
@@ -289,7 +286,7 @@ class Optical_System:
                 "phase_abb and ampl_abb must be real arrays, not complex")
 
         if phase_abb == 0 and ampl_abb == 0:
-            return np.onse((self.dim_overpad_pupil, self.dim_overpad_pupil))
+            return 1.
         else:
             if wavelength == None:
                 wavelength = self.wavelength_0
@@ -301,8 +298,6 @@ class Optical_System:
 ##############################################
 ##############################################
 ### PUPIL
-
-
 class pupil(Optical_System):
     """ --------------------------------------------------
     initialize and describe the behavior of single pupil
@@ -417,7 +412,7 @@ class pupil(Optical_System):
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variables entrance_EF
+        # call the Optical_System super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
         if wavelength == None:
@@ -444,8 +439,6 @@ class pupil(Optical_System):
 ##############################################
 ##############################################
 ### CORONAGRAPHS
-
-
 class coronagraph(Optical_System):
     """ --------------------------------------------------
     initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
@@ -713,7 +706,7 @@ class coronagraph(Optical_System):
         AUTHOR : Johan Mazoyer 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variables entrance_EF
+        # call the Optical_System super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
         if wavelength == None:
@@ -764,7 +757,7 @@ class coronagraph(Optical_System):
             # focal plane to be always centered between 4 pixels
             # if we only centered duing the PSF then in the subtraction in babinet's trick
             # we introduce a shift. Also this is not a perfect shift
-            # We need to code a anti-shift for mft !
+            # We need to code a anti-shift for mft-1 !
 
             maskshifthalfpix_fpm = phase_ampl.shift_phase_ramp(
                 self.dim_overpad_pupil,
@@ -800,24 +793,26 @@ class coronagraph(Optical_System):
             # this is ugly as sh*t but it works to be coherent with other convention in the code
 
         # elif self.prop_apod2lyot == "mft":
-        #     #Apod plane to focal plane
+        #Apod plane to focal plane
+        # currently MFT leaves a shift outside pupil
+        # We need to code a anti-shift for mft-1 !
 
-        #     corono_focal_plane = prop.mft(input_wavefront_after_apod,
-        #                                   self.dim_overpad_pupil,
-        #                                   self.dim_im,
-        #                                   self.dim_im / self.science_sampling *
-        #                                   lambda_ratio,
-        #                                   xshift=Psf_offset[0],
-        #                                   yshift=Psf_offset[1],
-        #                                   inv=1)
+        # corono_focal_plane = prop.mft(input_wavefront_after_apod,
+        #                               self.dim_overpad_pupil,
+        #                               self.dim_im,
+        #                               self.dim_im / self.science_sampling *
+        #                               lambda_ratio,
+        #                               xshift=Psf_offset[0],
+        #                               yshift=Psf_offset[1],
+        #                               inv=1)
 
-        #     # Focal plane to Lyot plane
-        #     lyotplane_before_lyot = prop.mft(
-        #         corono_focal_plane * FPmsk,
-        #         self.dim_im,
-        #         self.dim_overpad_pupil,
-        #         self.dim_im / self.science_sampling * lambda_ratio,
-        #         inv=-1)
+        # # Focal plane to Lyot plane
+        # lyotplane_before_lyot = prop.mft(
+        #     corono_focal_plane * FPmsk,
+        #     self.dim_im,
+        #     self.dim_overpad_pupil,
+        #     self.dim_im / self.science_sampling * lambda_ratio,
+        #     inv=-1)
 
         else:
             raise Exception(
@@ -977,8 +972,6 @@ class coronagraph(Optical_System):
 ##############################################
 ##############################################
 ### Deformable mirror
-
-
 class deformable_mirror(Optical_System):
     """ --------------------------------------------------
     initialize and describe the behavior of a deformable mirror 
@@ -988,18 +981,28 @@ class deformable_mirror(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self, modelconfig, DMconfig, Name_DM='DM1', model_dir=''):
+    def __init__(self,
+                 modelconfig,
+                 DMconfig,
+                 Name_DM='DM3',
+                 Measure_and_save=True,
+                 model_dir='',
+                 Model_local_dir=''):
         """ --------------------------------------------------
         Initialize a deformable mirror object
+        TODO handle misregistration 
         
         Parameters
         ----------
         modelconfig : general configuration parameters (sizes and dimensions)
         DMconfig : DM parameters
         Name_DM : the name of the DM, which allows to find it in the parameter file
-        model_dir: directory to find Measured positions for each actuator in pixel 
-                    and influence fun
-                    
+        Measure_and_save : bool, default = True if true, we measure and save the pushact functions
+        model_dir: directory to find Measured positions for each actuator in pixel and 
+                    influence fun. ie Things you cannot measure yourself and need to be given
+        Model_local_dir: directory to save things you can measure yourself 
+                    and can save to save time
+
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
@@ -1008,22 +1011,18 @@ class deformable_mirror(Optical_System):
 
         self.exitpup_rad = self.prad
 
-        #radius of the pupil in pixel in the DM plane
+        #radius of the pupil in pixel in the DM plane.
+        # by default the size of the pupil, changed if z_position != 0
         self.pradDM = self.prad
 
         self.z_position = DMconfig[Name_DM + "_z_position"]
+        self.active = DMconfig[Name_DM + "_active"]
 
-        # I need a pupil in creatingpushact_inpup() but do I really ???
-        self.entrancepupil = pupil(modelconfig,
-                                   self.prad,
-                                   directory=model_dir,
-                                   filename=modelconfig["filename_instr_pup"])
+        if self.active == False:
+            return
 
-        # we initialize the DM
-        self.DM_pushact = self.creatingpushact(model_dir,
-                                               DMconfig,
-                                               Name_DM=Name_DM)
-        #do the saving / loading of the fits here
+        # We apparetnly need a pupil in creatingpushact_inpup() but do we really ???
+        self.entrancepupil = pupil(modelconfig, self.prad)
 
         if self.z_position != 0:
             dx, dxout = prop.prop_fresnel(self.dim_overpad_pupil,
@@ -1032,11 +1031,51 @@ class deformable_mirror(Optical_System):
                                           self.diam_pup_in_m / 2,
                                           self.prad,
                                           retscale=1)
+            #radius of the pupil in pixel in the DM plane
             self.pradDM = self.prad * dx / dxout
 
-            self.DM_pushact_inpup = self.creatingpushact_inpup()
+            if dx > 2 * dxout:
+                print(dx, dxout)
+                raise Exception(
+                    "Need to enhance the pupil size in pixel for Fresnel propagation"
+                )
+
+        Name_pushact = Name_DM + "_PushActInPup_ray" + str(int(
+            self.pradDM)) + "_dimpuparray" + str(int(self.dim_overpad_pupil))
+
+        if Measure_and_save == True:
+            # in this case the pushact inpup are 
+            # measured and saved
+            # we initialize the DM
+            self.DM_pushact = self.creatingpushact(model_dir,
+                                                   DMconfig,
+                                                   Name_DM=Name_DM)
+            fits.writeto(Model_local_dir + Name_pushact + '.fits',
+                         self.DM_pushact,
+                         overwrite=True)
+
+            if self.z_position != 0:
+                # pushact in the DM plane
+                self.DM_pushact_inpup = self.creatingpushact_inpup()
+
+                fits.writeto(Model_local_dir + Name_pushact +
+                             '_inPup_real.fits',
+                             np.real(self.DM_pushact_inpup),
+                             overwrite=True)
+                fits.writeto(Model_local_dir + Name_pushact +
+                             '_inPup_imag.fits',
+                             np.imag(self.DM_pushact_inpup),
+                             overwrite=True)
         else:
-            self.pradDM = self.prad
+             # in this case the pushact inpup are loaded
+            self.DM_pushact = useful.check_and_load_fits(Model_local_dir , Name_pushact)
+
+            if self.z_position != 0:
+                DM_pushact_inpup_real = useful.check_and_load_fits(Model_local_dir , Name_pushact +'_inPup_real')
+                DM_pushact_inpup_imag = useful.check_and_load_fits(Model_local_dir , Name_pushact +'_inPup_imag')
+
+                self.DM_pushact_inpup = DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
+
 
     def EF_through(self, entrance_EF=1., wavelength=None, DMphase=0.):
         """ --------------------------------------------------
@@ -1070,11 +1109,17 @@ class deformable_mirror(Optical_System):
         AUTHOR : Johan Mazoyer 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variables entrance_EF
+        # call the Optical_System super function to check
+        # and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
         if wavelength == None:
             wavelength = self.wavelength_0
+
+        # if the DM is not active or if the surface is 0
+        # we save some calculation and the EF is not modified
+        if self.active == False or DMphase == 0.:
+            return entrance_EF
 
         if isinstance(DMphase, float) or isinstance(DMphase, np.float):
             DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
@@ -1325,7 +1370,7 @@ class THD2_testbed(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self, modelconfig, DMconfig, coroconfig, model_dir=''):
+    def __init__(self, modelconfig, DMconfig, coroconfig, Measure_and_save = True, model_dir='', Model_local_dir=''):
         """ --------------------------------------------------
         Initialize a the DM system and the coronagraph
         
@@ -1334,9 +1379,16 @@ class THD2_testbed(Optical_System):
         modelconfig : general configuration parameters (sizes and dimensions)
         DMconfig : DM parameters
         coroconfig : coronagraph parameters
-        model_dir: directory to find Measured positions for each actuator in pixel 
-                    and influence fun and pup files 
-                    
+        Measure_and_save : bool, default = True 
+                if true, we measure and save the long stuff
+                if false, we just load it
+        model_dir: directory to find Measured positions for each actuators and 
+                    influence fun and complex corona mask. 
+                    ie all the things you cannot measure yourself and need to be given
+        Model_local_dir: directory to save things you can measure yourself 
+                    and can save to save time
+        Mesaure
+
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
@@ -1350,9 +1402,11 @@ class THD2_testbed(Optical_System):
         self.DM1 = deformable_mirror(modelconfig,
                                      DMconfig,
                                      Name_DM='DM1',
+                                     Measure_and_save =Measure_and_save,
                                      model_dir=model_dir)
         self.DM3 = deformable_mirror(modelconfig,
                                      DMconfig,
+                                     Measure_and_save = Measure_and_save,
                                      Name_DM='DM3',
                                      model_dir=model_dir)
         self.corono = coronagraph(modelconfig, coroconfig, model_dir=model_dir)
@@ -1399,7 +1453,7 @@ class THD2_testbed(Optical_System):
         AUTHOR : Johan Mazoyer 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variables entrance_EF
+        # call the Optical_System super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
         if wavelength == None:

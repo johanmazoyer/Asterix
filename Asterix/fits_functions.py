@@ -1,4 +1,4 @@
-__author__ = 'Axel Potier'
+
 import os
 import glob
 import numpy as np
@@ -14,6 +14,8 @@ def quickshow(tab):
     """
     Function to quickly show an array.
     tab: array to be shown
+
+    Johan's quick function
     """
 
     tmp = tab
@@ -21,7 +23,6 @@ def quickshow(tab):
     plt.axis('off')
     plt.imshow(tmp, origin='lower', cmap='gray')
     plt.show()
-
 
 def quickfits(tab, dir='', name='tmp'):
     """
@@ -31,6 +32,8 @@ def quickfits(tab, dir='', name='tmp'):
     tab: array to be saved
     dir (optionnal): directory where to save the .fits
     name (optionnal): name of the .fits. By defaut tmpsXX.fits where xx is a random number
+
+    Johan's quick function
     """
 
     desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop/')
@@ -41,7 +44,6 @@ def quickfits(tab, dir='', name='tmp'):
         name = name + str(int(random() * 100))
     fits.writeto(dir + name + '.fits', tab)
 
-
 def quickpng(tab, dir='', name='tmp'):
     """
     Function to quickly save in .png. 
@@ -50,6 +52,8 @@ def quickpng(tab, dir='', name='tmp'):
     tab: array to be saved
     dir (optionnal): directory where to save the .png
     name (optionnal): name of the .png.  By defaut tmpXX.png where xx is a random number
+
+    Johan's quick function
     """
     desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
     if dir == '':
@@ -63,6 +67,50 @@ def quickpng(tab, dir='', name='tmp'):
         name = name + str(int(random() * 100))
     plt.tight_layout()
     plt.savefig(dir + name + '.png', dpi=300)
+
+
+def check_and_load_fits(directory, filename):
+    """ --------------------------------------------------
+    check existence of a .fits file and load it. 
+    TODO can probably be modified to do that 
+    for other format automtaically
+    
+    Parameters:
+    ----------
+    directory : the directory in whih to searc
+    filename : 
+    
+    Return:
+    ------
+    the data result
+    raise error if the file does not exist
+    -------------------------------------------------- """
+    if os.path.exists(directory + filename + '.fits') == True:
+        return fits.getdata(directory + filename + '.fits')
+    else: 
+        raise Exception("You need to create " + filename + ".fits before loading it")
+
+
+def from_param_to_header(config):
+    """ --------------------------------------------------
+    Convert ConfigObj parameters to fits header type list
+    
+    Parameters:
+    ----------
+    config: config obj
+    
+    Return:
+    ------
+    header: list of parameters
+
+    Author: Axel Potier
+    -------------------------------------------------- """
+    header = fits.Header()
+    for sect in config.sections:
+        # print(config[str(sect)])
+        for scalar in config[str(sect)].scalars:
+            header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
+    return header
 
 
 # def CubeFits(docs_dir):
@@ -123,21 +171,3 @@ def quickpng(tab, dir='', name='tmp'):
 #     return fits.getval(fitspath, "FLUX_W")
 
 
-def from_param_to_header(config):
-    """ --------------------------------------------------
-    Convert ConfigObj parameters to fits header type list
-    
-    Parameters:
-    ----------
-    config: config obj
-    
-    Return:
-    ------
-    header: list of parameters
-    -------------------------------------------------- """
-    header = fits.Header()
-    for sect in config.sections:
-        # print(config[str(sect)])
-        for scalar in config[str(sect)].scalars:
-            header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
-    return header
