@@ -1403,12 +1403,14 @@ class THD2_testbed(Optical_System):
                                      DMconfig,
                                      Name_DM='DM1',
                                      Measure_and_save =Measure_and_save,
-                                     model_dir=model_dir)
+                                     model_dir=model_dir,
+                                     Model_local_dir=Model_local_dir)
         self.DM3 = deformable_mirror(modelconfig,
                                      DMconfig,
                                      Measure_and_save = Measure_and_save,
                                      Name_DM='DM3',
-                                     model_dir=model_dir)
+                                     model_dir=model_dir,
+                                     Model_local_dir=Model_local_dir)
         self.corono = coronagraph(modelconfig, coroconfig, model_dir=model_dir)
 
         self.exitpup_rad = self.corono.lyotrad
