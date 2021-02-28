@@ -142,7 +142,6 @@ def create_interaction_matrices(parameter_file,
                               model_dir=model_dir,
                               Model_local_dir=Model_local_dir)
 
-
     #for stability purose, but will be remove
     # corona_struct = thd2.corono
 
@@ -658,8 +657,9 @@ def correctionLoop(parameter_file,
                                                   ampl_abb=amplitude_abb_up)
     imagedetector[0] = thd2.todetector_Intensity(
         entrance_EF=input_wavefront) / thd2.maxPSF
-    useful.quickfits(imagedetector[0])
-    asd
+    
+    # useful.quickfits(imagedetector[0])
+    # asd
     #     imagedetector[0] = (corona_struct.im_apodtodetector_chrom(
     # amplitude_abb_up, phase_abb_up)/
     #         corona_struct.maxPSF)
