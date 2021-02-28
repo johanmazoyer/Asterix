@@ -14,7 +14,7 @@ import Asterix.processing_functions as proc
 import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.WSC_functions as wsc
-# from Asterix.InstrumentSimu_functions import coronagraph
+
 import Asterix.InstrumentSimu_functions as instr
 import Asterix.fits_functions as useful
 
@@ -75,7 +75,7 @@ def create_interaction_matrices(parameter_file,
     ### DM CONFIG
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
-
+    
     DMconfig[
         "DM1_misregistration"] = False  # initially no misregistration, only in the correction part
     DMconfig[
@@ -107,7 +107,6 @@ def create_interaction_matrices(parameter_file,
     ###EFC CONFIG
     EFCconfig = config["EFCconfig"]
     EFCconfig.update(NewEFCconfig)
-    MinimumSurfaceRatioInThePupil = EFCconfig["MinimumSurfaceRatioInThePupil"]
     DHshape = EFCconfig["DHshape"]
     choosepix = EFCconfig["choosepix"]
     DM1_otherbasis = EFCconfig["DM1_otherbasis"]
@@ -222,49 +221,21 @@ def create_interaction_matrices(parameter_file,
             print("TO SET ON LABVIEW: ",
                   str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
 
-    # Creating WhichInPup. TODO this needs to go in the
-    # class initialization to be more general
-    # DM1
-    if thd2.DM1.active == True:
-        DM1_fileWhichInPup = "DM1_Whichactfor" + str(
-            MinimumSurfaceRatioInThePupil) + '_raypup' + str(thd2.prad)
-        if os.path.exists(intermatrix_dir + DM1_fileWhichInPup +
-                          ".fits") == True:
-            print("The matrix " + DM1_fileWhichInPup + " already exist")
-            DM1_WhichInPupil = fits.getdata(intermatrix_dir +
-                                            DM1_fileWhichInPup + ".fits")
-        else:
-            print("Saving " + DM1_fileWhichInPup + " ...")
+    # Creating WhichInPup. 
+    # if DM3_otherbasis = False, this is done inside the DM class
+    # if not, I am a bit weary to put all DMX_otherbasis stuff which are clearly 
+    # EFC stuff inside the optical models class. 
+    # I think currently the name of the actuator inside the pupil is
+    # used as the basis, which is not ideal at all, these are 2 different things. 
 
-            if DM1_otherbasis == False:
-                DM1_WhichInPupil = wsc.creatingWhichinPupil(
-                    thd2.DM1.DM_pushact_inpup, thd2.entrancepupil.pup,
-                    MinimumSurfaceRatioInThePupil)
-            else:
-                DM1_WhichInPupil = np.arange(
-                    thd2.DM1.DM_pushact_inpup.shape[0])
-            fits.writeto(intermatrix_dir + DM1_fileWhichInPup + ".fits",
-                         DM1_WhichInPupil)
+    # DM1
+    if DM1_otherbasis == True:
+        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.DM_pushact.shape[0])
 
     # DM3
-    DM3_fileWhichInPup = "DM3_Whichactfor" + str(
-        MinimumSurfaceRatioInThePupil) + '_raypup' + str(thd2.prad)
+    if DM3_otherbasis == True:
+        thd2.DM1.WhichInPupil = np.arange(thd2.DM3.DM_pushact.shape[0])
 
-    if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
-        print("The matrix " + DM3_fileWhichInPup + " already exist")
-        DM3_WhichInPupil = fits.getdata(intermatrix_dir + DM3_fileWhichInPup +
-                                        ".fits")
-    else:
-        print("Saving " + DM3_fileWhichInPup + " ...")
-
-        if DM3_otherbasis == False:
-            DM3_WhichInPupil = wsc.creatingWhichinPupil(
-                thd2.DM3.DM_pushact, thd2.entrancepupil.pup,
-                MinimumSurfaceRatioInThePupil)
-        else:
-            DM3_WhichInPupil = np.arange(thd2.DM3.DM_pushact.shape[0])
-        fits.writeto(intermatrix_dir + DM3_fileWhichInPup + ".fits",
-                     DM3_WhichInPupil)
 
     # Creating EFC control matrix
     string_dhshape = wsc.string_DHshape(EFCconfig)
@@ -311,11 +282,11 @@ def create_interaction_matrices(parameter_file,
                 DM_pushact = np.concatenate(
                     (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup))
                 DM_WhichInPupil = np.concatenate(
-                    (DM3_WhichInPupil,
-                     thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil))
+                    (thd2.DM3.WhichInPupil,
+                     thd2.DM3.DM_pushact.shape[0] + thd2.DM1.WhichInPupil))
             else:
                 DM_pushact = thd2.DM3.DM_pushact
-                DM_WhichInPupil = DM3_WhichInPupil
+                DM_WhichInPupil = thd2.DM3.WhichInPupil
 
             Gmatrix = wsc.creatingCorrectionmatrix(
                 thd2.entrancepupil.pup,
@@ -422,7 +393,7 @@ def correctionLoop(parameter_file,
     ### DM CONFIG
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
-    DM1_z_position = DMconfig["DM1_z_position"]
+
     DM1_misregistration = DMconfig["DM1_misregistration"]
     DM3_misregistration = DMconfig["DM3_misregistration"]
 
@@ -437,6 +408,7 @@ def correctionLoop(parameter_file,
     ### PW CONFIG
     PWconfig = config["PWconfig"]
     PWconfig.update(NewPWconfig)
+
     amplitudePW = PWconfig["amplitudePW"]
     posprobes = PWconfig["posprobes"]
     posprobes = [int(i) for i in posprobes]
@@ -451,8 +423,10 @@ def correctionLoop(parameter_file,
     ###EFC CONFIG
     EFCconfig = config["EFCconfig"]
     EFCconfig.update(NewEFCconfig)
-    MinimumSurfaceRatioInThePupil = EFCconfig["MinimumSurfaceRatioInThePupil"]
+
+    DM1_otherbasis = EFCconfig["DM1_otherbasis"]
     DM3_otherbasis = EFCconfig["DM3_otherbasis"]
+
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
 
@@ -522,9 +496,14 @@ def correctionLoop(parameter_file,
     if DM3_otherbasis == True:
         basistr = "fourier"
         DM3_basis = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
+        thd2.DM3.WhichInPupil = np.arange(thd2.DM3.DM_pushact.shape[0])
     else:
         basistr = "actu"
         DM3_basis = 0
+
+    # DM1
+    if DM1_otherbasis == True:
+        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.DM_pushact.shape[0])
 
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
                        thd2.corono.corona_type + "/")
@@ -556,29 +535,8 @@ def correctionLoop(parameter_file,
             raise Exception("Please create PW matrix before correction")
 
 
-    # List of DM3 actuators that are inside the pupil
-    DM3_fileWhichInPup = "DM3_Whichactfor" + str(
-        MinimumSurfaceRatioInThePupil) + '_raypup' + str(thd2.prad)
-    if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
-        DM3_WhichInPupil = fits.getdata(intermatrix_dir + DM3_fileWhichInPup +
-                                        ".fits")
-    else:
-        raise Exception(
-            "Please create DM3 Whichactfor matrix before correction")
-
     if thd2.DM1.active == True:
         nam2DM = "_2DM"
-
-        # List of DM1 actuators that are inside the pupil
-        DM1_fileWhichInPup = "DM1_Whichactfor" + str(
-            MinimumSurfaceRatioInThePupil) + '_raypup' + str(thd2.prad)
-        if os.path.exists(intermatrix_dir + DM1_fileWhichInPup +
-                          ".fits") == True:
-            DM1_WhichInPupil = fits.getdata(intermatrix_dir +
-                                            DM1_fileWhichInPup + ".fits")
-        else:
-            raise Exception(
-                "Please create DM1 Whichactfor matrix before correction")
     else:
         nam2DM = ""
 
@@ -758,8 +716,8 @@ def correctionLoop(parameter_file,
                         amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
                         maskDH,
                         np.concatenate(
-                            (DM3_WhichInPupil,
-                             thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                            (thd2.DM3.WhichInPupil,
+                             thd2.DM3.DM_pushact.shape[0] + DM1.WhichInPupil)),
                         otherbasis=DM3_otherbasis,
                         basisDM3=DM3_basis)
                 else:
@@ -770,7 +728,7 @@ def correctionLoop(parameter_file,
                         thd2.DM3.DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
                         wavelength_0,
                         maskDH,
-                        DM3_WhichInPupil,
+                        thd2.DM3.WhichInPupil,
                         otherbasis=DM3_otherbasis,
                         basisDM3=DM3_basis)
 
@@ -817,9 +775,9 @@ def correctionLoop(parameter_file,
 
                         solution1 = wsc.solutionEFC(
                             maskDH, resultatestimation, invertGDH,
-                            np.concatenate((DM3_WhichInPupil,
+                            np.concatenate((thd2.DM3.WhichInPupil,
                                             thd2.DM3.DM_pushact.shape[0] +
-                                            DM1_WhichInPupil)),
+                                            thd2.DM1.WhichInPupil)),
                             thd2.DM3.DM_pushact.shape[0] +
                             thd2.DM1.DM_pushact.shape[0])
                         # Phase to apply on DM1
@@ -839,7 +797,7 @@ def correctionLoop(parameter_file,
                     else:
                         solution1 = wsc.solutionEFC(
                             maskDH, resultatestimation, invertGDH,
-                            DM3_WhichInPupil, thd2.DM3.DM_pushact.shape[0])
+                            thd2.DM3.WhichInPupil, thd2.DM3.DM_pushact.shape[0])
 
                 # Phase to apply on DM3
                     apply_on_DM3 = wsc.apply_on_DM(
@@ -915,14 +873,14 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionEFC(
                     maskDH, resultatestimation, invertGDH,
                     np.concatenate(
-                        (DM3_WhichInPupil,
-                         thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                        (thd2.DM3.WhichInPupil,
+                         thd2.DM3.DM_pushact.shape[0] + thd2.DM1.WhichInPupil)),
                     thd2.DM3.DM_pushact.shape[0] +
                     thd2.DM1.DM_pushact.shape[0])
                 # Concatenate should be done in the THD2 structure
             else:
                 solution1 = wsc.solutionEFC(maskDH, resultatestimation,
-                                            invertGDH, DM3_WhichInPupil,
+                                            invertGDH, thd2.DM3.WhichInPupil,
                                             thd2.DM3.DM_pushact.shape[0])
 
         if correction_algorithm == "EM":
@@ -943,14 +901,14 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionEM(
                     maskDH, resultatestimation, invertM0, G,
                     np.concatenate(
-                        (DM3_WhichInPupil,
-                         thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                        (thd2.DM3.WhichInPupil,
+                         thd2.DM3.DM_pushact.shape[0] + thd2.DM1.WhichInPupil)),
                     thd2.DM3.DM_pushact.shape[0] +
                     thd2.DM1.DM_pushact.shape[0])
                 # Concatenate should be done in the THD2 structure
             else:
                 solution1 = wsc.solutionEM(maskDH, resultatestimation,
-                                           invertM0, G, DM3_WhichInPupil,
+                                           invertM0, G, thd2.DM3.WhichInPupil,
                                            thd2.DM3.DM_pushact.shape[0])
 
         if correction_algorithm == "steepest":
@@ -958,14 +916,14 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionSteepest(
                     maskDH, resultatestimation, M0, G,
                     np.concatenate(
-                        (DM3_WhichInPupil,
-                         thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                        (thd2.DM3.WhichInPupil,
+                         thd2.DM3.DM_pushact.shape[0] + thd2.DM1.WhichInPupil)),
                     thd2.DM3.DM_pushact.shape[0] +
                     thd2.DM1.DM_pushact.shape[0])
                 # Concatenate should be done in the THD2 structure
             else:
                 solution1 = wsc.solutionSteepest(maskDH, resultatestimation,
-                                                 M0, G, DM3_WhichInPupil,
+                                                 M0, G, thd2.DM3.WhichInPupil,
                                                  thd2.DM3.DM_pushact.shape[0])
 
         if thd2.DM1.active == True:

@@ -4,11 +4,10 @@ import scipy.ndimage as nd
 from astropy.io import fits
 import skimage.transform
 
-import propagation_functions as prop
+import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.fits_functions as useful
-
 
 ##############################################
 ##############################################
@@ -840,7 +839,7 @@ class deformable_mirror(Optical_System):
                  Model_local_dir=''):
         """ --------------------------------------------------
         Initialize a deformable mirror object
-        TODO handle misregistration 
+        TODO handle misregistration that is currently not working 
         
         Parameters
         ----------
@@ -867,6 +866,7 @@ class deformable_mirror(Optical_System):
 
         self.z_position = DMconfig[Name_DM + "_z_position"]
         self.active = DMconfig[Name_DM + "_active"]
+        self.MinimumSurfaceRatioInThePupil = DMconfig["MinimumSurfaceRatioInThePupil"]
 
         if self.active == False:
             return
@@ -876,6 +876,8 @@ class deformable_mirror(Optical_System):
         # this is a clear pupil of the same size
         self.clearpup = pupil(modelconfig, self.prad)
 
+        #define self.pradDM and check that the pupil is large enough
+        # for out of pupil propagation
         if self.z_position != 0:
             dx, dxout = prop.prop_fresnel(self.dim_overpad_pupil,
                                           self.wavelength_0,
@@ -894,6 +896,9 @@ class deformable_mirror(Optical_System):
 
         Name_pushact = Name_DM + "_PushActInPup_ray" + str(int(
             self.pradDM)) + "_dimpuparray" + str(int(self.dim_overpad_pupil))
+
+        Name_WhichInPup = Name_DM +"_Whichactfor" + str(
+            self.MinimumSurfaceRatioInThePupil) + '_raypup' + str(self.prad)
 
         if Measure_and_save == True:
             # in this case the pushact inpup are
@@ -927,9 +932,21 @@ class deformable_mirror(Optical_System):
                 self.DM_pushact_inpup = self.DM_pushact
                 # This is a repetition but coherent and
                 # allows you to easily concatenate wherever are the DMs
+            
+            self.WhichInPupil = creatingWhichinPupil(
+                self.DM_pushact_inpup, self.clearpup.pup,
+                self.MinimumSurfaceRatioInThePupil)
+            
+            fits.writeto(Model_local_dir + Name_WhichInPup + '.fits',
+                         self.WhichInPupil,
+                         overwrite=True)
 
         else:
-            # in this case the pushact inpup are loaded
+            # in this case the pushact inpup and WhichInPup are loaded
+
+            self.WhichInPupil = useful.check_and_load_fits(
+                Model_local_dir, Name_WhichInPup)
+
             self.DM_pushact = useful.check_and_load_fits(
                 Model_local_dir, Name_pushact)
 
@@ -1406,6 +1423,32 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     simu_grid = simu_grid * sampling_simu_over_measured
     return simu_grid
 
+def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
+    """ --------------------------------------------------
+    Create a vector with the index of all the actuators located in the entrance pupil
+    
+    Parameters:
+    ----------
+    pushact: 3D-array, opd created by the pokes of all actuators in the DM.
+    entrancepupil: 2D-array, entrance pupil shape
+    cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account (between 0 and 1, in ratio of an actuator perfectly centered in the entrance pupil)
+    
+    Return:
+    ------
+    WhichInPupil: 1D array, index of all the actuators located inside the pupil
+    -------------------------------------------------- """
+    WhichInPupil = []
+    tmp_entrancepupil = proc.crop_or_pad_image(entrancepupil, pushact.shape[2])
+
+    for i in np.arange(pushact.shape[0]):
+        Psivector = pushact[i]
+        cut = cutinpupil * np.sum(np.abs(Psivector))
+
+        if np.sum(Psivector * tmp_entrancepupil) > cut:
+            WhichInPupil.append(i)
+
+    WhichInPupil = np.array(WhichInPupil)
+    return WhichInPupil
 
 # def creatingpushact(model_dir,
 #                     diam_pup_in_m,

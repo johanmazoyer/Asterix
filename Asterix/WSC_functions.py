@@ -140,33 +140,6 @@ def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
     return [PWVector, SVD]
 
 
-def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
-    """ --------------------------------------------------
-    Create a vector with the index of all the actuators located in the entrance pupil
-    
-    Parameters:
-    ----------
-    pushact: 3D-array, opd created by the pokes of all actuators in the DM.
-    entrancepupil: 2D-array, entrance pupil shape
-    cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account (between 0 and 1, in ratio of an actuator perfectly centered in the entrance pupil)
-    
-    Return:
-    ------
-    WhichInPupil: 1D array, index of all the actuators located inside the pupil
-    -------------------------------------------------- """
-    WhichInPupil = []
-    tmp_entrancepupil = proc.crop_or_pad_image(entrancepupil, pushact.shape[2])
-
-    for i in np.arange(pushact.shape[0]):
-        Psivector = pushact[i]
-        cut = cutinpupil * np.sum(np.abs(Psivector))
-
-        if np.sum(Psivector * tmp_entrancepupil) > cut:
-            WhichInPupil.append(i)
-
-    WhichInPupil = np.array(WhichInPupil)
-    return WhichInPupil
-
 
 def string_DHshape(EFCconfig):
 
