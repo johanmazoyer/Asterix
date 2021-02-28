@@ -490,7 +490,7 @@ class coronagraph(Optical_System):
                 # We do not need to be exact, the mft in science_focal_plane will be
 
         if self.corona_type == "fqpm":
-            self.prop_apod2lyot = 'fft'
+            self.prop_apod2lyot = 'mft'
             self.err_fqpm = coroconfig["err_fqpm"]
             self.achrom_fqpm = coroconfig["achrom_fqpm"]
             self.FPmsk = self.FQPM()
