@@ -705,12 +705,12 @@ def correctionLoop(parameter_file,
                                                   ampl_abb=amplitude_abb_up)
     imagedetector[0] = thd2.todetector_Intensity(
         entrance_EF=input_wavefront) / thd2.maxPSF
-    # imagedetector[0] = (thd2.entrancetodetector_Intensity(
-    #     amplitude_abb_up, phase_abb_up) / thd2.maxPSF)
+    #     imagedetector[0] = (corona_struct.im_apodtodetector_chrom(
+                                # amplitude_abb_up, phase_abb_up)/
+                                #         corona_struct.maxPSF)
 
-    # TODO Not good. We should do the creation of a WF from phase + abb at one place only,
-    # either inside entrancetodetector fucntion or in a separate functions.
-    # I would adovcate doing it in a separate functions becasue we use it at different places
+    # TODO Not good. We should do the creation of a WF from phase + abb at one place only
+    # and not everytime we need it, this will be a problem in polytchomatic ! 
     # input_wavefront = thd2.entrancepupil.pup * (
     #     1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
@@ -752,14 +752,12 @@ def correctionLoop(parameter_file,
                 DM1phase=phaseDM1[k],
                 DM3phase=phaseDM3[k]) / np.sqrt(thd2.maxPSF)
 
-            # resultatestimation = (corona_struct.entrancetodetector(
-            #     amplitude_abb_up,
-            #     phase_abb_up,
-            #     DM1_active=DM1_active,
-            #     phaseDM1=phaseDM1[k],
-            #     DM3_active=True,
-            #     phaseDM3=phaseDM3[k],
-            #     DM1_z_position=DM1_z_position) / np.sqrt(thd2.maxPSF))
+            # resultatestimation = (corona_struct.im_apodtodetector_chrom(
+            #             amplitude_abb_up, phase_abb_up,
+            #             DM3_active = True, phaseDM3 = phaseDM3[k],
+            #             DM1_active=DM1_active,phaseDM1=phaseDM1[k],
+            #             DM1_z_position=DM1_z_position, retampl=True)
+            #             /np.sqrt(corona_struct.maxPSF))
 
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
