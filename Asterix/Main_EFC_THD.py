@@ -14,7 +14,7 @@ import Asterix.processing_functions as proc
 import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.WSC_functions as wsc
-from Asterix.InstrumentSimu_functions import coronagraph
+# from Asterix.InstrumentSimu_functions import coronagraph
 import Asterix.InstrumentSimu_functions as instr
 import Asterix.fits_functions as useful
 
@@ -124,13 +124,26 @@ def create_interaction_matrices(parameter_file,
     ##THEN DO
     model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
 
+    Model_local_dir = Data_dir + "Model_local/"
+    if not os.path.exists(Model_local_dir):
+        print("Creating directory " + Model_local_dir + " ...")
+        os.makedirs(Model_local_dir)
+
     if DM3_otherbasis == False:
         basistr = "actu"
     else:
         basistr = "fourier"
 
-    # Initialize coronagraphs:
-    corona_struct = coronagraph(modelconfig, Coronaconfig, model_dir)
+    # Initialize thd:
+    thd2 = instr.THD2_testbed(modelconfig,
+                              DMconfig,
+                              Coronaconfig,
+                              Measure_and_save=True,
+                              model_dir=model_dir,
+                              Model_local_dir=Model_local_dir)
+
+    #for stability purose, but will be remove
+    corona_struct = thd2.corono
 
     # Directories for saving data
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
@@ -162,11 +175,12 @@ def create_interaction_matrices(parameter_file,
             print("Creating directory " + Labview_dir + " ...")
             os.makedirs(Labview_dir)
 
-    Model_local_dir = Data_dir + "Model_local/"
-    if not os.path.exists(Model_local_dir):
-        print("Creating directory " + Model_local_dir + " ...")
-        os.makedirs(Model_local_dir)
-    tmp_nam = "_dimpuparray" + str(int(corona_struct.dim_overpad_pupil))
+    if thd2.DM1.active == True:
+        nam2DM = "_2DM"
+    else: 
+        nam2DM = ""
+
+    # tmp_nam = "_dimpuparray" + str(int(corona_struct.dim_overpad_pupil))
 
     # if corona_struct.prop_apod2lyot == "mft":
     #     tmp_nam = "_dimpuparray"+str(
@@ -174,78 +188,78 @@ def create_interaction_matrices(parameter_file,
     # else:
     #     tmp_nam=""
 
-    if DM1_active == True:
-        nam2DM = "_2DM"
+    # if DM1_active == True:
+    #     nam2DM = "_2DM"
 
-        dx, dxout = prop.prop_fresnel(corona_struct.dim_overpad_pupil,
-                                      wavelength_0,
-                                      DM1_z_position,
-                                      corona_struct.diam_pup_in_m / 2,
-                                      corona_struct.prad,
-                                      retscale=1)
-        corona_struct.pradDM1 = corona_struct.prad * dx / dxout
+    #     dx, dxout = prop.prop_fresnel(corona_struct.dim_overpad_pupil,
+    #                                   wavelength_0,
+    #                                   DM1_z_position,
+    #                                   corona_struct.diam_pup_in_m / 2,
+    #                                   corona_struct.prad,
+    #                                   retscale=1)
+    #     corona_struct.pradDM1 = corona_struct.prad * dx / dxout
 
-        if DM1_creating_pushact == True:
-            if dx > 2 * dxout:
-                print(dx, dxout)
-                raise Exception(
-                    "Need to enhance the pupil size in pixel for Fresnel propagation"
-                )
-            # Influence functions of DM1 in DM1 plane
-            DM1_pushact = instr.creatingpushact(
-                model_dir,
-                corona_struct.diam_pup_in_m,
-                2 * corona_struct.pradDM1,
-                DMconfig,
-                corona_struct.dim_overpad_pupil,
-                Name_DM='DM1')
-            fits.writeto(Model_local_dir + "DM1_PushActInPup_ray" +
-                         str(int(corona_struct.pradDM1)) + tmp_nam + ".fits",
-                         DM1_pushact,
-                         overwrite=True)
+    #     if DM1_creating_pushact == True:
+    #         if dx > 2 * dxout:
+    #             print(dx, dxout)
+    #             raise Exception(
+    #                 "Need to enhance the pupil size in pixel for Fresnel propagation"
+    #             )
+    #         # Influence functions of DM1 in DM1 plane
+    #         DM1_pushact = instr.creatingpushact(
+    #             model_dir,
+    #             corona_struct.diam_pup_in_m,
+    #             2 * corona_struct.pradDM1,
+    #             DMconfig,
+    #             corona_struct.dim_overpad_pupil,
+    #             Name_DM='DM1')
+    #         fits.writeto(Model_local_dir + "DM1_PushActInPup_ray" +
+    #                      str(int(corona_struct.pradDM1)) + tmp_nam + ".fits",
+    #                      DM1_pushact,
+    #                      overwrite=True)
 
-            # Influence functions of DM1 in pupil plane
-            # used to create the EFC matrix ()
-            DM1_pushact_inpup = instr.creatingpushact_inpup(
-                DM1_pushact, wavelength_0, corona_struct,
-                DMconfig["DM1_z_position"])
-            fits.writeto(Model_local_dir + "DM1_PushActInPup_ray" +
-                         str(int(corona_struct.pradDM1)) + tmp_nam +
-                         "_inPup_real.fits",
-                         DM1_pushact_inpup.real,
-                         overwrite=True)
-            fits.writeto(Model_local_dir + "DM1_PushActInPup_ray" +
-                         str(int(corona_struct.pradDM1)) + tmp_nam +
-                         "_inPup_imaginary.fits",
-                         DM1_pushact_inpup.imag,
-                         overwrite=True)
-        else:
-            # Influence functions of DM1 in pupil plane
-            # used to create the EFC matrix ()
-            DM1_pushact_inpup = fits.getdata(
-                Model_local_dir + "DM1_PushActInPup_ray" +
-                str(int(corona_struct.pradDM1)) + tmp_nam + "_inPup_real.fits"
-            ) + 1j * fits.getdata(Model_local_dir + "DM1_PushActInPup_ray" +
-                                  str(int(corona_struct.pradDM1)) + tmp_nam +
-                                  "_inPup_imaginary.fits")
-    else:
-        nam2DM = ""
+    #         # Influence functions of DM1 in pupil plane
+    #         # used to create the EFC matrix ()
+    #         DM1_pushact_inpup = instr.creatingpushact_inpup(
+    #             DM1_pushact, wavelength_0, corona_struct,
+    #             DMconfig["DM1_z_position"])
+    #         fits.writeto(Model_local_dir + "DM1_PushActInPup_ray" +
+    #                      str(int(corona_struct.pradDM1)) + tmp_nam +
+    #                      "_inPup_real.fits",
+    #                      DM1_pushact_inpup.real,
+    #                      overwrite=True)
+    #         fits.writeto(Model_local_dir + "DM1_PushActInPup_ray" +
+    #                      str(int(corona_struct.pradDM1)) + tmp_nam +
+    #                      "_inPup_imaginary.fits",
+    #                      DM1_pushact_inpup.imag,
+    #                      overwrite=True)
+    #     else:
+    #         # Influence functions of DM1 in pupil plane
+    #         # used to create the EFC matrix ()
+    #         DM1_pushact_inpup = fits.getdata(
+    #             Model_local_dir + "DM1_PushActInPup_ray" +
+    #             str(int(corona_struct.pradDM1)) + tmp_nam + "_inPup_real.fits"
+    #         ) + 1j * fits.getdata(Model_local_dir + "DM1_PushActInPup_ray" +
+    #                               str(int(corona_struct.pradDM1)) + tmp_nam +
+    #                               "_inPup_imaginary.fits")
+    # else:
+    #     nam2DM = ""
 
-    if DM3_creating_pushact == True:
-        DM3_pushact = instr.creatingpushact(model_dir,
-                                            corona_struct.diam_pup_in_m,
-                                            2 * corona_struct.prad,
-                                            DMconfig,
-                                            corona_struct.dim_overpad_pupil,
-                                            Name_DM='DM3')
-        fits.writeto(Model_local_dir + "DM3_PushActInPup_ray" +
-                     str(int(corona_struct.prad)) + tmp_nam + ".fits",
-                     DM3_pushact,
-                     overwrite=True)
-    else:
-        DM3_pushact = fits.getdata(Model_local_dir + "DM3_PushActInPup_ray" +
-                                   str(int(corona_struct.prad)) + tmp_nam +
-                                   ".fits")
+    # if DM3_creating_pushact == True:
+    #     DM3_pushact = instr.creatingpushact(model_dir,
+    #                                         corona_struct.diam_pup_in_m,
+    #                                         2 * corona_struct.prad,
+    #                                         DMconfig,
+    #                                         corona_struct.dim_overpad_pupil,
+    #                                         Name_DM='DM3')
+    #     fits.writeto(Model_local_dir + "DM3_PushActInPup_ray" +
+    #                  str(int(corona_struct.prad)) + tmp_nam + ".fits",
+    #                  DM3_pushact,
+    #                  overwrite=True)
+    # else:
+    #     DM3_pushact = fits.getdata(Model_local_dir + "DM3_PushActInPup_ray" +
+    #                                str(int(corona_struct.prad)) + tmp_nam +
+    #                                ".fits")
 
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
@@ -258,10 +272,10 @@ def create_interaction_matrices(parameter_file,
     else:
         print("Recording " + filePW + " ...")
         vectoressai, showsvd = wsc.createvectorprobes(wavelength_0,
-                                                      corona_struct,
+                                                      thd2,
                                                       amplitudePW, posprobes,
-                                                      DM3_pushact, dim_sampl,
-                                                      cut)
+                                                      thd2.DM3.DM_pushact,
+                                                      dim_sampl, cut)
         fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
         visuPWMap = ("MapEigenvaluesPW" + "_" + "_".join(map(str, posprobes)) +
@@ -274,7 +288,7 @@ def create_interaction_matrices(parameter_file,
 
     # Saving PW matrices in Labview directory
     if onbench == True:
-        probes = np.zeros((len(posprobes), DM3_pushact.shape[0]),
+        probes = np.zeros((len(posprobes), thd2.DM3.DM_pushact.shape[0]),
                           dtype=np.float32)
         vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
                             dtype=np.float32)
@@ -297,7 +311,8 @@ def create_interaction_matrices(parameter_file,
             print("TO SET ON LABVIEW: ",
                   str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
 
-    # Creating WhichInPup
+    # Creating WhichInPup. TODO this needs to go in the
+    # class initialization to be more general
     # DM1
     if DM1_active == True:
         DM1_fileWhichInPup = "DM1_Whichactfor" + str(
@@ -313,10 +328,11 @@ def create_interaction_matrices(parameter_file,
 
             if DM1_otherbasis == False:
                 DM1_WhichInPupil = wsc.creatingWhichinPupil(
-                    DM1_pushact_inpup, corona_struct.entrancepupil.pup,
+                    thd2.DM1.DM_pushact_inpup, thd2.entrancepupil.pup,
                     MinimumSurfaceRatioInThePupil)
             else:
-                DM1_WhichInPupil = np.arange(DM1_pushact_inpup.shape[0])
+                DM1_WhichInPupil = np.arange(
+                    thd2.DM1.DM_pushact_inpup.shape[0])
             fits.writeto(intermatrix_dir + DM1_fileWhichInPup + ".fits",
                          DM1_WhichInPupil)
 
@@ -329,14 +345,14 @@ def create_interaction_matrices(parameter_file,
         DM3_WhichInPupil = fits.getdata(intermatrix_dir + DM3_fileWhichInPup +
                                         ".fits")
     else:
-        print("Recording" + DM3_fileWhichInPup + " ...")
+        print("Saving " + DM3_fileWhichInPup + " ...")
 
         if DM3_otherbasis == False:
             DM3_WhichInPupil = wsc.creatingWhichinPupil(
-                DM3_pushact, corona_struct.entrancepupil.pup,
+                thd2.DM3.DM_pushact, thd2.entrancepupil.pup,
                 MinimumSurfaceRatioInThePupil)
         else:
-            DM3_WhichInPupil = np.arange(DM3_pushact.shape[0])
+            DM3_WhichInPupil = np.arange(thd2.DM3.DM_pushact.shape[0])
         fits.writeto(intermatrix_dir + DM3_fileWhichInPup + ".fits",
                      DM3_WhichInPupil)
 
@@ -379,20 +395,22 @@ def create_interaction_matrices(parameter_file,
                                                 science_sampling)
 
             # Creating EFC Interaction Matrix if does not exist
-            print("Recording " + fileDirectMatrix + " ...")
-
+            print("Saving " + fileDirectMatrix + " ...")
+            # this is typically the kind of stuff that would be more better
+            # in the class
             if DM1_active == True:
-                DM_pushact = np.concatenate((DM3_pushact, DM1_pushact_inpup))
+                DM_pushact = np.concatenate(
+                    (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup))
                 DM_WhichInPupil = np.concatenate(
                     (DM3_WhichInPupil,
-                     DM3_pushact.shape[0] + DM1_WhichInPupil))
+                     thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil))
             else:
-                DM_pushact = DM3_pushact
+                DM_pushact = thd2.DM3.DM_pushact
                 DM_WhichInPupil = DM3_WhichInPupil
 
             Gmatrix = wsc.creatingCorrectionmatrix(
-                corona_struct.entrancepupil.pup,
-                corona_struct,
+                thd2.entrancepupil.pup,
+                thd2,
                 dim_sampl,
                 DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
                 maskDH,
@@ -403,7 +421,7 @@ def create_interaction_matrices(parameter_file,
 
             fits.writeto(intermatrix_dir + fileDirectMatrix + ".fits", Gmatrix)
 
-        # Calculating and recording EFC Control Matrix
+        # Calculating and saving EFC Control Matrix
         print("Recording " + fileEFCMatrix + " ...")
         SVD, SVD_trunc, invertGDH = wsc.invertSVD(
             Gmatrix,
@@ -568,21 +586,28 @@ def correctionLoop(parameter_file,
 
     ## Directories for saving the data
     model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
-    # model_dir = Data_dir + os.path.sep + "Model" + os.path.sep
 
-    # Initialize coronagraphs:
-    corona_struct = coronagraph(modelconfig, Coronaconfig, model_dir)
+    Model_local_dir = Data_dir + "Model_local/"
+    if not os.path.exists(Model_local_dir):
+        print("Creating directory " + Model_local_dir + " ...")
+        os.makedirs(Model_local_dir)
+
+    # Initialize thd:
+    thd2 = instr.THD2_testbed(modelconfig,
+                              DMconfig,
+                              Coronaconfig,
+                              Measure_and_save=False,
+                              model_dir=model_dir,
+                              Model_local_dir=Model_local_dir)
+
+    #for stability purose, but will be remove
+    corona_struct = thd2.corono
 
     if onbench == True:
         Labview_dir = Data_dir + "Labview/"
         if not os.path.exists(Labview_dir):
             print("Creating directory " + Labview_dir + " ...")
             os.makedirs(Labview_dir)
-
-    Model_local_dir = Data_dir + "Model_local/"
-    if not os.path.exists(Model_local_dir):
-        print("Creating directory " + Model_local_dir + " ...")
-        os.makedirs(Model_local_dir)
 
     result_dir = Data_dir + "Results/" + Name_Experiment + "/"
     if not os.path.exists(result_dir):
@@ -616,7 +641,7 @@ def correctionLoop(parameter_file,
                        "/lop_" + str(round(science_sampling, 2)) + "/basis_" +
                        basistr + "/")
 
-    tmp_nam = "_dimpuparray" + str(int(corona_struct.dim_overpad_pupil))
+    # tmp_nam = "_dimpuparray" + str(int(corona_struct.dim_overpad_pupil))
     # if corona_struct.prop_apod2lyot == "mft":
     #     tmp_nam = "_dimpuparray"+str(
     #         int(corona_struct.dim_overpad_pupil))
@@ -637,14 +662,14 @@ def correctionLoop(parameter_file,
             raise Exception("Please create PW matrix before correction")
 
     #Load DM3 actuator functions
-    if os.path.exists(Model_local_dir + "DM3_PushActInPup_ray" +
-                      str(int(corona_struct.prad)) + tmp_nam +
-                      ".fits") == True:
-        DM3_pushact = fits.getdata(Model_local_dir + "DM3_PushActInPup_ray" +
-                                   str(int(corona_struct.prad)) + tmp_nam +
-                                   ".fits")
-    else:
-        raise Exception("Please create DM3_PushActInPup before correction")
+    # if os.path.exists(Model_local_dir + "DM3_PushActInPup_ray" +
+    #                   str(int(corona_struct.prad)) + tmp_nam +
+    #                   ".fits") == True:
+    #     DM3_pushact = fits.getdata(Model_local_dir + "DM3_PushActInPup_ray" +
+    #                                str(int(corona_struct.prad)) + tmp_nam +
+    #                                ".fits")
+    # else:
+    #     raise Exception("Please create DM3_PushActInPup before correction")
 
     # List of DM3 actuators that are inside the pupil
     DM3_fileWhichInPup = "DM3_Whichactfor" + str(
@@ -656,35 +681,35 @@ def correctionLoop(parameter_file,
         raise Exception(
             "Please create DM3 Whichactfor matrix before correction")
 
-    if DM1_active == True:
+
+    if thd2.DM1.active == True:
         nam2DM = "_2DM"
-        dx, dxout = prop.prop_fresnel(corona_struct.dim_overpad_pupil,
-                                      wavelength_0,
-                                      DM1_z_position,
-                                      corona_struct.diam_pup_in_m / 2,
-                                      corona_struct.prad,
-                                      retscale=1)
-        corona_struct.pradDM1 = corona_struct.prad * dx / dxout
+        # dx, dxout = prop.prop_fresnel(corona_struct.dim_overpad_pupil,
+        #                               wavelength_0,
+        #                               DM1_z_position,
+        #                               corona_struct.diam_pup_in_m / 2,
+        #                               corona_struct.prad,
+        #                               retscale=1)
+        # corona_struct.pradDM1 = corona_struct.prad * dx / dxout
 
-        #Load DM1 actuator functions
-        if os.path.exists(Model_local_dir +
-                                       "DM1_PushActInPup_ray" +
-                                       str(int(corona_struct.pradDM1)) +
-                                       tmp_nam + ".fits") == True:
-            DM1_pushact = fits.getdata(Model_local_dir +
-                                       "DM1_PushActInPup_ray" +
-                                       str(int(corona_struct.pradDM1)) +
-                                       tmp_nam + ".fits")
+        # #Load DM1 actuator functions
+        # if os.path.exists(Model_local_dir + "DM1_PushActInPup_ray" +
+        #                   str(int(corona_struct.pradDM1)) + tmp_nam +
+        #                   ".fits") == True:
+        #     DM1_pushact = fits.getdata(Model_local_dir +
+        #                                "DM1_PushActInPup_ray" +
+        #                                str(int(corona_struct.pradDM1)) +
+        #                                tmp_nam + ".fits")
 
-        else:
-            raise Exception("Please create DM1_PushActInPup before correction")
-        tmp = Model_local_dir + "DM1_PushActInPup_ray" + str(
-            int(corona_struct.pradDM1)) + tmp_nam
-        if os.path.exists(tmp + "_inPup_real.fits") == True and os.path.exists(
-                tmp + "_inPup_imaginary.fits") == True:
-            DM1_pushact_inpup = fits.getdata(
-                tmp + "_inPup_real.fits"
-            ) + 1j * fits.getdata(tmp + "_inPup_imaginary.fits")
+        # else:
+        #     raise Exception("Please create DM1_PushActInPup before correction")
+        # tmp = Model_local_dir + "DM1_PushActInPup_ray" + str(
+        #     int(corona_struct.pradDM1)) + tmp_nam
+        # if os.path.exists(tmp + "_inPup_real.fits") == True and os.path.exists(
+        #         tmp + "_inPup_imaginary.fits") == True:
+        #     DM1_pushact_inpup = fits.getdata(
+        #         tmp + "_inPup_real.fits"
+        #     ) + 1j * fits.getdata(tmp + "_inPup_imaginary.fits")
 
         # List of DM1 actuators that are inside the pupil
         DM1_fileWhichInPup = "DM1_Whichactfor" + str(
@@ -731,7 +756,7 @@ def correctionLoop(parameter_file,
             print("Random phase aberrations upstream from coronagraph")
             phase_up = phase_ampl.random_phase_map(
                 corona_struct.dim_overpad_pupil, phaserms, rhoc_phase,
-                slope_phase, corona_struct.entrancepupil)
+                slope_phase, thd2.entrancepupil)
         else:
             if phase_abb_filename == '':
                 phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
@@ -760,7 +785,7 @@ def correctionLoop(parameter_file,
     if set_amplitude_abb == True:
         ampfinal = phase_ampl.scale_amplitude_abb(
             model_dir + amplitude_abb + ".fits", corona_struct.prad,
-            corona_struct.entrancepupil.pup)
+            thd2.entrancepupil.pup)
     else:
         ampfinal = 0
 
@@ -768,9 +793,10 @@ def correctionLoop(parameter_file,
     phase_abb_up = phase_up
 
     ## To convert in photon flux
-    contrast_to_photons = (np.sum(corona_struct.entrancepupil.pup) /
+    # We can probably replace here by transmission ! 
+    contrast_to_photons = (np.sum(thd2.entrancepupil.pup) /
                            np.sum(corona_struct.lyot_pup.pup) * nb_photons *
-                           corona_struct.maxPSF / corona_struct.sumPSF)
+                           thd2.maxPSF / thd2.sumPSF)
 
     ## Adding error on the DM model?
     if DM3_misregistration == True:
@@ -782,7 +808,7 @@ def correctionLoop(parameter_file,
                                              corona_struct.dim_overpad_pupil,
                                              Name_DM='DM3')
     else:
-        pushactonDM3 = DM3_pushact
+        pushactonDM3 = thd2.DM3.DM_pushact
 
     ## Correction loop
     nbiter = len(modevector)
@@ -796,12 +822,12 @@ def correctionLoop(parameter_file,
 
     # Initial wavefront in pupil plane
     imagedetector[0] = (corona_struct.entrancetodetector_Intensity(
-        amplitude_abb_up, phase_abb_up) / corona_struct.maxPSF)
+        amplitude_abb_up, phase_abb_up) / thd2.maxPSF)
 
     # TODO Not good. We should do the creation of a WF from phase + abb at one place only,
     # either inside entrancetodetector fucntion or in a separate functions.
     # I would adovcate doing it in a separate functions becasue we use it at different places
-    input_wavefront = corona_struct.entrancepupil.pup * (
+    input_wavefront = thd2.entrancepupil.pup * (
         1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
@@ -823,14 +849,14 @@ def correctionLoop(parameter_file,
         if (estimation == "PairWise" or estimation == "pairwise"
                 or estimation == "PW" or estimation == "pw"):
 
-            Difference = wsc.createdifference(
-                input_wavefront,
-                posprobes,
-                pushactonDM3 * amplitudePW * 1e-9 * 2 * np.pi / wavelength_0,
-                corona_struct,
-                dim_sampl,
-                noise=photon_noise,
-                numphot=nb_photons)
+            Difference = wsc.createdifference(input_wavefront,
+                                              posprobes,
+                                              pushactonDM3 * amplitudePW *
+                                              1e-9 * 2 * np.pi / wavelength_0,
+                                              corona_struct,
+                                              dim_sampl,
+                                              noise=photon_noise,
+                                              numphot=nb_photons)
 
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
@@ -843,7 +869,7 @@ def correctionLoop(parameter_file,
                 phaseDM1=phaseDM1[k],
                 DM3_active=True,
                 phaseDM3=phaseDM3[k],
-                DM1_z_position=DM1_z_position) / np.sqrt(corona_struct.maxPSF))
+                DM1_z_position=DM1_z_position) / np.sqrt(thd2.maxPSF))
 
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
@@ -857,26 +883,26 @@ def correctionLoop(parameter_file,
 
                 # Calculate the control matrix for the current aberrations
                 # (needed because of linearization of the problem?)
-
+                # TODO concatenation should be done automatically in thd structure
                 if DM1_active == True:
                     Gmatrix = wsc.creatingCorrectionmatrix(
                         input_wavefront,
-                        corona_struct,
+                        thd2,
                         dim_sampl,
-                        np.concatenate((DM3_pushact, DM1_pushact_inpup)) *
+                        np.concatenate((thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
                         amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
                         maskDH,
                         np.concatenate(
                             (DM3_WhichInPupil,
-                             DM3_pushact.shape[0] + DM1_WhichInPupil)),
+                             thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
                         otherbasis=DM3_otherbasis,
                         basisDM3=DM3_basis)
                 else:
                     Gmatrix = wsc.creatingCorrectionmatrix(
                         input_wavefront,
-                        corona_struct,
+                        thd2,
                         dim_sampl,
-                        DM3_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
+                        thd2.DM3.DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
                         wavelength_0,
                         maskDH,
                         DM3_WhichInPupil,
@@ -921,12 +947,12 @@ def correctionLoop(parameter_file,
                             maskDH, resultatestimation, invertGDH,
                             np.concatenate(
                                 (DM3_WhichInPupil,
-                                 DM3_pushact.shape[0] + DM1_WhichInPupil)),
-                            DM3_pushact.shape[0] + DM1_pushact.shape[0])
+                                 thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                            thd2.DM3.DM_pushact.shape[0] + thd2.DM1.DM_pushact.shape[0])
                         # Phase to apply on DM1
                         apply_on_DM1 = wsc.apply_on_DM(
                             solution1[pushactonDM3.shape[0]:],
-                            DM1_pushact) * (-gain * amplitudeEFC * 2 * np.pi *
+                            thd2.DM1.DM_pushact) * (-gain * amplitudeEFC * 2 * np.pi *
                                             1e-9 / wavelength_0)
 
                         tmp_input_wavefront = instr.prop_pup_DM1_DM3(
@@ -937,7 +963,7 @@ def correctionLoop(parameter_file,
                         solution1 = wsc.solutionEFC(maskDH, resultatestimation,
                                                     invertGDH,
                                                     DM3_WhichInPupil,
-                                                    DM3_pushact.shape[0])
+                                                    thd2.DM3.DM_pushact.shape[0])
 
                 # Phase to apply on DM3
                     apply_on_DM3 = wsc.apply_on_DM(
@@ -959,9 +985,10 @@ def correctionLoop(parameter_file,
                         1j * proc.crop_or_pad_image(
                             apply_on_DM3, corona_struct.dim_overpad_pupil))
 
-                    imagedetectortemp = (
-                        abs(corona_struct.todetector(entrance_EF= tmp_input_wavefront))**2 /
-                        corona_struct.maxPSF)
+                    imagedetectortemp = (abs(
+                        corona_struct.todetector(
+                            entrance_EF=tmp_input_wavefront))**2 /
+                                         thd2.maxPSF)
 
                     meancontrasttemp[b] = np.mean(
                         imagedetectortemp[np.where(maskDHcontrast != 0)])
@@ -991,12 +1018,12 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionEFC(
                     maskDH, resultatestimation, invertGDH,
                     np.concatenate((DM3_WhichInPupil,
-                                    DM3_pushact.shape[0] + DM1_WhichInPupil)),
-                    DM3_pushact.shape[0] + DM1_pushact.shape[0])
+                                    thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                    thd2.DM3.DM_pushact.shape[0] + thd2.DM1.DM_pushact.shape[0])
             else:
                 solution1 = wsc.solutionEFC(maskDH, resultatestimation,
                                             invertGDH, DM3_WhichInPupil,
-                                            DM3_pushact.shape[0])
+                                            thd2.DM3.DM_pushact.shape[0])
 
         if correction_algorithm == "EM":
             if mode != previousmode or k == 0:
@@ -1015,29 +1042,29 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionEM(
                     maskDH, resultatestimation, invertM0, G,
                     np.concatenate((DM3_WhichInPupil,
-                                    DM3_pushact.shape[0] + DM1_WhichInPupil)),
-                    DM3_pushact.shape[0] + DM1_pushact.shape[0])
+                                    thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                    thd2.DM3.DM_pushact.shape[0] + thd2.DM1.DM_pushact.shape[0])
             else:
                 solution1 = wsc.solutionEM(maskDH, resultatestimation,
                                            invertM0, G, DM3_WhichInPupil,
-                                           DM3_pushact.shape[0])
+                                           thd2.DM3.DM_pushact.shape[0])
 
         if correction_algorithm == "steepest":
             if DM1_active == True:
                 solution1 = wsc.solutionSteepest(
                     maskDH, resultatestimation, M0, G,
                     np.concatenate((DM3_WhichInPupil,
-                                    DM3_pushact.shape[0] + DM1_WhichInPupil)),
-                    DM3_pushact.shape[0] + DM1_pushact.shape[0])
+                                    thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                    thd2.DM3.DM_pushact.shape[0] + thd2.DM1.DM_pushact.shape[0])
             else:
                 solution1 = wsc.solutionSteepest(maskDH, resultatestimation,
                                                  M0, G, DM3_WhichInPupil,
-                                                 DM3_pushact.shape[0])
+                                                 thd2.DM3.DM_pushact.shape[0])
 
         if DM1_active == True:
             # Phase to apply on DM1
             apply_on_DM1 = wsc.apply_on_DM(
-                solution1[pushactonDM3.shape[0]:], DM1_pushact) * (
+                solution1[pushactonDM3.shape[0]:], thd2.DM1.DM_pushact) * (
                     -gain * amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0)
             phaseDM1[k + 1] = phaseDM1[k] + proc.crop_or_pad_image(
                 apply_on_DM1, dim_pup)
@@ -1075,7 +1102,7 @@ def correctionLoop(parameter_file,
             phaseDM1=phaseDM1[k + 1],
             DM3_active=True,
             phaseDM3=phaseDM3[k + 1],
-            DM1_z_position=DM1_z_position) / corona_struct.maxPSF)
+            DM1_z_position=DM1_z_position) / thd2.maxPSF)
 
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHcontrast != 0)])

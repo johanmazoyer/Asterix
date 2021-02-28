@@ -75,7 +75,7 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
+def createvectorprobes(wavelength, testbed, amplitude, posprobes,
                        pushact, dimimages, cutsvd):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
@@ -83,7 +83,7 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
     Parameters:
     ----------
     wavelength: float, wavelength of the  incoming flux in meter
-    corona_struct: coronagraph structure
+    testbed: testbed structure
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
     posprobes: 1D-array, index of the actuators to push and pull for pair-wise probing
     pushact: 3D-array, opd created by the pokes of all actuators in the DM.
@@ -98,21 +98,28 @@ def createvectorprobes(wavelength, corona_struct, amplitude, posprobes,
     -------------------------------------------------- """
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimimages, dimimages), dtype=complex)
-    probephase = np.zeros((numprobe, corona_struct.dim_overpad_pupil,
-                           corona_struct.dim_overpad_pupil))
+    probephase = np.zeros((numprobe, testbed.dim_overpad_pupil,
+                           testbed.dim_overpad_pupil))
     matrix = np.zeros((numprobe, 2))
     PWVector = np.zeros((dimimages**2, 2, numprobe))
     SVD = np.zeros((2, dimimages, dimimages))
 
     k = 0
     for i in posprobes:
+
+        # 
+        # lines inputwavefront = and deltapsikbis = need to be replace by
+        # testbed.todetector(DM3phase = probephase[k])/ np.sqrt(testbed.maxPSF)
+        # but chaque chose en son temps donc laissons comme ca now
+
         tmp = proc.crop_or_pad_image(pushact[i],
-                                     corona_struct.dim_overpad_pupil)
+                                     testbed.dim_overpad_pupil)
         probephase[k] = tmp * amplitude * 1e-9 * 2 * np.pi / wavelength
 
-        inputwavefront = corona_struct.entrancepupil.pup * (1 + 1j * probephase[k])
-        deltapsikbis = (corona_struct.todetector(entrance_EF=inputwavefront) /
-                        np.sqrt(corona_struct.maxPSF))
+        inputwavefront = testbed.entrancepupil.pup * (1 + 1j * probephase[k])
+        deltapsikbis = (testbed.corono.todetector(entrance_EF=inputwavefront) /
+                        np.sqrt(testbed.maxPSF))
+        
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
 
@@ -322,7 +329,7 @@ def creatingMaskDH(dimimages,
 
 
 def creatingCorrectionmatrix(input_wavefront,
-                             corona_struct,
+                             testbed,
                              dimimages,
                              pushact,
                              mask,
@@ -336,8 +343,8 @@ def creatingCorrectionmatrix(input_wavefront,
     ----------
     input_wavefront: 2D-array complex
         input wavefront in pupil plane
-    corona_struct: structure
-        coronagraph structure
+    testbed: Optical_element
+        testbed structure
     dimimages: int
         size of the output image after resampling in pixels
     pushact: 3D-array
@@ -362,12 +369,12 @@ def creatingCorrectionmatrix(input_wavefront,
                                          pushact.shape[2])
     else:
         probephase = np.zeros(
-            (pushact.shape[0], corona_struct.dim_overpad_pupil,
-             corona_struct.dim_overpad_pupil),
+            (pushact.shape[0], testbed.dim_overpad_pupil,
+             testbed.dim_overpad_pupil),
             dtype=complex)
         for k in range(pushact.shape[0]):
             probephase[k] = proc.crop_or_pad_image(
-                pushact[k], corona_struct.dim_overpad_pupil)
+                pushact[k], testbed.dim_overpad_pupil)
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")
@@ -377,9 +384,18 @@ def creatingCorrectionmatrix(input_wavefront,
         if i % 100 == 0:
             print(i)
         Psivector = bas_fct[i]
+        # TODO : RAPHAEL we really need to check I think there is a major problem: 
+        # is it a phase or a the EF (exp(j phase)) ? input_wavefront is an EF, 
+        # I think it should be input_wavefront * exp(1j * Psivector)
+        #
+        # for now we only keep the corono structure, 
+        # we should use testbed.todetector(entrance_EF= input_wavefront, DMXX = Psivector)
+        # directly 
+        #
+        # also i and k are the same indice I think :-)
         Gvector = (
-            corona_struct.todetector(entrance_EF= input_wavefront * 1j * Psivector) /
-            np.sqrt(corona_struct.maxPSF))
+            testbed.corono.todetector(entrance_EF= input_wavefront * 1j * Psivector) /
+            np.sqrt(testbed.maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()

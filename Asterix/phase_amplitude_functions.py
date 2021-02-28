@@ -146,7 +146,7 @@ def random_phase_map(dim_im, phaserms, rhoc, slope, pupil):
 
 def scale_amplitude_abb(filename, prad, pupil):
     """ --------------------------------------------------
-    Scale the map of a recorded amplitude map
+    Scale the map of a saved amplitude map
 
     Parameters
     ----------
