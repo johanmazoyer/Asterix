@@ -257,7 +257,10 @@ class Optical_System:
 
         return throughput_loss
 
-    def EF_from_phase_and_ampl(self, phase_abb=0, ampl_abb=0, wavelength=None):
+    def EF_from_phase_and_ampl(self,
+                               phase_abb=0.,
+                               ampl_abb=0.,
+                               wavelength=None):
         """ --------------------------------------------------
         Create an electrical field from an phase and amplitude aberrations
         
@@ -285,7 +288,7 @@ class Optical_System:
             raise Exception(
                 "phase_abb and ampl_abb must be real arrays, not complex")
 
-        if phase_abb == 0 and ampl_abb == 0:
+        if (phase_abb == 0.).all() and (ampl_abb == 0).all():
             return 1.
         else:
             if wavelength == None:
@@ -523,10 +526,10 @@ class coronagraph(Optical_System):
         #                            directory=model_dir,
         #                            filename=modelconfig["filename_instr_pup"])
 
-        # We need a pupil only to measure the response 
-        # of the coronograph to a clear pupil to remove it 
-        # if perfect corono. THIS IS NOT THE ENTRANCE PUPIL, 
-        # this is a clear pupil of the same size 
+        # We need a pupil only to measure the response
+        # of the coronograph to a clear pupil to remove it
+        # if perfect corono. THIS IS NOT THE ENTRANCE PUPIL,
+        # this is a clear pupil of the same size
         self.clearpup = pupil(modelconfig, self.prad)
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
@@ -548,7 +551,6 @@ class coronagraph(Optical_System):
             self.perfect_Lyot_pupil = 0
             self.perfect_Lyot_pupil = self.EF_through(
                 entrance_EF=self.clearpup.EF_through())
-
 
     def FQPM(self):
         """ --------------------------------------------------
@@ -816,142 +818,6 @@ class coronagraph(Optical_System):
 
         return lyotplane_after_lyot
 
-    def entrancetodetector(self,
-                           ampl_abb,
-                           phase_abb,
-                           wavelength=None,
-                           noFPM=False,
-                           DM1_active=False,
-                           phaseDM1=0,
-                           DM3_active=False,
-                           phaseDM3=0,
-                           DM1_z_position=0):
-        """ --------------------------------------------------
-        Propagate the electric field through the entire instrument (from Entrance pupil plane to Science focal plane) 
-        for a given wavelength
-        
-        Parameters
-        ----------
-        ampl_abb: amplitude aberrations
-        phase_abb: phase aberrations
-        wavelength : current wavelength in m. Default is the reference wavelength of the coronagraph
-        noFPM : bool (default=False)
-            if True, remove the FPM if one want to measure a un-obstructed PSF
-        DM1_active : bool (default=False). If true we use DM1
-        phase_DM1 : 2D array (default=0)
-                Phase introduced by DM1
-        DM3_active: bool (default=False). If true we use DM3
-        phase_DM3 : 2D array(default=0)
-                Phase introduced by DM3
-        DM1_z_position : float
-                distance between the pupil plane and DM1
-
-        TODO: useless to remove
-        Returns
-        ------
-        exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] 
-            Electric field in the pupil plane a the exit of the system
-        
-        Author: Johan Mazoyer
-        -------------------------------------------------- """
-
-        if wavelength == None:
-            wavelength = self.wavelength_0
-
-        lambda_ratio = wavelength / self.wavelength_0
-
-        # Entrance pupil
-        input_wavefront = self.clearpup.pup * (1 + ampl_abb) * np.exp(
-            1j * phase_abb / lambda_ratio)
-
-        if DM1_active == True:
-            # Propagation in DM1 plane, add DM1 phase
-            # and propagate to next pupil plane (DM3 plane)
-            input_wavefront = prop_pup_DM1_DM3(input_wavefront,
-                                               phaseDM1 / lambda_ratio,
-                                               wavelength, DM1_z_position,
-                                               self.diam_pup_in_m / 2,
-                                               self.prad)
-        if DM3_active == True:
-            input_wavefront = input_wavefront * np.exp(
-                1j * proc.crop_or_pad_image(phaseDM3 / lambda_ratio,
-                                            self.dim_overpad_pupil))
-
-        # Science_focal_plane
-        science_focal_plane = self.todetector(entrance_EF=input_wavefront,
-                                              wavelength=wavelength)
-
-        return science_focal_plane
-
-    def entrancetodetector_Intensity(self,
-                                     ampl_abb,
-                                     phase_abb,
-                                     wavelengths='all',
-                                     noFPM=False,
-                                     DM3_active=False,
-                                     phaseDM3=0,
-                                     DM1_active=False,
-                                     phaseDM1=0,
-                                     DM1_z_position=0):
-        """ --------------------------------------------------
-        Propagate the electric field through the entire instrument (from Entrance pupil plane to Science focal plane) 
-        for a given wavelength
-        TODO: useless to remove
-        
-        Parameters
-        ----------
-        ampl_abb: amplitude aberrations
-        phase_abb: phase aberrations
-        wavelengths : string. defautl 'all'
-                    if 'all': all wavelength
-                    if 'ref': only the reference wavelength
-                            Default is a one element vector containing the reference wavelength of the coronagraph
-        noFPM : bool (default=False)
-            if True, remove the FPM if one want to measure a un-obstructed PSF
-        DM1_active : bool (default=False). If true we use DM1
-        phase_DM1 : 2D array (default=0)
-                Phase introduced by DM1
-        DM3_active: bool (default=False). If true we use DM3
-        phase_DM3 : 2D array(default=0)
-                Phase introduced by DM3
-        DM1_z_position : float
-                distance between the pupil plane and DM1
-
-        TODO
-        # Not super satisfied with this function. This should be generalized by a function doing Optical_system.to_Intensity(phase) function 
-
-        Returns
-        ------
-        Intensity_science_focal_plane : 2D array, 
-            Intensity in the focal plane
-        
-        AUTHOR : Johan Mazoyer
-
-        -------------------------------------------------- """
-
-        if wavelengths == 'all':
-            wavelength_vec = self.wav_vec
-        elif wavelengths == 'ref':
-            wavelength_vec = [self.wavelength_0]
-        else:
-            raise Exception("'wavelengths' keyword can only be 'all' or 'ref'")
-
-        Intensity = np.zeros((self.dim_im, self.dim_im))
-
-        for wav in wavelength_vec:
-            Intensity += np.abs(
-                self.entrancetodetector(ampl_abb,
-                                        phase_abb,
-                                        wavelength=wav,
-                                        noFPM=noFPM,
-                                        DM3_active=DM3_active,
-                                        phaseDM3=phaseDM3,
-                                        DM1_active=DM1_active,
-                                        phaseDM1=phaseDM1,
-                                        DM1_z_position=DM1_z_position))**2
-
-        return Intensity
-
 
 ##############################################
 ##############################################
@@ -1006,8 +872,8 @@ class deformable_mirror(Optical_System):
             return
 
         # We need a pupil in creatingpushact_inpup() and for
-        # which in pup. THIS IS NOT THE ENTRANCE PUPIL, 
-        # this is a clear pupil of the same size 
+        # which in pup. THIS IS NOT THE ENTRANCE PUPIL,
+        # this is a clear pupil of the same size
         self.clearpup = pupil(modelconfig, self.prad)
 
         if self.z_position != 0:
@@ -1028,9 +894,9 @@ class deformable_mirror(Optical_System):
 
         Name_pushact = Name_DM + "_PushActInPup_ray" + str(int(
             self.pradDM)) + "_dimpuparray" + str(int(self.dim_overpad_pupil))
-        
+
         if Measure_and_save == True:
-            # in this case the pushact inpup are 
+            # in this case the pushact inpup are
             # measured and saved
 
             # DM_pushact is always in the DM plane
@@ -1053,25 +919,27 @@ class deformable_mirror(Optical_System):
                              '_inPup_imag.fits',
                              np.imag(self.DM_pushact_inpup),
                              overwrite=True)
-                
+
                 self.DM_pushact_inpup = self.creatingpushact_inpup()
-            
+
             else:
-                # if the DM is in the pupil plane 
+                # if the DM is in the pupil plane
                 self.DM_pushact_inpup = self.DM_pushact
-                # This is a repetition but coherent and 
+                # This is a repetition but coherent and
                 # allows you to easily concatenate wherever are the DMs
 
         else:
-             # in this case the pushact inpup are loaded
-            self.DM_pushact = useful.check_and_load_fits(Model_local_dir , Name_pushact)
+            # in this case the pushact inpup are loaded
+            self.DM_pushact = useful.check_and_load_fits(
+                Model_local_dir, Name_pushact)
 
             if self.z_position != 0:
-                DM_pushact_inpup_real = useful.check_and_load_fits(Model_local_dir , Name_pushact +'_inPup_real')
-                DM_pushact_inpup_imag = useful.check_and_load_fits(Model_local_dir , Name_pushact +'_inPup_imag')
+                DM_pushact_inpup_real = useful.check_and_load_fits(
+                    Model_local_dir, Name_pushact + '_inPup_real')
+                DM_pushact_inpup_imag = useful.check_and_load_fits(
+                    Model_local_dir, Name_pushact + '_inPup_imag')
 
                 self.DM_pushact_inpup = DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
-
 
     def EF_through(self, entrance_EF=1., wavelength=None, DMphase=0.):
         """ --------------------------------------------------
@@ -1370,7 +1238,13 @@ class THD2_testbed(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self, modelconfig, DMconfig, coroconfig, Measure_and_save = True, model_dir='', Model_local_dir=''):
+    def __init__(self,
+                 modelconfig,
+                 DMconfig,
+                 coroconfig,
+                 Measure_and_save=True,
+                 model_dir='',
+                 Model_local_dir=''):
         """ --------------------------------------------------
         Initialize a the DM system and the coronagraph
         
@@ -1402,12 +1276,12 @@ class THD2_testbed(Optical_System):
         self.DM1 = deformable_mirror(modelconfig,
                                      DMconfig,
                                      Name_DM='DM1',
-                                     Measure_and_save =Measure_and_save,
+                                     Measure_and_save=Measure_and_save,
                                      model_dir=model_dir,
                                      Model_local_dir=Model_local_dir)
         self.DM3 = deformable_mirror(modelconfig,
                                      DMconfig,
-                                     Measure_and_save = Measure_and_save,
+                                     Measure_and_save=Measure_and_save,
                                      Name_DM='DM3',
                                      model_dir=model_dir,
                                      Model_local_dir=Model_local_dir)
@@ -1417,7 +1291,6 @@ class THD2_testbed(Optical_System):
 
         # Measure the PSF and store max and Sum
         self.maxPSF, self.sumPSF = self.max_sum_PSF()
-
 
     def EF_through(self,
                    entrance_EF=1.,
@@ -1501,63 +1374,9 @@ class THD2_testbed(Optical_System):
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
-        PSF = self.todetector_Intensity(
-            center_on_pixel=True,
-            noFPM=True)
+        PSF = self.todetector_Intensity(center_on_pixel=True, noFPM=True)
 
         return np.amax(PSF), np.sum(PSF)
-
-
-def prop_pup_DM1_DM3(pupil_wavefront, phase_DM1, wavelength, DM1_z_position,
-                     rad_pup_in_m, rad_pup_in_pixel):
-    """ --------------------------------------------------
-    Propagate the field towards an out-of-pupil plane (DM1 plane),
-    add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
-    TODO : useless, to comment
-
-    Parameters
-    ----------
-    pupil_wavefront : 2D array (float, double or complex)
-                Wavefront in the pupil plane
-
-    phase_DM1 : 2D array
-                Phase introduced by DM1
-    
-    wavelength : float
-                wavelength
-    
-    DM1_z_position : float
-                distance between the pupil plane and DM1
-
-    rad_pup_in_m : float
-                radius of the pupil in meter
-
-    rad_pup_in_pix : int
-                radius of the pupil in pixel
-
-    Returns
-    ------
-    UDM3 : 2D array (complex)
-            Wavefront in the pupil plane after DM1
-            (corresponds to DM3 plane on THD2 bench)
-
-    AUTHOR : Raphaël Galicher
-
-    REVISION HISTORY :
-    Revision 1.1  2021-02-10 Raphaël Galicher
-    Initial revision
-
-    -------------------------------------------------- """
-
-    # Propagation in DM1 plane
-    UDM1, dxout = prop.prop_fresnel(pupil_wavefront, wavelength,
-                                    DM1_z_position, rad_pup_in_m,
-                                    rad_pup_in_pixel)
-    # Add DM1 phase and propagate to next pupil plane (DM3 plane)
-    UDM3, dxpup = prop.prop_fresnel(UDM1 * np.exp(1j * phase_DM1), wavelength,
-                                    -DM1_z_position, rad_pup_in_m,
-                                    rad_pup_in_pixel)
-    return UDM3
 
 
 def actuator_position(measured_grid, measured_ActuN, ActuN,
@@ -1606,10 +1425,10 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
 #     dim_array : dimension of the output array
 
 #     Error on the model of the DM
-        
+
 #     Returns
 #     ------
-#     pushact : 
+#     pushact :
 #     -------------------------------------------------- """
 
 #     # this is not ideal if we want to have DMs with other names
@@ -1730,7 +1549,6 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
 
 #     return pushact
 
-
 # ## Create the influence functions of an out-of-pupil DM
 # ## in the pupil plane
 # def creatingpushact_inpup(DM_pushact, wavelength, corona_struct, z_position):
@@ -1770,3 +1588,54 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
 #         pushact_inpup[i] = Upup
 
 #     return pushact_inpup
+
+# def prop_pup_DM1_DM3(pupil_wavefront, phase_DM1, wavelength, DM1_z_position,
+#                      rad_pup_in_m, rad_pup_in_pixel):
+#     """ --------------------------------------------------
+#     Propagate the field towards an out-of-pupil plane (DM1 plane),
+#     add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
+#     TODO : useless, to comment
+
+#     Parameters
+#     ----------
+#     pupil_wavefront : 2D array (float, double or complex)
+#                 Wavefront in the pupil plane
+
+#     phase_DM1 : 2D array
+#                 Phase introduced by DM1
+
+#     wavelength : float
+#                 wavelength
+
+#     DM1_z_position : float
+#                 distance between the pupil plane and DM1
+
+#     rad_pup_in_m : float
+#                 radius of the pupil in meter
+
+#     rad_pup_in_pix : int
+#                 radius of the pupil in pixel
+
+#     Returns
+#     ------
+#     UDM3 : 2D array (complex)
+#             Wavefront in the pupil plane after DM1
+#             (corresponds to DM3 plane on THD2 bench)
+
+#     AUTHOR : Raphaël Galicher
+
+#     REVISION HISTORY :
+#     Revision 1.1  2021-02-10 Raphaël Galicher
+#     Initial revision
+
+#     -------------------------------------------------- """
+
+#     # Propagation in DM1 plane
+#     UDM1, dxout = prop.prop_fresnel(pupil_wavefront, wavelength,
+#                                     DM1_z_position, rad_pup_in_m,
+#                                     rad_pup_in_pixel)
+#     # Add DM1 phase and propagate to next pupil plane (DM3 plane)
+#     UDM3, dxpup = prop.prop_fresnel(UDM1 * np.exp(1j * phase_DM1), wavelength,
+#                                     -DM1_z_position, rad_pup_in_m,
+#                                     rad_pup_in_pixel)
+#     return UDM3

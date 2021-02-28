@@ -156,8 +156,7 @@ def create_interaction_matrices(parameter_file,
                            "lop/")
     intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) +
                        "nm/p" +
-                       str(round(thd2.corono.diam_pup_in_m * 1e3, 2)) +
-                       "_l" +
+                       str(round(thd2.corono.diam_pup_in_m * 1e3, 2)) + "_l" +
                        str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)) +
                        "/lop_" + str(round(science_sampling, 2)) + "/basis_" +
                        basistr + "/")
@@ -174,21 +173,20 @@ def create_interaction_matrices(parameter_file,
 
     if thd2.DM1.active == True:
         nam2DM = "_2DM"
-    else: 
+    else:
         nam2DM = ""
 
     ####Calculating and Recording PW matrix
     filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
               "_".join(map(str, posprobes)) + "act_" + str(int(amplitudePW)) +
-              "nm_" + str(int(cut)) + "cutsvd_dim" +
-              str(thd2.dim_im) + '_raypup' + str(thd2.prad))
+              "nm_" + str(int(cut)) + "cutsvd_dim" + str(thd2.dim_im) +
+              '_raypup' + str(thd2.prad))
     if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
         print("The matrix " + filePW + " already exist")
         vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
     else:
         print("Recording " + filePW + " ...")
-        vectoressai, showsvd = wsc.createvectorprobes(wavelength_0,
-                                                      thd2,
+        vectoressai, showsvd = wsc.createvectorprobes(wavelength_0, thd2,
                                                       amplitudePW, posprobes,
                                                       thd2.DM3.DM_pushact,
                                                       dim_sampl, cut)
@@ -196,8 +194,7 @@ def create_interaction_matrices(parameter_file,
 
         visuPWMap = ("MapEigenvaluesPW" + "_" + "_".join(map(str, posprobes)) +
                      "act_" + str(int(amplitudePW)) + "nm_dim" +
-                     str(thd2.dim_im) + '_raypup' +
-                     str(thd2.prad))
+                     str(thd2.dim_im) + '_raypup' + str(thd2.prad))
         if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
             print("Recording " + visuPWMap + " ...")
             fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
@@ -232,8 +229,7 @@ def create_interaction_matrices(parameter_file,
     # DM1
     if DM1_active == True:
         DM1_fileWhichInPup = "DM1_Whichactfor" + str(
-            MinimumSurfaceRatioInThePupil) + '_raypup' + str(
-                thd2.prad)
+            MinimumSurfaceRatioInThePupil) + '_raypup' + str(thd2.prad)
         if os.path.exists(intermatrix_dir + DM1_fileWhichInPup +
                           ".fits") == True:
             print("The matrix " + DM1_fileWhichInPup + " already exist")
@@ -296,9 +292,8 @@ def create_interaction_matrices(parameter_file,
         fileDirectMatrix = "DirectMatrix" + string_dhshape
 
         fileDirectMatrix = fileDirectMatrix + str(
-            amplitudeEFC) + "nm_dim" + str(
-                thd2.dim_im) + '_raypup' + str(
-                    thd2.prad) + nam2DM
+            amplitudeEFC) + "nm_dim" + str(thd2.dim_im) + '_raypup' + str(
+                thd2.prad) + nam2DM
 
         if os.path.exists(intermatrix_dir + fileDirectMatrix +
                           ".fits") == True:
@@ -357,8 +352,7 @@ def create_interaction_matrices(parameter_file,
         figSVDEFC = "invertSVDEFC_square" + string_dhshape
 
         figSVDEFC = figSVDEFC + str(amplitudeEFC) + "nm_dim" + str(
-            thd2.dim_im) + '_raypup' + str(
-                thd2.prad) + nam2DM + ".png"
+            thd2.dim_im) + '_raypup' + str(thd2.prad) + nam2DM + ".png"
         plt.savefig(figSVDEFC)
 
     if onbench == True:
@@ -516,9 +510,6 @@ def correctionLoop(parameter_file,
                               model_dir=model_dir,
                               Model_local_dir=Model_local_dir)
 
-    #for stability purose, but will be remove
-    corona_struct = thd2.corono
-
     if onbench == True:
         Labview_dir = Data_dir + "Labview/"
         if not os.path.exists(Labview_dir):
@@ -539,21 +530,19 @@ def correctionLoop(parameter_file,
         DM3_basis = 0
 
     intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
-                       corona_struct.corona_type + "/")
-    if corona_struct.corona_type == 'fqpm':
-        if corona_struct.achrom_fqpm == True:
+                       thd2.corono.corona_type + "/")
+    if thd2.corono.corona_type == 'fqpm':
+        if thd2.corono.achrom_fqpm == True:
             intermatrix_dir = intermatrix_dir + "Achromatic_phase_mask/"
         else:
             intermatrix_dir = intermatrix_dir + "Polychromatic_phase_mask/"
-    if corona_struct.corona_type == 'knife':
-        intermatrix_dir = (intermatrix_dir + corona_struct.coro_position +
-                           "/offset_" + str(corona_struct.knife_coro_offset) +
+    if thd2.corono.corona_type == 'knife':
+        intermatrix_dir = (intermatrix_dir + thd2.corono.coro_position +
+                           "/offset_" + str(thd2.corono.knife_coro_offset) +
                            "lop/")
     intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) +
-                       "nm/p" +
-                       str(round(corona_struct.diam_pup_in_m * 1e3, 2)) +
-                       "_l" +
-                       str(round(corona_struct.diam_lyot_in_m * 1e3, 1)) +
+                       "nm/p" + str(round(thd2.diam_pup_in_m * 1e3, 2)) +
+                       "_l" + str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)) +
                        "/lop_" + str(round(science_sampling, 2)) + "/basis_" +
                        basistr + "/")
 
@@ -570,8 +559,7 @@ def correctionLoop(parameter_file,
         filePW = ("MatrixPW_" + str(dim_sampl) + "x" + str(dim_sampl) + "_" +
                   "_".join(map(str, posprobes)) + "act_" +
                   str(int(amplitudePW)) + "nm_" + str(int(cut)) +
-                  "cutsvd_dim" + str(corona_struct.dim_im) + '_raypup' +
-                  str(corona_struct.prad))
+                  "cutsvd_dim" + str(thd2.dim_im) + '_raypup' + str(thd2.prad))
         if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
             vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
         else:
@@ -589,7 +577,7 @@ def correctionLoop(parameter_file,
 
     # List of DM3 actuators that are inside the pupil
     DM3_fileWhichInPup = "DM3_Whichactfor" + str(
-        MinimumSurfaceRatioInThePupil) + '_raypup' + str(corona_struct.prad)
+        MinimumSurfaceRatioInThePupil) + '_raypup' + str(thd2.prad)
     if os.path.exists(intermatrix_dir + DM3_fileWhichInPup + ".fits") == True:
         DM3_WhichInPupil = fits.getdata(intermatrix_dir + DM3_fileWhichInPup +
                                         ".fits")
@@ -597,15 +585,12 @@ def correctionLoop(parameter_file,
         raise Exception(
             "Please create DM3 Whichactfor matrix before correction")
 
-
     if thd2.DM1.active == True:
         nam2DM = "_2DM"
- 
 
         # List of DM1 actuators that are inside the pupil
         DM1_fileWhichInPup = "DM1_Whichactfor" + str(
-            MinimumSurfaceRatioInThePupil) + '_raypup' + str(
-                corona_struct.prad)
+            MinimumSurfaceRatioInThePupil) + '_raypup' + str(thd2.prad)
         if os.path.exists(intermatrix_dir + DM1_fileWhichInPup +
                           ".fits") == True:
             DM1_WhichInPupil = fits.getdata(intermatrix_dir +
@@ -621,7 +606,7 @@ def correctionLoop(parameter_file,
     fileDirectMatrix = "DirectMatrix" + string_dhshape
 
     fileDirectMatrix = fileDirectMatrix + str(amplitudeEFC) + "nm_dim" + str(
-        corona_struct.dim_im) + '_raypup' + str(corona_struct.prad) + nam2DM
+        thd2.dim_im) + '_raypup' + str(thd2.prad) + nam2DM
 
     if os.path.exists(intermatrix_dir + fileDirectMatrix + ".fits") == True:
         Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix + ".fits")
@@ -645,14 +630,15 @@ def correctionLoop(parameter_file,
     if set_phase_abb == True:
         if set_random_phase == True:
             print("Random phase aberrations upstream from coronagraph")
-            phase_up = phase_ampl.random_phase_map(
-                corona_struct.dim_overpad_pupil, phaserms, rhoc_phase,
-                slope_phase, thd2.entrancepupil)
+            phase_up = phase_ampl.random_phase_map(thd2.dim_overpad_pupil,
+                                                   phaserms, rhoc_phase,
+                                                   slope_phase,
+                                                   thd2.entrancepupil)
         else:
             if phase_abb_filename == '':
                 phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                     int(phaserms * 1e9), int(slope_phase), rhoc_phase,
-                    corona_struct.prad)
+                    thd2.prad)
             if os.path.isfile(Model_local_dir + phase_abb_filename + ".fits"):
                 phase_up = fits.getdata(Model_local_dir + phase_abb_filename +
                                         ".fits")
@@ -660,9 +646,10 @@ def correctionLoop(parameter_file,
                 print(
                     "Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "
                     + phase_abb_filename + ".fits")
-                phase_up = phase_ampl.random_phase_map(
-                    corona_struct.dim_overpad_pupil, phaserms, rhoc_phase,
-                    slope_phase, thd2.entrancepupil.pup)
+                phase_up = phase_ampl.random_phase_map(thd2.dim_overpad_pupil,
+                                                       phaserms, rhoc_phase,
+                                                       slope_phase,
+                                                       thd2.entrancepupil.pup)
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
                              phase_up)
             print(
@@ -675,7 +662,7 @@ def correctionLoop(parameter_file,
 
     if set_amplitude_abb == True:
         ampfinal = phase_ampl.scale_amplitude_abb(
-            model_dir + amplitude_abb + ".fits", corona_struct.prad,
+            model_dir + amplitude_abb + ".fits", thd2.prad,
             thd2.entrancepupil.pup)
     else:
         ampfinal = 0
@@ -684,9 +671,9 @@ def correctionLoop(parameter_file,
     phase_abb_up = phase_up
 
     ## To convert in photon flux
-    # We can probably replace here by transmission ! 
+    # We can probably replace here by transmission !
     contrast_to_photons = (np.sum(thd2.entrancepupil.pup) /
-                           np.sum(corona_struct.lyot_pup.pup) * nb_photons *
+                           np.sum(thd2.corono.lyot_pup.pup) * nb_photons *
                            thd2.maxPSF / thd2.sumPSF)
 
     ## Adding error on the DM model?
@@ -706,29 +693,31 @@ def correctionLoop(parameter_file,
 
     ## Correction loop
     nbiter = len(modevector)
-    imagedetector = np.zeros(
-        (nbiter + 1, corona_struct.dim_im, corona_struct.dim_im))
-    phaseDM3 = np.zeros((nbiter + 1, corona_struct.dim_overpad_pupil,
-                         corona_struct.dim_overpad_pupil))
-    phaseDM1 = np.zeros((nbiter + 1, corona_struct.dim_overpad_pupil,
-                         corona_struct.dim_overpad_pupil))
+    imagedetector = np.zeros((nbiter + 1, thd2.dim_im, thd2.dim_im))
+    phaseDM3 = np.zeros(
+        (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
+    phaseDM1 = np.zeros(
+        (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
     meancontrast = np.zeros(nbiter + 1)
 
     # Initial wavefront in pupil plane
-    imagedetector[0] = (corona_struct.entrancetodetector_Intensity(
-        amplitude_abb_up, phase_abb_up) / thd2.maxPSF)
+    input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
+                                                  ampl_abb=amplitude_abb_up)
+    imagedetector[0] = thd2.todetector_Intensity(
+        entrance_EF=input_wavefront) / thd2.maxPSF
+    # imagedetector[0] = (thd2.entrancetodetector_Intensity(
+    #     amplitude_abb_up, phase_abb_up) / thd2.maxPSF)
 
     # TODO Not good. We should do the creation of a WF from phase + abb at one place only,
     # either inside entrancetodetector fucntion or in a separate functions.
     # I would adovcate doing it in a separate functions becasue we use it at different places
-    input_wavefront = thd2.entrancepupil.pup * (
-        1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
+    # input_wavefront = thd2.entrancepupil.pup * (
+    #     1 + amplitude_abb_up) * np.exp(1j * phase_abb_up)
 
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
-        photondetector = np.zeros(
-            (nbiter + 1, corona_struct.dim_im, corona_struct.dim_im))
+        photondetector = np.zeros((nbiter + 1, thd2.dim_im, thd2.dim_im))
         photondetector[0] = np.random.poisson(imagedetector[0] *
                                               contrast_to_photons)
 
@@ -736,7 +725,7 @@ def correctionLoop(parameter_file,
     plt.figure()
     previousmode = modevector[0]
     k = 0
-    dim_pup = corona_struct.dim_overpad_pupil
+    dim_pup = thd2.dim_overpad_pupil
     for mode in modevector:
         print("--------------------------------------------------")
         print("Iteration number: ", k, " EFC truncation: ", mode)
@@ -747,7 +736,7 @@ def correctionLoop(parameter_file,
                                               posprobes,
                                               pushactonDM3 * amplitudePW *
                                               1e-9 * 2 * np.pi / wavelength_0,
-                                              corona_struct,
+                                              thd2,
                                               dim_sampl,
                                               noise=photon_noise,
                                               numphot=nb_photons)
@@ -756,14 +745,21 @@ def correctionLoop(parameter_file,
 
         elif estimation == "Perfect":
             # If polychromatic, assume a perfect estimation at one wavelength
-            resultatestimation = (corona_struct.entrancetodetector(
-                amplitude_abb_up,
-                phase_abb_up,
-                DM1_active=DM1_active,
-                phaseDM1=phaseDM1[k],
-                DM3_active=True,
-                phaseDM3=phaseDM3[k],
-                DM1_z_position=DM1_z_position) / np.sqrt(thd2.maxPSF))
+            input_wavefront = thd2.EF_from_phase_and_ampl(
+                phase_abb=phase_abb_up, ampl_abb=amplitude_abb_up)
+            resultatestimation = thd2.todetector(
+                entrance_EF=input_wavefront,
+                DM1phase=phaseDM1[k],
+                DM3phase=phaseDM3[k]) / np.sqrt(thd2.maxPSF)
+
+            # resultatestimation = (corona_struct.entrancetodetector(
+            #     amplitude_abb_up,
+            #     phase_abb_up,
+            #     DM1_active=DM1_active,
+            #     phaseDM1=phaseDM1[k],
+            #     DM3_active=True,
+            #     phaseDM3=phaseDM3[k],
+            #     DM1_z_position=DM1_z_position) / np.sqrt(thd2.maxPSF))
 
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
@@ -783,7 +779,8 @@ def correctionLoop(parameter_file,
                         input_wavefront,
                         thd2,
                         dim_sampl,
-                        np.concatenate((thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
+                        np.concatenate(
+                            (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
                         amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
                         maskDH,
                         np.concatenate(
@@ -823,7 +820,14 @@ def correctionLoop(parameter_file,
                 meancontrasttemp = np.zeros(len(Linesearchmode))
                 b = 0
                 for mode in Linesearchmode:
-                    tmp_input_wavefront = input_wavefront
+
+                    # ok ne laisse pas un truc avec 5 tmp_input_wavefront different
+                    # pour un truc pas simple la prochaine fois que tu pars en vacances ! :-p
+                    # J'ai fait une tentative de correction plus bas !
+                    # J'ai commenté tes parties crados et fait une fait une tentative de
+                    # correction plus bas !
+
+                    # tmp_input_wavefront = input_wavefront
 
                     SVD, SVD_trunc, invertGDH = wsc.invertSVD(
                         Gmatrix,
@@ -839,25 +843,26 @@ def correctionLoop(parameter_file,
 
                         solution1 = wsc.solutionEFC(
                             maskDH, resultatestimation, invertGDH,
-                            np.concatenate(
-                                (DM3_WhichInPupil,
-                                 thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
-                            thd2.DM3.DM_pushact.shape[0] + thd2.DM1.DM_pushact.shape[0])
+                            np.concatenate((DM3_WhichInPupil,
+                                            thd2.DM3.DM_pushact.shape[0] +
+                                            DM1_WhichInPupil)),
+                            thd2.DM3.DM_pushact.shape[0] +
+                            thd2.DM1.DM_pushact.shape[0])
                         # Phase to apply on DM1
                         apply_on_DM1 = wsc.apply_on_DM(
                             solution1[pushactonDM3.shape[0]:],
-                            thd2.DM1.DM_pushact) * (-gain * amplitudeEFC * 2 * np.pi *
-                                            1e-9 / wavelength_0)
+                            thd2.DM1.DM_pushact) * (-gain * amplitudeEFC * 2 *
+                                                    np.pi * 1e-9 /
+                                                    wavelength_0)
 
-                        tmp_input_wavefront = instr.prop_pup_DM1_DM3(
-                            tmp_input_wavefront, apply_on_DM1, wavelength_0,
-                            DM1_z_position, corona_struct.diam_pup_in_m / 2,
-                            corona_struct.prad)
+                        # tmp_input_wavefront = instr.prop_pup_DM1_DM3(
+                        #     tmp_input_wavefront, apply_on_DM1, wavelength_0,
+                        #     DM1_z_position, thd2.diam_pup_in_m / 2, thd2.prad)
+
                     else:
-                        solution1 = wsc.solutionEFC(maskDH, resultatestimation,
-                                                    invertGDH,
-                                                    DM3_WhichInPupil,
-                                                    thd2.DM3.DM_pushact.shape[0])
+                        solution1 = wsc.solutionEFC(
+                            maskDH, resultatestimation, invertGDH,
+                            DM3_WhichInPupil, thd2.DM3.DM_pushact.shape[0])
 
                 # Phase to apply on DM3
                     apply_on_DM3 = wsc.apply_on_DM(
@@ -868,21 +873,39 @@ def correctionLoop(parameter_file,
                     # Propagation in DM1 plane, add DM1 phase,
                     # propagate to next pupil plane (DM3 plane),
                     # add DM3 phase and propagate to detector
-                    # imagedetectortemp=(corona_struct.entrancetodetector_Intensity(
+                    # imagedetectortemp=(corona_struct.im_apodtodetector_chrom(
                     #             amplitude_abb_up, phase_abb_up,
                     #             DM3_active = True, phaseDM3 = apply_on_DM3,
                     #             DM1_active=DM1_active,phaseDM1=apply_on_DM1,
                     #             DM1_z_position=DM1_z_position)/corona_struct.maxPSF)
 
                     # # Add DM3 phase
-                    tmp_input_wavefront = tmp_input_wavefront * np.exp(
-                        1j * proc.crop_or_pad_image(
-                            apply_on_DM3, corona_struct.dim_overpad_pupil))
+                    # ARRRRRGH EVERYTHING IS CALLED tmp_input_wavefront !! AAH
 
-                    imagedetectortemp = (abs(
-                        corona_struct.todetector(
-                            entrance_EF=tmp_input_wavefront))**2 /
-                                         thd2.maxPSF)
+                    # tmp_input_wavefront = tmp_input_wavefront * np.exp(
+                    #         1j * instr.cut_image(apply_on_DM3,
+                    #         corona_struct.entrancepupil.shape[1]))
+
+                    # imagedetectortemp = (
+                    #     abs(corona_struct.apodtodetector(
+                    #         tmp_input_wavefront))**2 /corona_struct.maxPSF)
+
+                    # imagedetectortemp = (abs(
+                    #     corona_struct.todetector(
+                    #         entrance_EF=tmp_input_wavefront))**2 /
+                    #                      thd2.maxPSF)
+
+                    # I think this will work based on waht you wrote after
+                    if DM1_active == True:
+                        phaseDM1 = proc.crop_or_pad_image(
+                            apply_on_DM1, dim_pup)
+                    else:
+                        phaseDM1 = 0.
+                    phaseDM3 = proc.crop_or_pad_image(apply_on_DM3, dim_pup)
+                    imagedetectortemp = thd2.todetector_Intensity(
+                        entrance_EF=input_wavefront,
+                        DM1phase=phaseDM1,
+                        phaseDM3=phaseDM3) / thd2.maxPSF
 
                     meancontrasttemp[b] = np.mean(
                         imagedetectortemp[np.where(maskDHcontrast != 0)])
@@ -911,9 +934,11 @@ def correctionLoop(parameter_file,
             if DM1_active == True:
                 solution1 = wsc.solutionEFC(
                     maskDH, resultatestimation, invertGDH,
-                    np.concatenate((DM3_WhichInPupil,
-                                    thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
-                    thd2.DM3.DM_pushact.shape[0] + thd2.DM1.DM_pushact.shape[0])
+                    np.concatenate(
+                        (DM3_WhichInPupil,
+                         thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                    thd2.DM3.DM_pushact.shape[0] +
+                    thd2.DM1.DM_pushact.shape[0])
             else:
                 solution1 = wsc.solutionEFC(maskDH, resultatestimation,
                                             invertGDH, DM3_WhichInPupil,
@@ -935,9 +960,11 @@ def correctionLoop(parameter_file,
             if DM1_active == True:
                 solution1 = wsc.solutionEM(
                     maskDH, resultatestimation, invertM0, G,
-                    np.concatenate((DM3_WhichInPupil,
-                                    thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
-                    thd2.DM3.DM_pushact.shape[0] + thd2.DM1.DM_pushact.shape[0])
+                    np.concatenate(
+                        (DM3_WhichInPupil,
+                         thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                    thd2.DM3.DM_pushact.shape[0] +
+                    thd2.DM1.DM_pushact.shape[0])
             else:
                 solution1 = wsc.solutionEM(maskDH, resultatestimation,
                                            invertM0, G, DM3_WhichInPupil,
@@ -947,9 +974,11 @@ def correctionLoop(parameter_file,
             if DM1_active == True:
                 solution1 = wsc.solutionSteepest(
                     maskDH, resultatestimation, M0, G,
-                    np.concatenate((DM3_WhichInPupil,
-                                    thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
-                    thd2.DM3.DM_pushact.shape[0] + thd2.DM1.DM_pushact.shape[0])
+                    np.concatenate(
+                        (DM3_WhichInPupil,
+                         thd2.DM3.DM_pushact.shape[0] + DM1_WhichInPupil)),
+                    thd2.DM3.DM_pushact.shape[0] +
+                    thd2.DM1.DM_pushact.shape[0])
             else:
                 solution1 = wsc.solutionSteepest(maskDH, resultatestimation,
                                                  M0, G, DM3_WhichInPupil,
@@ -966,9 +995,10 @@ def correctionLoop(parameter_file,
             # # Propagation in DM1 plane, add DM1 phase
             # # and propagate to next pupil plane (DM3 plane)
             # TODO Not good, 2 very different stuff (wavefront before and after the DM system) have the same name
-            input_wavefront = instr.prop_pup_DM1_DM3(
-                input_wavefront, apply_on_DM1, wavelength_0, DM1_z_position,
-                corona_struct.diam_pup_in_m / 2., corona_struct.prad)
+            # to raphael: I think this is not used anymore see comment bellow
+            # input_wavefront = instr.prop_pup_DM1_DM3(
+            #     input_wavefront, apply_on_DM1, wavelength_0, DM1_z_position,
+            #     thd2.diam_pup_in_m / 2., thd2.prad)
 
         # Phase to apply on DM3
         apply_on_DM3 = wsc.apply_on_DM(
@@ -978,9 +1008,8 @@ def correctionLoop(parameter_file,
         phaseDM3[k + 1] = phaseDM3[k] + proc.crop_or_pad_image(
             apply_on_DM3, dim_pup)
 
-        # TODO Not good, 2  different stuff have the same name
-        input_wavefront = input_wavefront * np.exp(
-            1j * proc.crop_or_pad_image(apply_on_DM3, dim_pup))
+        # input_wavefront = input_wavefront * np.exp(
+        #     1j * proc.crop_or_pad_image(apply_on_DM3, dim_pup))
 
         # imagedetector[k + 1] = (
         #     abs(corona_struct.apodtodetector(input_wavefront))**2 /
@@ -989,14 +1018,26 @@ def correctionLoop(parameter_file,
         # Propagation in DM1 plane, add DM1 phase,
         # propagate to next pupil plane (DM3 plane),
         # add DM3 phase and propagate to detector
-        imagedetector[k + 1] = (corona_struct.entrancetodetector_Intensity(
-            amplitude_abb_up,
-            phase_abb_up,
-            DM1_active=DM1_active,
-            phaseDM1=phaseDM1[k + 1],
-            DM3_active=True,
-            phaseDM3=phaseDM3[k + 1],
-            DM1_z_position=DM1_z_position) / thd2.maxPSF)
+
+        # # TODO Not good, everythin is call input_wavefront
+        # This is not understandable !
+        # I think this part was not cleaned and is not used anymore
+        # Because imagedetector[k + 1] does not use input_wavefront
+        # but directly DMphase.
+
+        # this is before you left for holiday : it does not use input_wavefront :
+        # imagedetector[k + 1]=(corona_struct.im_apodtodetector_chrom(
+        #                 amplitude_abb_up, phase_abb_up,
+        #                 DM3_active = True, phaseDM3 = phaseDM3[k + 1],
+        #                 DM1_active=DM1_active,phaseDM1=phaseDM1[k + 1],
+        #                 DM1_z_position=DM1_z_position)/corona_struct.maxPSF)
+        # this is after:
+        input_wavefront = thd2.EF_from_phase_and_ampl(
+            phase_abb=phase_abb_up, ampl_abb=amplitude_abb_up)
+        imagedetector[k + 1] = thd2.todetector_Intensity(
+            entrance_EF=input_wavefront,
+            DM1phase=phaseDM1[k + 1],
+            DM3phase=phaseDM3[k + 1]) / thd2.maxPSF
 
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(maskDHcontrast != 0)])
@@ -1016,16 +1057,13 @@ def correctionLoop(parameter_file,
     ## SAVING...
     header = useful.from_param_to_header(config)
     if DM1_active == True:
-        cut_phaseDM1 = np.zeros(
-            (nbiter + 1, 2 * corona_struct.prad, 2 * corona_struct.prad))
+        cut_phaseDM1 = np.zeros((nbiter + 1, 2 * thd2.prad, 2 * thd2.prad))
         for it in np.arange(nbiter + 1):
             cut_phaseDM1[it] = proc.crop_or_pad_image(phaseDM1[it],
-                                                      2 * corona_struct.prad)
-    cut_phaseDM3 = np.zeros(
-        (nbiter + 1, 2 * corona_struct.prad, 2 * corona_struct.prad))
+                                                      2 * thd2.prad)
+    cut_phaseDM3 = np.zeros((nbiter + 1, 2 * thd2.prad, 2 * thd2.prad))
     for it in np.arange(nbiter + 1):
-        cut_phaseDM3[it] = proc.crop_or_pad_image(phaseDM3[it],
-                                                  2 * corona_struct.prad)
+        cut_phaseDM3[it] = proc.crop_or_pad_image(phaseDM3[it], 2 * thd2.prad)
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
     fits.writeto(result_dir + current_time_str + "_Detector_Images" + ".fits",
