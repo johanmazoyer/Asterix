@@ -478,14 +478,15 @@ class coronagraph(Optical_System):
         #coronagraph
         self.corona_type = coroconfig["corona_type"].lower()
 
-        # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
-        self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
-        for i, wav in enumerate(self.wav_vec):
-            self.dim_fp_fft[i] = int(
-                np.ceil(self.prad * self.science_sampling * self.diam_lyot_in_m
-                        / self.diam_pup_in_m * self.wavelength_0 / wav)) * 2
-            # we take the ceil to be sure that we measure at least the good resolution
-            # We do not need to be exact, the mft in science_focal_plane will be
+        if self.corona_type == "fqpm" or self.corona_type == "knife":
+            # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
+            self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
+            for i, wav in enumerate(self.wav_vec):
+                self.dim_fp_fft[i] = int(
+                    np.ceil(self.prad * self.science_sampling * self.diam_lyot_in_m
+                            / self.diam_pup_in_m * self.wavelength_0 / wav)) * 2
+                # we take the ceil to be sure that we measure at least the good resolution
+                # We do not need to be exact, the mft in science_focal_plane will be
 
         if self.corona_type == "fqpm":
             self.prop_apod2lyot = 'fft'
@@ -513,18 +514,6 @@ class coronagraph(Optical_System):
             phasevortex = 0  # to be defined
             self.FPmsk = np.exp(1j * phasevortex)
             self.perfect_coro = True
-
-        #radius of the pupil in pixel in DM1 plane
-        #(updated in Main_EFC_THD) Should not be there !
-        self.pradDM1 = self.prad
-
-        # We define all the pupil
-        # We should remove the entrance pupil from the coronostructure,
-        # this is "before the DMs" so probably not relevant here.
-        # self.entrancepupil = pupil(modelconfig,
-        #                            self.prad,
-        #                            directory=model_dir,
-        #                            filename=modelconfig["filename_instr_pup"])
 
         # We need a pupil only to measure the response
         # of the coronograph to a clear pupil to remove it
@@ -569,7 +558,14 @@ class coronagraph(Optical_System):
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
         else:
-            raise Exception("FQPM shuold not be simuated wit MFT")
+            maxdimension_array_fpm = self.dim_im
+            print("you should really not simulate FQPM with MFT")
+
+            self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
+            for i, wav in enumerate(self.wav_vec):
+                self.dim_fp_fft[i] = int(
+                    np.ceil(self.prad * self.science_sampling * self.diam_lyot_in_m
+                            / self.diam_pup_in_m * self.wavelength_0 / wav)) * 2
 
         xx, yy = np.meshgrid(
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
@@ -585,12 +581,19 @@ class coronagraph(Optical_System):
 
         fqpm = list()
         for i, wav in enumerate(self.wav_vec):
-            phase = np.zeros((self.dim_fp_fft[i], self.dim_fp_fft[i]))
+            if self.prop_apod2lyot == "fft": 
+                dim_fp = self.dim_fp_fft[i]
+            else:
+                dim_fp = self.dim_im
+                print("really you should not do that")
+
+            phase = np.zeros((dim_fp, dim_fp))
             fqpm_thick_cut = proc.crop_or_pad_image(fqpm_thick,
-                                                    self.dim_fp_fft[i])
+                                                    dim_fp)
             phase[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
             if self.achrom_fqpm == False:
                 phase = phase * self.wavelength_0 / wav
+            
             fqpm.append(np.exp(1j * phase))
 
         return fqpm
@@ -778,27 +781,31 @@ class coronagraph(Optical_System):
                                      ) * maskshifthalfpix_fpm_inverse
             # this is ugly as sh*t but it works to be coherent with other convention in the code
 
-        # elif self.prop_apod2lyot == "mft":
-        #Apod plane to focal plane
-        # currently MFT leaves a shift outside pupil
-        # We need to code a anti-shift for mft-1 !
+        elif self.prop_apod2lyot == "mft":
+        # Apod plane to focal plane
+        # We need to code a anti-shift in mft-1 !
 
-        # corono_focal_plane = prop.mft(input_wavefront_after_apod,
-        #                               self.dim_overpad_pupil,
-        #                               self.dim_im,
-        #                               self.dim_im / self.science_sampling *
-        #                               lambda_ratio,
-        #                               xshift=Psf_offset[0],
-        #                               yshift=Psf_offset[1],
-        #                               inv=1)
+            maskshifthalfpix_fpm_inverse = phase_ampl.shift_phase_ramp(
+                self.dim_overpad_pupil,
+                -0.5 / self.science_sampling * lambda_ratio,
+                -0.5 / self.science_sampling * lambda_ratio)
+            
+            corono_focal_plane = prop.mft(input_wavefront_after_apod,
+                                        2*self.prad,
+                                        self.dim_im,
+                                        self.dim_im / self.science_sampling *
+                                        lambda_ratio,
+                                        xshift=-0.5,
+                                        yshift=-0.5,
+                                        inv=1)
 
-        # # Focal plane to Lyot plane
-        # lyotplane_before_lyot = prop.mft(
-        #     corono_focal_plane * FPmsk,
-        #     self.dim_im,
-        #     self.dim_overpad_pupil,
-        #     self.dim_im / self.science_sampling * lambda_ratio,
-        #     inv=-1)
+            # Focal plane to Lyot plane
+            lyotplane_before_lyot = proc.crop_or_pad_image(prop.mft(
+                corono_focal_plane * FPmsk,
+                self.dim_im,
+                2*self.prad,
+                self.dim_im / self.science_sampling * lambda_ratio,
+                inv=-1), self.dim_overpad_pupil)*maskshifthalfpix_fpm_inverse
 
         else:
             raise Exception(
