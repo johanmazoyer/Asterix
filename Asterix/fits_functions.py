@@ -88,7 +88,8 @@ def check_and_load_fits(directory, filename):
     if os.path.exists(directory + filename + '.fits') == True:
         return fits.getdata(directory + filename + '.fits')
     else: 
-        raise Exception("You need to create " + filename + ".fits before loading it")
+        raise Exception("You need to create " + filename + ".fits before loading it." +
+    "Please run the initialization with 'Measure_and_save = True' before")
 
 
 def from_param_to_header(config):
