@@ -286,16 +286,16 @@ class Optical_System:
         """
         if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
             raise Exception(
-                "phase_abb and ampl_abb must be real arrays, not complex")
+                "phase_abb and ampl_abb must be real arrays or float, not complex")
 
         if (phase_abb == 0.).all() and (ampl_abb == 0).all():
             return 1.
-        else:
-            if wavelength == None:
-                wavelength = self.wavelength_0
-            lambda_ratio = wavelength / self.wavelength_0
+        
+        if wavelength == None:
+            wavelength = self.wavelength_0
+        lambda_ratio = wavelength / self.wavelength_0
 
-            return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
+        return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
 
 
 ##############################################
@@ -870,16 +870,14 @@ class deformable_mirror(Optical_System):
 
         self.exitpup_rad = self.prad
 
-        #radius of the pupil in pixel in the DM plane.
-        # by default the size of the pupil, changed if z_position != 0
-        self.pradDM = self.prad
-
-        self.z_position = DMconfig[Name_DM + "_z_position"]
-        self.active = DMconfig[Name_DM + "_active"]
-        self.MinimumSurfaceRatioInThePupil = DMconfig[
+        self.Name_DM = Name_DM
+        self.z_position = DMconfig[self.Name_DM + "_z_position"]
+        self.active = DMconfig[self.Name_DM + "_active"]
+        MinimumSurfaceRatioInThePupil = DMconfig[
             "MinimumSurfaceRatioInThePupil"]
 
         if self.active == False:
+            print(self.Name_DM + ' is not activated')
             return
 
         # We need a pupil in creatingpushact_inpup() and for
@@ -904,70 +902,37 @@ class deformable_mirror(Optical_System):
                 raise Exception(
                     "Need to enhance the pupil size in pixel for Fresnel propagation"
                 )
-
-        Name_pushact = Name_DM + "_PushActInPup_ray" + str(int(
-            self.pradDM)) + "_dimpuparray" + str(int(self.dim_overpad_pupil))
-
-        Name_WhichInPup = Name_DM + "_Whichactfor" + str(
-            self.MinimumSurfaceRatioInThePupil) + '_raypup' + str(self.prad)
-
-        if Measure_and_save == True:
-            # in this case the pushact inpup are
-            # measured and saved
-
-            # DM_pushact is always in the DM plane
-            self.DM_pushact = self.creatingpushact(model_dir,
-                                                   DMconfig,
-                                                   Name_DM=Name_DM)
-            fits.writeto(Model_local_dir + Name_pushact + '.fits',
-                         self.DM_pushact,
-                         overwrite=True)
-
-            if self.z_position != 0:
-                # DM_pushact_inpup is always in the pupil plane
-                self.DM_pushact_inpup = self.creatingpushact_inpup()
-
-                fits.writeto(Model_local_dir + Name_pushact +
-                             '_inPup_real.fits',
-                             np.real(self.DM_pushact_inpup),
-                             overwrite=True)
-                fits.writeto(Model_local_dir + Name_pushact +
-                             '_inPup_imag.fits',
-                             np.imag(self.DM_pushact_inpup),
-                             overwrite=True)
-
-                self.DM_pushact_inpup = self.creatingpushact_inpup()
-
-            else:
-                # if the DM is in the pupil plane
-                self.DM_pushact_inpup = self.DM_pushact
-                # This is a repetition but coherent and
-                # allows you to easily concatenate wherever are the DMs
-
-            self.WhichInPupil = creatingWhichinPupil(
-                self.DM_pushact_inpup, self.clearpup.pup,
-                self.MinimumSurfaceRatioInThePupil)
-
-            fits.writeto(Model_local_dir + Name_WhichInPup + '.fits',
-                         self.WhichInPupil,
-                         overwrite=True)
-
         else:
-            # in this case the pushact inpup and WhichInPup are loaded
+            # radius of the pupil in pixel in the DM plane.
+            # by default the size of the pupil
+            self.pradDM = self.prad
 
-            self.WhichInPupil = useful.check_and_load_fits(
-                Model_local_dir, Name_WhichInPup)
+        # create, save or load the DM_pushact and DM_pushact_inpup functions 
+        # from the influence function
 
-            self.DM_pushact = useful.check_and_load_fits(
-                Model_local_dir, Name_pushact)
+        # DM_pushact is always in the DM plane
+        self.DM_pushact = self.creatingpushact(
+            DMconfig,
+            Measure_and_save=Measure_and_save,
+            model_dir=model_dir,
+            Model_local_dir=Model_local_dir)
 
-            if self.z_position != 0:
-                DM_pushact_inpup_real = useful.check_and_load_fits(
-                    Model_local_dir, Name_pushact + '_inPup_real')
-                DM_pushact_inpup_imag = useful.check_and_load_fits(
-                    Model_local_dir, Name_pushact + '_inPup_imag')
+        if self.z_position != 0: 
+            # DM_pushact_inpup is always in the pupil plane
+            self.DM_pushact_inpup = self.creatingpushact_inpup(
+                Measure_and_save=Measure_and_save,
+                Model_local_dir=Model_local_dir)
+        else:
+            # if the DM plane IS the pupil plane
+            self.DM_pushact_inpup = self.DM_pushact
+            # This is a duplicate of the same file but coherent and
+            # allows you to easily concatenate wherever are the DMs
 
-                self.DM_pushact_inpup = DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
+        # create or load 'which actuators are in pupil'
+        self.WhichInPupil = self.creatingWhichinPupil(
+            MinimumSurfaceRatioInThePupil,
+            Measure_and_save=Measure_and_save,
+            Model_local_dir=Model_local_dir)
 
     def EF_through(self, entrance_EF=1., wavelength=None, DMphase=0.):
         """ --------------------------------------------------
@@ -1017,10 +982,6 @@ class deformable_mirror(Optical_System):
         if self.active == False or (DMphase == 0.).all():
             return entrance_EF
 
-        if isinstance(DMphase, float) or isinstance(DMphase, np.float):
-            DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
-                              np.float(DMphase))
-
         lambda_ratio = wavelength / self.wavelength_0
 
         if self.z_position == 0:
@@ -1030,48 +991,60 @@ class deformable_mirror(Optical_System):
                                                 DMphase / lambda_ratio,
                                                 wavelength)
 
-    def creatingpushact(self, model_dir, DMconfig, Name_DM='DM1'):
+    def creatingpushact(self,
+                        DMconfig,
+                        Measure_and_save=True,
+                        model_dir='',
+                        Model_local_dir=''):
         """ --------------------------------------------------
         OPD map induced in the DM plane for each actuator
 
         Parameters
         ----------
-        model_dir : directory where the influence function of the DM is saved
-        diam_pup_in_m : diameter of the pupil in meter
-        diam_pup_in_pix : radius of the pupil in pixels
         DMconfig : structure with all information on DMs
-        dim_array : dimension of the output array
+        Measure_and_save : bool, default = True if true, we measure and save the pushact functions
+        model_dir: directory to find Measured positions for each actuator in pixel and 
+                    influence fun. ie Things you cannot measure yourself and need to be given
+        Model_local_dir: directory to save things you can measure yourself 
+                    and can save to save time
 
         Error on the model of the DM
 
-        This function needs to be severely cleaned (names and comment). 
-        I do it quickly to show how the  DM class is a good idea but leave 
-        the cleaning for later (it's late and saturday night)
+        This function can to cleaned (names and comment). 
             
         Returns
         ------
         pushact : 
         -------------------------------------------------- """
 
+        Name_pushact_fits = self.Name_DM + "_PushActInPup_radpup" + str(
+            int(self.pradDM)) + "_dimpuparray" + str(
+                int(self.dim_overpad_pupil))
+
+        if Measure_and_save == False:
+            return useful.check_and_load_fits(Model_local_dir,
+                                              Name_pushact_fits)
+
         diam_pup_in_pix = 2 * self.prad
         diam_pup_in_m = self.diam_pup_in_m
         dim_array = self.dim_overpad_pupil
 
-        pitchDM = DMconfig[Name_DM + "_pitch"]
-        filename_ActuN = DMconfig[Name_DM + "_filename_ActuN"]
-        filename_grid_actu = DMconfig[Name_DM + "_filename_grid_actu"]
-        filename_actu_infl_fct = DMconfig[Name_DM + "_filename_actu_infl_fct"]
-        ActuN = DMconfig[Name_DM + "_ActuN"]
-        y_ActuN = DMconfig[Name_DM + "_y_ActuN"]
-        x_ActuN = DMconfig[Name_DM + "_x_ActuN"]
+        pitchDM = DMconfig[self.Name_DM + "_pitch"]
+        filename_ActuN = DMconfig[self.Name_DM + "_filename_ActuN"]
+        filename_grid_actu = DMconfig[self.Name_DM + "_filename_grid_actu"]
+        filename_actu_infl_fct = DMconfig[self.Name_DM +
+                                          "_filename_actu_infl_fct"]
+        ActuN = DMconfig[self.Name_DM + "_ActuN"]
+        y_ActuN = DMconfig[self.Name_DM + "_y_ActuN"]
+        x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
         xy_ActuN = [x_ActuN, y_ActuN]
 
-        misregistration = DMconfig[Name_DM + "_misregistration"]
+        misregistration = DMconfig[self.Name_DM + "_misregistration"]
         if misregistration == True:
-            xerror = DMconfig[Name_DM + "_xerror"]
-            yerror = DMconfig[Name_DM + "_yerror"]
-            angerror = DMconfig[Name_DM + "_angerror"]
-            gausserror = DMconfig[Name_DM + "_gausserror"]
+            xerror = DMconfig[self.Name_DM + "_xerror"]
+            yerror = DMconfig[self.Name_DM + "_yerror"]
+            angerror = DMconfig[self.Name_DM + "_angerror"]
+            gausserror = DMconfig[self.Name_DM + "_gausserror"]
         else:
             xerror = 0.
             yerror = 0.
@@ -1172,28 +1145,49 @@ class deformable_mirror(Optical_System):
 
             pushact[i] = Psivector
 
+        if Measure_and_save == True:
+            fits.writeto(Model_local_dir + Name_pushact_fits + '.fits',
+                         pushact,
+                         overwrite=True)
+
         return pushact
 
-    def creatingpushact_inpup(self):
+    def creatingpushact_inpup(self,
+                              Measure_and_save=True,
+                              Model_local_dir=''):
         """ --------------------------------------------------
         OPD map induced by out-of-pupil DM in the pupil plane for each actuator
         ## Create the influence functions of an out-of-pupil DM
         ## in the pupil plane
 
-        TODO: Can use prop_pup_to_DM_and_back function to avoid repetition
-
         Parameters
         ----------
         DM_pushact : OPD map induced by the DM in the DM plane
-
+        Measure_and_save : bool, default = True if true, we measure and save the pushact functions
+        model_dir: directory to find Measured positions for each actuator in pixel and 
+                    influence fun. ie Things you cannot measure yourself and need to be given
+        Model_local_dir: directory to save things you can measure yourself 
+                    and can save to save time
         Returns
         ------
         pushact_inpup : Map of the complex phase induced in pupil plane
         -------------------------------------------------- """
 
+        Name_pushact_fits = self.Name_DM + "_PushActInPup_radpup" + str(
+            int(self.pradDM)) + "_dimpuparray" + str(
+                int(self.dim_overpad_pupil))
+
+        if Measure_and_save == False:
+            DM_pushact_inpup_real = useful.check_and_load_fits(
+                Model_local_dir, Name_pushact_fits + '_inPup_real')
+            DM_pushact_inpup_imag = useful.check_and_load_fits(
+                Model_local_dir, Name_pushact_fits + '_inPup_imag')
+
+            return DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
+
         dim_entrancepupil = self.dim_overpad_pupil
         # do we really need a pupil here ?!? seems to me it would be more general
-        # with all the actuators and not really shorter.
+        # with all the actuators ?
         EF_inDMplane, dxout = prop.prop_fresnel(self.clearpup.pup,
                                                 self.wavelength_0,
                                                 self.z_position,
@@ -1211,7 +1205,62 @@ class deformable_mirror(Optical_System):
                 self.prad)
             pushact_inpup[i] = EF_back_in_pup_plane
 
+        if Measure_and_save == True:
+            fits.writeto(Model_local_dir + Name_pushact_fits + '_inPup_real.fits',
+                         np.real(pushact_inpup),
+                         overwrite=True)
+            fits.writeto(Model_local_dir + Name_pushact_fits + '_inPup_imag.fits',
+                         np.imag(pushact_inpup),
+                         overwrite=True)
+
         return pushact_inpup
+
+    def creatingWhichinPupil(self,
+                             cutinpupil,
+                             Measure_and_save=True,
+                             Model_local_dir=''):
+        """ --------------------------------------------------
+        Create a vector with the index of all the actuators located in the entrance pupil
+        
+        Parameters:
+        ----------
+        cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account (between 0 and 1, in ratio of an actuator perfectly centered in the entrance pupil)
+        Measure_and_save : bool, default = True if true, we measure and save the WhichInPup act.
+        Model_local_dir: directory to save things you can measure yourself 
+                    and can save to save time
+        Return:
+        ------
+        WhichInPupil: 1D array, index of all the actuators located inside the pupil
+        -------------------------------------------------- """
+
+        Name_WhichInPup_fits = self.Name_DM + "_Whichact_for" + str(
+            cutinpupil) + '_radpup' + str(self.prad)
+
+        if Measure_and_save == False:
+            return useful.check_and_load_fits(Model_local_dir, Name_WhichInPup_fits)
+
+        WhichInPupil = []
+
+        # TODO to check if we need this line. thisis important because if the
+        # pupil is no the size we expect it, we might exclude act that should not
+        tmp_entrancepupil = proc.crop_or_pad_image(
+            self.clearpup.pup, self.DM_pushact_inpup.shape[2])
+
+        for i in np.arange(self.DM_pushact_inpup.shape[0]):
+            Psivector = self.DM_pushact_inpup[i]
+            cut = cutinpupil * np.sum(np.abs(Psivector))
+
+            if np.sum(Psivector * tmp_entrancepupil) > cut:
+                WhichInPupil.append(i)
+
+        WhichInPupil = np.array(WhichInPupil)
+
+        if Measure_and_save == True:
+            fits.writeto(Model_local_dir + Name_WhichInPup_fits + '.fits',
+                         WhichInPupil,
+                         overwrite=True)
+
+        return WhichInPupil
 
     def prop_pup_to_DM_and_back(self, entrance_EF, phase_DM, wavelength):
         """ --------------------------------------------------
@@ -1366,16 +1415,6 @@ class THD2_testbed(Optical_System):
         if wavelength == None:
             wavelength = self.wavelength_0
 
-        if isinstance(DM1phase, float) or isinstance(DM1phase, np.float):
-            DM1phase = np.full(
-                (self.dim_overpad_pupil, self.dim_overpad_pupil),
-                np.float(DM1phase))
-
-        if isinstance(DM3phase, float) or isinstance(DM3phase, np.float):
-            DM3phase = np.full(
-                (self.dim_overpad_pupil, self.dim_overpad_pupil),
-                np.float(DM3phase))
-
         EF_afterentrancepup = self.entrancepupil.EF_through(
             entrance_EF=entrance_EF, wavelength=wavelength)
 
@@ -1433,31 +1472,3 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
             ActuN)] + measured_ActuN
     simu_grid = simu_grid * sampling_simu_over_measured
     return simu_grid
-
-
-def creatingWhichinPupil(pushact, entrancepupil, cutinpupil):
-    """ --------------------------------------------------
-    Create a vector with the index of all the actuators located in the entrance pupil
-    
-    Parameters:
-    ----------
-    pushact: 3D-array, opd created by the pokes of all actuators in the DM.
-    entrancepupil: 2D-array, entrance pupil shape
-    cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account (between 0 and 1, in ratio of an actuator perfectly centered in the entrance pupil)
-    
-    Return:
-    ------
-    WhichInPupil: 1D array, index of all the actuators located inside the pupil
-    -------------------------------------------------- """
-    WhichInPupil = []
-    tmp_entrancepupil = proc.crop_or_pad_image(entrancepupil, pushact.shape[2])
-
-    for i in np.arange(pushact.shape[0]):
-        Psivector = pushact[i]
-        cut = cutinpupil * np.sum(np.abs(Psivector))
-
-        if np.sum(Psivector * tmp_entrancepupil) > cut:
-            WhichInPupil.append(i)
-
-    WhichInPupil = np.array(WhichInPupil)
-    return WhichInPupil
