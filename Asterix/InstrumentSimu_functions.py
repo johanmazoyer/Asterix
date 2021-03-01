@@ -286,11 +286,12 @@ class Optical_System:
         """
         if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
             raise Exception(
-                "phase_abb and ampl_abb must be real arrays or float, not complex")
+                "phase_abb and ampl_abb must be real arrays or float, not complex"
+            )
 
         if (phase_abb == 0.).all() and (ampl_abb == 0).all():
             return 1.
-        
+
         if wavelength == None:
             wavelength = self.wavelength_0
         lambda_ratio = wavelength / self.wavelength_0
@@ -844,7 +845,8 @@ class deformable_mirror(Optical_System):
                  modelconfig,
                  DMconfig,
                  Name_DM='DM3',
-                 Measure_and_save=True,
+                 load_fits=False,
+                 save_fits=False,
                  model_dir='',
                  Model_local_dir=''):
         """ --------------------------------------------------
@@ -856,7 +858,10 @@ class deformable_mirror(Optical_System):
         modelconfig : general configuration parameters (sizes and dimensions)
         DMconfig : DM parameters
         Name_DM : the name of the DM, which allows to find it in the parameter file
-        Measure_and_save : bool, default = True if true, we measure and save the pushact functions
+        load_fits : bool, default = True if true, we do not measure the DM init fits, we load them
+        save_fits : 
+        we measure and save the pushact functions
+
         model_dir: directory to find Measured positions for each actuator in pixel and 
                     influence fun. ie Things you cannot measure yourself and need to be given
         Model_local_dir: directory to save things you can measure yourself 
@@ -875,6 +880,8 @@ class deformable_mirror(Optical_System):
         self.active = DMconfig[self.Name_DM + "_active"]
         MinimumSurfaceRatioInThePupil = DMconfig[
             "MinimumSurfaceRatioInThePupil"]
+        DMconfig[self.Name_DM + "_misregistration"] = False
+        # no misregistration in the initialization part, only in the correction part
 
         if self.active == False:
             print(self.Name_DM + ' is not activated')
@@ -907,20 +914,21 @@ class deformable_mirror(Optical_System):
             # by default the size of the pupil
             self.pradDM = self.prad
 
-        # create, save or load the DM_pushact and DM_pushact_inpup functions 
+        # create, save or load the DM_pushact and DM_pushact_inpup functions
         # from the influence function
 
         # DM_pushact is always in the DM plane
-        self.DM_pushact = self.creatingpushact(
-            DMconfig,
-            Measure_and_save=Measure_and_save,
-            model_dir=model_dir,
-            Model_local_dir=Model_local_dir)
+        self.DM_pushact = self.creatingpushact(DMconfig,
+                                               load_fits=load_fits,
+                                               save_fits=save_fits,
+                                               model_dir=model_dir,
+                                               Model_local_dir=Model_local_dir)
 
-        if self.z_position != 0: 
+        if self.z_position != 0:
             # DM_pushact_inpup is always in the pupil plane
             self.DM_pushact_inpup = self.creatingpushact_inpup(
-                Measure_and_save=Measure_and_save,
+                load_fits=load_fits,
+                save_fits=save_fits,
                 Model_local_dir=Model_local_dir)
         else:
             # if the DM plane IS the pupil plane
@@ -931,7 +939,8 @@ class deformable_mirror(Optical_System):
         # create or load 'which actuators are in pupil'
         self.WhichInPupil = self.creatingWhichinPupil(
             MinimumSurfaceRatioInThePupil,
-            Measure_and_save=Measure_and_save,
+            load_fits=load_fits,
+            save_fits=save_fits,
             Model_local_dir=Model_local_dir)
 
     def EF_through(self, entrance_EF=1., wavelength=None, DMphase=0.):
@@ -993,7 +1002,8 @@ class deformable_mirror(Optical_System):
 
     def creatingpushact(self,
                         DMconfig,
-                        Measure_and_save=True,
+                        load_fits=False,
+                        save_fits=False,
                         model_dir='',
                         Model_local_dir=''):
         """ --------------------------------------------------
@@ -1021,7 +1031,7 @@ class deformable_mirror(Optical_System):
             int(self.pradDM)) + "_dimpuparray" + str(
                 int(self.dim_overpad_pupil))
 
-        if Measure_and_save == False:
+        if load_fits == True:
             return useful.check_and_load_fits(Model_local_dir,
                                               Name_pushact_fits)
 
@@ -1145,7 +1155,7 @@ class deformable_mirror(Optical_System):
 
             pushact[i] = Psivector
 
-        if Measure_and_save == True:
+        if save_fits == True and misregistration == False:
             fits.writeto(Model_local_dir + Name_pushact_fits + '.fits',
                          pushact,
                          overwrite=True)
@@ -1153,7 +1163,8 @@ class deformable_mirror(Optical_System):
         return pushact
 
     def creatingpushact_inpup(self,
-                              Measure_and_save=True,
+                              load_fits=False,
+                              save_fits=False,
                               Model_local_dir=''):
         """ --------------------------------------------------
         OPD map induced by out-of-pupil DM in the pupil plane for each actuator
@@ -1177,7 +1188,7 @@ class deformable_mirror(Optical_System):
             int(self.pradDM)) + "_dimpuparray" + str(
                 int(self.dim_overpad_pupil))
 
-        if Measure_and_save == False:
+        if load_fits == True:
             DM_pushact_inpup_real = useful.check_and_load_fits(
                 Model_local_dir, Name_pushact_fits + '_inPup_real')
             DM_pushact_inpup_imag = useful.check_and_load_fits(
@@ -1205,11 +1216,13 @@ class deformable_mirror(Optical_System):
                 self.prad)
             pushact_inpup[i] = EF_back_in_pup_plane
 
-        if Measure_and_save == True:
-            fits.writeto(Model_local_dir + Name_pushact_fits + '_inPup_real.fits',
+        if save_fits == True:
+            fits.writeto(Model_local_dir + Name_pushact_fits +
+                         '_inPup_real.fits',
                          np.real(pushact_inpup),
                          overwrite=True)
-            fits.writeto(Model_local_dir + Name_pushact_fits + '_inPup_imag.fits',
+            fits.writeto(Model_local_dir + Name_pushact_fits +
+                         '_inPup_imag.fits',
                          np.imag(pushact_inpup),
                          overwrite=True)
 
@@ -1217,7 +1230,8 @@ class deformable_mirror(Optical_System):
 
     def creatingWhichinPupil(self,
                              cutinpupil,
-                             Measure_and_save=True,
+                             load_fits=False,
+                             save_fits=False,
                              Model_local_dir=''):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
@@ -1236,8 +1250,9 @@ class deformable_mirror(Optical_System):
         Name_WhichInPup_fits = self.Name_DM + "_Whichact_for" + str(
             cutinpupil) + '_radpup' + str(self.prad)
 
-        if Measure_and_save == False:
-            return useful.check_and_load_fits(Model_local_dir, Name_WhichInPup_fits)
+        if load_fits == True:
+            return useful.check_and_load_fits(Model_local_dir,
+                                              Name_WhichInPup_fits)
 
         WhichInPupil = []
 
@@ -1255,7 +1270,7 @@ class deformable_mirror(Optical_System):
 
         WhichInPupil = np.array(WhichInPupil)
 
-        if Measure_and_save == True:
+        if save_fits == True:
             fits.writeto(Model_local_dir + Name_WhichInPup_fits + '.fits',
                          WhichInPupil,
                          overwrite=True)
@@ -1319,7 +1334,8 @@ class THD2_testbed(Optical_System):
                  modelconfig,
                  DMconfig,
                  coroconfig,
-                 Measure_and_save=True,
+                 load_fits=False,
+                 save_fits=False,
                  model_dir='',
                  Model_local_dir=''):
         """ --------------------------------------------------
@@ -1353,12 +1369,14 @@ class THD2_testbed(Optical_System):
         self.DM1 = deformable_mirror(modelconfig,
                                      DMconfig,
                                      Name_DM='DM1',
-                                     Measure_and_save=Measure_and_save,
+                                     load_fits=load_fits,
+                                     save_fits=save_fits,
                                      model_dir=model_dir,
                                      Model_local_dir=Model_local_dir)
         self.DM3 = deformable_mirror(modelconfig,
                                      DMconfig,
-                                     Measure_and_save=Measure_and_save,
+                                     load_fits=load_fits,
+                                     save_fits=save_fits,
                                      Name_DM='DM3',
                                      model_dir=model_dir,
                                      Model_local_dir=Model_local_dir)

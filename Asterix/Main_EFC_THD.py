@@ -76,11 +76,6 @@ def create_interaction_matrices(parameter_file,
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
 
-    DMconfig[
-        "DM1_misregistration"] = False  # initially no misregistration, only in the correction part
-    DMconfig[
-        "DM3_misregistration"] = False  # initially no misregistration, only in the correction part
-
     ##################
     ##################
     ### coronagraph CONFIG
@@ -629,19 +624,25 @@ def correctionLoop(parameter_file,
                            thd2.maxPSF / thd2.sumPSF)
 
     ## Adding error on the DM model?
-    # TODO Misregistration need to be redone, it does not work currently !
-    # if done properly, it should work exactly the same for DM1 and DM3
-    # if DM3_misregistration == True:
-    #     print("DM Misregistration!")
-    #     pushactonDM3 = thd2.creatingpushact(model_dir,
-    #                                          corona_struct.diam_pup_in_m,
-    #                                          2 * corona_struct.prad,
-    #                                          DMconfig,
-    #                                          corona_struct.dim_overpad_pupil,
-    #                                          Name_DM='DM3')
-    # else:
-    #     pushactonDM3 = thd2.DM3.DM_pushact
-    pushactonDM3 = thd2.DM3.DM_pushact
+
+    if DM3_misregistration == True:
+        print("DM3 Misregistration!")
+        pushactonDM3 = thd2.DM3.creatingpushact(DMconfig,
+                                                load_fits=False,
+                                                save_fits=False,
+                                                model_dir=model_dir)
+    else:
+        pushactonDM3 = thd2.DM3.DM_pushact
+    
+    if DM1_misregistration == True:
+        print("DM1 Misregistration!")
+        pushactonDM1 = thd2.DM1.creatingpushact(DMconfig,
+                                                load_fits=False,
+                                                save_fits=False,
+                                                model_dir=model_dir)
+    else:
+        pushactonDM1 = thd2.DM1.DM_pushact
+
 
     ## Correction loop
     nbiter = len(modevector)
@@ -657,7 +658,7 @@ def correctionLoop(parameter_file,
                                                   ampl_abb=amplitude_abb_up)
     imagedetector[0] = thd2.todetector_Intensity(
         entrance_EF=input_wavefront) / thd2.maxPSF
-    
+
     # useful.quickfits(imagedetector[0])
     # asd
     #     imagedetector[0] = (corona_struct.im_apodtodetector_chrom(
@@ -771,8 +772,7 @@ def correctionLoop(parameter_file,
 
                     # ok ne laisse pas un truc avec 5 tmp_input_wavefront different
                     # pour un truc pas simple la prochaine fois que tu pars en vacances ! :-p
-                    # J'ai fait une tentative de correction plus bas !
-                    # J'ai commenté tes parties crados et fait une fait une tentative de
+                    # J'ai commenté et fait une fait une tentative de
                     # correction plus bas !
 
                     # tmp_input_wavefront = input_wavefront
@@ -955,6 +955,7 @@ def correctionLoop(parameter_file,
             # # and propagate to next pupil plane (DM3 plane)
             # TODO Not good, 2 very different stuff (wavefront before and after the DM system) have the same name
             # to raphael: I think this is not used anymore see comment bellow
+
             # input_wavefront = instr.prop_pup_DM1_DM3(
             #     input_wavefront, apply_on_DM1, wavelength_0, DM1_z_position,
             #     thd2.diam_pup_in_m / 2., thd2.prad)
