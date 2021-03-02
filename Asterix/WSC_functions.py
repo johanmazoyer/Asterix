@@ -339,11 +339,8 @@ def creatingCorrectionmatrix(input_wavefront,
         if i % 100 == 0:
             print(i)
         Psivector = bas_fct[i]
-        # TODO : RAPHAEL we really need to check I think there is a major problem:
-        # is it a phase or a the EF (exp(j phase)) ? input_wavefront is an EF,
-        # I think it should be input_wavefront * exp(1j * Psivector)
-        #
-        # for now we only keep the corono structure,
+
+        # TODO for now we only keep the corono structure,
         # we should use testbed.todetector(entrance_EF= input_wavefront, DMXX = Psivector)
         # directly
         #

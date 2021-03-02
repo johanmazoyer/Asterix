@@ -1,9 +1,9 @@
-
 import os
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
+import datetime
 
 from random import random
 
@@ -24,25 +24,48 @@ def quickshow(tab):
     plt.imshow(tmp, origin='lower', cmap='gray')
     plt.show()
 
+
+def save_plane_in_fits(dir_save_fits, name_plane, image):
+
+    current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
+    name_fits = current_time_str +'_'+ name_plane
+
+    if np.iscomplexobj(image):
+        tofits_array = np.zeros((2, image.shape[0], image.shape[1]))
+        tofits_array[0] = np.real(image)
+        tofits_array[1] = np.imag(image)
+        fits.writeto(os.path.join(dir_save_fits,
+                                  name_fits + '_RE_and_IM.fits'),
+                     tofits_array,
+                     overwrite=True)
+    else:
+        fits.writeto(os.path.join(dir_save_fits, name_fits + '_RE.fits'),
+                     image,
+                     overwrite=True)
+
+
 def quickfits(tab, dir='', name='tmp'):
     """
     Function to quickly save in fits. 
-    By default, it will save on the desktop with a random name to avoid overwriting
+    By default, it will save on the desktop with a random name to avoid overwriting.
+    Not sure the default saving on Desktop works for windows OS, but it work on mac and linux
     
     tab: array to be saved
-    dir (optionnal): directory where to save the .fits
-    name (optionnal): name of the .fits. By defaut tmpsXX.fits where xx is a random number
-
+    dir (optionnal): directory where to save the .fits. by default the Desktop. 
+    name (optionnal): name of the .fits. By defaut tmp_currenttimeinms.fits
     Johan's quick function
     """
 
-    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop/')
+    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
     if dir == '':
         dir = desktop
 
     if name == 'tmp':
-        name = name + str(int(random() * 100))
-    fits.writeto(dir + name + '.fits', tab)
+        current_time_str = datetime.datetime.today().strftime(
+            '_%H_%M_%S_%f')[:-3]
+        name = name + current_time_str
+    fits.writeto(os.path.join(dir, name + '.fits'), tab)
+
 
 def quickpng(tab, dir='', name='tmp'):
     """
@@ -87,9 +110,11 @@ def check_and_load_fits(directory, filename):
     -------------------------------------------------- """
     if os.path.exists(directory + filename + '.fits') == True:
         return fits.getdata(directory + filename + '.fits')
-    else: 
-        raise Exception("You need to create " + filename + ".fits before loading it." +
-    "Please run the initialization with 'Measure_and_save = True' before")
+    else:
+        raise Exception(
+            "You need to create " + filename + ".fits before loading it." +
+            "Please run the initialization with 'Measure_and_save = True' before"
+        )
 
 
 def from_param_to_header(config):
@@ -112,63 +137,3 @@ def from_param_to_header(config):
         for scalar in config[str(sect)].scalars:
             header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
     return header
-
-
-# def CubeFits(docs_dir):
-#     """ --------------------------------------------------
-#     Load all the fits images from a directory into a cube
-
-#     Parameters:
-#     ----------
-#     doc_dir: Input directory
-
-#     Return:
-#     ------
-#     image_array: numpy array
-#     -------------------------------------------------- """
-#     image_list = []
-#     for filename in sorted(glob.glob(docs_dir + "*.fits")):
-#         image = fits.getdata(filename)
-#         image_list.append(image)
-
-#     image_array = np.array(image_list)
-#     return image_array
-
-# def AverageFits(docs_dir):
-#     """ --------------------------------------------------
-#     Load all the fits from a directory and create an averaged numpy array
-
-#     Parameters:
-#     ----------
-#     doc_dir: Input directory
-
-#     Return:
-#     ------
-#     imagemoyenne: numpy array
-#     -------------------------------------------------- """
-#     Cubeimage = CubeFits(docs_dir)
-#     Sommeimage = 0
-#     for i in np.arange((Cubeimage.shape[0])):
-#         Sommeimage = Sommeimage + Cubeimage[i]
-#     imagemoyenne = Sommeimage / Cubeimage.shape[0]
-#     return imagemoyenne
-
-# def GetFluxmetreValue(fitspath):
-#     """ --------------------------------------------------
-#     Extract measured flux recorded in fits header by the THD2 experiment
-
-#     Parameters:
-#     ----------
-#     fitspath: Name of the file with extension
-
-#     Return:
-#     ------
-#     fluxmetre: float
-#     -------------------------------------------------- """
-#     # openfits=fits.open(fitspath)
-#     # hdu=openfits[0].header
-#     # fluxmetre=hdu['FLUX_W']
-#     # return fluxmetre
-#     return fits.getval(fitspath, "FLUX_W")
-
-

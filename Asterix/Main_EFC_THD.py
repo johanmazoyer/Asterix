@@ -63,12 +63,6 @@ def create_interaction_matrices(parameter_file,
     #On bench or numerical simulation
     onbench = modelconfig["onbench"]
 
-    #Image
-    dim_im = modelconfig["dim_im"]  #image size on detector
-
-    #Lambda over D in pixels
-    wavelength_0 = modelconfig["wavelength_0"]
-    science_sampling = modelconfig["science_sampling"]
 
     ##################
     ##################
@@ -94,8 +88,7 @@ def create_interaction_matrices(parameter_file,
 
     DH_sampling = PWconfig["DH_sampling"]
 
-    #image size after binning
-    dim_sampl = int(DH_sampling / science_sampling * dim_im / 2) * 2
+
 
     ##################
     ##################
@@ -105,11 +98,7 @@ def create_interaction_matrices(parameter_file,
     DHshape = EFCconfig["DHshape"]
     choosepix = EFCconfig["choosepix"]
     choosepix = [int(i) for i in choosepix]
-    circ_rad = EFCconfig["circ_rad"]
-    circ_rad = [int(i) for i in circ_rad]
-    circ_side = EFCconfig["circ_side"].lower()
-    circ_offset = EFCconfig["circ_offset"]
-    circ_angle = EFCconfig["circ_angle"]
+
     DM1_otherbasis = EFCconfig["DM1_otherbasis"]
     DM3_otherbasis = EFCconfig["DM3_otherbasis"]
     Nbmodes = EFCconfig["Nbmodes"]
@@ -133,9 +122,14 @@ def create_interaction_matrices(parameter_file,
     thd2 = instr.THD2_testbed(modelconfig,
                               DMconfig,
                               Coronaconfig,
-                              Measure_and_save=True,
+                              save_fits=True,
                               model_dir=model_dir,
                               Model_local_dir=Model_local_dir)
+
+
+    #image size after binning
+    dim_sampl = int(DH_sampling / thd2.science_sampling * thd2.dim_im / 2) * 2
+
 
     #for stability purose, but will be remove
     # corona_struct = thd2.corono
@@ -152,11 +146,11 @@ def create_interaction_matrices(parameter_file,
         intermatrix_dir = (intermatrix_dir + thd2.corono.coro_position +
                            "/offset_" + str(thd2.corono.knife_coro_offset) +
                            "lop/")
-    intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) +
+    intermatrix_dir = (intermatrix_dir + str(int(thd2.wavelength_0 * 1e9)) +
                        "nm/p" +
                        str(round(thd2.corono.diam_pup_in_m * 1e3, 2)) + "_l" +
                        str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)) +
-                       "/lop_" + str(round(science_sampling, 2)) + "/basis_" +
+                       "/lop_" + str(round(thd2.science_sampling, 2)) + "/basis_" +
                        basistr + "/")
 
     if not os.path.exists(intermatrix_dir):
@@ -186,7 +180,7 @@ def create_interaction_matrices(parameter_file,
         vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
     else:
         print("Saving " + filePW + " ...")
-        vectoressai, showsvd = wsc.createvectorprobes(wavelength_0, thd2,
+        vectoressai, showsvd = wsc.createvectorprobes(thd2.wavelength_0, thd2,
                                                       amplitudePW, posprobes,
                                                       thd2.DM3.DM_pushact,
                                                       dim_sampl, cut)
@@ -240,8 +234,8 @@ def create_interaction_matrices(parameter_file,
 
     #measure the masks
     maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, dim_im,
-        science_sampling)
+        intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, thd2.dim_im,
+        thd2.science_sampling)
 
     #useful string
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
@@ -290,7 +284,7 @@ def create_interaction_matrices(parameter_file,
                 thd2.entrancepupil.pup,
                 thd2,
                 dim_sampl,
-                DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
+                DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 / thd2.wavelength_0,
                 maskDH,
                 DM_WhichInPupil,
                 otherbasis=DM3_otherbasis,
@@ -376,12 +370,8 @@ def correctionLoop(parameter_file,
     #On bench or numerical simulation
     onbench = modelconfig["onbench"]
 
-    #Image
-    dim_im = modelconfig["dim_im"]  #image size on detector
-
     #Lambda over D in pixels
     wavelength_0 = modelconfig["wavelength_0"]
-    science_sampling = modelconfig["science_sampling"]
 
     ##################
     ##################
@@ -410,9 +400,6 @@ def correctionLoop(parameter_file,
     cut = PWconfig["cut"]
     DH_sampling = PWconfig["DH_sampling"]
 
-    #image size after binning
-    dim_sampl = int(DH_sampling / science_sampling * dim_im / 2) * 2
-
     ##################
     ##################
     ###EFC CONFIG
@@ -422,15 +409,6 @@ def correctionLoop(parameter_file,
     Nbmodes = EFCconfig["Nbmodes"]
     DM1_otherbasis = EFCconfig["DM1_otherbasis"]
     DM3_otherbasis = EFCconfig["DM3_otherbasis"]
-
-    DHshape = EFCconfig["DHshape"]
-    choosepix = EFCconfig["choosepix"]
-    choosepix = [int(i) for i in choosepix]
-    circ_rad = EFCconfig["circ_rad"]
-    circ_rad = [int(i) for i in circ_rad]
-    circ_side = EFCconfig["circ_side"].lower()
-    circ_offset = EFCconfig["circ_offset"]
-    circ_angle = EFCconfig["circ_angle"]
 
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
@@ -482,9 +460,12 @@ def correctionLoop(parameter_file,
     thd2 = instr.THD2_testbed(modelconfig,
                               DMconfig,
                               Coronaconfig,
-                              Measure_and_save=False,
+                              load_fits=True,
                               model_dir=model_dir,
                               Model_local_dir=Model_local_dir)
+
+    #image size after binning
+    dim_sampl = int(DH_sampling / thd2.science_sampling * thd2.dim_im / 2) * 2
 
     if onbench == True:
         Labview_dir = Data_dir + "Labview/"
@@ -524,7 +505,7 @@ def correctionLoop(parameter_file,
     intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) +
                        "nm/p" + str(round(thd2.diam_pup_in_m * 1e3, 2)) +
                        "_l" + str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)) +
-                       "/lop_" + str(round(science_sampling, 2)) + "/basis_" +
+                       "/lop_" + str(round(thd2.science_sampling, 2)) + "/basis_" +
                        basistr + "/")
 
     ##Load PW matrices
@@ -549,8 +530,8 @@ def correctionLoop(parameter_file,
 
     #usefull string
     maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, dim_im,
-        science_sampling)
+        intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, thd2.dim_im,
+        thd2.science_sampling)
 
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
         Nbmodes) + "modes_dim" + str(thd2.dim_im) + '_radpup' + str(
@@ -633,7 +614,8 @@ def correctionLoop(parameter_file,
                                                 model_dir=model_dir)
     else:
         pushactonDM3 = thd2.DM3.DM_pushact
-    
+
+    # not really defined for DM1 but it is there.
     if DM1_misregistration == True:
         print("DM1 Misregistration!")
         pushactonDM1 = thd2.DM1.creatingpushact(DMconfig,
@@ -642,7 +624,6 @@ def correctionLoop(parameter_file,
                                                 model_dir=model_dir)
     else:
         pushactonDM1 = thd2.DM1.DM_pushact
-
 
     ## Correction loop
     nbiter = len(modevector)
