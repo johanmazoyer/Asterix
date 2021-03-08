@@ -118,6 +118,7 @@ def resampling(image, new):
     ------
     Gvector: 2D array, image resampled into new dimensions
     -------------------------------------------------- """
+    
     dim_im = len(image)
     Gvectorbis = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image)))
     Gvector = cropimage(Gvectorbis, dim_im / 2, dim_im / 2, new)
@@ -167,7 +168,7 @@ def crop_or_pad_image(image, dimout):
 
     REVISION HISTORY :
     Revision 1.1  2021-02-10 Raphaël Galicher Initial revision
-    Revision 2.0  2021-02-24. Rename because cut_image was innacurate
+    Revision 2.0  2021-02-24. JM Rename because cut_image was innacurate
     
 
     -------------------------------------------------- """

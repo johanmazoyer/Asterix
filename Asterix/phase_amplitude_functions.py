@@ -34,44 +34,6 @@ def roundpupil(dim_im, prad1):
     return pupilnormal
 
 
-# def load_or_create_binary_pupil(direct, filename, dim, prad):
-#     """ --------------------------------------------------
-#     Create a binary pupil from a Fits file or create a round pupil
-
-#     Parameters
-#     ----------
-#     direct : string
-#          name of the directory where filename is
-
-#     filename : string
-#          name of the Fits file
-
-#     dim : int
-#          dimension in pixels of the output array
-
-#     prad : int
-#          radius in pixels of the round pupil mask
-
-#     Returns
-#     ------
-#     pup_z : 2D array (float)
-#             Binary pupil (used for entrance pupil and Lyot stop)
-
-#     AUTHOR : Raphael Galicher
-
-#     REVISION HISTORY :
-#     Revision 1.1  2020-01-26 Raphael Galicher
-#     Initial revision
-#     Revision 2.0  2020-02-24 Johan Mazoyer rename (ambiguous name)
-
-#     -------------------------------------------------- """
-
-#     if filename != "":
-#         pupil = fits.getdata(direct + filename)
-#     else:
-#         pupil = roundpupil(dim, prad)
-
-#     return pupil
 
 
 def shift_phase_ramp(dim_im, a, b):
@@ -103,45 +65,7 @@ def shift_phase_ramp(dim_im, a, b):
     return ramp
 
 
-def random_phase_map(dim_im, phaserms, rhoc, slope, pupil):
-    """ --------------------------------------------------
-    Create a random phase map, whose PSD decrease in f^(-slope)
-    
-    Parameters
-    ----------
-    dim_im : integer
-        Size of the generated phase map
-    phaserms : float
-        Level of aberration
-    rhoc : float
-        See Borde et Traub 2006
-    slope : float
-        Slope of the PSD
-    pupil : 2D array
-        pupil over which phase rms = phaserms
 
-    Returns
-    ------
-    phase : 2D array
-        Static random phase map (or OPD) generated 
-    -------------------------------------------------- """
-
-    dim_pup = pupil.shape[1]
-    xx, yy = np.meshgrid(
-        np.arange(dim_pup) - dim_pup / 2,
-        np.arange(dim_pup) - dim_pup / 2)
-    rho = np.hypot(yy, xx)
-    PSD0 = 1
-    PSD = PSD0 / (1 + (rho / rhoc)**slope)
-    sqrtPSD = np.sqrt(2 * PSD)
-    #    randomphase = 2 * np.pi * (np.random.rand(dim_im, dim_im) - 0.5)
-    #    product = np.fft.fftshift(sqrtPSD * np.exp(1j * randomphase))
-    randomphase = np.random.randn(
-        dim_im, dim_im) + 1j * np.random.randn(dim_im, dim_im)
-    phase = np.real(np.fft.ifft2(np.fft.fftshift(sqrtPSD * randomphase)))
-    phase = phase - np.mean(phase[np.where(pupil)])
-    phase = phase / np.std(phase[np.where(pupil)]) * phaserms
-    return phase
 
 
 def scale_amplitude_abb(filename, prad, pupil):

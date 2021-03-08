@@ -63,7 +63,6 @@ def create_interaction_matrices(parameter_file,
     #On bench or numerical simulation
     onbench = modelconfig["onbench"]
 
-
     ##################
     ##################
     ### DM CONFIG
@@ -87,8 +86,6 @@ def create_interaction_matrices(parameter_file,
     cut = PWconfig["cut"]
 
     DH_sampling = PWconfig["DH_sampling"]
-
-
 
     ##################
     ##################
@@ -126,10 +123,8 @@ def create_interaction_matrices(parameter_file,
                               model_dir=model_dir,
                               Model_local_dir=Model_local_dir)
 
-
     #image size after binning
     dim_sampl = int(DH_sampling / thd2.science_sampling * thd2.dim_im / 2) * 2
-
 
     #for stability purose, but will be remove
     # corona_struct = thd2.corono
@@ -150,8 +145,8 @@ def create_interaction_matrices(parameter_file,
                        "nm/p" +
                        str(round(thd2.corono.diam_pup_in_m * 1e3, 2)) + "_l" +
                        str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)) +
-                       "/lop_" + str(round(thd2.science_sampling, 2)) + "/basis_" +
-                       basistr + "/")
+                       "/lop_" + str(round(thd2.science_sampling, 2)) +
+                       "/basis_" + basistr + "/")
 
     if not os.path.exists(intermatrix_dir):
         print("Creating directory " + intermatrix_dir + " ...")
@@ -284,7 +279,8 @@ def create_interaction_matrices(parameter_file,
                 thd2.entrancepupil.pup,
                 thd2,
                 dim_sampl,
-                DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 / thd2.wavelength_0,
+                DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
+                thd2.wavelength_0,
                 maskDH,
                 DM_WhichInPupil,
                 otherbasis=DM3_otherbasis,
@@ -505,8 +501,8 @@ def correctionLoop(parameter_file,
     intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) +
                        "nm/p" + str(round(thd2.diam_pup_in_m * 1e3, 2)) +
                        "_l" + str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)) +
-                       "/lop_" + str(round(thd2.science_sampling, 2)) + "/basis_" +
-                       basistr + "/")
+                       "/lop_" + str(round(thd2.science_sampling, 2)) +
+                       "/basis_" + basistr + "/")
 
     ##Load PW matrices
     if (estimation == "PairWise" or estimation == "pairwise"
@@ -556,35 +552,24 @@ def correctionLoop(parameter_file,
 
     ## Phase map and amplitude map for the static aberrations
     if set_phase_abb == True:
-        if set_random_phase == True:
-            print("Random phase aberrations upstream from coronagraph")
-            phase_up = phase_ampl.random_phase_map(thd2.dim_overpad_pupil,
-                                                   phaserms, rhoc_phase,
-                                                   slope_phase,
-                                                   thd2.entrancepupil)
+        if phase_abb_filename == '':
+            phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                int(phaserms * 1e9), int(slope_phase), rhoc_phase, thd2.prad)
+
+        if set_random_phase == False and os.path.isfile(Model_local_dir +
+                                                        phase_abb_filename +
+                                                        ".fits") == True:
+            phase_up = fits.getdata(Model_local_dir + phase_abb_filename +
+                                    ".fits")
+
         else:
-            if phase_abb_filename == '':
-                phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
-                    int(phaserms * 1e9), int(slope_phase), rhoc_phase,
-                    thd2.prad)
-            if os.path.isfile(Model_local_dir + phase_abb_filename + ".fits"):
-                phase_up = fits.getdata(Model_local_dir + phase_abb_filename +
-                                        ".fits")
-            else:
-                print(
-                    "Fixed phase aberrations upstream from coronagraph, file do not exist yet, generated and saved in "
-                    + phase_abb_filename + ".fits")
-                phase_up = phase_ampl.random_phase_map(thd2.dim_overpad_pupil,
-                                                       phaserms, rhoc_phase,
-                                                       slope_phase,
-                                                       thd2.entrancepupil.pup)
+            phase_up = thd2.entrancepupil.random_phase_map(
+                phaserms, rhoc_phase, slope_phase)
+            if set_random_phase == False: # save it for next time
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
                              phase_up)
-            print(
-                "Fixed phase aberrations upstream from coronagraph, loaded from: "
-                + phase_abb_filename + ".fits")
 
-        phase_up = phase_up * 2 * np.pi / wavelength_0
+        phase_up = phase_up * 2 * np.pi / wavelength_0  # where should we do that ? here ?
     else:
         phase_up = 0
 

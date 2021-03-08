@@ -356,7 +356,7 @@ class pupil(Optical_System):
     -------------------------------------------------- """
     def __init__(self,
                  modelconfig,
-                 prad = 0.,
+                 prad=0.,
                  model_dir="",
                  filename="",
                  noPup=False):
@@ -395,9 +395,8 @@ class pupil(Optical_System):
         super().__init__(modelconfig)
         if prad == 0:
             prad = self.prad
-        
-        self.exitpup_rad = prad
 
+        self.exitpup_rad = prad
 
         self.pup = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
                            1.)
@@ -505,6 +504,48 @@ class pupil(Optical_System):
 
         return exit_EF
 
+    def random_phase_map(self, phaserms, rhoc, slope):
+        """ --------------------------------------------------
+        Create a random phase map, whose PSD decrease in f^(-slope)
+        
+        Parameters
+        ----------
+        phaserms : float
+            Level of aberration
+        rhoc : float
+            See Borde et Traub 2006
+        slope : float
+            Slope of the PSD
+        pupil : 2D array
+            
+
+        Returns
+        ------
+        phase : 2D array
+            Static random phase map (or OPD) generated 
+        -------------------------------------------------- """
+
+        # create a circular pupil of the same radius of the given pupil
+        # this will be the pupil over which phase rms = phaserms
+        pup = phase_ampl.roundpupil(self.prad, self.dim_overpad_pupil)
+
+        xx, yy = np.meshgrid(
+            np.arange(self.dim_overpad_pupil) - self.dim_overpad_pupil / 2,
+            np.arange(self.dim_overpad_pupil) - self.dim_overpad_pupil / 2)
+        rho = np.hypot(yy, xx)
+        PSD0 = 1
+        PSD = PSD0 / (1 + (rho / rhoc)**slope)
+        sqrtPSD = np.sqrt(2 * PSD)
+
+        randomphase = np.random.randn(
+            self.dim_overpad_pupil,
+            self.dim_overpad_pupil) + 1j * np.random.randn(
+                self.dim_overpad_pupil, self.dim_overpad_pupil)
+        phase = np.real(np.fft.ifft2(np.fft.fftshift(sqrtPSD * randomphase)))
+        phase = phase - np.mean(phase[np.where(pup == 1.)])
+        phase = phase / np.std(phase[np.where(pup == 1.)]) * phaserms
+        return phase
+
 
 ##############################################
 ##############################################
@@ -587,18 +628,18 @@ class coronagraph(Optical_System):
         # of the coronograph to a clear pupil to remove it
         # if perfect corono. THIS IS NOT THE ENTRANCE PUPIL,
         # this is a clear pupil of the same size
-        self.clearpup = pupil(modelconfig, prad = self.prad)
+        self.clearpup = pupil(modelconfig, prad=self.prad)
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
         self.apod_pup = pupil(modelconfig,
-                              prad = self.prad,
+                              prad=self.prad,
                               model_dir=model_dir,
                               filename=coroconfig["filename_instr_apod"],
                               noPup=True)
 
         self.lyot_pup = pupil(modelconfig,
-                              prad = self.lyotrad,
+                              prad=self.lyotrad,
                               model_dir=model_dir,
                               filename=coroconfig["filename_instr_lyot"])
 
@@ -1002,7 +1043,7 @@ class deformable_mirror(Optical_System):
         # We need a pupil in creatingpushact_inpup() and for
         # which in pup. THIS IS NOT THE ENTRANCE PUPIL,
         # this is a clear pupil of the same size
-        self.clearpup = pupil(modelconfig, prad = self.prad)
+        self.clearpup = pupil(modelconfig, prad=self.prad)
 
         #define self.pradDM and check that the pupil is large enough
         # for out of pupil propagation
@@ -1518,7 +1559,7 @@ class THD2_testbed(Optical_System):
         super().__init__(modelconfig)
 
         self.entrancepupil = pupil(modelconfig,
-                                   prad = self.prad,
+                                   prad=self.prad,
                                    model_dir=model_dir,
                                    filename=modelconfig["filename_instr_pup"])
         self.DM1 = deformable_mirror(modelconfig,
@@ -1541,6 +1582,7 @@ class THD2_testbed(Optical_System):
 
         # Measure the PSF and store max and Sum
         self.maxPSF, self.sumPSF = self.max_sum_PSF()
+        
 
     def EF_through(self,
                    entrance_EF=1.,
@@ -1602,14 +1644,14 @@ class THD2_testbed(Optical_System):
             DMphase=DM1phase,
             save_all_planes_to_fits=save_all_planes_to_fits,
             dir_save_fits=dir_save_fits)
-        
+
         EF_afterDM3 = self.DM3.EF_through(
             entrance_EF=EF_afterDM1,
             wavelength=wavelength,
             DMphase=DM3phase,
             save_all_planes_to_fits=save_all_planes_to_fits,
             dir_save_fits=dir_save_fits)
-        
+
         EF_afterCorono = self.corono.EF_through(
             entrance_EF=EF_afterDM3,
             wavelength=wavelength,
