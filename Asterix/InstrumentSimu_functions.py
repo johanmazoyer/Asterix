@@ -1516,7 +1516,9 @@ class deformable_mirror(Optical_System):
 
         return EF_back_in_pup_plane
 
-
+##############################################
+##############################################
+### Test bed
 class THD2_testbed(Optical_System):
     """ --------------------------------------------------
     initialize and describe the behavior of the THD testbed 

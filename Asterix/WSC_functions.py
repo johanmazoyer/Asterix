@@ -500,12 +500,6 @@ def apply_on_DM(actu_vect, DM_pushact):
                                DM_pushact.shape[1], DM_pushact.shape[1])
 
 
-##############################################
-##############################################
-### Difference of images for Pair-Wise probing
-### Need to go in WSC_functions.py
-
-
 def createdifference(input_wavefront,
                      posprobes,
                      pushact,

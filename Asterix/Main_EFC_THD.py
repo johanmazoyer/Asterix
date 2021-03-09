@@ -103,9 +103,9 @@ def create_interaction_matrices(parameter_file,
     regularization = EFCconfig["regularization"]
 
     ##THEN DO
-    model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
+    model_dir = os.path.join(Asterixroot, "Model") + os.path.sep
 
-    Model_local_dir = Data_dir + "Model_local/"
+    Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
     if not os.path.exists(Model_local_dir):
         print("Creating directory " + Model_local_dir + " ...")
         os.makedirs(Model_local_dir)
@@ -129,31 +129,33 @@ def create_interaction_matrices(parameter_file,
     #for stability purose, but will be remove
     # corona_struct = thd2.corono
 
-    # Directories for saving data
-    intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
-                       thd2.corono.corona_type + "/")
+    intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices",
+                                   thd2.corono.corona_type)
     if thd2.corono.corona_type == 'fqpm':
         if thd2.corono.achrom_fqpm == True:
-            intermatrix_dir = intermatrix_dir + "Achromatic_phase_mask/"
+            intermatrix_dir = os.path.join(intermatrix_dir,
+                                           "Achromatic_phase_mask")
         else:
-            intermatrix_dir = intermatrix_dir + "Polychromatic_phase_mask/"
+            intermatrix_dir = os.path.join(intermatrix_dir,
+                                           "Polychromatic_phase_mask")
     if thd2.corono.corona_type == 'knife':
-        intermatrix_dir = (intermatrix_dir + thd2.corono.coro_position +
-                           "/offset_" + str(thd2.corono.knife_coro_offset) +
-                           "lop/")
-    intermatrix_dir = (intermatrix_dir + str(int(thd2.wavelength_0 * 1e9)) +
-                       "nm/p" +
-                       str(round(thd2.corono.diam_pup_in_m * 1e3, 2)) + "_l" +
-                       str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)) +
-                       "/lop_" + str(round(thd2.science_sampling, 2)) +
-                       "/basis_" + basistr + "/")
+        intermatrix_dir = os.path.join(
+            intermatrix_dir, thd2.corono.coro_position,
+            "offset_" + str(thd2.corono.knife_coro_offset) + "lop")
+
+    intermatrix_dir = os.path.join(
+        intermatrix_dir,
+        str(int(thd2.wavelength_0 * 1e9)) + "nm",
+        "p" + str(round(thd2.corono.diam_pup_in_m * 1e3, 2)) + "_l" +
+        str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)), "lop_" +
+        str(round(thd2.science_sampling, 2)), "basis_" + basistr) + os.path.sep
 
     if not os.path.exists(intermatrix_dir):
         print("Creating directory " + intermatrix_dir + " ...")
         os.makedirs(intermatrix_dir)
 
     if onbench == True:
-        Labview_dir = Data_dir + "Labview/"
+        Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
         if not os.path.exists(Labview_dir):
             print("Creating directory " + Labview_dir + " ...")
             os.makedirs(Labview_dir)
@@ -305,7 +307,7 @@ def create_interaction_matrices(parameter_file,
         plt.plot(SVD, "r.")
         plt.yscale("log")
 
-        figSVDEFC = "invertSVDEFC_square" + string_dhshape + string_dims_EFCMatrix + ".png"
+        figSVDEFC = intermatrix_dir + "invertSVDEFC_square" + string_dhshape + string_dims_EFCMatrix + ".png"
 
         plt.savefig(figSVDEFC)
 
@@ -445,12 +447,9 @@ def correctionLoop(parameter_file,
         modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
     ## Directories for saving the data
-    model_dir = Asterixroot + os.path.sep + "Model" + os.path.sep
+    model_dir = os.path.join(Asterixroot, "Model") + os.path.sep
 
-    Model_local_dir = Data_dir + "Model_local/"
-    if not os.path.exists(Model_local_dir):
-        print("Creating directory " + Model_local_dir + " ...")
-        os.makedirs(Model_local_dir)
+    Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
 
     # Initialize thd:
     thd2 = instr.THD2_testbed(modelconfig,
@@ -464,12 +463,13 @@ def correctionLoop(parameter_file,
     dim_sampl = int(DH_sampling / thd2.science_sampling * thd2.dim_im / 2) * 2
 
     if onbench == True:
-        Labview_dir = Data_dir + "Labview/"
+        Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
         if not os.path.exists(Labview_dir):
             print("Creating directory " + Labview_dir + " ...")
             os.makedirs(Labview_dir)
 
-    result_dir = Data_dir + "Results/" + Name_Experiment + "/"
+    result_dir = Labview_dir = os.path.join(Data_dir, "Results",
+                                            Name_Experiment) + os.path.sep
     if not os.path.exists(result_dir):
         print("Creating directory " + result_dir + " ...")
         os.makedirs(result_dir)
@@ -487,22 +487,26 @@ def correctionLoop(parameter_file,
     if DM1_otherbasis == True:
         thd2.DM1.WhichInPupil = np.arange(thd2.DM1.DM_pushact.shape[0])
 
-    intermatrix_dir = (Data_dir + "Interaction_Matrices/" +
-                       thd2.corono.corona_type + "/")
+    intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices",
+                                   thd2.corono.corona_type)
     if thd2.corono.corona_type == 'fqpm':
         if thd2.corono.achrom_fqpm == True:
-            intermatrix_dir = intermatrix_dir + "Achromatic_phase_mask/"
+            intermatrix_dir = os.path.join(intermatrix_dir,
+                                           "Achromatic_phase_mask")
         else:
-            intermatrix_dir = intermatrix_dir + "Polychromatic_phase_mask/"
+            intermatrix_dir = os.path.join(intermatrix_dir,
+                                           "Polychromatic_phase_mask")
     if thd2.corono.corona_type == 'knife':
-        intermatrix_dir = (intermatrix_dir + thd2.corono.coro_position +
-                           "/offset_" + str(thd2.corono.knife_coro_offset) +
-                           "lop/")
-    intermatrix_dir = (intermatrix_dir + str(int(wavelength_0 * 1e9)) +
-                       "nm/p" + str(round(thd2.diam_pup_in_m * 1e3, 2)) +
-                       "_l" + str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)) +
-                       "/lop_" + str(round(thd2.science_sampling, 2)) +
-                       "/basis_" + basistr + "/")
+        intermatrix_dir = os.path.join(
+            intermatrix_dir, thd2.corono.coro_position,
+            "offset_" + str(thd2.corono.knife_coro_offset) + "lop")
+
+    intermatrix_dir = os.path.join(
+        intermatrix_dir,
+        str(int(thd2.wavelength_0 * 1e9)) + "nm",
+        "p" + str(round(thd2.corono.diam_pup_in_m * 1e3, 2)) + "_l" +
+        str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)), "lop_" +
+        str(round(thd2.science_sampling, 2)), "basis_" + basistr) + os.path.sep
 
     ##Load PW matrices
     if (estimation == "PairWise" or estimation == "pairwise"
@@ -565,7 +569,7 @@ def correctionLoop(parameter_file,
         else:
             phase_up = thd2.entrancepupil.random_phase_map(
                 phaserms, rhoc_phase, slope_phase)
-            if set_random_phase == False: # save it for next time
+            if set_random_phase == False:  # save it for next time
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
                              phase_up)
 
@@ -601,14 +605,15 @@ def correctionLoop(parameter_file,
         pushactonDM3 = thd2.DM3.DM_pushact
 
     # not really defined for DM1 but it is there.
-    if DM1_misregistration == True:
-        print("DM1 Misregistration!")
-        pushactonDM1 = thd2.DM1.creatingpushact(DMconfig,
-                                                load_fits=False,
-                                                save_fits=False,
-                                                model_dir=model_dir)
-    else:
-        pushactonDM1 = thd2.DM1.DM_pushact
+    if thd2.DM1.active == True:
+        if DM1_misregistration == True:
+            print("DM1 Misregistration!")
+            pushactonDM1 = thd2.DM1.creatingpushact(DMconfig,
+                                                    load_fits=False,
+                                                    save_fits=False,
+                                                    model_dir=model_dir)
+        else:
+            pushactonDM1 = thd2.DM1.DM_pushact
 
     ## Correction loop
     nbiter = len(modevector)
