@@ -1,69 +1,200 @@
 import numpy as np
 
 
-def mft(pup, dimpup, dimft, nbres, xshift=0, yshift=0, inv=-1):
-    """ --------------------------------------------------
-    MFT  - Return the Matrix Direct Fourier transform (MFT) of pup
+def mft(image,
+        dimpup,
+        dim_output,
+        nbres,
+        inv=-1,
+        X_offset_input=0,
+        Y_offset_input=0,
+        X_offset_output=0,
+        Y_offset_output=0):
+    """
+    Based on Matrix Direct Fourier transform (MFT) from R. Galicher
     (cf. Soummer et al. 2007, OSA)
-
+        - Return the Matrix Direct Fourier transform (MFT) of a 2D image
+        - Can deal with any size, any position of
+            the 0-frequency...
+    
     Parameters
     ----------
-    pup : 2D array (complex or real)
-         Entrance pupil.
-         CAUTION : pup has to be centered on (dim0/2+1,dim0/2+1)
-         where dim0 is the pup array dimension
+        image : 2D Entrance image (entrance size in x and y can be different)
+        
+        dimpup : int or tupple of int of dim 2 
+                Diameter of the support in pup (can differ from image.shape)
+                Example : dimpup = diameter of the pupil in pixel
 
-    dimpup : integer
-            Diameter of the support in pup (can differ from dim0)
-            Example : dimpup = diameter of the pupil in pixel
+        dim_output : int or tupple of int of dim 2 
+                Dimension of the output in pixels (square if int, rectangular if (int, int)
 
-    dimft : integer
-           Dimension of the output
-
-    nbres : float
-           Number of spatial resolution elements
-
-    xshift : float
-            center of the output array in the x direction
-
-    yshift : float
-            center of the output array in the y direction    
-
-    inv : integer
-            direct MFT if 1
-            indirect MFT if -1 (default)
+        nbres: float or or tupple of float of dim 2
+                Number of spatial resolution elements (same in both directions if float)
+        
+        inv : direction of the MFT
+                inv=1, direct mft
+                inv=-1, indirect mft (default value)
     
+        X_offset_input :(default 0) position of the 0-frequency pixel in x for the entrance
+             image with respect to the center of the entrance image (real position
+             of the 0-frequency pixel on dim_input_x/2+x0) 
+        
+        Y_offset_input :(default 0) position of the 0-frequency pixel in Y for the entrance
+             image with respect to the center of the entrance image (real position
+             of the 0-frequency pixel on dim_input_y/2+y0)
+    
+        X_offset_output :(default 0) position of the 0-frequency pixel in x for the output
+             image with respect to the center of the output image (real position
+             of the 0-frequency pixel on dim_output_x/2+x1)
+
+        Y_offset_output :(default 0) position of the 0-frequency pixel in Y for the output
+             image with respect to the center of the output image (real position
+             of the 0-frequency pixel on dim_output_y/2+y1)
 
     Returns
     ------
-    result : 2D array (complex)
-            MFT of pup centered on the pixel (dimft/2D+1+xhift,dimft/2D+1+yxhift)
-            dimension is dimft x dimft
-
-    AUTHOR : Raphael Galicher
-
+        result : 2D array (complex)
+            Output is a complex array dimft x dimft with the position of the
+            0-frequency on the (dim_output_x/2+x1,dim_output_y/2+y1) pixel
+    
+    AUTHOR :
+       $Author: Baudoz, Galicher Mazoyer $
+    
+    
     REVISION HISTORY :
-    Revision 1.1  2020-01-22 Raphaël Galicher
-    Initial revision (from MFT.pro written in IDL)
+        Revision 1.1  2011  Initial revision. Raphaël Galicher (from soummer, in IDL)
+        Revision 2.0  2012-04-12 P. Baudoz (IDL version): added pup offset
+        Revision 3.0  2020-03-10 J. Mazoyer (to python)
 
-    -------------------------------------------------- """
-    dim0 = pup.shape[0]
-    nbres = nbres * dim0 / dimpup
+"""
 
-    xx0 = np.arange(dim0) / dim0 - 0.5
-    uu0 = ((np.arange(dimft) - xshift) / dimft - 0.5) * nbres
-    uu1 = ((np.arange(dimft) - yshift) / dimft - 0.5) * nbres
+    dim_input_x = image.shape[0]
+    dim_input_y = image.shape[1]
+
+    if isinstance(dimpup,int):
+        dimpup_x = dimpup
+        dimpup_y = dimpup
+    elif isinstance(dimpup,tuple) & len(dimpup) == 2:
+        dimpup_x = dimpup[0]
+        dimpup_y = dimpup[1]
+    else:
+        raise Exception("dimpup must be an int (square input pupil)" +
+                        " or tupple of int of dimension 2")
+
+    if isinstance(dim_output,int):
+        dim_output_x = dim_output
+        dim_output_y = dim_output
+    elif isinstance(dim_output,tuple) & len(dim_output) == 2:
+        dim_output_x = dim_output[0]
+        dim_output_y = dim_output[1]
+    else:
+        raise Exception("dim_output must be an int (square output)" +
+                        " or tupple of int of dimension 2")
+    
+    if isinstance(nbres,int):
+        nbresx = nbres
+        nbresy = nbres
+    elif isinstance(nbres,tuple) & len(nbres) == 2:
+        nbresx = nbres[0]
+        nbresy = nbres[1]
+    else:
+        raise Exception(
+            "nbres must be an float (square output) or tupple of float of dimension 2"
+        )
+
+    nbresx = nbresx * dim_input_x / dimpup_x
+    nbresy = nbresy * dim_input_y / dimpup_y
+
+    X0 = dim_input_x / 2 + X_offset_input
+    Y0 = dim_input_y / 2 + Y_offset_input
+    
+    X1 = X_offset_output
+    Y1 = Y_offset_output
+
+    # image0 = dcomplex(image)
+    xx0 = ((np.arange(dim_input_x) - X0) / dim_input_x)  #Entrance image
+    xx1 = ((np.arange(dim_input_y) - Y0) / dim_input_y)  #Entrance image
+    uu0 = ((np.arange(dim_output_x) - X1) / dim_output_x -
+           1 / 2) * nbresx  #Fourier plane
+    uu1 = ((np.arange(dim_output_y) - Y1) / dim_output_y -
+           1 / 2) * nbresy  #Fourier plane
 
     if inv == 1:
-        norm0 = 1
+        norm0 = 1.#nbresx * nbresy / dim_input_x / dim_input_y
     else:
-        norm0 = ((1. * nbres)**2 / (1. * dimft)**2 / (1. * dim0)**2)
+        norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
+
 
     AA = np.exp(-inv * 1j * 2 * np.pi * np.outer(uu0, xx0))
-    BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx0, uu1))
-    result = norm0 * np.matmul(np.matmul(AA, pup), BB)
+    BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx1, uu1))
+    result = norm0 * np.matmul(np.matmul(AA, image), BB)
 
     return result
+
+
+# def mft(pup, dimpup, dimft, nbres, xshift=0, yshift=0, inv=-1):
+#     """ --------------------------------------------------
+#     MFT  - Return the Matrix Direct Fourier transform (MFT) of pup
+#     (cf. Soummer et al. 2007, OSA)
+
+#     Parameters
+#     ----------
+#     pup : 2D array (complex or real)
+#          Entrance pupil.
+#          CAUTION : pup has to be centered on (dim0/2+1,dim0/2+1)
+#          where dim0 is the pup array dimension
+
+#     dimpup : integer
+#             Diameter of the support in pup (can differ from dim0)
+#             Example : dimpup = diameter of the pupil in pixel
+
+#     dimft : integer
+#            Dimension of the output
+
+#     nbres : float
+#            Number of spatial resolution elements
+
+#     xshift : float
+#             center of the output array in the x direction
+
+#     yshift : float
+#             center of the output array in the y direction    
+
+#     inv : integer
+#             direct MFT if 1
+#             indirect MFT if -1 (default)
+    
+
+#     Returns
+#     ------
+#     result : 2D array (complex)
+#             MFT of pup centered on the pixel (dimft/2D+1+xhift,dimft/2D+1+yxhift)
+#             dimension is dimft x dimft
+
+#     AUTHOR : Raphael Galicher
+
+#     REVISION HISTORY :
+#     Revision 1.1  2020-01-22 Raphaël Galicher
+#     Initial revision (from MFT.pro written in IDL)
+
+#     -------------------------------------------------- """
+#     dim0 = pup.shape[0]
+#     nbres = nbres * dim0 / dimpup
+
+#     xx0 = np.arange(dim0) / dim0 - 0.5
+#     uu0 = ((np.arange(dimft) - xshift) / dimft - 0.5) * nbres
+#     uu1 = ((np.arange(dimft) - yshift) / dimft - 0.5) * nbres
+
+#     if inv == 1:
+#         norm0 = 1
+#     else:
+#         norm0 = ((1. * nbres)**2 / (1. * dimft)**2 / (1. * dim0)**2)
+
+#     AA = np.exp(-inv * 1j * 2 * np.pi * np.outer(uu0, xx0))
+#     BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx0, uu1))
+#     result = norm0 * np.matmul(np.matmul(AA, pup), BB)
+
+#     return result
 
 
 def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
