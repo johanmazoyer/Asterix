@@ -767,7 +767,7 @@ def correctionLoop(parameter_file,
                                             thd2.DM1.WhichInPupil)),
                             thd2.DM3.DM_pushact.shape[0] +
                             thd2.DM1.DM_pushact.shape[0])
-                        # Phase to apply on DM1
+                        # Phase to apply on DM1    
                         apply_on_DM1 = wsc.apply_on_DM(
                             solution1[pushactonDM3.shape[0]:],
                             thd2.DM1.DM_pushact) * (-gain * amplitudeEFC * 2 *
@@ -823,15 +823,16 @@ def correctionLoop(parameter_file,
 
                     # I think this will work based on waht you wrote after
                     if thd2.DM1.active == True:
-                        phaseDM1 = proc.crop_or_pad_image(
+                        phaseDM1_tmp = phaseDM1[k] + proc.crop_or_pad_image(
                             apply_on_DM1, dim_pup)
                     else:
-                        phaseDM1 = 0.
-                    phaseDM3 = proc.crop_or_pad_image(apply_on_DM3, dim_pup)
+                        phaseDM1_tmp = 0.
+                    phaseDM3_tmp = phaseDM3[k] + proc.crop_or_pad_image(
+                        apply_on_DM3, dim_pup)
                     imagedetectortemp = thd2.todetector_Intensity(
                         entrance_EF=input_wavefront,
-                        DM1phase=phaseDM1,
-                        phaseDM3=phaseDM3) / thd2.maxPSF
+                        DM1phase=phaseDM1_tmp,
+                        DM3phase=phaseDM3_tmp) / thd2.maxPSF
 
                     meancontrasttemp[b] = np.mean(
                         imagedetectortemp[np.where(maskDHcontrast != 0)])
