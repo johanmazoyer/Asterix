@@ -1,4 +1,5 @@
 __author__ = 'Raphael Galicher, Johan Mazoyer, and Axel Potier'
+print('test2')
 
 import os
 import datetime
