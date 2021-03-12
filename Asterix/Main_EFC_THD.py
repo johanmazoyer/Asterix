@@ -1,4 +1,4 @@
-__author__ = 'Axel Potier'
+__author__ = 'Raphael Galicher, Johan Mazoyer, and Axel Potier'
 
 import os
 import datetime
