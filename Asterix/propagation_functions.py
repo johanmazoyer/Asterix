@@ -120,10 +120,9 @@ def mft(image,
            1 / 2) * nbresy  #Fourier plane
 
     if inv == 1:
-        norm0 = 1.#nbresx * nbresy / dim_input_x / dim_input_y
+        norm0 = nbresx * nbresy / dim_input_x / dim_input_y
     else:
         norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
-
 
     AA = np.exp(-inv * 1j * 2 * np.pi * np.outer(uu0, xx0))
     BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx1, uu1))
