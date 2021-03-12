@@ -177,7 +177,7 @@ class Optical_System:
         if center_on_pixel == True:
             Psf_offset = (0, 0)
         else:
-            Psf_offset = (1 / 2, 1 / 2)
+            Psf_offset = (- 1 / 2, - 1 / 2)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -610,7 +610,7 @@ class coronagraph(Optical_System):
                 # We do not need to be exact, the mft in science_focal_plane will be
 
         if self.corona_type == "fqpm":
-            self.prop_apod2lyot = 'fft'
+            self.prop_apod2lyot = 'mft'
             self.err_fqpm = coroconfig["err_fqpm"]
             self.achrom_fqpm = coroconfig["achrom_fqpm"]
             self.FPmsk = self.FQPM()
@@ -661,6 +661,223 @@ class coronagraph(Optical_System):
             self.perfect_Lyot_pupil = 0
             self.perfect_Lyot_pupil = self.EF_through(
                 entrance_EF=self.clearpup.EF_through())
+    
+    def EF_through(self,
+                   entrance_EF=1.,
+                   wavelength=None,
+                   noFPM=False,
+                   save_all_planes_to_fits=False,
+                   dir_save_all_planes=None):
+        """ --------------------------------------------------
+        Propagate the electric field from apod plane before the apod
+        pupil to Lyot plane after Lyot pupil
+
+        Parameters
+        ----------
+        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+        Electric field in the pupil plane a the entrance of the system. 
+
+        wavelength : float. Default is self.wavelength_0 the reference wavelength
+                current wavelength in m. 
+        
+        noFPM : bool (default: False)
+            if True, remove the FPM if one want to measure a un-obstructed PSF
+
+        save_all_planes_to_fits: Bool, default False.
+                if True, save all planes to fits for debugging purposes to dir_save_all_planes
+                This can generate a lot of fits especially if in a loop so the code force you
+                to define a repository.
+        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+
+        Returns
+        ------
+        exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] 
+            Electric field in the pupil plane a the exit of the system
+
+        AUTHOR : Johan Mazoyer 
+        -------------------------------------------------- """
+
+        # call the Optical_System super function to check and format the variable entrance_EF
+        entrance_EF = super().EF_through(entrance_EF=entrance_EF)
+
+        if save_all_planes_to_fits == True:
+            name_plane = 'EF_PP_before_apod' + '_wl{}'.format(
+                int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+
+        if wavelength == None:
+            wavelength = self.wavelength_0
+
+        if noFPM:
+            FPmsk = 1.
+        else:
+            FPmsk = self.FPmsk[self.wav_vec.tolist().index(wavelength)]
+
+        lambda_ratio = wavelength / self.wavelength_0
+
+        input_wavefront_after_apod = self.apod_pup.EF_through(
+            entrance_EF=entrance_EF, wavelength=wavelength)
+
+        if save_all_planes_to_fits == True:
+            name_plane = 'EF_PP_after_apod' + '_wl{}'.format(
+                int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      input_wavefront_after_apod)
+
+        if self.prop_apod2lyot == "fft":
+            dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(
+                wavelength)]
+            input_wavefront_pad = proc.crop_or_pad_image(
+                entrance_EF, dim_fp_fft_here)
+            # Phase ramp to center focal plane between 4 pixels
+
+            maskshifthalfpix = phase_ampl.shift_phase_ramp(
+                dim_fp_fft_here, 0.5, 0.5)
+            maskshifthalfpix_invert = phase_ampl.shift_phase_ramp(
+                dim_fp_fft_here, -0.5, -0.5)
+
+            #Apod plane to focal plane
+            corono_focal_plane = np.fft.fft2(
+                np.fft.fftshift(input_wavefront_pad * maskshifthalfpix))
+
+            if save_all_planes_to_fits == True:
+                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane)
+                
+                ame_plane = 'FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          FPmsk)
+
+                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane * FPmsk)
+
+            # Focal plane to Lyot plane
+            lyotplane_before_lyot = np.fft.fftshift(
+                np.fft.ifft2(
+                    corono_focal_plane * FPmsk)) * maskshifthalfpix_invert
+            # we take the convention that when we are in pupil plane the field must be
+            # "non-shifted". Because the shift in pupil plane is resolution dependent
+            # which depend on the method (fft is not exactly science resolution because
+            # of rounding issues, mft-babinet does not use the science resolution, etc).
+            # these shift in both direction should be included in apod and pup multiplication
+            # to save time
+
+        elif self.prop_apod2lyot == "mft-babinet":
+            #Apod plane to focal plane
+
+            corono_focal_plane = prop.mft(
+                input_wavefront_after_apod,
+                self.dim_overpad_pupil,
+                self.dim_fpm,
+                self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
+                X_offset_output= - 1 / 2,
+                Y_offset_output= - 1 / 2,
+                inverse=False)
+
+            if save_all_planes_to_fits == True:
+                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane)
+                
+                name_plane = 'FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          FPmsk)
+
+                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane * FPmsk)
+
+            # Focal plane to Lyot plane
+            lyotplane_before_lyot_central_part = prop.mft(
+                corono_focal_plane * (1 - FPmsk),
+                self.dim_fpm,
+                self.dim_overpad_pupil,
+                self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
+                X_offset_input= - 1 / 2,
+                Y_offset_input= - 1 / 2,
+                inverse=True)
+
+            # Babinet's trick
+            lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
+
+        elif self.prop_apod2lyot == "mft":
+            # Apod plane to focal plane
+
+            corono_focal_plane = prop.mft(input_wavefront_after_apod,
+                                          2 * self.prad,
+                                          self.dim_im,
+                                          self.dim_im / self.science_sampling *
+                                          lambda_ratio,
+                                          X_offset_output= - 1 / 2,
+                                          Y_offset_output= - 1 / 2,
+                                          inverse=False)
+
+            if save_all_planes_to_fits == True:
+                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane)
+                
+                name_plane = 'FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          FPmsk)
+
+                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane * FPmsk)
+
+            # Focal plane to Lyot plane
+            lyotplane_before_lyot = proc.crop_or_pad_image(
+                prop.mft(corono_focal_plane * FPmsk,
+                         self.dim_im,
+                         2 * self.prad,
+                         self.dim_im / self.science_sampling * lambda_ratio,
+                         X_offset_input= - 1 / 2,
+                         Y_offset_input= - 1 / 2,
+                         inverse=True), self.dim_overpad_pupil)
+
+        else:
+            raise Exception(
+                self.prop_apod2lyot +
+                " is not a known prop_apod2lyot propagation mehtod")
+
+        if save_all_planes_to_fits == True:
+            name_plane = 'EF_PP_before_LS' + '_wl{}'.format(
+                int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      lyotplane_before_lyot)
+
+        # crop to the dim_overpad_pupil expeted size
+        lyotplane_before_lyot_crop = proc.crop_or_pad_image(
+            lyotplane_before_lyot, self.dim_overpad_pupil)
+
+        # Field after filtering by Lyot stop
+        lyotplane_after_lyot = self.lyot_pup.EF_through(
+            entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
+
+        if (self.perfect_coro == True) & (noFPM == False):
+            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
+
+        if save_all_planes_to_fits == True:
+            name_plane = 'EF_PP_after_LS' + '_wl{}'.format(
+                int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      lyotplane_after_lyot)
+
+        return lyotplane_after_lyot
+
 
     def FQPM(self):
         """ --------------------------------------------------
@@ -789,207 +1006,7 @@ class coronagraph(Optical_System):
     ##############################################
     ### Propagation through coronagraph
 
-    def EF_through(self,
-                   entrance_EF=1.,
-                   wavelength=None,
-                   noFPM=False,
-                   save_all_planes_to_fits=False,
-                   dir_save_all_planes=None):
-        """ --------------------------------------------------
-        Propagate the electric field from apod plane before the apod
-        pupil to Lyot plane after Lyot pupil
-
-        Parameters
-        ----------
-        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
-                        Can also be a float scalar in which case entrance_EF is constant
-                        default is 1.
-        Electric field in the pupil plane a the entrance of the system. 
-
-        wavelength : float. Default is self.wavelength_0 the reference wavelength
-                current wavelength in m. 
-        
-        noFPM : bool (default: False)
-            if True, remove the FPM if one want to measure a un-obstructed PSF
-
-        save_all_planes_to_fits: Bool, default False.
-                if True, save all planes to fits for debugging purposes to dir_save_all_planes
-                This can generate a lot of fits especially if in a loop so the code force you
-                to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
-
-        Returns
-        ------
-        exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] 
-            Electric field in the pupil plane a the exit of the system
-
-        AUTHOR : Johan Mazoyer 
-        -------------------------------------------------- """
-
-        # call the Optical_System super function to check and format the variable entrance_EF
-        entrance_EF = super().EF_through(entrance_EF=entrance_EF)
-
-        if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_before_apod' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
-
-        if wavelength == None:
-            wavelength = self.wavelength_0
-
-        if noFPM:
-            FPmsk = 1.
-        else:
-            FPmsk = self.FPmsk[self.wav_vec.tolist().index(wavelength)]
-
-        lambda_ratio = wavelength / self.wavelength_0
-
-        input_wavefront_after_apod = self.apod_pup.EF_through(
-            entrance_EF=entrance_EF, wavelength=wavelength)
-
-        if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_after_apod' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      input_wavefront_after_apod)
-
-        if self.prop_apod2lyot == "fft":
-            dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(
-                wavelength)]
-            input_wavefront_pad = proc.crop_or_pad_image(
-                entrance_EF, dim_fp_fft_here)
-            # Phase ramp to center focal plane between 4 pixels
-
-            maskshifthalfpix = phase_ampl.shift_phase_ramp(
-                dim_fp_fft_here, 0.5, 0.5)
-            maskshifthalfpix_invert = phase_ampl.shift_phase_ramp(
-                dim_fp_fft_here, -0.5, -0.5)
-
-            #Apod plane to focal plane
-            corono_focal_plane = np.fft.fft2(
-                np.fft.fftshift(input_wavefront_pad * maskshifthalfpix))
-
-            if save_all_planes_to_fits == True:
-                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane)
-
-                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane * FPmsk)
-
-            # Focal plane to Lyot plane
-            lyotplane_before_lyot = np.fft.fftshift(
-                np.fft.ifft2(
-                    corono_focal_plane * FPmsk)) * maskshifthalfpix_invert
-            # we take the convention that when we are in pupil plane the field must be
-            # "non-shifted". Because the shift in pupil plane is resolution dependent
-            # which depend on the method (fft is not exactly science resolution because
-            # of rounding issues, mft-babinet does not use the science resolution, etc).
-            # these shift in both direction should be included in apod and pup multiplication
-            # to save time
-
-        elif self.prop_apod2lyot == "mft-babinet":
-            #Apod plane to focal plane
-
-            corono_focal_plane = prop.mft(
-                input_wavefront_after_apod,
-                self.dim_overpad_pupil,
-                self.dim_fpm,
-                self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                X_offset_output=1 / 2,
-                Y_offset_output=1 / 2,
-                inverse=False)
-
-            if save_all_planes_to_fits == True:
-                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane)
-
-                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane * FPmsk)
-
-            # Focal plane to Lyot plane
-            lyotplane_before_lyot_central_part = prop.mft(
-                corono_focal_plane * (1 - FPmsk),
-                self.dim_fpm,
-                self.dim_overpad_pupil,
-                self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                X_offset_input=1 / 2,
-                Y_offset_input=1 / 2,
-                inverse=True)
-
-            # Babinet's trick
-            lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
-
-        elif self.prop_apod2lyot == "mft":
-            # Apod plane to focal plane
-
-            corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          2 * self.prad,
-                                          self.dim_im,
-                                          self.dim_im / self.science_sampling *
-                                          lambda_ratio,
-                                          X_offset_output=1 / 2,
-                                          Y_offset_output=1 / 2,
-                                          inverse=False)
-
-            if save_all_planes_to_fits == True:
-                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane)
-
-                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane * FPmsk)
-
-            # Focal plane to Lyot plane
-            lyotplane_before_lyot = proc.crop_or_pad_image(
-                prop.mft(corono_focal_plane * FPmsk,
-                         self.dim_im,
-                         2 * self.prad,
-                         self.dim_im / self.science_sampling * lambda_ratio,
-                         X_offset_input=1 / 2,
-                         Y_offset_input=1 / 2,
-                         inverse=True), self.dim_overpad_pupil)
-
-        else:
-            raise Exception(
-                self.prop_apod2lyot +
-                " is not a known prop_apod2lyot propagation mehtod")
-
-        if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_before_LS' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      lyotplane_before_lyot)
-
-        # crop to the dim_overpad_pupil expeted size
-        lyotplane_before_lyot_crop = proc.crop_or_pad_image(
-            lyotplane_before_lyot, self.dim_overpad_pupil)
-
-        # Field after filtering by Lyot stop
-        lyotplane_after_lyot = self.lyot_pup.EF_through(
-            entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
-
-        if (self.perfect_coro == True) & (noFPM == False):
-            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
-
-        if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_after_LS' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      lyotplane_after_lyot)
-
-        return lyotplane_after_lyot
-
+    
 
 ##############################################
 ##############################################

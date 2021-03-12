@@ -76,10 +76,10 @@ corono = instr.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
 #we can also update some of the parameter on the spot if we wish.
 # For example the coronagraph define int he parameter file does not have an entrance pupil because
 # it is in the "THD2" way, but we can put one, for exemple roman:
-Coronaconfig.update(
-    {'filename_instr_apod': "roman_pup_1002pix_center4pixels.fits"})
+# Coronaconfig.update(
+#     {'filename_instr_apod': "roman_pup_1002pix_center4pixels.fits"})
 # WE can also cahnge the Bandwidth
-Coronaconfig.update({'Delta_wav': '50e-9'})
+# Coronaconfig.update({'Delta_wav': '50e-9'})
 # Lets reinitialize the coronagraph
 corono = instr.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
 
@@ -111,12 +111,13 @@ if not os.path.exists(plot_all_fits_dir):
 FP_after_corono_in_contrast = corono.todetector_Intensity(
     entrance_EF=Entrance_EF,
     save_all_planes_to_fits=True,
-    dir_save_fits=plot_all_fits_dir) / No_mask_PSF
+    dir_save_all_planes=plot_all_fits_dir) / No_mask_PSF
+
 
 # Initialize the whole thd:
 thd2 = instr.THD2_testbed(modelconfig,
                           DMconfig,
                           Coronaconfig,
-                          load_fits=True,
+                          save_fits=True,
                           model_dir=model_dir,
                           Model_local_dir=Model_local_dir)

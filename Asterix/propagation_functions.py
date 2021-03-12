@@ -91,9 +91,9 @@ def mft(image,
         raise Exception("dim_output must be an int (square output)" +
                         " or tupple of int of dimension 2")
     
-    if isinstance(nbres,float):
-        nbresx = nbres
-        nbresy = nbres
+    if isinstance(nbres,(float,int)):
+        nbresx = float(nbres)
+        nbresy = float(nbres)
     elif isinstance(nbres,tuple) & len(nbres) == 2:
         nbresx = nbres[0]
         nbresy = nbres[1]
