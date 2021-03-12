@@ -507,11 +507,12 @@ class pupil(Optical_System):
     def random_phase_map(self, phaserms, rhoc, slope):
         """ --------------------------------------------------
         Create a random phase map, whose PSD decrease in f^(-slope)
+        average is null and stadard deviation is phaserms
         
         Parameters
         ----------
         phaserms : float
-            Level of aberration
+            standard deviation of aberration
         rhoc : float
             See Borde et Traub 2006
         slope : float
@@ -598,7 +599,8 @@ class coronagraph(Optical_System):
                 # We do not need to be exact, the mft in science_focal_plane will be
 
         if self.corona_type == "fqpm":
-            self.prop_apod2lyot = 'fft'
+#            self.prop_apod2lyot = 'fft'
+            self.prop_apod2lyot = 'mft'
             self.err_fqpm = coroconfig["err_fqpm"]
             self.achrom_fqpm = coroconfig["achrom_fqpm"]
             self.FPmsk = self.FQPM()

@@ -418,12 +418,16 @@ def correctionLoop(parameter_file,
     SIMUconfig.update(NewSIMUconfig)
     Name_Experiment = SIMUconfig["Name_Experiment"]
     set_amplitude_abb = SIMUconfig["set_amplitude_abb"]
-    amplitude_abb = SIMUconfig["amplitude_abb"]
+    ampl_abb_filename = SIMUconfig["ampl_abb_filename"]
+    set_random_ampl=SIMUconfig["set_random_ampl"]
+    ampl_rms = SIMUconfig["ampl_rms"]
+    ampl_rhoc = SIMUconfig["ampl_rhoc"]
+    ampl_slope = SIMUconfig["ampl_slope"]
     set_phase_abb = SIMUconfig["set_phase_abb"]
     set_random_phase = SIMUconfig["set_random_phase"]
-    phaserms = SIMUconfig["phaserms"]
-    rhoc_phase = SIMUconfig["rhoc_phase"]
-    slope_phase = SIMUconfig["slope_phase"]
+    phase_rms = SIMUconfig["phase_rms"]
+    phase_rhoc = SIMUconfig["phase_rhoc"]
+    phase_slope = SIMUconfig["phase_slope"]
     phase_abb_filename = SIMUconfig["phase_abb_filename"]
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
@@ -558,7 +562,7 @@ def correctionLoop(parameter_file,
     if set_phase_abb == True:
         if phase_abb_filename == '':
             phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
-                int(phaserms * 1e9), int(slope_phase), rhoc_phase, thd2.prad)
+                int(phase_rms * 1e9), int(phase_slope), phase_rhoc, thd2.prad)
 
         if set_random_phase == False and os.path.isfile(Model_local_dir +
                                                         phase_abb_filename +
@@ -568,7 +572,7 @@ def correctionLoop(parameter_file,
 
         else:
             phase_up = thd2.entrancepupil.random_phase_map(
-                phaserms, rhoc_phase, slope_phase)
+                phase_rms, phase_rhoc, phase_slope)
             if set_random_phase == False:  # save it for next time
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
                              phase_up)
@@ -578,9 +582,26 @@ def correctionLoop(parameter_file,
         phase_up = 0
 
     if set_amplitude_abb == True:
-        ampfinal = phase_ampl.scale_amplitude_abb(
-            model_dir + amplitude_abb + ".fits", thd2.prad,
-            thd2.entrancepupil.pup)
+        if ampl_abb_filename != '' and os.path.isfile(
+                    Model_local_dir + ampl_abb_filename + ".fits"
+                    ) == True and set_random_ampl == False:
+            ampfinal = phase_ampl.scale_amplitude_abb(
+                model_dir + ampl_abb_filename + ".fits", thd2.prad,
+                thd2.entrancepupil.pup)
+        else:
+            ampl_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                int(ampl_rms), int(ampl_slope), ampl_rhoc, thd2.prad)
+
+            if set_random_ampl == False and os.path.isfile(Model_local_dir +
+                                    ampl_abb_filename +".fits") == True:
+                ampfinal = fits.getdata(Model_local_dir + ampl_abb_filename +
+                                    ".fits")
+            else:
+                ampfinal = thd2.entrancepupil.random_phase_map(
+                            ampl_rms/100., ampl_rhoc, ampl_slope)
+            if set_random_ampl == False:  # save it for next time
+                fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
+                             ampfinal)
     else:
         ampfinal = 0
 
