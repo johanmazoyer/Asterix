@@ -5,7 +5,7 @@ def mft(image,
         dimpup,
         dim_output,
         nbres,
-        inv=-1,
+        inverse=False,
         X_offset_input=0,
         Y_offset_input=0,
         X_offset_output=0,
@@ -31,10 +31,10 @@ def mft(image,
         nbres: float or or tupple of float of dim 2
                 Number of spatial resolution elements (same in both directions if float)
         
-        inv : direction of the MFT
-                inv=1, direct mft
-                inv=-1, indirect mft (default value)
-    
+        inverse : direction of the MFT
+                inverse = False, direct mft (default value)
+                inverse = True, indirect mft 
+
         X_offset_input :(default 0) position of the 0-frequency pixel in x for the entrance
              image with respect to the center of the entrance image (real position
              of the 0-frequency pixel on dim_input_x/2+x0) 
@@ -64,7 +64,7 @@ def mft(image,
     REVISION HISTORY :
         Revision 1.1  2011  Initial revision. Raphaël Galicher (from soummer, in IDL)
         Revision 2.0  2012-04-12 P. Baudoz (IDL version): added pup offset
-        Revision 3.0  2020-03-10 J. Mazoyer (to python)
+        Revision 3.0  2020-03-10 J. Mazoyer (to python). Replace the MFT with no input offset option
 
 """
 
@@ -91,7 +91,7 @@ def mft(image,
         raise Exception("dim_output must be an int (square output)" +
                         " or tupple of int of dimension 2")
     
-    if isinstance(nbres,int):
+    if isinstance(nbres,float):
         nbresx = nbres
         nbresy = nbres
     elif isinstance(nbres,tuple) & len(nbres) == 2:
@@ -119,19 +119,21 @@ def mft(image,
     uu1 = ((np.arange(dim_output_y) - Y1) / dim_output_y -
            1 / 2) * nbresy  #Fourier plane
 
-    if inv == 1:
-        norm0 = nbresx * nbresy / dim_input_x / dim_input_y
-    else:
+    if inverse == False:
+        norm0 = 1.
+        sign_exponential = -1
+    elif inverse == True:
         norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
+        sign_exponential = 1
 
-    AA = np.exp(-inv * 1j * 2 * np.pi * np.outer(uu0, xx0))
-    BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx1, uu1))
+    AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0))
+    BB = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(xx1, uu1))
     result = norm0 * np.matmul(np.matmul(AA, image), BB)
 
     return result
 
 
-# def mft(pup, dimpup, dimft, nbres, xshift=0, yshift=0, inv=-1):
+# def mft_v1(pup, dimpup, dimft, nbres, xshift=0, yshift=0, inv=-1):
 #     """ --------------------------------------------------
 #     MFT  - Return the Matrix Direct Fourier transform (MFT) of pup
 #     (cf. Soummer et al. 2007, OSA)
@@ -267,6 +269,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         dx = rad / prad
         # Sampling in the output dim x dim array if FFT
         dxout = np.abs(lam * z / (dx * dim))
+        inverse_mft = False
     # Zoom factor to get the same spatial scale in the input and output array
     #fac = dx/dxout
     else:
@@ -275,6 +278,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         dxout = rad / prad
         # Sampling in the input dim x dim array if FFT
         dx = np.abs(lam * z / (dxout * dim))
+        inverse_mft = True
     # Zoom factor to get the same spatial scale in the input and output array
     #fac = dxout/dx
 
@@ -296,7 +300,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         return -1
 
     # Fourier transform using MFT
-    result = mft(pup * H, 2 * prad, dim, 2 * prad * fac, inv=sign)
+    result = mft(pup * H, 2 * prad, dim, 2 * prad * fac, inverse=inverse_mft)
 
     # Fresnel factor that applies after Fourier transform
     result = result * np.exp(1j * sign * np.pi * rho**2 / dim * dxout / dx)

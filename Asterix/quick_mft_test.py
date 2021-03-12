@@ -12,20 +12,34 @@ pup = phafun.roundpupil(dim_pup,prad)
 print(np.mean(pup[np.where(pup != 0)])) 
 
 
-useful.quickfits(pup)
+useful.quickfits(pup,name='pup')
 
-psf = prop.mft(pup, 2*prad, 2000, 400, inv= -1 )
+efmft = prop.mft(pup, 2*prad, 4* dim_pup, dim_pup, inverse=False, X_offset_output = 1/2, Y_offset_output = 1/2 )
+psfmft = np.abs(efmft)**2
 
-pup_back = np.abs(prop.mft( psf, 2000,2*prad, 400, inv = 1))
-useful.quickfits(np.abs(pup_back))
+useful.quickfits(np.abs(psfmft),name='psf_mft')
+
+pup_back = prop.mft( efmft, 4* dim_pup,2*prad, dim_pup, inverse=True, X_offset_input = 1/2, Y_offset_input = 1/2 )
+useful.quickfits(np.angle(pup_back),name='pupback_mft_phase')
+useful.quickfits(np.real(pup_back),name='pupback_mft')
 
 print(np.mean(pup_back[np.where(pup_back != 0)])) 
 
 
-# puppad = proc.crop_or_pad_image(pup, 4* dim_pup)
-# psf =  proc.crop_or_pad_image(np.abs(np.fft.fftshift(np.fft.fft2(
-#                 np.fft.fftshift(puppad))))**2, 1000)
-# useful.quickfits(psf)
+puppad = proc.crop_or_pad_image(pup, 4* dim_pup)
+efffft =  np.fft.fftshift(np.fft.fft2(
+                np.fft.fftshift(puppad)))
+psffft = np.abs(efffft)**2
+useful.quickfits(psffft, name='psf_fft')
+
+pup_back = proc.crop_or_pad_image(np.fft.fftshift(np.fft.ifft2(np.fft.fft2(
+                np.fft.fftshift(puppad)))), dim_pup)
+
+
+
+useful.quickfits(np.real(pup_back),  name='pupback_fft')
+
+
 
 
 

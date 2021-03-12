@@ -79,7 +79,7 @@ class Optical_System:
     def EF_through(self,
                    entrance_EF=1.,
                    save_all_planes_to_fits=False,
-                   dir_save_fits=None,
+                   dir_save_all_planes=None,
                    **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from entrance pupil to exit pupil
@@ -91,11 +91,11 @@ class Optical_System:
                         default is 1.
         Electric field in the pupil plane a the entrance of the system. 
 
-        save_planes_to_fits: Bool, default False.
-                if True, save all planes to fits for debugging purposes to dir_save_fits
+        save_all_planes_to_fits: Bool, default False.
+                if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_fits : default None. directory to save all plane in fits if save_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
             
 
         **kwargs: other kw parameters can be passed for other Optical_System objects EF_trough function
@@ -119,11 +119,11 @@ class Optical_System:
             raise Exception(
                 "entrance_EF should be a float of a numpy array of floats")
 
-        if save_all_planes_to_fits == True and dir_save_fits == None:
+        if save_all_planes_to_fits == True and dir_save_all_planes == None:
             raise Exception(
                 "save_all_planes_to_fits = True can generate a lot of .fits files"
                 +
-                "please define a clear directory using dir_save_fits kw argument"
+                "please define a clear directory using dir_save_all_planes kw argument"
             )
 
         exit_EF = entrance_EF
@@ -134,7 +134,7 @@ class Optical_System:
                    wavelength=None,
                    center_on_pixel=False,
                    save_all_planes_to_fits=False,
-                   dir_save_fits=None,
+                   dir_save_all_planes=None,
                    **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from entrance plane through the system and then
@@ -158,6 +158,12 @@ class Optical_System:
         This of course assume that no tip-tilt have been introduced in the entrance_EF 
         or during self.EF_through
 
+        save_all_planes_to_fits: Bool, default False.
+                if True, save all planes to fits for debugging purposes to dir_save_all_planes
+                This can generate a lot of fits especially if in a loop so the code force you
+                to define a repository.
+        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+
         **kwargs: other kw parameters can be passed direclty to self.EF_through function
 
         Returns
@@ -171,7 +177,7 @@ class Optical_System:
         if center_on_pixel == True:
             Psf_offset = (0, 0)
         else:
-            Psf_offset = (-0.5, -0.5)
+            Psf_offset = (1 / 2, 1 / 2)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -182,7 +188,7 @@ class Optical_System:
             entrance_EF=entrance_EF,
             wavelength=wavelength,
             save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_fits=dir_save_fits,
+            dir_save_all_planes=dir_save_all_planes,
             **kwargs)
 
         focal_plane_EF = prop.mft(exit_EF,
@@ -190,15 +196,15 @@ class Optical_System:
                                   self.dim_im,
                                   self.dim_im / self.science_sampling *
                                   lambda_ratio,
-                                  xshift=Psf_offset[0],
-                                  yshift=Psf_offset[1],
-                                  inv=1)
+                                  X_offset_output=Psf_offset[0],
+                                  Y_offset_output=Psf_offset[1],
+                                  inverse=False)
 
         if save_all_planes_to_fits == True:
             who_called_me = self.__class__.__name__
             name_plane = 'EF_FP_after_' + who_called_me + '_obj' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane,
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       focal_plane_EF)
 
         return focal_plane_EF
@@ -208,7 +214,7 @@ class Optical_System:
                              wavelengths=None,
                              center_on_pixel=False,
                              save_all_planes_to_fits=False,
-                             dir_save_fits=None,
+                             dir_save_all_planes=None,
                              **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from entrance plane through the system, then
@@ -228,6 +234,12 @@ class Optical_System:
             If False, the PSF will be centered between 4 pixels
         This of course assume that no tip-tilt have been introduced in the entrance_EF 
         or during self.EF_through
+
+        save_all_planes_to_fits: Bool, default False.
+                if True, save all planes to fits for debugging purposes to dir_save_all_planes
+                This can generate a lot of fits especially if in a loop so the code force you
+                to define a repository.
+        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
 
         **kwargs: other kw parameters can be passed direclty to self.EF_through function
 
@@ -260,13 +272,13 @@ class Optical_System:
                     wavelength=wav,
                     center_on_pixel=center_on_pixel,
                     save_all_planes_to_fits=save_all_planes_to_fits,
-                    dir_save_fits=dir_save_fits,
+                    dir_save_all_planes=dir_save_all_planes,
                     **kwargs))**2
 
         if save_all_planes_to_fits == True:
             who_called_me = self.__class__.__name__
             name_plane = 'Int_FP_after_' + who_called_me + '_obj'
-            useful.save_plane_in_fits(dir_save_fits, name_plane,
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       focal_plane_Intensity)
 
         return focal_plane_Intensity
@@ -441,7 +453,7 @@ class pupil(Optical_System):
                    entrance_EF=1.,
                    wavelength=None,
                    save_all_planes_to_fits=False,
-                   dir_save_fits=None):
+                   dir_save_all_planes=None):
         """ --------------------------------------------------
         Propagate the electric field through the pupil
 
@@ -455,11 +467,11 @@ class pupil(Optical_System):
         wavelength : float. Default is self.wavelength_0 the reference wavelength
                 current wavelength in m. 
         
-        save_planes_to_fits: Bool, default False.
-                if True, save all planes to fits for debugging purposes to dir_save_fits
+        save_all_planes_to_fits: Bool, default False.
+                if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_fits : default None. directory to save all plane in fits if save_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
 
         Returns
         ------
@@ -475,7 +487,7 @@ class pupil(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_pupil' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -500,7 +512,7 @@ class pupil(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_after_pupil' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         return exit_EF
 
@@ -782,7 +794,7 @@ class coronagraph(Optical_System):
                    wavelength=None,
                    noFPM=False,
                    save_all_planes_to_fits=False,
-                   dir_save_fits=None):
+                   dir_save_all_planes=None):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod
         pupil to Lyot plane after Lyot pupil
@@ -800,6 +812,11 @@ class coronagraph(Optical_System):
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
 
+        save_all_planes_to_fits: Bool, default False.
+                if True, save all planes to fits for debugging purposes to dir_save_all_planes
+                This can generate a lot of fits especially if in a loop so the code force you
+                to define a repository.
+        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
 
         Returns
         ------
@@ -815,7 +832,7 @@ class coronagraph(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_apod' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -833,7 +850,7 @@ class coronagraph(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_after_apod' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane,
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       input_wavefront_after_apod)
 
         if self.prop_apod2lyot == "fft":
@@ -855,8 +872,13 @@ class coronagraph(Optical_System):
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_fits, name_plane,
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane)
+
+                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane * FPmsk)
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = np.fft.fftshift(
@@ -872,37 +894,25 @@ class coronagraph(Optical_System):
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
 
-            # in babinet, we have to shift also the initial pupil.
-            # this is a bit absurd but this is the only way if we want
-            # focal plane to be always centered between 4 pixels
-            # if we only centered duing the PSF then in the subtraction in babinet's trick
-            # we introduce a shift. Also this is not a perfect shift
-            # We need to code a anti-shift for mft-1 !
-
-            maskshifthalfpix_fpm = phase_ampl.shift_phase_ramp(
-                self.dim_overpad_pupil,
-                0.5 / self.Lyot_fpm_sampling * lambda_ratio,
-                0.5 / self.Lyot_fpm_sampling * lambda_ratio)
-
-            maskshifthalfpix_fpm_inverse = phase_ampl.shift_phase_ramp(
-                self.dim_overpad_pupil,
-                -0.5 / self.Lyot_fpm_sampling * lambda_ratio,
-                -0.5 / self.Lyot_fpm_sampling * lambda_ratio)
-
-            input_wavefront_after_apod_shifted = input_wavefront_after_apod * maskshifthalfpix_fpm
-
             corono_focal_plane = prop.mft(
-                input_wavefront_after_apod_shifted,
+                input_wavefront_after_apod,
                 self.dim_overpad_pupil,
                 self.dim_fpm,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                inv=1)
+                X_offset_output=1 / 2,
+                Y_offset_output=1 / 2,
+                inverse=False)
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_fits, name_plane,
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane)
+
+                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane * FPmsk)
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot_central_part = prop.mft(
@@ -910,37 +920,35 @@ class coronagraph(Optical_System):
                 self.dim_fpm,
                 self.dim_overpad_pupil,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                inv=-1)
+                X_offset_input=1 / 2,
+                Y_offset_input=1 / 2,
+                inverse=True)
 
             # Babinet's trick
-            lyotplane_before_lyot = (input_wavefront_after_apod_shifted -
-                                     lyotplane_before_lyot_central_part
-                                     ) * maskshifthalfpix_fpm_inverse
-            # this is ugly as sh*t but it works to be coherent with other convention in the code
+            lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
 
         elif self.prop_apod2lyot == "mft":
             # Apod plane to focal plane
-            # We need to code a anti-shift in mft-1 !
-
-            maskshifthalfpix_fpm_inverse = phase_ampl.shift_phase_ramp(
-                self.dim_overpad_pupil,
-                -0.5 / self.science_sampling * lambda_ratio,
-                -0.5 / self.science_sampling * lambda_ratio)
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
                                           2 * self.prad,
                                           self.dim_im,
                                           self.dim_im / self.science_sampling *
                                           lambda_ratio,
-                                          xshift=-0.5,
-                                          yshift=-0.5,
-                                          inv=1)
+                                          X_offset_output=1 / 2,
+                                          Y_offset_output=1 / 2,
+                                          inverse=False)
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_fits, name_plane,
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane)
+
+                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane * FPmsk)
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = proc.crop_or_pad_image(
@@ -948,8 +956,9 @@ class coronagraph(Optical_System):
                          self.dim_im,
                          2 * self.prad,
                          self.dim_im / self.science_sampling * lambda_ratio,
-                         inv=-1),
-                self.dim_overpad_pupil) * maskshifthalfpix_fpm_inverse
+                         X_offset_input=1 / 2,
+                         Y_offset_input=1 / 2,
+                         inverse=True), self.dim_overpad_pupil)
 
         else:
             raise Exception(
@@ -959,7 +968,7 @@ class coronagraph(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_LS' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane,
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       lyotplane_before_lyot)
 
         # crop to the dim_overpad_pupil expeted size
@@ -976,7 +985,7 @@ class coronagraph(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_after_LS' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane,
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       lyotplane_after_lyot)
 
         return lyotplane_after_lyot
@@ -1011,8 +1020,8 @@ class deformable_mirror(Optical_System):
         modelconfig : general configuration parameters (sizes and dimensions)
         DMconfig : DM parameters
         Name_DM : the name of the DM, which allows to find it in the parameter file
-        load_fits : bool, default = True if true, we do not measure the DM init fits, we load them
-        save_fits : 
+        load_fits : bool, default = False if true, we do not measure the DM init fits, we load them
+        save_fits : bool, default = False if true, we save the DM init fits for future use
         we measure and save the pushact functions
 
         model_dir: directory to find Measured positions for each actuator in pixel and 
@@ -1101,7 +1110,7 @@ class deformable_mirror(Optical_System):
                    wavelength=None,
                    DMphase=0.,
                    save_all_planes_to_fits=False,
-                   dir_save_fits=None):
+                   dir_save_all_planes=None):
         """ --------------------------------------------------
         Propagate the electric field through the DM.
         if z_DM = 0, then it's just a phase multiplication
@@ -1120,10 +1129,12 @@ class deformable_mirror(Optical_System):
         DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.  
                     Can also be a float scalar in which case DM_phase is constant
                     default is 0. 
-                    
-        TODO: Maybe we can put the electrical field directly ? 
-        TODO: do all the annoying saving and loading of fits in the initialization here
-
+        
+        save_all_planes_to_fits: Bool, default False.
+                if True, save all planes to fits for debugging purposes to dir_save_all_planes
+                This can generate a lot of fits especially if in a loop so the code force you
+                to define a repository.
+        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
 
         Returns
         ------
@@ -1147,10 +1158,10 @@ class deformable_mirror(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_' + self.Name_DM + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
             name_plane = 'phase_' + self.Name_DM + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane, DMphase)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, DMphase)
 
         # if the DM is not active or if the surface is 0
         # we save some time : the EF is not modified
@@ -1168,12 +1179,12 @@ class deformable_mirror(Optical_System):
                 DMphase / lambda_ratio,
                 wavelength,
                 save_all_planes_to_fits=save_all_planes_to_fits,
-                dir_save_fits=dir_save_fits)
+                dir_save_all_planes=dir_save_all_planes)
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         return EF_after_DM
 
@@ -1189,7 +1200,8 @@ class deformable_mirror(Optical_System):
         Parameters
         ----------
         DMconfig : structure with all information on DMs
-        Measure_and_save : bool, default = True if true, we measure and save the pushact functions
+        load_fits : bool, default = False if true, we do not measure the DM init fits, we load them
+        save_fits : bool, default = False if true, we save the DM init fits for future use
         model_dir: directory to find Measured positions for each actuator in pixel and 
                     influence fun. ie Things you cannot measure yourself and need to be given
         Model_local_dir: directory to save things you can measure yourself 
@@ -1350,10 +1362,8 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        DM_pushact : OPD map induced by the DM in the DM plane
-        Measure_and_save : bool, default = True if true, we measure and save the pushact functions
-        model_dir: directory to find Measured positions for each actuator in pixel and 
-                    influence fun. ie Things you cannot measure yourself and need to be given
+        load_fits : bool, default = False if true, we do not measure creatingpushact_inpup fits, we load it
+        save_fits : bool, default = False if true, we save the creatingpushact_inpup fits for future use
         Model_local_dir: directory to save things you can measure yourself 
                     and can save to save time
         Returns
@@ -1416,7 +1426,8 @@ class deformable_mirror(Optical_System):
         Parameters:
         ----------
         cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account (between 0 and 1, in ratio of an actuator perfectly centered in the entrance pupil)
-        Measure_and_save : bool, default = True if true, we measure and save the WhichInPup act.
+        load_fits : bool, default = False if true, we do not measure WhichInPup fits, we load it
+        save_fits : bool, default = False if true, we save the WhichInPup fits for future use
         Model_local_dir: directory to save things you can measure yourself 
                     and can save to save time
         Return:
@@ -1459,7 +1470,7 @@ class deformable_mirror(Optical_System):
                                 phase_DM,
                                 wavelength,
                                 save_all_planes_to_fits=False,
-                                dir_save_fits=None):
+                                dir_save_all_planes=None):
         """ --------------------------------------------------
         Propagate the field towards an out-of-pupil plane (DM1 plane),
         add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
@@ -1474,6 +1485,12 @@ class deformable_mirror(Optical_System):
         
         wavelength : float
                     wavelength in m
+        
+        save_all_planes_to_fits: Bool, default False.
+                if True, save all planes to fits for debugging purposes to dir_save_all_planes
+                This can generate a lot of fits especially if in a loop so the code force you
+                to define a repository.
+        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
         
         Returns
         ------
@@ -1499,14 +1516,14 @@ class deformable_mirror(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane, EF_inDMplane)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         EF_inDMplane_after_DM = EF_inDMplane * np.exp(1j * phase_DM)
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_fits, name_plane, EF_inDMplane)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
         # and propagate to next pupil plane
         EF_back_in_pup_plane, _ = prop.prop_fresnel(EF_inDMplane_after_DM,
                                                     wavelength,
@@ -1515,6 +1532,7 @@ class deformable_mirror(Optical_System):
                                                     self.prad)
 
         return EF_back_in_pup_plane
+
 
 ##############################################
 ##############################################
@@ -1532,8 +1550,6 @@ class THD2_testbed(Optical_System):
                  coroconfig,
                  load_fits=False,
                  save_fits=False,
-                 save_all_planes_to_fits=False,
-                 dir_save_fits=None,
                  model_dir='',
                  Model_local_dir=''):
         """ --------------------------------------------------
@@ -1544,15 +1560,14 @@ class THD2_testbed(Optical_System):
         modelconfig : general configuration parameters (sizes and dimensions)
         DMconfig : DM parameters
         coroconfig : coronagraph parameters
-        Measure_and_save : bool, default = True 
-                if true, we measure and save the long stuff
-                if false, we just load it
+        load_fits : bool, default = False if true, we do not measure initialization fits, we load it
+        save_fits : bool, default = False if true, we save the initialization fits for future use
+        
         model_dir: directory to find Measured positions for each actuators and 
                     influence fun and complex corona mask. 
                     ie all the things you cannot measure yourself and need to be given
         Model_local_dir: directory to save things you can measure yourself 
                     and can save to save time
-        Mesaure
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
@@ -1584,7 +1599,6 @@ class THD2_testbed(Optical_System):
 
         # Measure the PSF and store max and Sum
         self.maxPSF, self.sumPSF = self.max_sum_PSF()
-        
 
     def EF_through(self,
                    entrance_EF=1.,
@@ -1593,7 +1607,7 @@ class THD2_testbed(Optical_System):
                    DM3phase=0.,
                    noFPM=False,
                    save_all_planes_to_fits=False,
-                   dir_save_fits=None):
+                   dir_save_all_planes=None):
         """ --------------------------------------------------
         Propagate the electric field through the 2 DMs and the coronograph
 
@@ -1617,6 +1631,12 @@ class THD2_testbed(Optical_System):
         
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
+        
+        save_all_planes_to_fits: Bool, default False.
+                if True, save all planes to fits for debugging purposes to dir_save_all_planes
+                This can generate a lot of fits especially if in a loop so the code force you
+                to define a repository.
+        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
                     
 
         Returns
@@ -1638,28 +1658,28 @@ class THD2_testbed(Optical_System):
             entrance_EF=entrance_EF,
             wavelength=wavelength,
             save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_fits=dir_save_fits)
+            dir_save_all_planes=dir_save_all_planes)
 
         EF_afterDM1 = self.DM1.EF_through(
             entrance_EF=EF_afterentrancepup,
             wavelength=wavelength,
             DMphase=DM1phase,
             save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_fits=dir_save_fits)
+            dir_save_all_planes=dir_save_all_planes)
 
         EF_afterDM3 = self.DM3.EF_through(
             entrance_EF=EF_afterDM1,
             wavelength=wavelength,
             DMphase=DM3phase,
             save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_fits=dir_save_fits)
+            dir_save_all_planes=dir_save_all_planes)
 
         EF_afterCorono = self.corono.EF_through(
             entrance_EF=EF_afterDM3,
             wavelength=wavelength,
             noFPM=noFPM,
             save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_fits=dir_save_fits)
+            dir_save_all_planes=dir_save_all_planes)
         return EF_afterCorono
 
     def max_sum_PSF(self):
