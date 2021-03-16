@@ -9,7 +9,7 @@ setup(
     description='Asterix: A simulation tool for high-contrast sensing and control algorithms',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='https://bitbucket.org/pyKLIP/pyklip',
+    url='https://github.com/johanmazoyer/Asterix',
     author='Asterix Developers',
     author_email='johan.mazoyer@obspm.fr',
     license='BSD',
@@ -28,6 +28,6 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3.6',
         ],
-    keywords='KLIP PSF Subtraction Exoplanets Astronomy',
+    keywords='coronagraph coronagraphs wavefront contol estimation EFC',
     install_requires=['numpy', 'scipy', 'astropy', 'matplotlib','scikit-image','configobj']
     )
