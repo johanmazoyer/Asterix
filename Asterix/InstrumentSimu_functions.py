@@ -1244,7 +1244,7 @@ class deformable_mirror(Optical_System):
         measured_grid = fits.getdata(model_dir + filename_grid_actu)
         #Ratio: pupil radius in the measured position over
         # pupil radius in the numerical simulation
-        sampling_simu_over_meaasured = diam_pup_in_pix / 2 / fits.getheader(
+        sampling_simu_over_measured = diam_pup_in_pix / 2 / fits.getheader(
             model_dir + filename_grid_actu)['PRAD']
         if filename_ActuN != "":
             im_ActuN = fits.getdata(model_dir + filename_ActuN)
@@ -1258,7 +1258,7 @@ class deformable_mirror(Optical_System):
 
         #Position for each actuator in pixel for the numerical simulation
         simu_grid = actuator_position(measured_grid, xy_ActuN, ActuN,
-                                      sampling_simu_over_meaasured)
+                                      sampling_simu_over_measured)
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
         pitch_actshape = fits.getheader(model_dir +
@@ -1693,7 +1693,7 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
                     x and y positions of actuator ActuN same unit as measured_grid
     ActuN:          int
                     Index of the actuator ActuN (corresponding to measured_ActuN) 
-    sampling_simu_over_meaasured : float
+    sampling_simu_over_measured : float
                     Ratio of sampling in simulation grid over sampling in measured grid 
     Returns
     ------
