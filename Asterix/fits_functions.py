@@ -7,8 +7,6 @@ import datetime
 
 from random import random
 
-import png
-
 
 def quickshow(tab):
     """
