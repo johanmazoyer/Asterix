@@ -9,7 +9,7 @@ setup(
     description='Asterix: A simulation tool for high-contrast sensing and control algorithms',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='https://bitbucket.org/pyKLIP/pyklip',
+    url='https://github.com/johanmazoyer/Asterix',
     author='Asterix Developers',
     author_email='johan.mazoyer@obspm.fr',
     license='BSD',
