@@ -29,5 +29,5 @@ setup(
         'Programming Language :: Python :: 3.6',
         ],
     keywords='coronagraph coronagraphs wavefront contol estimation EFC',
-    install_requires=['numpy', 'scipy', 'astropy', 'matplotlib','scikit-image','configobj']
+    install_requires=['numpy', 'scipy', 'astropy', 'matplotlib','scikit-image','configobj','pypng']
     )
