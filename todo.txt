@@ -1,7 +1,5 @@
 Ideas for Asterix improvements
 
-
-
 Other propagation methods :
     -   FALCO trick
 
