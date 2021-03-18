@@ -3,7 +3,7 @@
 *.png
 
 # to avoid that people sync their own param file in the git dir
-*.ini 
+#*.ini 
 
 #if someone run Asterix in the git repo, results are not synced
 *.fits
