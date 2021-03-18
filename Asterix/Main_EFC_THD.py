@@ -313,13 +313,24 @@ def create_interaction_matrices(parameter_file,
 
     if onbench == True:
         # Save EFC control matrix in Labview directory
-        EFCmatrix = np.zeros((invertGDH.shape[1], DM_pushact.shape[0]),
-                             dtype=np.float32)
-        for i in np.arange(len(DM_WhichInPupil)):
-            EFCmatrix[:, DM_WhichInPupil[i]] = invertGDH[i, :]
-        fits.writeto(Labview_dir + "Matrix_control_EFC_DM3_default.fits",
-                     EFCmatrix,
-                     overwrite=True)
+        #EFCmatrix = np.zeros((invertGDH.shape[1], DM_pushact.shape[0]),
+        #                     dtype=np.float32)
+        EFCmatrix_DM3 = np.zeros((invertGDH.shape[1],
+            thd2.DM3.DM_pushact.shape[0]), dtype=np.float32)
+        for i in np.arange(len(thd2.DM3.WhichInPupil)):
+            EFCmatrix_DM3[:, thd2.DM3.WhichInPupil[i]] = invertGDH[i, :]
+        fits.writeto(Labview_dir +
+                "Matrix_control_EFC_DM3_default.fits",
+                EFCmatrix_DM3,overwrite=True)
+        if thd2.DM1.active:
+            EFCmatrix_DM1 = np.zeros((invertGDH.shape[1],
+                thd2.DM1.DM_pushact.shape[0]), dtype=np.float32)
+            for i in np.arange(len(thd2.DM1.WhichInPupil)):
+                EFCmatrix_DM1[:, thd2.DM1.WhichInPupil[i]] = invertGDH[
+                    i+len(thd2.DM3.WhichInPupil), :]
+            fits.writeto(Labview_dir +
+                    "Matrix_control_EFC_DM1_default.fits",
+                     EFCmatrix_DM1,overwrite=True)
 
     return 0
 
