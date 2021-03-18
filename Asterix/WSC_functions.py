@@ -480,26 +480,26 @@ def FP_PWestimate(Difference, Vectorprobes):
     return Resultat / 4
 
 
-def apply_on_DM(actu_vect, DM_pushact):
-    """ --------------------------------------------------
-    Generate the phase applied on one DM for a give vector of actuator amplitude
+# def apply_on_DM(actu_vect, DM_pushact):
+#     """ --------------------------------------------------
+#     Generate the phase applied on one DM for a give vector of actuator amplitude
     
-    Parameters:
-    ----------
-    actu_vect : 1D array
-                values of the amplitudes for each actuator
-    DM_pushact : 2D array
-                array of the DM actuator functions
-    Return:
-    ------
-        2D array
-        phase map in the same unit as actu_vect times DM_pushact)
-    -------------------------------------------------- """
-    return np.dot(
-        actu_vect,
-        DM_pushact.reshape(DM_pushact.shape[0],
-                           DM_pushact.shape[1] * DM_pushact.shape[1])).reshape(
-                               DM_pushact.shape[1], DM_pushact.shape[1])
+#     Parameters:
+#     ----------
+#     actu_vect : 1D array
+#                 values of the amplitudes for each actuator
+#     DM_pushact : 2D array
+#                 array of the DM actuator functions
+#     Return:
+#     ------
+#         2D array
+#         phase map in the same unit as actu_vect times DM_pushact)
+#     -------------------------------------------------- """
+#     return np.dot(
+#         actu_vect,
+#         DM_pushact.reshape(DM_pushact.shape[0],
+#                            DM_pushact.shape[1] * DM_pushact.shape[1])).reshape(
+#                                DM_pushact.shape[1], DM_pushact.shape[1])
 
 
 def createdifference(input_wavefront,
