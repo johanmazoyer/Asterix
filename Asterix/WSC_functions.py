@@ -549,6 +549,7 @@ def createdifference(input_wavefront,
                            testbed.maxPSF / testbed.sumPSF)
 
     dim_pup = testbed.dim_overpad_pupil
+#    input_wavefront *= testbed.entrancepupil.pup
 
     k = 0
     for i in posprobes:
@@ -580,7 +581,7 @@ def createdifference(input_wavefront,
 
         Difference[k] = Ikplus - Ikmoins
         k = k + 1
-    useful.quickfits(np.abs(Difference),dir="/home/rgalicher/tt/")
-    azs
+    # useful.quickfits(np.abs(Difference),dir="/home/rgalicher/tt/")
+    # azs
 
     return Difference
