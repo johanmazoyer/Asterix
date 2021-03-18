@@ -1285,7 +1285,7 @@ class deformable_mirror(Optical_System):
             xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
 
         #Position for each actuator in pixel for the numerical simulation
-        simu_grid = actuator_position(measured_grid, xy_ActuN, ActuN,
+        simu_grid = self.actuator_position(measured_grid, xy_ActuN, ActuN,
                                       sampling_simu_over_measured)
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
@@ -1550,6 +1550,34 @@ class deformable_mirror(Optical_System):
                                                     self.prad)
 
         return EF_back_in_pup_plane
+    
+    def actuator_position(self, measured_grid, measured_ActuN, ActuN,
+                      sampling_simu_over_measured):
+        """ --------------------------------------------------
+        Convert the measred positions of actuators to positions for numerical simulation
+        Parameters
+        ----------
+        measured_grid : 2D array (float) of shape is 2 x Nb_actuator
+                        x and y measured positions for each actuator (unit = pixel)
+        measured_ActuN: 1D array (float) of shape 2
+                        x and y positions of actuator ActuN same unit as measured_grid
+        ActuN:          int
+                        Index of the actuator ActuN (corresponding to measured_ActuN) 
+        sampling_simu_over_measured : float
+                        Ratio of sampling in simulation grid over sampling in measured grid 
+        Returns
+        ------
+        simu_grid : 2D array of shape is 2 x Nb_actuator
+                    x and y positions of each actuator for simulation
+                    same unit as measured_ActuN
+        -------------------------------------------------- """
+        simu_grid = measured_grid * 0
+        for i in np.arange(measured_grid.shape[1]):
+            simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(
+                ActuN)] + measured_ActuN
+        simu_grid = simu_grid * sampling_simu_over_measured
+        return simu_grid
+
 
 
 ##############################################
@@ -1715,31 +1743,3 @@ class THD2_testbed(Optical_System):
         PSF = self.todetector_Intensity(center_on_pixel=True, noFPM=True)
 
         return np.amax(PSF), np.sum(PSF)
-
-
-def actuator_position(measured_grid, measured_ActuN, ActuN,
-                      sampling_simu_over_measured):
-    """ --------------------------------------------------
-    Convert the measred positions of actuators to positions for numerical simulation
-    Parameters
-    ----------
-    measured_grid : 2D array (float) of shape is 2 x Nb_actuator
-                    x and y measured positions for each actuator (unit = pixel)
-    measured_ActuN: 1D array (float) of shape 2
-                    x and y positions of actuator ActuN same unit as measured_grid
-    ActuN:          int
-                    Index of the actuator ActuN (corresponding to measured_ActuN) 
-    sampling_simu_over_measured : float
-                    Ratio of sampling in simulation grid over sampling in measured grid 
-    Returns
-    ------
-    simu_grid : 2D array of shape is 2 x Nb_actuator
-                x and y positions of each actuator for simulation
-                same unit as measured_ActuN
-    -------------------------------------------------- """
-    simu_grid = measured_grid * 0
-    for i in np.arange(measured_grid.shape[1]):
-        simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(
-            ActuN)] + measured_ActuN
-    simu_grid = simu_grid * sampling_simu_over_measured
-    return simu_grid

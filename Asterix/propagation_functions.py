@@ -66,7 +66,7 @@ def mft(image,
         Revision 2.0  2012-04-12 P. Baudoz (IDL version): added pup offset
         Revision 3.0  2020-03-10 J. Mazoyer (to python). Replace the MFT with no input offset option
 
-"""
+    """
 
     dim_input_x = image.shape[0]
     dim_input_y = image.shape[1]
@@ -132,70 +132,6 @@ def mft(image,
 
     return result
 
-
-# def mft_v1(pup, dimpup, dimft, nbres, xshift=0, yshift=0, inv=-1):
-#     """ --------------------------------------------------
-#     MFT  - Return the Matrix Direct Fourier transform (MFT) of pup
-#     (cf. Soummer et al. 2007, OSA)
-
-#     Parameters
-#     ----------
-#     pup : 2D array (complex or real)
-#          Entrance pupil.
-#          CAUTION : pup has to be centered on (dim0/2+1,dim0/2+1)
-#          where dim0 is the pup array dimension
-
-#     dimpup : integer
-#             Diameter of the support in pup (can differ from dim0)
-#             Example : dimpup = diameter of the pupil in pixel
-
-#     dimft : integer
-#            Dimension of the output
-
-#     nbres : float
-#            Number of spatial resolution elements
-
-#     xshift : float
-#             center of the output array in the x direction
-
-#     yshift : float
-#             center of the output array in the y direction    
-
-#     inv : integer
-#             direct MFT if 1
-#             indirect MFT if -1 (default)
-    
-
-#     Returns
-#     ------
-#     result : 2D array (complex)
-#             MFT of pup centered on the pixel (dimft/2D+1+xhift,dimft/2D+1+yxhift)
-#             dimension is dimft x dimft
-
-#     AUTHOR : Raphael Galicher
-
-#     REVISION HISTORY :
-#     Revision 1.1  2020-01-22 Raphaël Galicher
-#     Initial revision (from MFT.pro written in IDL)
-
-#     -------------------------------------------------- """
-#     dim0 = pup.shape[0]
-#     nbres = nbres * dim0 / dimpup
-
-#     xx0 = np.arange(dim0) / dim0 - 0.5
-#     uu0 = ((np.arange(dimft) - xshift) / dimft - 0.5) * nbres
-#     uu1 = ((np.arange(dimft) - yshift) / dimft - 0.5) * nbres
-
-#     if inv == 1:
-#         norm0 = 1
-#     else:
-#         norm0 = ((1. * nbres)**2 / (1. * dimft)**2 / (1. * dim0)**2)
-
-#     AA = np.exp(-inv * 1j * 2 * np.pi * np.outer(uu0, xx0))
-#     BB = np.exp(-inv * 1j * 2 * np.pi * np.outer(xx0, uu1))
-#     result = norm0 * np.matmul(np.matmul(AA, pup), BB)
-
-#     return result
 
 
 def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
