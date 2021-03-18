@@ -612,9 +612,9 @@ def correctionLoop(parameter_file,
             else:
                 ampfinal = thd2.entrancepupil.random_phase_map(
                     ampl_rms / 100., ampl_rhoc, ampl_slope)
-            if set_random_ampl == False:  # save it for next time
-                fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
-                             ampfinal)
+                if set_random_ampl == False:  # save it for next time
+                    fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
+                                ampfinal)
     else:
         ampfinal = 0
 
@@ -796,9 +796,6 @@ def correctionLoop(parameter_file,
                             voltage_DM1, wavelength=thd2.wavelength_0) * (
                                 -gain * amplitudeEFC)
 
-                        print(phaseDM1[k].shape)
-                        print(apply_on_DM1.shape)
-                        asd
                         phaseDM1_tmp = phaseDM1[k] + proc.crop_or_pad_image(
                             apply_on_DM1, dim_pup)
 
@@ -912,6 +909,10 @@ def correctionLoop(parameter_file,
             apply_on_DM1 = thd2.DM1.voltage_to_phase(
                 voltage_DM1,
                 wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
+
+            print(phaseDM1[k].shape)
+            print(apply_on_DM1.shape)
+            asd
 
             phaseDM1[k + 1] = phaseDM1[k] + proc.crop_or_pad_image(
                 apply_on_DM1, dim_pup)
