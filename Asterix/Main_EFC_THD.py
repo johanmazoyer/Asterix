@@ -30,7 +30,8 @@ def create_interaction_matrices(parameter_file,
                                 NewDMconfig={},
                                 NewCoronaconfig={},
                                 NewPWconfig={},
-                                NewEFCconfig={}):
+                                NewEFCconfig={},
+                                NewSIMUconfig={}):
 
     Asterixroot = os.path.dirname(os.path.realpath(__file__))
 
@@ -102,6 +103,10 @@ def create_interaction_matrices(parameter_file,
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
 
+    SIMUconfig = config["SIMUconfig"]
+    SIMUconfig.update(NewSIMUconfig)
+    estimation = SIMUconfig["estimation"]
+
     ##THEN DO
     model_dir = os.path.join(Asterixroot, "Model") + os.path.sep
 
@@ -169,49 +174,52 @@ def create_interaction_matrices(parameter_file,
         int(amplitudePW)) + "nm_" + str(
             int(cut)) + "cutsvd_dim_sampl_" + str(dim_sampl) + "_dim" + str(
                 thd2.dim_im) + '_radpup' + str(thd2.prad)
+    
     ####Calculating and Saving PW matrix
-    filePW = "MatrixPW_" + string_dims_PWMatrix
-    if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
-        print("The matrix " + filePW + " already exist")
-        vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
-    else:
-        print("Saving " + filePW + " ...")
-        vectoressai, showsvd = wsc.createvectorprobes(thd2.wavelength_0, thd2,
-                                                      amplitudePW, posprobes,
-                                                      thd2.DM3.DM_pushact,
-                                                      dim_sampl, cut)
-        fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
+    if (estimation == "PairWise" or estimation == "pairwise"
+            or estimation == "PW" or estimation == "pw"):
+        filePW = "MatrixPW_" + string_dims_PWMatrix
+        if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
+            print("The matrix " + filePW + " already exist")
+            vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
+        else:
+            print("Saving " + filePW + " ...")
+            vectoressai, showsvd = wsc.createvectorprobes(thd2.wavelength_0, thd2,
+                                                        amplitudePW, posprobes,
+                                                        thd2.DM3.DM_pushact,
+                                                        dim_sampl, cut)
+            fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
-        visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
+            visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
 
-        if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
-            print("Saving " + visuPWMap + " ...")
-            fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
+            if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
+                print("Saving " + visuPWMap + " ...")
+                fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
 
-    # Saving PW matrices in Labview directory
-    if onbench == True:
-        probes = np.zeros((len(posprobes), thd2.DM3.DM_pushact.shape[0]),
-                          dtype=np.float32)
-        vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
+        # Saving PW matrices in Labview directory
+        if onbench == True:
+            probes = np.zeros((len(posprobes), thd2.DM3.DM_pushact.shape[0]),
                             dtype=np.float32)
+            vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
+                                dtype=np.float32)
 
-        for i in np.arange(len(posprobes)):
-            probes[i, posprobes[i]] = amplitudePW / 17
-            vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                     dim_sampl] = vectoressai[:, 0, i].flatten()
-            vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                     dim_sampl] = vectoressai[:, 1, i].flatten()
-        fits.writeto(Labview_dir + "Probes_EFC_default.fits",
-                     probes,
-                     overwrite=True)
-        fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
-                     vectorPW,
-                     overwrite=True)
+            for i in np.arange(len(posprobes)):
+                probes[i, posprobes[i]] = amplitudePW / 17
+                vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
+                        dim_sampl] = vectoressai[:, 0, i].flatten()
+                vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
+                        dim_sampl] = vectoressai[:, 1, i].flatten()
+            fits.writeto(Labview_dir + "Probes_EFC_default.fits",
+                        probes,
+                        overwrite=True)
+            fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
+                        vectorPW,
+                        overwrite=True)
 
-        ####Calculating and Saving EFC matrix
-        if DHshape == "square":
-            print("TO SET ON LABVIEW: ",
-                  str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
+            ####Calculating and Saving EFC matrix
+            if DHshape == "square":
+                print("TO SET ON LABVIEW: ",
+                    str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
 
     # Creating WhichInPup.
     # if DM3_otherbasis = False, this is done inside the DM class

@@ -1558,7 +1558,6 @@ class deformable_mirror(Optical_System):
 
         return EF_back_in_pup_plane
 
-
     def voltage_to_phase(self, actu_vect,  wavelength = None):
         """ --------------------------------------------------
         Generate the phase applied on one DM for a give vector of actuator amplitude
