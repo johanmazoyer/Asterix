@@ -121,6 +121,8 @@ def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
 
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
+        # useful.quickfits(np.abs(deltapsikbis))
+        # azs
 
     l = 0
     for i in np.arange(dimimages):
@@ -552,14 +554,18 @@ def createdifference(input_wavefront,
     for i in posprobes:
         probephase = proc.crop_or_pad_image(pushact[i], dim_pup)
 
-        Ikmoins = testbed.todetector_Intensity(
-            entrance_EF=input_wavefront, DM3phase=-probephase) / testbed.maxPSF
+        # Ikmoins = testbed.todetector_Intensity(
+        #     entrance_EF=input_wavefront, DM3phase=-probephase) / testbed.maxPSF
+        Ikmoins = np.abs(testbed.corono.todetector(entrance_EF=
+                input_wavefront * np.exp(-1j * probephase)))**2 / testbed.maxPSF
         # Ikmoins = np.abs(corona_struct.apodtodetector(input_wavefront * np.exp(
         #         -1j * probephase)))**2 / corona_struct.maxPSF
 
-        Ikplus = testbed.todetector_Intensity(
-            entrance_EF=input_wavefront, DM3phase=probephase) / testbed.maxPSF
-        # Ikplus = np.abs(
+        # Ikplus = testbed.todetector_Intensity(
+        #     entrance_EF=input_wavefront, DM3phase=probephase) / testbed.maxPSF
+        Ikplus = np.abs(testbed.corono.todetector(entrance_EF=
+                input_wavefront * np.exp(1j * probephase)))**2 / testbed.maxPSF
+                # Ikplus = np.abs(
         #     corona_struct.apodtodetector(input_wavefront * np.exp(
         #         1j * probephase)))**2 / corona_struct.maxPSF
 
