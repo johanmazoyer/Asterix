@@ -7,8 +7,6 @@ import datetime
 
 from random import random
 
-import png
-
 
 def quickshow(tab):
     """
@@ -113,7 +111,7 @@ def check_and_load_fits(directory, filename):
     else:
         raise Exception(
             "You need to create " + filename + ".fits before loading it." +
-            "Please run the initialization with 'Measure_and_save = True' before"
+            "Please run the initialization with 'save_fits = True' before"
         )
 
 

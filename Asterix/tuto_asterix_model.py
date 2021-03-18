@@ -81,7 +81,7 @@ Coronaconfig.update(
 # WE can also cahnge the Bandwidth
 Coronaconfig.update({'Delta_wav': '50e-9'})
 # Lets reinitialize the coronagraph
-corono = instr.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
+corono_roman_pup = instr.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
 
 # lets create a phase:
 phaserms = 50e-9  #in meter
@@ -111,12 +111,12 @@ if not os.path.exists(plot_all_fits_dir):
 FP_after_corono_in_contrast = corono.todetector_Intensity(
     entrance_EF=Entrance_EF,
     save_all_planes_to_fits=True,
-    dir_save_fits=plot_all_fits_dir) / No_mask_PSF
+    dir_save_all_planes=plot_all_fits_dir) / No_mask_PSF
 
 # Initialize the whole thd:
 thd2 = instr.THD2_testbed(modelconfig,
                           DMconfig,
                           Coronaconfig,
-                          load_fits=True,
+                          save_fits=True,
                           model_dir=model_dir,
                           Model_local_dir=Model_local_dir)

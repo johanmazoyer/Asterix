@@ -28,6 +28,6 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3.6',
         ],
-    keywords='coronagraph coronagraphs wavefront contol estimation EFC',
-    install_requires=['numpy', 'scipy', 'astropy', 'matplotlib','scikit-image','configobj','pypng']
+    keywords='KLIP PSF Subtraction Exoplanets Astronomy',
+    install_requires=['numpy', 'scipy', 'astropy', 'matplotlib', 'scikit-image', 'configobj']
     )
