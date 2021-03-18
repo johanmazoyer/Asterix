@@ -516,9 +516,9 @@ def createdifference(input_wavefront,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
     -------------------------------------------------- """
-
-    Ikmoins = np.zeros((testbed.dim_im, testbed.dim_im))
-    Ikplus = np.zeros((testbed.dim_im, testbed.dim_im))
+    if wavelength == None:
+        wavelength = testbed.wavelength_0
+    
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
     ## To convert in photon flux
@@ -527,12 +527,11 @@ def createdifference(input_wavefront,
                            np.sum(testbed.corono.lyot_pup.pup) * numphot *
                            testbed.maxPSF / testbed.sumPSF)
 
-    dim_pup = testbed.dim_overpad_pupil
     input_wavefront *= testbed.entrancepupil.pup
 
-    k = 0
-    for i in posprobes:
-        probephase = pushact[i]
+
+    for count, num_probe in enumerate(posprobes):
+        probephase = pushact[num_probe]
 
         # Not 100% sure about wavelength here, so I prefeer to use
         # todetector to keep it monochromatic instead of todetector_Intensity 
@@ -554,10 +553,9 @@ def createdifference(input_wavefront,
             Ikmoins = (np.random.poisson(Ikmoins * contrast_to_photons) /
                        contrast_to_photons)
 
-        Ikplus = np.abs(proc.resampling(Ikplus, dimimages))
-        Ikmoins = np.abs(proc.resampling(Ikmoins, dimimages))
+        Ikplus_resampl = np.abs(proc.resampling(Ikplus, dimimages))
+        Ikmoins_resampl = np.abs(proc.resampling(Ikmoins, dimimages))
 
-        Difference[k] = Ikplus - Ikmoins
-        k = k + 1
+        Difference[count] = Ikplus_resampl - Ikmoins_resampl
 
     return Difference
