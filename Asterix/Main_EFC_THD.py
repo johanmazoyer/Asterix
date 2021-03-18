@@ -614,7 +614,7 @@ def correctionLoop(parameter_file,
                     ampl_rms / 100., ampl_rhoc, ampl_slope)
                 if set_random_ampl == False:  # save it for next time
                     fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
-                                ampfinal)
+                                 ampfinal)
     else:
         ampfinal = 0
 
@@ -796,8 +796,7 @@ def correctionLoop(parameter_file,
                             voltage_DM1, wavelength=thd2.wavelength_0) * (
                                 -gain * amplitudeEFC)
 
-                        phaseDM1_tmp = phaseDM1[k] + proc.crop_or_pad_image(
-                            apply_on_DM1, dim_pup)
+                        phaseDM1_tmp = phaseDM1[k] + apply_on_DM1
 
                     else:
                         solution1 = wsc.solutionEFC(
@@ -813,8 +812,7 @@ def correctionLoop(parameter_file,
                         voltage_DM3,
                         wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
 
-                    phaseDM3_tmp = phaseDM3[k] + proc.crop_or_pad_image(
-                        apply_on_DM3, dim_pup)
+                    phaseDM3_tmp = phaseDM3[k] + apply_on_DM3
 
                     imagedetectortemp = thd2.todetector_Intensity(
                         entrance_EF=input_wavefront,
@@ -914,8 +912,7 @@ def correctionLoop(parameter_file,
             print(apply_on_DM1.shape)
             asd
 
-            phaseDM1[k + 1] = phaseDM1[k] + proc.crop_or_pad_image(
-                apply_on_DM1, dim_pup)
+            phaseDM1[k + 1] = phaseDM1[k] + apply_on_DM1
 
         voltage_DM3 = solution1[0:pushactonDM3.shape[0]]
 
@@ -923,8 +920,7 @@ def correctionLoop(parameter_file,
         apply_on_DM3 = thd2.DM3.voltage_to_phase(
             voltage_DM3, wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
 
-        phaseDM3[k + 1] = phaseDM3[k] + proc.crop_or_pad_image(
-            apply_on_DM3, dim_pup)
+        phaseDM3[k + 1] = phaseDM3[k] + apply_on_DM3
 
         imagedetector[k + 1] = thd2.todetector_Intensity(
             entrance_EF=input_wavefront,
@@ -948,14 +944,6 @@ def correctionLoop(parameter_file,
 
     ## SAVING...
     header = useful.from_param_to_header(config)
-    if thd2.DM1.active == True:
-        cut_phaseDM1 = np.zeros((nbiter + 1, 2 * thd2.prad, 2 * thd2.prad))
-        for it in np.arange(nbiter + 1):
-            cut_phaseDM1[it] = proc.crop_or_pad_image(phaseDM1[it],
-                                                      2 * thd2.prad)
-    cut_phaseDM3 = np.zeros((nbiter + 1, 2 * thd2.prad, 2 * thd2.prad))
-    for it in np.arange(nbiter + 1):
-        cut_phaseDM3[it] = proc.crop_or_pad_image(phaseDM3[it], 2 * thd2.prad)
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
     fits.writeto(result_dir + current_time_str + "_Detector_Images" + ".fits",
@@ -964,11 +952,11 @@ def correctionLoop(parameter_file,
                  overwrite=True)
     if thd2.DM1.active == True:
         fits.writeto(result_dir + current_time_str + "_Phase_on_DM1" + ".fits",
-                     cut_phaseDM1,
+                     phaseDM1,
                      header,
                      overwrite=True)
     fits.writeto(result_dir + current_time_str + "_Phase_on_DM3" + ".fits",
-                 cut_phaseDM3,
+                 phaseDM3,
                  header,
                  overwrite=True)
     fits.writeto(result_dir + current_time_str + "_Mean_Contrast_DH" + ".fits",
