@@ -177,7 +177,7 @@ class Optical_System:
         if center_on_pixel == True:
             Psf_offset = (0, 0)
         else:
-            Psf_offset = (- 1 / 2, - 1 / 2)
+            Psf_offset = (- 0.5, - 0.5)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -778,8 +778,8 @@ class coronagraph(Optical_System):
                 self.dim_overpad_pupil,
                 self.dim_fpm,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                X_offset_output= - 1 / 2,
-                Y_offset_output= - 1 / 2,
+                X_offset_output= - 0.5,
+                Y_offset_output= - 0.5,
                 inverse=False)
 
             if save_all_planes_to_fits == True:
@@ -804,8 +804,8 @@ class coronagraph(Optical_System):
                 self.dim_fpm,
                 self.dim_overpad_pupil,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                X_offset_input= - 1 / 2,
-                Y_offset_input= - 1 / 2,
+                X_offset_input= - 0.5,
+                Y_offset_input= - 0.5,
                 inverse=True)
 
             # Babinet's trick
@@ -819,8 +819,8 @@ class coronagraph(Optical_System):
                                           self.dim_im,
                                           self.dim_im / self.science_sampling *
                                           lambda_ratio,
-                                          X_offset_output= - 1 / 2,
-                                          Y_offset_output= - 1 / 2,
+                                          X_offset_output= - 0.5,
+                                          Y_offset_output= - 0.5,
                                           inverse=False)
 
             if save_all_planes_to_fits == True:
@@ -845,8 +845,8 @@ class coronagraph(Optical_System):
                          self.dim_im,
                          2 * self.prad,
                          self.dim_im / self.science_sampling * lambda_ratio,
-                         X_offset_input= - 1 / 2,
-                         Y_offset_input= - 1 / 2,
+                         X_offset_input= - 0.5,
+                         Y_offset_input= - 0.5,
                          inverse=True), self.dim_overpad_pupil)
 
         else:
