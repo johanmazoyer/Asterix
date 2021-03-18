@@ -121,7 +121,7 @@ def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
 
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
-        # useful.quickfits(np.abs(deltapsikbis))
+        # useful.quickfits(np.abs(deltapsikbis),dir="/home/rgalicher/tt/")
         # azs
 
     l = 0
@@ -580,5 +580,7 @@ def createdifference(input_wavefront,
 
         Difference[k] = Ikplus - Ikmoins
         k = k + 1
+    useful.quickfits(np.abs(Difference),dir="/home/rgalicher/tt/")
+    azs
 
     return Difference
