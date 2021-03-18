@@ -329,7 +329,7 @@ def creatingCorrectionmatrix(input_wavefront,
                               dtype=complex)
         for k in range(pushact.shape[0]):
             probephase[k] = pushact[k]
-            
+
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")
@@ -486,7 +486,8 @@ def createdifference(input_wavefront,
                      DM1phase=0,
                      DM3phase=0,
                      noise=False,
-                     numphot=1e30):
+                     numphot=1e30,
+                     wavelength = None):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]
@@ -515,13 +516,13 @@ def createdifference(input_wavefront,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
     -------------------------------------------------- """
+
     Ikmoins = np.zeros((testbed.dim_im, testbed.dim_im))
     Ikplus = np.zeros((testbed.dim_im, testbed.dim_im))
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
     ## To convert in photon flux
     # This will be replaced by transmission!
-
     contrast_to_photons = (np.sum(testbed.entrancepupil.pup) /
                            np.sum(testbed.corono.lyot_pup.pup) * numphot *
                            testbed.maxPSF / testbed.sumPSF)
@@ -531,26 +532,21 @@ def createdifference(input_wavefront,
 
     k = 0
     for i in posprobes:
-        probephase = proc.crop_or_pad_image(pushact[i], dim_pup)
+        probephase = pushact[i]
 
-        Ikmoins = testbed.todetector_Intensity(
+        # Not 100% sure about wavelength here, so I prefeer to use
+        # todetector to keep it monochromatic instead of todetector_Intensity 
+        # which is large band
+
+        Ikmoins = np.abs(testbed.todetector(
             entrance_EF=input_wavefront,
             DM1phase=DM1phase,
-            DM3phase=DM3phase - probephase) / testbed.maxPSF
-        #Ikmoins = np.abs(testbed.corono.todetector(entrance_EF=
-        #        input_wavefront * np.exp(-1j * probephase)))**2 / testbed.maxPSF
-        # Ikmoins = np.abs(corona_struct.apodtodetector(input_wavefront * np.exp(
-        #         -1j * probephase)))**2 / corona_struct.maxPSF
+            DM3phase=DM3phase - probephase, wavelength=wavelength))**2 / testbed.maxPSF
 
-        Ikplus = testbed.todetector_Intensity(
+        Ikplus = np.abs(testbed.todetector(
             entrance_EF=input_wavefront,
             DM1phase=DM1phase,
-            DM3phase=DM3phase + probephase) / testbed.maxPSF
-        #Ikplus = np.abs(testbed.corono.todetector(entrance_EF=
-        #        input_wavefront * np.exp(1j * probephase)))**2 / testbed.maxPSF
-        # Ikplus = np.abs(
-        #     corona_struct.apodtodetector(input_wavefront * np.exp(
-        #         1j * probephase)))**2 / corona_struct.maxPSF
+            DM3phase=DM3phase + probephase, wavelength=wavelength))**2 / testbed.maxPSF
 
         if noise == True:
             Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
@@ -563,7 +559,5 @@ def createdifference(input_wavefront,
 
         Difference[k] = Ikplus - Ikmoins
         k = k + 1
-    # useful.quickfits(np.abs(Difference),dir="/home/rgalicher/tt/")
-    # azs
 
     return Difference
