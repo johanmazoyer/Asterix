@@ -664,12 +664,6 @@ def correctionLoop(parameter_file,
     imagedetector[0] = thd2.todetector_Intensity(
         entrance_EF=input_wavefront) / thd2.maxPSF
 
-    # useful.quickfits(imagedetector[0])
-    # asd
-    #     imagedetector[0] = (corona_struct.im_apodtodetector_chrom(
-    # amplitude_abb_up, phase_abb_up)/
-    #         corona_struct.maxPSF)
-
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
@@ -907,10 +901,6 @@ def correctionLoop(parameter_file,
             apply_on_DM1 = thd2.DM1.voltage_to_phase(
                 voltage_DM1,
                 wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
-
-            print(phaseDM1[k].shape)
-            print(apply_on_DM1.shape)
-            asd
 
             phaseDM1[k + 1] = phaseDM1[k] + apply_on_DM1
 
