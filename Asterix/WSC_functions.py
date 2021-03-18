@@ -536,19 +536,21 @@ def createdifference(input_wavefront,
         probephase = proc.crop_or_pad_image(pushact[i], dim_pup)
 
         Ikmoins = testbed.todetector_Intensity(
-             entrance_EF=input_wavefront, DM1phase = DM1phase,
-             DM3phase=DM3phase-probephase) / testbed.maxPSF
+            entrance_EF=input_wavefront,
+            DM1phase=DM1phase,
+            DM3phase=DM3phase - probephase) / testbed.maxPSF
         #Ikmoins = np.abs(testbed.corono.todetector(entrance_EF=
         #        input_wavefront * np.exp(-1j * probephase)))**2 / testbed.maxPSF
         # Ikmoins = np.abs(corona_struct.apodtodetector(input_wavefront * np.exp(
         #         -1j * probephase)))**2 / corona_struct.maxPSF
 
         Ikplus = testbed.todetector_Intensity(
-             entrance_EF=input_wavefront, DM1phase = DM1phase,
-             DM3phase=DM3phase+probephase) / testbed.maxPSF
+            entrance_EF=input_wavefront,
+            DM1phase=DM1phase,
+            DM3phase=DM3phase + probephase) / testbed.maxPSF
         #Ikplus = np.abs(testbed.corono.todetector(entrance_EF=
         #        input_wavefront * np.exp(1j * probephase)))**2 / testbed.maxPSF
-                # Ikplus = np.abs(
+        # Ikplus = np.abs(
         #     corona_struct.apodtodetector(input_wavefront * np.exp(
         #         1j * probephase)))**2 / corona_struct.maxPSF
 

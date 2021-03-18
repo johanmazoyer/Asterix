@@ -1290,8 +1290,9 @@ class deformable_mirror(Optical_System):
         for i in np.arange(measured_grid.shape[1]):
             simu_grid[:,
                       i] = measured_grid[:,
-                                         i] - measured_grid[:, int(
-                                             ActuN)] + xy_ActuN
+                                         i] - measured_grid[:,
+                                                            int(ActuN
+                                                                )] + xy_ActuN
         simu_grid = simu_grid * sampling_simu_over_measured
 
         # Influence function and the pitch in pixels
@@ -1560,36 +1561,7 @@ class deformable_mirror(Optical_System):
 
         return EF_back_in_pup_plane
 
-    # def actuator_position(self, measured_grid, measured_ActuN, ActuN,
-    #                       sampling_simu_over_measured):
-    #     """ --------------------------------------------------
-    #     Convert the measred positions of actuators to positions for numerical simulation
-    #     Parameters
-    #     ----------
-    #     measured_grid : 2D array (float) of shape is 2 x Nb_actuator
-    #                     x and y measured positions for each actuator (unit = pixel)
-    #     measured_ActuN: 1D array (float) of shape 2
-    #                     x and y positions of actuator ActuN same unit as measured_grid
-    #     ActuN:          int
-    #                     Index of the actuator ActuN (corresponding to measured_ActuN) 
-    #     sampling_simu_over_measured : float
-    #                     Ratio of sampling in simulation grid over sampling in measured grid 
-    #     Returns
-    #     ------
-    #     simu_grid : 2D array of shape is 2 x Nb_actuator
-    #                 x and y positions of each actuator for simulation
-    #                 same unit as measured_ActuN
-    #     -------------------------------------------------- """
-    #     simu_grid = measured_grid * 0
-    #     for i in np.arange(measured_grid.shape[1]):
-    #         simu_grid[:,
-    #                   i] = measured_grid[:,
-    #                                      i] - measured_grid[:, int(
-    #                                          ActuN)] + measured_ActuN
-    #     simu_grid = simu_grid * sampling_simu_over_measured
-    #     return simu_grid
-
-    def voltage_to_phase(self, actu_vect,  wavelength = None):
+    def voltage_to_phase(self, actu_vect, wavelength=None):
         """ --------------------------------------------------
         Generate the phase applied on one DM for a give vector of actuator amplitude
         
@@ -1606,7 +1578,7 @@ class deformable_mirror(Optical_System):
 
         if wavelength == None:
             wavelength = self.wavelength_0
-        
+
         DM_pushact_reshaped = self.DM_pushact.reshape(
             self.DM_pushact.shape[0],
             self.DM_pushact.shape[1] * self.DM_pushact.shape[2])
@@ -1614,7 +1586,7 @@ class deformable_mirror(Optical_System):
         surface_reshaped = np.dot(actu_vect, DM_pushact_reshaped)
 
         surface_DM = surface_reshaped.reshape(self.DM_pushact.shape[1],
-                                               self.DM_pushact.shape[2])
+                                              self.DM_pushact.shape[2])
 
         phase_on_DM = surface_DM * 2 * np.pi * 1e-9 / wavelength
 
