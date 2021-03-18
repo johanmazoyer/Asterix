@@ -170,7 +170,6 @@ def create_interaction_matrices(parameter_file,
             int(cut)) + "cutsvd_dim_sampl_" + str(dim_sampl) + "_dim" + str(
                 thd2.dim_im) + '_radpup' + str(thd2.prad)
     ####Calculating and Saving PW matrix
-
     filePW = "MatrixPW_" + string_dims_PWMatrix
     if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
         print("The matrix " + filePW + " already exist")
