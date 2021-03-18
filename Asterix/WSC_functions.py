@@ -121,6 +121,8 @@ def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
 
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
+        # useful.quickfits(np.abs(deltapsikbis),dir="/home/rgalicher/tt/")
+        # azs
 
     l = 0
     for i in np.arange(dimimages):
@@ -505,6 +507,8 @@ def createdifference(input_wavefront,
                      pushact,
                      testbed,
                      dimimages,
+                     DM1phase=0,
+                     DM3phase=0,
                      noise=False,
                      numphot=1e30):
     """ --------------------------------------------------
@@ -547,19 +551,26 @@ def createdifference(input_wavefront,
                            testbed.maxPSF / testbed.sumPSF)
 
     dim_pup = testbed.dim_overpad_pupil
+    input_wavefront *= testbed.entrancepupil.pup
 
     k = 0
     for i in posprobes:
         probephase = proc.crop_or_pad_image(pushact[i], dim_pup)
 
         Ikmoins = testbed.todetector_Intensity(
-            entrance_EF=input_wavefront, PhaseDM3=-probephase) / testbed.maxPSF
+             entrance_EF=input_wavefront, DM1phase = DM1phase,
+             DM3phase=DM3phase-probephase) / testbed.maxPSF
+        #Ikmoins = np.abs(testbed.corono.todetector(entrance_EF=
+        #        input_wavefront * np.exp(-1j * probephase)))**2 / testbed.maxPSF
         # Ikmoins = np.abs(corona_struct.apodtodetector(input_wavefront * np.exp(
         #         -1j * probephase)))**2 / corona_struct.maxPSF
 
         Ikplus = testbed.todetector_Intensity(
-            entrance_EF=input_wavefront, PhaseDM3=probephase) / testbed.maxPSF
-        # Ikplus = np.abs(
+             entrance_EF=input_wavefront, DM1phase = DM1phase,
+             DM3phase=DM3phase+probephase) / testbed.maxPSF
+        #Ikplus = np.abs(testbed.corono.todetector(entrance_EF=
+        #        input_wavefront * np.exp(1j * probephase)))**2 / testbed.maxPSF
+                # Ikplus = np.abs(
         #     corona_struct.apodtodetector(input_wavefront * np.exp(
         #         1j * probephase)))**2 / corona_struct.maxPSF
 
@@ -574,5 +585,7 @@ def createdifference(input_wavefront,
 
         Difference[k] = Ikplus - Ikmoins
         k = k + 1
+    # useful.quickfits(np.abs(Difference),dir="/home/rgalicher/tt/")
+    # azs
 
     return Difference
