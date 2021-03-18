@@ -691,6 +691,8 @@ def correctionLoop(parameter_file,
                                               1e-9 * 2 * np.pi / wavelength_0,
                                               thd2,
                                               dim_sampl,
+                                              DM1phase=phaseDM1[k],
+                                              DM3phase=phaseDM3[k],
                                               noise=photon_noise,
                                               numphot=nb_photons)
 
@@ -698,8 +700,8 @@ def correctionLoop(parameter_file,
 
         elif estimation == "Perfect":
             # If polychromatic, assume a perfect estimation at one wavelength
-            input_wavefront = thd2.EF_from_phase_and_ampl(
-                phase_abb=phase_abb_up, ampl_abb=amplitude_abb_up)
+            # input_wavefront = thd2.EF_from_phase_and_ampl(
+            #     phase_abb=phase_abb_up, ampl_abb=amplitude_abb_up)
             resultatestimation = thd2.todetector(
                 entrance_EF=input_wavefront,
                 DM1phase=phaseDM1[k],
@@ -995,8 +997,8 @@ def correctionLoop(parameter_file,
         #                 DM1_active=DM1_active,phaseDM1=phaseDM1[k + 1],
         #                 DM1_z_position=DM1_z_position)/corona_struct.maxPSF)
         # this is after:
-        input_wavefront = thd2.EF_from_phase_and_ampl(
-            phase_abb=phase_abb_up, ampl_abb=amplitude_abb_up)
+        # input_wavefront = thd2.EF_from_phase_and_ampl(
+        #     phase_abb=phase_abb_up, ampl_abb=amplitude_abb_up)
         imagedetector[k + 1] = thd2.todetector_Intensity(
             entrance_EF=input_wavefront,
             DM1phase=phaseDM1[k + 1],
