@@ -1056,6 +1056,8 @@ class deformable_mirror(Optical_System):
         self.Name_DM = Name_DM
         self.z_position = DMconfig[self.Name_DM + "_z_position"]
         self.active = DMconfig[self.Name_DM + "_active"]
+        self.creating_pushact = DMconfig[self.Name_DM + "_creating_pushact"]
+        
         MinimumSurfaceRatioInThePupil = DMconfig[
             "MinimumSurfaceRatioInThePupil"]
         DMconfig[self.Name_DM + "_misregistration"] = False
@@ -1238,9 +1240,8 @@ class deformable_mirror(Optical_System):
             int(self.pradDM)) + "_dimpuparray" + str(
                 int(self.dim_overpad_pupil))
 
-        if load_fits == True:
-            return useful.check_and_load_fits(Model_local_dir,
-                                              Name_pushact_fits)
+        if (load_fits == True) or (self.creating_pushact == False and os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
+            return fits.getdata(os.path.join(Model_local_dir ,Name_pushact_fits + '.fits')) 
 
         diam_pup_in_pix = 2 * self.prad
         diam_pup_in_m = self.diam_pup_in_m
@@ -1284,15 +1285,13 @@ class deformable_mirror(Optical_System):
             # centered between pixels
             xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
 
-        #Position for each actuator in pixel for the numerical simulation
-
+        # Convert the measred positions of actuators to positions for numerical simulation
         simu_grid = measured_grid * 0
         for i in np.arange(measured_grid.shape[1]):
             simu_grid[:,
                       i] = measured_grid[:,
-                                         i] - measured_grid[:,
-                                                            int(ActuN
-                                                                )] + xy_ActuN
+                                         i] - measured_grid[:, int(
+                                             ActuN)] + xy_ActuN
         simu_grid = simu_grid * sampling_simu_over_measured
 
         # Influence function and the pitch in pixels
@@ -1400,12 +1399,10 @@ class deformable_mirror(Optical_System):
         Name_pushact_fits = self.Name_DM + "_PushActInPup_radpup" + str(
             int(self.pradDM)) + "_dimpuparray" + str(
                 int(self.dim_overpad_pupil))
-
-        if load_fits == True:
-            DM_pushact_inpup_real = useful.check_and_load_fits(
-                Model_local_dir, Name_pushact_fits + '_inPup_real')
-            DM_pushact_inpup_imag = useful.check_and_load_fits(
-                Model_local_dir, Name_pushact_fits + '_inPup_imag')
+        
+        if (load_fits == True) or (self.creating_pushact == False and os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
+            DM_pushact_inpup_real = fits.getdata(os.path.join(Model_local_dir ,Name_pushact_fits+ '_inPup_real.fits'))
+            DM_pushact_inpup_imag = fits.getdata(os.path.join(Model_local_dir ,Name_pushact_fits +'_inPup_imag.fits'))
 
             return DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
 
@@ -1561,7 +1558,8 @@ class deformable_mirror(Optical_System):
 
         return EF_back_in_pup_plane
 
-    def voltage_to_phase(self, actu_vect, wavelength=None):
+
+    def voltage_to_phase(self, actu_vect,  wavelength = None):
         """ --------------------------------------------------
         Generate the phase applied on one DM for a give vector of actuator amplitude
         
@@ -1578,7 +1576,7 @@ class deformable_mirror(Optical_System):
 
         if wavelength == None:
             wavelength = self.wavelength_0
-
+        
         DM_pushact_reshaped = self.DM_pushact.reshape(
             self.DM_pushact.shape[0],
             self.DM_pushact.shape[1] * self.DM_pushact.shape[2])
@@ -1586,7 +1584,7 @@ class deformable_mirror(Optical_System):
         surface_reshaped = np.dot(actu_vect, DM_pushact_reshaped)
 
         surface_DM = surface_reshaped.reshape(self.DM_pushact.shape[1],
-                                              self.DM_pushact.shape[2])
+                                               self.DM_pushact.shape[2])
 
         phase_on_DM = surface_DM * 2 * np.pi * 1e-9 / wavelength
 
