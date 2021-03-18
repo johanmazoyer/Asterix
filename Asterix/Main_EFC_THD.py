@@ -691,10 +691,10 @@ def correctionLoop(parameter_file,
 
             Difference = wsc.createdifference(input_wavefront,
                                               posprobes,
-                                              pushactonDM3 * amplitudePW *
-                                              1e-9 * 2 * np.pi / wavelength_0,
+                                              pushactonDM3,
                                               thd2,
                                               dim_sampl,
+                                              amplitudePW,
                                               DM1phase=phaseDM1[k],
                                               DM3phase=phaseDM3[k],
                                               noise=photon_noise,

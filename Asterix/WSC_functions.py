@@ -483,6 +483,7 @@ def createdifference(input_wavefront,
                      pushact,
                      testbed,
                      dimimages,
+                     amplitudePW,
                      DM1phase=0,
                      DM3phase=0,
                      noise=False,
@@ -531,7 +532,7 @@ def createdifference(input_wavefront,
 
 
     for count, num_probe in enumerate(posprobes):
-        probephase = pushact[num_probe]
+        probephase = pushact[num_probe]* amplitudePW * 1e-9 * 2 * np.pi / wavelength
 
         # Not 100% sure about wavelength here, so I prefeer to use
         # todetector to keep it monochromatic instead of todetector_Intensity 
