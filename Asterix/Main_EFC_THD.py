@@ -774,13 +774,6 @@ def correctionLoop(parameter_file,
                 b = 0
                 for mode in Linesearchmode:
 
-                    # ok ne laisse pas un truc avec 5 tmp_input_wavefront different
-                    # pour un truc pas simple la prochaine fois que tu pars en vacances ! :-p
-                    # J'ai commenté et fait une fait une tentative de
-                    # correction plus bas !
-
-                    # tmp_input_wavefront = input_wavefront
-
                     SVD, SVD_trunc, invertGDH = wsc.invertSVD(
                         Gmatrix,
                         mode,
@@ -806,13 +799,6 @@ def correctionLoop(parameter_file,
                             thd2.DM1.DM_pushact) * (-gain * amplitudeEFC * 2 *
                                                     np.pi * 1e-9 /
                                                     wavelength_0)
-                        # TODO dividing by wl here is dangerous
-                        # WONT WORK WHEN POLYCHROME
-                        # TO CHANGE !
-
-                        # tmp_input_wavefront = instr.prop_pup_DM1_DM3(
-                        #     tmp_input_wavefront, apply_on_DM1, wavelength_0,
-                        #     DM1_z_position, thd2.diam_pup_in_m / 2, thd2.prad)
 
                     else:
                         solution1 = wsc.solutionEFC(
@@ -825,36 +811,7 @@ def correctionLoop(parameter_file,
                         solution1[0:pushactonDM3.shape[0]],
                         pushactonDM3) * (-gain * amplitudeEFC * 2 * np.pi *
                                          1e-9 / wavelength_0)
-                    # TODO dividing by wl here is dangerous
-                    # WONT WORK WHEN POLYCHROME
-                    # TO CHANGE !
 
-                    # Propagation in DM1 plane, add DM1 phase,
-                    # propagate to next pupil plane (DM3 plane),
-                    # add DM3 phase and propagate to detector
-                    # imagedetectortemp=(corona_struct.im_apodtodetector_chrom(
-                    #             amplitude_abb_up, phase_abb_up,
-                    #             DM3_active = True, phaseDM3 = apply_on_DM3,
-                    #             DM1_active=DM1_active,phaseDM1=apply_on_DM1,
-                    #             DM1_z_position=DM1_z_position)/corona_struct.maxPSF)
-
-                    # # Add DM3 phase
-                    # ARRRRRGH EVERYTHING IS CALLED tmp_input_wavefront !! AAH
-
-                    # tmp_input_wavefront = tmp_input_wavefront * np.exp(
-                    #         1j * instr.cut_image(apply_on_DM3,
-                    #         corona_struct.entrancepupil.shape[1]))
-
-                    # imagedetectortemp = (
-                    #     abs(corona_struct.apodtodetector(
-                    #         tmp_input_wavefront))**2 /corona_struct.maxPSF)
-
-                    # imagedetectortemp = (abs(
-                    #     corona_struct.todetector(
-                    #         entrance_EF=tmp_input_wavefront))**2 /
-                    #                      thd2.maxPSF)
-
-                    # I think this will work based on waht you wrote after
                     if thd2.DM1.active == True:
                         phaseDM1_tmp = phaseDM1[k] + proc.crop_or_pad_image(
                             apply_on_DM1, dim_pup)
@@ -956,15 +913,6 @@ def correctionLoop(parameter_file,
             phaseDM1[k + 1] = phaseDM1[k] + proc.crop_or_pad_image(
                 apply_on_DM1, dim_pup)
 
-            # # Propagation in DM1 plane, add DM1 phase
-            # # and propagate to next pupil plane (DM3 plane)
-            # TODO Not good, 2 very different stuff (wavefront before and after the DM system) have the same name
-            # to raphael: I think this is not used anymore see comment bellow
-
-            # input_wavefront = instr.prop_pup_DM1_DM3(
-            #     input_wavefront, apply_on_DM1, wavelength_0, DM1_z_position,
-            #     thd2.diam_pup_in_m / 2., thd2.prad)
-
         # Phase to apply on DM3
         apply_on_DM3 = wsc.apply_on_DM(
             solution1[0:pushactonDM3.shape[0]], pushactonDM3) * (
@@ -973,32 +921,6 @@ def correctionLoop(parameter_file,
         phaseDM3[k + 1] = phaseDM3[k] + proc.crop_or_pad_image(
             apply_on_DM3, dim_pup)
 
-        # input_wavefront = input_wavefront * np.exp(
-        #     1j * proc.crop_or_pad_image(apply_on_DM3, dim_pup))
-
-        # imagedetector[k + 1] = (
-        #     abs(corona_struct.apodtodetector(input_wavefront))**2 /
-        #     corona_struct.maxPSF)
-
-        # Propagation in DM1 plane, add DM1 phase,
-        # propagate to next pupil plane (DM3 plane),
-        # add DM3 phase and propagate to detector
-
-        # # TODO Not good, everythin is call input_wavefront
-        # This is not understandable !
-        # I think this part was not cleaned and is not used anymore
-        # Because imagedetector[k + 1] does not use input_wavefront
-        # but directly DMphase.
-
-        # this is before you left for holiday : it does not use input_wavefront :
-        # imagedetector[k + 1]=(corona_struct.im_apodtodetector_chrom(
-        #                 amplitude_abb_up, phase_abb_up,
-        #                 DM3_active = True, phaseDM3 = phaseDM3[k + 1],
-        #                 DM1_active=DM1_active,phaseDM1=phaseDM1[k + 1],
-        #                 DM1_z_position=DM1_z_position)/corona_struct.maxPSF)
-        # this is after:
-        # input_wavefront = thd2.EF_from_phase_and_ampl(
-        #     phase_abb=phase_abb_up, ampl_abb=amplitude_abb_up)
         imagedetector[k + 1] = thd2.todetector_Intensity(
             entrance_EF=input_wavefront,
             DM1phase=phaseDM1[k + 1],
