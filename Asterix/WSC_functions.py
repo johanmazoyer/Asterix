@@ -75,8 +75,8 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def createvectorprobes(testbed, amplitude, posprobes,
-                       dimimages, cutsvd, wavelength):
+def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
+                       wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
     
@@ -107,13 +107,15 @@ def createvectorprobes(testbed, amplitude, posprobes,
     k = 0
 
     for i in posprobes:
-        
-        # TODO: for now we use testbed.DM3.pushact but we shoudl put a 
+
+        # TODO: for now we use testbed.DM3.pushact but we shoudl put a
         # which_DM_to_do_probes parameter
         probe_surface = testbed.DM3.DM_pushact[i]
-        probephase[k] = probe_surface * amplitude * 1e-9 * 2 * np.pi / wavelength
+        probephase[
+            k] = probe_surface * amplitude * 1e-9 * 2 * np.pi / wavelength
 
-        inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1+ 1j * probephase[k])
+        inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
+                                                          1j * probephase[k])
         deltapsikbis = (testbed.todetector(entrance_EF=inputwavefront) /
                         np.sqrt(testbed.maxPSF))
 
