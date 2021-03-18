@@ -328,8 +328,8 @@ def creatingCorrectionmatrix(input_wavefront,
                                testbed.dim_overpad_pupil),
                               dtype=complex)
         for k in range(pushact.shape[0]):
-            probephase[k] = proc.crop_or_pad_image(pushact[k],
-                                                   testbed.dim_overpad_pupil)
+            probephase[k] = pushact[k]
+            
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")
