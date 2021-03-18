@@ -314,22 +314,24 @@ def create_interaction_matrices(parameter_file,
         # Save EFC control matrix in Labview directory
         #EFCmatrix = np.zeros((invertGDH.shape[1], DM_pushact.shape[0]),
         #                     dtype=np.float32)
-        EFCmatrix_DM3 = np.zeros((invertGDH.shape[1],
-            thd2.DM3.DM_pushact.shape[0]), dtype=np.float32)
+        EFCmatrix_DM3 = np.zeros(
+            (invertGDH.shape[1], thd2.DM3.DM_pushact.shape[0]),
+            dtype=np.float32)
         for i in np.arange(len(thd2.DM3.WhichInPupil)):
             EFCmatrix_DM3[:, thd2.DM3.WhichInPupil[i]] = invertGDH[i, :]
-        fits.writeto(Labview_dir +
-                "Matrix_control_EFC_DM3_default.fits",
-                EFCmatrix_DM3,overwrite=True)
+        fits.writeto(Labview_dir + "Matrix_control_EFC_DM3_default.fits",
+                     EFCmatrix_DM3,
+                     overwrite=True)
         if thd2.DM1.active:
-            EFCmatrix_DM1 = np.zeros((invertGDH.shape[1],
-                thd2.DM1.DM_pushact.shape[0]), dtype=np.float32)
+            EFCmatrix_DM1 = np.zeros(
+                (invertGDH.shape[1], thd2.DM1.DM_pushact.shape[0]),
+                dtype=np.float32)
             for i in np.arange(len(thd2.DM1.WhichInPupil)):
                 EFCmatrix_DM1[:, thd2.DM1.WhichInPupil[i]] = invertGDH[
-                    i+len(thd2.DM3.WhichInPupil), :]
-            fits.writeto(Labview_dir +
-                    "Matrix_control_EFC_DM1_default.fits",
-                     EFCmatrix_DM1,overwrite=True)
+                    i + len(thd2.DM3.WhichInPupil), :]
+            fits.writeto(Labview_dir + "Matrix_control_EFC_DM1_default.fits",
+                         EFCmatrix_DM1,
+                         overwrite=True)
 
     return 0
 
@@ -429,7 +431,7 @@ def correctionLoop(parameter_file,
     Name_Experiment = SIMUconfig["Name_Experiment"]
     set_amplitude_abb = SIMUconfig["set_amplitude_abb"]
     ampl_abb_filename = SIMUconfig["ampl_abb_filename"]
-    set_random_ampl=SIMUconfig["set_random_ampl"]
+    set_random_ampl = SIMUconfig["set_random_ampl"]
     ampl_rms = SIMUconfig["ampl_rms"]
     ampl_rhoc = SIMUconfig["ampl_rhoc"]
     ampl_slope = SIMUconfig["ampl_slope"]
@@ -593,8 +595,8 @@ def correctionLoop(parameter_file,
 
     if set_amplitude_abb == True:
         if ampl_abb_filename != '' and os.path.isfile(
-                    Model_local_dir + ampl_abb_filename + ".fits"
-                    ) == True and set_random_ampl == False:
+                Model_local_dir + ampl_abb_filename +
+                ".fits") == True and set_random_ampl == False:
             ampfinal = phase_ampl.scale_amplitude_abb(
                 model_dir + ampl_abb_filename + ".fits", thd2.prad,
                 thd2.entrancepupil.pup)
@@ -603,12 +605,13 @@ def correctionLoop(parameter_file,
                 int(ampl_rms), int(ampl_slope), ampl_rhoc, thd2.prad)
 
             if set_random_ampl == False and os.path.isfile(Model_local_dir +
-                                    ampl_abb_filename +".fits") == True:
+                                                           ampl_abb_filename +
+                                                           ".fits") == True:
                 ampfinal = fits.getdata(Model_local_dir + ampl_abb_filename +
-                                    ".fits")
+                                        ".fits")
             else:
                 ampfinal = thd2.entrancepupil.random_phase_map(
-                            ampl_rms/100., ampl_rhoc, ampl_slope)
+                    ampl_rms / 100., ampl_rhoc, ampl_slope)
             if set_random_ampl == False:  # save it for next time
                 fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
                              ampfinal)
@@ -707,13 +710,6 @@ def correctionLoop(parameter_file,
                 DM1phase=phaseDM1[k],
                 DM3phase=phaseDM3[k]) / np.sqrt(thd2.maxPSF)
 
-            # resultatestimation = (corona_struct.im_apodtodetector_chrom(
-            #             amplitude_abb_up, phase_abb_up,
-            #             DM3_active = True, phaseDM3 = phaseDM3[k],
-            #             DM1_active=DM1_active,phaseDM1=phaseDM1[k],
-            #             DM1_z_position=DM1_z_position, retampl=True)
-            #             /np.sqrt(corona_struct.maxPSF))
-
             resultatestimation = proc.resampling(resultatestimation, dim_sampl)
 
         else:
@@ -793,10 +789,12 @@ def correctionLoop(parameter_file,
                                             thd2.DM1.WhichInPupil)),
                             thd2.DM3.DM_pushact.shape[0] +
                             thd2.DM1.DM_pushact.shape[0])
-                        
+
                         voltage_DM1 = solution1[pushactonDM3.shape[0]:]
-                        # Phase to apply on DM1    
-                        apply_on_DM1 = thd2.DM1.voltage_to_phase(voltage_DM1, wavelength=thd2.wavelength_0)* (-gain * amplitudeEFC )
+                        # Phase to apply on DM1
+                        apply_on_DM1 = thd2.DM1.voltage_to_phase(
+                            voltage_DM1, wavelength=thd2.wavelength_0) * (
+                                -gain * amplitudeEFC)
 
                         print(phaseDM1[k].shape)
                         print(apply_on_DM1.shape)
@@ -814,12 +812,13 @@ def correctionLoop(parameter_file,
 
                     # Phase to apply on DM3
                     voltage_DM3 = solution1[0:pushactonDM3.shape[0]]
-                    apply_on_DM3 = thd2.DM3.voltage_to_phase(voltage_DM3, wavelength=thd2.wavelength_0)* (-gain * amplitudeEFC )
+                    apply_on_DM3 = thd2.DM3.voltage_to_phase(
+                        voltage_DM3,
+                        wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
 
-                    
                     phaseDM3_tmp = phaseDM3[k] + proc.crop_or_pad_image(
                         apply_on_DM3, dim_pup)
-                    
+
                     imagedetectortemp = thd2.todetector_Intensity(
                         entrance_EF=input_wavefront,
                         DM1phase=phaseDM1_tmp,
@@ -907,22 +906,24 @@ def correctionLoop(parameter_file,
                                                  thd2.DM3.DM_pushact.shape[0])
 
         if thd2.DM1.active == True:
-            
+
             voltage_DM1 = solution1[pushactonDM3.shape[0]:]
-            # Phase to apply on DM1    
-            apply_on_DM1 = thd2.DM1.voltage_to_phase(voltage_DM1, wavelength=thd2.wavelength_0)* (-gain * amplitudeEFC )
+            # Phase to apply on DM1
+            apply_on_DM1 = thd2.DM1.voltage_to_phase(
+                voltage_DM1,
+                wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
 
             phaseDM1[k + 1] = phaseDM1[k] + proc.crop_or_pad_image(
                 apply_on_DM1, dim_pup)
 
         voltage_DM3 = solution1[0:pushactonDM3.shape[0]]
-        
-        # Phase to apply on DM1    
-        apply_on_DM3 = thd2.DM3.voltage_to_phase(voltage_DM3, wavelength=thd2.wavelength_0)* (-gain * amplitudeEFC )
+
+        # Phase to apply on DM1
+        apply_on_DM3 = thd2.DM3.voltage_to_phase(
+            voltage_DM3, wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
 
         phaseDM3[k + 1] = phaseDM3[k] + proc.crop_or_pad_image(
             apply_on_DM3, dim_pup)
-
 
         imagedetector[k + 1] = thd2.todetector_Intensity(
             entrance_EF=input_wavefront,
