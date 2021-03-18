@@ -599,7 +599,7 @@ def correctionLoop(parameter_file,
                 model_dir + ampl_abb_filename + ".fits", thd2.prad,
                 thd2.entrancepupil.pup)
         else:
-            ampl_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+            ampl_abb_filename = "ampl_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                 int(ampl_rms), int(ampl_slope), ampl_rhoc, thd2.prad)
 
             if set_random_ampl == False and os.path.isfile(Model_local_dir +
@@ -798,6 +798,9 @@ def correctionLoop(parameter_file,
                         # Phase to apply on DM1    
                         apply_on_DM1 = thd2.DM1.voltage_to_phase(voltage_DM1, wavelength=thd2.wavelength_0)* (-gain * amplitudeEFC )
 
+                        print(phaseDM1[k].shape)
+                        print(apply_on_DM1.shape)
+                        asd
                         phaseDM1_tmp = phaseDM1[k] + proc.crop_or_pad_image(
                             apply_on_DM1, dim_pup)
 
