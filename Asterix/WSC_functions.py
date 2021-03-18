@@ -75,8 +75,8 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
-                       dimimages, cutsvd):
+def createvectorprobes(testbed, amplitude, posprobes,
+                       dimimages, cutsvd, wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
     
@@ -86,9 +86,9 @@ def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
     testbed: testbed structure
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
     posprobes: 1D-array, index of the actuators to push and pull for pair-wise probing
-    pushact: 3D-array, opd created by the pokes of all actuators in the DM.
     dimimages: int, size of the output image after resampling in pixels
     cutsvd: float, value not to exceed for the inverse eigeinvalues at each pixels
+    whichDM_to_do_probes: name of the DM to do the probes
     
     
     Return:
@@ -105,24 +105,20 @@ def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
     SVD = np.zeros((2, dimimages, dimimages))
 
     k = 0
+
     for i in posprobes:
+        
+        # TODO: for now we use testbed.DM3.pushact but we shoudl put a 
+        # which_DM_to_do_probes parameter
+        probe_surface = testbed.DM3.DM_pushact[i]
+        probephase[k] = probe_surface * amplitude * 1e-9 * 2 * np.pi / wavelength
 
-        #
-        # lines inputwavefront = and deltapsikbis = need to be replace by
-        # testbed.todetector(DM3phase = probephase[k])/ np.sqrt(testbed.maxPSF)
-        # but chaque chose en son temps donc laissons comme ca now
-
-        tmp = proc.crop_or_pad_image(pushact[i], testbed.dim_overpad_pupil)
-        probephase[k] = tmp * amplitude * 1e-9 * 2 * np.pi / wavelength
-
-        inputwavefront = testbed.entrancepupil.pup * (1 + 1j * probephase[k])
-        deltapsikbis = (testbed.corono.todetector(entrance_EF=inputwavefront) /
+        inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1+ 1j * probephase[k])
+        deltapsikbis = (testbed.todetector(entrance_EF=inputwavefront) /
                         np.sqrt(testbed.maxPSF))
 
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
-        # useful.quickfits(np.abs(deltapsikbis),dir="/home/rgalicher/tt/")
-        # azs
 
     l = 0
     for i in np.arange(dimimages):

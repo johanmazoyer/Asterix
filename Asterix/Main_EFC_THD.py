@@ -184,10 +184,9 @@ def create_interaction_matrices(parameter_file,
             vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
         else:
             print("Saving " + filePW + " ...")
-            vectoressai, showsvd = wsc.createvectorprobes(thd2.wavelength_0, thd2,
+            vectoressai, showsvd = wsc.createvectorprobes(thd2,
                                                         amplitudePW, posprobes,
-                                                        thd2.DM3.DM_pushact,
-                                                        dim_sampl, cut)
+                                                        dim_sampl, cut, thd2.wavelength_0)
             fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
             visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
