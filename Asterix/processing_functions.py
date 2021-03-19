@@ -129,7 +129,7 @@ def resampling(image, new):
     resized_image = np.fft.fftshift(
         np.fft.fft2(np.fft.ifftshift(fftimage_cropped)))
 
-    if not isinstance(image, complex):
+    if not np.iscomplexobj(image):
         resize_image = np.real(resized_image)
 
     return resized_image
@@ -196,3 +196,31 @@ def crop_or_pad_image(image, dimout):
     else:
         im_out = image
     return im_out
+
+def actuator_position(measured_grid, measured_ActuN, ActuN,
+                      sampling_simu_over_measured):
+    """ --------------------------------------------------
+    Convert the measred positions of actuators to positions for numerical simulation
+    Parameters
+    ----------
+    measured_grid : 2D array (float) of shape is 2 x Nb_actuator
+                    x and y measured positions for each actuator (unit = pixel)
+    measured_ActuN: 1D array (float) of shape 2
+                    x and y positions of actuator ActuN same unit as measured_grid
+    ActuN:          int
+                    Index of the actuator ActuN (corresponding to measured_ActuN) 
+    sampling_simu_over_measured : float
+                    Ratio of sampling in simulation grid over sampling in measured grid 
+    Returns
+    ------
+    simu_grid : 2D array of shape is 2 x Nb_actuator
+                x and y positions of each actuator for simulation
+                same unit as measured_ActuN
+    -------------------------------------------------- """
+    simu_grid = measured_grid * 0
+    for i in np.arange(measured_grid.shape[1]):
+        simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(
+            ActuN)] + measured_ActuN
+    simu_grid = simu_grid * sampling_simu_over_measured
+    return simu_grid
+

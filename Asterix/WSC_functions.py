@@ -554,5 +554,4 @@ def createdifference(input_wavefront,
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 
-
     return Difference
