@@ -488,7 +488,7 @@ def createdifference(input_wavefront,
                      DM3phase=0,
                      noise=False,
                      numphot=1e30,
-                     wavelength = None):
+                     wavelength=None):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]
@@ -519,34 +519,32 @@ def createdifference(input_wavefront,
     -------------------------------------------------- """
     if wavelength == None:
         wavelength = testbed.wavelength_0
-    
+
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
     ## To convert in photon flux
-    # This will be replaced by transmission!
-    contrast_to_photons = (np.sum(testbed.entrancepupil.pup) /
-                           np.sum(testbed.corono.lyot_pup.pup) * numphot *
-                           testbed.maxPSF / testbed.sumPSF)
-
-    input_wavefront *= testbed.entrancepupil.pup
-
+    contrast_to_photons = 1 / testbed.transmission(
+        noFPM=True) * numphot * testbed.maxPSF / testbed.sumPSF
 
     for count, num_probe in enumerate(posprobes):
-        probephase = pushact[num_probe]* amplitudePW * 1e-9 * 2 * np.pi / wavelength
+        probephase = pushact[
+            num_probe] * amplitudePW * 1e-9 * 2 * np.pi / wavelength
 
         # Not 100% sure about wavelength here, so I prefeer to use
-        # todetector to keep it monochromatic instead of todetector_Intensity 
+        # todetector to keep it monochromatic instead of todetector_Intensity
         # which is large band
 
-        Ikmoins = np.abs(testbed.todetector(
-            entrance_EF=input_wavefront,
-            DM1phase=DM1phase,
-            DM3phase=DM3phase - probephase, wavelength=wavelength))**2 / testbed.maxPSF
+        Ikmoins = np.abs(
+            testbed.todetector(entrance_EF=input_wavefront,
+                               DM1phase=DM1phase,
+                               DM3phase=DM3phase - probephase,
+                               wavelength=wavelength))**2 / testbed.maxPSF
 
-        Ikplus = np.abs(testbed.todetector(
-            entrance_EF=input_wavefront,
-            DM1phase=DM1phase,
-            DM3phase=DM3phase + probephase, wavelength=wavelength))**2 / testbed.maxPSF
+        Ikplus = np.abs(
+            testbed.todetector(entrance_EF=input_wavefront,
+                               DM1phase=DM1phase,
+                               DM3phase=DM3phase + probephase,
+                               wavelength=wavelength))**2 / testbed.maxPSF
 
         if noise == True:
             Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /

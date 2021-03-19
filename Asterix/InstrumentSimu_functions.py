@@ -1057,7 +1057,7 @@ class deformable_mirror(Optical_System):
         self.z_position = DMconfig[self.Name_DM + "_z_position"]
         self.active = DMconfig[self.Name_DM + "_active"]
         self.creating_pushact = DMconfig[self.Name_DM + "_creating_pushact"]
-        
+
         MinimumSurfaceRatioInThePupil = DMconfig[
             "MinimumSurfaceRatioInThePupil"]
         DMconfig[self.Name_DM + "_misregistration"] = False
@@ -1240,8 +1240,12 @@ class deformable_mirror(Optical_System):
             int(self.pradDM)) + "_dimpuparray" + str(
                 int(self.dim_overpad_pupil))
 
-        if (load_fits == True) or (self.creating_pushact == False and os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
-            return fits.getdata(os.path.join(Model_local_dir ,Name_pushact_fits + '.fits')) 
+        if (load_fits
+                == True) or (self.creating_pushact == False
+                             and os.path.exists(Model_local_dir +
+                                                Name_pushact_fits + '.fits')):
+            return fits.getdata(
+                os.path.join(Model_local_dir, Name_pushact_fits + '.fits'))
 
         diam_pup_in_pix = 2 * self.prad
         diam_pup_in_m = self.diam_pup_in_m
@@ -1290,8 +1294,9 @@ class deformable_mirror(Optical_System):
         for i in np.arange(measured_grid.shape[1]):
             simu_grid[:,
                       i] = measured_grid[:,
-                                         i] - measured_grid[:, int(
-                                             ActuN)] + xy_ActuN
+                                         i] - measured_grid[:,
+                                                            int(ActuN
+                                                                )] + xy_ActuN
         simu_grid = simu_grid * sampling_simu_over_measured
 
         # Influence function and the pitch in pixels
@@ -1399,10 +1404,17 @@ class deformable_mirror(Optical_System):
         Name_pushact_fits = self.Name_DM + "_PushActInPup_radpup" + str(
             int(self.pradDM)) + "_dimpuparray" + str(
                 int(self.dim_overpad_pupil))
-        
-        if (load_fits == True) or (self.creating_pushact == False and os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
-            DM_pushact_inpup_real = fits.getdata(os.path.join(Model_local_dir ,Name_pushact_fits+ '_inPup_real.fits'))
-            DM_pushact_inpup_imag = fits.getdata(os.path.join(Model_local_dir ,Name_pushact_fits +'_inPup_imag.fits'))
+
+        if (load_fits
+                == True) or (self.creating_pushact == False
+                             and os.path.exists(Model_local_dir +
+                                                Name_pushact_fits + '.fits')):
+            DM_pushact_inpup_real = fits.getdata(
+                os.path.join(Model_local_dir,
+                             Name_pushact_fits + '_inPup_real.fits'))
+            DM_pushact_inpup_imag = fits.getdata(
+                os.path.join(Model_local_dir,
+                             Name_pushact_fits + '_inPup_imag.fits'))
 
             return DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
 
@@ -1420,10 +1432,8 @@ class deformable_mirror(Optical_System):
 
         for i in np.arange(self.DM_pushact.shape[0]):
             EF_back_in_pup_plane, dxpup = prop.prop_fresnel(
-                EF_inDMplane *
-                proc.crop_or_pad_image(self.DM_pushact[i], dim_entrancepupil),
-                self.wavelength_0, -self.z_position, self.diam_pup_in_m / 2,
-                self.prad)
+                EF_inDMplane * self.DM_pushact[i], self.wavelength_0,
+                -self.z_position, self.diam_pup_in_m / 2, self.prad)
             pushact_inpup[i] = EF_back_in_pup_plane
 
         if save_fits == True:
@@ -1558,7 +1568,7 @@ class deformable_mirror(Optical_System):
 
         return EF_back_in_pup_plane
 
-    def voltage_to_phase(self, actu_vect,  wavelength = None):
+    def voltage_to_phase(self, actu_vect, wavelength=None):
         """ --------------------------------------------------
         Generate the phase applied on one DM for a give vector of actuator amplitude
         
@@ -1575,7 +1585,7 @@ class deformable_mirror(Optical_System):
 
         if wavelength == None:
             wavelength = self.wavelength_0
-        
+
         DM_pushact_reshaped = self.DM_pushact.reshape(
             self.DM_pushact.shape[0],
             self.DM_pushact.shape[1] * self.DM_pushact.shape[2])
@@ -1583,7 +1593,7 @@ class deformable_mirror(Optical_System):
         surface_reshaped = np.dot(actu_vect, DM_pushact_reshaped)
 
         surface_DM = surface_reshaped.reshape(self.DM_pushact.shape[1],
-                                               self.DM_pushact.shape[2])
+                                              self.DM_pushact.shape[2])
 
         phase_on_DM = surface_DM * 2 * np.pi * 1e-9 / wavelength
 

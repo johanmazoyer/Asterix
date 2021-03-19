@@ -174,7 +174,7 @@ def create_interaction_matrices(parameter_file,
         int(amplitudePW)) + "nm_" + str(
             int(cut)) + "cutsvd_dim_sampl_" + str(dim_sampl) + "_dim" + str(
                 thd2.dim_im) + '_radpup' + str(thd2.prad)
-    
+
     ####Calculating and Saving PW matrix
     if (estimation == "PairWise" or estimation == "pairwise"
             or estimation == "PW" or estimation == "pw"):
@@ -184,9 +184,9 @@ def create_interaction_matrices(parameter_file,
             vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
         else:
             print("Saving " + filePW + " ...")
-            vectoressai, showsvd = wsc.createvectorprobes(thd2,
-                                                        amplitudePW, posprobes,
-                                                        dim_sampl, cut, thd2.wavelength_0)
+            vectoressai, showsvd = wsc.createvectorprobes(
+                thd2, amplitudePW, posprobes, dim_sampl, cut,
+                thd2.wavelength_0)
             fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
             visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
@@ -198,26 +198,27 @@ def create_interaction_matrices(parameter_file,
         # Saving PW matrices in Labview directory
         if onbench == True:
             probes = np.zeros((len(posprobes), thd2.DM3.DM_pushact.shape[0]),
-                            dtype=np.float32)
+                              dtype=np.float32)
             vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
                                 dtype=np.float32)
 
             for i in np.arange(len(posprobes)):
                 probes[i, posprobes[i]] = amplitudePW / 17
                 vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                        dim_sampl] = vectoressai[:, 0, i].flatten()
+                         dim_sampl] = vectoressai[:, 0, i].flatten()
                 vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                        dim_sampl] = vectoressai[:, 1, i].flatten()
+                         dim_sampl] = vectoressai[:, 1, i].flatten()
             fits.writeto(Labview_dir + "Probes_EFC_default.fits",
-                        probes,
-                        overwrite=True)
+                         probes,
+                         overwrite=True)
             fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
-                        vectorPW,
-                        overwrite=True)
+                         vectorPW,
+                         overwrite=True)
 
             ####Calculating and Saving EFC matrix
             if DHshape == "square":
-                print("TO SET ON LABVIEW: ",
+                print(
+                    "TO SET ON LABVIEW: ",
                     str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
 
     # Creating WhichInPup.
