@@ -752,7 +752,7 @@ class coronagraph(Optical_System):
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane)
 
-                ame_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           FPmsk)
 
@@ -1289,16 +1289,9 @@ class deformable_mirror(Optical_System):
             # centered between pixels
             xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
 
-        # Convert the measred positions of actuators to positions for numerical simulation
-        simu_grid = measured_grid * 0
-        for i in np.arange(measured_grid.shape[1]):
-            simu_grid[:,
-                      i] = measured_grid[:,
-                                         i] - measured_grid[:,
-                                                            int(ActuN
-                                                                )] + xy_ActuN
-        simu_grid = simu_grid * sampling_simu_over_measured
-
+        #Position for each actuator in pixel for the numerical simulation
+        simu_grid = actuator_position(measured_grid, xy_ActuN, ActuN,
+                                      sampling_simu_over_measured)
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
         pitch_actshape = fits.getheader(model_dir +
@@ -1586,16 +1579,14 @@ class deformable_mirror(Optical_System):
         if wavelength == None:
             wavelength = self.wavelength_0
 
-        DM_pushact_reshaped = self.DM_pushact.reshape(
+        surface_reshaped = np.dot(actu_vect,self.DM_pushact.reshape(
             self.DM_pushact.shape[0],
-            self.DM_pushact.shape[1] * self.DM_pushact.shape[2])
+            self.DM_pushact.shape[1] * self.DM_pushact.shape[2]))
 
-        surface_reshaped = np.dot(actu_vect, DM_pushact_reshaped)
 
-        surface_DM = surface_reshaped.reshape(self.DM_pushact.shape[1],
-                                              self.DM_pushact.shape[2])
+        phase_on_DM = surface_reshaped.reshape(self.DM_pushact.shape[1],
+                                              self.DM_pushact.shape[2])* 2 * np.pi * 1e-9 / wavelength
 
-        phase_on_DM = surface_DM * 2 * np.pi * 1e-9 / wavelength
 
         return phase_on_DM
 
@@ -1763,3 +1754,31 @@ class THD2_testbed(Optical_System):
         PSF = self.todetector_Intensity(center_on_pixel=True, noFPM=True)
 
         return np.amax(PSF), np.sum(PSF)
+
+
+def actuator_position(measured_grid, measured_ActuN, ActuN,
+                      sampling_simu_over_measured):
+    """ --------------------------------------------------
+    Convert the measred positions of actuators to positions for numerical simulation
+    Parameters
+    ----------
+    measured_grid : 2D array (float) of shape is 2 x Nb_actuator
+                    x and y measured positions for each actuator (unit = pixel)
+    measured_ActuN: 1D array (float) of shape 2
+                    x and y positions of actuator ActuN same unit as measured_grid
+    ActuN:          int
+                    Index of the actuator ActuN (corresponding to measured_ActuN) 
+    sampling_simu_over_measured : float
+                    Ratio of sampling in simulation grid over sampling in measured grid 
+    Returns
+    ------
+    simu_grid : 2D array of shape is 2 x Nb_actuator
+                x and y positions of each actuator for simulation
+                same unit as measured_ActuN
+    -------------------------------------------------- """
+    simu_grid = measured_grid * 0
+    for i in np.arange(measured_grid.shape[1]):
+        simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(
+            ActuN)] + measured_ActuN
+    simu_grid = simu_grid * sampling_simu_over_measured
+    return simu_grid
