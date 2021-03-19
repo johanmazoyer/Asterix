@@ -128,8 +128,8 @@ def resampling(image, new):
     resized_image = np.fft.fftshift(
         np.fft.fft2(np.fft.ifftshift(fftimage_cropped)))
 
-    if not np.iscomplexobj(image):
-        resize_image = np.real(resized_image)
+    if np.isrealobj(image):
+        resized_image = np.real(resized_image)
 
     return resized_image
 
