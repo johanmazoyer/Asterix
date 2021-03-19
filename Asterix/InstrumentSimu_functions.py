@@ -1291,7 +1291,7 @@ class deformable_mirror(Optical_System):
 
         #Position for each actuator in pixel for the numerical simulation
         simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
-                                      sampling_simu_over_measured)
+                                           sampling_simu_over_measured)
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
         pitch_actshape = fits.getheader(model_dir +
@@ -1579,14 +1579,15 @@ class deformable_mirror(Optical_System):
         if wavelength == None:
             wavelength = self.wavelength_0
 
-        surface_reshaped = np.dot(actu_vect,self.DM_pushact.reshape(
-            self.DM_pushact.shape[0],
-            self.DM_pushact.shape[1] * self.DM_pushact.shape[2]))
+        surface_reshaped = np.dot(
+            actu_vect,
+            self.DM_pushact.reshape(
+                self.DM_pushact.shape[0],
+                self.DM_pushact.shape[1] * self.DM_pushact.shape[2]))
 
-
-        phase_on_DM = surface_reshaped.reshape(self.DM_pushact.shape[1],
-                                              self.DM_pushact.shape[2])* 2 * np.pi * 1e-9 / wavelength
-
+        phase_on_DM = surface_reshaped.reshape(
+            self.DM_pushact.shape[1],
+            self.DM_pushact.shape[2]) * 2 * np.pi * 1e-9 / wavelength
 
         return phase_on_DM
 

@@ -1,4 +1,3 @@
-
 import numpy as np
 import scipy.optimize as opt
 
@@ -196,6 +195,7 @@ def crop_or_pad_image(image, dimout):
         im_out = image
     return im_out
 
+
 def actuator_position(measured_grid, measured_ActuN, ActuN,
                       sampling_simu_over_measured):
     """ --------------------------------------------------
@@ -222,4 +222,3 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
             ActuN)] + measured_ActuN
     simu_grid = simu_grid * sampling_simu_over_measured
     return simu_grid
-
