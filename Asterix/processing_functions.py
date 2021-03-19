@@ -1,4 +1,3 @@
-__author__ = 'Axel Potier'
 
 import numpy as np
 import scipy.optimize as opt
