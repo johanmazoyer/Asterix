@@ -117,13 +117,22 @@ def resampling(image, new):
     Return:
     ------
     Gvector: 2D array, image resampled into new dimensions
+    v1.0 2020 A. Potier
+    v2.0 19/030/21 J Mazoyer clean names + if image is real, result is real. 
     -------------------------------------------------- """
 
     dim_im = len(image)
-    Gvectorbis = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image)))
-    Gvector = cropimage(Gvectorbis, dim_im / 2, dim_im / 2, new)
-    Gvector = np.fft.fftshift(np.fft.fft2(np.fft.ifftshift(Gvector)))
-    return Gvector
+
+    fftimage_cropped = cropimage(
+        np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dim_im / 2,
+        dim_im / 2, new)
+    resized_image = np.fft.fftshift(
+        np.fft.fft2(np.fft.ifftshift(fftimage_cropped)))
+
+    if not isinstance(image, complex):
+        resize_image = np.real(resized_image)
+
+    return resized_image
 
 
 def cropimage(img, ctr_x, ctr_y, newsizeimg):

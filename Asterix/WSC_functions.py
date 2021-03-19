@@ -552,7 +552,7 @@ def createdifference(input_wavefront,
             Ikmoins = (np.random.poisson(Ikmoins * contrast_to_photons) /
                        contrast_to_photons)
 
-        Difference[count] = np.abs(proc.resampling(Ikplus, dimimages)) -  np.abs(proc.resampling(Ikmoins, dimimages)) 
+        Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 
 
     return Difference
