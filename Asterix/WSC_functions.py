@@ -75,8 +75,8 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
-                       dimimages, cutsvd):
+def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
+                       wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
     
@@ -86,9 +86,9 @@ def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
     testbed: testbed structure
     amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
     posprobes: 1D-array, index of the actuators to push and pull for pair-wise probing
-    pushact: 3D-array, opd created by the pokes of all actuators in the DM.
     dimimages: int, size of the output image after resampling in pixels
     cutsvd: float, value not to exceed for the inverse eigeinvalues at each pixels
+    whichDM_to_do_probes: name of the DM to do the probes
     
     
     Return:
@@ -105,24 +105,22 @@ def createvectorprobes(wavelength, testbed, amplitude, posprobes, pushact,
     SVD = np.zeros((2, dimimages, dimimages))
 
     k = 0
+
     for i in posprobes:
 
-        #
-        # lines inputwavefront = and deltapsikbis = need to be replace by
-        # testbed.todetector(DM3phase = probephase[k])/ np.sqrt(testbed.maxPSF)
-        # but chaque chose en son temps donc laissons comme ca now
+        # TODO: for now we use testbed.DM3.pushact but we shoudl put a
+        # which_DM_to_do_probes parameter
+        probe_surface = testbed.DM3.DM_pushact[i]
+        probephase[
+            k] = probe_surface * amplitude * 1e-9 * 2 * np.pi / wavelength
 
-        tmp = proc.crop_or_pad_image(pushact[i], testbed.dim_overpad_pupil)
-        probephase[k] = tmp * amplitude * 1e-9 * 2 * np.pi / wavelength
-
-        inputwavefront = testbed.entrancepupil.pup * (1 + 1j * probephase[k])
-        deltapsikbis = (testbed.corono.todetector(entrance_EF=inputwavefront) /
+        inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
+                                                          1j * probephase[k])
+        deltapsikbis = (testbed.todetector(entrance_EF=inputwavefront) /
                         np.sqrt(testbed.maxPSF))
 
         deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
         k = k + 1
-        # useful.quickfits(np.abs(deltapsikbis),dir="/home/rgalicher/tt/")
-        # azs
 
     l = 0
     for i in np.arange(dimimages):
@@ -330,8 +328,8 @@ def creatingCorrectionmatrix(input_wavefront,
                                testbed.dim_overpad_pupil),
                               dtype=complex)
         for k in range(pushact.shape[0]):
-            probephase[k] = proc.crop_or_pad_image(pushact[k],
-                                                   testbed.dim_overpad_pupil)
+            probephase[k] = pushact[k]
+
         bas_fct = np.array([probephase[ind] for ind in Whichact])
         nb_fct = len(Whichact)
     print("Start EFC")
@@ -480,37 +478,17 @@ def FP_PWestimate(Difference, Vectorprobes):
     return Resultat / 4
 
 
-def apply_on_DM(actu_vect, DM_pushact):
-    """ --------------------------------------------------
-    Generate the phase applied on one DM for a give vector of actuator amplitude
-    
-    Parameters:
-    ----------
-    actu_vect : 1D array
-                values of the amplitudes for each actuator
-    DM_pushact : 2D array
-                array of the DM actuator functions
-    Return:
-    ------
-        2D array
-        phase map in the same unit as actu_vect times DM_pushact)
-    -------------------------------------------------- """
-    return np.dot(
-        actu_vect,
-        DM_pushact.reshape(DM_pushact.shape[0],
-                           DM_pushact.shape[1] * DM_pushact.shape[1])).reshape(
-                               DM_pushact.shape[1], DM_pushact.shape[1])
-
-
 def createdifference(input_wavefront,
                      posprobes,
                      pushact,
                      testbed,
                      dimimages,
+                     amplitudePW,
                      DM1phase=0,
                      DM3phase=0,
                      noise=False,
-                     numphot=1e30):
+                     numphot=1e30,
+                     wavelength=None):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]
@@ -539,40 +517,34 @@ def createdifference(input_wavefront,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
     -------------------------------------------------- """
-    Ikmoins = np.zeros((testbed.dim_im, testbed.dim_im))
-    Ikplus = np.zeros((testbed.dim_im, testbed.dim_im))
+    if wavelength == None:
+        wavelength = testbed.wavelength_0
+
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
     ## To convert in photon flux
-    # This will be replaced by transmission!
+    contrast_to_photons = 1 / testbed.transmission(
+        noFPM=True) * numphot * testbed.maxPSF / testbed.sumPSF
 
-    contrast_to_photons = (np.sum(testbed.entrancepupil.pup) /
-                           np.sum(testbed.corono.lyot_pup.pup) * numphot *
-                           testbed.maxPSF / testbed.sumPSF)
+    for count, num_probe in enumerate(posprobes):
+        probephase = pushact[
+            num_probe] * amplitudePW * 1e-9 * 2 * np.pi / wavelength
 
-    dim_pup = testbed.dim_overpad_pupil
-    input_wavefront *= testbed.entrancepupil.pup
+        # Not 100% sure about wavelength here, so I prefeer to use
+        # todetector to keep it monochromatic instead of todetector_Intensity
+        # which is large band
 
-    k = 0
-    for i in posprobes:
-        probephase = proc.crop_or_pad_image(pushact[i], dim_pup)
+        Ikmoins = np.abs(
+            testbed.todetector(entrance_EF=input_wavefront,
+                               DM1phase=DM1phase,
+                               DM3phase=DM3phase - probephase,
+                               wavelength=wavelength))**2 / testbed.maxPSF
 
-        Ikmoins = testbed.todetector_Intensity(
-             entrance_EF=input_wavefront, DM1phase = DM1phase,
-             DM3phase=DM3phase-probephase) / testbed.maxPSF
-        #Ikmoins = np.abs(testbed.corono.todetector(entrance_EF=
-        #        input_wavefront * np.exp(-1j * probephase)))**2 / testbed.maxPSF
-        # Ikmoins = np.abs(corona_struct.apodtodetector(input_wavefront * np.exp(
-        #         -1j * probephase)))**2 / corona_struct.maxPSF
-
-        Ikplus = testbed.todetector_Intensity(
-             entrance_EF=input_wavefront, DM1phase = DM1phase,
-             DM3phase=DM3phase+probephase) / testbed.maxPSF
-        #Ikplus = np.abs(testbed.corono.todetector(entrance_EF=
-        #        input_wavefront * np.exp(1j * probephase)))**2 / testbed.maxPSF
-                # Ikplus = np.abs(
-        #     corona_struct.apodtodetector(input_wavefront * np.exp(
-        #         1j * probephase)))**2 / corona_struct.maxPSF
+        Ikplus = np.abs(
+            testbed.todetector(entrance_EF=input_wavefront,
+                               DM1phase=DM1phase,
+                               DM3phase=DM3phase + probephase,
+                               wavelength=wavelength))**2 / testbed.maxPSF
 
         if noise == True:
             Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
@@ -580,12 +552,6 @@ def createdifference(input_wavefront,
             Ikmoins = (np.random.poisson(Ikmoins * contrast_to_photons) /
                        contrast_to_photons)
 
-        Ikplus = np.abs(proc.resampling(Ikplus, dimimages))
-        Ikmoins = np.abs(proc.resampling(Ikmoins, dimimages))
-
-        Difference[k] = Ikplus - Ikmoins
-        k = k + 1
-    # useful.quickfits(np.abs(Difference),dir="/home/rgalicher/tt/")
-    # azs
+        Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 
     return Difference

@@ -177,7 +177,7 @@ class Optical_System:
         if center_on_pixel == True:
             Psf_offset = (0, 0)
         else:
-            Psf_offset = (- 1 / 2, - 1 / 2)
+            Psf_offset = (-0.5, -0.5)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -487,7 +487,8 @@ class pupil(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_pupil' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      entrance_EF)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -512,7 +513,8 @@ class pupil(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_after_pupil' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      entrance_EF)
 
         return exit_EF
 
@@ -662,7 +664,7 @@ class coronagraph(Optical_System):
             self.perfect_Lyot_pupil = 0
             self.perfect_Lyot_pupil = self.EF_through(
                 entrance_EF=self.clearpup.EF_through())
-    
+
     def EF_through(self,
                    entrance_EF=1.,
                    wavelength=None,
@@ -706,7 +708,8 @@ class coronagraph(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_apod' + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      entrance_EF)
 
         if wavelength == None:
             wavelength = self.wavelength_0
@@ -748,9 +751,8 @@ class coronagraph(Optical_System):
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane)
-                
-                ame_plane = 'FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
+
+                name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           FPmsk)
 
@@ -778,8 +780,8 @@ class coronagraph(Optical_System):
                 self.dim_overpad_pupil,
                 self.dim_fpm,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                X_offset_output= - 1 / 2,
-                Y_offset_output= - 1 / 2,
+                X_offset_output=-0.5,
+                Y_offset_output=-0.5,
                 inverse=False)
 
             if save_all_planes_to_fits == True:
@@ -787,9 +789,8 @@ class coronagraph(Optical_System):
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane)
-                
-                name_plane = 'FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
+
+                name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           FPmsk)
 
@@ -804,8 +805,8 @@ class coronagraph(Optical_System):
                 self.dim_fpm,
                 self.dim_overpad_pupil,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                X_offset_input= - 1 / 2,
-                Y_offset_input= - 1 / 2,
+                X_offset_input=-0.5,
+                Y_offset_input=-0.5,
                 inverse=True)
 
             # Babinet's trick
@@ -819,8 +820,8 @@ class coronagraph(Optical_System):
                                           self.dim_im,
                                           self.dim_im / self.science_sampling *
                                           lambda_ratio,
-                                          X_offset_output= - 1 / 2,
-                                          Y_offset_output= - 1 / 2,
+                                          X_offset_output=-0.5,
+                                          Y_offset_output=-0.5,
                                           inverse=False)
 
             if save_all_planes_to_fits == True:
@@ -828,9 +829,8 @@ class coronagraph(Optical_System):
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane)
-                
-                name_plane = 'FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
+
+                name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           FPmsk)
 
@@ -845,8 +845,8 @@ class coronagraph(Optical_System):
                          self.dim_im,
                          2 * self.prad,
                          self.dim_im / self.science_sampling * lambda_ratio,
-                         X_offset_input= - 1 / 2,
-                         Y_offset_input= - 1 / 2,
+                         X_offset_input=-0.5,
+                         Y_offset_input=-0.5,
                          inverse=True), self.dim_overpad_pupil)
 
         else:
@@ -878,7 +878,6 @@ class coronagraph(Optical_System):
                                       lyotplane_after_lyot)
 
         return lyotplane_after_lyot
-
 
     def FQPM(self):
         """ --------------------------------------------------
@@ -1007,7 +1006,6 @@ class coronagraph(Optical_System):
     ##############################################
     ### Propagation through coronagraph
 
-    
 
 ##############################################
 ##############################################
@@ -1058,6 +1056,8 @@ class deformable_mirror(Optical_System):
         self.Name_DM = Name_DM
         self.z_position = DMconfig[self.Name_DM + "_z_position"]
         self.active = DMconfig[self.Name_DM + "_active"]
+        self.creating_pushact = DMconfig[self.Name_DM + "_creating_pushact"]
+
         MinimumSurfaceRatioInThePupil = DMconfig[
             "MinimumSurfaceRatioInThePupil"]
         DMconfig[self.Name_DM + "_misregistration"] = False
@@ -1176,7 +1176,8 @@ class deformable_mirror(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_' + self.Name_DM + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      entrance_EF)
             name_plane = 'phase_' + self.Name_DM + '_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane, DMphase)
@@ -1202,7 +1203,8 @@ class deformable_mirror(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      entrance_EF)
 
         return EF_after_DM
 
@@ -1238,9 +1240,12 @@ class deformable_mirror(Optical_System):
             int(self.pradDM)) + "_dimpuparray" + str(
                 int(self.dim_overpad_pupil))
 
-        if load_fits == True:
-            return useful.check_and_load_fits(Model_local_dir,
-                                              Name_pushact_fits)
+        if (load_fits
+                == True) or (self.creating_pushact == False
+                             and os.path.exists(Model_local_dir +
+                                                Name_pushact_fits + '.fits')):
+            return fits.getdata(
+                os.path.join(Model_local_dir, Name_pushact_fits + '.fits'))
 
         diam_pup_in_pix = 2 * self.prad
         diam_pup_in_m = self.diam_pup_in_m
@@ -1285,8 +1290,8 @@ class deformable_mirror(Optical_System):
             xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
 
         #Position for each actuator in pixel for the numerical simulation
-        simu_grid = actuator_position(measured_grid, xy_ActuN, ActuN,
-                                      sampling_simu_over_measured)
+        simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
+                                           sampling_simu_over_measured)
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
         pitch_actshape = fits.getheader(model_dir +
@@ -1393,16 +1398,21 @@ class deformable_mirror(Optical_System):
             int(self.pradDM)) + "_dimpuparray" + str(
                 int(self.dim_overpad_pupil))
 
-        if load_fits == True:
-            DM_pushact_inpup_real = useful.check_and_load_fits(
-                Model_local_dir, Name_pushact_fits + '_inPup_real')
-            DM_pushact_inpup_imag = useful.check_and_load_fits(
-                Model_local_dir, Name_pushact_fits + '_inPup_imag')
+        if (load_fits
+                == True) or (self.creating_pushact == False
+                             and os.path.exists(Model_local_dir +
+                                                Name_pushact_fits + '.fits')):
+            DM_pushact_inpup_real = fits.getdata(
+                os.path.join(Model_local_dir,
+                             Name_pushact_fits + '_inPup_real.fits'))
+            DM_pushact_inpup_imag = fits.getdata(
+                os.path.join(Model_local_dir,
+                             Name_pushact_fits + '_inPup_imag.fits'))
 
             return DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
 
         dim_entrancepupil = self.dim_overpad_pupil
-        # do we really need a pupil here ?!? seems to me it would be more general
+        # TODO do we really need a pupil here ?!? seems to me it would be more general
         # with all the actuators ?
         EF_inDMplane, dxout = prop.prop_fresnel(self.clearpup.pup,
                                                 self.wavelength_0,
@@ -1415,10 +1425,8 @@ class deformable_mirror(Optical_System):
 
         for i in np.arange(self.DM_pushact.shape[0]):
             EF_back_in_pup_plane, dxpup = prop.prop_fresnel(
-                EF_inDMplane *
-                proc.crop_or_pad_image(self.DM_pushact[i], dim_entrancepupil),
-                self.wavelength_0, -self.z_position, self.diam_pup_in_m / 2,
-                self.prad)
+                EF_inDMplane * self.DM_pushact[i], self.wavelength_0,
+                -self.z_position, self.diam_pup_in_m / 2, self.prad)
             pushact_inpup[i] = EF_back_in_pup_plane
 
         if save_fits == True:
@@ -1534,14 +1542,16 @@ class deformable_mirror(Optical_System):
         if save_all_planes_to_fits == True:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      EF_inDMplane)
 
         EF_inDMplane_after_DM = EF_inDMplane * np.exp(1j * phase_DM)
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
                 int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      EF_inDMplane)
         # and propagate to next pupil plane
         EF_back_in_pup_plane, _ = prop.prop_fresnel(EF_inDMplane_after_DM,
                                                     wavelength,
@@ -1550,6 +1560,36 @@ class deformable_mirror(Optical_System):
                                                     self.prad)
 
         return EF_back_in_pup_plane
+
+    def voltage_to_phase(self, actu_vect, wavelength=None):
+        """ --------------------------------------------------
+        Generate the phase applied on one DM for a give vector of actuator amplitude
+        
+        Parameters:
+        ----------
+        actu_vect : 1D array
+                    values of the amplitudes for each actuator
+
+        Return:
+        ------
+            2D array
+            phase map in the same unit as actu_vect times DM_pushact)
+        -------------------------------------------------- """
+
+        if wavelength == None:
+            wavelength = self.wavelength_0
+
+        surface_reshaped = np.dot(
+            actu_vect,
+            self.DM_pushact.reshape(
+                self.DM_pushact.shape[0],
+                self.DM_pushact.shape[1] * self.DM_pushact.shape[2]))
+
+        phase_on_DM = surface_reshaped.reshape(
+            self.DM_pushact.shape[1],
+            self.DM_pushact.shape[2]) * 2 * np.pi * 1e-9 / wavelength
+
+        return phase_on_DM
 
 
 ##############################################
@@ -1715,31 +1755,3 @@ class THD2_testbed(Optical_System):
         PSF = self.todetector_Intensity(center_on_pixel=True, noFPM=True)
 
         return np.amax(PSF), np.sum(PSF)
-
-
-def actuator_position(measured_grid, measured_ActuN, ActuN,
-                      sampling_simu_over_measured):
-    """ --------------------------------------------------
-    Convert the measred positions of actuators to positions for numerical simulation
-    Parameters
-    ----------
-    measured_grid : 2D array (float) of shape is 2 x Nb_actuator
-                    x and y measured positions for each actuator (unit = pixel)
-    measured_ActuN: 1D array (float) of shape 2
-                    x and y positions of actuator ActuN same unit as measured_grid
-    ActuN:          int
-                    Index of the actuator ActuN (corresponding to measured_ActuN) 
-    sampling_simu_over_measured : float
-                    Ratio of sampling in simulation grid over sampling in measured grid 
-    Returns
-    ------
-    simu_grid : 2D array of shape is 2 x Nb_actuator
-                x and y positions of each actuator for simulation
-                same unit as measured_ActuN
-    -------------------------------------------------- """
-    simu_grid = measured_grid * 0
-    for i in np.arange(measured_grid.shape[1]):
-        simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(
-            ActuN)] + measured_ActuN
-    simu_grid = simu_grid * sampling_simu_over_measured
-    return simu_grid

@@ -107,7 +107,7 @@ def check_and_load_fits(directory, filename):
     raise error if the file does not exist
     -------------------------------------------------- """
     if os.path.exists(directory + filename + '.fits') == True:
-        return fits.getdata(directory + filename + '.fits')
+        return fits.getdata(os.path.join(directory ,filename + '.fits')) 
     else:
         raise Exception(
             "You need to create " + filename + ".fits before loading it." +
