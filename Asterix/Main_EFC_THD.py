@@ -1,5 +1,5 @@
 __author__ = 'Raphael Galicher, Johan Mazoyer, and Axel Potier'
-print('test')
+
 import os
 import datetime
 
@@ -174,7 +174,7 @@ def create_interaction_matrices(parameter_file,
         int(amplitudePW)) + "nm_" + str(
             int(cut)) + "cutsvd_dim_sampl_" + str(dim_sampl) + "_dim" + str(
                 thd2.dim_im) + '_radpup' + str(thd2.prad)
-
+ 
     ####Calculating and Saving PW matrix
     if (estimation == "PairWise" or estimation == "pairwise"
             or estimation == "PW" or estimation == "pw"):
@@ -189,37 +189,36 @@ def create_interaction_matrices(parameter_file,
                 thd2.wavelength_0)
             fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
 
-            visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
+        visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
 
-            if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
-                print("Saving " + visuPWMap + " ...")
-                fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
+        if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
+            print("Saving " + visuPWMap + " ...")
+            fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
 
-        # Saving PW matrices in Labview directory
-        if onbench == True:
-            probes = np.zeros((len(posprobes), thd2.DM3.DM_pushact.shape[0]),
-                              dtype=np.float32)
-            vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
-                                dtype=np.float32)
+    # Saving PW matrices in Labview directory
+    if onbench == True:
+        probes = np.zeros((len(posprobes), thd2.DM3.DM_pushact.shape[0]),
+                          dtype=np.float32)
+        vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
+                            dtype=np.float32)
 
-            for i in np.arange(len(posprobes)):
-                probes[i, posprobes[i]] = amplitudePW / 17
-                vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                         dim_sampl] = vectoressai[:, 0, i].flatten()
-                vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                         dim_sampl] = vectoressai[:, 1, i].flatten()
-            fits.writeto(Labview_dir + "Probes_EFC_default.fits",
-                         probes,
-                         overwrite=True)
-            fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
-                         vectorPW,
-                         overwrite=True)
+        for i in np.arange(len(posprobes)):
+            probes[i, posprobes[i]] = amplitudePW / 17
+            vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
+                     dim_sampl] = vectoressai[:, 0, i].flatten()
+            vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
+                     dim_sampl] = vectoressai[:, 1, i].flatten()
+        fits.writeto(Labview_dir + "Probes_EFC_default.fits",
+                     probes,
+                     overwrite=True)
+        fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
+                     vectorPW,
+                     overwrite=True)
 
-            ####Calculating and Saving EFC matrix
-            if DHshape == "square":
-                print(
-                    "TO SET ON LABVIEW: ",
-                    str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
+        ####Calculating and Saving EFC matrix
+        if DHshape == "square":
+            print("TO SET ON LABVIEW: ",
+                  str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
 
     # Creating WhichInPup.
     # if DM3_otherbasis = False, this is done inside the DM class
@@ -461,7 +460,7 @@ def correctionLoop(parameter_file,
     Linesearchmode = SIMUconfig["Linesearchmode"]
     Linesearchmode = [int(i) for i in Linesearchmode]
     gain = SIMUconfig["gain"]
-    estimation = SIMUconfig["estimation"]
+    estimation = SIMUconfig["estimation"].lower()
 
     ##THEN DO
 
@@ -533,8 +532,7 @@ def correctionLoop(parameter_file,
         str(round(thd2.science_sampling, 2)), "basis_" + basistr) + os.path.sep
 
     ##Load PW matrices
-    if (estimation == "PairWise" or estimation == "pairwise"
-            or estimation == "PW" or estimation == "pw"):
+    if (estimation == "pairwise" or estimation == "pw"):
 
         string_dims_PWMatrix = "_".join(map(str, posprobes)) + "act_" + str(
             int(amplitudePW)) + "nm_" + str(int(
@@ -616,13 +614,13 @@ def correctionLoop(parameter_file,
                                                            ampl_abb_filename +
                                                            ".fits") == True:
                 ampfinal = fits.getdata(Model_local_dir + ampl_abb_filename +
-                                        ".fits")
+                                    ".fits")
             else:
                 ampfinal = thd2.entrancepupil.random_phase_map(
                     ampl_rms / 100., ampl_rhoc, ampl_slope)
-                if set_random_ampl == False:  # save it for next time
-                    fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
-                                 ampfinal)
+            if set_random_ampl == False:  # save it for next time
+                fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
+                             ampfinal)
     else:
         ampfinal = 0
 
@@ -687,9 +685,7 @@ def correctionLoop(parameter_file,
     for mode in modevector:
         print("--------------------------------------------------")
         print("Iteration number: ", k, " EFC truncation: ", mode)
-        if (estimation == "PairWise" or estimation == "pairwise"
-                or estimation == "PW" or estimation == "pw"):
-
+        if (estimation == "pairwise" or estimation == "pw"):
             Difference = wsc.createdifference(input_wavefront,
                                               posprobes,
                                               pushactonDM3,
@@ -701,9 +697,10 @@ def correctionLoop(parameter_file,
                                               noise=photon_noise,
                                               numphot=nb_photons)
 
+
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
-        elif estimation == "Perfect":
+        elif estimation == "perfect":
             # If polychromatic, assume a perfect estimation at one wavelength
             # input_wavefront = thd2.EF_from_phase_and_ampl(
             #     phase_abb=phase_abb_up, ampl_abb=amplitude_abb_up)
@@ -791,9 +788,8 @@ def correctionLoop(parameter_file,
                                             thd2.DM1.WhichInPupil)),
                             thd2.DM3.DM_pushact.shape[0] +
                             thd2.DM1.DM_pushact.shape[0])
-
                         voltage_DM1 = solution1[pushactonDM3.shape[0]:]
-                        # Phase to apply on DM1
+                    # Phase to apply on DM1
                         apply_on_DM1 = thd2.DM1.voltage_to_phase(
                             voltage_DM1, wavelength=thd2.wavelength_0) * (
                                 -gain * amplitudeEFC)
@@ -903,7 +899,6 @@ def correctionLoop(parameter_file,
                                                  thd2.DM3.DM_pushact.shape[0])
 
         if thd2.DM1.active == True:
-
             voltage_DM1 = solution1[pushactonDM3.shape[0]:]
             # Phase to apply on DM1
             apply_on_DM1 = thd2.DM1.voltage_to_phase(
@@ -942,6 +937,8 @@ def correctionLoop(parameter_file,
 
     ## SAVING...
     header = useful.from_param_to_header(config)
+    for it in np.arange(nbiter + 1):
+        cut_phaseDM3[it] = proc.crop_or_pad_image(phaseDM3[it], 2 * thd2.prad)
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
     fits.writeto(result_dir + current_time_str + "_Detector_Images" + ".fits",
