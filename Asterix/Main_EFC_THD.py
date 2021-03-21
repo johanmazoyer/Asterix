@@ -937,12 +937,6 @@ def correctionLoop(parameter_file,
 
     ## SAVING...
     header = useful.from_param_to_header(config)
-    if thd2.DM1.active == True:
-        cut_phaseDM1 = np.zeros((nbiter + 1, 2 * thd2.prad, 2 * thd2.prad))
-        for it in np.arange(nbiter + 1):
-            cut_phaseDM1[it] = proc.crop_or_pad_image(phaseDM1[it],
-                                                      2 * thd2.prad)
-    cut_phaseDM3 = np.zeros((nbiter + 1, 2 * thd2.prad, 2 * thd2.prad))
     for it in np.arange(nbiter + 1):
         cut_phaseDM3[it] = proc.crop_or_pad_image(phaseDM3[it], 2 * thd2.prad)
 
