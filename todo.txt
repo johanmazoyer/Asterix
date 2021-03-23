@@ -27,7 +27,7 @@ the testbed
 Estimation = Estimator.estimate(entrance EF, DM voltage, WL)
 
 It returns the estimation as a 2D array. In all generality, it can be pupil or focal plane,
-complex or real with keywords (Estim.is_focal_plane = True, Estim.is_complex = Trus) 
+complex or real with keywords (Estim.is_focal_plane = True, Estim.is_complex = True, Estim.whatWL) 
 to explain the form of the output and potentially prevent wronfull combination of
 estim + correc.
 
@@ -60,4 +60,7 @@ define separatly the problematic of gains, matrix recalculation, etc.
 
 Correction with repeated Jacobian
 
-polychromatic correction
+polychromatic correction: inside of the correction
+polychromatic estimation: inside of the estimation function and can send, single WL, multiple WL or large bandwidth 
+                                estimate with keyword to explain.
+
