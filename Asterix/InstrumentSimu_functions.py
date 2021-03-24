@@ -37,10 +37,6 @@ class Optical_System:
         #pupil in pixel
         self.prad = int(modelconfig["diam_pup_in_pix"] / 2)
 
-        # this is not a big file and like that you always have it on you to check that
-        # Optical Systems are using the same config to be able to compare them
-        self.modelconfig = modelconfig
-
         # 1.25 is hard coded for now. TODO Fix that.
         # All pupils in the code must have this dimensions, so that the blocks can be easily switch
         self.dim_overpad_pupil = int(self.prad * 1.25) * 2
@@ -400,7 +396,8 @@ def concatenate_os(list_os, list_os_names):
     parameter:
         a list of optical systems. all the systems must have been defined with te same modelconfig.
         The list order is form the first optics system to the last in the path of the light
-        (so usually from entrance pupil to )
+        (so usually from entrance pupil to Lyot pupil)
+        TODO : make it check that all modelconfig are the same
     
 
     Returns
@@ -411,8 +408,8 @@ def concatenate_os(list_os, list_os_names):
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
     
-    #initialize with the last ones to get the good prad
-    testbed = Optical_System(list_os[-1].modelconfig)
+    #initialize with the last ones to get the good testbed.exitpup_rad
+    testbed = list_os[-1]
 
     number_DM = 0
     number_of_acts_in_DMs = []
@@ -421,14 +418,34 @@ def concatenate_os(list_os, list_os_names):
     # the last pupil is the one were going to use in the to
 
 
-    for num_optical_sys in reversed(range(len(list_os))):
-
+    for num_optical_sys in reversed(range(len(list_os)-1 )):
         if not isinstance(list_os[num_optical_sys], Optical_System):
-            raise Exception(list_os[num_optical_sys] + " is not an optical system")
+            raise Exception("list_os[" +str(num_optical_sys) + "] is not an optical system")
+
+        if list_os[num_optical_sys].prad != testbed.prad:
+            print("")
+            print("All optical systems need to be defined with the same initial modelconfig!")
+            raise Exception("Problem with prad")
+        if list_os[num_optical_sys].dim_im != testbed.dim_im:
+            print("")
+            print("All optical systems need to be defined with the same initial modelconfig!")
+            raise Exception("Problem with dim_in")
+        if list_os[num_optical_sys].wavelength_0 != testbed.wavelength_0:
+            print("")
+            print("All optical systems need to be defined with the same initial modelconfig!")
+            raise Exception("Problem with wavelength_0")
+        if list_os[num_optical_sys].science_sampling != testbed.science_sampling:
+            print("")
+            print("All optical systems need to be defined with the same initial modelconfig!")
+            raise Exception("Problem with science_sampling")
+        if list_os[num_optical_sys].dim_overpad_pupil != testbed.dim_overpad_pupil:
+            print("")
+            print("All optical systems need to be defined with the same initial modelconfig!")
+            raise Exception("Problem with dim_overpad_pupil")
         
         if isinstance(list_os[num_optical_sys], deformable_mirror):
             number_DM += 1
-            # number_of_acts_in_DMs.append(list_os[num_optical_sys].DM_number_act)
+            number_of_acts_in_DMs.append(list_os[num_optical_sys].DM_number_act)
             name_of_DMs.append(list_os[num_optical_sys].Name_DM)
             list_os[num_optical_sys].EF_through = rename_DM_phase_param(list_os[num_optical_sys].EF_through, list_os[num_optical_sys].Name_DM +"Phase")
 

@@ -55,7 +55,9 @@ pup_roman = instr.pupil(modelconfig,
 pup_round = instr.pupil(modelconfig)
 corono = instr.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
 
-Test = instr.concatenate_os([pup_roman,corono,pup_round], ["lala", "corono", "lafamilleadams"])
+modelconfig.update( {'dim_im': 234})
+pup_round_bis = 3
+Test = instr.concatenate_os([pup_round_bis, pup_roman,corono,pup_round], ["pup_round_bis", "lala", "corono", "lafamilleadams"])
 
 # Clear pupil of radius equal to 100 pixel
 pup_round_100 = instr.pupil(modelconfig, prad=100)
