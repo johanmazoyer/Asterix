@@ -37,6 +37,10 @@ class Optical_System:
         #pupil in pixel
         self.prad = int(modelconfig["diam_pup_in_pix"] / 2)
 
+        # this is not a big file and like that you always have it on you to check that
+        # Optical Systems are using the same config to be able to compare them
+        self.modelconfig = modelconfig
+
         # 1.25 is hard coded for now. TODO Fix that.
         # All pupils in the code must have this dimensions, so that the blocks can be easily switch
         self.dim_overpad_pupil = int(self.prad * 1.25) * 2
@@ -347,6 +351,93 @@ class Optical_System:
         lambda_ratio = wavelength / self.wavelength_0
 
         return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
+
+
+def _swap_paramsDM1(DM_EF_through_function):
+    """ --------------------------------------------------
+   A variable to rename the DM phase
+
+    parameter: 
+        the function the_function: the_old_param -> the_function(the_old_param, *args, **kwargs)
+        the__old_name_of_the_param : string the old name of the param that you want to replace
+        the_new_name_of_the_param : string the new name of the param
+
+    Returns
+        ------
+        the_new_function: with swap_paramsDM1 as a param
+
+    
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    def wrapper(DM1Phase = 0, *args, **kwargs):
+        return DM_EF_through_function(DMphase = DM1Phase, *args, **kwargs)
+    return wrapper
+
+def _concat_fun(outer_fun, inner_fun):
+    """ --------------------------------------------------
+    A very small function to concatenate 2 functions
+
+    parameter: 2 functions
+         outer_fun: x -> outer_fun(x)
+         inner_fun: x -> inner_fun(x)
+
+    Returns
+        ------
+        the concatenated function:
+        concat_fun: x -> outer_fun(inner_fun(x))
+
+    
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    def wrapper(*args, **kwargs):
+        return outer_EF_through_fun(*inner_EF_through_fun(*args, **kwargs))
+    return wrapper
+
+def concatenate_os(list_os, list_os_names):
+    """ --------------------------------------------------
+    This function allow you to concatenates Optical_System obsjects to create a testbed:
+
+    parameter:
+        a list of optical systems. all the systems must have been defined with te same modelconfig.
+        The list order is form the first optics system to the last in the path of the light
+        (so usually from entrance pupil to )
+    
+
+    Returns
+        ------
+        testbed : an optical system which is the concatenation of the optical system
+
+    
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    
+    #initialize with the last ones to get the good prad
+    testbed = Optical_System(list_os[-1].modelconfig)
+
+    number_DM = 0
+    number_of_acts_in_DMs = []
+    name_of_DMs = []
+
+    # the last pupil is the one were going to use in the to
+
+
+    for num_optical_sys in reversed(range(len(list_os))):
+
+        if not isinstance(list_os[num_optical_sys], Optical_System):
+            raise Exception(list_os[num_optical_sys] + " is not an optical system")
+        
+        if isinstance(list_os[num_optical_sys], deformable_mirror):
+            number_DM += 1
+            # number_of_acts_in_DMs.append(list_os[num_optical_sys].DM_number_act)
+            name_of_DMs.append(list_os[num_optical_sys].Name_DM)
+            list_os[num_optical_sys].EF_through = rename_DM_phase_param(list_os[num_optical_sys].EF_through, list_os[num_optical_sys].Name_DM +"Phase")
+
+        
+        testbed.EF_through = _concat_fun(list_os[num_optical_sys].EF_through,testbed.EF_through)
+        
+        vars(testbed)[list_os_names[num_optical_sys]] = list_os[num_optical_sys]
+
+    return testbed
 
 
 ##############################################
