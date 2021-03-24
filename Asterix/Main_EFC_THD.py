@@ -29,7 +29,7 @@ def create_interaction_matrices(parameter_file,
                                 NewMODELconfig={},
                                 NewDMconfig={},
                                 NewCoronaconfig={},
-                                NewPWconfig={},
+                                NewEstimationconfig={},
                                 NewEFCconfig={},
                                 NewSIMUconfig={}):
 
@@ -79,14 +79,16 @@ def create_interaction_matrices(parameter_file,
     ##################
     ##################
     ### PW CONFIG
-    PWconfig = config["PWconfig"]
-    PWconfig.update(NewPWconfig)
-    amplitudePW = PWconfig["amplitudePW"]
-    posprobes = PWconfig["posprobes"]
-    posprobes = [int(i) for i in posprobes]
-    cut = PWconfig["cut"]
+    Estimationconfig = config["Estimationconfig"]
+    Estimationconfig.update(NewEstimationconfig)
 
-    DH_sampling = PWconfig["DH_sampling"]
+    estimation = Estimationconfig["estimation"]
+    amplitudePW = Estimationconfig["amplitudePW"]
+    posprobes = Estimationconfig["posprobes"]
+    posprobes = [int(i) for i in posprobes]
+    cut = Estimationconfig["cut"]
+
+    DH_sampling = Estimationconfig["DH_sampling"]
 
     ##################
     ##################
@@ -103,9 +105,6 @@ def create_interaction_matrices(parameter_file,
     amplitudeEFC = EFCconfig["amplitudeEFC"]
     regularization = EFCconfig["regularization"]
 
-    SIMUconfig = config["SIMUconfig"]
-    SIMUconfig.update(NewSIMUconfig)
-    estimation = SIMUconfig["estimation"]
 
     ##THEN DO
     model_dir = os.path.join(Asterixroot, "Model") + os.path.sep
@@ -352,7 +351,7 @@ def correctionLoop(parameter_file,
                    NewMODELconfig={},
                    NewDMconfig={},
                    NewCoronaconfig={},
-                   NewPWconfig={},
+                   NewEstimationconfig={},
                    NewEFCconfig={},
                    NewSIMUconfig={}):
 
@@ -407,15 +406,17 @@ def correctionLoop(parameter_file,
 
     ##################
     ##################
-    ### PW CONFIG
-    PWconfig = config["PWconfig"]
-    PWconfig.update(NewPWconfig)
+    ### Estimation CONFIG
+    Estimationconfig = config["Estimationconfig"]
+    Estimationconfig.update(NewEstimationconfig)
 
-    amplitudePW = PWconfig["amplitudePW"]
-    posprobes = PWconfig["posprobes"]
+    estimation = Estimationconfig["estimation"].lower()
+
+    amplitudePW = Estimationconfig["amplitudePW"]
+    posprobes = Estimationconfig["posprobes"]
     posprobes = [int(i) for i in posprobes]
-    cut = PWconfig["cut"]
-    DH_sampling = PWconfig["DH_sampling"]
+    cut = Estimationconfig["cut"]
+    DH_sampling = Estimationconfig["DH_sampling"]
 
     ##################
     ##################
@@ -460,7 +461,7 @@ def correctionLoop(parameter_file,
     Linesearchmode = SIMUconfig["Linesearchmode"]
     Linesearchmode = [int(i) for i in Linesearchmode]
     gain = SIMUconfig["gain"]
-    estimation = SIMUconfig["estimation"].lower()
+
 
     ##THEN DO
 
