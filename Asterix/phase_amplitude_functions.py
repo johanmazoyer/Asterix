@@ -103,7 +103,6 @@ def scale_amplitude_abb(filename, prad, pupil):
                                      anti_aliasing=True,
                                      multichannel=False)
     # Shift to center between 4 pixels
-    #tmp_phase_ramp=np.fft.fftshift(instr.shift_phase_ramp(amp1.shape[0],-.5,-.5))
     #bidouille entre le grandissement 1.03 à la ligne au-dessus et le -1,-1 au lieu
     #de -.5,-.5 C'est pour éviter un écran d'amplitude juste plus petit que la pupille
     tmp_phase_ramp = np.fft.fftshift(shift_phase_ramp(amp1.shape[0], -1., -1.))

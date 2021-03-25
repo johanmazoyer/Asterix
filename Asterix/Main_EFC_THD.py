@@ -15,7 +15,7 @@ import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.WSC_functions as wsc
 
-import Asterix.InstrumentSimu_functions as instr
+import Asterix.Optical_System_functions as OptSy
 import Asterix.fits_functions as useful
 
 __all__ = ["create_interaction_matrices", "correctionLoop"]
@@ -113,13 +113,13 @@ def create_interaction_matrices(parameter_file,
         print("Creating directory " + Model_local_dir + " ...")
         os.makedirs(Model_local_dir)
 
-    if DM3_otherbasis == False:
+    if DM3_otherbasis is False:
         basistr = "actu"
     else:
         basistr = "fourier"
 
     # Initialize thd:
-    thd2 = instr.THD2_testbed(modelconfig,
+    thd2 = OptSy.THD2_testbed(modelconfig,
                               DMconfig,
                               Coronaconfig,
                               save_fits=True,
@@ -189,7 +189,7 @@ def create_interaction_matrices(parameter_file,
 
         visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
 
-        if os.path.exists(intermatrix_dir + visuPWMap + ".fits") == False:
+        if os.path.exists(intermatrix_dir + visuPWMap + ".fits") is False:
             print("Saving " + visuPWMap + " ...")
             fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
 
@@ -474,7 +474,7 @@ def correctionLoop(parameter_file,
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
 
     # Initialize thd:
-    thd2 = instr.THD2_testbed(modelconfig,
+    thd2 = OptSy.THD2_testbed(modelconfig,
                               DMconfig,
                               Coronaconfig,
                               load_fits=True,
@@ -581,7 +581,7 @@ def correctionLoop(parameter_file,
             phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                 int(phase_rms * 1e9), int(phase_slope), phase_rhoc, thd2.prad)
 
-        if set_random_phase == False and os.path.isfile(Model_local_dir +
+        if set_random_phase is False and os.path.isfile(Model_local_dir +
                                                         phase_abb_filename +
                                                         ".fits") == True:
             phase_up = fits.getdata(Model_local_dir + phase_abb_filename +
@@ -590,7 +590,7 @@ def correctionLoop(parameter_file,
         else:
             phase_up = thd2.entrancepupil.random_phase_map(
                 phase_rms, phase_rhoc, phase_slope)
-            if set_random_phase == False:  # save it for next time
+            if set_random_phase is False:  # save it for next time
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
                              phase_up)
 
@@ -601,7 +601,7 @@ def correctionLoop(parameter_file,
     if set_amplitude_abb == True:
         if ampl_abb_filename != '' and os.path.isfile(
                 Model_local_dir + ampl_abb_filename +
-                ".fits") == True and set_random_ampl == False:
+                ".fits") == True and set_random_ampl is False:
             ampfinal = phase_ampl.scale_amplitude_abb(
                 model_dir + ampl_abb_filename + ".fits", thd2.prad,
                 thd2.entrancepupil.pup)
@@ -609,7 +609,7 @@ def correctionLoop(parameter_file,
             ampl_abb_filename = "ampl_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                 int(ampl_rms), int(ampl_slope), ampl_rhoc, thd2.prad)
 
-            if set_random_ampl == False and os.path.isfile(Model_local_dir +
+            if set_random_ampl is False and os.path.isfile(Model_local_dir +
                                                            ampl_abb_filename +
                                                            ".fits") == True:
                 ampfinal = fits.getdata(Model_local_dir + ampl_abb_filename +
@@ -617,7 +617,7 @@ def correctionLoop(parameter_file,
             else:
                 ampfinal = thd2.entrancepupil.random_phase_map(
                     ampl_rms / 100., ampl_rhoc, ampl_slope)
-            if set_random_ampl == False:  # save it for next time
+            if set_random_ampl is False:  # save it for next time
                 fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
                              ampfinal)
     else:
@@ -747,7 +747,7 @@ def correctionLoop(parameter_file,
                         basisDM3=DM3_basis)
 
             # Use the control matrix simulated for a null input aberration
-            if Linesearch == False:
+            if Linesearch is False:
                 if mode != previousmode or k == 0:
                     invertGDH = wsc.invertSVD(
                         Gmatrix,

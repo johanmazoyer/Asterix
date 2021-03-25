@@ -9,7 +9,7 @@ import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.fits_functions as useful
-import Asterix.InstrumentSimu_functions as instr
+import Asterix.Optical_System_functions as OptSy
 
 
 ##############################################
@@ -55,7 +55,7 @@ class Estimator:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        if isinstance(testbed, instr.Optical_System) == False:
+        if isinstance(testbed, OptSy.Optical_System) == False:
             raise Exception("testbed must be an Optical_System objet")
 
         self.is_focal_plane = None

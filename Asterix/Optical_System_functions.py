@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name
+
 import os
 
 import inspect
@@ -12,6 +14,7 @@ import skimage.transform
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.phase_amplitude_functions as phase_ampl
+
 import Asterix.fits_functions as useful
 
 
@@ -20,8 +23,9 @@ import Asterix.fits_functions as useful
 ### Optical_System
 class Optical_System:
     """ --------------------------------------------------
-    Super class Optical_System allows to pass parameters to all sub class. We can then creat blocks inside this super class
-    An Optical_System start and end in the pupil plane.
+    Super class Optical_System allows to pass parameters to all sub class.
+    We can then creat blocks inside this super class. An Optical_System start and
+    end in the pupil plane.
     The entrance and exit pupil plane must always of the same size (dim_overpad_pupil)
     With these convention, they can be easily assemble to create complex optical systems.
 
@@ -92,7 +96,8 @@ class Optical_System:
 
         Parameters
         ----------
-        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
+        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],
+                        can be complex.
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
         Electric field in the pupil plane a the entrance of the system.
@@ -101,7 +106,8 @@ class Optical_System:
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane in fits
+                                if save_all_planes_to_fits = True
 
 
         **kwargs: other kw parameters can be passed for other Optical_System objects EF_trough function
@@ -177,7 +183,8 @@ class Optical_System:
         ------
         ef_focal_plane : 2D array of size [self.dim_im, self.dim_im]
         Electric field in the focal plane.
-            the lambda / D is defined such as self.wavelength_0 /  (2*self.exitpup_rad) = self.science_sampling pixels
+            the lambda / D is defined such as
+                self.wavelength_0 /  (2*self.exitpup_rad) = self.science_sampling pixels
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
@@ -186,7 +193,7 @@ class Optical_System:
         else:
             Psf_offset = (-0.5, -0.5)
 
-        if wavelength == None:
+        if wavelength is None:
             wavelength = self.wavelength_0
 
         lambda_ratio = wavelength / self.wavelength_0
@@ -349,7 +356,7 @@ class Optical_System:
         if (phase_abb == 0.).all() and (ampl_abb == 0).all():
             return 1.
 
-        if wavelength == None:
+        if wavelength is None:
             wavelength = self.wavelength_0
         lambda_ratio = wavelength / self.wavelength_0
 
@@ -498,7 +505,7 @@ class pupil(Optical_System):
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       entrance_EF)
 
-        if wavelength == None:
+        if wavelength is None:
             wavelength = self.wavelength_0
 
         if len(self.pup.shape) == 2:
@@ -741,7 +748,7 @@ class coronagraph(Optical_System):
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       entrance_EF)
 
-        if wavelength == None:
+        if wavelength is None:
             wavelength = self.wavelength_0
 
         if noFPM:
@@ -1197,10 +1204,10 @@ class deformable_mirror(Optical_System):
         # and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
-        if wavelength == None:
+        if wavelength is None:
             wavelength = self.wavelength_0
 
-        if isinstance(DMphase, float) or isinstance(DMphase, np.float):
+        if isinstance(DMphase, (float,np.float)):
             DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
                               np.float(DMphase))
 
@@ -1610,7 +1617,7 @@ class deformable_mirror(Optical_System):
             phase map in the same unit as actu_vect times DM_pushact)
         -------------------------------------------------- """
 
-        if wavelength == None:
+        if wavelength is None:
             wavelength = self.wavelength_0
 
         surface_reshaped = np.dot(
@@ -1728,7 +1735,8 @@ class THD2_testbed(Optical_System):
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane in fits
+                                if save_all_planes_to_fits = True
 
 
         Returns
@@ -1743,7 +1751,7 @@ class THD2_testbed(Optical_System):
         # call the Optical_System super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
-        if wavelength == None:
+        if wavelength is None:
             wavelength = self.wavelength_0
 
         EF_afterentrancepup = self.entrancepupil.EF_through(
