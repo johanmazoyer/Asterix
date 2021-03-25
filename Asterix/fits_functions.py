@@ -26,7 +26,7 @@ def quickshow(tab):
 def save_plane_in_fits(dir_save_fits, name_plane, image):
 
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
-    name_fits = current_time_str +'_'+ name_plane
+    name_fits = current_time_str + '_' + name_plane
 
     if np.iscomplexobj(image):
         tofits_array = np.zeros((2, image.shape[0], image.shape[1]))
@@ -44,12 +44,12 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
 
 def quickfits(tab, dir='', name='tmp'):
     """
-    Function to quickly save in fits. 
+    Function to quickly save in fits.
     By default, it will save on the desktop with a random name to avoid overwriting.
     Not sure the default saving on Desktop works for windows OS, but it work on mac and linux
-    
+
     tab: array to be saved
-    dir (optionnal): directory where to save the .fits. by default the Desktop. 
+    dir (optionnal): directory where to save the .fits. by default the Desktop.
     name (optionnal): name of the .fits. By defaut tmp_currenttimeinms.fits
     Johan's quick function
     """
@@ -67,7 +67,7 @@ def quickfits(tab, dir='', name='tmp'):
 
 def quickpng(tab, dir='', name='tmp'):
     """
-    Function to quickly save in .png. 
+    Function to quickly save in .png.
     By default, it will save on the desktop with a random name
 
     tab: array to be saved
@@ -92,37 +92,36 @@ def quickpng(tab, dir='', name='tmp'):
 
 def check_and_load_fits(directory, filename):
     """ --------------------------------------------------
-    check existence of a .fits file and load it. 
-    TODO can probably be modified to do that 
+    check existence of a .fits file and load it.
+    TODO can probably be modified to do that
     for other format automtaically
-    
+
     Parameters:
     ----------
     directory : the directory in whih to searc
-    filename : 
-    
+    filename :
+
     Return:
     ------
     the data result
     raise error if the file does not exist
     -------------------------------------------------- """
     if os.path.exists(directory + filename + '.fits') == True:
-        return fits.getdata(os.path.join(directory ,filename + '.fits')) 
+        return fits.getdata(os.path.join(directory, filename + '.fits'))
     else:
         raise Exception(
             "You need to create " + filename + ".fits before loading it." +
-            "Please run the initialization with 'save_fits = True' before"
-        )
+            "Please run the initialization with 'save_fits = True' before")
 
 
 def from_param_to_header(config):
     """ --------------------------------------------------
     Convert ConfigObj parameters to fits header type list
-    
+
     Parameters:
     ----------
     config: config obj
-    
+
     Return:
     ------
     header: list of parameters

@@ -258,7 +258,6 @@ pup_roman = instr.pupil(modelconfig,
                         model_dir=model_dir,
                         filename="roman_pup_1002pix_center4pixels.fits")
 
-
 #lets concatenate everything !
 testbed_3DM = instr.concatenate_os(
     [pup_roman, DM1, DM3, pupil_inbetween_DM, DMnew, corono_thd],

@@ -10,19 +10,19 @@ import Asterix.processing_functions as proc
 def roundpupil(dim_im, prad1):
     """ --------------------------------------------------
     Create a circular pupil. The center of the pupil is located between 4 pixels.
-    
+
     Parameters
     ----------
-    dim_im : int  
+    dim_im : int
         Size of the image (in pixels)
-    prad1 : float 
+    prad1 : float
         Size of the pupil radius (in pixels)
-    
+
     Returns
     ------
     pupilnormal : 2D array
         Output circular pupil
-    
+
     AUTHOR : Axel Pottier
     -------------------------------------------------- """
     xx, yy = np.meshgrid(
@@ -34,13 +34,11 @@ def roundpupil(dim_im, prad1):
     return pupilnormal
 
 
-
-
 def shift_phase_ramp(dim_im, a, b):
     """ --------------------------------------------------
     Create a phase ramp of size (dim_im,dim_im) that can be used as follow
     to shift one image by (a,b) pixels : shift_im = real(fft(ifft(im)*exp(i phase ramp)))
-    
+
     Parameters
     ----------
     dim_im : int
@@ -49,7 +47,7 @@ def shift_phase_ramp(dim_im, a, b):
         Shift desired in the x direction (in pixels)
     b : float
         Shift desired in the y direction (in pixels)
-    
+
     Returns
     ------
     masktot : 2D array
@@ -63,9 +61,6 @@ def shift_phase_ramp(dim_im, a, b):
         xx, yy = np.meshgrid(maska, maskb)
         ramp = np.exp(-1j * xx) * np.exp(-1j * yy)
     return ramp
-
-
-
 
 
 def scale_amplitude_abb(filename, prad, pupil):

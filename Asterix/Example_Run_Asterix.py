@@ -4,7 +4,7 @@ import time
 
 Asterixroot = os.path.dirname(os.path.realpath(__file__))
 
-# These four cases need to converge before pull request ! 
+# These four cases need to converge before pull request !
 
 # INITIALISATION 1DM IN PW + EFC
 start_time = time.time()

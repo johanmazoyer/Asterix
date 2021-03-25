@@ -105,7 +105,6 @@ def create_interaction_matrices(parameter_file,
     amplitudeEFC = Correctionconfig["amplitudeEFC"]
     regularization = Correctionconfig["regularization"]
 
-
     ##THEN DO
     model_dir = os.path.join(Asterixroot, "Model") + os.path.sep
 
@@ -173,7 +172,7 @@ def create_interaction_matrices(parameter_file,
         int(amplitudePW)) + "nm_" + str(
             int(cut)) + "cutsvd_dim_sampl_" + str(dim_sampl) + "_dim" + str(
                 thd2.dim_im) + '_radpup' + str(thd2.prad)
- 
+
     ####Calculating and Saving PW matrix
     if (estimation == "PairWise" or estimation == "pairwise"
             or estimation == "PW" or estimation == "pw"):
@@ -462,7 +461,6 @@ def correctionLoop(parameter_file,
     Linesearchmode = [int(i) for i in Linesearchmode]
     gain = SIMUconfig["gain"]
 
-
     ##THEN DO
 
     ## Number of modes that is used as a function of the iteration cardinal
@@ -615,7 +613,7 @@ def correctionLoop(parameter_file,
                                                            ampl_abb_filename +
                                                            ".fits") == True:
                 ampfinal = fits.getdata(Model_local_dir + ampl_abb_filename +
-                                    ".fits")
+                                        ".fits")
             else:
                 ampfinal = thd2.entrancepupil.random_phase_map(
                     ampl_rms / 100., ampl_rhoc, ampl_slope)
@@ -697,7 +695,6 @@ def correctionLoop(parameter_file,
                                               DM3phase=phaseDM3[k],
                                               noise=photon_noise,
                                               numphot=nb_photons)
-
 
             resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
 
@@ -790,7 +787,7 @@ def correctionLoop(parameter_file,
                             thd2.DM3.DM_pushact.shape[0] +
                             thd2.DM1.DM_pushact.shape[0])
                         voltage_DM1 = solution1[pushactonDM3.shape[0]:]
-                    # Phase to apply on DM1
+                        # Phase to apply on DM1
                         apply_on_DM1 = thd2.DM1.voltage_to_phase(
                             voltage_DM1, wavelength=thd2.wavelength_0) * (
                                 -gain * amplitudeEFC)

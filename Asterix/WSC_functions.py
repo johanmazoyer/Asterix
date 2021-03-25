@@ -20,11 +20,11 @@ def invertSVD(matrix_to_invert,
               intermatrix_dir="./"):
     """ --------------------------------------------------
     Invert a matrix after a Singular Value Decomposition. The inversion can be regularized.
-    
+
     Parameters:
     ----------
-    matrix_to_invert: 
-    cut: 
+    matrix_to_invert:
+    cut:
     goal: string, can be 'e' or 'c'
           if 'e': the cut set the inverse singular value not to exceed
           if 'c': the cut set the number of modes to take into account (keep the lowest inverse singular values)
@@ -32,9 +32,9 @@ def invertSVD(matrix_to_invert,
           if 'truncation': when goal is set to 'c', the modes with the highest inverse singular values are truncated
           if 'tikhonov': when goal is set to 'c', the modes with the highest inverse singular values are smooth (low pass filter)
     visu: boolean, if True, plot and save the crescent inverse singular values , before regularization
-    otherbasis: boolean, 
+    otherbasis: boolean,
     basisDM3: goes with other basis
-    
+
     Return:
     ------
     np.diag(InvS): Inverse eigenvalues of the input matrix
@@ -79,7 +79,7 @@ def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
                        wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
-    
+
     Parameters:
     ----------
     wavelength: float, wavelength of the  incoming flux in meter
@@ -89,8 +89,8 @@ def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
     dimimages: int, size of the output image after resampling in pixels
     cutsvd: float, value not to exceed for the inverse eigeinvalues at each pixels
     whichDM_to_do_probes: name of the DM to do the probes
-    
-    
+
+
     Return:
     ------
     PWVector: 2D array, vector probe to be multiplied by the image difference matrix in order to retrieve the focal plane electric field
@@ -147,7 +147,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
         and loading depending in existence
         THIS IS BAD, THE DH SHOULD BE CODED IN l/D and not in pixel in the DH_sampling sampling.
         ONCE CORRECTED THIS FUNCTION CAN BE SIMPLIFIED A LOT and loaded twice, once for each dimension
-        
+
         Parameters:
         ----------
         intermatrix_dir: Directory where to save the fits
@@ -156,7 +156,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
         DH_sampling : sampling of the re-sampled DH
         dim_im: dimension of the FP in the detector focal plane
         science_sampling : sampling of the FP in the detector focal plane
-        
+
         Return:
         ------
         the 2 dark hole mask in each dimensions and the string name
@@ -233,7 +233,7 @@ def creatingMaskDH(dimimages,
                    circ_angle=0):
     """ --------------------------------------------------
     Create a binary mask.
-    
+
     Parameters:
     ----------
     dimimages: int, size of the output squared mask
@@ -294,7 +294,7 @@ def creatingCorrectionmatrix(input_wavefront,
                              basisDM3=0):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
-    
+
     Parameters:
     ----------
     input_wavefront: 2D-array complex
@@ -311,7 +311,7 @@ def creatingCorrectionmatrix(input_wavefront,
         index of the actuators taken into account to create the jacobian matrix
     otherbasis:
     basisDM3:
-    
+
     Return:
     ------
     Gmatrixbis: 2D array, jacobian matrix for Electric Field Conjugation
@@ -362,7 +362,7 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
                 nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
-    
+
     Parameters:
     ----------
     mask: Binary mask corresponding to the dark hole region
@@ -390,7 +390,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
                nbDMactu):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
-    
+
     Parameters:
     ----------
     mask: Binary mask corresponding to the dark hole region
@@ -420,7 +420,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize
     the speckle intensity in the dark hole region
-    
+
     Parameters:
     ----------
     mask: Binary mask corresponding to the dark hole region
@@ -452,12 +452,12 @@ def FP_PWestimate(Difference, Vectorprobes):
     """ --------------------------------------------------
     Calculate the focal plane electric field from the prone image
     differences and the modeled probe matrix
-    
+
     Parameters:
     ----------
     Difference: 3D array, cube with image difference for each probes
     Vectorprobes: 2D array, model probe matrix for the same probe as for difference
-    
+
     Return:
     ------
     Difference: 3D array, cube with image difference for each probes.
@@ -492,7 +492,7 @@ def createdifference(input_wavefront,
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]
-    
+
     Parameters
     ----------
     input_wavefront : 2D-array (complex)
@@ -508,10 +508,10 @@ def createdifference(input_wavefront,
     perfect_coro : bool, optional
         Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
     noise : boolean, optional
-        If True, add photon noise. 
+        If True, add photon noise.
     numphot : int, optional
         Number of photons entering the pupil
-    
+
     Returns
     ------
     Difference : 3D array
