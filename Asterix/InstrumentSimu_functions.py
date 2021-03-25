@@ -1,4 +1,5 @@
 import os
+import copy
 import datetime
 import numpy as np
 import scipy.ndimage as nd
@@ -55,6 +56,9 @@ class Optical_System:
         # this is the exit pupil radius, that is used to define the L/D
         # in self.todetector function.
         # by default this is the entrance pupil rad. of course, this can be changed
+
+        self.modelconfig = copy.copy(modelconfig)
+
 
         # wavelength
         self.Delta_wav = modelconfig["Delta_wav"]
@@ -116,6 +120,7 @@ class Optical_System:
                 np.float(entrance_EF))
 
         if isinstance(entrance_EF, np.ndarray) == False:
+            print(entrance_EF)
             raise Exception(
                 "entrance_EF should be a float of a numpy array of floats")
 
@@ -349,7 +354,7 @@ class Optical_System:
         return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
 
 
-def _swap_paramsDM1(DM_EF_through_function):
+def _swap_params_name(DM_EF_through_function, name_var ):
     """ --------------------------------------------------
    A variable to rename the DM phase
 
@@ -365,11 +370,22 @@ def _swap_paramsDM1(DM_EF_through_function):
     
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def wrapper(DM1Phase = 0, *args, **kwargs):
-        return DM_EF_through_function(DMphase = DM1Phase, *args, **kwargs)
+
+    def wrapper(**kwargs):
+
+        if 'DMPhase' not in kwargs.keys():
+            kwargs['DMPhase'] = 0.
+        new_kwargs = copy.copy(kwargs)
+        new_kwargs[name_var] = kwargs['DMPhase']
+        
+        del new_kwargs['DMPhase']
+
+        return DM_EF_through_function(**new_kwargs)
+
+        
     return wrapper
 
-def _concat_fun(outer_fun, inner_fun):
+def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
     """ --------------------------------------------------
     A very small function to concatenate 2 functions
 
@@ -385,9 +401,14 @@ def _concat_fun(outer_fun, inner_fun):
     
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def wrapper(*args, **kwargs):
-        return outer_EF_through_fun(*inner_EF_through_fun(*args, **kwargs))
-    return wrapper
+    def new_EF_through_fun( **kwargs):
+        if 'entrance_EF' not in kwargs.keys():
+            kwargs['entrance_EF'] = 1.
+        new_kwargs_outer = copy.copy(kwargs)
+        del new_kwargs_outer['entrance_EF']
+        return outer_EF_through_fun(entrance_EF=inner_EF_through_fun(**kwargs), **new_kwargs_outer)
+
+    return new_EF_through_fun
 
 def concatenate_os(list_os, list_os_names):
     """ --------------------------------------------------
@@ -409,50 +430,42 @@ def concatenate_os(list_os, list_os_names):
     -------------------------------------------------- """
     
     #initialize with the last ones to get the good testbed.exitpup_rad
-    testbed = list_os[-1]
+    testbed = Optical_System(list_os[-1].modelconfig)
 
-    number_DM = 0
-    number_of_acts_in_DMs = []
-    name_of_DMs = []
+    testbed.number_DM = 0
+    testbed.number_of_acts_in_DMs = []
+    testbed.name_of_DMs = []
 
     # the last pupil is the one were going to use in the to
+    # we concatenate the Optical Element starting by the end 
 
+    for num_optical_sys in reversed(range(len(list_os))):
 
-    for num_optical_sys in reversed(range(len(list_os)-1 )):
+        # we firt check that all variables in the list are optical systems
+        # defined the same way. 
         if not isinstance(list_os[num_optical_sys], Optical_System):
             raise Exception("list_os[" +str(num_optical_sys) + "] is not an optical system")
 
-        if list_os[num_optical_sys].prad != testbed.prad:
+        if list_os[num_optical_sys].modelconfig != testbed.modelconfig:
             print("")
-            print("All optical systems need to be defined with the same initial modelconfig!")
-            raise Exception("Problem with prad")
-        if list_os[num_optical_sys].dim_im != testbed.dim_im:
-            print("")
-            print("All optical systems need to be defined with the same initial modelconfig!")
-            raise Exception("Problem with dim_in")
-        if list_os[num_optical_sys].wavelength_0 != testbed.wavelength_0:
-            print("")
-            print("All optical systems need to be defined with the same initial modelconfig!")
-            raise Exception("Problem with wavelength_0")
-        if list_os[num_optical_sys].science_sampling != testbed.science_sampling:
-            print("")
-            print("All optical systems need to be defined with the same initial modelconfig!")
-            raise Exception("Problem with science_sampling")
-        if list_os[num_optical_sys].dim_overpad_pupil != testbed.dim_overpad_pupil:
-            print("")
-            print("All optical systems need to be defined with the same initial modelconfig!")
-            raise Exception("Problem with dim_overpad_pupil")
+            raise Exception("All optical systems need to be defined with the same initial modelconfig!")
         
-        if isinstance(list_os[num_optical_sys], deformable_mirror):
-            number_DM += 1
-            number_of_acts_in_DMs.append(list_os[num_optical_sys].DM_number_act)
-            name_of_DMs.append(list_os[num_optical_sys].Name_DM)
-            list_os[num_optical_sys].EF_through = rename_DM_phase_param(list_os[num_optical_sys].EF_through, list_os[num_optical_sys].Name_DM +"Phase")
+        # if the os if a DM we increase the number of DM counter and
+        # store the number of act and its name
 
-        
+        if isinstance(list_os[num_optical_sys], deformable_mirror):
+            testbed.number_DM += 1
+            # testbed.number_of_acts_in_DMs.append(list_os[num_optical_sys].DM_number_act)
+            testbed.name_of_DMs.append(list_os[num_optical_sys].Name_DM)
+            #this function is to replace the DMphase variable by a DM3phase variable
+            list_os[num_optical_sys].EF_through = _swap_params_name(list_os[num_optical_sys].EF_through, list_os[num_optical_sys].Name_DM +"Phase")
+
+        # concatenation of the EF_through functions
         testbed.EF_through = _concat_fun(list_os[num_optical_sys].EF_through,testbed.EF_through)
         
+        # the 
         vars(testbed)[list_os_names[num_optical_sys]] = list_os[num_optical_sys]
+
 
     return testbed
 
@@ -561,7 +574,8 @@ class pupil(Optical_System):
                    entrance_EF=1.,
                    wavelength=None,
                    save_all_planes_to_fits=False,
-                   dir_save_all_planes=None):
+                   dir_save_all_planes=None, 
+                   **kwargs):
         """ --------------------------------------------------
         Propagate the electric field through the pupil
 
@@ -778,7 +792,8 @@ class coronagraph(Optical_System):
                    wavelength=None,
                    noFPM=False,
                    save_all_planes_to_fits=False,
-                   dir_save_all_planes=None):
+                   dir_save_all_planes=None,
+                   **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod
         pupil to Lyot plane after Lyot pupil
@@ -1236,7 +1251,8 @@ class deformable_mirror(Optical_System):
                    wavelength=None,
                    DMphase=0.,
                    save_all_planes_to_fits=False,
-                   dir_save_all_planes=None):
+                   dir_save_all_planes=None,
+                   **kwargs):
         """ --------------------------------------------------
         Propagate the electric field through the DM.
         if z_DM = 0, then it's just a phase multiplication
@@ -1273,6 +1289,8 @@ class deformable_mirror(Optical_System):
         # call the Optical_System super function to check
         # and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
+
+        print(DMphase)
 
         if wavelength == None:
             wavelength = self.wavelength_0

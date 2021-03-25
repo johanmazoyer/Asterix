@@ -52,12 +52,27 @@ pup_roman = instr.pupil(modelconfig,
                         filename="roman_pup_1002pix_center4pixels.fits")
 
 # Clear pupil of radius prad as define in the parameter file
+
+
+modelconfig.update(
+    {'diam_pup_in_pix': 80})
+
+
 pup_round = instr.pupil(modelconfig)
+
 corono = instr.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
 
-modelconfig.update( {'dim_im': 234})
-pup_round_bis = 3
-Test = instr.concatenate_os([pup_round_bis, pup_roman,corono,pup_round], ["pup_round_bis", "lala", "corono", "lafamilleadams"])
+DM3 = instr.deformable_mirror(modelconfig,
+                                DMconfig,
+                                load_fits=False,
+                                save_fits=True,
+                                Name_DM='DM3',
+                                model_dir=model_dir,
+                                Model_local_dir=Model_local_dir)
+
+Test = instr.concatenate_os([pup_round,DM3,corono], ["Entrance_pupil","DM3", "corono"])
+
+
 
 # Clear pupil of radius equal to 100 pixel
 pup_round_100 = instr.pupil(modelconfig, prad=100)
@@ -77,6 +92,9 @@ print("transmission pup roman = ", transmission_roman_pup)
 
 # Now lets initialie a coronagraph
 corono = instr.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
+
+
+
 
 #we can also update some of the parameter on the spot if we wish.
 # For example the coronagraph define int he parameter file does not have an entrance pupil because
