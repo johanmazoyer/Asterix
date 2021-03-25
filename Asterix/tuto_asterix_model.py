@@ -235,35 +235,35 @@ print("number of DMs in thd2:", thd2.number_DMs)
 print("name of the DMs: ", thd2.name_of_DMs)
 print("number of actuators in each DMs: ", thd2.number_of_acts_in_DMs)
 
-# # And Now that we have all the tools, we can concatenate define even more complicated system
-# # let's define a third DM, similar to DM1, but off pupil in the other dimension
-# DMconfig.update({'DM1_z_position': -15e-2})  # meter
-# DMconfig.update({'DM1_active': True})
-# DMnew = instr.deformable_mirror(modelconfig,
-#                                 DMconfig,
-#                                 load_fits=False,
-#                                 save_fits=True,
-#                                 Name_DM='DM1',
-#                                 model_dir=model_dir,
-#                                 Model_local_dir=Model_local_dir)
-# # the Name_DM in this function is to be understand as the type of DM you want to use (more like the DM1 or DM3)
-# # but hte real name in the system is to be defined in the concatenation
+# And Now that we have all the tools, we can concatenate define even more complicated system
+# let's define a third DM, similar to DM1, but off pupil in the other dimension
+DMconfig.update({'DM1_z_position': -15e-2})  # meter
+DMconfig.update({'DM1_active': True})
+DMnew = instr.deformable_mirror(modelconfig,
+                                DMconfig,
+                                load_fits=False,
+                                save_fits=True,
+                                Name_DM='DM1',
+                                model_dir=model_dir,
+                                Model_local_dir=Model_local_dir)
+# the Name_DM in this function is to be understand as the type of DM you want to use (more like the DM1 or DM3)
+# but hte real name in the system is to be defined in the concatenation
 
-# # We also want to add a pupil in between all these DM. Lets make is a round pupil for now, but we could imagine
-# # putting an apodizer here.
-# pupil_inbetween_DM = instr.pupil(modelconfig)
+# We also want to add a pupil in between all these DM. Lets make is a round pupil for now, but we could imagine
+# putting an apodizer here.
+pupil_inbetween_DM = instr.pupil(modelconfig)
 
-# # and a roman entrance pupil
-# pup_roman = instr.pupil(modelconfig,
-#                         model_dir=model_dir,
-#                         filename="roman_pup_1002pix_center4pixels.fits")
+# and a roman entrance pupil
+pup_roman = instr.pupil(modelconfig,
+                        model_dir=model_dir,
+                        filename="roman_pup_1002pix_center4pixels.fits")
 
 
-# #lets concatenate everything !
-# testbed_3DM = instr.concatenate_os(
-#     [pup_roman, DM1, DM3, pupil_inbetween_DM, DMnew, corono_thd],
-#     ["entrancepupil", "DM1", "DM3", "pupil_inbetween_DM", "DMnew", "corono"])
+#lets concatenate everything !
+testbed_3DM = instr.concatenate_os(
+    [pup_roman, DM1, DM3, pupil_inbetween_DM, DMnew, corono_thd],
+    ["entrancepupil", "DM1", "DM3", "pupil_inbetween_DM", "DMnew", "corono"])
 
-# print("number of DMs in thd2:", thd2.number_DMs)
-# print("name of the DMs: ", thd2.name_of_DMs)
-# print("number of actuators in each DMs: ", thd2.number_of_acts_in_DMs)
+print("number of DMs in thd2:", testbed_3DM.number_DMs)
+print("name of the DMs: ", testbed_3DM.name_of_DMs)
+print("number of actuators in each DMs: ", testbed_3DM.number_of_acts_in_DMs)
