@@ -356,178 +356,6 @@ class Optical_System:
         return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
 
 
-def _swap_params_name(DM_EF_through_function, name_var):
-    """ --------------------------------------------------
-   A variable to rename the DM phase
-
-    parameter: 
-        the function the_function: the_old_param -> the_function(the_old_param, *args, **kwargs)
-        the__old_name_of_the_param : string the old name of the param that you want to replace
-        the_new_name_of_the_param : string the new name of the param
-
-    Returns
-        ------
-        the_new_function: with swap_paramsDM1 as a param
-
-    
-    AUTHOR : Johan Mazoyer
-    -------------------------------------------------- """
-    def wrapper(**kwargs):
-
-        if name_var not in kwargs.keys():
-            kwargs[name_var] = 0.
-        new_kwargs = copy.copy(kwargs)
-
-        new_kwargs['DMphase'] = kwargs[name_var]
-
-        return DM_EF_through_function(**new_kwargs)
-
-    return wrapper
-
-
-def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
-    """ --------------------------------------------------
-    A very small function to concatenate 2 functions
-
-    parameter: 2 functions
-         outer_fun: x -> outer_fun(x)
-         inner_fun: x -> inner_fun(x)
-
-    Returns
-        ------
-        the concatenated function:
-        concat_fun: x -> outer_fun(inner_fun(x))
-
-    
-    AUTHOR : Johan Mazoyer
-    -------------------------------------------------- """
-    def new_EF_through_fun(**kwargs):
-
-        new_kwargs_outer = copy.copy(kwargs)
-        del new_kwargs_outer['entrance_EF']
-
-        return outer_EF_through_fun(entrance_EF=inner_EF_through_fun(**kwargs),
-                                    **new_kwargs_outer)
-
-    return new_EF_through_fun
-
-
-def _clean_EF_through(testbed_EF_through, known_keywords):
-    """ --------------------------------------------------
-    a functions to finally check that we do not set unknown keyword in 
-    the testbed EF through function
-
-    parameter: 2 functions
-         testbed_EF_through function
-         inner_fun: x -> inner_fun(x)
-
-    Returns
-        ------
-        the concatenated function:
-        concat_fun: x -> outer_fun(inner_fun(x))
-
-    
-    AUTHOR : Johan Mazoyer
-    -------------------------------------------------- """
-    def wrapper(**kwargs):
-        for passed_arg in kwargs.keys():
-            if passed_arg == 'DMphase':
-                raise Exception(
-                    'DMphase is an ambiguous argument if you have several DMs. Please use XXphase with XX = nameDM'
-                )
-            if passed_arg not in known_keywords:
-                raise Exception(
-                    passed_arg +
-                    'is not a EF_through valid argument. Valid args are ' +
-                    str(known_keywords))
-
-        return testbed_EF_through(**kwargs)
-
-    return wrapper
-
-
-def concatenate_os(list_os, list_os_names):
-    """ --------------------------------------------------
-    This function allow you to concatenates Optical_System obsjects to create a testbed:
-
-    parameter:
-        a list of optical systems. all the systems must have been defined with te same modelconfig.
-        The list order is form the first optics system to the last in the path of the light
-        (so usually from entrance pupil to Lyot pupil)    
-
-    Returns
-        ------
-        testbed : an optical system which is the concatenation of the optical system
-
-    
-    AUTHOR : Johan Mazoyer
-    -------------------------------------------------- """
-
-    #initialize the testbed
-    testbed = Optical_System(list_os[0].modelconfig)
-
-    # The exitpuprad parameter which will be used to plot the PSF in todetector functions
-    # is the exitpuprad of the last one.
-    testbed.exitpup_rad = list_os[-1].exitpup_rad
-
-    testbed.number_DM = 0
-    testbed.number_of_acts_in_DMs = []
-    testbed.name_of_DMs = []
-
-    known_keywords = []
-
-    # we concatenate the Optical Element starting by the end
-    for num_optical_sys in range(len(list_os)):
-
-        # we firt check that all variables in the list are optical systems
-        # defined the same way.
-        if not isinstance(list_os[num_optical_sys], Optical_System):
-            raise Exception("list_os[" + str(num_optical_sys) +
-                            "] is not an optical system")
-
-        if list_os[num_optical_sys].modelconfig != testbed.modelconfig:
-            print("")
-            raise Exception(
-                "All optical systems need to be defined with the same initial modelconfig!"
-            )
-
-        # if the os if a DM we increase the number of DM counter and
-        # store the number of act and its name
-
-        for params in inspect.signature(
-                list_os[num_optical_sys].EF_through).parameters:
-            known_keywords.append(params)
-
-        if isinstance(list_os[num_optical_sys], deformable_mirror):
-            testbed.number_DM += 1
-            # testbed.number_of_acts_in_DMs.append(list_os[num_optical_sys].DM_number_act)
-            testbed.name_of_DMs.append(list_os[num_optical_sys].Name_DM)
-            #this function is to replace the DMphase variable by a DM3phase variable
-            list_os[num_optical_sys].EF_through = _swap_params_name(
-                list_os[num_optical_sys].EF_through,
-                list_os[num_optical_sys].Name_DM + "phase")
-            known_keywords.append(list_os[num_optical_sys].Name_DM + "phase")
-
-        # concatenation of the EF_through functions
-        testbed.EF_through = _concat_fun(list_os[num_optical_sys].EF_through,
-                                         testbed.EF_through)
-
-        # we add all systems to the Optical System so that they can be accessed
-        vars(testbed)[
-            list_os_names[num_optical_sys]] = list_os[num_optical_sys]
-
-    # we remove doublons
-    # known_keywords = list(set(known_keywords))
-    known_keywords = list(dict.fromkeys(known_keywords))
-
-    # We remove arguments we know are wrong
-    known_keywords.remove('DMphase')
-    known_keywords.remove('kwargs')
-
-    testbed.EF_through = _clean_EF_through(testbed.EF_through, known_keywords)
-
-    return testbed
-
 
 ##############################################
 ##############################################
@@ -794,7 +622,7 @@ class coronagraph(Optical_System):
                 # We do not need to be exact, the mft in science_focal_plane will be
 
         if self.corona_type == "fqpm":
-            self.prop_apod2lyot = 'fft'
+            self.prop_apod2lyot = 'mft'
             self.err_fqpm = coroconfig["err_fqpm"]
             self.achrom_fqpm = coroconfig["achrom_fqpm"]
             self.FPmsk = self.FQPM()
@@ -828,16 +656,38 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        self.apod_pup = pupil(modelconfig,
-                              prad=self.prad,
-                              model_dir=model_dir,
-                              filename=coroconfig["filename_instr_apod"],
-                              noPup=True)
+        if coroconfig["filename_instr_apod"] == "ClearPlane"
+            self.apod_pup = pupil(modelconfig,
+                                prad=self.prad,
+                                model_dir=model_dir,
+                                noPup=True)
+        
+        elif coroconfig["filename_instr_apod"] == "RoundPup"
+            self.apod_pup = pupil(modelconfig,
+                                prad=self.prad,
+                                model_dir=model_dir)
+        else:
+            self.apod_pup = pupil(modelconfig,
+                                prad=self.prad,
+                                model_dir=model_dir,
+                                filename=coroconfig["filename_instr_apod"])
 
-        self.lyot_pup = pupil(modelconfig,
-                              prad=self.lyotrad,
-                              model_dir=model_dir,
-                              filename=coroconfig["filename_instr_lyot"])
+        if coroconfig["filename_instr_lyot"] == "ClearPlane"
+            self.apod_pup = pupil(modelconfig,
+                                prad=self.lyotrad,
+                                model_dir=model_dir,
+                                noPup=True)
+        
+        elif coroconfig["filename_instr_lyot"] == "RoundPup"
+            self.apod_pup = pupil(modelconfig,
+                                prad=self.lyotrad,
+                                model_dir=model_dir)
+        else:
+            self.apod_pup = pupil(modelconfig,
+                                prad=self.lyotrad,
+                                model_dir=model_dir,
+                                filename=coroconfig["filename_instr_lyot"])
+
 
         if self.perfect_coro == True:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
@@ -1283,6 +1133,8 @@ class deformable_mirror(Optical_System):
                                                save_fits=save_fits,
                                                model_dir=model_dir,
                                                Model_local_dir=Model_local_dir)
+
+        self.number_act = self.DM_pushact.shape[0]
 
         if self.z_position != 0:
             # DM_pushact_inpup is always in the pupil plane
@@ -1936,3 +1788,189 @@ class THD2_testbed(Optical_System):
         PSF = self.todetector_Intensity(center_on_pixel=True, noFPM=True)
 
         return np.amax(PSF), np.sum(PSF)
+
+
+##############################################
+##############################################
+### The function to concatenate Optical Systems !
+
+def concatenate_os(list_os, list_os_names):
+    """ --------------------------------------------------
+    This function allow you to concatenates Optical_System obsjects to create a testbed:
+
+    parameter:
+        a list of optical systems. all the systems must have been defined with te same modelconfig.
+        The list order is form the first optics system to the last in the path of the light
+        (so usually from entrance pupil to Lyot pupil)    
+
+    Returns
+        ------
+        testbed : an optical system which is the concatenation of the optical system
+
+    
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+
+    #initialize the testbed
+    testbed = Optical_System(list_os[0].modelconfig)
+
+    # The exitpuprad parameter which will be used to plot the PSF in todetector functions
+    # is the exitpuprad of the last one.
+    testbed.exitpup_rad = list_os[-1].exitpup_rad
+
+    testbed.number_DMs = 0
+    testbed.number_of_acts_in_DMs = []
+    testbed.name_of_DMs = []
+
+    known_keywords = []
+
+    # we concatenate the Optical Element starting by the end
+    for num_optical_sys in range(len(list_os)):
+
+        # we firt check that all variables in the list are optical systems
+        # defined the same way.
+        if not isinstance(list_os[num_optical_sys], Optical_System):
+            raise Exception("list_os[" + str(num_optical_sys) +
+                            "] is not an optical system")
+
+        if list_os[num_optical_sys].modelconfig != testbed.modelconfig:
+            print("")
+            raise Exception(
+                "All optical systems need to be defined with the same initial modelconfig!"
+            )
+
+        # if the os if a DM we increase the number of DM counter and
+        # store the number of act and its name
+
+        for params in inspect.signature(
+                list_os[num_optical_sys].EF_through).parameters:
+            known_keywords.append(params)
+
+        if isinstance(list_os[num_optical_sys], deformable_mirror):
+            if list_os[num_optical_sys].active = False:
+                # if the Dm is not active, we don't add it to the testbed model
+                continue
+
+            # else
+            testbed.number_DMs += 1
+            testbed.number_of_acts_in_DMs.append(list_os[num_optical_sys].number_act)
+            testbed.name_of_DMs.append(list_os[num_optical_sys].Name_DMs)
+            #this function is to replace the DMphase variable by a XXphase variable
+            # where XX is the name of the DM
+
+            list_os[num_optical_sys].EF_through = _swap_DMphase_name(
+                list_os[num_optical_sys].EF_through,
+                list_os_names[num_optical_sys]+ "phase")
+            known_keywords.append(list_os_names[num_optical_sys] + "phase")
+
+        # concatenation of the EF_through functions
+        testbed.EF_through = _concat_fun(list_os[num_optical_sys].EF_through,
+                                         testbed.EF_through)
+
+        # we add all systems to the Optical System so that they can be accessed
+        vars(testbed)[
+            list_os_names[num_optical_sys]] = list_os[num_optical_sys]
+
+    # we remove doublons
+    # known_keywords = list(set(known_keywords))
+    known_keywords = list(dict.fromkeys(known_keywords))
+
+    # We remove arguments we know are wrong
+    if 'DMphase' in known_keywords:
+        known_keywords.remove('DMphase')
+    known_keywords.remove('kwargs')
+
+    testbed.EF_through = _clean_EF_through(testbed.EF_through, known_keywords)
+
+    return testbed
+
+
+def _swap_DMphase_name(DM_EF_through_function, name_var):
+    """ --------------------------------------------------
+   A function to rename the DM phase
+
+    parameter: 
+        DM_EF_through_function : the function of which we want to change the params
+        name_var : string the name of the  new name variable 
+
+    Returns
+        ------
+        the_new_function: with name_var as a param
+
+    
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    def wrapper(**kwargs):
+
+        if name_var not in kwargs.keys():
+            kwargs[name_var] = 0.
+        new_kwargs = copy.copy(kwargs)
+
+        new_kwargs['DMphase'] = kwargs[name_var]
+
+        return DM_EF_through_function(**new_kwargs)
+
+    return wrapper
+
+
+def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
+    """ --------------------------------------------------
+    A very small function to concatenate 2 functions
+
+    parameter: 2 functions
+         outer_fun: x -> outer_fun(x)
+         inner_fun: x -> inner_fun(x)
+
+    Returns
+        ------
+        the concatenated function:
+        concat_fun: x -> outer_fun(inner_fun(x))
+
+    
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    def new_EF_through_fun(**kwargs):
+
+        new_kwargs_outer = copy.copy(kwargs)
+        del new_kwargs_outer['entrance_EF']
+
+        return outer_EF_through_fun(entrance_EF=inner_EF_through_fun(**kwargs),
+                                    **new_kwargs_outer)
+
+    return new_EF_through_fun
+
+
+def _clean_EF_through(testbed_EF_through, known_keywords):
+    """ --------------------------------------------------
+    a functions to finally check that we do not set unknown keyword in 
+    the testbed EF through function
+
+    parameter: 2 functions
+         testbed_EF_through function
+         inner_fun: x -> inner_fun(x)
+
+    Returns
+        ------
+        the concatenated function:
+        concat_fun: x -> outer_fun(inner_fun(x))
+
+    
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    def wrapper(**kwargs):
+        for passed_arg in kwargs.keys():
+            if passed_arg == 'DMphase':
+                raise Exception(
+                    'DMphase is an ambiguous argument if you have several DMs. Please use XXphase with XX = nameDM'
+                )
+            if passed_arg not in known_keywords:
+                raise Exception(
+                    passed_arg +
+                    'is not a EF_through valid argument. Valid args are ' +
+                    str(known_keywords))
+
+        return testbed_EF_through(**kwargs)
+
+    return wrapper
+
+
