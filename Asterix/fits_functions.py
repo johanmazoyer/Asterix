@@ -62,7 +62,7 @@ def quickfits(tab, dir='', name='tmp'):
         current_time_str = datetime.datetime.today().strftime(
             '_%H_%M_%S_%f')[:-3]
         name = name + current_time_str
-    fits.writeto(os.path.join(dir, name + '.fits'), tab)
+    fits.writeto(os.path.join(dir, name + '.fits'), tab, overwrite=True)
 
 
 def quickpng(tab, dir='', name='tmp'):

@@ -656,13 +656,13 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        if coroconfig["filename_instr_apod"] == "ClearPlane"
+        if coroconfig["filename_instr_apod"] == "ClearPlane":
             self.apod_pup = pupil(modelconfig,
                                 prad=self.prad,
                                 model_dir=model_dir,
                                 noPup=True)
         
-        elif coroconfig["filename_instr_apod"] == "RoundPup"
+        elif coroconfig["filename_instr_apod"] == "RoundPup":
             self.apod_pup = pupil(modelconfig,
                                 prad=self.prad,
                                 model_dir=model_dir)
@@ -672,18 +672,18 @@ class coronagraph(Optical_System):
                                 model_dir=model_dir,
                                 filename=coroconfig["filename_instr_apod"])
 
-        if coroconfig["filename_instr_lyot"] == "ClearPlane"
-            self.apod_pup = pupil(modelconfig,
+        if coroconfig["filename_instr_lyot"] == "ClearPlane":
+            self.lyot_pup = pupil(modelconfig,
                                 prad=self.lyotrad,
                                 model_dir=model_dir,
                                 noPup=True)
         
-        elif coroconfig["filename_instr_lyot"] == "RoundPup"
-            self.apod_pup = pupil(modelconfig,
+        elif coroconfig["filename_instr_lyot"] == "RoundPup":
+            self.lyot_pup = pupil(modelconfig,
                                 prad=self.lyotrad,
                                 model_dir=model_dir)
         else:
-            self.apod_pup = pupil(modelconfig,
+            self.lyot_pup = pupil(modelconfig,
                                 prad=self.lyotrad,
                                 model_dir=model_dir,
                                 filename=coroconfig["filename_instr_lyot"])
@@ -1427,9 +1427,9 @@ class deformable_mirror(Optical_System):
         pushact_inpup : Map of the complex phase induced in pupil plane
         -------------------------------------------------- """
 
-        Name_pushact_fits = self.Name_DM + "_PushActInPup_radpup" + str(
+        Name_pushact_inpup_fits = self.Name_DM + "_PushActInPup_radpup" + str(
             int(self.pradDM)) + "_dimpuparray" + str(
-                int(self.dim_overpad_pupil))
+                int(self.dim_overpad_pupil)) +"_z" str(int(self.z_position*1000)) +'mm'
 
         if (load_fits
                 == True) or (self.creating_pushact == False
@@ -1847,14 +1847,14 @@ def concatenate_os(list_os, list_os_names):
             known_keywords.append(params)
 
         if isinstance(list_os[num_optical_sys], deformable_mirror):
-            if list_os[num_optical_sys].active = False:
+            if list_os[num_optical_sys].active == False:
                 # if the Dm is not active, we don't add it to the testbed model
                 continue
 
             # else
             testbed.number_DMs += 1
             testbed.number_of_acts_in_DMs.append(list_os[num_optical_sys].number_act)
-            testbed.name_of_DMs.append(list_os[num_optical_sys].Name_DMs)
+            testbed.name_of_DMs.append(list_os_names[num_optical_sys])
             #this function is to replace the DMphase variable by a XXphase variable
             # where XX is the name of the DM
 
@@ -1883,6 +1883,12 @@ def concatenate_os(list_os, list_os_names):
     testbed.EF_through = _clean_EF_through(testbed.EF_through, known_keywords)
 
     return testbed
+
+
+##############################################
+##############################################
+### internal functions to properly concatenate the EF_through functions
+### probably not needed outside of this file
 
 
 def _swap_DMphase_name(DM_EF_through_function, name_var):
