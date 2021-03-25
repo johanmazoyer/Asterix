@@ -1429,7 +1429,7 @@ class deformable_mirror(Optical_System):
 
         Name_pushact_inpup_fits = self.Name_DM + "_PushActInPup_radpup" + str(
             int(self.pradDM)) + "_dimpuparray" + str(
-                int(self.dim_overpad_pupil)) +"_z" str(int(self.z_position*1000)) +'mm'
+                int(self.dim_overpad_pupil)) +"_z" +str(int(self.z_position*1000)) +'mm'
 
         if (load_fits
                 == True) or (self.creating_pushact == False
