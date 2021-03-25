@@ -30,7 +30,7 @@ def create_interaction_matrices(parameter_file,
                                 NewDMconfig={},
                                 NewCoronaconfig={},
                                 NewEstimationconfig={},
-                                NewEFCconfig={},
+                                NewCorrectionconfig={},
                                 NewSIMUconfig={}):
 
     Asterixroot = os.path.dirname(os.path.realpath(__file__))
@@ -93,17 +93,17 @@ def create_interaction_matrices(parameter_file,
     ##################
     ##################
     ###EFC CONFIG
-    EFCconfig = config["EFCconfig"]
-    EFCconfig.update(NewEFCconfig)
-    DHshape = EFCconfig["DHshape"]
-    choosepix = EFCconfig["choosepix"]
+    Correctionconfig = config["Correctionconfig"]
+    Correctionconfig.update(NewCorrectionconfig)
+    DHshape = Correctionconfig["DHshape"]
+    choosepix = Correctionconfig["choosepix"]
     choosepix = [int(i) for i in choosepix]
 
-    DM1_otherbasis = EFCconfig["DM1_otherbasis"]
-    DM3_otherbasis = EFCconfig["DM3_otherbasis"]
-    Nbmodes = EFCconfig["Nbmodes"]
-    amplitudeEFC = EFCconfig["amplitudeEFC"]
-    regularization = EFCconfig["regularization"]
+    DM1_otherbasis = Correctionconfig["DM1_otherbasis"]
+    DM3_otherbasis = Correctionconfig["DM3_otherbasis"]
+    Nbmodes = Correctionconfig["Nbmodes"]
+    amplitudeEFC = Correctionconfig["amplitudeEFC"]
+    regularization = Correctionconfig["regularization"]
 
 
     ##THEN DO
@@ -236,7 +236,7 @@ def create_interaction_matrices(parameter_file,
 
     #measure the masks
     maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, thd2.dim_im,
+        intermatrix_dir, Correctionconfig, dim_sampl, DH_sampling, thd2.dim_im,
         thd2.science_sampling)
 
     #useful string
@@ -352,7 +352,7 @@ def correctionLoop(parameter_file,
                    NewDMconfig={},
                    NewCoronaconfig={},
                    NewEstimationconfig={},
-                   NewEFCconfig={},
+                   NewCorrectionconfig={},
                    NewSIMUconfig={}):
 
     Asterixroot = os.path.dirname(os.path.realpath(__file__))
@@ -421,15 +421,15 @@ def correctionLoop(parameter_file,
     ##################
     ##################
     ###EFC CONFIG
-    EFCconfig = config["EFCconfig"]
-    EFCconfig.update(NewEFCconfig)
+    Correctionconfig = config["Correctionconfig"]
+    Correctionconfig.update(NewCorrectionconfig)
 
-    Nbmodes = EFCconfig["Nbmodes"]
-    DM1_otherbasis = EFCconfig["DM1_otherbasis"]
-    DM3_otherbasis = EFCconfig["DM3_otherbasis"]
+    Nbmodes = Correctionconfig["Nbmodes"]
+    DM1_otherbasis = Correctionconfig["DM1_otherbasis"]
+    DM3_otherbasis = Correctionconfig["DM3_otherbasis"]
 
-    amplitudeEFC = EFCconfig["amplitudeEFC"]
-    regularization = EFCconfig["regularization"]
+    amplitudeEFC = Correctionconfig["amplitudeEFC"]
+    regularization = Correctionconfig["regularization"]
 
     ##################
     ##################
@@ -553,7 +553,7 @@ def correctionLoop(parameter_file,
 
     #usefull string
     maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, EFCconfig, dim_sampl, DH_sampling, thd2.dim_im,
+        intermatrix_dir, Correctionconfig, dim_sampl, DH_sampling, thd2.dim_im,
         thd2.science_sampling)
 
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
