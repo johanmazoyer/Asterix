@@ -356,7 +356,6 @@ class Optical_System:
         return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
 
 
-
 ##############################################
 ##############################################
 ### PUPIL
@@ -658,36 +657,35 @@ class coronagraph(Optical_System):
         # In Roman this is where is the apodiser
         if coroconfig["filename_instr_apod"] == "ClearPlane":
             self.apod_pup = pupil(modelconfig,
-                                prad=self.prad,
-                                model_dir=model_dir,
-                                noPup=True)
-        
+                                  prad=self.prad,
+                                  model_dir=model_dir,
+                                  noPup=True)
+
         elif coroconfig["filename_instr_apod"] == "RoundPup":
             self.apod_pup = pupil(modelconfig,
-                                prad=self.prad,
-                                model_dir=model_dir)
+                                  prad=self.prad,
+                                  model_dir=model_dir)
         else:
             self.apod_pup = pupil(modelconfig,
-                                prad=self.prad,
-                                model_dir=model_dir,
-                                filename=coroconfig["filename_instr_apod"])
+                                  prad=self.prad,
+                                  model_dir=model_dir,
+                                  filename=coroconfig["filename_instr_apod"])
 
         if coroconfig["filename_instr_lyot"] == "ClearPlane":
             self.lyot_pup = pupil(modelconfig,
-                                prad=self.lyotrad,
-                                model_dir=model_dir,
-                                noPup=True)
-        
+                                  prad=self.lyotrad,
+                                  model_dir=model_dir,
+                                  noPup=True)
+
         elif coroconfig["filename_instr_lyot"] == "RoundPup":
             self.lyot_pup = pupil(modelconfig,
-                                prad=self.lyotrad,
-                                model_dir=model_dir)
+                                  prad=self.lyotrad,
+                                  model_dir=model_dir)
         else:
             self.lyot_pup = pupil(modelconfig,
-                                prad=self.lyotrad,
-                                model_dir=model_dir,
-                                filename=coroconfig["filename_instr_lyot"])
-
+                                  prad=self.lyotrad,
+                                  model_dir=model_dir,
+                                  filename=coroconfig["filename_instr_lyot"])
 
         if self.perfect_coro == True:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
@@ -1429,18 +1427,21 @@ class deformable_mirror(Optical_System):
 
         Name_pushact_inpup_fits = self.Name_DM + "_PushActInPup_radpup" + str(
             int(self.pradDM)) + "_dimpuparray" + str(
-                int(self.dim_overpad_pupil)) +"_z" +str(int(self.z_position*1000)) +'mm'
+                int(self.dim_overpad_pupil)) + "_z" + str(
+                    int(self.z_position * 1000)) + 'mm'
 
-        if (load_fits
-                == True) or (self.creating_pushact == False
-                             and os.path.exists(Model_local_dir +
-                                                Name_pushact_fits + '.fits')):
+        if (load_fits == True) or (
+                self.creating_pushact == False
+                and os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                                   '_inPup_real.fits')
+                and os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                                   '_inPup_imag.fits')):
             DM_pushact_inpup_real = fits.getdata(
                 os.path.join(Model_local_dir,
-                             Name_pushact_fits + '_inPup_real.fits'))
+                             Name_pushact_inpup_fits + '_inPup_real.fits'))
             DM_pushact_inpup_imag = fits.getdata(
                 os.path.join(Model_local_dir,
-                             Name_pushact_fits + '_inPup_imag.fits'))
+                             Name_pushact_inpup_fits + '_inPup_imag.fits'))
 
             return DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
 
@@ -1463,11 +1464,11 @@ class deformable_mirror(Optical_System):
             pushact_inpup[i] = EF_back_in_pup_plane
 
         if save_fits == True:
-            fits.writeto(Model_local_dir + Name_pushact_fits +
+            fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
                          '_inPup_real.fits',
                          np.real(pushact_inpup),
                          overwrite=True)
-            fits.writeto(Model_local_dir + Name_pushact_fits +
+            fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
                          '_inPup_imag.fits',
                          np.imag(pushact_inpup),
                          overwrite=True)
@@ -1794,6 +1795,7 @@ class THD2_testbed(Optical_System):
 ##############################################
 ### The function to concatenate Optical Systems !
 
+
 def concatenate_os(list_os, list_os_names):
     """ --------------------------------------------------
     This function allow you to concatenates Optical_System obsjects to create a testbed:
@@ -1853,14 +1855,15 @@ def concatenate_os(list_os, list_os_names):
 
             # else
             testbed.number_DMs += 1
-            testbed.number_of_acts_in_DMs.append(list_os[num_optical_sys].number_act)
+            testbed.number_of_acts_in_DMs.append(
+                list_os[num_optical_sys].number_act)
             testbed.name_of_DMs.append(list_os_names[num_optical_sys])
             #this function is to replace the DMphase variable by a XXphase variable
             # where XX is the name of the DM
 
             list_os[num_optical_sys].EF_through = _swap_DMphase_name(
                 list_os[num_optical_sys].EF_through,
-                list_os_names[num_optical_sys]+ "phase")
+                list_os_names[num_optical_sys] + "phase")
             known_keywords.append(list_os_names[num_optical_sys] + "phase")
 
         # concatenation of the EF_through functions
@@ -1978,5 +1981,3 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
         return testbed_EF_through(**kwargs)
 
     return wrapper
-
-
