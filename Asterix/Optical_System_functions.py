@@ -297,7 +297,7 @@ class Optical_System:
 
         return focal_plane_Intensity
 
-    def transmission(self, **kwargs):
+    def transmission(self, noFPM=True, **kwargs):
         """
         measure ratio of photons lost when
         crossing the system compared to a clear aperture of radius self.prad
@@ -314,7 +314,9 @@ class Optical_System:
         clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil,
                                                      self.prad)
 
-        exit_EF = self.EF_through(**kwargs)
+        # all parameter can be passed here, but in the case there is a coronagraph,
+        # we pass noFPM = True and noentrance Field by default
+        exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
         throughput_loss = np.sum(
             np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
@@ -1058,7 +1060,7 @@ class deformable_mirror(Optical_System):
                  modelconfig,
                  DMconfig,
                  Name_DM='DM3',
-                 load_fits=False,
+                 load_fits=True,
                  save_fits=False,
                  model_dir='',
                  Model_local_dir=''):
@@ -1071,7 +1073,7 @@ class deformable_mirror(Optical_System):
         modelconfig : general configuration parameters (sizes and dimensions)
         DMconfig : DM parameters
         Name_DM : the name of the DM, which allows to find it in the parameter file
-        load_fits : bool, default = False if true, we do not measure the DM init fits, we load them
+        load_fits : bool, default = True if true, we do not measure the DM init fits, we load them
         save_fits : bool, default = False if true, we save the DM init fits for future use
         we measure and save the pushact functions
 
@@ -1091,7 +1093,6 @@ class deformable_mirror(Optical_System):
         self.Name_DM = Name_DM
         self.z_position = DMconfig[self.Name_DM + "_z_position"]
         self.active = DMconfig[self.Name_DM + "_active"]
-        self.creating_pushact = DMconfig[self.Name_DM + "_creating_pushact"]
 
         MinimumSurfaceRatioInThePupil = DMconfig[
             "MinimumSurfaceRatioInThePupil"]
@@ -1207,7 +1208,7 @@ class deformable_mirror(Optical_System):
         if wavelength is None:
             wavelength = self.wavelength_0
 
-        if isinstance(DMphase, (float,np.float)):
+        if isinstance(DMphase, (float, np.float)):
             DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
                               np.float(DMphase))
 
@@ -1278,10 +1279,8 @@ class deformable_mirror(Optical_System):
             int(self.pradDM)) + "_dimpuparray" + str(
                 int(self.dim_overpad_pupil))
 
-        if (load_fits
-                == True) or (self.creating_pushact == False
-                             and os.path.exists(Model_local_dir +
-                                                Name_pushact_fits + '.fits')):
+        if (load_fits == True) and (
+                os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
             return fits.getdata(
                 os.path.join(Model_local_dir, Name_pushact_fits + '.fits'))
 
@@ -1437,12 +1436,11 @@ class deformable_mirror(Optical_System):
                 int(self.dim_overpad_pupil)) + "_z" + str(
                     int(self.z_position * 1000)) + 'mm'
 
-        if (load_fits == True) or (
-                self.creating_pushact == False
-                and os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
-                                   '_inPup_real.fits')
-                and os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
-                                   '_inPup_imag.fits')):
+        if (load_fits is True) and (
+                os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                               '_inPup_real.fits')
+        ) and (os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                              '_inPup_imag.fits')):
             DM_pushact_inpup_real = fits.getdata(
                 os.path.join(Model_local_dir,
                              Name_pushact_inpup_fits + '_inPup_real.fits'))
@@ -1505,7 +1503,9 @@ class deformable_mirror(Optical_System):
         Name_WhichInPup_fits = self.Name_DM + "_Whichact_for" + str(
             cutinpupil) + '_radpup' + str(self.prad)
 
-        if load_fits == True:
+        if load_fits is True and (os.path.exists(Model_local_dir +
+                                                 Name_WhichInPup_fits +
+                                                 '.fits')):
             return useful.check_and_load_fits(Model_local_dir,
                                               Name_WhichInPup_fits)
 
@@ -1636,264 +1636,126 @@ class deformable_mirror(Optical_System):
 ##############################################
 ##############################################
 ### Test bed
-class THD2_testbed(Optical_System):
+
+
+class Testbed(Optical_System):
     """ --------------------------------------------------
-    initialize and describe the behavior of the THD testbed
+    initialize and describe the behavior of a testbed.
+    This is a particular subclass of Optical System, because we do not know what is inside
+    It can only be initialized by giving a list of Optical Systems and it will create a
+    "testbed" which contains all the Optical System in a
 
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self,
-                 modelconfig,
-                 DMconfig,
-                 coroconfig,
-                 load_fits=False,
-                 save_fits=False,
-                 model_dir='',
-                 Model_local_dir=''):
+    def __init__(self, list_os, list_os_names):
         """ --------------------------------------------------
-        Initialize a the DM system and the coronagraph
+        This function allow you to concatenates Optical_System obsjects to create a testbed:
+        parameter:
+            list_os:        a list of optical systems. all the systems must have been defined with
+                                the same modelconfig. or it will send an error.
+                            The list order is form the first optics system to the last in the
+                            path of the light (so usually from entrance pupil to Lyot pupil)
 
-        Parameters
-        ----------
-        modelconfig : general configuration parameters (sizes and dimensions)
-        DMconfig : DM parameters
-        coroconfig : coronagraph parameters
-        load_fits : bool, default = False if true, we do not measure initialization fits, we load it
-        save_fits : bool, default = False if true, we save the initialization fits for future use
-
-        model_dir: directory to find Measured positions for each actuators and
-                    influence fun and complex corona mask.
-                    ie all the things you cannot measure yourself and need to be given
-        Model_local_dir: directory to save things you can measure yourself
-                    and can save to save time
-
-        AUTHOR : Johan Mazoyer
-        -------------------------------------------------- """
-
-        # Initialize the Optical_System class and inherit properties
-        super().__init__(modelconfig)
-
-        self.entrancepupil = pupil(modelconfig,
-                                   prad=self.prad,
-                                   model_dir=model_dir,
-                                   filename=modelconfig["filename_instr_pup"])
-        self.DM1 = deformable_mirror(modelconfig,
-                                     DMconfig,
-                                     Name_DM='DM1',
-                                     load_fits=load_fits,
-                                     save_fits=save_fits,
-                                     model_dir=model_dir,
-                                     Model_local_dir=Model_local_dir)
-        self.DM3 = deformable_mirror(modelconfig,
-                                     DMconfig,
-                                     load_fits=load_fits,
-                                     save_fits=save_fits,
-                                     Name_DM='DM3',
-                                     model_dir=model_dir,
-                                     Model_local_dir=Model_local_dir)
-        self.corono = coronagraph(modelconfig, coroconfig, model_dir=model_dir)
-
-        self.exitpup_rad = self.corono.lyotrad
-
-        # Measure the PSF and store max and Sum
-        self.maxPSF, self.sumPSF = self.max_sum_PSF()
-
-    def EF_through(self,
-                   entrance_EF=1.,
-                   wavelength=None,
-                   DM1phase=0.,
-                   DM3phase=0.,
-                   noFPM=False,
-                   save_all_planes_to_fits=False,
-                   dir_save_all_planes=None):
-        """ --------------------------------------------------
-        Propagate the electric field through the 2 DMs and the coronograph
-
-        Parameters
-        ----------
-        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
-                        Can also be a float scalar in which case entrance_EF is constant
-                        default is 1.
-        Electric field in the pupil plane a the entrance of the system.
-
-        wavelength : float. Default is self.wavelength_0 the reference wavelength
-                current wavelength in m.
-
-        DM1phase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
-                    Can also be a float scalar in which case DM1phase is constant
-                    default is 0.
-
-        DM3phase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
-            Can also be a float scalar in which case DM3phase is constant
-            default is 0.
-
-        noFPM : bool (default: False)
-            if True, remove the FPM if one want to measure a un-obstructed PSF
-
-        save_all_planes_to_fits: Bool, default False.
-                if True, save all planes to fits for debugging purposes to dir_save_all_planes
-                This can generate a lot of fits especially if in a loop so the code force you
-                to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits
-                                if save_all_planes_to_fits = True
-
+            list_os_names: a list of string of the same size as list_os to define
+                            the names of the optical systems. Then can then be accessed
+                            inside the Testbed object by os_#i = Testbed.list_os_names[i]
 
         Returns
-        ------
-        exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Electric field in the pupil plane a the exit of the system
-
+            ------
+            testbed : an optical system which is the concatenation of all the optical systems
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
-
-        # call the Optical_System super function to check and format the variable entrance_EF
-        entrance_EF = super().EF_through(entrance_EF=entrance_EF)
-
-        if wavelength is None:
-            wavelength = self.wavelength_0
-
-        EF_afterentrancepup = self.entrancepupil.EF_through(
-            entrance_EF=entrance_EF,
-            wavelength=wavelength,
-            save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_all_planes=dir_save_all_planes)
-
-        EF_afterDM1 = self.DM1.EF_through(
-            entrance_EF=EF_afterentrancepup,
-            wavelength=wavelength,
-            DMphase=DM1phase,
-            save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_all_planes=dir_save_all_planes)
-
-        EF_afterDM3 = self.DM3.EF_through(
-            entrance_EF=EF_afterDM1,
-            wavelength=wavelength,
-            DMphase=DM3phase,
-            save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_all_planes=dir_save_all_planes)
-
-        EF_afterCorono = self.corono.EF_through(
-            entrance_EF=EF_afterDM3,
-            wavelength=wavelength,
-            noFPM=noFPM,
-            save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_all_planes=dir_save_all_planes)
-        return EF_afterCorono
-
-    def max_sum_PSF(self):
-        """ --------------------------------------------------
-        Measure the non-coronagraphic PSF with no focal plane mask
-        and with flat DMs and return max and sum
-
-        Returns
-        ------
-        np.amax(PSF): max of the non-coronagraphic PSF
-        np.sum(PSF): sum of the non-coronagraphic PSF
-
-        AUTHOR : Johan Mazoyer
-        -------------------------------------------------- """
-        PSF = self.todetector_Intensity(center_on_pixel=True, noFPM=True)
-
-        return np.amax(PSF), np.sum(PSF)
-
-
-##############################################
-##############################################
-### The function to concatenate Optical Systems !
-
-
-def concatenate_os(list_os, list_os_names):
-    """ --------------------------------------------------
-    This function allow you to concatenates Optical_System obsjects to create a testbed:
-
-    parameter:
-        a list of optical systems. all the systems must have been defined with te same modelconfig.
-        The list order is form the first optics system to the last in the path of the light
-        (so usually from entrance pupil to Lyot pupil)
-
-    Returns
-        ------
-        testbed : an optical system which is the concatenation of the optical system
-
-
-    AUTHOR : Johan Mazoyer
-    -------------------------------------------------- """
-
-    #initialize the testbed
-    testbed = Optical_System(list_os[0].modelconfig)
-
-    # The exitpuprad parameter which will be used to plot the PSF in todetector functions
-    # is the exitpuprad of the last one.
-    testbed.exitpup_rad = list_os[-1].exitpup_rad
-
-    testbed.number_DMs = 0
-    testbed.number_of_acts_in_DMs = []
-    testbed.name_of_DMs = []
-
-    known_keywords = []
-
-    # we concatenate the Optical Element starting by the end
-    for num_optical_sys in range(len(list_os)):
-
-        # we firt check that all variables in the list are optical systems
-        # defined the same way.
-        if not isinstance(list_os[num_optical_sys], Optical_System):
-            raise Exception("list_os[" + str(num_optical_sys) +
-                            "] is not an optical system")
-
-        if list_os[num_optical_sys].modelconfig != testbed.modelconfig:
+        if len(list_os) != len(list_os_names):
             print("")
             raise Exception(
-                "All optical systems need to be defined with the same initial modelconfig!"
+                "list of systems and list of names need to be of the same size"
             )
 
-        # if the os if a DM we increase the number of DM counter and
-        # store the number of act and its name
+        # Initialize the Optical_System class and inherit properties
+        super().__init__(list_os[0].modelconfig)
+        # Initialize the EF_through_function
+        self.EF_through = super().EF_through
 
-        for params in inspect.signature(
-                list_os[num_optical_sys].EF_through).parameters:
-            known_keywords.append(params)
+        # The exitpuprad parameter which will be used to plot the PSF in todetector functions
+        # is the exitpuprad of the last one.
+        self.exitpup_rad = list_os[-1].exitpup_rad
 
-        if isinstance(list_os[num_optical_sys], deformable_mirror):
-            if list_os[num_optical_sys].active == False:
-                # if the Dm is not active, we don't add it to the testbed model
-                continue
+        self.number_DMs = 0
+        self.number_of_acts_in_DMs = []
+        self.name_of_DMs = []
 
-            # else
-            testbed.number_DMs += 1
-            testbed.number_of_acts_in_DMs.append(
-                list_os[num_optical_sys].number_act)
-            testbed.name_of_DMs.append(list_os_names[num_optical_sys])
-            #this function is to replace the DMphase variable by a XXphase variable
-            # where XX is the name of the DM
+        # this is the collection of all the possible keywords that can be used in
+        # practice in the final testbed.EF_through, so that can be used in
+        # all the EF_through functions
+        known_keywords = []
 
-            list_os[num_optical_sys].EF_through = _swap_DMphase_name(
-                list_os[num_optical_sys].EF_through,
-                list_os_names[num_optical_sys] + "phase")
-            known_keywords.append(list_os_names[num_optical_sys] + "phase")
+        # we store the name of all the sub systems
+        self.subsystems = list_os_names
 
-        # concatenation of the EF_through functions
-        testbed.EF_through = _concat_fun(list_os[num_optical_sys].EF_through,
-                                         testbed.EF_through)
+        # we concatenate the Optical Element starting by the end
+        for num_optical_sys in range(len(list_os)):
 
-        # we add all systems to the Optical System so that they can be accessed
-        vars(testbed)[
-            list_os_names[num_optical_sys]] = list_os[num_optical_sys]
+            # we firt check that all variables in the list are optical systems
+            # defined the same way.
+            if not isinstance(list_os[num_optical_sys], Optical_System):
+                raise Exception("list_os[" + str(num_optical_sys) +
+                                "] is not an optical system")
 
-    # we remove doublons
-    # known_keywords = list(set(known_keywords))
-    known_keywords = list(dict.fromkeys(known_keywords))
+            if list_os[num_optical_sys].modelconfig != self.modelconfig:
+                print("")
+                raise Exception(
+                    "All optical systems need to be defined with the same initial modelconfig!"
+                )
 
-    # We remove arguments we know are wrong
-    if 'DMphase' in known_keywords:
-        known_keywords.remove('DMphase')
-    known_keywords.remove('kwargs')
+            # if the os if a DM we increase the number of DM counter and
+            # store the number of act and its name
 
-    testbed.EF_through = _clean_EF_through(testbed.EF_through, known_keywords)
+            for params in inspect.signature(
+                    list_os[num_optical_sys].EF_through).parameters:
+                known_keywords.append(params)
 
-    return testbed
+            if isinstance(list_os[num_optical_sys], deformable_mirror):
+
+                #this function is to replace the DMphase variable by a XXphase variable
+                # where XX is the name of the DM
+                list_os[num_optical_sys].EF_through = _swap_DMphase_name(
+                    list_os[num_optical_sys].EF_through,
+                    list_os_names[num_optical_sys] + "phase")
+                known_keywords.append(list_os_names[num_optical_sys] + "phase")
+
+                if list_os[num_optical_sys].active == False:
+                    # if the Dm is not active, we just add it to the testbed model
+                    # but not to the EF_through function
+                    vars(self)[list_os_names[num_optical_sys]] = list_os[
+                        num_optical_sys]
+                    continue
+
+                # else
+                self.number_DMs += 1
+                self.number_of_acts_in_DMs.append(
+                    list_os[num_optical_sys].number_act)
+                self.name_of_DMs.append(list_os_names[num_optical_sys])
+
+            # concatenation of the EF_through functions
+            self.EF_through = _concat_fun(list_os[num_optical_sys].EF_through,
+                                          self.EF_through)
+
+            # we add all systems to the Optical System so that they can be accessed
+            vars(self)[
+                list_os_names[num_optical_sys]] = list_os[num_optical_sys]
+
+        # we remove doublons
+        # known_keywords = list(set(known_keywords))
+        known_keywords = list(dict.fromkeys(known_keywords))
+
+        # We remove arguments we know are wrong
+        if 'DMphase' in known_keywords:
+            known_keywords.remove('DMphase')
+        known_keywords.remove('kwargs')
+
+        self.EF_through = _clean_EF_through(self.EF_through, known_keywords)
 
 
 ##############################################

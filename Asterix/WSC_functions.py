@@ -522,8 +522,7 @@ def createdifference(input_wavefront,
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
     ## To convert in photon flux
-    contrast_to_photons = 1 / testbed.transmission(
-        noFPM=True) * numphot * testbed.maxPSF / testbed.sumPSF
+    contrast_to_photons = 1 / testbed.transmission() * numphot * testbed.maxPSF / testbed.sumPSF
 
     for count, num_probe in enumerate(posprobes):
         probephase = pushact[

@@ -69,6 +69,8 @@ def create_interaction_matrices(parameter_file,
     ### DM CONFIG
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
+    DM1_creating_pushact = DMconfig["DM1_creating_pushact"]
+    DM3_creating_pushact = DMconfig["DM3_creating_pushact"]
 
     ##################
     ##################
@@ -119,12 +121,33 @@ def create_interaction_matrices(parameter_file,
         basistr = "fourier"
 
     # Initialize thd:
-    thd2 = OptSy.THD2_testbed(modelconfig,
-                              DMconfig,
-                              Coronaconfig,
-                              save_fits=True,
-                              model_dir=model_dir,
-                              Model_local_dir=Model_local_dir)
+    pup_round = OptSy.pupil(modelconfig)
+    DM1 = OptSy.deformable_mirror(modelconfig,
+                                DMconfig,
+                                load_fits=not DM1_creating_pushact,
+                                save_fits=DM3_creating_pushact,
+                                Name_DM='DM1',
+                                model_dir=model_dir,
+                                Model_local_dir=Model_local_dir)
+
+    DM3 = OptSy.deformable_mirror(modelconfig,
+                                DMconfig,
+                                load_fits=not DM3_creating_pushact,
+                                save_fits=DM3_creating_pushact,
+                                Name_DM='DM3',
+                                model_dir=model_dir,
+                                Model_local_dir=Model_local_dir)
+
+    # we also need to "clear" the apod plane because the THD2 is like that
+    Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
+    corono = OptSy.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
+    # and then just concatenate
+    thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
+                                ["entrancepupil", "DM1", "DM3", "corono"])
+
+    PSF = thd2.todetector_Intensity(center_on_pixel=True, noFPM=True)
+    thd2.maxPSF = np.max(PSF)
+    thd2.sumPSF = np.sum(PSF)
 
     #image size after binning
     dim_sampl = int(DH_sampling / thd2.science_sampling * thd2.dim_im / 2) * 2
@@ -474,12 +497,42 @@ def correctionLoop(parameter_file,
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
 
     # Initialize thd:
-    thd2 = OptSy.THD2_testbed(modelconfig,
-                              DMconfig,
-                              Coronaconfig,
-                              load_fits=True,
-                              model_dir=model_dir,
-                              Model_local_dir=Model_local_dir)
+    pup_round = OptSy.pupil(modelconfig)
+    DM1 = OptSy.deformable_mirror(modelconfig,
+                                DMconfig,
+                                Name_DM='DM1',
+                                model_dir=model_dir,
+                                Model_local_dir=Model_local_dir)
+
+    DM3 = OptSy.deformable_mirror(modelconfig,
+                                DMconfig,
+                                Name_DM='DM3',
+                                model_dir=model_dir,
+                                Model_local_dir=Model_local_dir)
+
+    # we also need to "clear" the apod plane because the THD2 is like that
+    Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
+    corono = OptSy.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
+    # and then just concatenate
+    thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
+                                ["entrancepupil", "DM1", "DM3", "corono"])
+
+    # TODO Because the code is currently setup heavily on the
+    # 'default testbed' beeing thd2 having those elements, VS code thinks
+    # there is an error if it thinks they are not defined (although in practice
+    # they are).
+    thd2.entrancepupil = pup_round
+    thd2.DM1 = DM1
+    thd2.DM3 = DM3
+    thd2.corono = corono
+    # In practice this is done inside the Testbed initialization already !
+    # and these lines are useless and I only put them to calm
+    # To be removed when the correction and estimation class are done
+    # in which case these class will be able when these things exists or not
+
+    PSF = thd2.todetector_Intensity(center_on_pixel=True, noFPM=True)
+    thd2.maxPSF = np.max(PSF)
+    thd2.sumPSF = np.sum(PSF)
 
     #image size after binning
     dim_sampl = int(DH_sampling / thd2.science_sampling * thd2.dim_im / 2) * 2
@@ -627,10 +680,8 @@ def correctionLoop(parameter_file,
     phase_abb_up = phase_up
 
     ## To convert in photon flux
-    # We can probably replace here by transmission !
-    contrast_to_photons = (np.sum(thd2.entrancepupil.pup) /
-                           np.sum(thd2.corono.lyot_pup.pup) * nb_photons *
-                           thd2.maxPSF / thd2.sumPSF)
+    contrast_to_photons = 1 / thd2.transmission() * nb_photons * thd2.maxPSF / thd2.sumPSF
+
 
     ## Adding error on the DM model?
 

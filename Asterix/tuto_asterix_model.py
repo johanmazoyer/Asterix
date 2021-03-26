@@ -171,7 +171,7 @@ EF_though_DM = DM3.EF_through(entrance_EF=aberrated_EF, DMphase=phase)
 # The concatenate function takes 2 parameters:
 #                               - a list of Optical Systems
 #                               - A list of the same size of the name of those system so that you can access it
-testbed_1DM = OptSy.concatenate_os([pup_round, DM3, corono],
+testbed_1DM = OptSy.Testbed([pup_round, DM3, corono],
                                    ["entrancepupil", "DM3", "corono"])
 
 # each of the subsystem can now be access individually with the name you gave it:
@@ -185,7 +185,7 @@ PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF,
 # PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF, DMphase = phase)
 
 # we can off now play with all the things we define up to now. for example:
-testbed_1DM_romanpup = OptSy.concatenate_os([pup_roman, DM3, corono],
+testbed_1DM_romanpup = OptSy.Testbed([pup_roman, DM3, corono],
                                             ["entrancepupil", "DM3", "corono"])
 
 # if you have DMs in your system, these are saved in the structure so that you can access it:
@@ -201,7 +201,7 @@ print("number of actuators in each DMs: ",
 # We need to increase the number of pixel in the pupil if we add another DM. I'll put it at the minimum to go faster
 modelconfig.update({'diam_pup_in_pix': 220})
 
-# Once we change modelconfig, all the previously defined systems are of the wring dimensions so they cannot
+# Once we change modelconfig, all the previously defined systems are of the wrong dimensions so they cannot
 # be concatenated adn muste be reclacultated
 del pup_round, DM3, corono
 pup_round = OptSy.pupil(modelconfig)
@@ -227,7 +227,7 @@ Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
 corono_thd = OptSy.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
 
 # and then just concatenate
-thd2 = OptSy.concatenate_os([pup_round, DM1, DM3, corono_thd],
+thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono_thd],
                             ["entrancepupil", "DM1", "DM3", "corono"])
 
 # if you have DMs in your system, these are saved in the structure so that you can access it:
@@ -246,8 +246,8 @@ DMnew = OptSy.deformable_mirror(modelconfig,
                                 Name_DM='DM1',
                                 model_dir=model_dir,
                                 Model_local_dir=Model_local_dir)
-# the Name_DM in this function is to be understand as the type of DM you want to use (more like the DM1 or DM3)
-# but hte real name in the system is to be defined in the concatenation
+# the Name_DM in this function is to be understand as the type of DM you want to use (DM3 is a BMC32x32 type DM
+# and DM1 is a BMC34x34) but hte real name in the system is to be defined in the concatenation
 
 # We also want to add a pupil in between all these DM. Lets make is a round pupil for now, but we could imagine
 # putting an apodizer here.
@@ -259,10 +259,10 @@ pup_roman = OptSy.pupil(modelconfig,
                         filename="roman_pup_1002pix_center4pixels.fits")
 
 #lets concatenate everything !
-testbed_3DM = OptSy.concatenate_os(
+testbed_3DM = OptSy.Testbed(
     [pup_roman, DM1, DM3, pupil_inbetween_DM, DMnew, corono_thd],
     ["entrancepupil", "DM1", "DM3", "pupil_inbetween_DM", "DMnew", "corono"])
 
-print("number of DMs in thd2:", testbed_3DM.number_DMs)
+print("number of DMs in testbed_3DM:", testbed_3DM.number_DMs)
 print("name of the DMs: ", testbed_3DM.name_of_DMs)
 print("number of actuators in each DMs: ", testbed_3DM.number_of_acts_in_DMs)
