@@ -714,6 +714,9 @@ def correctionLoop(parameter_file,
         (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
     meancontrast = np.zeros(nbiter + 1)
 
+    voltage_DM1 = [0.] # initialize with no voltage
+    voltage_DM3 = [0.] # initialize with no voltage
+
     # Initial wavefront in pupil plane
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
                                                   ampl_abb=amplitude_abb_up)
@@ -837,13 +840,13 @@ def correctionLoop(parameter_file,
                                             thd2.DM1.WhichInPupil)),
                             thd2.DM3.DM_pushact.shape[0] +
                             thd2.DM1.DM_pushact.shape[0])
-                        voltage_DM1 = solution1[pushactonDM3.shape[0]:]
-                        # Phase to apply on DM1
-                        apply_on_DM1 = thd2.DM1.voltage_to_phase(
-                            voltage_DM1, wavelength=thd2.wavelength_0) * (
-                                -gain * amplitudeEFC)
 
-                        phaseDM1_tmp = phaseDM1[k] + apply_on_DM1
+
+                        apply_on_DM1 = solution1[pushactonDM1.shape[0]:]* (-gain * amplitudeEFC)
+                        voltage_DM1_tmp = voltage_DM1[k] + apply_on_DM1
+                        phaseDM1_tmp = thd2.DM1.voltage_to_phase(
+                            voltage_DM1_tmp ,
+                            wavelength=thd2.wavelength_0)
 
                     else:
                         solution1 = wsc.solutionEFC(
@@ -853,13 +856,14 @@ def correctionLoop(parameter_file,
 
                         phaseDM1_tmp = 0.
 
-                    # Phase to apply on DM3
-                    voltage_DM3 = solution1[0:pushactonDM3.shape[0]]
-                    apply_on_DM3 = thd2.DM3.voltage_to_phase(
-                        voltage_DM3,
-                        wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
 
-                    phaseDM3_tmp = phaseDM3[k] + apply_on_DM3
+                    # Phase to apply on DM3
+
+                    apply_on_DM3 = solution1[0:pushactonDM3.shape[0]]* (-gain * amplitudeEFC)
+                    # Phase to apply on DM3
+                    voltage_DM3_tmp = voltage_DM3[k] + apply_on_DM3
+                    phaseDM3_tmp = thd2.DM3.voltage_to_phase(
+                        voltage_DM3_tmp, wavelength=thd2.wavelength_0)
 
                     imagedetectortemp = thd2.todetector_Intensity(
                         entrance_EF=input_wavefront,
@@ -948,21 +952,18 @@ def correctionLoop(parameter_file,
                                                  thd2.DM3.DM_pushact.shape[0])
 
         if thd2.DM1.active == True:
-            voltage_DM1 = solution1[pushactonDM3.shape[0]:]
             # Phase to apply on DM1
-            apply_on_DM1 = thd2.DM1.voltage_to_phase(
-                voltage_DM1,
-                wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
+            apply_on_DM1 = solution1[pushactonDM1.shape[0]:]* (-gain * amplitudeEFC)
+            voltage_DM1.append(voltage_DM1[k] + apply_on_DM1)
+            phaseDM1[k + 1] = thd2.DM1.voltage_to_phase(
+                voltage_DM1[k+1] ,
+                wavelength=thd2.wavelength_0)
 
-            phaseDM1[k + 1] = phaseDM1[k] + apply_on_DM1
-
-        voltage_DM3 = solution1[0:pushactonDM3.shape[0]]
-
-        # Phase to apply on DM1
-        apply_on_DM3 = thd2.DM3.voltage_to_phase(
-            voltage_DM3, wavelength=thd2.wavelength_0) * (-gain * amplitudeEFC)
-
-        phaseDM3[k + 1] = phaseDM3[k] + apply_on_DM3
+        apply_on_DM3 = solution1[0:pushactonDM3.shape[0]]* (-gain * amplitudeEFC)
+        # Phase to apply on DM3
+        voltage_DM3.append(voltage_DM3[k] + apply_on_DM3)
+        phaseDM3[k + 1] = thd2.DM3.voltage_to_phase(
+             voltage_DM3[k+1], wavelength=thd2.wavelength_0)
 
         imagedetector[k + 1] = thd2.todetector_Intensity(
             entrance_EF=input_wavefront,

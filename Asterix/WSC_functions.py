@@ -107,11 +107,14 @@ def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
 
     for i in posprobes:
 
-        # TODO: for now we use testbed.DM3.pushact but we shoudl put a
+        # TODO: for now we use testbed.DM3.DM_pushact but we shoudl put a
         # which_DM_to_do_probes parameter
-        probe_surface = testbed.DM3.DM_pushact[i]
-        probephase[
-            k] = probe_surface * amplitude * 1e-9 * 2 * np.pi / wavelength
+        Voltage_probe = np.zeros(testbed.DM3.DM_pushact.shape[0])
+        Voltage_probe[i] = amplitude
+        probephase[k] = testbed.DM3.voltage_to_phase(Voltage_probe, wavelength=wavelength)
+
+        # for PW the probes are not sent in the DM but at the entrance of the testbed.
+        # with an hypothesis of small phase.
 
         inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
                                                           1j * probephase[k])
@@ -315,6 +318,9 @@ def creatingCorrectionmatrix(input_wavefront,
     ------
     Gmatrixbis: 2D array, jacobian matrix for Electric Field Conjugation
     -------------------------------------------------- """
+    # TODO this is not super clear to me, I need to clean it with Raphael,
+    # with available tools. Shouldn;t we go through DM1 and 3 ?
+
     # change basis if needed
     if otherbasis == True:
         nb_fct = basisDM3.shape[0]  # number of functions in the basis
@@ -525,13 +531,14 @@ def createdifference(input_wavefront,
     contrast_to_photons = 1 / testbed.transmission() * numphot * testbed.maxPSF / testbed.sumPSF
 
     for count, num_probe in enumerate(posprobes):
-        probephase = pushact[
-            num_probe] * amplitudePW * 1e-9 * 2 * np.pi / wavelength
+
+        Voltage_probe = np.zeros(testbed.DM3.DM_pushact.shape[0])
+        Voltage_probe[num_probe] = amplitudePW
+        probephase = testbed.DM3.voltage_to_phase(Voltage_probe, wavelength=wavelength)
 
         # Not 100% sure about wavelength here, so I prefeer to use
         # todetector to keep it monochromatic instead of todetector_Intensity
         # which is large band
-
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                DM1phase=DM1phase,

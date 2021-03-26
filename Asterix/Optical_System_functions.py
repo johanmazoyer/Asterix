@@ -355,7 +355,7 @@ class Optical_System:
                 "phase_abb and ampl_abb must be real arrays or float, not complex"
             )
 
-        if (phase_abb == 0.).all() and (ampl_abb == 0).all():
+        if (phase_abb == 0.).all() and (ampl_abb == 0.).all():
             return 1.
 
         if wavelength is None:
