@@ -201,7 +201,7 @@ def create_interaction_matrices(parameter_file,
             or estimation == "PW" or estimation == "pw"):
         filePW = "MatrixPW_" + string_dims_PWMatrix
         if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
-            print("The matrix " + filePW + " already exist")
+            print("The matrix " + filePW + " already exists")
             vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
         else:
             print("Saving " + filePW + " ...")
@@ -218,7 +218,7 @@ def create_interaction_matrices(parameter_file,
 
     # Saving PW matrices in Labview directory
     if onbench == True:
-        probes = np.zeros((len(posprobes), thd2.DM3.DM_pushact.shape[0]),
+        probes = np.zeros((len(posprobes), thd2.DM3.number_act ),
                           dtype=np.float32)
         vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
                             dtype=np.float32)
@@ -250,11 +250,11 @@ def create_interaction_matrices(parameter_file,
 
     # DM1
     if DM1_otherbasis == True:
-        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.DM_pushact.shape[0])
+        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.number_act )
 
     # DM3
     if DM3_otherbasis == True:
-        thd2.DM1.WhichInPupil = np.arange(thd2.DM3.DM_pushact.shape[0])
+        thd2.DM1.WhichInPupil = np.arange(thd2.DM3.number_act )
 
     #measure the masks
     maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
@@ -270,7 +270,7 @@ def create_interaction_matrices(parameter_file,
     fileEFCMatrix = "MatrixEFC" + string_dhshape + string_dims_EFCMatrix
 
     if os.path.exists(intermatrix_dir + fileEFCMatrix + ".fits") == True:
-        print("The matrix " + fileEFCMatrix + " already exist")
+        print("The matrix " + fileEFCMatrix + " already exists")
         invertGDH = fits.getdata(intermatrix_dir + fileEFCMatrix + ".fits")
     else:
 
@@ -285,7 +285,7 @@ def create_interaction_matrices(parameter_file,
 
         if os.path.exists(intermatrix_dir + fileDirectMatrix +
                           ".fits") == True:
-            print("The matrix " + fileDirectMatrix + " already exist")
+            print("The matrix " + fileDirectMatrix + " already exists")
             Gmatrix = fits.getdata(intermatrix_dir + fileDirectMatrix +
                                    ".fits")
         else:
@@ -299,7 +299,7 @@ def create_interaction_matrices(parameter_file,
                     (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup))
                 DM_WhichInPupil = np.concatenate(
                     (thd2.DM3.WhichInPupil,
-                     thd2.DM3.DM_pushact.shape[0] + thd2.DM1.WhichInPupil))
+                     thd2.DM3.number_act  + thd2.DM1.WhichInPupil))
             else:
                 DM_pushact = thd2.DM3.DM_pushact
                 DM_WhichInPupil = thd2.DM3.WhichInPupil
@@ -339,11 +339,9 @@ def create_interaction_matrices(parameter_file,
         plt.savefig(figSVDEFC)
 
     if onbench == True:
-        # Save EFC control matrix in Labview directory
-        #EFCmatrix = np.zeros((invertGDH.shape[1], DM_pushact.shape[0]),
-        #                     dtype=np.float32)
+
         EFCmatrix_DM3 = np.zeros(
-            (invertGDH.shape[1], thd2.DM3.DM_pushact.shape[0]),
+            (invertGDH.shape[1], thd2.DM3.number_act ),
             dtype=np.float32)
         for i in np.arange(len(thd2.DM3.WhichInPupil)):
             EFCmatrix_DM3[:, thd2.DM3.WhichInPupil[i]] = invertGDH[i, :]
@@ -352,7 +350,7 @@ def create_interaction_matrices(parameter_file,
                      overwrite=True)
         if thd2.DM1.active:
             EFCmatrix_DM1 = np.zeros(
-                (invertGDH.shape[1], thd2.DM1.DM_pushact.shape[0]),
+                (invertGDH.shape[1], thd2.DM1.number_act ),
                 dtype=np.float32)
             for i in np.arange(len(thd2.DM1.WhichInPupil)):
                 EFCmatrix_DM1[:, thd2.DM1.WhichInPupil[i]] = invertGDH[
@@ -553,14 +551,14 @@ def correctionLoop(parameter_file,
     if DM3_otherbasis == True:
         basistr = "fourier"
         DM3_basis = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
-        thd2.DM3.WhichInPupil = np.arange(thd2.DM3.DM_pushact.shape[0])
+        thd2.DM3.WhichInPupil = np.arange(thd2.DM3.number_act )
     else:
         basistr = "actu"
         DM3_basis = 0
 
     # DM1
     if DM1_otherbasis == True:
-        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.DM_pushact.shape[0])
+        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.number_act )
 
     intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices",
                                    thd2.corono.corona_type)
@@ -784,7 +782,7 @@ def correctionLoop(parameter_file,
                         amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
                         maskDH,
                         np.concatenate((thd2.DM3.WhichInPupil,
-                                        thd2.DM3.DM_pushact.shape[0] +
+                                        thd2.DM3.number_act  +
                                         thd2.DM1.WhichInPupil)),
                         otherbasis=DM3_otherbasis,
                         basisDM3=DM3_basis)
@@ -836,13 +834,13 @@ def correctionLoop(parameter_file,
                         solution1 = wsc.solutionEFC(
                             maskDH, resultatestimation, invertGDH,
                             np.concatenate((thd2.DM3.WhichInPupil,
-                                            thd2.DM3.DM_pushact.shape[0] +
+                                            thd2.DM3.number_act +
                                             thd2.DM1.WhichInPupil)),
-                            thd2.DM3.DM_pushact.shape[0] +
-                            thd2.DM1.DM_pushact.shape[0])
+                            thd2.DM3.number_act +
+                            thd2.DM1.number_act)
 
 
-                        apply_on_DM1 = solution1[pushactonDM1.shape[0]:]* (-gain * amplitudeEFC)
+                        apply_on_DM1 = solution1[DM3.number_act:]* (-gain * amplitudeEFC)
                         voltage_DM1_tmp = voltage_DM1[k] + apply_on_DM1
                         phaseDM1_tmp = thd2.DM1.voltage_to_phase(
                             voltage_DM1_tmp ,
@@ -852,14 +850,14 @@ def correctionLoop(parameter_file,
                         solution1 = wsc.solutionEFC(
                             maskDH, resultatestimation, invertGDH,
                             thd2.DM3.WhichInPupil,
-                            thd2.DM3.DM_pushact.shape[0])
+                            thd2.DM3.number_act)
 
                         phaseDM1_tmp = 0.
 
 
                     # Phase to apply on DM3
 
-                    apply_on_DM3 = solution1[0:pushactonDM3.shape[0]]* (-gain * amplitudeEFC)
+                    apply_on_DM3 = solution1[0:DM3.number_act]* (-gain * amplitudeEFC)
                     # Phase to apply on DM3
                     voltage_DM3_tmp = voltage_DM3[k] + apply_on_DM3
                     phaseDM3_tmp = thd2.DM3.voltage_to_phase(
@@ -898,15 +896,15 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionEFC(
                     maskDH, resultatestimation, invertGDH,
                     np.concatenate(
-                        (thd2.DM3.WhichInPupil, thd2.DM3.DM_pushact.shape[0] +
+                        (thd2.DM3.WhichInPupil, thd2.DM3.number_act  +
                          thd2.DM1.WhichInPupil)),
-                    thd2.DM3.DM_pushact.shape[0] +
-                    thd2.DM1.DM_pushact.shape[0])
+                    thd2.DM3.number_act  +
+                    thd2.DM1.number_act )
                 # Concatenate should be done in the THD2 structure
             else:
                 solution1 = wsc.solutionEFC(maskDH, resultatestimation,
                                             invertGDH, thd2.DM3.WhichInPupil,
-                                            thd2.DM3.DM_pushact.shape[0])
+                                            thd2.DM3.number_act )
 
         if correction_algorithm == "EM":
             if mode != previousmode or k == 0:
@@ -926,40 +924,40 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionEM(
                     maskDH, resultatestimation, invertM0, G,
                     np.concatenate(
-                        (thd2.DM3.WhichInPupil, thd2.DM3.DM_pushact.shape[0] +
+                        (thd2.DM3.WhichInPupil, thd2.DM3.number_act  +
                          thd2.DM1.WhichInPupil)),
-                    thd2.DM3.DM_pushact.shape[0] +
-                    thd2.DM1.DM_pushact.shape[0])
+                    thd2.DM3.number_act  +
+                    thd2.DM1.number_act )
                 # Concatenate should be done in the THD2 structure
             else:
                 solution1 = wsc.solutionEM(maskDH, resultatestimation,
                                            invertM0, G, thd2.DM3.WhichInPupil,
-                                           thd2.DM3.DM_pushact.shape[0])
+                                           thd2.DM3.number_act )
 
         if correction_algorithm == "steepest":
             if thd2.DM1.active == True:
                 solution1 = wsc.solutionSteepest(
                     maskDH, resultatestimation, M0, G,
                     np.concatenate(
-                        (thd2.DM3.WhichInPupil, thd2.DM3.DM_pushact.shape[0] +
+                        (thd2.DM3.WhichInPupil, thd2.DM3.number_act  +
                          thd2.DM1.WhichInPupil)),
-                    thd2.DM3.DM_pushact.shape[0] +
-                    thd2.DM1.DM_pushact.shape[0])
+                    thd2.DM3.number_act  +
+                    thd2.DM1.number_act )
                 # Concatenate should be done in the THD2 structure
             else:
                 solution1 = wsc.solutionSteepest(maskDH, resultatestimation,
                                                  M0, G, thd2.DM3.WhichInPupil,
-                                                 thd2.DM3.DM_pushact.shape[0])
+                                                 thd2.DM3.number_act)
 
         if thd2.DM1.active == True:
             # Phase to apply on DM1
-            apply_on_DM1 = solution1[pushactonDM1.shape[0]:]* (-gain * amplitudeEFC)
+            apply_on_DM1 = solution1[thd2.DM3.number_act :]* (-gain * amplitudeEFC)
             voltage_DM1.append(voltage_DM1[k] + apply_on_DM1)
             phaseDM1[k + 1] = thd2.DM1.voltage_to_phase(
                 voltage_DM1[k+1] ,
                 wavelength=thd2.wavelength_0)
 
-        apply_on_DM3 = solution1[0:pushactonDM3.shape[0]]* (-gain * amplitudeEFC)
+        apply_on_DM3 = solution1[0:thd2.DM3.number_act ]* (-gain * amplitudeEFC)
         # Phase to apply on DM3
         voltage_DM3.append(voltage_DM3[k] + apply_on_DM3)
         phaseDM3[k + 1] = thd2.DM3.voltage_to_phase(

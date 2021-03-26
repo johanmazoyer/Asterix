@@ -109,7 +109,7 @@ def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
 
         # TODO: for now we use testbed.DM3.DM_pushact but we shoudl put a
         # which_DM_to_do_probes parameter
-        Voltage_probe = np.zeros(testbed.DM3.DM_pushact.shape[0])
+        Voltage_probe = np.zeros(testbed.DM3.number_act )
         Voltage_probe[i] = amplitude
         probephase[k] = testbed.DM3.voltage_to_phase(Voltage_probe, wavelength=wavelength)
 
@@ -188,7 +188,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
         dim_sampl) + 'res{:.1f}'.format(DH_sampling)
 
     if os.path.exists(intermatrix_dir + fileMaskDH_sampl + ".fits") == True:
-        print("Mask of DH " + fileMaskDH + " already exist")
+        print("Mask of DH " + fileMaskDH + " already exists")
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH_sampl + ".fits")
     else:
         print("We measure and save " + fileMaskDH_sampl)
@@ -205,7 +205,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
         science_sampling)
 
     if os.path.exists(intermatrix_dir + fileMaskDH_detect + ".fits") == True:
-        print("Mask of DH " + fileMaskDH_detect + " already exist")
+        print("Mask of DH " + fileMaskDH_detect + " already exists")
         maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH_detect +
                                       ".fits")
     else:
@@ -532,7 +532,7 @@ def createdifference(input_wavefront,
 
     for count, num_probe in enumerate(posprobes):
 
-        Voltage_probe = np.zeros(testbed.DM3.DM_pushact.shape[0])
+        Voltage_probe = np.zeros(testbed.DM3.number_act )
         Voltage_probe[num_probe] = amplitudePW
         probephase = testbed.DM3.voltage_to_phase(Voltage_probe, wavelength=wavelength)
 

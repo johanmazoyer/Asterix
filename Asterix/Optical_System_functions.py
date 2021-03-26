@@ -1470,10 +1470,10 @@ class deformable_mirror(Optical_System):
                                                 self.diam_pup_in_m / 2,
                                                 self.prad)
         pushact_inpup = np.zeros(
-            (self.DM_pushact.shape[0], dim_entrancepupil, dim_entrancepupil),
+            (self.number_act , dim_entrancepupil, dim_entrancepupil),
             dtype=complex)
 
-        for i in np.arange(self.DM_pushact.shape[0]):
+        for i in np.arange(self.number_act ):
             EF_back_in_pup_plane, dxpup = prop.prop_fresnel(
                 EF_inDMplane * self.DM_pushact[i], self.wavelength_0,
                 -self.z_position, self.diam_pup_in_m / 2, self.prad)
