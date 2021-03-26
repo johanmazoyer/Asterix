@@ -645,7 +645,7 @@ def correctionLoop(parameter_file,
                 phase_rms, phase_rhoc, phase_slope)
             if set_random_phase is False:  # save it for next time
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
-                             phase_up)
+                             phase_up, overwrite=True)
 
         phase_up = phase_up * 2 * np.pi / wavelength_0  # where should we do that ? here ?
     else:
@@ -672,7 +672,7 @@ def correctionLoop(parameter_file,
                     ampl_rms / 100., ampl_rhoc, ampl_slope)
             if set_random_ampl is False:  # save it for next time
                 fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
-                             ampfinal)
+                             ampfinal, overwrite=True)
     else:
         ampfinal = 0
 

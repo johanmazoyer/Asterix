@@ -355,7 +355,17 @@ class Optical_System:
                 "phase_abb and ampl_abb must be real arrays or float, not complex"
             )
 
-        if (phase_abb == 0.).all() and (ampl_abb == 0).all():
+        if isinstance(phase_abb, (int, float, np.float)):
+            phase_abb = np.full(
+                (self.dim_overpad_pupil, self.dim_overpad_pupil),
+                np.float(phase_abb))
+
+        if isinstance(ampl_abb, (int, float, np.float)):
+            ampl_abb = np.full(
+                (self.dim_overpad_pupil, self.dim_overpad_pupil),
+                np.float(phase_abb))
+
+        if ((phase_abb == 0.).all()) and ((ampl_abb == 0.).all()):
             return 1.
 
         if wavelength is None:
