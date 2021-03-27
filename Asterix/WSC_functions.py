@@ -350,7 +350,7 @@ def creatingCorrectionmatrix(input_wavefront,
         # directly
         #
         # also i and k are the same indice I think :-)
-        Gvector = (testbed.corono.todetector(entrance_EF=input_wavefront * 1j *
+        Gvector = (testbed.todetector(entrance_EF=input_wavefront * 1j *
                                              Psivector) /
                    np.sqrt(testbed.maxPSF))
         Gvector = proc.resampling(Gvector, dimimages)
@@ -529,7 +529,8 @@ def createdifference(input_wavefront,
 
     ## To convert in photon flux
     contrast_to_photons = 1 / testbed.transmission() * numphot * testbed.maxPSF / testbed.sumPSF
-
+    #TODO if the DM1 is active we can measure once the EFthoughDM1 ans store it in entrance_EF
+    #to save time
     for count, num_probe in enumerate(posprobes):
 
         Voltage_probe = np.zeros(testbed.DM3.number_act )

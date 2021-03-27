@@ -58,12 +58,22 @@ class Estimator:
         if isinstance(testbed, OptSy.Optical_System) == False:
             raise Exception("testbed must be an Optical_System objet")
 
-        self.is_focal_plane = None
-        self.is_complex = None
+
+        self.technique = Estimationconfig["estimation"]
+
+        if self.technique == "Perfect":
+            self.is_focal_plane = None
+            self.is_complex = None
 
         # this is where you define the pw matrix, the modified Lyot stop
         # or the COFFEE gradiant.
 
-    def estimatation(self, entrance_EF, WL, DM_voltage=0, large_band=False):
+    def estimation(self, testbed, entrance_EF = 0., DM1phase = 0., DM3phase = 0., wavelength = None,  **kwargs):
+
+        if wavelength is None:
+            wavelength = testbed.wavelength_0
+
+        if self.technique == "Perfect":
+            return testbed.todetector(entrance_EF=entrance_EF, DM1phase = DM1phase, DM3phase = DM3phase)
 
         return 0

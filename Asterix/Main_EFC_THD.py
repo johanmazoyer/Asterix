@@ -152,8 +152,6 @@ def create_interaction_matrices(parameter_file,
     #image size after binning
     dim_sampl = int(DH_sampling / thd2.science_sampling * thd2.dim_im / 2) * 2
 
-    #for stability purose, but will be remove
-    # corona_struct = thd2.corono
 
     intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices",
                                    thd2.corono.corona_type)
@@ -577,7 +575,7 @@ def correctionLoop(parameter_file,
     intermatrix_dir = os.path.join(
         intermatrix_dir,
         str(int(thd2.wavelength_0 * 1e9)) + "nm",
-        "p" + str(round(thd2.corono.diam_pup_in_m * 1e3, 2)) + "_l" +
+        "p" + str(round(thd2.diam_pup_in_m * 1e3, 2)) + "_l" +
         str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)), "lop_" +
         str(round(thd2.science_sampling, 2)), "basis_" + basistr) + os.path.sep
 
