@@ -110,7 +110,7 @@ class Optical_System:
                                 if save_all_planes_to_fits = True
 
 
-        **kwargs: other kw parameters can be passed for other Optical_System objects EF_trough function
+        **kwargs: other parameters can be passed for Optical_System objects EF_trough functions
 
         NEED TO BE DEFINED FOR ALL Optical_System
 
@@ -157,7 +157,7 @@ class Optical_System:
 
         Parameters
         ----------
-        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
         Electric field in the pupil plane a the entrance of the system.
@@ -175,7 +175,8 @@ class Optical_System:
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane in
+                                    fits if save_all_planes_to_fits = True
 
         **kwargs: other kw parameters can be passed direclty to self.EF_through function
 
@@ -236,12 +237,13 @@ class Optical_System:
 
         Parameters
         ----------
-        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
         Electric field in the pupil plane a the entrance of the system.
 
-        wavelengths : float or float array of wavelength in m. Default is all wavelenthg in self.wav_vec
+        wavelengths : float or float array of wavelength in m.
+                        Default is all wavelenthg in self.wav_vec
 
         center_on_pixel : bool Default False
             If True, the PSF will be centered on a pixel
@@ -253,15 +255,16 @@ class Optical_System:
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane
+                                            in fits if save_all_planes_to_fits = True
 
         **kwargs: other kw parameters can be passed direclty to self.EF_through function
 
         Returns
         ------
         focal_plane_Intensity : 2D array of size [self.dim_im, self.dim_im]
-        Intensity in the focal plane.
-            the lambda / D is defined such as self.wavelength_0 /  (2*self.exitpup_rad) = self.science_sampling pixels
+        Intensity in the focal plane. The lambda / D is defined such as
+                self.wavelength_0 /  (2*self.exitpup_rad) = self.science_sampling pixels
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
@@ -487,7 +490,7 @@ class pupil(Optical_System):
 
         Parameters
         ----------
-        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
         Electric field in the pupil plane a the entrance of the system.
@@ -499,7 +502,8 @@ class pupil(Optical_System):
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane
+                                            in fits if save_all_planes_to_fits = True
 
         Returns
         ------
@@ -727,7 +731,7 @@ class coronagraph(Optical_System):
 
         Parameters
         ----------
-        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
         Electric field in the pupil plane a the entrance of the system.
@@ -742,7 +746,8 @@ class coronagraph(Optical_System):
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane in
+                              fits if save_all_planes_to_fits = True
 
         Returns
         ------
@@ -1186,7 +1191,7 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
         Electric field in the pupil plane a the entrance of the system.
@@ -1202,7 +1207,8 @@ class deformable_mirror(Optical_System):
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane in
+                                    fits if save_all_planes_to_fits = True
 
         Returns
         ------
@@ -1433,8 +1439,8 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        load_fits : bool, default = False if true, we do not measure creatingpushact_inpup fits, we load it
-        save_fits : bool, default = False if true, we save the creatingpushact_inpup fits for future use
+        load_fits : bool, default = False. if true, we just load creatingpushact_inpup fits
+        save_fits : bool, default = False if true, we save the creatingpushact_inpup fits
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
         Returns
@@ -1464,17 +1470,15 @@ class deformable_mirror(Optical_System):
         dim_entrancepupil = self.dim_overpad_pupil
         # TODO do we really need a pupil here ?!? seems to me it would be more general
         # with all the actuators ?
-        EF_inDMplane, dxout = prop.prop_fresnel(self.clearpup.pup,
-                                                self.wavelength_0,
-                                                self.z_position,
-                                                self.diam_pup_in_m / 2,
-                                                self.prad)
+        EF_inDMplane, _ = prop.prop_fresnel(self.clearpup.pup,
+                                            self.wavelength_0, self.z_position,
+                                            self.diam_pup_in_m / 2, self.prad)
         pushact_inpup = np.zeros(
-            (self.number_act , dim_entrancepupil, dim_entrancepupil),
+            (self.number_act, dim_entrancepupil, dim_entrancepupil),
             dtype=complex)
 
-        for i in np.arange(self.number_act ):
-            EF_back_in_pup_plane, dxpup = prop.prop_fresnel(
+        for i in np.arange(self.number_act):
+            EF_back_in_pup_plane, _ = prop.prop_fresnel(
                 EF_inDMplane * self.DM_pushact[i], self.wavelength_0,
                 -self.z_position, self.diam_pup_in_m / 2, self.prad)
             pushact_inpup[i] = EF_back_in_pup_plane
@@ -1501,11 +1505,12 @@ class deformable_mirror(Optical_System):
 
         Parameters:
         ----------
-        cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account (between 0 and 1, in ratio of an actuator perfectly centered in the entrance pupil)
+        cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account
+                    (between 0 and 1, ratio of an actuator perfectly centered in the entrance pupil)
         load_fits : bool, default = False if true, we do not measure WhichInPup fits, we load it
         save_fits : bool, default = False if true, we save the WhichInPup fits for future use
         Model_local_dir: directory to save things you can measure yourself
-                    and can save to save time
+                        and can save to save time
         Return:
         ------
         WhichInPupil: 1D array, index of all the actuators located inside the pupil
@@ -1568,7 +1573,8 @@ class deformable_mirror(Optical_System):
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. directory to save all plane in fits
+                                            if save_all_planes_to_fits = True
 
         Returns
         ------
@@ -1851,8 +1857,8 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
         for passed_arg in kwargs.keys():
             if passed_arg == 'DMphase':
                 raise Exception(
-                    'DMphase is an ambiguous argument if you have several DMs. Please use XXphase with XX = nameDM'
-                )
+                    'DMphase is an ambiguous argument if you have several DMs.'
+                    + ' Please use XXphase with XX = nameDM')
             if passed_arg not in known_keywords:
                 raise Exception(
                     passed_arg +

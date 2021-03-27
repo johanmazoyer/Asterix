@@ -1,4 +1,5 @@
 __author__ = 'Raphael Galicher, Johan Mazoyer, and Axel Potier'
+# pylint: disable=invalid-name
 
 import os
 import datetime
@@ -10,13 +11,13 @@ from astropy.io import fits
 from configobj import ConfigObj
 from validate import Validator
 
-import Asterix.processing_functions as proc
-import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.WSC_functions as wsc
 
 import Asterix.Optical_System_functions as OptSy
 import Asterix.fits_functions as useful
+
+from Asterix.estimator import Estimator
 
 __all__ = ["create_interaction_matrices", "correctionLoop"]
 
@@ -84,14 +85,6 @@ def create_interaction_matrices(parameter_file,
     Estimationconfig = config["Estimationconfig"]
     Estimationconfig.update(NewEstimationconfig)
 
-    estimation = Estimationconfig["estimation"]
-    amplitudePW = Estimationconfig["amplitudePW"]
-    posprobes = Estimationconfig["posprobes"]
-    posprobes = [int(i) for i in posprobes]
-    cut = Estimationconfig["cut"]
-
-    DH_sampling = Estimationconfig["DH_sampling"]
-
     ##################
     ##################
     ###EFC CONFIG
@@ -123,36 +116,35 @@ def create_interaction_matrices(parameter_file,
     # Initialize thd:
     pup_round = OptSy.pupil(modelconfig)
     DM1 = OptSy.deformable_mirror(modelconfig,
-                                DMconfig,
-                                load_fits=not DM1_creating_pushact,
-                                save_fits=DM3_creating_pushact,
-                                Name_DM='DM1',
-                                model_dir=model_dir,
-                                Model_local_dir=Model_local_dir)
+                                  DMconfig,
+                                  load_fits=not DM1_creating_pushact,
+                                  save_fits=DM3_creating_pushact,
+                                  Name_DM='DM1',
+                                  model_dir=model_dir,
+                                  Model_local_dir=Model_local_dir)
 
     DM3 = OptSy.deformable_mirror(modelconfig,
-                                DMconfig,
-                                load_fits=not DM3_creating_pushact,
-                                save_fits=DM3_creating_pushact,
-                                Name_DM='DM3',
-                                model_dir=model_dir,
-                                Model_local_dir=Model_local_dir)
+                                  DMconfig,
+                                  load_fits=not DM3_creating_pushact,
+                                  save_fits=DM3_creating_pushact,
+                                  Name_DM='DM3',
+                                  model_dir=model_dir,
+                                  Model_local_dir=Model_local_dir)
 
     # we also need to "clear" the apod plane because the THD2 is like that
     Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
     corono = OptSy.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
     # and then just concatenate
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
-                                ["entrancepupil", "DM1", "DM3", "corono"])
+                         ["entrancepupil", "DM1", "DM3", "corono"])
 
     PSF = thd2.todetector_Intensity(center_on_pixel=True, noFPM=True)
     thd2.maxPSF = np.max(PSF)
     thd2.sumPSF = np.sum(PSF)
 
-    #image size after binning
-    dim_sampl = int(DH_sampling / thd2.science_sampling * thd2.dim_im / 2) * 2
-
-
+    ##############################################################################
+    ### Initialization of the Correction matrix
+    ##############################################################################
     intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices",
                                    thd2.corono.corona_type)
     if thd2.corono.corona_type == 'fqpm':
@@ -184,60 +176,19 @@ def create_interaction_matrices(parameter_file,
             print("Creating directory " + Labview_dir + " ...")
             os.makedirs(Labview_dir)
 
-    if thd2.DM1.active == True:
-        nam2DM = "_2DM"
-    else:
-        nam2DM = ""
+    # initialization of the estimator
+    estim = Estimator(Estimationconfig,
+                      thd2,
+                      matrix_dir=intermatrix_dir,
+                      save_for_bench=onbench,
+                      realtestbed_dir=Labview_dir)
 
-    string_dims_PWMatrix = "_".join(map(str, posprobes)) + "act_" + str(
-        int(amplitudePW)) + "nm_" + str(
-            int(cut)) + "cutsvd_dim_sampl_" + str(dim_sampl) + "_dim" + str(
-                thd2.dim_im) + '_radpup' + str(thd2.prad)
-
-    ####Calculating and Saving PW matrix
-    if (estimation == "PairWise" or estimation == "pairwise"
-            or estimation == "PW" or estimation == "pw"):
-        filePW = "MatrixPW_" + string_dims_PWMatrix
-        if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
-            print("The matrix " + filePW + " already exists")
-            vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
-        else:
-            print("Saving " + filePW + " ...")
-            vectoressai, showsvd = wsc.createvectorprobes(
-                thd2, amplitudePW, posprobes, dim_sampl, cut,
-                thd2.wavelength_0)
-            fits.writeto(intermatrix_dir + filePW + ".fits", vectoressai)
-
-        visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
-
-        if os.path.exists(intermatrix_dir + visuPWMap + ".fits") is False:
-            print("Saving " + visuPWMap + " ...")
-            fits.writeto(intermatrix_dir + visuPWMap + ".fits", showsvd[1])
-
-    # Saving PW matrices in Labview directory
-    if onbench == True:
-        probes = np.zeros((len(posprobes), thd2.DM3.number_act ),
-                          dtype=np.float32)
-        vectorPW = np.zeros((2, dim_sampl * dim_sampl * len(posprobes)),
-                            dtype=np.float32)
-
-        for i in np.arange(len(posprobes)):
-            probes[i, posprobes[i]] = amplitudePW / 17
-            vectorPW[0, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                     dim_sampl] = vectoressai[:, 0, i].flatten()
-            vectorPW[1, i * dim_sampl * dim_sampl:(i + 1) * dim_sampl *
-                     dim_sampl] = vectoressai[:, 1, i].flatten()
-        fits.writeto(Labview_dir + "Probes_EFC_default.fits",
-                     probes,
-                     overwrite=True)
-        fits.writeto(Labview_dir + "Matr_mult_estim_PW.fits",
-                     vectorPW,
-                     overwrite=True)
-
-        ####Calculating and Saving EFC matrix
-        if DHshape == "square":
-            print("TO SET ON LABVIEW: ",
-                  str(dim_sampl / 2 + np.array(np.fft.fftshift(choosepix))))
+    ####Calculating and Saving EFC matrix
+    if DHshape == "square":
+        print(
+            "TO SET ON LABVIEW: ",
+            str(estim.output_estimation_size / 2 +
+                np.array(np.fft.fftshift(choosepix))))
 
     # Creating WhichInPup.
     # if DM3_otherbasis = False, this is done inside the DM class
@@ -248,18 +199,22 @@ def create_interaction_matrices(parameter_file,
 
     # DM1
     if DM1_otherbasis == True:
-        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.number_act )
+        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.number_act)
 
     # DM3
     if DM3_otherbasis == True:
-        thd2.DM1.WhichInPupil = np.arange(thd2.DM3.number_act )
+        thd2.DM1.WhichInPupil = np.arange(thd2.DM3.number_act)
 
     #measure the masks
     maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, Correctionconfig, dim_sampl, DH_sampling, thd2.dim_im,
-        thd2.science_sampling)
+        intermatrix_dir, Correctionconfig, estim.output_estimation_size,
+        estim.DH_sampling, thd2.dim_im, thd2.science_sampling)
 
     #useful string
+    if thd2.DM1.active == True:
+        nam2DM = "_2DM"
+    else:
+        nam2DM = ""
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
         Nbmodes) + "modes_dim" + str(thd2.dim_im) + '_radpup' + str(
             thd2.prad) + nam2DM
@@ -297,7 +252,7 @@ def create_interaction_matrices(parameter_file,
                     (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup))
                 DM_WhichInPupil = np.concatenate(
                     (thd2.DM3.WhichInPupil,
-                     thd2.DM3.number_act  + thd2.DM1.WhichInPupil))
+                     thd2.DM3.number_act + thd2.DM1.WhichInPupil))
             else:
                 DM_pushact = thd2.DM3.DM_pushact
                 DM_WhichInPupil = thd2.DM3.WhichInPupil
@@ -305,7 +260,7 @@ def create_interaction_matrices(parameter_file,
             Gmatrix = wsc.creatingCorrectionmatrix(
                 thd2.entrancepupil.pup,
                 thd2,
-                dim_sampl,
+                estim.output_estimation_size,
                 DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
                 thd2.wavelength_0,
                 maskDH,
@@ -318,14 +273,12 @@ def create_interaction_matrices(parameter_file,
 
         # Calculating and saving EFC Control Matrix
         print("Saving " + fileEFCMatrix + " ...")
-        SVD, SVD_trunc, invertGDH = wsc.invertSVD(
-            Gmatrix,
-            Nbmodes,
-            goal="c",
-            regul=regularization,
-            otherbasis=DM3_otherbasis,
-            basisDM3=DM3_basis,
-            intermatrix_dir=intermatrix_dir)
+        SVD, SVD_trunc, invertGDH = wsc.invertSVD(Gmatrix,
+                                                  Nbmodes,
+                                                  goal="c",
+                                                  regul=regularization,
+                                                  otherbasis=DM3_otherbasis,
+                                                  basisDM3=DM3_basis)
         fits.writeto(intermatrix_dir + fileEFCMatrix + ".fits", invertGDH)
 
         plt.clf()
@@ -338,26 +291,22 @@ def create_interaction_matrices(parameter_file,
 
     if onbench == True:
 
-        EFCmatrix_DM3 = np.zeros(
-            (invertGDH.shape[1], thd2.DM3.number_act ),
-            dtype=np.float32)
+        EFCmatrix_DM3 = np.zeros((invertGDH.shape[1], thd2.DM3.number_act),
+                                 dtype=np.float32)
         for i in np.arange(len(thd2.DM3.WhichInPupil)):
             EFCmatrix_DM3[:, thd2.DM3.WhichInPupil[i]] = invertGDH[i, :]
         fits.writeto(Labview_dir + "Matrix_control_EFC_DM3_default.fits",
                      EFCmatrix_DM3,
                      overwrite=True)
         if thd2.DM1.active:
-            EFCmatrix_DM1 = np.zeros(
-                (invertGDH.shape[1], thd2.DM1.number_act ),
-                dtype=np.float32)
+            EFCmatrix_DM1 = np.zeros((invertGDH.shape[1], thd2.DM1.number_act),
+                                     dtype=np.float32)
             for i in np.arange(len(thd2.DM1.WhichInPupil)):
                 EFCmatrix_DM1[:, thd2.DM1.WhichInPupil[i]] = invertGDH[
                     i + len(thd2.DM3.WhichInPupil), :]
             fits.writeto(Labview_dir + "Matrix_control_EFC_DM1_default.fits",
                          EFCmatrix_DM1,
                          overwrite=True)
-
-    return 0
 
 
 #######################################################
@@ -428,14 +377,6 @@ def correctionLoop(parameter_file,
     Estimationconfig = config["Estimationconfig"]
     Estimationconfig.update(NewEstimationconfig)
 
-    estimation = Estimationconfig["estimation"].lower()
-
-    amplitudePW = Estimationconfig["amplitudePW"]
-    posprobes = Estimationconfig["posprobes"]
-    posprobes = [int(i) for i in posprobes]
-    cut = Estimationconfig["cut"]
-    DH_sampling = Estimationconfig["DH_sampling"]
-
     ##################
     ##################
     ###EFC CONFIG
@@ -495,23 +436,23 @@ def correctionLoop(parameter_file,
     # Initialize thd:
     pup_round = OptSy.pupil(modelconfig)
     DM1 = OptSy.deformable_mirror(modelconfig,
-                                DMconfig,
-                                Name_DM='DM1',
-                                model_dir=model_dir,
-                                Model_local_dir=Model_local_dir)
+                                  DMconfig,
+                                  Name_DM='DM1',
+                                  model_dir=model_dir,
+                                  Model_local_dir=Model_local_dir)
 
     DM3 = OptSy.deformable_mirror(modelconfig,
-                                DMconfig,
-                                Name_DM='DM3',
-                                model_dir=model_dir,
-                                Model_local_dir=Model_local_dir)
+                                  DMconfig,
+                                  Name_DM='DM3',
+                                  model_dir=model_dir,
+                                  Model_local_dir=Model_local_dir)
 
     # we also need to "clear" the apod plane because the THD2 is like that
     Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
     corono = OptSy.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
     # and then just concatenate
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
-                                ["entrancepupil", "DM1", "DM3", "corono"])
+                         ["entrancepupil", "DM1", "DM3", "corono"])
 
     # TODO Because the code is currently setup heavily on the
     # 'default testbed' beeing thd2 having those elements, VS code thinks
@@ -530,17 +471,8 @@ def correctionLoop(parameter_file,
     thd2.maxPSF = np.max(PSF)
     thd2.sumPSF = np.sum(PSF)
 
-    #image size after binning
-    dim_sampl = int(DH_sampling / thd2.science_sampling * thd2.dim_im / 2) * 2
-
-    if onbench == True:
-        Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
-        if not os.path.exists(Labview_dir):
-            print("Creating directory " + Labview_dir + " ...")
-            os.makedirs(Labview_dir)
-
-    result_dir = Labview_dir = os.path.join(Data_dir, "Results",
-                                            Name_Experiment) + os.path.sep
+    result_dir = os.path.join(Data_dir, "Results",
+                              Name_Experiment) + os.path.sep
     if not os.path.exists(result_dir):
         print("Creating directory " + result_dir + " ...")
         os.makedirs(result_dir)
@@ -548,15 +480,15 @@ def correctionLoop(parameter_file,
     ## Pair-wise probing directory
     if DM3_otherbasis == True:
         basistr = "fourier"
-        DM3_basis = fits.getdata(Labview_dir + "Map_modes_DM3_foc.fits")
-        thd2.DM3.WhichInPupil = np.arange(thd2.DM3.number_act )
+        DM3_basis = fits.getdata(result_dir + "Map_modes_DM3_foc.fits")
+        thd2.DM3.WhichInPupil = np.arange(thd2.DM3.number_act)
     else:
         basistr = "actu"
         DM3_basis = 0
 
     # DM1
     if DM1_otherbasis == True:
-        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.number_act )
+        thd2.DM1.WhichInPupil = np.arange(thd2.DM1.number_act)
 
     intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices",
                                    thd2.corono.corona_type)
@@ -579,19 +511,8 @@ def correctionLoop(parameter_file,
         str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)), "lop_" +
         str(round(thd2.science_sampling, 2)), "basis_" + basistr) + os.path.sep
 
-    ##Load PW matrices
-    if (estimation == "pairwise" or estimation == "pw"):
-
-        string_dims_PWMatrix = "_".join(map(str, posprobes)) + "act_" + str(
-            int(amplitudePW)) + "nm_" + str(int(
-                cut)) + "cutsvd_dim_sampl_" + str(dim_sampl) + "_dim" + str(
-                    thd2.dim_im) + '_radpup' + str(thd2.prad)
-
-        filePW = ("MatrixPW_" + string_dims_PWMatrix)
-        if os.path.exists(intermatrix_dir + filePW + ".fits") == True:
-            vectoressai = fits.getdata(intermatrix_dir + filePW + ".fits")
-        else:
-            raise Exception("Please create PW matrix before correction")
+    ## Initialize Estimation
+    estim = Estimator(Estimationconfig, thd2, matrix_dir=intermatrix_dir)
 
     if thd2.DM1.active == True:
         nam2DM = "_2DM"
@@ -600,8 +521,8 @@ def correctionLoop(parameter_file,
 
     #usefull string
     maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, Correctionconfig, dim_sampl, DH_sampling, thd2.dim_im,
-        thd2.science_sampling)
+        intermatrix_dir, Correctionconfig, estim.output_estimation_size,
+        estim.DH_sampling, thd2.dim_im, thd2.science_sampling)
 
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
         Nbmodes) + "modes_dim" + str(thd2.dim_im) + '_radpup' + str(
@@ -641,7 +562,8 @@ def correctionLoop(parameter_file,
                 phase_rms, phase_rhoc, phase_slope)
             if set_random_phase is False:  # save it for next time
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
-                             phase_up, overwrite=True)
+                             phase_up,
+                             overwrite=True)
 
         phase_up = phase_up * 2 * np.pi / wavelength_0  # where should we do that ? here ?
     else:
@@ -668,7 +590,8 @@ def correctionLoop(parameter_file,
                     ampl_rms / 100., ampl_rhoc, ampl_slope)
             if set_random_ampl is False:  # save it for next time
                 fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
-                             ampfinal, overwrite=True)
+                             ampfinal,
+                             overwrite=True)
     else:
         ampfinal = 0
 
@@ -676,8 +599,8 @@ def correctionLoop(parameter_file,
     phase_abb_up = phase_up
 
     ## To convert in photon flux
-    contrast_to_photons = 1 / thd2.transmission() * nb_photons * thd2.maxPSF / thd2.sumPSF
-
+    contrast_to_photons = 1 / thd2.transmission(
+    ) * nb_photons * thd2.maxPSF / thd2.sumPSF
 
     ## Adding error on the DM model?
 
@@ -710,8 +633,8 @@ def correctionLoop(parameter_file,
         (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
     meancontrast = np.zeros(nbiter + 1)
 
-    voltage_DM1 = [0.] # initialize with no voltage
-    voltage_DM3 = [0.] # initialize with no voltage
+    voltage_DM1 = [0.]  # initialize with no voltage
+    voltage_DM3 = [0.]  # initialize with no voltage
 
     # Initial wavefront in pupil plane
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
@@ -730,37 +653,17 @@ def correctionLoop(parameter_file,
     plt.figure()
     previousmode = modevector[0]
     k = 0
-    dim_pup = thd2.dim_overpad_pupil
     for mode in modevector:
         print("--------------------------------------------------")
         print("Iteration number: ", k, " EFC truncation: ", mode)
-        if (estimation == "pairwise" or estimation == "pw"):
-            Difference = wsc.createdifference(input_wavefront,
-                                              posprobes,
-                                              pushactonDM3,
-                                              thd2,
-                                              dim_sampl,
-                                              amplitudePW,
-                                              DM1phase=phaseDM1[k],
-                                              DM3phase=phaseDM3[k],
-                                              noise=photon_noise,
-                                              numphot=nb_photons)
 
-            resultatestimation = wsc.FP_PWestimate(Difference, vectoressai)
-
-        elif estimation == "perfect":
-            # If polychromatic, assume a perfect estimation at one wavelength
-            # input_wavefront = thd2.EF_from_phase_and_ampl(
-            #     phase_abb=phase_abb_up, ampl_abb=amplitude_abb_up)
-            resultatestimation = thd2.todetector(
-                entrance_EF=input_wavefront,
-                DM1phase=phaseDM1[k],
-                DM3phase=phaseDM3[k]) / np.sqrt(thd2.maxPSF)
-
-            resultatestimation = proc.resampling(resultatestimation, dim_sampl)
-
-        else:
-            raise Exception("This estimation algorithm is not yet implemented")
+        resultatestimation = estim.estimate(thd2,
+                                            entrance_EF=input_wavefront,
+                                            DM1phase=phaseDM1[k],
+                                            DM3phase=phaseDM3[k],
+                                            wavelength=thd2.wavelength_0,
+                                            photon_noise=photon_noise,
+                                            nb_photons=nb_photons)
 
         # Find the solution of actuator motions to apply
         if correction_algorithm == "EFC":
@@ -774,21 +677,21 @@ def correctionLoop(parameter_file,
                     Gmatrix = wsc.creatingCorrectionmatrix(
                         input_wavefront,
                         thd2,
-                        dim_sampl,
+                        estim.output_estimation_size,
                         np.concatenate(
                             (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
                         amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
                         maskDH,
-                        np.concatenate((thd2.DM3.WhichInPupil,
-                                        thd2.DM3.number_act  +
-                                        thd2.DM1.WhichInPupil)),
+                        np.concatenate(
+                            (thd2.DM3.WhichInPupil,
+                             thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
                         otherbasis=DM3_otherbasis,
                         basisDM3=DM3_basis)
                 else:
                     Gmatrix = wsc.creatingCorrectionmatrix(
                         input_wavefront,
                         thd2,
-                        dim_sampl,
+                        estim.output_estimation_size,
                         thd2.DM3.DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
                         wavelength_0,
                         maskDH,
@@ -807,7 +710,6 @@ def correctionLoop(parameter_file,
                         regul=regularization,
                         otherbasis=DM3_otherbasis,
                         basisDM3=DM3_basis,
-                        intermatrix_dir=intermatrix_dir,
                     )[2]
 
             else:
@@ -825,37 +727,34 @@ def correctionLoop(parameter_file,
                         regul=regularization,
                         otherbasis=DM3_otherbasis,
                         basisDM3=DM3_basis,
-                        intermatrix_dir=intermatrix_dir,
                     )
                     if thd2.DM1.active == True:
 
                         solution1 = wsc.solutionEFC(
                             maskDH, resultatestimation, invertGDH,
-                            np.concatenate((thd2.DM3.WhichInPupil,
-                                            thd2.DM3.number_act +
-                                            thd2.DM1.WhichInPupil)),
-                            thd2.DM3.number_act +
-                            thd2.DM1.number_act)
+                            np.concatenate(
+                                (thd2.DM3.WhichInPupil,
+                                 thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
+                            thd2.DM3.number_act + thd2.DM1.number_act)
 
-
-                        apply_on_DM1 = solution1[DM3.number_act:]* (-gain * amplitudeEFC)
+                        apply_on_DM1 = solution1[DM3.number_act:] * (
+                            -gain * amplitudeEFC)
                         voltage_DM1_tmp = voltage_DM1[k] + apply_on_DM1
                         phaseDM1_tmp = thd2.DM1.voltage_to_phase(
-                            voltage_DM1_tmp ,
-                            wavelength=thd2.wavelength_0)
+                            voltage_DM1_tmp, wavelength=thd2.wavelength_0)
 
                     else:
-                        solution1 = wsc.solutionEFC(
-                            maskDH, resultatestimation, invertGDH,
-                            thd2.DM3.WhichInPupil,
-                            thd2.DM3.number_act)
+                        solution1 = wsc.solutionEFC(maskDH, resultatestimation,
+                                                    invertGDH,
+                                                    thd2.DM3.WhichInPupil,
+                                                    thd2.DM3.number_act)
 
                         phaseDM1_tmp = 0.
 
-
                     # Phase to apply on DM3
 
-                    apply_on_DM3 = solution1[0:DM3.number_act]* (-gain * amplitudeEFC)
+                    apply_on_DM3 = solution1[0:DM3.number_act] * (-gain *
+                                                                  amplitudeEFC)
                     # Phase to apply on DM3
                     voltage_DM3_tmp = voltage_DM3[k] + apply_on_DM3
                     phaseDM3_tmp = thd2.DM3.voltage_to_phase(
@@ -887,22 +786,20 @@ def correctionLoop(parameter_file,
                     regul=regularization,
                     otherbasis=DM3_otherbasis,
                     basisDM3=DM3_basis,
-                    intermatrix_dir=intermatrix_dir,
                 )[2]
 
             if thd2.DM1.active == True:
                 solution1 = wsc.solutionEFC(
                     maskDH, resultatestimation, invertGDH,
                     np.concatenate(
-                        (thd2.DM3.WhichInPupil, thd2.DM3.number_act  +
-                         thd2.DM1.WhichInPupil)),
-                    thd2.DM3.number_act  +
-                    thd2.DM1.number_act )
+                        (thd2.DM3.WhichInPupil,
+                         thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
+                    thd2.DM3.number_act + thd2.DM1.number_act)
                 # Concatenate should be done in the THD2 structure
             else:
                 solution1 = wsc.solutionEFC(maskDH, resultatestimation,
                                             invertGDH, thd2.DM3.WhichInPupil,
-                                            thd2.DM3.number_act )
+                                            thd2.DM3.number_act)
 
         if correction_algorithm == "EM":
             if mode != previousmode or k == 0:
@@ -914,7 +811,6 @@ def correctionLoop(parameter_file,
                     regul=regularization,
                     otherbasis=DM3_otherbasis,
                     basisDM3=DM3_basis,
-                    intermatrix_dir=intermatrix_dir,
                 )[2]
 
             # Concatenate can be done in the THD2 structure
@@ -922,25 +818,23 @@ def correctionLoop(parameter_file,
                 solution1 = wsc.solutionEM(
                     maskDH, resultatestimation, invertM0, G,
                     np.concatenate(
-                        (thd2.DM3.WhichInPupil, thd2.DM3.number_act  +
-                         thd2.DM1.WhichInPupil)),
-                    thd2.DM3.number_act  +
-                    thd2.DM1.number_act )
+                        (thd2.DM3.WhichInPupil,
+                         thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
+                    thd2.DM3.number_act + thd2.DM1.number_act)
                 # Concatenate should be done in the THD2 structure
             else:
                 solution1 = wsc.solutionEM(maskDH, resultatestimation,
                                            invertM0, G, thd2.DM3.WhichInPupil,
-                                           thd2.DM3.number_act )
+                                           thd2.DM3.number_act)
 
         if correction_algorithm == "steepest":
             if thd2.DM1.active == True:
                 solution1 = wsc.solutionSteepest(
                     maskDH, resultatestimation, M0, G,
                     np.concatenate(
-                        (thd2.DM3.WhichInPupil, thd2.DM3.number_act  +
-                         thd2.DM1.WhichInPupil)),
-                    thd2.DM3.number_act  +
-                    thd2.DM1.number_act )
+                        (thd2.DM3.WhichInPupil,
+                         thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
+                    thd2.DM3.number_act + thd2.DM1.number_act)
                 # Concatenate should be done in the THD2 structure
             else:
                 solution1 = wsc.solutionSteepest(maskDH, resultatestimation,
@@ -949,17 +843,18 @@ def correctionLoop(parameter_file,
 
         if thd2.DM1.active == True:
             # Phase to apply on DM1
-            apply_on_DM1 = solution1[thd2.DM3.number_act :]* (-gain * amplitudeEFC)
+            apply_on_DM1 = solution1[thd2.DM3.number_act:] * (-gain *
+                                                              amplitudeEFC)
             voltage_DM1.append(voltage_DM1[k] + apply_on_DM1)
             phaseDM1[k + 1] = thd2.DM1.voltage_to_phase(
-                voltage_DM1[k+1] ,
-                wavelength=thd2.wavelength_0)
+                voltage_DM1[k + 1], wavelength=thd2.wavelength_0)
 
-        apply_on_DM3 = solution1[0:thd2.DM3.number_act ]* (-gain * amplitudeEFC)
+        apply_on_DM3 = solution1[0:thd2.DM3.number_act] * (-gain *
+                                                           amplitudeEFC)
         # Phase to apply on DM3
         voltage_DM3.append(voltage_DM3[k] + apply_on_DM3)
         phaseDM3[k + 1] = thd2.DM3.voltage_to_phase(
-             voltage_DM3[k+1], wavelength=thd2.wavelength_0)
+            voltage_DM3[k + 1], wavelength=thd2.wavelength_0)
 
         imagedetector[k + 1] = thd2.todetector_Intensity(
             entrance_EF=input_wavefront,
