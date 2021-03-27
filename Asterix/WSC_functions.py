@@ -4,6 +4,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
+import time
 
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
@@ -522,6 +523,7 @@ def createdifference(input_wavefront,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
     -------------------------------------------------- """
+    start_time = time.time()
     if wavelength == None:
         wavelength = testbed.wavelength_0
 
@@ -529,8 +531,12 @@ def createdifference(input_wavefront,
 
     ## To convert in photon flux
     contrast_to_photons = 1 / testbed.transmission() * numphot * testbed.maxPSF / testbed.sumPSF
+
     #TODO if the DM1 is active we can measure once the EFthoughDM1 ans store it in entrance_EF
-    #to save time
+    #to save time. To check
+    # if testbed.DM1.active is True:
+    #     input_wavefront = testbed.DM1.EF_through(entrance_EF=input_wavefront, DM1phase = DM1phase,wavelength=wavelength)
+
     for count, num_probe in enumerate(posprobes):
 
         Voltage_probe = np.zeros(testbed.DM3.number_act )
@@ -559,5 +565,6 @@ def createdifference(input_wavefront,
                        contrast_to_photons)
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
+    print('total time create differe', time.time() - start_time)
 
     return Difference

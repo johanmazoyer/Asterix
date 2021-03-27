@@ -1219,7 +1219,7 @@ class deformable_mirror(Optical_System):
         if wavelength is None:
             wavelength = self.wavelength_0
 
-        if isinstance(DMphase, (float, np.float)):
+        if isinstance(DMphase, (int, float, np.float)):
             DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
                               np.float(DMphase))
 
