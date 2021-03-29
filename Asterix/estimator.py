@@ -97,10 +97,10 @@ class Estimator:
             self.posprobes = [int(i) for i in Estimationconfig["posprobes"]]
             cutsvdPW = Estimationconfig["cut"]
 
-            string_dims_PWMatrix = "actProb_[" +"_".join(map(
-                str, self.posprobes)) + "]_" + str(int(
+            string_dims_PWMatrix = "actProb[" +"_".join(map(
+                str, self.posprobes)) + "]_PWampl" + str(int(
                     self.amplitudePW)) + "_cutsvd" + str(
-                        int(cutsvdPW)) + "_dimEstim_" + str(
+                        int(cutsvdPW//1000)) + "k_dimEstim" + str(
                             self.dimEstim) + testbed.string_os
 
             ####Calculating and Saving PW matrix

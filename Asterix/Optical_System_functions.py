@@ -85,7 +85,7 @@ class Optical_System:
 
         self.string_os = '_prad' + str(int(self.prad)) + '_wl' + str(
             int(self.wavelength_0 * 1e9)) + "_resFP" + str(
-                round(self.Science_sampling, 2)) + "_dimScience" + str(
+                round(self.Science_sampling, 2)) + "_dimFP" + str(
                     int(self.dimScience))
 
     #We define functions that all Optical_System object can use.

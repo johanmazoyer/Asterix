@@ -18,6 +18,7 @@ import Asterix.Optical_System_functions as OptSy
 import Asterix.fits_functions as useful
 
 from Asterix.estimator import Estimator
+from Asterix.MaskDH import MaskDH
 
 __all__ = ["create_interaction_matrices", "correctionLoop"]
 
@@ -90,9 +91,8 @@ def create_interaction_matrices(parameter_file,
     ###EFC CONFIG
     Correctionconfig = config["Correctionconfig"]
     Correctionconfig.update(NewCorrectionconfig)
-    DHshape = Correctionconfig["DHshape"]
-    choosepix = Correctionconfig["choosepix"]
-    choosepix = [int(i) for i in choosepix]
+    DH_shape = Correctionconfig["DH_shape"]
+    corner_pos = [float(i) for i in Correctionconfig["corner_pos"]]
 
     DM1_otherbasis = Correctionconfig["DM1_otherbasis"]
     DM3_otherbasis = Correctionconfig["DM3_otherbasis"]
@@ -164,12 +164,12 @@ def create_interaction_matrices(parameter_file,
                       save_for_bench=onbench,
                       realtestbed_dir=Labview_dir)
 
-    ####Calculating and Saving EFC matrix
-    if DHshape == "square":
-        print(
-            "TO SET ON LABVIEW: ",
-            str(estim.dimEstim / 2 +
-                np.array(np.fft.fftshift(choosepix))))
+    #### Not sure what it does...
+    # if DHshape == "square":
+    #     print(
+    #         "TO SET ON LABVIEW: ",
+    #         str(estim.dimEstim / 2 +
+    #             np.array(np.fft.fftshift(corner_pos*estim.Estim_sampling))))
 
     # Creating WhichInPup.
     # if DM3_otherbasis = False, this is done inside the DM class
@@ -186,14 +186,15 @@ def create_interaction_matrices(parameter_file,
     if DM3_otherbasis == True:
         thd2.DM1.WhichInPupil = np.arange(thd2.DM3.number_act)
 
-    #measure the masks
-    maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, Correctionconfig, estim.dimEstim,
-        estim.Estim_sampling, thd2.dimScience, thd2.Science_sampling)
+    #initalize the DH masks
+    mask_dh = MaskDH(Correctionconfig)
+    MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim, estim.Estim_sampling)
+    string_dhshape = mask_dh.tostring()
+
 
     #useful string
-    string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
-        Nbmodes) + "modes" + thd2.string_os
+    string_dims_EFCMatrix = '_EFCampl'+str(amplitudeEFC) + "_modes" + str(
+        Nbmodes) + thd2.string_os
 
     # Creating EFC control matrix
     fileEFCMatrix = "MatrixEFC" + string_dhshape + string_dims_EFCMatrix
@@ -238,7 +239,7 @@ def create_interaction_matrices(parameter_file,
                 estim.dimEstim,
                 DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
                 thd2.wavelength_0,
-                maskDH,
+                MaskEstim,
                 DM_WhichInPupil,
                 otherbasis=DM3_otherbasis,
                 basisDM3=DM3_basis,
@@ -325,9 +326,6 @@ def correctionLoop(parameter_file,
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
 
-    #On bench or numerical simulation
-    onbench = modelconfig["onbench"]
-
     #Lambda over D in pixels
     wavelength_0 = modelconfig["wavelength_0"]
 
@@ -387,10 +385,8 @@ def correctionLoop(parameter_file,
     nb_photons = SIMUconfig["nb_photons"]
     correction_algorithm = SIMUconfig["correction_algorithm"]
     Linearization = SIMUconfig["Linearization"]
-    Nbiter_corr = SIMUconfig["Nbiter_corr"]
-    Nbiter_corr = [int(i) for i in Nbiter_corr]
-    Nbmode_corr = SIMUconfig["Nbmode_corr"]
-    Nbmode_corr = [int(i) for i in Nbmode_corr]
+    Nbiter_corr = [int(i) for i in SIMUconfig["Nbiter_corr"]]
+    Nbmode_corr = [int(i) for i in SIMUconfig["Nbmode_corr"]]
     Linesearch = SIMUconfig["Linesearch"]
     Linesearchmode = SIMUconfig["Linesearchmode"]
     Linesearchmode = [int(i) for i in Linesearchmode]
@@ -469,13 +465,14 @@ def correctionLoop(parameter_file,
     ## Initialize Estimation
     estim = Estimator(Estimationconfig, thd2, matrix_dir=intermatrix_dir)
 
-    #usefull string
-    maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, Correctionconfig, estim.dimEstim,
-        estim.Estim_sampling, thd2.dimScience, thd2.Science_sampling)
+        #initalize the DH masks
+    mask_dh = MaskDH(Correctionconfig)
+    MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim, estim.Estim_sampling)
+    MaskScience = mask_dh.creatingMaskDH(thd2.dimScience, thd2.Science_sampling)
+    string_dhshape = mask_dh.tostring()
 
-    string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
-        Nbmodes) + "modes" + thd2.string_os
+    string_dims_EFCMatrix = '_EFCampl'+str(amplitudeEFC) + "_modes" + str(
+        Nbmodes) + thd2.string_os
 
     ## Load Control matrix
     fileDirectMatrix = "DirectMatrix" + string_dhshape + string_dims_EFCMatrix
@@ -488,7 +485,7 @@ def correctionLoop(parameter_file,
 
     if correction_algorithm == "EM" or correction_algorithm == "steepest":
 
-        G = np.zeros((int(np.sum(maskDH)), Gmatrix.shape[1]), dtype=complex)
+        G = np.zeros((int(np.sum(MaskEstim)), Gmatrix.shape[1]), dtype=complex)
         G = (Gmatrix[0:int(Gmatrix.shape[0] / 2), :] +
              1j * Gmatrix[int(Gmatrix.shape[0] / 2):, :])
         transposecomplexG = np.transpose(np.conjugate(G))
@@ -591,7 +588,7 @@ def correctionLoop(parameter_file,
     imagedetector[0] = thd2.todetector_Intensity(
         entrance_EF=input_wavefront) / thd2.maxPSF
 
-    meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
+    meancontrast[0] = np.mean(imagedetector[0][np.where(MaskScience != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
         photondetector = np.zeros((nbiter + 1, thd2.dimScience, thd2.dimScience))
@@ -629,7 +626,7 @@ def correctionLoop(parameter_file,
                         np.concatenate(
                             (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
                         amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
-                        maskDH,
+                        MaskEstim,
                         np.concatenate(
                             (thd2.DM3.WhichInPupil,
                              thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
@@ -642,7 +639,7 @@ def correctionLoop(parameter_file,
                         estim.dimEstim,
                         thd2.DM3.DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
                         wavelength_0,
-                        maskDH,
+                        MaskEstim,
                         thd2.DM3.WhichInPupil,
                         otherbasis=DM3_otherbasis,
                         basisDM3=DM3_basis)
@@ -679,7 +676,7 @@ def correctionLoop(parameter_file,
                     if thd2.DM1.active == True:
 
                         solution1 = wsc.solutionEFC(
-                            maskDH, resultatestimation, invertGDH,
+                            MaskEstim, resultatestimation, invertGDH,
                             np.concatenate(
                                 (thd2.DM3.WhichInPupil,
                                  thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
@@ -692,7 +689,7 @@ def correctionLoop(parameter_file,
                             voltage_DM1_tmp, wavelength=thd2.wavelength_0)
 
                     else:
-                        solution1 = wsc.solutionEFC(maskDH, resultatestimation,
+                        solution1 = wsc.solutionEFC(MaskEstim, resultatestimation,
                                                     invertGDH,
                                                     thd2.DM3.WhichInPupil,
                                                     thd2.DM3.number_act)
@@ -714,7 +711,7 @@ def correctionLoop(parameter_file,
                         DM3phase=phaseDM3_tmp) / thd2.maxPSF
 
                     meancontrasttemp[b] = np.mean(
-                        imagedetectortemp[np.where(maskDHcontrast != 0)])
+                        imagedetectortemp[np.where(MaskScience != 0)])
 
                     print('contraste moyen avec regul ', mode, '=',
                           meancontrasttemp[b])
@@ -738,14 +735,14 @@ def correctionLoop(parameter_file,
 
             if thd2.DM1.active == True:
                 solution1 = wsc.solutionEFC(
-                    maskDH, resultatestimation, invertGDH,
+                    MaskEstim, resultatestimation, invertGDH,
                     np.concatenate(
                         (thd2.DM3.WhichInPupil,
                          thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
                     thd2.DM3.number_act + thd2.DM1.number_act)
                 # Concatenate should be done in the THD2 structure
             else:
-                solution1 = wsc.solutionEFC(maskDH, resultatestimation,
+                solution1 = wsc.solutionEFC(MaskEstim, resultatestimation,
                                             invertGDH, thd2.DM3.WhichInPupil,
                                             thd2.DM3.number_act)
 
@@ -764,28 +761,28 @@ def correctionLoop(parameter_file,
             # Concatenate can be done in the THD2 structure
             if thd2.DM1.active == True:
                 solution1 = wsc.solutionEM(
-                    maskDH, resultatestimation, invertM0, G,
+                    MaskEstim, resultatestimation, invertM0, G,
                     np.concatenate(
                         (thd2.DM3.WhichInPupil,
                          thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
                     thd2.DM3.number_act + thd2.DM1.number_act)
                 # Concatenate should be done in the THD2 structure
             else:
-                solution1 = wsc.solutionEM(maskDH, resultatestimation,
+                solution1 = wsc.solutionEM(MaskEstim, resultatestimation,
                                            invertM0, G, thd2.DM3.WhichInPupil,
                                            thd2.DM3.number_act)
 
         if correction_algorithm == "steepest":
             if thd2.DM1.active == True:
                 solution1 = wsc.solutionSteepest(
-                    maskDH, resultatestimation, M0, G,
+                    MaskEstim, resultatestimation, M0, G,
                     np.concatenate(
                         (thd2.DM3.WhichInPupil,
                          thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
                     thd2.DM3.number_act + thd2.DM1.number_act)
                 # Concatenate should be done in the THD2 structure
             else:
-                solution1 = wsc.solutionSteepest(maskDH, resultatestimation,
+                solution1 = wsc.solutionSteepest(MaskEstim, resultatestimation,
                                                  M0, G, thd2.DM3.WhichInPupil,
                                                  thd2.DM3.number_act)
 
@@ -810,7 +807,7 @@ def correctionLoop(parameter_file,
             DM3phase=phaseDM3[k + 1]) / thd2.maxPSF
 
         meancontrast[k + 1] = np.mean(
-            imagedetector[k + 1][np.where(maskDHcontrast != 0)])
+            imagedetector[k + 1][np.where(MaskScience != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])
         if photon_noise == True:
             photondetector[k + 1] = np.random.poisson(imagedetector[k + 1] *
