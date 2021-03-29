@@ -189,7 +189,7 @@ def create_interaction_matrices(parameter_file,
     #measure the masks
     maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
         intermatrix_dir, Correctionconfig, estim.dimEstim,
-        estim.DH_sampling, thd2.dimFP, thd2.science_sampling)
+        estim.Estim_sampling, thd2.dimFP, thd2.science_sampling)
 
     #useful string
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
@@ -472,7 +472,7 @@ def correctionLoop(parameter_file,
     #usefull string
     maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
         intermatrix_dir, Correctionconfig, estim.dimEstim,
-        estim.DH_sampling, thd2.dimFP, thd2.science_sampling)
+        estim.Estim_sampling, thd2.dimFP, thd2.science_sampling)
 
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
         Nbmodes) + "modes" + thd2.string_os

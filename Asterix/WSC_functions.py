@@ -86,11 +86,11 @@ def invertSVD(matrix_to_invert,
 
 
 def load_or_save_maskDH(intermatrix_dir, EFCconfig, dimEstim,
-                        DH_sampling, dimFP, science_sampling):
+                        Estim_sampling, dimFP, science_sampling):
     """ --------------------------------------------------
         define at a single place the complicated file name of the mask and do the saving
         and loading depending in existence
-        TODO THE DH SHOULD BE CODED IN l/D and not in pixel in the DH_sampling sampling.
+        TODO THE DH SHOULD BE CODED IN l/D and not in pixel in the Estim_sampling sampling.
         ONCE CORRECTED THIS FUNCTION CAN BE SIMPLIFIED A LOT
 
         Parameters:
@@ -98,7 +98,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dimEstim,
         intermatrix_dir: Directory where to save the fits
         EFCconfig: all the EFC parameters containing shape and size of the DH.
         dimEstim: dimension of the re-sampled focal plane
-        DH_sampling : sampling of the re-sampled DH
+        Estim_sampling : sampling of the re-sampled DH
         dimFP: dimension of the FP in the detector focal plane
         science_sampling : sampling of the FP in the detector focal plane
 
@@ -128,7 +128,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dimEstim,
     fileMaskDH = "MaskDH" + stringdh
 
     fileMaskDH_sampl = fileMaskDH + 'dim' + str(
-        dimEstim) + 'res{:.1f}'.format(DH_sampling)
+        dimEstim) + 'res{:.1f}'.format(Estim_sampling)
 
     if os.path.exists(intermatrix_dir + fileMaskDH_sampl + ".fits") == True:
         print("Mask of DH " + fileMaskDH + " already exists")

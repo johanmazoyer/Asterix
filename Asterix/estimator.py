@@ -78,11 +78,11 @@ class Estimator:
 
         self.technique = Estimationconfig["estimation"].lower()
 
-        self.DH_sampling = Estimationconfig["DH_sampling"]
+        self.Estim_sampling = Estimationconfig["Estim_sampling"]
 
         #image size after binning. This is the size of the estimation !
         self.dimEstim = int(
-            self.DH_sampling / testbed.science_sampling * testbed.dimFP /
+            self.Estim_sampling / testbed.science_sampling * testbed.dimFP /
             2) * 2
 
         if self.technique == "perfect":
