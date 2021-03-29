@@ -97,11 +97,11 @@ def resampling(image, new):
     v2.0 19/030/21 J Mazoyer clean names + if image is real, result is real.
     -------------------------------------------------- """
 
-    dimFP = len(image)
+    dimScience = len(image)
 
     fftimage_cropped = cropimage(
-        np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dimFP / 2,
-        dimFP / 2, new)
+        np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dimScience / 2,
+        dimScience / 2, new)
     resized_image = np.fft.fftshift(
         np.fft.fft2(np.fft.ifftshift(fftimage_cropped)))
 

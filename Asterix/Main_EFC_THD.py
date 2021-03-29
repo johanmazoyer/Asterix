@@ -189,7 +189,7 @@ def create_interaction_matrices(parameter_file,
     #measure the masks
     maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
         intermatrix_dir, Correctionconfig, estim.dimEstim,
-        estim.Estim_sampling, thd2.dimFP, thd2.science_sampling)
+        estim.Estim_sampling, thd2.dimScience, thd2.Science_sampling)
 
     #useful string
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
@@ -472,7 +472,7 @@ def correctionLoop(parameter_file,
     #usefull string
     maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
         intermatrix_dir, Correctionconfig, estim.dimEstim,
-        estim.Estim_sampling, thd2.dimFP, thd2.science_sampling)
+        estim.Estim_sampling, thd2.dimScience, thd2.Science_sampling)
 
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
         Nbmodes) + "modes" + thd2.string_os
@@ -575,7 +575,7 @@ def correctionLoop(parameter_file,
 
     ## Correction loop
     nbiter = len(modevector)
-    imagedetector = np.zeros((nbiter + 1, thd2.dimFP, thd2.dimFP))
+    imagedetector = np.zeros((nbiter + 1, thd2.dimScience, thd2.dimScience))
     phaseDM3 = np.zeros(
         (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
     phaseDM1 = np.zeros(
@@ -594,7 +594,7 @@ def correctionLoop(parameter_file,
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
-        photondetector = np.zeros((nbiter + 1, thd2.dimFP, thd2.dimFP))
+        photondetector = np.zeros((nbiter + 1, thd2.dimScience, thd2.dimScience))
         photondetector[0] = np.random.poisson(imagedetector[0] *
                                               contrast_to_photons)
 

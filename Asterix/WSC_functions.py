@@ -86,7 +86,7 @@ def invertSVD(matrix_to_invert,
 
 
 def load_or_save_maskDH(intermatrix_dir, EFCconfig, dimEstim,
-                        Estim_sampling, dimFP, science_sampling):
+                        Estim_sampling, dimScience, Science_sampling):
     """ --------------------------------------------------
         define at a single place the complicated file name of the mask and do the saving
         and loading depending in existence
@@ -99,8 +99,8 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dimEstim,
         EFCconfig: all the EFC parameters containing shape and size of the DH.
         dimEstim: dimension of the re-sampled focal plane
         Estim_sampling : sampling of the re-sampled DH
-        dimFP: dimension of the FP in the detector focal plane
-        science_sampling : sampling of the FP in the detector focal plane
+        dimScience: dimension of the FP in the detector focal plane
+        Science_sampling : sampling of the FP in the detector focal plane
 
         Return:
         ------
@@ -144,8 +144,8 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dimEstim,
                                 circ_angle=circ_angle)
         fits.writeto(intermatrix_dir + fileMaskDH_sampl + ".fits", maskDH)
 
-    fileMaskDH_detect = fileMaskDH + 'dimFP' + str(dimFP) + 'res{:.1f}'.format(
-        science_sampling)
+    fileMaskDH_detect = fileMaskDH + 'dimScience' + str(dimScience) + 'res{:.1f}'.format(
+        Science_sampling)
 
     if os.path.exists(intermatrix_dir + fileMaskDH_detect + ".fits") == True:
         print("Mask of DH " + fileMaskDH_detect + " already exists")
@@ -154,18 +154,18 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dimEstim,
     else:
         print("We measure and save " + fileMaskDH_detect)
         maskDHcontrast = creatingMaskDH(
-            dimFP,
+            dimScience,
             DHshape,
             choosepixDH=[
-                element * dimFP / dimEstim
+                element * dimScience / dimEstim
                 for element in choosepix
             ],
             circ_rad=[
-                element * dimFP / dimEstim
+                element * dimScience / dimEstim
                 for element in circ_rad
             ],
             circ_side=circ_side,
-            circ_offset=circ_offset * dimFP / dimEstim,
+            circ_offset=circ_offset * dimScience / dimEstim,
             circ_angle=circ_angle)
 
         fits.writeto(intermatrix_dir + fileMaskDH_detect + ".fits",
@@ -173,7 +173,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, dimEstim,
     return maskDH, maskDHcontrast, stringdh
 
 
-def creatingMaskDH(dimFP,
+def creatingMaskDH(dimScience,
                    shape,
                    choosepixDH=[8, 35, -35, 35],
                    circ_rad=[8, 10],
@@ -197,17 +197,17 @@ def creatingMaskDH(dimFP,
     maskDH: 2D array, binary mask
     -------------------------------------------------- """
     xx, yy = np.meshgrid(
-        np.arange(dimFP) - (dimFP) / 2,
-        np.arange(dimFP) - (dimFP) / 2)
+        np.arange(dimScience) - (dimScience) / 2,
+        np.arange(dimScience) - (dimScience) / 2)
     rr = np.hypot(yy, xx)
     if shape == "square":
-        maskDH = np.ones((dimFP, dimFP))
+        maskDH = np.ones((dimScience, dimScience))
         maskDH[xx < choosepixDH[0]] = 0
         maskDH[xx > choosepixDH[1]] = 0
         maskDH[yy < choosepixDH[2]] = 0
         maskDH[yy > choosepixDH[3]] = 0
     if shape == "circle":
-        maskDH = np.ones((dimFP, dimFP))
+        maskDH = np.ones((dimScience, dimScience))
         maskDH[rr >= circ_rad[1]] = 0
         maskDH[rr < circ_rad[0]] = 0
         if circ_side == "right":
