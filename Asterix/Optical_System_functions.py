@@ -83,6 +83,11 @@ class Optical_System:
         else:
             self.wav_vec = np.array([self.wavelength_0])
 
+        self.string_os = '_prad' + str(int(self.prad)) + '_wl' + str(
+            int(self.wavelength_0 * 1e9)) + "_resFP" + str(
+                round(self.science_sampling, 2)) + "_dimFP" + str(
+                    int(self.dim_im))
+
     #We define functions that all Optical_System object can use.
     # These can be overwritten for a subclass if need be
 
@@ -633,6 +638,8 @@ class coronagraph(Optical_System):
         #coronagraph
         self.corona_type = coroconfig["corona_type"].lower()
 
+        self.string_os += '_' + self.corona_type
+
         if self.corona_type == "fqpm" or self.corona_type == "knife":
             # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
             self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
@@ -649,12 +656,18 @@ class coronagraph(Optical_System):
             self.err_fqpm = coroconfig["err_fqpm"]
             self.achrom_fqpm = coroconfig["achrom_fqpm"]
             self.FPmsk = self.FQPM()
+            if self.achrom_fqpm:
+                str_achrom = "achrom"
+            else:
+                str_achrom = "nonachrom"
+            self.string_os += '_' + str_achrom
             self.perfect_coro = True
 
         elif self.corona_type == "classiclyot":
             self.prop_apod2lyot = 'mft-babinet'
             self.Lyot_fpm_sampling = 30  # hard coded for now, this is very internal cooking
             self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
+            self.string_os += '_' + "iwa" + str(round(self.rad_lyot_fpm, 2))
             self.FPmsk = self.ClassicalLyot()
             self.perfect_coro = False
 
@@ -663,6 +676,8 @@ class coronagraph(Optical_System):
             self.coro_position = coroconfig["coro_position"].lower()
             self.knife_coro_offset = coroconfig["knife_coro_offset"]
             self.FPmsk = self.KnifeEdgeCoro()
+            self.string_os += '_' + self.coro_position + "_iwa" + str(
+                round(self.knife_coro_offset, 2))
             self.perfect_coro = False
 
         elif self.corona_type == "vortex":
@@ -710,6 +725,8 @@ class coronagraph(Optical_System):
                                   prad=self.lyotrad,
                                   model_dir=model_dir,
                                   filename=coroconfig["filename_instr_lyot"])
+
+        self.string_os += '_lrad' + str(int(self.lyotrad))
 
         if self.perfect_coro == True:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
@@ -1115,6 +1132,14 @@ class deformable_mirror(Optical_System):
         DMconfig[self.Name_DM + "_misregistration"] = False
         # no misregistration in the initialization part, only in the correction part
 
+        # first thing we do is to open filename_grid_actu to check the number of
+        # actuator of this DM
+        self.number_act = fits.getdata(
+            model_dir +
+            DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
+        self.string_os += '_' + self.Name_DM + "_Nact" + str(
+            int(self.number_act)) + "_z" + str(int(self.z_position * 100))
+
         if self.active == False:
             print(self.Name_DM + ' is not activated')
             return
@@ -1155,8 +1180,6 @@ class deformable_mirror(Optical_System):
                                                save_fits=save_fits,
                                                model_dir=model_dir,
                                                Model_local_dir=Model_local_dir)
-
-        self.number_act = self.DM_pushact.shape[0]
 
         if self.z_position != 0:
             # DM_pushact_inpup is always in the pupil plane
@@ -1292,9 +1315,7 @@ class deformable_mirror(Optical_System):
         pushact :
         -------------------------------------------------- """
 
-        Name_pushact_fits = self.Name_DM + "_PushActInPup_radpup" + str(
-            int(self.pradDM)) + "_dimpuparray" + str(
-                int(self.dim_overpad_pupil))
+        Name_pushact_fits = "PushAct" + self.string_os
 
         if (load_fits == True) and (
                 os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
@@ -1448,22 +1469,18 @@ class deformable_mirror(Optical_System):
         pushact_inpup : Map of the complex phase induced in pupil plane
         -------------------------------------------------- """
 
-        Name_pushact_inpup_fits = self.Name_DM + "_PushActInPup_radpup" + str(
-            int(self.pradDM)) + "_dimpuparray" + str(
-                int(self.dim_overpad_pupil)) + "_z" + str(
-                    int(self.z_position * 1000)) + 'mm'
+        Name_pushact_inpup_fits = "PushActInPup" + self.string_os
 
-        if (load_fits is True) and (
-                os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
-                               '_inPup_real.fits')
-        ) and (os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
-                              '_inPup_imag.fits')):
+        if (load_fits is True) and (os.path.exists(
+                Model_local_dir + Name_pushact_inpup_fits + '_RE.fits')) and (
+                    os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                                   '_IM.fits')):
             DM_pushact_inpup_real = fits.getdata(
                 os.path.join(Model_local_dir,
-                             Name_pushact_inpup_fits + '_inPup_real.fits'))
+                             Name_pushact_inpup_fits + '_RE.fits'))
             DM_pushact_inpup_imag = fits.getdata(
                 os.path.join(Model_local_dir,
-                             Name_pushact_inpup_fits + '_inPup_imag.fits'))
+                             Name_pushact_inpup_fits + '_IM.fits'))
 
             return DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
 
@@ -1485,11 +1502,11 @@ class deformable_mirror(Optical_System):
 
         if save_fits == True:
             fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_inPup_real.fits',
+                         '_inPup_RE.fits',
                          np.real(pushact_inpup),
                          overwrite=True)
             fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_inPup_imag.fits',
+                         '_inPup_IM.fits',
                          np.imag(pushact_inpup),
                          overwrite=True)
 
@@ -1516,8 +1533,7 @@ class deformable_mirror(Optical_System):
         WhichInPupil: 1D array, index of all the actuators located inside the pupil
         -------------------------------------------------- """
 
-        Name_WhichInPup_fits = self.Name_DM + "_Whichact_for" + str(
-            cutinpupil) + '_radpup' + str(self.prad)
+        Name_WhichInPup_fits = "ActinPup" + self.string_os
 
         if load_fits is True and (os.path.exists(Model_local_dir +
                                                  Name_WhichInPup_fits +
@@ -1692,6 +1708,9 @@ class Testbed(Optical_System):
 
         # Initialize the Optical_System class and inherit properties
         super().__init__(list_os[0].modelconfig)
+
+        init_string = self.string_os
+
         # Initialize the EF_through_function
         self.EF_through = super().EF_through
 
@@ -1762,6 +1781,9 @@ class Testbed(Optical_System):
             # we add all systems to the Optical System so that they can be accessed
             vars(self)[
                 list_os_names[num_optical_sys]] = list_os[num_optical_sys]
+
+            self.string_os += list_os[num_optical_sys].string_os.replace(
+                init_string, '')
 
         # we remove doublons
         # known_keywords = list(set(known_keywords))

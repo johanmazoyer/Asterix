@@ -97,12 +97,11 @@ class Estimator:
             self.posprobes = [int(i) for i in Estimationconfig["posprobes"]]
             cutsvdPW = Estimationconfig["cut"]
 
-            string_dims_PWMatrix = "_".join(map(
-                str, self.posprobes)) + "act_" + str(int(
-                    self.amplitudePW)) + "nm_" + str(
-                        int(cutsvdPW)) + "cutsvd_dimEstim_" + str(
-                            self.output_estimation_size) + "_dim" + str(
-                                testbed.dim_im) + '_radpup' + str(testbed.prad)
+            string_dims_PWMatrix = "actProb_[" +"_".join(map(
+                str, self.posprobes)) + "]_" + str(int(
+                    self.amplitudePW)) + "_cutsvd" + str(
+                        int(cutsvdPW)) + "_dimEstim_" + str(
+                            self.output_estimation_size) + testbed.string_os
 
             ####Calculating and Saving PW matrix
             filePW = "MatrixPW_" + string_dims_PWMatrix
@@ -119,7 +118,7 @@ class Estimator:
                 fits.writeto(matrix_dir + filePW + ".fits",
                              self.PWVectorprobes)
 
-            visuPWMap = "MapEigenvaluesPW" + string_dims_PWMatrix
+            visuPWMap = "EigenValPW_" + string_dims_PWMatrix
 
             if os.path.exists(matrix_dir + visuPWMap + ".fits") is False:
                 print("Saving " + visuPWMap + " ...")

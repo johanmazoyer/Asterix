@@ -145,27 +145,8 @@ def create_interaction_matrices(parameter_file,
     ##############################################################################
     ### Initialization of the Correction matrix
     ##############################################################################
-    intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices",
-                                   thd2.corono.corona_type)
-    if thd2.corono.corona_type == 'fqpm':
-        if thd2.corono.achrom_fqpm == True:
-            intermatrix_dir = os.path.join(intermatrix_dir,
-                                           "Achromatic_phase_mask")
-        else:
-            intermatrix_dir = os.path.join(intermatrix_dir,
-                                           "Polychromatic_phase_mask")
-    if thd2.corono.corona_type == 'knife':
-        intermatrix_dir = os.path.join(
-            intermatrix_dir, thd2.corono.coro_position,
-            "offset_" + str(thd2.corono.knife_coro_offset) + "lop")
 
-    intermatrix_dir = os.path.join(
-        intermatrix_dir,
-        str(int(thd2.wavelength_0 * 1e9)) + "nm",
-        "p" + str(round(thd2.corono.diam_pup_in_m * 1e3, 2)) + "_l" +
-        str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)), "lop_" +
-        str(round(thd2.science_sampling, 2)), "basis_" + basistr) + os.path.sep
-
+    intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices") + os.path.sep
     if not os.path.exists(intermatrix_dir):
         print("Creating directory " + intermatrix_dir + " ...")
         os.makedirs(intermatrix_dir)
@@ -211,13 +192,8 @@ def create_interaction_matrices(parameter_file,
         estim.DH_sampling, thd2.dim_im, thd2.science_sampling)
 
     #useful string
-    if thd2.DM1.active == True:
-        nam2DM = "_2DM"
-    else:
-        nam2DM = ""
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
-        Nbmodes) + "modes_dim" + str(thd2.dim_im) + '_radpup' + str(
-            thd2.prad) + nam2DM
+        Nbmodes) + "modes" + thd2.string_os
 
     # Creating EFC control matrix
     fileEFCMatrix = "MatrixEFC" + string_dhshape + string_dims_EFCMatrix
@@ -461,7 +437,6 @@ def correctionLoop(parameter_file,
     thd2.entrancepupil = pup_round
     thd2.DM1 = DM1
     thd2.DM3 = DM3
-    thd2.corono = corono
     # In practice this is done inside the Testbed initialization already !
     # and these lines are useless and I only put them to calm
     # To be removed when the correction and estimation class are done
@@ -490,34 +465,10 @@ def correctionLoop(parameter_file,
     if DM1_otherbasis == True:
         thd2.DM1.WhichInPupil = np.arange(thd2.DM1.number_act)
 
-    intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices",
-                                   thd2.corono.corona_type)
-    if thd2.corono.corona_type == 'fqpm':
-        if thd2.corono.achrom_fqpm == True:
-            intermatrix_dir = os.path.join(intermatrix_dir,
-                                           "Achromatic_phase_mask")
-        else:
-            intermatrix_dir = os.path.join(intermatrix_dir,
-                                           "Polychromatic_phase_mask")
-    if thd2.corono.corona_type == 'knife':
-        intermatrix_dir = os.path.join(
-            intermatrix_dir, thd2.corono.coro_position,
-            "offset_" + str(thd2.corono.knife_coro_offset) + "lop")
-
-    intermatrix_dir = os.path.join(
-        intermatrix_dir,
-        str(int(thd2.wavelength_0 * 1e9)) + "nm",
-        "p" + str(round(thd2.diam_pup_in_m * 1e3, 2)) + "_l" +
-        str(round(thd2.corono.diam_lyot_in_m * 1e3, 1)), "lop_" +
-        str(round(thd2.science_sampling, 2)), "basis_" + basistr) + os.path.sep
+    intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices") + os.path.sep
 
     ## Initialize Estimation
     estim = Estimator(Estimationconfig, thd2, matrix_dir=intermatrix_dir)
-
-    if thd2.DM1.active == True:
-        nam2DM = "_2DM"
-    else:
-        nam2DM = ""
 
     #usefull string
     maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
@@ -525,8 +476,7 @@ def correctionLoop(parameter_file,
         estim.DH_sampling, thd2.dim_im, thd2.science_sampling)
 
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
-        Nbmodes) + "modes_dim" + str(thd2.dim_im) + '_radpup' + str(
-            thd2.prad) + nam2DM
+        Nbmodes) + "modes" + thd2.string_os
 
     ## Load Control matrix
     fileDirectMatrix = "DirectMatrix" + string_dhshape + string_dims_EFCMatrix
