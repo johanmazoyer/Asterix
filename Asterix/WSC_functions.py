@@ -85,7 +85,7 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def load_or_save_maskDH(intermatrix_dir, EFCconfig, output_estimation_size,
+def load_or_save_maskDH(intermatrix_dir, EFCconfig, dimEstim,
                         DH_sampling, dimFP, science_sampling):
     """ --------------------------------------------------
         define at a single place the complicated file name of the mask and do the saving
@@ -97,7 +97,7 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, output_estimation_size,
         ----------
         intermatrix_dir: Directory where to save the fits
         EFCconfig: all the EFC parameters containing shape and size of the DH.
-        output_estimation_size: dimension of the re-sampled focal plane
+        dimEstim: dimension of the re-sampled focal plane
         DH_sampling : sampling of the re-sampled DH
         dimFP: dimension of the FP in the detector focal plane
         science_sampling : sampling of the FP in the detector focal plane
@@ -128,14 +128,14 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, output_estimation_size,
     fileMaskDH = "MaskDH" + stringdh
 
     fileMaskDH_sampl = fileMaskDH + 'dim' + str(
-        output_estimation_size) + 'res{:.1f}'.format(DH_sampling)
+        dimEstim) + 'res{:.1f}'.format(DH_sampling)
 
     if os.path.exists(intermatrix_dir + fileMaskDH_sampl + ".fits") == True:
         print("Mask of DH " + fileMaskDH + " already exists")
         maskDH = fits.getdata(intermatrix_dir + fileMaskDH_sampl + ".fits")
     else:
         print("We measure and save " + fileMaskDH_sampl)
-        maskDH = creatingMaskDH(output_estimation_size,
+        maskDH = creatingMaskDH(dimEstim,
                                 DHshape,
                                 choosepixDH=choosepix,
                                 circ_rad=circ_rad,
@@ -157,15 +157,15 @@ def load_or_save_maskDH(intermatrix_dir, EFCconfig, output_estimation_size,
             dimFP,
             DHshape,
             choosepixDH=[
-                element * dimFP / output_estimation_size
+                element * dimFP / dimEstim
                 for element in choosepix
             ],
             circ_rad=[
-                element * dimFP / output_estimation_size
+                element * dimFP / dimEstim
                 for element in circ_rad
             ],
             circ_side=circ_side,
-            circ_offset=circ_offset * dimFP / output_estimation_size,
+            circ_offset=circ_offset * dimFP / dimEstim,
             circ_angle=circ_angle)
 
         fits.writeto(intermatrix_dir + fileMaskDH_detect + ".fits",

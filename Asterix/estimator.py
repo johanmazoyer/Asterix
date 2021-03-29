@@ -81,7 +81,7 @@ class Estimator:
         self.DH_sampling = Estimationconfig["DH_sampling"]
 
         #image size after binning. This is the size of the estimation !
-        self.output_estimation_size = int(
+        self.dimEstim = int(
             self.DH_sampling / testbed.science_sampling * testbed.dimFP /
             2) * 2
 
@@ -101,7 +101,7 @@ class Estimator:
                 str, self.posprobes)) + "]_" + str(int(
                     self.amplitudePW)) + "_cutsvd" + str(
                         int(cutsvdPW)) + "_dimEstim_" + str(
-                            self.output_estimation_size) + testbed.string_os
+                            self.dimEstim) + testbed.string_os
 
             ####Calculating and Saving PW matrix
             filePW = "MatrixPW_" + string_dims_PWMatrix
@@ -113,7 +113,7 @@ class Estimator:
                 print("Saving " + filePW + " ...")
                 self.PWVectorprobes, showsvd = wsc.createvectorprobes(
                     testbed, self.amplitudePW, self.posprobes,
-                    self.output_estimation_size, cutsvdPW,
+                    self.dimEstim, cutsvdPW,
                     testbed.wavelength_0)
                 fits.writeto(matrix_dir + filePW + ".fits",
                              self.PWVectorprobes)
@@ -130,24 +130,24 @@ class Estimator:
                     (len(self.posprobes), testbed.DM3.number_act),
                     dtype=np.float32)
                 vectorPW = np.zeros(
-                    (2, self.output_estimation_size *
-                     self.output_estimation_size * len(self.posprobes)),
+                    (2, self.dimEstim *
+                     self.dimEstim * len(self.posprobes)),
                     dtype=np.float32)
 
                 for i in np.arange(len(self.posprobes)):
                     probes[i, self.posprobes[i]] = self.amplitudePW / 17
                     vectorPW[
-                        0, i * self.output_estimation_size *
-                        self.output_estimation_size:(i + 1) *
-                        self.output_estimation_size * self.
-                        output_estimation_size] = self.PWVectorprobes[:, 0,
+                        0, i * self.dimEstim *
+                        self.dimEstim:(i + 1) *
+                        self.dimEstim * self.
+                        dimEstim] = self.PWVectorprobes[:, 0,
                                                                       i].flatten(
                                                                       )
                     vectorPW[
-                        1, i * self.output_estimation_size *
-                        self.output_estimation_size:(i + 1) *
-                        self.output_estimation_size * self.
-                        output_estimation_size] = self.PWVectorprobes[:, 1,
+                        1, i * self.dimEstim *
+                        self.dimEstim:(i + 1) *
+                        self.dimEstim * self.
+                        dimEstim] = self.PWVectorprobes[:, 1,
                                                                       i].flatten(
                                                                       )
                 fits.writeto(realtestbed_dir + "Probes_EFC_default.fits",
@@ -203,13 +203,13 @@ class Estimator:
                 DM3phase=DM3phase) / np.sqrt(testbed.maxPSF)
 
             return proc.resampling(resultatestimation,
-                                   self.output_estimation_size)
+                                   self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
             Difference = wsc.createdifference(entrance_EF,
                                               testbed,
                                               self.posprobes,
-                                              self.output_estimation_size,
+                                              self.dimEstim,
                                               self.amplitudePW,
                                               DM1phase=DM1phase,
                                               DM3phase=DM3phase,

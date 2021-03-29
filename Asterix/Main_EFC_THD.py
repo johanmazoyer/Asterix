@@ -168,7 +168,7 @@ def create_interaction_matrices(parameter_file,
     if DHshape == "square":
         print(
             "TO SET ON LABVIEW: ",
-            str(estim.output_estimation_size / 2 +
+            str(estim.dimEstim / 2 +
                 np.array(np.fft.fftshift(choosepix))))
 
     # Creating WhichInPup.
@@ -188,7 +188,7 @@ def create_interaction_matrices(parameter_file,
 
     #measure the masks
     maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, Correctionconfig, estim.output_estimation_size,
+        intermatrix_dir, Correctionconfig, estim.dimEstim,
         estim.DH_sampling, thd2.dimFP, thd2.science_sampling)
 
     #useful string
@@ -235,7 +235,7 @@ def create_interaction_matrices(parameter_file,
             Gmatrix = wsc.creatingCorrectionmatrix(
                 thd2.entrancepupil.pup,
                 thd2,
-                estim.output_estimation_size,
+                estim.dimEstim,
                 DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
                 thd2.wavelength_0,
                 maskDH,
@@ -471,7 +471,7 @@ def correctionLoop(parameter_file,
 
     #usefull string
     maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
-        intermatrix_dir, Correctionconfig, estim.output_estimation_size,
+        intermatrix_dir, Correctionconfig, estim.dimEstim,
         estim.DH_sampling, thd2.dimFP, thd2.science_sampling)
 
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
@@ -625,7 +625,7 @@ def correctionLoop(parameter_file,
                     Gmatrix = wsc.creatingCorrectionmatrix(
                         input_wavefront,
                         thd2,
-                        estim.output_estimation_size,
+                        estim.dimEstim,
                         np.concatenate(
                             (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
                         amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
@@ -639,7 +639,7 @@ def correctionLoop(parameter_file,
                     Gmatrix = wsc.creatingCorrectionmatrix(
                         input_wavefront,
                         thd2,
-                        estim.output_estimation_size,
+                        estim.dimEstim,
                         thd2.DM3.DM_pushact * amplitudeEFC * 2 * np.pi * 1e-9 /
                         wavelength_0,
                         maskDH,
