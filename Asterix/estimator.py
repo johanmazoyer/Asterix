@@ -81,9 +81,8 @@ class Estimator:
         self.Estim_sampling = Estimationconfig["Estim_sampling"]
 
         #image size after binning. This is the size of the estimation !
-        self.dimEstim = int(
-            self.Estim_sampling / testbed.Science_sampling * testbed.dimScience /
-            2) * 2
+        self.dimEstim = int(self.Estim_sampling / testbed.Science_sampling *
+                            testbed.dimScience / 2) * 2
 
         if self.technique == "perfect":
             self.is_focal_plane = True
@@ -97,10 +96,10 @@ class Estimator:
             self.posprobes = [int(i) for i in Estimationconfig["posprobes"]]
             cutsvdPW = Estimationconfig["cut"]
 
-            string_dims_PWMatrix = "actProb[" +"_".join(map(
-                str, self.posprobes)) + "]_PWampl" + str(int(
-                    self.amplitudePW)) + "_cutsvd" + str(
-                        int(cutsvdPW//1000)) + "k_dimEstim" + str(
+            string_dims_PWMatrix = "actProb[" + "_".join(
+                map(str, self.posprobes)) + "]_PWampl" + str(
+                    int(self.amplitudePW)) + "_cutsvd" + str(
+                        int(cutsvdPW // 1000)) + "k_dimEstim" + str(
                             self.dimEstim) + testbed.string_os
 
             ####Calculating and Saving PW matrix
@@ -112,9 +111,8 @@ class Estimator:
             else:
                 print("Saving " + filePW + " ...")
                 self.PWVectorprobes, showsvd = wsc.createvectorprobes(
-                    testbed, self.amplitudePW, self.posprobes,
-                    self.dimEstim, cutsvdPW,
-                    testbed.wavelength_0)
+                    testbed, self.amplitudePW, self.posprobes, self.dimEstim,
+                    cutsvdPW, testbed.wavelength_0)
                 fits.writeto(matrix_dir + filePW + ".fits",
                              self.PWVectorprobes)
 
@@ -130,26 +128,19 @@ class Estimator:
                     (len(self.posprobes), testbed.DM3.number_act),
                     dtype=np.float32)
                 vectorPW = np.zeros(
-                    (2, self.dimEstim *
-                     self.dimEstim * len(self.posprobes)),
+                    (2, self.dimEstim * self.dimEstim * len(self.posprobes)),
                     dtype=np.float32)
 
                 for i in np.arange(len(self.posprobes)):
                     probes[i, self.posprobes[i]] = self.amplitudePW / 17
-                    vectorPW[
-                        0, i * self.dimEstim *
-                        self.dimEstim:(i + 1) *
-                        self.dimEstim * self.
-                        dimEstim] = self.PWVectorprobes[:, 0,
-                                                                      i].flatten(
-                                                                      )
-                    vectorPW[
-                        1, i * self.dimEstim *
-                        self.dimEstim:(i + 1) *
-                        self.dimEstim * self.
-                        dimEstim] = self.PWVectorprobes[:, 1,
-                                                                      i].flatten(
-                                                                      )
+                    vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) *
+                             self.dimEstim *
+                             self.dimEstim] = self.PWVectorprobes[:, 0,
+                                                                  i].flatten()
+                    vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) *
+                             self.dimEstim *
+                             self.dimEstim] = self.PWVectorprobes[:, 1,
+                                                                  i].flatten()
                 fits.writeto(realtestbed_dir + "Probes_EFC_default.fits",
                              probes,
                              overwrite=True)
@@ -198,12 +189,16 @@ class Estimator:
         if self.technique == "perfect":
             # If polychromatic, assume a perfect estimation at one wavelength
 
-            resultatestimation = testbed.todetector(
-                entrance_EF=entrance_EF, DM1phase=DM1phase,
-                DM3phase=DM3phase) / np.sqrt(testbed.maxPSF)
+            resultatestimation = testbed.todetector(entrance_EF=entrance_EF,
+                                                    DM1phase=DM1phase,
+                                                    DM3phase=DM3phase)
 
-            return proc.resampling(resultatestimation,
-                                   self.dimEstim)
+            if photon_noise == True:
+                resultatestimation = np.random.poisson(
+                    resultatestimation * testbed.normPupto1 *
+                    nb_photons) / (testbed.normPupto1 * nb_photons)
+
+            return proc.resampling(resultatestimation, self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
             Difference = wsc.createdifference(entrance_EF,
@@ -213,8 +208,8 @@ class Estimator:
                                               self.amplitudePW,
                                               DM1phase=DM1phase,
                                               DM3phase=DM3phase,
-                                              noise=photon_noise,
-                                              numphot=nb_photons)
+                                              photon_noise=photon_noise,
+                                              nb_photons=nb_photons)
 
             return wsc.FP_PWestimate(Difference, self.PWVectorprobes)
 

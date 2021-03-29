@@ -144,15 +144,11 @@ def creatingCorrectionmatrix(input_wavefront,
             print(i)
         Psivector = bas_fct[i]
 
-        # TODO for now we only keep the corono structure,
-        # we should use testbed.todetector(entrance_EF= input_wavefront, DMXX = Psivector)
-        # directly
-        #
+        # TODO we shoudl replace by perfect estimation. This is equivalent but it would be more coherent
         # also i and k are the same indice I think :-)
-        Gvector = (
-            testbed.todetector(entrance_EF=input_wavefront * 1j * Psivector) /
-            np.sqrt(testbed.maxPSF))
-        Gvector = proc.resampling(Gvector, dimimages)
+        # the names here are confusing
+
+        Gvector = proc.resampling(testbed.todetector(entrance_EF=input_wavefront * 1j * Psivector), dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()
         Gmatrixbis[int(np.sum(mask)):,
@@ -319,13 +315,11 @@ def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
 
         # for PW the probes are not sent in the DM but at the entrance of the testbed.
         # with an hypothesis of small phase.
-
+        #  not sure the pupil multiplication is necessary
         inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
                                                           1j * probephase[k])
-        deltapsikbis = (testbed.todetector(entrance_EF=inputwavefront) /
-                        np.sqrt(testbed.maxPSF))
 
-        deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
+        deltapsik[k] = proc.resampling(testbed.todetector(entrance_EF=inputwavefront), dimimages)
         k = k + 1
 
     l = 0
@@ -383,8 +377,8 @@ def createdifference(input_wavefront,
                      amplitudePW,
                      DM1phase=0,
                      DM3phase=0,
-                     noise=False,
-                     numphot=1e30,
+                     photon_noise=False,
+                     nb_photons=1e30,
                      wavelength=None):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
@@ -419,9 +413,6 @@ def createdifference(input_wavefront,
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
-    ## To convert in photon flux
-    contrast_to_photons = 1 / testbed.transmission(
-    ) * numphot * testbed.maxPSF / testbed.sumPSF
 
     #TODO if the DM1 is active we can measure once the EFthoughDM1 ans store it in entrance_EF
     #to save time. To check
@@ -442,19 +433,17 @@ def createdifference(input_wavefront,
             testbed.todetector(entrance_EF=input_wavefront,
                                DM1phase=DM1phase,
                                DM3phase=DM3phase - probephase,
-                               wavelength=wavelength))**2 / testbed.maxPSF
+                               wavelength=wavelength))**2
 
         Ikplus = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                DM1phase=DM1phase,
                                DM3phase=DM3phase + probephase,
-                               wavelength=wavelength))**2 / testbed.maxPSF
+                               wavelength=wavelength))**2
 
-        if noise == True:
-            Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
-                      contrast_to_photons)
-            Ikmoins = (np.random.poisson(Ikmoins * contrast_to_photons) /
-                       contrast_to_photons)
+        if photon_noise == True:
+            Ikplus = np.random.poisson(Ikplus * testbed.normPupto1 * nb_photons) / (testbed.normPupto1 * nb_photons)
+            Ikmoins = np.random.poisson(Ikmoins * testbed.normPupto1 * nb_photons) / (testbed.normPupto1 * nb_photons)
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 

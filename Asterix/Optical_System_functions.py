@@ -151,6 +151,7 @@ class Optical_System:
                    entrance_EF=1.,
                    wavelength=None,
                    center_on_pixel=False,
+                   in_contrast=True,
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
                    **kwargs):
@@ -220,6 +221,10 @@ class Optical_System:
                                   Y_offset_output=Psf_offset[1],
                                   inverse=False)
 
+        if in_contrast == True:
+            focal_plane_EF /= np.sqrt(
+                self.norm_monochrom[self.wav_vec.tolist().index(wavelength)])
+
         if save_all_planes_to_fits == True:
             who_called_me = self.__class__.__name__
             name_plane = 'EF_FP_after_' + who_called_me + '_obj' + '_wl{}'.format(
@@ -232,6 +237,7 @@ class Optical_System:
     def todetector_Intensity(self,
                              entrance_EF=1.,
                              wavelengths=None,
+                             in_contrast=True,
                              center_on_pixel=False,
                              save_all_planes_to_fits=False,
                              dir_save_all_planes=None,
@@ -292,10 +298,24 @@ class Optical_System:
                 self.todetector(
                     entrance_EF=entrance_EF,
                     wavelength=wav,
+                    in_contrast=False,
                     center_on_pixel=center_on_pixel,
                     save_all_planes_to_fits=save_all_planes_to_fits,
                     dir_save_all_planes=dir_save_all_planes,
                     **kwargs))**2
+
+        if in_contrast == True:
+            if wavelength_vec != self.wav_vec:
+                raise Exception(
+                    """carefull: contrast normalization in todetector_Intensity assumes
+                     it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1
+                     and you want only one BW with the good contrast normalization, use
+                     np.abs(to_detector(wavelength = wavelength))**2... If you want a specific
+                     normalization for a subset of  wavelengths, use in_contrast = False and
+                     measure the PSF to normalize.
+                """)
+            else:
+                focal_plane_Intensity /= self.norm_polychrom
 
         if save_all_planes_to_fits == True:
             who_called_me = self.__class__.__name__
@@ -309,6 +329,9 @@ class Optical_System:
         """
         measure ratio of photons lost when
         crossing the system compared to a clear aperture of radius self.prad
+
+        By default transmission is done at the reference WL, and there is
+        no reason to depend heavily on the WL.
 
         **kwargs: other kw parameters can be passed direclty to self.EF_through function
 
@@ -382,6 +405,43 @@ class Optical_System:
         lambda_ratio = wavelength / self.wavelength_0
 
         return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
+
+    def measure_normalization(self):
+        """ --------------------------------------------------
+        Functions must me used at the end of all Optical Systems initalization
+
+        Measure 3 differents values to normalize the data:
+            - self.norm_monochrom. Array of size len(self.wav_vec)
+                        the PSF per WL, use to nomrmalize to_detector
+            - self.norm_polychrom. float
+                        the polychromatic PSF use to nomrmalize to_detector_Intensity
+            - self.normPupto1, which is used to measure the photon noise
+                This it the factor that we use to measure photon noise.
+                From an image in contrast, we now normalize by the total number of photons
+                  (*self.norm_polychrom / self.sum_polychrom) and then account for the photons
+                lost in the process (1 / self.transmission()). Can be used as follow:
+                Im_ntensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
+
+        AUTHOR : Johan Mazoyer
+        """
+
+        PSFs = np.zeros((len(self.wav_vec), self.dimScience, self.dimScience),
+                        dtype=complex)
+        self.norm_monochrom = np.zeros((len(self.wav_vec)))
+        self.sum_monochrom = np.zeros((len(self.wav_vec)))
+
+        for i, wav in enumerate(self.wav_vec):
+            PSFs[i] = self.todetector(wavelength=wav,
+                                      noFPM=True,
+                                      center_on_pixel=True,
+                                      in_contrast=False)
+            self.norm_monochrom[i] = np.max(np.abs(PSFs[i])**2)
+
+        self.norm_polychrom = np.max(np.abs(np.sum(PSFs, axis=0))**2)
+        self.sum_polychrom = np.sum(np.abs(np.sum(PSFs, axis=0))**2)
+
+        self.normPupto1 = 1 / self.transmission(
+        ) * self.norm_polychrom / self.sum_polychrom
 
 
 ##############################################
@@ -483,6 +543,9 @@ class pupil(Optical_System):
         else:  # no filename
             if noPup == False:
                 self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
+
+        #initialize the max and sum of PSFs for the normalization to contrast
+        self.measure_normalization()
 
     def EF_through(self,
                    entrance_EF=1.,
@@ -735,6 +798,9 @@ class coronagraph(Optical_System):
             self.perfect_Lyot_pupil = self.EF_through(
                 entrance_EF=self.clearpup.EF_through())
 
+        #initialize the max and sum of PSFs for the normalization to contrast
+        self.measure_normalization()
+
     def EF_through(self,
                    entrance_EF=1.,
                    wavelength=None,
@@ -890,8 +956,8 @@ class coronagraph(Optical_System):
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
                                           2 * self.prad,
                                           self.dimScience,
-                                          self.dimScience / self.Science_sampling *
-                                          lambda_ratio,
+                                          self.dimScience /
+                                          self.Science_sampling * lambda_ratio,
                                           X_offset_output=-0.5,
                                           Y_offset_output=-0.5,
                                           inverse=False)
@@ -916,7 +982,8 @@ class coronagraph(Optical_System):
                 prop.mft(corono_focal_plane * FPmsk,
                          self.dimScience,
                          2 * self.prad,
-                         self.dimScience / self.Science_sampling * lambda_ratio,
+                         self.dimScience / self.Science_sampling *
+                         lambda_ratio,
                          X_offset_input=-0.5,
                          Y_offset_input=-0.5,
                          inverse=True), self.dim_overpad_pupil)
@@ -1199,6 +1266,9 @@ class deformable_mirror(Optical_System):
             load_fits=load_fits,
             save_fits=save_fits,
             Model_local_dir=Model_local_dir)
+
+        #initialize the max and sum of PSFs for the normalization to contrast
+        self.measure_normalization()
 
     def EF_through(self,
                    entrance_EF=1.,
@@ -1785,16 +1855,24 @@ class Testbed(Optical_System):
             self.string_os += list_os[num_optical_sys].string_os.replace(
                 init_string, '')
 
+        # in case there is no coronagraph in the system, we still add
+        # noFPM so that it does not break when we run transmission and max_sum_PSFs
+        # which pass this keyword by default
+        known_keywords.append('noFPM')
         # we remove doublons
         # known_keywords = list(set(known_keywords))
         known_keywords = list(dict.fromkeys(known_keywords))
 
+        # we add no
         # We remove arguments we know are wrong
         if 'DMphase' in known_keywords:
             known_keywords.remove('DMphase')
         known_keywords.remove('kwargs')
 
         self.EF_through = _clean_EF_through(self.EF_through, known_keywords)
+
+        #initialize the max and sum of PSFs for the normalization to contrast
+        self.measure_normalization()
 
 
 ##############################################

@@ -138,15 +138,12 @@ def create_interaction_matrices(parameter_file,
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
-    PSF = thd2.todetector_Intensity(center_on_pixel=True, noFPM=True)
-    thd2.maxPSF = np.max(PSF)
-    thd2.sumPSF = np.sum(PSF)
-
     ##############################################################################
     ### Initialization of the Correction matrix
     ##############################################################################
 
-    intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices") + os.path.sep
+    intermatrix_dir = os.path.join(Data_dir,
+                                   "Interaction_Matrices") + os.path.sep
     if not os.path.exists(intermatrix_dir):
         print("Creating directory " + intermatrix_dir + " ...")
         os.makedirs(intermatrix_dir)
@@ -191,9 +188,8 @@ def create_interaction_matrices(parameter_file,
     MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim, estim.Estim_sampling)
     string_dhshape = mask_dh.tostring()
 
-
     #useful string
-    string_dims_EFCMatrix = '_EFCampl'+str(amplitudeEFC) + "_modes" + str(
+    string_dims_EFCMatrix = '_EFCampl' + str(amplitudeEFC) + "_modes" + str(
         Nbmodes) + thd2.string_os
 
     # Creating EFC control matrix
@@ -437,10 +433,6 @@ def correctionLoop(parameter_file,
     # To be removed when the correction and estimation class are done
     # in which case these class will be able when these things exists or not
 
-    PSF = thd2.todetector_Intensity(center_on_pixel=True, noFPM=True)
-    thd2.maxPSF = np.max(PSF)
-    thd2.sumPSF = np.sum(PSF)
-
     result_dir = os.path.join(Data_dir, "Results",
                               Name_Experiment) + os.path.sep
     if not os.path.exists(result_dir):
@@ -460,18 +452,20 @@ def correctionLoop(parameter_file,
     if DM1_otherbasis == True:
         thd2.DM1.WhichInPupil = np.arange(thd2.DM1.number_act)
 
-    intermatrix_dir = os.path.join(Data_dir, "Interaction_Matrices") + os.path.sep
+    intermatrix_dir = os.path.join(Data_dir,
+                                   "Interaction_Matrices") + os.path.sep
 
     ## Initialize Estimation
     estim = Estimator(Estimationconfig, thd2, matrix_dir=intermatrix_dir)
 
-        #initalize the DH masks
+    #initalize the DH masks
     mask_dh = MaskDH(Correctionconfig)
     MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim, estim.Estim_sampling)
-    MaskScience = mask_dh.creatingMaskDH(thd2.dimScience, thd2.Science_sampling)
+    MaskScience = mask_dh.creatingMaskDH(thd2.dimScience,
+                                         thd2.Science_sampling)
     string_dhshape = mask_dh.tostring()
 
-    string_dims_EFCMatrix = '_EFCampl'+str(amplitudeEFC) + "_modes" + str(
+    string_dims_EFCMatrix = '_EFCampl' + str(amplitudeEFC) + "_modes" + str(
         Nbmodes) + thd2.string_os
 
     ## Load Control matrix
@@ -544,9 +538,9 @@ def correctionLoop(parameter_file,
     amplitude_abb_up = ampfinal
     phase_abb_up = phase_up
 
-    ## To convert in photon flux
-    contrast_to_photons = 1 / thd2.transmission(
-    ) * nb_photons * thd2.maxPSF / thd2.sumPSF
+    # ## To convert in photon flux
+    # contrast_to_photons = 1 / thd2.transmission(
+    # ) * nb_photons * thd2.maxPSF / thd2.sumPSF
 
     ## Adding error on the DM model?
 
@@ -573,6 +567,7 @@ def correctionLoop(parameter_file,
     ## Correction loop
     nbiter = len(modevector)
     imagedetector = np.zeros((nbiter + 1, thd2.dimScience, thd2.dimScience))
+
     phaseDM3 = np.zeros(
         (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
     phaseDM1 = np.zeros(
@@ -585,15 +580,16 @@ def correctionLoop(parameter_file,
     # Initial wavefront in pupil plane
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
                                                   ampl_abb=amplitude_abb_up)
-    imagedetector[0] = thd2.todetector_Intensity(
-        entrance_EF=input_wavefront) / thd2.maxPSF
+    imagedetector[0] = thd2.todetector_Intensity(entrance_EF=input_wavefront)
+
+    if photon_noise == True:
+        photondetector = np.zeros(
+            (nbiter + 1, thd2.dimScience, thd2.dimScience))
+        photondetector[0] = np.random.poisson(imagedetector[0] *
+                                              thd2.normPupto1 * nb_photons)
 
     meancontrast[0] = np.mean(imagedetector[0][np.where(MaskScience != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
-    if photon_noise == True:
-        photondetector = np.zeros((nbiter + 1, thd2.dimScience, thd2.dimScience))
-        photondetector[0] = np.random.poisson(imagedetector[0] *
-                                              contrast_to_photons)
 
     plt.ion()
     plt.figure()
@@ -689,7 +685,8 @@ def correctionLoop(parameter_file,
                             voltage_DM1_tmp, wavelength=thd2.wavelength_0)
 
                     else:
-                        solution1 = wsc.solutionEFC(MaskEstim, resultatestimation,
+                        solution1 = wsc.solutionEFC(MaskEstim,
+                                                    resultatestimation,
                                                     invertGDH,
                                                     thd2.DM3.WhichInPupil,
                                                     thd2.DM3.number_act)
@@ -708,7 +705,7 @@ def correctionLoop(parameter_file,
                     imagedetectortemp = thd2.todetector_Intensity(
                         entrance_EF=input_wavefront,
                         DM1phase=phaseDM1_tmp,
-                        DM3phase=phaseDM3_tmp) / thd2.maxPSF
+                        DM3phase=phaseDM3_tmp)
 
                     meancontrasttemp[b] = np.mean(
                         imagedetectortemp[np.where(MaskScience != 0)])
@@ -804,14 +801,16 @@ def correctionLoop(parameter_file,
         imagedetector[k + 1] = thd2.todetector_Intensity(
             entrance_EF=input_wavefront,
             DM1phase=phaseDM1[k + 1],
-            DM3phase=phaseDM3[k + 1]) / thd2.maxPSF
+            DM3phase=phaseDM3[k + 1])
 
         meancontrast[k + 1] = np.mean(
             imagedetector[k + 1][np.where(MaskScience != 0)])
         print("Mean contrast in DH: ", meancontrast[k + 1])
+
         if photon_noise == True:
-            photondetector[k + 1] = np.random.poisson(imagedetector[k + 1] *
-                                                      contrast_to_photons)
+            photondetector[k + 1] = np.random.poisson(
+                imagedetector[k + 1] * thd2.normPupto1 * photon_noise)
+
         plt.clf()
         plt.imshow(np.log10(imagedetector[k + 1]), vmin=-8, vmax=-5)
         plt.colorbar()
