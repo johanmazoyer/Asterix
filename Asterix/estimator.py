@@ -82,7 +82,7 @@ class Estimator:
 
         #image size after binning. This is the size of the estimation !
         self.output_estimation_size = int(
-            self.DH_sampling / testbed.science_sampling * testbed.dim_im /
+            self.DH_sampling / testbed.science_sampling * testbed.dimFP /
             2) * 2
 
         if self.technique == "perfect":

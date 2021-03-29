@@ -7,15 +7,15 @@ import Asterix.processing_functions as proc
 ##############################################
 ##############################################
 ### Pupil
-def roundpupil(dim_im, prad1):
+def roundpupil(dim_pp, prad):
     """ --------------------------------------------------
     Create a circular pupil. The center of the pupil is located between 4 pixels.
 
     Parameters
     ----------
-    dim_im : int
+    dim_pp : int
         Size of the image (in pixels)
-    prad1 : float
+    prad : float
         Size of the pupil radius (in pixels)
 
     Returns
@@ -26,39 +26,39 @@ def roundpupil(dim_im, prad1):
     AUTHOR : Axel Pottier
     -------------------------------------------------- """
     xx, yy = np.meshgrid(
-        np.arange(dim_im) - (dim_im) / 2,
-        np.arange(dim_im) - (dim_im) / 2)
+        np.arange(dim_pp) - (dim_pp) / 2,
+        np.arange(dim_pp) - (dim_pp) / 2)
     rr = np.hypot(yy + 1 / 2, xx + 1 / 2)
-    pupilnormal = np.zeros((dim_im, dim_im))
-    pupilnormal[rr <= prad1] = 1.0
+    pupilnormal = np.zeros((dim_pp, dim_pp))
+    pupilnormal[rr <= prad] = 1.0
     return pupilnormal
 
 
-def shift_phase_ramp(dim_im, a, b):
+def shift_phase_ramp(dim_pp, shift_x, shift_y):
     """ --------------------------------------------------
-    Create a phase ramp of size (dim_im,dim_im) that can be used as follow
+    Create a phase ramp of size (dim_pp,dim_pp) that can be used as follow
     to shift one image by (a,b) pixels : shift_im = real(fft(ifft(im)*exp(i phase ramp)))
 
     Parameters
     ----------
-    dim_im : int
-        Size of the phase ramp (in pixels)
-    a : float
-        Shift desired in the x direction (in pixels)
-    b : float
-        Shift desired in the y direction (in pixels)
+    dim_pp : int
+                Size of the phase ramp (in pixels)
+    shift_x : float
+                Shift desired in the x direction (in pixels)
+    shift_y : float
+                Shift desired in the y direction (in pixels)
 
     Returns
     ------
     masktot : 2D array
         Phase ramp
     -------------------------------------------------- """
-    if (a == 0) & (b == 0):
+    if (shift_x == 0) & (shift_y == 0):
         ramp = 1
     else:
-        maska = np.linspace(-np.pi * a, np.pi * a, dim_im)
-        maskb = np.linspace(-np.pi * b, np.pi * b, dim_im)
-        xx, yy = np.meshgrid(maska, maskb)
+        maskx = np.linspace(-np.pi * shift_x, np.pi * shift_x, dim_pp)
+        masky = np.linspace(-np.pi * shift_y, np.pi * shift_y, dim_pp)
+        xx, yy = np.meshgrid(maskx, masky)
         ramp = np.exp(-1j * xx) * np.exp(-1j * yy)
     return ramp
 

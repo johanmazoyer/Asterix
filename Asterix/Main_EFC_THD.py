@@ -189,7 +189,7 @@ def create_interaction_matrices(parameter_file,
     #measure the masks
     maskDH, _, string_dhshape = wsc.load_or_save_maskDH(
         intermatrix_dir, Correctionconfig, estim.output_estimation_size,
-        estim.DH_sampling, thd2.dim_im, thd2.science_sampling)
+        estim.DH_sampling, thd2.dimFP, thd2.science_sampling)
 
     #useful string
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
@@ -221,8 +221,7 @@ def create_interaction_matrices(parameter_file,
 
             # Creating EFC Interaction Matrix if does not exist
             print("Saving " + fileDirectMatrix + " ...")
-            # this is typically the kind of stuff that would be more better
-            # in the class
+
             if thd2.DM1.active == True:
                 DM_pushact = np.concatenate(
                     (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup))
@@ -473,7 +472,7 @@ def correctionLoop(parameter_file,
     #usefull string
     maskDH, maskDHcontrast, string_dhshape = wsc.load_or_save_maskDH(
         intermatrix_dir, Correctionconfig, estim.output_estimation_size,
-        estim.DH_sampling, thd2.dim_im, thd2.science_sampling)
+        estim.DH_sampling, thd2.dimFP, thd2.science_sampling)
 
     string_dims_EFCMatrix = str(amplitudeEFC) + "nm_" + str(
         Nbmodes) + "modes" + thd2.string_os
@@ -576,7 +575,7 @@ def correctionLoop(parameter_file,
 
     ## Correction loop
     nbiter = len(modevector)
-    imagedetector = np.zeros((nbiter + 1, thd2.dim_im, thd2.dim_im))
+    imagedetector = np.zeros((nbiter + 1, thd2.dimFP, thd2.dimFP))
     phaseDM3 = np.zeros(
         (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
     phaseDM1 = np.zeros(
@@ -595,7 +594,7 @@ def correctionLoop(parameter_file,
     meancontrast[0] = np.mean(imagedetector[0][np.where(maskDHcontrast != 0)])
     print("Mean contrast in DH: ", meancontrast[0])
     if photon_noise == True:
-        photondetector = np.zeros((nbiter + 1, thd2.dim_im, thd2.dim_im))
+        photondetector = np.zeros((nbiter + 1, thd2.dimFP, thd2.dimFP))
         photondetector[0] = np.random.poisson(imagedetector[0] *
                                               contrast_to_photons)
 
@@ -622,7 +621,6 @@ def correctionLoop(parameter_file,
 
                 # Calculate the control matrix for the current aberrations
                 # (needed because of linearization of the problem?)
-                # TODO concatenation should be done automatically in thd structure
                 if thd2.DM1.active == True:
                     Gmatrix = wsc.creatingCorrectionmatrix(
                         input_wavefront,

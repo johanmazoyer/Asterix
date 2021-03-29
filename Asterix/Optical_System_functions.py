@@ -52,7 +52,7 @@ class Optical_System:
         #Lambda over D in pixels in the focal plane
         # at the reference wavelength
         #image size and resolution in detector
-        self.dim_im = modelconfig["dim_im"]
+        self.dimFP = modelconfig["dimFP"]
         self.science_sampling = modelconfig["science_sampling"]
 
         #pupil in meters
@@ -86,7 +86,7 @@ class Optical_System:
         self.string_os = '_prad' + str(int(self.prad)) + '_wl' + str(
             int(self.wavelength_0 * 1e9)) + "_resFP" + str(
                 round(self.science_sampling, 2)) + "_dimFP" + str(
-                    int(self.dim_im))
+                    int(self.dimFP))
 
     #We define functions that all Optical_System object can use.
     # These can be overwritten for a subclass if need be
@@ -187,7 +187,7 @@ class Optical_System:
 
         Returns
         ------
-        ef_focal_plane : 2D array of size [self.dim_im, self.dim_im]
+        ef_focal_plane : 2D array of size [self.dimFP, self.dimFP]
         Electric field in the focal plane.
             the lambda / D is defined such as
                 self.wavelength_0 /  (2*self.exitpup_rad) = self.science_sampling pixels
@@ -213,8 +213,8 @@ class Optical_System:
 
         focal_plane_EF = prop.mft(exit_EF,
                                   self.exitpup_rad * 2,
-                                  self.dim_im,
-                                  self.dim_im / self.science_sampling *
+                                  self.dimFP,
+                                  self.dimFP / self.science_sampling *
                                   lambda_ratio,
                                   X_offset_output=Psf_offset[0],
                                   Y_offset_output=Psf_offset[1],
@@ -267,7 +267,7 @@ class Optical_System:
 
         Returns
         ------
-        focal_plane_Intensity : 2D array of size [self.dim_im, self.dim_im]
+        focal_plane_Intensity : 2D array of size [self.dimFP, self.dimFP]
         Intensity in the focal plane. The lambda / D is defined such as
                 self.wavelength_0 /  (2*self.exitpup_rad) = self.science_sampling pixels
 
@@ -285,7 +285,7 @@ class Optical_System:
         #TODO check if wavelengths have good format float array and raise
         # exception if not
 
-        focal_plane_Intensity = np.zeros((self.dim_im, self.dim_im))
+        focal_plane_Intensity = np.zeros((self.dimFP, self.dimFP))
 
         for wav in wavelength_vec:
             focal_plane_Intensity += np.abs(
@@ -889,8 +889,8 @@ class coronagraph(Optical_System):
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
                                           2 * self.prad,
-                                          self.dim_im,
-                                          self.dim_im / self.science_sampling *
+                                          self.dimFP,
+                                          self.dimFP / self.science_sampling *
                                           lambda_ratio,
                                           X_offset_output=-0.5,
                                           Y_offset_output=-0.5,
@@ -914,9 +914,9 @@ class coronagraph(Optical_System):
             # Focal plane to Lyot plane
             lyotplane_before_lyot = proc.crop_or_pad_image(
                 prop.mft(corono_focal_plane * FPmsk,
-                         self.dim_im,
+                         self.dimFP,
                          2 * self.prad,
-                         self.dim_im / self.science_sampling * lambda_ratio,
+                         self.dimFP / self.science_sampling * lambda_ratio,
                          X_offset_input=-0.5,
                          Y_offset_input=-0.5,
                          inverse=True), self.dim_overpad_pupil)
@@ -968,7 +968,7 @@ class coronagraph(Optical_System):
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
         else:
-            maxdimension_array_fpm = self.dim_im
+            maxdimension_array_fpm = self.dimFP
 
             self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
             for i, wav in enumerate(self.wav_vec):
@@ -994,7 +994,7 @@ class coronagraph(Optical_System):
             if self.prop_apod2lyot == "fft":
                 dim_fp = self.dim_fp_fft[i]
             else:
-                dim_fp = self.dim_im
+                dim_fp = self.dimFP
 
             phase = np.zeros((dim_fp, dim_fp))
             fqpm_thick_cut = proc.crop_or_pad_image(fqpm_thick, dim_fp)
@@ -1008,7 +1008,7 @@ class coronagraph(Optical_System):
 
     def KnifeEdgeCoro(self):
         """ --------------------------------------------------
-        Create a Knife edge coronagraph of size (dim_im,dim_im)
+        Create a Knife edge coronagraph of size (dimFP,dimFP)
 
         Returns
         ------
