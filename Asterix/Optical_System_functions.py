@@ -305,7 +305,7 @@ class Optical_System:
                     **kwargs))**2
 
         if in_contrast == True:
-            if wavelength_vec != self.wav_vec:
+            if (wavelength_vec != self.wav_vec).all():
                 raise Exception(
                     """carefull: contrast normalization in todetector_Intensity assumes
                      it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1
@@ -703,16 +703,15 @@ class coronagraph(Optical_System):
 
         self.string_os += '_' + self.corona_type
 
-        if self.corona_type == "fqpm" or self.corona_type == "knife":
-            # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
-            self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
-            for i, wav in enumerate(self.wav_vec):
-                self.dim_fp_fft[i] = int(
-                    np.ceil(self.prad * self.Science_sampling *
-                            self.diam_lyot_in_m / self.diam_pup_in_m *
-                            self.wavelength_0 / wav)) * 2
-                # we take the ceil to be sure that we measure at least the good resolution
-                # We do not need to be exact, the mft in science_focal_plane will be
+        # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
+        self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
+        for i, wav in enumerate(self.wav_vec):
+            self.dim_fp_fft[i] = int(
+                np.ceil(self.prad * self.Science_sampling *
+                        self.diam_lyot_in_m / self.diam_pup_in_m *
+                        self.wavelength_0 / wav)) * 2
+            # we take the ceil to be sure that we measure at least the good resolution
+            # We do not need to be exact, the mft in science_focal_plane will be
 
         if self.corona_type == "fqpm":
             self.prop_apod2lyot = 'mft'
@@ -735,7 +734,7 @@ class coronagraph(Optical_System):
             self.perfect_coro = False
 
         elif self.corona_type == "knife":
-            self.prop_apod2lyot = 'fft'
+            self.prop_apod2lyot = 'mft'
             self.coro_position = coroconfig["coro_position"].lower()
             self.knife_coro_offset = coroconfig["knife_coro_offset"]
             self.FPmsk = self.KnifeEdgeCoro()
@@ -1037,12 +1036,6 @@ class coronagraph(Optical_System):
         else:
             maxdimension_array_fpm = self.dimScience
 
-            self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
-            for i, wav in enumerate(self.wav_vec):
-                self.dim_fp_fft[i] = int(
-                    np.ceil(self.prad * self.Science_sampling *
-                            self.diam_lyot_in_m / self.diam_pup_in_m *
-                            self.wavelength_0 / wav)) * 2
 
         xx, yy = np.meshgrid(
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
@@ -1085,11 +1078,12 @@ class coronagraph(Optical_System):
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
         -------------------------------------------------- """
-
-        if len(self.wav_vec) == 1:
-            raise Exception(
-                "KnifeEdgeCoro only working in monochromatic as of now")
-        maxdimension_array_fpm = np.max(self.dim_fp_fft)
+        if self.prop_apod2lyot == "fft":
+            maxdimension_array_fpm = np.max(self.dim_fp_fft)
+            if len(self.wav_vec) >1:
+                raise Exception("knife currently not coded in polychromatic fft")
+        else:
+            maxdimension_array_fpm = self.dimScience
 
         # self.coro_position can be 'left', 'right', 'top' or 'bottom'
         # to define the orientation of the coronagraph
@@ -1114,7 +1108,11 @@ class coronagraph(Optical_System):
             Knife[np.where(yy < (maxdimension_array_fpm / 2 -
                                  self.knife_coro_offset * ld_p_0))] = 1
 
-        return [Knife]
+        knife_allwl = list()
+        for i in range(len(self.wav_vec)):
+            knife_allwl.append(Knife)
+
+        return knife_allwl
 
     def ClassicalLyot(self):
         """ --------------------------------------------------
@@ -1738,8 +1736,7 @@ class deformable_mirror(Optical_System):
 
 ##############################################
 ##############################################
-### Test bed
-
+### Testbed
 
 class Testbed(Optical_System):
     """ --------------------------------------------------

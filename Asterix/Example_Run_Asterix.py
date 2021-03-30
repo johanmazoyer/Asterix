@@ -4,7 +4,7 @@ import time
 
 Asterixroot = os.path.dirname(os.path.realpath(__file__))
 
-# These four cases need to converge before pull request !
+# These five cases need to converge before pull request !
 
 # INITIALISATION 1DM IN PW + EFC
 start_time = time.time()
@@ -90,6 +90,31 @@ phase, im = Main_EFC_THD.correctionLoop(
         'Nbmode_corr': ["500","800","500","1000","700","900","1000","900","700","900"]
     })
 print('total time correction 2DM perfect', time.time() - start_time)
+print("")
+print("")
+print("")
+
+start_time = time.time()
+Main_EFC_THD.create_interaction_matrices(
+    Asterixroot + os.path.sep + 'Example_param_file.ini',
+    NewCoronaconfig={'corona_type': 'knife'},
+    NewDMconfig={'DM1_active': False},
+    NewEstimationconfig={'estimation': 'perfect'},
+    NewCorrectionconfig={'DH_side': "right"})
+print('time for 1DM initialization', time.time() - start_time)
+print("")
+print("")
+print("")
+
+
+start_time = time.time()
+Main_EFC_THD.create_interaction_matrices(
+    Asterixroot + os.path.sep + 'Example_param_file.ini',
+    NewCoronaconfig={'corona_type': 'knife'},
+    NewDMconfig={'DM1_active': False},
+    NewEstimationconfig={'estimation': 'perfect'},
+    NewCorrectionconfig={'DH_side': "right"})
+print('time for 1DM initialization', time.time() - start_time)
 print("")
 print("")
 print("")
