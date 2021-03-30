@@ -707,9 +707,8 @@ class coronagraph(Optical_System):
         self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
         for i, wav in enumerate(self.wav_vec):
             self.dim_fp_fft[i] = int(
-                np.ceil(self.prad * self.Science_sampling *
-                        self.diam_lyot_in_m / self.diam_pup_in_m *
-                        self.wavelength_0 / wav)) * 2
+                np.ceil(self.prad * self.Science_sampling * self.diam_lyot_in_m
+                        / self.diam_pup_in_m * self.wavelength_0 / wav)) * 2
             # we take the ceil to be sure that we measure at least the good resolution
             # We do not need to be exact, the mft in science_focal_plane will be
 
@@ -1036,7 +1035,6 @@ class coronagraph(Optical_System):
         else:
             maxdimension_array_fpm = self.dimScience
 
-
         xx, yy = np.meshgrid(
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
@@ -1080,8 +1078,9 @@ class coronagraph(Optical_System):
         -------------------------------------------------- """
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
-            if len(self.wav_vec) >1:
-                raise Exception("knife currently not coded in polychromatic fft")
+            if len(self.wav_vec) > 1:
+                raise Exception(
+                    "knife currently not coded in polychromatic fft")
         else:
             maxdimension_array_fpm = self.dimScience
 
@@ -1737,6 +1736,7 @@ class deformable_mirror(Optical_System):
 ##############################################
 ##############################################
 ### Testbed
+
 
 class Testbed(Optical_System):
     """ --------------------------------------------------

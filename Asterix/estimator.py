@@ -97,9 +97,9 @@ class Estimator:
             cutsvdPW = Estimationconfig["cut"]
 
             string_dims_PWMatrix = "actProb[" + "_".join(
-                map(str, self.posprobes)) + "]_PWampl" + str(
-                    int(self.amplitudePW)) + "_cutsvd" + str(
-                        int(cutsvdPW // 1000)) + "k_dimEstim" + str(
+                map(str, self.posprobes)) + "]PWampl" + str(
+                    int(self.amplitudePW)) + "_cut" + str(int(
+                        cutsvdPW // 1000)) + "k_dimEstim" + str(
                             self.dimEstim) + testbed.string_os
 
             ####Calculating and Saving PW matrix
@@ -177,7 +177,7 @@ class Estimator:
 
         Returns
         ------
-        estimation : 2D array
+        estimation : 2D array od size [self.dimEstim,self.dimEstim]
                     estimation of the Electrical field
 
         AUTHOR : Johan Mazoyer

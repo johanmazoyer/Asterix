@@ -1,19 +1,38 @@
+# pylint: disable=invalid-name
+
 import numpy as np
 
 
 class MaskDH:
+    """ --------------------------------------------------
+        A very small class to do all the mask related stuff: retrieve parameters and
+        combined them measure the mask and measure the string to save matrices.
+        There are so fast to measure that we do not save them but if you
+        absolutely want to you can do it here.
+    -------------------------------------------------- """
+
     def __init__(self, Correctionconfig):
-        """ initialize the mask object. There are so fast to measure that we do not save them
-            but if you absolutely want to you can do it here
-        """
+        """ --------------------------------------------------
+        initialize the mask object.
+
+        Parameters:
+        ----------
+        Correctionconfig: general correction file which contains mask parameters
+
+        Author : Johan Mazoyer
+        -------------------------------------------------- """
 
         self.DH_shape = Correctionconfig["DH_shape"].lower()
 
         if self.DH_shape == "square":
-            self.corner_pos = [float(i) for i in Correctionconfig["corner_pos"]]
+            self.corner_pos = [
+                float(i) for i in Correctionconfig["corner_pos"]
+            ]
         if self.DH_shape == "circle":
             self.DH_side = Correctionconfig["DH_side"].lower()
-            self.Sep_Min_Max = [float(i) for i in Correctionconfig["Sep_Min_Max"]]
+            self.Sep_Min_Max = [
+                float(i) for i in Correctionconfig["Sep_Min_Max"]
+            ]
 
             self.circ_offset = Correctionconfig["circ_offset"]
             self.circ_angle = Correctionconfig["circ_angle"]
@@ -34,6 +53,8 @@ class MaskDH:
         Return:
         ------
         maskDH: 2D array, binary mask
+
+        Author : Johan Mazoyer
         -------------------------------------------------- """
 
         maskDH = np.ones((dimFP, dimFP))
@@ -84,6 +105,10 @@ class MaskDH:
         return maskDH
 
     def tostring(self):
+        """ create a mask String to be used to save .fits files
+         Author : Johan Mazoyer
+        """
+
         if self.DH_shape == "square":
             stringdh = "MaskDH_square_[" + "_".join(map(str,
                                                         self.corner_pos)) + "]"
