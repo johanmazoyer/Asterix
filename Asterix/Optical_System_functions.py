@@ -1256,6 +1256,10 @@ class deformable_mirror(Optical_System):
             self.DM_pushact_inpup = self.DM_pushact
             # This is a duplicate of the same file but coherent and
             # allows you to easily concatenate wherever are the DMs
+            # this is not taking memmery this is just 2 names for the
+            # same object in memory:
+            # print(id(self.DM_pushact_inpup))
+            # print(id(self.DM_pushact))
 
         # create or load 'which actuators are in pupil'
         self.WhichInPupil = self.creatingWhichinPupil(
@@ -1551,14 +1555,18 @@ class deformable_mirror(Optical_System):
 
             return DM_pushact_inpup_real + 1j * DM_pushact_inpup_imag
 
-        dim_entrancepupil = self.dim_overpad_pupil
         # TODO do we really need a pupil here ?!? seems to me it would be more general
-        # with all the actuators ?
+        # with all the actuators ? It seems to me that it reduce the generality of
+        # this function which is: what is the influence of the influce of DM1 in the
+        # pupil plane ? WE also need to find a way to measure which in pup for DM1
+        # because the way it is done currently, all actuators are selected !
+        # I think we really need a pupil, so we need the real pupil not a generic
+        # round pupil
         EF_inDMplane, _ = prop.prop_fresnel(self.clearpup.pup,
                                             self.wavelength_0, self.z_position,
                                             self.diam_pup_in_m / 2, self.prad)
         pushact_inpup = np.zeros(
-            (self.number_act, dim_entrancepupil, dim_entrancepupil),
+            (self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil),
             dtype=complex)
 
         for i in np.arange(self.number_act):
@@ -1609,17 +1617,17 @@ class deformable_mirror(Optical_System):
                                               Name_WhichInPup_fits)
 
         WhichInPupil = []
-
-        # TODO to check if we need this line. thisis important because if the
-        # pupil is no the size we expect it, we might exclude act that should not
-        tmp_entrancepupil = proc.crop_or_pad_image(
-            self.clearpup.pup, self.DM_pushact_inpup.shape[2])
-
+        # TODO I don't think this is working for DM1 ! All actuators are selected
+        # because for DM1 wecheck how much actu = fresenl(pushactu*fresnel(Pup)),
+        # has energy inside Pup. but it has almost no impact out of pup.
+        # so pup*actu/actu always ~1
+        #  We can do it in pupil plane (we check energy
+        # of fresenl(pushactu) inside Pup or in DM plane (we check energy of
+        # pushactu inside of fresnel(Pup).
         for i in np.arange(self.DM_pushact_inpup.shape[0]):
-            Psivector = self.DM_pushact_inpup[i]
-            cut = cutinpupil * np.sum(np.abs(Psivector))
-
-            if np.sum(Psivector * tmp_entrancepupil) > cut:
+            actu = self.DM_pushact_inpup[i]
+            # cut = cutinpupil * np.sum(np.abs(actu))
+            if np.sum(np.abs(actu * self.clearpup.pup))/ np.sum(np.abs(actu)) > cutinpupil:
                 WhichInPupil.append(i)
 
         WhichInPupil = np.array(WhichInPupil)

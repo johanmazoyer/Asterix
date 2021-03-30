@@ -148,7 +148,9 @@ def creatingCorrectionmatrix(input_wavefront,
         # also i and k are the same indice I think :-)
         # the names here are confusing
 
-        Gvector = proc.resampling(testbed.todetector(entrance_EF=input_wavefront * 1j * Psivector), dimimages)
+        Gvector = proc.resampling(
+            testbed.todetector(entrance_EF=input_wavefront * 1j * Psivector),
+            dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()
         Gmatrixbis[int(np.sum(mask)):,
@@ -271,7 +273,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
 #################################################################################
 
 
-def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
+def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
                        wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
@@ -281,7 +283,7 @@ def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
     testbed:    testbed structure
     amplitude:  float, amplitude of the actuator pokes for pair(wise probing in nm
     posprobes:  1D-array, index of the actuators to push and pull for pair-wise probing
-    dimimages:  int, size of the output image after resampling in pixels
+    dimEstim:  int, size of the output image after resampling in pixels
     cutsvd:     float, value not to exceed for the inverse eigeinvalues at each pixels
     wavelength: float, wavelength of the incoming flux in meter
 
@@ -295,19 +297,18 @@ def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
                 before regularization
     -------------------------------------------------- """
     numprobe = len(posprobes)
-    deltapsik = np.zeros((numprobe, dimimages, dimimages), dtype=complex)
+    deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=complex)
     probephase = np.zeros(
         (numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
     matrix = np.zeros((numprobe, 2))
-    PWVector = np.zeros((dimimages**2, 2, numprobe))
-    SVD = np.zeros((2, dimimages, dimimages))
+    PWVector = np.zeros((dimEstim**2, 2, numprobe))
+    SVD = np.zeros((2, dimEstim, dimEstim))
 
     k = 0
 
     for i in posprobes:
 
-        # TODO: for now we use testbed.DM3.DM_pushact but we shoudl put a
-        # which_DM_to_do_probes parameter
+        # TODO: we shoudl maybe put a which_DM_to_do_probes parameter
         Voltage_probe = np.zeros(testbed.DM3.number_act)
         Voltage_probe[i] = amplitude
         probephase[k] = testbed.DM3.voltage_to_phase(Voltage_probe,
@@ -316,15 +317,16 @@ def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
         # for PW the probes are not sent in the DM but at the entrance of the testbed.
         # with an hypothesis of small phase.
         #  not sure the pupil multiplication is necessary
-        inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
-                                                          1j * probephase[k])
+        # inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
+        #                                                   1j * probephase[k])
 
-        deltapsik[k] = proc.resampling(testbed.todetector(entrance_EF=inputwavefront), dimimages)
+        deltapsik[k] = proc.resampling(
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k]), dimEstim)
         k = k + 1
 
     l = 0
-    for i in np.arange(dimimages):
-        for j in np.arange(dimimages):
+    for i in np.arange(dimEstim):
+        for j in np.arange(dimEstim):
             matrix[:, 0] = np.real(deltapsik[:, i, j])
             matrix[:, 1] = np.imag(deltapsik[:, i, j])
 
@@ -413,7 +415,6 @@ def createdifference(input_wavefront,
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
-
     #TODO if the DM1 is active we can measure once the EFthoughDM1 ans store it in entrance_EF
     #to save time. To check
     # if testbed.DM1.active is True:
@@ -442,8 +443,12 @@ def createdifference(input_wavefront,
                                wavelength=wavelength))**2
 
         if photon_noise == True:
-            Ikplus = np.random.poisson(Ikplus * testbed.normPupto1 * nb_photons) / (testbed.normPupto1 * nb_photons)
-            Ikmoins = np.random.poisson(Ikmoins * testbed.normPupto1 * nb_photons) / (testbed.normPupto1 * nb_photons)
+            Ikplus = np.random.poisson(
+                Ikplus * testbed.normPupto1 *
+                nb_photons) / (testbed.normPupto1 * nb_photons)
+            Ikmoins = np.random.poisson(
+                Ikmoins * testbed.normPupto1 *
+                nb_photons) / (testbed.normPupto1 * nb_photons)
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 
