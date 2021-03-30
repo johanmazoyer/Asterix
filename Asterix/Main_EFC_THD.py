@@ -42,9 +42,8 @@ def create_interaction_matrices(parameter_file,
     config = ConfigObj(parameter_file,
                        configspec=configspec_file,
                        default_encoding="utf8")
-    vtor = Validator()
-    checks = config.validate(vtor, copy=True)
-    # copy=True for copying the comments
+    _ = config.validate(Validator(), copy=True)
+
 
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file +
@@ -91,8 +90,6 @@ def create_interaction_matrices(parameter_file,
     ###EFC CONFIG
     Correctionconfig = config["Correctionconfig"]
     Correctionconfig.update(NewCorrectionconfig)
-    DH_shape = Correctionconfig["DH_shape"]
-    corner_pos = [float(i) for i in Correctionconfig["corner_pos"]]
 
     DM1_otherbasis = Correctionconfig["DM1_otherbasis"]
     DM3_otherbasis = Correctionconfig["DM3_otherbasis"]
@@ -100,7 +97,9 @@ def create_interaction_matrices(parameter_file,
     amplitudeEFC = Correctionconfig["amplitudeEFC"]
     regularization = Correctionconfig["regularization"]
 
-    ##THEN DO
+    ##############################################################################
+    ### Initialization all the directories
+    ##############################################################################
     model_dir = os.path.join(Asterixroot, "Model") + os.path.sep
 
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
@@ -108,10 +107,17 @@ def create_interaction_matrices(parameter_file,
         print("Creating directory " + Model_local_dir + " ...")
         os.makedirs(Model_local_dir)
 
-    if DM3_otherbasis is False:
-        basistr = "actu"
-    else:
-        basistr = "fourier"
+    intermatrix_dir = os.path.join(Data_dir,
+                                   "Interaction_Matrices") + os.path.sep
+    if not os.path.exists(intermatrix_dir):
+        print("Creating directory " + intermatrix_dir + " ...")
+        os.makedirs(intermatrix_dir)
+
+    if onbench == True:
+        Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
+        if not os.path.exists(Labview_dir):
+            print("Creating directory " + Labview_dir + " ...")
+            os.makedirs(Labview_dir)
 
     # Initialize thd:
     pup_round = OptSy.pupil(modelconfig)
@@ -131,42 +137,28 @@ def create_interaction_matrices(parameter_file,
                                   model_dir=model_dir,
                                   Model_local_dir=Model_local_dir)
 
-    # we also need to "clear" the apod plane because the THD2 is like that
-    Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
     corono = OptSy.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
     # and then just concatenate
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
-    ##############################################################################
-    ### Initialization of the Correction matrix
-    ##############################################################################
-
-    intermatrix_dir = os.path.join(Data_dir,
-                                   "Interaction_Matrices") + os.path.sep
-    if not os.path.exists(intermatrix_dir):
-        print("Creating directory " + intermatrix_dir + " ...")
-        os.makedirs(intermatrix_dir)
-
-    if onbench == True:
-        Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
-        if not os.path.exists(Labview_dir):
-            print("Creating directory " + Labview_dir + " ...")
-            os.makedirs(Labview_dir)
-
-    # initialization of the estimator
+    # initialize the estimator
     estim = Estimator(Estimationconfig,
                       thd2,
                       matrix_dir=intermatrix_dir,
                       save_for_bench=onbench,
                       realtestbed_dir=Labview_dir)
 
-    #### Not sure what it does...
-    # if DHshape == "square":
-    #     print(
-    #         "TO SET ON LABVIEW: ",
-    #         str(estim.dimEstim / 2 +
-    #             np.array(np.fft.fftshift(corner_pos*estim.Estim_sampling))))
+    #initalize the DH masks
+    mask_dh = MaskDH(Correctionconfig)
+    MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim, estim.Estim_sampling)
+    string_dhshape = mask_dh.tostring()
+
+    # all the rest shoudl go into corrector init
+    if DM3_otherbasis is False:
+        basistr = "actu"
+    else:
+        basistr = "fourier"
 
     # Creating WhichInPup.
     # if DM3_otherbasis = False, this is done inside the DM class
@@ -182,11 +174,6 @@ def create_interaction_matrices(parameter_file,
     # DM3
     if DM3_otherbasis == True:
         thd2.DM1.WhichInPupil = np.arange(thd2.DM3.number_act)
-
-    #initalize the DH masks
-    mask_dh = MaskDH(Correctionconfig)
-    MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim, estim.Estim_sampling)
-    string_dhshape = mask_dh.tostring()
 
     #useful string
     string_dims_EFCMatrix = '_EFCampl' + str(amplitudeEFC) + "_modes" + str(
@@ -263,6 +250,15 @@ def create_interaction_matrices(parameter_file,
 
     if onbench == True:
 
+        #### Not sure what it does... Is this still useful ?
+        # I modified it with the new mask parameters
+        if mask_dh.DH_shape == "square":
+            print(
+                "TO SET ON LABVIEW: ",
+                str(estim.dimEstim / 2 + np.array(
+                    np.fft.fftshift(mask_dh.corner_pos *
+                                    estim.Estim_sampling))))
+
         EFCmatrix_DM3 = np.zeros((invertGDH.shape[1], thd2.DM3.number_act),
                                  dtype=np.float32)
         for i in np.arange(len(thd2.DM3.WhichInPupil)):
@@ -301,8 +297,7 @@ def correctionLoop(parameter_file,
     config = ConfigObj(parameter_file,
                        configspec=configspec_file,
                        default_encoding="utf8")
-    vtor = Validator()
-    checks = config.validate(vtor, copy=True)
+    _ = config.validate(Validator(), copy=True)
     # copy=True for copying the comments
 
     if not os.path.exists(parameter_file):
