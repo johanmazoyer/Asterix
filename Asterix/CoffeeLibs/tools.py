@@ -65,3 +65,9 @@ def gradient_xy(A):
 def gradient2_xy(A):
     """ 2D spacial graident """
     return ndimage.laplace(A,mode='constant')
+
+def defoc(phi_foc,defoc_factor):
+    [w,l] = phi_foc.shape
+    map_deofc = grad_matrix(w,l,defoc_factor) 
+    phi_defoc = phi_foc + map_deofc
+    return phi_defoc

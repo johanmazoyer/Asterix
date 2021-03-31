@@ -14,10 +14,12 @@ import numpy as np
 import CoffeeLibs.tools as tls
 import CoffeeLibs.simu as simu
 from copy import deepcopy
-from CoffeeLibs.param import *
+from CoffeeLibs.pzernike import pmap, zernike
 from sklearn.preprocessing import normalize
 from Asterix.propagation_functions import mft
 from Asterix.InstrumentSimu_functions import THD2_testbed
+
+from CoffeeLibs.param import * # A ENLEVER !!!
 
 # %% #######################
 """ Calcule critère  """
@@ -25,13 +27,7 @@ from Asterix.InstrumentSimu_functions import THD2_testbed
 def meanSquare(x,y,tb):
     """Compte mean square distance between data y and input x"""
     
-    Hx = tb.EF_through(entrance_EF=x,
-                   wavelength=None,
-                   DM1phase=0.,
-                   DM3phase=0.,
-                   noFPM=False,
-                   save_all_planes_to_fits=False,
-                   dir_save_fits=None)
+    Hx = tb.psf(entrance_EF=x)
     
     d = pow( abs( y - Hx ) , 2 ) # Distance mean square
     
@@ -53,11 +49,14 @@ def regule(psi):
 def map_J(phi,phi_defoc,i_foc,i_div,tb):
     """Compte critere J (as a matrix)"""
     
-    Jfoc =  meanSquare(phi,i_foc,tb)
-    Jdiv =  meanSquare(phi_defoc,i_div,tb)
+    EF_foc = np.exp(1j*phi)
+    EF_div = np.exp(1j*phi_defoc)
     
-    # return Jfoc + Jdiv
-    return Jfoc + Jdiv + regule(phi)
+    Jfoc =  meanSquare(EF_foc,i_foc,tb)
+    Jdiv =  meanSquare(EF_div,i_div,tb)
+    
+    return Jfoc + Jdiv
+    # return Jfoc + Jdiv + regule(phi)
 
 
 
@@ -68,20 +67,15 @@ def map_J(phi,phi_defoc,i_foc,i_div,tb):
 
 def DJ(phi,img,tb):
     
-    P = tb.entrancepupil.pup
-    psi  = P*np.exp(1j*phi) 
-    Hphi = tb.EF_through(entrance_EF=phi,
-                   wavelength=None,
-                   DM1phase=0.,
-                   DM3phase=0.,
-                   noFPM=False,
-                   save_all_planes_to_fits=False,
-                   dir_save_fits=None)
+    psi_in = np.exp(1j*phi)
+    
+    psi  = tb.EF_through(entrance_EF=psi_in)
+    Hphi = tb.psf(entrance_EF=psi_in)
     
     diff  = Hphi - img
     
+    w    = tb.dim_overpad_pupil
     wphi = phi.shape[0]
-    w    = Hphi.shape[0]
     
     ### !!!!!!  Pas de prise en compte d'échtillonage   !!!!!!! ###
     Dj = 4*np.imag( np.conj(psi) *  (1/w) * mft( diff * w * mft(psi,wphi,w,wphi) ,wphi,w,wphi,inv=1) )
@@ -104,8 +98,9 @@ def Dregule(psi):
 def grad_map_J(phi,phi_div,i_foc,i_div,tb):
     """ Compute gradient of critere J """
     # Dj foc +  Dj div 
-    return DJ(phi,i_foc,tb) + DJ(phi_div,i_div,tb) + Dregule(phi)
-    # return DJ(phi,i_foc) + DJ(phi_div,i_div)
+    
+    # return DJ(phi,i_foc,tb) + DJ(phi_div,i_div,tb) + Dregule(phi)
+    return DJ(phi,i_foc,tb) + DJ(phi_div,i_div,tb)
 
 
 
@@ -135,12 +130,14 @@ def diff_grad_J(PHI0,i_foc,i_div, dphi=10e-5):
 
 def V_map_J(phi,thd2,psi_foc,psi_div):
     n = int(np.sqrt(len(phi)))
+    [Ro,Theta] = pmap(n,n)
     phi    = phi.reshape(n,n)
     phidef = simu.defoc(phi,defoc_factor)
     return  map_J(phi,phidef,psi_foc,psi_div,thd2)
 
 def V_grad_J(phi,thd2,psi_foc,psi_div):
     n = int(np.sqrt(len(phi)))
+    [Ro,Theta] = pmap(n,n)
     phi    = phi.reshape(n,n)
     phidef = simu.defoc(phi,defoc_factor)
     return grad_map_J(phi,phidef,psi_foc,psi_div,thd2).reshape(n*n,)

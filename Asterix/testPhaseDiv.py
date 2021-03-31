@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 import os
 import Asterix.InstrumentSimu_functions as instr
+from CoffeeLibs.coffee import custom_bench
 from CoffeeLibs.coffee import Estimator
+from CoffeeLibs.tools import defoc
+from CoffeeLibs.pzernike import pmap, zernike
+from sklearn.preprocessing import normalize
 import numpy as np
 
 from configobj import ConfigObj
 from validate import Validator
 
 import matplotlib.pyplot as plt
-
+from CoffeeLibs.param import defoc_factor  # A enlever !!!
 
 # %% Initialisations
 
@@ -32,62 +36,46 @@ modelconfig = config["modelconfig"]
 model_dir = os.path.join(Asterixroot, "Model") + os.path.sep
 Model_local_dir = os.path.join(config["Data_dir"], "Model_local") + os.path.sep
 
-# Initialize thd:
-thd2 = instr.THD2_testbed(modelconfig,
-                          config["DMconfig"],
-                          config["Coronaconfig"],
-                          save_fits=True,
-                          model_dir=model_dir,
-                          Model_local_dir=Model_local_dir)
+# Initialize test bed:
+tbed = custom_bench(modelconfig,model_dir=model_dir)
 
 
 
-# %% Traitement
+# %% Treatment
 
-N = thd2.dim_overpad_pupil
+N = tbed.dim_overpad_pupil
 
-# Images a bases for the estimator 
-EF_foc = np.zeros((N,N)) #Trouver ou est le prametre dans config file
-EF_div = np.zeros((N,N))
+# Images to estimate
+[Ro,Theta] = pmap(N,N)
+phi_foc =  normalize( zernike(Ro,Theta,4) + zernike(Ro,Theta,6) ) # Astig + defoc
+phi_div = phi_foc + zernike(Ro,Theta,4)
 
-i_foc = thd2.EF_through(entrance_EF=EF_foc,
-                        wavelength=None,
-                        DM1phase=0.,
-                        DM3phase=0.,
-                        noFPM=False,
-                        save_all_planes_to_fits=False,
-                        dir_save_fits=None)
 
-i_div = thd2.EF_through(entrance_EF=EF_div,
-                        wavelength=None,
-                        DM1phase=0.,
-                        DM3phase=0.,
-                        noFPM=False,
-                        save_all_planes_to_fits=False,
-                        dir_save_fits=None)
+EF_foc = np.exp(1j*phi_foc)
+EF_div = np.exp(1j*phi_div)
+
+
+i_foc = tbed.psf(entrance_EF=EF_foc)
+
+i_div = tbed.psf(entrance_EF=EF_div)
 
 
 # %% Ajut de bruit
 
 # Add some perturbation
-varb  = 1e-5 # Variance du bruit
-i_foc  = i_foc + np.random.normal(0, varb, i_foc.shape)
-i_div  = i_div + np.random.normal(0, varb, i_div.shape)
+
+# varb  = 0 # Variance du bruit
+# i_foc  = i_foc + np.random.normal(0, varb, i_foc.shape)
+# i_div  = i_div + np.random.normal(0, varb, i_div.shape)
 
 
 
 # %% Estimation
-estimator = Estimator(thd2,**config["coffeeEstimator"])
+estimator = Estimator(tbed,**config["coffeeEstimator"])
 
-EF_est = estimator.estimate(i_foc, i_div)
+phi_est = estimator.estimate(i_foc, i_div)
 
-i_est = thd2.EF_through(entrance_EF=EF_est,
-                        wavelength=None,
-                        DM1phase=0.,
-                        DM3phase=0.,
-                        noFPM=False,
-                        save_all_planes_to_fits=False,
-                        dir_save_fits=None)
+i_est = tbed.psf(entrance_EF=np.exp(1j*phi_est))
 
 
 # %%  Plots 
@@ -95,10 +83,10 @@ i_est = thd2.EF_through(entrance_EF=EF_est,
 
 
 plt.figure(3)
-plt.subplot(2,2,1),plt.imshow(EF_est,cmap='jet'),plt.title("Estimation"),plt.colorbar()
-plt.subplot(2,2,2),plt.imshow(EF_foc,cmap='jet'),plt.title("Valeur Attendu"),plt.colorbar()
+plt.subplot(2,2,1),plt.imshow(phi_est,cmap='jet'),plt.title("Estimation"),plt.colorbar()
+plt.subplot(2,2,2),plt.imshow(phi_foc,cmap='jet'),plt.title("Valeur Attendu"),plt.colorbar()
 
-plt.subplot(2,2,3),plt.imshow(abs(i_foc),cmap='jet'),plt.title("Evaluation H avec estimation"),plt.colorbar()
-plt.subplot(2,2,4),plt.imshow(abs(i_est),cmap='jet'),plt.title("Evaluation H avec Valeur Attendu"),plt.colorbar()
+plt.subplot(2,2,3),plt.imshow(i_est,cmap='jet'),plt.title("Evaluation H avec estimation"),plt.colorbar()
+plt.subplot(2,2,4),plt.imshow(i_foc,cmap='jet'),plt.title("Evaluation H avec Valeur Attendu"),plt.colorbar()
 
 
