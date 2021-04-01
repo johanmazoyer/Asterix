@@ -464,7 +464,7 @@ class pupil(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self, modelconfig, prad=0., filename="", noPup=False):
+    def __init__(self, modelconfig, prad=0., PupType = "", filename=""):
         """ --------------------------------------------------
         Initialize a pupil object.
 
@@ -478,15 +478,17 @@ class pupil(Optical_System):
         prad : int Default is the pupil prad in the parameter
             radius in pixels of the round pupil.
 
-        directory : string (default "")
-            name of the directory where filename is
+        PupType : string (default currently "RoundPup", CleanPlane, or RomanPupman)
 
         filename : string (default "")
-            name of the .fits file
+            name and directory of the .fits file
             The pupil .fits files should be be 2D and square([dim_fits,dim_fits])
             and assumed to be centered between 4 pixels.
             if dim_fits < dim_overpad_pupil then the pupil is zero-padded
             if dim_fits > dim_overpad_pupil we raise an Exception
+
+            This is a bit dangerous because your .fits file might not be defined
+            the right way or something so be careful
 
             TODO: include here function scale_amplitude_abb, shift_phase_ramp
             TODO: include an SCC Lyot pupil function here !
@@ -506,41 +508,62 @@ class pupil(Optical_System):
         self.pup = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
                            1.)
 
-        if filename != "":
+        # known case, with known response
+        # default case: round pupil
+        if (PupType == "") or (PupType == "RoundPup"):
+            self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
 
-            # we start by a bunch of tests to check
-            # that pupil has a certain acceptable form.
-            print("we load the pupil: " + filename)
-            print("we assume it is centered in its array")
-            pup_fits = fits.getdata(os.path.join(model_dir, filename))
+        # ClearPlane (in case we want to define an empty pupil plane)
+        elif PupType == "ClearPlane":
+            self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
 
-            if len(pup_fits.shape) != 2:
-                raise Exception("file " + filename + " should be a 2D array")
-
-            if pup_fits.shape[0] != pup_fits.shape[1]:
-                raise Exception("file " + filename +
-                                " appears to be not square")
-
-            # this assume that the pupil file is squared
-            # and is centered in the file
-
-            if pup_fits.shape[0] == self.prad:
-                pup_fits_right_size = pup_fits
-            else:
-                #Rescale to the pupil size
-                pup_fits_right_size = skimage.transform.rescale(
-                    pup_fits,
-                    2 * prad / pup_fits.shape[0],
-                    preserve_range=True,
-                    anti_aliasing=True,
-                    multichannel=False)
+        elif PupType == "RomanPup":
+            #Rescale to the pupil size
+            pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_1002pix_center4pixels.fits"))
+            pup_fits_right_size = skimage.transform.rescale(
+                pup_fits,
+                2 * prad / pup_fits.shape[0],
+                preserve_range=True,
+                anti_aliasing=True,
+                multichannel=False)
 
             self.pup = proc.crop_or_pad_image(pup_fits_right_size,
                                               self.dim_overpad_pupil)
+        elif filename != "":
 
-        else:  # no filename
-            if noPup == False:
-                self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
+                # we start by a bunch of tests to check
+                # that pupil has a certain acceptable form.
+                # print("we load the pupil: " + filename)
+                # print("we assume it is centered in its array")
+                pup_fits = fits.getdata(filename)
+
+                if len(pup_fits.shape) != 2:
+                    raise Exception("file " + filename + " should be a 2D array")
+
+                if pup_fits.shape[0] != pup_fits.shape[1]:
+                    raise Exception("file " + filename +
+                                    " appears to be not square")
+
+                # this assume that the pupil file is squared
+                # and is centered in the file
+
+                if pup_fits.shape[0] == self.prad:
+                    pup_fits_right_size = pup_fits
+                else:
+                    #Rescale to the pupil size
+                    pup_fits_right_size = skimage.transform.rescale(
+                        pup_fits,
+                        2 * prad / pup_fits.shape[0],
+                        preserve_range=True,
+                        anti_aliasing=True,
+                        multichannel=False)
+
+                self.pup = proc.crop_or_pad_image(pup_fits_right_size,
+                                                self.dim_overpad_pupil)
+
+        else:  # no filename and no known. In this case, we can have a few
+            raise Exception("this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup'")
+
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
@@ -752,21 +775,15 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        if coroconfig["filename_instr_apod"] == "ClearPlane":
-            self.apod_pup = pupil(modelconfig, prad=self.prad, noPup=True)
-
-        elif coroconfig["filename_instr_apod"] == "RoundPup":
-            self.apod_pup = pupil(modelconfig, prad=self.prad)
+        if coroconfig["filename_instr_apod"] == "ClearPlane" or coroconfig["filename_instr_apod"]  == "RoundPup":
+            self.apod_pup = pupil(modelconfig, prad=self.prad, PupType= coroconfig["filename_instr_apod"])
         else:
             self.apod_pup = pupil(modelconfig,
                                   prad=self.prad,
                                   filename=coroconfig["filename_instr_apod"])
 
-        if coroconfig["filename_instr_lyot"] == "ClearPlane":
-            self.lyot_pup = pupil(modelconfig, prad=self.lyotrad, noPup=True)
-
-        elif coroconfig["filename_instr_lyot"] == "RoundPup":
-            self.lyot_pup = pupil(modelconfig, prad=self.lyotrad)
+        if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig["filename_instr_lyot"]  == "RoundPup":
+            self.lyot_pup = pupil(modelconfig, prad=self.prad, PupType= coroconfig["filename_instr_lyot"])
         else:
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,

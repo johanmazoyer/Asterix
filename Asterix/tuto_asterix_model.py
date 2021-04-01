@@ -46,8 +46,7 @@ pup_round = OptSy.pupil(modelconfig)
 
 # If you have a file, you can initialize complex pupil at the right size
 # Roman pupil of radius prad as define in the parameter file.
-pup_roman = OptSy.pupil(modelconfig,
-                        filename="roman_pup_1002pix_center4pixels.fits")
+pup_roman = OptSy.pupil(modelconfig, PupType="RomanPup")
 
 # by defaulf all pupil have the diameter of the telescope but smaller pupil / larger can be define
 # This can be useful for Lyot stop
@@ -242,8 +241,7 @@ DMnew = OptSy.deformable_mirror(modelconfig,
 pupil_inbetween_DM = OptSy.pupil(modelconfig)
 
 # and a roman entrance pupil
-pup_roman = OptSy.pupil(modelconfig,
-                        filename="roman_pup_1002pix_center4pixels.fits")
+pup_roman = OptSy.pupil(modelconfig,PupType="RomanPup")
 
 #lets concatenate everything !
 testbed_3DM = OptSy.Testbed(
