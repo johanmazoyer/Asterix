@@ -79,7 +79,7 @@ phi_est = estimator.estimate(i_foc, i_div)
 i_est = tbed.psf(entrance_EF=np.exp(1j*phi_est))
 
 
-# %%  Plots 
+# %%  Plots
 
 
 
@@ -89,5 +89,3 @@ plt.subplot(2,2,2),plt.imshow(phi_foc,cmap='jet'),plt.title("Valeur Attendu"),pl
 
 plt.subplot(2,2,3),plt.imshow(i_est,cmap='jet'),plt.title("Evaluation H avec estimation"),plt.colorbar()
 plt.subplot(2,2,4),plt.imshow(i_foc,cmap='jet'),plt.title("Evaluation H avec Valeur Attendu"),plt.colorbar()
-
-
