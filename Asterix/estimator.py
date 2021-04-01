@@ -147,6 +147,8 @@ class Estimator:
                 fits.writeto(realtestbed_dir + "Matr_mult_estim_PW.fits",
                              vectorPW,
                              overwrite=True)
+        elif self.technique == 'coffee':
+            pass
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
@@ -212,6 +214,9 @@ class Estimator:
                                               nb_photons=nb_photons)
 
             return wsc.FP_PWestimate(Difference, self.PWVectorprobes)
+
+        elif self.technique == 'coffee':
+            return np.zeros((self.dimEstim,self.dimEstim))
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
