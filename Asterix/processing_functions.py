@@ -1,28 +1,6 @@
 import numpy as np
 import scipy.optimize as opt
 
-# def butterworth(image, order, length):
-#     """ --------------------------------------------------
-#     Multiply the image by a butterworth
-
-#     Parameters:
-#     ----------
-#     image: 2D-array, input image
-#     order: butterworth order
-#     length: butterworth length
-
-#     Return:
-#     ------
-#     image*butt: 2D array, same dimension as input frame
-#     The input image is multiplied by the butterworth
-#     -------------------------------------------------- """
-
-#     dim_im = len(image)
-#     xx, yy = np.meshgrid(np.arange(dim_im) - dim_im / 2, np.arange(dim_im) - dim_im / 2)
-#     rr = np.hypot(yy, xx)
-#     butt = 1 / (1 + (np.sqrt(2) - 1) * (rr / length)**(2 * order))
-#     return image * butt
-
 
 def twoD_Gaussian(xy,
                   amplitude,
@@ -34,13 +12,13 @@ def twoD_Gaussian(xy,
                   h,
                   flatten=True):
     """ --------------------------------------------------
-    Create a gaussian in 2D 
-    
+    Create a gaussian in 2D
+
     Parameters:
     ----------
     xy: Tuple object (2,dim1,dim2)  which can be created with:
         x, y = np.mgrid[0:dim1, 0:dim2]
-        xy=(x,y)    
+        xy=(x,y)
     amplitude: Peak of the gaussian function
     sigma_x: Standard deviation of the gaussian function in the x direction
     sigma_y: Standard deviation of the gaussian function in the y direction
@@ -73,11 +51,11 @@ def twoD_Gaussian(xy,
 def gauss2Dfit(data):
     """ --------------------------------------------------
     Return the parameter of the 2D-Gaussian that best fits data
-    
+
     Parameters:
     ----------
     data: 2D array, input image
-     
+
     Return:
     ------
     popt: max, sig_x, sig_y, x_cen, y_cen, angle, offset
@@ -105,25 +83,25 @@ def gauss2Dfit(data):
 def resampling(image, new):
     """ --------------------------------------------------
     Crop and then resample the focal plane image to create a 2D array with new dimensions
-    
+
     Parameters:
     ----------
     image: 2D array, input image
     reechpup: Size of the cropped image before resempling in pixels
     new: Size of the output image after resampling in pixels
-    
+
     Return:
     ------
     Gvector: 2D array, image resampled into new dimensions
     v1.0 2020 A. Potier
-    v2.0 19/030/21 J Mazoyer clean names + if image is real, result is real. 
+    v2.0 19/030/21 J Mazoyer clean names + if image is real, result is real.
     -------------------------------------------------- """
 
-    dim_im = len(image)
+    dimScience = len(image)
 
     fftimage_cropped = cropimage(
-        np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dim_im / 2,
-        dim_im / 2, new)
+        np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dimScience / 2,
+        dimScience / 2, new)
     resized_image = np.fft.fftshift(
         np.fft.fft2(np.fft.ifftshift(fftimage_cropped)))
 
@@ -136,14 +114,14 @@ def resampling(image, new):
 def cropimage(img, ctr_x, ctr_y, newsizeimg):
     """ --------------------------------------------------
     Crop an image to create a 2D array with new dimensions
-    
+
     Parameters:
     ----------
     img: 2D array, input image, can be non squared
     ctr_x: Center of the input image in the x direction around which you make the cut
     ctr_y: Center of the input image in the y direction around which you make the cut
     newsizeimg: int
-    
+
     Return:
     ------
     Gvector: 2D array, squared image resampled into new dimensions
@@ -176,7 +154,7 @@ def crop_or_pad_image(image, dimout):
     REVISION HISTORY :
     Revision 1.1  2021-02-10 Raphaël Galicher Initial revision
     Revision 2.0  2021-02-24. JM Rename because cut_image was innacurate
-    
+
 
     -------------------------------------------------- """
     if float(dimout) < image.shape[0]:
@@ -207,9 +185,9 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     measured_ActuN: 1D array (float) of shape 2
                     x and y positions of actuator ActuN same unit as measured_grid
     ActuN:          int
-                    Index of the actuator ActuN (corresponding to measured_ActuN) 
+                    Index of the actuator ActuN (corresponding to measured_ActuN)
     sampling_simu_over_measured : float
-                    Ratio of sampling in simulation grid over sampling in measured grid 
+                    Ratio of sampling in simulation grid over sampling in measured grid
     Returns
     ------
     simu_grid : 2D array of shape is 2 x Nb_actuator

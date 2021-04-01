@@ -16,33 +16,33 @@ def mft(image,
         - Return the Matrix Direct Fourier transform (MFT) of a 2D image
         - Can deal with any size, any position of
             the 0-frequency...
-    
+
     Parameters
     ----------
         image : 2D Entrance image (entrance size in x and y can be different)
-        
-        dimpup : int or tupple of int of dim 2 
+
+        dimpup : int or tupple of int of dim 2
                 Diameter of the support in pup (can differ from image.shape)
                 Example : dimpup = diameter of the pupil in pixel
 
-        dim_output : int or tupple of int of dim 2 
+        dim_output : int or tupple of int of dim 2
                 Dimension of the output in pixels (square if int, rectangular if (int, int)
 
         nbres: float or or tupple of float of dim 2
                 Number of spatial resolution elements (same in both directions if float)
-        
+
         inverse : direction of the MFT
                 inverse = False, direct mft (default value)
-                inverse = True, indirect mft 
+                inverse = True, indirect mft
 
         X_offset_input :(default 0) position of the 0-frequency pixel in x for the entrance
              image with respect to the center of the entrance image (real position
-             of the 0-frequency pixel on dim_input_x/2+x0) 
-        
+             of the 0-frequency pixel on dim_input_x/2+x0)
+
         Y_offset_input :(default 0) position of the 0-frequency pixel in Y for the entrance
              image with respect to the center of the entrance image (real position
              of the 0-frequency pixel on dim_input_y/2+y0)
-    
+
         X_offset_output :(default 0) position of the 0-frequency pixel in x for the output
              image with respect to the center of the output image (real position
              of the 0-frequency pixel on dim_output_x/2+x1)
@@ -56,11 +56,11 @@ def mft(image,
         result : 2D array (complex)
             Output is a complex array dimft x dimft with the position of the
             0-frequency on the (dim_output_x/2+x1,dim_output_y/2+y1) pixel
-    
+
     AUTHOR :
        $Author: Baudoz, Galicher Mazoyer $
-    
-    
+
+
     REVISION HISTORY :
         Revision 1.1  2011  Initial revision. Raphaël Galicher (from soummer, in IDL)
         Revision 2.0  2012-04-12 P. Baudoz (IDL version): added pup offset
@@ -71,30 +71,30 @@ def mft(image,
     dim_input_x = image.shape[0]
     dim_input_y = image.shape[1]
 
-    if isinstance(dimpup,int):
+    if isinstance(dimpup, int):
         dimpup_x = dimpup
         dimpup_y = dimpup
-    elif isinstance(dimpup,tuple) & len(dimpup) == 2:
+    elif isinstance(dimpup, tuple) & len(dimpup) == 2:
         dimpup_x = dimpup[0]
         dimpup_y = dimpup[1]
     else:
         raise Exception("dimpup must be an int (square input pupil)" +
                         " or tupple of int of dimension 2")
 
-    if isinstance(dim_output,int):
+    if isinstance(dim_output, int):
         dim_output_x = dim_output
         dim_output_y = dim_output
-    elif isinstance(dim_output,tuple) & len(dim_output) == 2:
+    elif isinstance(dim_output, tuple) & len(dim_output) == 2:
         dim_output_x = dim_output[0]
         dim_output_y = dim_output[1]
     else:
         raise Exception("dim_output must be an int (square output)" +
                         " or tupple of int of dimension 2")
-    
-    if isinstance(nbres,(float,int)):
+
+    if isinstance(nbres, (float, int)):
         nbresx = float(nbres)
         nbresy = float(nbres)
-    elif isinstance(nbres,tuple) & len(nbres) == 2:
+    elif isinstance(nbres, tuple) & len(nbres) == 2:
         nbresx = nbres[0]
         nbresy = nbres[1]
     else:
@@ -107,7 +107,7 @@ def mft(image,
 
     X0 = dim_input_x / 2 + X_offset_input
     Y0 = dim_input_y / 2 + Y_offset_input
-    
+
     X1 = X_offset_output
     Y1 = Y_offset_output
 
@@ -131,7 +131,6 @@ def mft(image,
     result = norm0 * np.matmul(np.matmul(AA, image), BB)
 
     return result
-
 
 
 def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
