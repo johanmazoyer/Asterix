@@ -26,14 +26,6 @@ def np_fftconv(A,B):
     """Fast convolution"""
     return np.real(iffts(ffts(A)*ffts(B)))
 
-def circle(w,l,r):
-    """ Create a zeros matrix [w*l] with a circle of ones of raduis r at the centre"""
-    M = np.zeros([w,l])
-    for x in range(0, w):
-           for y in range(0, l):
-               if  pow(x-w/2,2) + pow(y-l/2,2) <= pow(r,2):
-                   M[x,y] = 1
-    return M
 
 def grad_matrix(w,l,factor):
     M = np.zeros([w,l])

@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-import Asterix.InstrumentSimu_functions as instr
-from CoffeeLibs.coffee import custom_bench
-from CoffeeLibs.coffee import Estimator
-from CoffeeLibs.tools import defoc
+from CoffeeLibs.coffee import custom_bench, Estimator
 from CoffeeLibs.pzernike import pmap, zernike
 from sklearn.preprocessing import normalize
 import numpy as np
@@ -12,7 +9,6 @@ from configobj import ConfigObj
 from validate import Validator
 
 import matplotlib.pyplot as plt
-from CoffeeLibs.param import defoc_factor  # A enlever !!!
 
 # %% Initialisations
 
@@ -47,20 +43,25 @@ N = tbed.dim_overpad_pupil
 
 # Images to estimate
 [Ro,Theta] = pmap(N,N)
-phi_foc =  normalize( zernike(Ro,Theta,4) + zernike(Ro,Theta,6) ) # Astig + defoc
+phi_foc =  normalize(zernike(Ro,Theta,4) + zernike(Ro,Theta,6)) # Astig + defoc
 phi_div = phi_foc + zernike(Ro,Theta,4)
 
 
 EF_foc = np.exp(1j*phi_foc)
 EF_div = np.exp(1j*phi_div)
 
+plt.subplot(1,2,1),plt.imshow(abs(EF_foc),cmap='jet'),plt.title("Evaluation H avec Valeur Attendu"),plt.colorbar()
+plt.subplot(1,2,2),plt.imshow(abs(tbed.EF_through(EF_foc)),cmap='jet'),plt.title("Evaluation H avec Valeur Attendu"),plt.colorbar()
+
+
+# %% BBGC
 
 i_foc = tbed.psf(entrance_EF=EF_foc)
 
 i_div = tbed.psf(entrance_EF=EF_div)
 
 
-# %% Ajut de bruit
+# %% BBGC
 
 # Add some perturbation
 

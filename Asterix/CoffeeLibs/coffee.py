@@ -12,13 +12,10 @@ Created on Tue Mar  9 17:20:09 2021
 
 import numpy as np
 
-import CoffeeLibs.tools as tls
-import CoffeeLibs.simu as sim
 import CoffeeLibs.criteres as cacl
 from scipy.optimize import minimize
 from Asterix.InstrumentSimu_functions import Optical_System, pupil
 from Asterix.propagation_functions import mft
-from CoffeeLibs.param import *  # Doit être enlever !!
 
 
 class Estimator:
@@ -26,8 +23,8 @@ class Estimator:
     COFFEE estimator
     -------------------------------------------------- """
     
-    def __init__(self, thd2, gtol=1e-5, maxiter=5000, eps=1e-10):
-        self.thd2 = thd2    # Initialize thd:
+    def __init__(self, tbed, gtol=1e-5, maxiter=5000, eps=1e-10):
+        self.tbed = tbed    # Initialize thd:
         # Estimator parameters
         self.gtol = gtol
         self.maxiter = maxiter
@@ -37,12 +34,12 @@ class Estimator:
     def estimate(self,i_foc,i_div):
         
         # Random pour l'instant parce que le modèle l'oblige
-        N = self.thd2.dim_overpad_pupil
+        N = self.tbed.dim_im
         EF_ini   = np.zeros((N,N))
         
         res  = minimize(cacl.V_map_J,
                         EF_ini.reshape(N*N,),
-                        args=(self.thd2,i_foc,i_div),
+                        args=(self.tbed,i_foc,i_div),
                         method='BFGS',
                         jac=cacl.V_grad_J,
                         options={'disp': True,'gtol':self.gtol,'eps':self.eps,'maxiter':self.maxiter}) 
@@ -56,10 +53,13 @@ class custom_bench(Optical_System):
     def __init__(self, modelconfig, model_dir=''):
         
         super().__init__(modelconfig)
+        self.diam_pup_in_pix = modelconfig["diam_pup_in_pix"]
         self.entrancepupil = pupil(modelconfig,
                                    prad=self.prad,
                                    model_dir=model_dir,
                                    filename=modelconfig["filename_instr_pup"])
+
+
 
     def EF_through(self,
                    entrance_EF=1.,
@@ -90,7 +90,7 @@ class custom_bench(Optical_System):
         EF_out = self.EF_through(entrance_EF=entrance_EF,
                                 wavelength=wavelength)
 
-        dim_pup = self.dim_overpad_pupil
-        dim_img = EF_out.shape[0]
+        dim_pup = self.diam_pup_in_pix
+        dim_img = self.dim_im
         
-        return pow( abs( mft(EF_out,dim_pup,dim_img,dim_pup) ) ,2)
+        return pow( abs( dim_img * mft(EF_out,dim_pup,dim_img,dim_pup) ) ,2)
