@@ -11,6 +11,8 @@ from astropy.io import fits
 from configobj import ConfigObj
 from validate import Validator
 
+from Asterix.definitions import Asterix_root, Asterix_model_dir
+
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.WSC_functions as wsc
 
@@ -21,6 +23,7 @@ from Asterix.estimator import Estimator
 from Asterix.MaskDH import MaskDH
 
 __all__ = ["create_interaction_matrices", "correctionLoop"]
+
 
 #######################################################
 #######################################################
@@ -35,10 +38,9 @@ def create_interaction_matrices(parameter_file,
                                 NewCorrectionconfig={},
                                 NewSIMUconfig={}):
 
-    Asterixroot = os.path.dirname(os.path.realpath(__file__))
 
     ### CONFIGURATION FILE
-    configspec_file = Asterixroot + os.path.sep + "Param_configspec.ini"
+    configspec_file = os.path.join(Asterix_root, "Param_configspec.ini")
     config = ConfigObj(parameter_file,
                        configspec=configspec_file,
                        default_encoding="utf8")
@@ -100,7 +102,6 @@ def create_interaction_matrices(parameter_file,
     ##############################################################################
     ### Initialization all the directories
     ##############################################################################
-    model_dir = os.path.join(Asterixroot, "Model") + os.path.sep
 
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
     if not os.path.exists(Model_local_dir):
@@ -126,7 +127,6 @@ def create_interaction_matrices(parameter_file,
                                   load_fits=not DM1_creating_pushact,
                                   save_fits=DM3_creating_pushact,
                                   Name_DM='DM1',
-                                  model_dir=model_dir,
                                   Model_local_dir=Model_local_dir)
 
     DM3 = OptSy.deformable_mirror(modelconfig,
@@ -134,10 +134,9 @@ def create_interaction_matrices(parameter_file,
                                   load_fits=not DM3_creating_pushact,
                                   save_fits=DM3_creating_pushact,
                                   Name_DM='DM3',
-                                  model_dir=model_dir,
                                   Model_local_dir=Model_local_dir)
 
-    corono = OptSy.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
+    corono = OptSy.coronagraph(modelconfig, Coronaconfig)
     # and then just concatenate
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
@@ -389,9 +388,7 @@ def correctionLoop(parameter_file,
     modevector = []
     for i in np.arange(len(Nbiter_corr)):
         modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
-
-    ## Directories for saving the data
-    model_dir = os.path.join(Asterixroot, "Model") + os.path.sep
+    Asterix_model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
 
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
 
@@ -400,18 +397,16 @@ def correctionLoop(parameter_file,
     DM1 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
                                   Name_DM='DM1',
-                                  model_dir=model_dir,
                                   Model_local_dir=Model_local_dir)
 
     DM3 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
                                   Name_DM='DM3',
-                                  model_dir=model_dir,
                                   Model_local_dir=Model_local_dir)
 
     # we also need to "clear" the apod plane because the THD2 is like that
     Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
-    corono = OptSy.coronagraph(modelconfig, Coronaconfig, model_dir=model_dir)
+    corono = OptSy.coronagraph(modelconfig, Coronaconfig)
     # and then just concatenate
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
@@ -509,7 +504,7 @@ def correctionLoop(parameter_file,
                 Model_local_dir + ampl_abb_filename +
                 ".fits") == True and set_random_ampl is False:
             ampfinal = phase_ampl.scale_amplitude_abb(
-                model_dir + ampl_abb_filename + ".fits", thd2.prad,
+                Asterix_model_dir + ampl_abb_filename + ".fits", thd2.prad,
                 thd2.entrancepupil.pup)
         else:
             ampl_abb_filename = "ampl_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
@@ -543,8 +538,7 @@ def correctionLoop(parameter_file,
         print("DM3 Misregistration!")
         pushactonDM3 = thd2.DM3.creatingpushact(DMconfig,
                                                 load_fits=False,
-                                                save_fits=False,
-                                                model_dir=model_dir)
+                                                save_fits=False)
     else:
         pushactonDM3 = thd2.DM3.DM_pushact
 
@@ -554,8 +548,7 @@ def correctionLoop(parameter_file,
             print("DM1 Misregistration!")
             pushactonDM1 = thd2.DM1.creatingpushact(DMconfig,
                                                     load_fits=False,
-                                                    save_fits=False,
-                                                    model_dir=model_dir)
+                                                    save_fits=False)
         else:
             pushactonDM1 = thd2.DM1.DM_pushact
 

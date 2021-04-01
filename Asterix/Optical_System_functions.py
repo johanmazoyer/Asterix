@@ -17,6 +17,9 @@ import Asterix.phase_amplitude_functions as phase_ampl
 
 import Asterix.fits_functions as useful
 
+Asterix_root = os.path.dirname(os.path.realpath(__file__))
+model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
+
 
 ##############################################
 ##############################################
@@ -386,6 +389,7 @@ class Optical_System:
                 "phase_abb and ampl_abb must be real arrays or float, not complex"
             )
 
+
         if isinstance(phase_abb, (int, float, np.float)):
             phase_abb = np.full(
                 (self.dim_overpad_pupil, self.dim_overpad_pupil),
@@ -394,7 +398,7 @@ class Optical_System:
         if isinstance(ampl_abb, (int, float, np.float)):
             ampl_abb = np.full(
                 (self.dim_overpad_pupil, self.dim_overpad_pupil),
-                np.float(phase_abb))
+                np.float(ampl_abb))
 
         if ((phase_abb == 0.).all()) and ((ampl_abb == 0.).all()):
 
@@ -464,7 +468,6 @@ class pupil(Optical_System):
     def __init__(self,
                  modelconfig,
                  prad=0.,
-                 model_dir="",
                  filename="",
                  noPup=False):
         """ --------------------------------------------------
@@ -673,7 +676,7 @@ class coronagraph(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self, modelconfig, coroconfig, model_dir):
+    def __init__(self, modelconfig, coroconfig):
         """ --------------------------------------------------
         Initialize a coronograph object
 
@@ -681,7 +684,6 @@ class coronagraph(Optical_System):
         ----------
         modelconfig : general configuration parameters (sizes and dimensions)
         coroconfig : coronagraph parameters
-        model_dir : if needed, we load the mask in this directory
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
@@ -758,33 +760,27 @@ class coronagraph(Optical_System):
         if coroconfig["filename_instr_apod"] == "ClearPlane":
             self.apod_pup = pupil(modelconfig,
                                   prad=self.prad,
-                                  model_dir=model_dir,
                                   noPup=True)
 
         elif coroconfig["filename_instr_apod"] == "RoundPup":
             self.apod_pup = pupil(modelconfig,
-                                  prad=self.prad,
-                                  model_dir=model_dir)
+                                  prad=self.prad)
         else:
             self.apod_pup = pupil(modelconfig,
                                   prad=self.prad,
-                                  model_dir=model_dir,
                                   filename=coroconfig["filename_instr_apod"])
 
         if coroconfig["filename_instr_lyot"] == "ClearPlane":
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
-                                  model_dir=model_dir,
                                   noPup=True)
 
         elif coroconfig["filename_instr_lyot"] == "RoundPup":
             self.lyot_pup = pupil(modelconfig,
-                                  prad=self.lyotrad,
-                                  model_dir=model_dir)
+                                  prad=self.lyotrad)
         else:
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
-                                  model_dir=model_dir,
                                   filename=coroconfig["filename_instr_lyot"])
 
         self.string_os += '_lrad' + str(int(self.lyotrad))
@@ -1159,7 +1155,6 @@ class deformable_mirror(Optical_System):
                  Name_DM='DM3',
                  load_fits=True,
                  save_fits=False,
-                 model_dir='',
                  Model_local_dir=''):
         """ --------------------------------------------------
         Initialize a deformable mirror object
@@ -1174,8 +1169,6 @@ class deformable_mirror(Optical_System):
         save_fits : bool, default = False if true, we save the DM init fits for future use
         we measure and save the pushact functions
 
-        model_dir: directory to find Measured positions for each actuator in pixel and
-                    influence fun. ie Things you cannot measure yourself and need to be given
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
 
@@ -1242,7 +1235,6 @@ class deformable_mirror(Optical_System):
         self.DM_pushact = self.creatingpushact(DMconfig,
                                                load_fits=load_fits,
                                                save_fits=save_fits,
-                                               model_dir=model_dir,
                                                Model_local_dir=Model_local_dir)
 
         if self.z_position != 0:
@@ -1362,7 +1354,6 @@ class deformable_mirror(Optical_System):
                         DMconfig,
                         load_fits=False,
                         save_fits=False,
-                        model_dir='',
                         Model_local_dir=''):
         """ --------------------------------------------------
         OPD map induced in the DM plane for each actuator
@@ -1372,8 +1363,6 @@ class deformable_mirror(Optical_System):
         DMconfig : structure with all information on DMs
         load_fits : bool, default = False if true, we do not measure the DM init fits, we load them
         save_fits : bool, default = False if true, we save the DM init fits for future use
-        model_dir: directory to find Measured positions for each actuator in pixel and
-                    influence fun. ie Things you cannot measure yourself and need to be given
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
 
