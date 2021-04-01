@@ -1577,11 +1577,11 @@ class deformable_mirror(Optical_System):
 
         if save_fits == True:
             fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_inPup_RE.fits',
+                         '_RE.fits',
                          np.real(pushact_inpup),
                          overwrite=True)
             fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_inPup_IM.fits',
+                         '_IM.fits',
                          np.imag(pushact_inpup),
                          overwrite=True)
 
