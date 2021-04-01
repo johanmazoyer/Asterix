@@ -24,7 +24,6 @@ from Asterix.MaskDH import MaskDH
 
 __all__ = ["create_interaction_matrices", "correctionLoop"]
 
-
 #######################################################
 #######################################################
 ######## Interaction/control matrices for PW and EFC
@@ -38,14 +37,12 @@ def create_interaction_matrices(parameter_file,
                                 NewCorrectionconfig={},
                                 NewSIMUconfig={}):
 
-
     ### CONFIGURATION FILE
     configspec_file = os.path.join(Asterix_root, "Param_configspec.ini")
     config = ConfigObj(parameter_file,
                        configspec=configspec_file,
                        default_encoding="utf8")
     _ = config.validate(Validator(), copy=True)
-
 
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file +

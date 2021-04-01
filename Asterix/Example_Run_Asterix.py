@@ -70,8 +70,11 @@ phase, im = Main_EFC_THD.correctionLoop(
     NewEstimationconfig={'estimation': 'pw'},
     NewCorrectionconfig={'DH_side': "Full"},
     NewSIMUconfig={
-        'Nbiter_corr': ["2"  ,"1"  ,"1"  ,"1"   ,"3"  ,"2"  ,"1"  ,"2"  ,"4"  ,"3"],
-        'Nbmode_corr': ["500","800","500","1000","700","900","1000","900","700","900"]
+        'Nbiter_corr': ["2", "1", "1", "1", "3", "2", "1", "2", "4", "3"],
+        'Nbmode_corr': [
+            "500", "800", "500", "1000", "700", "900", "1000", "900", "700",
+            "900"
+        ]
     })
 print('time correction 2DM pw', time.time() - start_time)
 print("")
@@ -86,8 +89,11 @@ phase, im = Main_EFC_THD.correctionLoop(
     NewEstimationconfig={'estimation': 'Perfect'},
     NewCorrectionconfig={'DH_side': "Full"},
     NewSIMUconfig={
-        'Nbiter_corr': ["2"  ,"1"  ,"1"  ,"1"   ,"3"  ,"2"  ,"1"  ,"2"  ,"4"  ,"3"],
-        'Nbmode_corr': ["500","800","500","1000","700","900","1000","900","700","900"]
+        'Nbiter_corr': ["2", "1", "1", "1", "3", "2", "1", "2", "4", "3"],
+        'Nbmode_corr': [
+            "500", "800", "500", "1000", "700", "900", "1000", "900", "700",
+            "900"
+        ]
     })
 print('total time correction 2DM perfect', time.time() - start_time)
 print("")

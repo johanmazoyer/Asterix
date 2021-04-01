@@ -17,7 +17,7 @@ import Asterix.phase_amplitude_functions as phase_ampl
 
 import Asterix.fits_functions as useful
 
-Asterix_root = os.path.dirname(os.path.realpath(__file__))
+Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
 
 
@@ -389,7 +389,6 @@ class Optical_System:
                 "phase_abb and ampl_abb must be real arrays or float, not complex"
             )
 
-
         if isinstance(phase_abb, (int, float, np.float)):
             phase_abb = np.full(
                 (self.dim_overpad_pupil, self.dim_overpad_pupil),
@@ -465,11 +464,7 @@ class pupil(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self,
-                 modelconfig,
-                 prad=0.,
-                 filename="",
-                 noPup=False):
+    def __init__(self, modelconfig, prad=0., filename="", noPup=False):
         """ --------------------------------------------------
         Initialize a pupil object.
 
@@ -758,26 +753,20 @@ class coronagraph(Optical_System):
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
         if coroconfig["filename_instr_apod"] == "ClearPlane":
-            self.apod_pup = pupil(modelconfig,
-                                  prad=self.prad,
-                                  noPup=True)
+            self.apod_pup = pupil(modelconfig, prad=self.prad, noPup=True)
 
         elif coroconfig["filename_instr_apod"] == "RoundPup":
-            self.apod_pup = pupil(modelconfig,
-                                  prad=self.prad)
+            self.apod_pup = pupil(modelconfig, prad=self.prad)
         else:
             self.apod_pup = pupil(modelconfig,
                                   prad=self.prad,
                                   filename=coroconfig["filename_instr_apod"])
 
         if coroconfig["filename_instr_lyot"] == "ClearPlane":
-            self.lyot_pup = pupil(modelconfig,
-                                  prad=self.lyotrad,
-                                  noPup=True)
+            self.lyot_pup = pupil(modelconfig, prad=self.lyotrad, noPup=True)
 
         elif coroconfig["filename_instr_lyot"] == "RoundPup":
-            self.lyot_pup = pupil(modelconfig,
-                                  prad=self.lyotrad)
+            self.lyot_pup = pupil(modelconfig, prad=self.lyotrad)
         else:
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
@@ -1616,7 +1605,8 @@ class deformable_mirror(Optical_System):
         for i in np.arange(self.DM_pushact_inpup.shape[0]):
             actu = self.DM_pushact_inpup[i]
             # cut = cutinpupil * np.sum(np.abs(actu))
-            if np.sum(np.abs(actu * self.clearpup.pup))/ np.sum(np.abs(actu)) > cutinpupil:
+            if np.sum(np.abs(actu * self.clearpup.pup)) / np.sum(
+                    np.abs(actu)) > cutinpupil:
                 WhichInPupil.append(i)
 
         WhichInPupil = np.array(WhichInPupil)
