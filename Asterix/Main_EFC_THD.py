@@ -11,8 +11,6 @@ from astropy.io import fits
 from configobj import ConfigObj
 from validate import Validator
 
-from Asterix.definitions import Asterix_root, Asterix_model_dir
-
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.WSC_functions as wsc
 
@@ -38,7 +36,7 @@ def create_interaction_matrices(parameter_file,
                                 NewSIMUconfig={}):
 
     ### CONFIGURATION FILE
-    configspec_file = os.path.join(Asterix_root, "Param_configspec.ini")
+    configspec_file = os.path.join(OptSy.Asterix_root, "Param_configspec.ini")
     config = ConfigObj(parameter_file,
                        configspec=configspec_file,
                        default_encoding="utf8")
@@ -385,7 +383,7 @@ def correctionLoop(parameter_file,
     modevector = []
     for i in np.arange(len(Nbiter_corr)):
         modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
-    Asterix_model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
+    Asterix_model_dir = os.path.join(OptSy.Asterix_root, "Model") + os.path.sep
 
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
 
