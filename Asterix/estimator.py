@@ -48,7 +48,7 @@ class Estimator:
         This is where you define the pw matrix, the modified Lyot stop
         or the COFFEE gradiant...
 
-        For all large files you should do use a method of "save to fits" if
+        For all large files you should use a method of "save to fits" if
         it does not exist "load from fits" if it does, in matrix_dir
 
         Store in the structure only what you need for estimation. Everything not
