@@ -14,7 +14,7 @@ import numpy as np
 
 import CoffeeLibs.criteres as cacl
 from scipy.optimize import minimize
-from Asterix.InstrumentSimu_functions import Optical_System, pupil
+from Asterix.Optical_System_functions import Optical_System, pupil
 from Asterix.propagation_functions import mft
 
 
@@ -23,7 +23,7 @@ class Estimator:
     COFFEE estimator
     -------------------------------------------------- """
 
-    def __init__(self, tbed, gtol=1e-5, maxiter=5000, eps=1e-10):
+    def __init__(self, tbed, gtol=1e-5, maxiter=5000, eps=1e-10,**kwarg):
         self.tbed = tbed    # Initialize thd:
         # Estimator parameters
         self.gtol = gtol
@@ -34,7 +34,7 @@ class Estimator:
     def estimate(self,i_foc,i_div):
 
         # Random pour l'instant parce que le modèle l'oblige
-        N = self.tbed.dim_im
+        N = self.tbed.dimScience
         EF_ini   = np.zeros((N,N))
 
         res  = minimize(cacl.V_map_J,
@@ -58,6 +58,7 @@ class custom_bench(Optical_System):
                                    prad=self.prad,
                                    model_dir=model_dir,
                                    filename=modelconfig["filename_instr_pup"])
+        self.measure_normalization()
 
 
 
@@ -91,6 +92,6 @@ class custom_bench(Optical_System):
                                 wavelength=wavelength)
 
         dim_pup = self.diam_pup_in_pix
-        dim_img = self.dim_im
+        dim_img = self.dimScience
 
         return pow( abs( dim_img * mft(EF_out,dim_pup,dim_img,dim_pup) ) ,2)

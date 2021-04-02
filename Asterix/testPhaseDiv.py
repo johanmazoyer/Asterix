@@ -50,13 +50,10 @@ phi_div = phi_foc + zernike(Ro,Theta,4)
 EF_foc = np.exp(1j*phi_foc)
 EF_div = np.exp(1j*phi_div)
 
-plt.subplot(1,2,1),plt.imshow(abs(EF_foc),cmap='jet'),plt.title("Evaluation H avec Valeur Attendu"),plt.colorbar()
-plt.subplot(1,2,2),plt.imshow(abs(tbed.EF_through(EF_foc)),cmap='jet'),plt.title("Evaluation H avec Valeur Attendu"),plt.colorbar()
-
 
 # %% BBGC
 
-i_foc = tbed.psf(entrance_EF=EF_foc)
+i_foc = tbed.todetector_Intensity(entrance_EF=EF_foc)
 
 i_div = tbed.psf(entrance_EF=EF_div)
 
@@ -72,7 +69,7 @@ i_div = tbed.psf(entrance_EF=EF_div)
 
 
 # %% Estimation
-estimator = Estimator(tbed,**config["coffeeEstimator"])
+estimator = Estimator(tbed,**config["Estimationconfig"])
 
 phi_est = estimator.estimate(i_foc, i_div)
 
