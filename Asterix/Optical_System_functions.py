@@ -352,10 +352,10 @@ class Optical_System:
         # we pass noFPM = True and noentrance Field by default
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
-        throughput_loss = np.sum(
+        throughput = np.sum(
             np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
 
-        return throughput_loss
+        return throughput
 
     def EF_from_phase_and_ampl(self,
                                phase_abb=0.,
@@ -1804,7 +1804,7 @@ class Testbed(Optical_System):
         # we concatenate the Optical Element starting by the end
         for num_optical_sys in range(len(list_os)):
 
-            # we firt check that all variables in the list are optical systems
+            # we first check that all variables in the list are optical systems
             # defined the same way.
             if not isinstance(list_os[num_optical_sys], Optical_System):
                 raise Exception("list_os[" + str(num_optical_sys) +
@@ -1816,7 +1816,7 @@ class Testbed(Optical_System):
                     "All optical systems need to be defined with the same initial modelconfig!"
                 )
 
-            # if the os if a DM we increase the number of DM counter and
+            # if the os is a DM we increase the number of DM counter and
             # store the number of act and its name
 
             for params in inspect.signature(
@@ -1860,7 +1860,7 @@ class Testbed(Optical_System):
         # noFPM so that it does not break when we run transmission and max_sum_PSFs
         # which pass this keyword by default
         known_keywords.append('noFPM')
-        # we remove doublons
+        # we remove doubloons
         # known_keywords = list(set(known_keywords))
         known_keywords = list(dict.fromkeys(known_keywords))
 

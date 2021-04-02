@@ -26,12 +26,12 @@ class Estimator:
         - an estimatation function itself with parameters
                 - the entrance EF
                 - DM voltages
-                - the WL
+                - the wavelength
         Estimation = Estimator.estimate(entrance EF, DM voltage, WL)
 
         It returns the estimation as a 2D array. In all generality, it can be pupil or focal plane,
         complex or real with keywords (Estim.is_focal_plane = True, Estim.is_complex = True)
-        to explain the form of the output and potentially prevent wronfull combination of
+        to explain the form of the output and potentially prevent wrongfull combination of
         estim + correc.
 
 

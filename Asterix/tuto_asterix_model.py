@@ -48,8 +48,8 @@ pup_round = OptSy.pupil(modelconfig)
 # Roman pupil of radius prad as define in the parameter file.
 pup_roman = OptSy.pupil(modelconfig, PupType="RomanPup")
 
-# by defaulf all pupil have the diameter of the telescope but smaller pupil / larger can be define
-# This can be useful for Lyot stop
+# by default all pupil have the diameter of the telescope but smaller / larger pupil
+# can be defined. This can be useful for Lyot stop
 # Clear pupil of radius equal to 100 pixel
 pup_round_100 = OptSy.pupil(modelconfig, prad=100)
 # TODO a better way to define this pupil can be to indicate the radius as a percentage of
@@ -97,10 +97,10 @@ pup_roman_poly = OptSy.pupil(modelconfig,
 #let's go back to monochromatic for now.
 modelconfig.update({'Delta_wav': 0})
 
-# Now lets initialie a coronagraph
+# Now lets initialize a coronagraph
 # a coronagraph is a system composed of 3 planes. A apodization plane (PP), a FPM (FP) and a Lyot stop (PP)
-# The coronagraph currently int he parameter file does not have an apodization pupil because
-# it is in the "THD2" defaut, but we can put one, that is why I put an apod.
+# The coronagraph currently int he parameter file does not have an apodization pupil
+# because there is no such plane on the THD2 bench, but we can put one, that is why I put an apod.
 Coronaconfig.update({'filename_instr_apod': "RoundPup"})
 corono = OptSy.coronagraph(modelconfig, Coronaconfig)
 
@@ -116,7 +116,8 @@ slope_phase = 3
 phase = pup_round.random_phase_map(phaserms, rhoc_phase, slope_phase)
 
 
-# # fron this phase we create a electrical field
+# # from this phase we create a electrical field. This is a general
+# aberrated field before any pupil multiplication.
 aberrated_EF = corono.EF_from_phase_and_ampl(phase_abb=phase)
 
 # By default this is the normal coronagraphic PSF (with FPM)
@@ -141,7 +142,7 @@ FP_after_corono_in_contrast = corono.todetector_Intensity(
     dir_save_all_planes=plot_all_fits_dir) / No_mask_PSF
 
 # Finally we can initialize DMs. DMs can be in pupil or off pupil.
-# in the default parameter file, this one in is pupil
+# in the default parameter file, this one is in pupil
 DM3 = OptSy.deformable_mirror(modelconfig,
                               DMconfig,
                               load_fits=False,
@@ -161,6 +162,8 @@ EF_though_DM = DM3.EF_through(entrance_EF=aberrated_EF, DMphase=phase)
 # The concatenate function takes 2 parameters:
 #                               - a list of Optical Systems
 #                               - A list of the same size of the name of those system so that you can access it
+# The list order is form the first optics system to the last in the
+# path of the light (so usually from entrance pupil to Lyot pupil)
 testbed_1DM = OptSy.Testbed([pup_round, DM3, corono],
                                    ["entrancepupil", "DM3", "corono"])
 
@@ -174,7 +177,7 @@ PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF,
 # and the confusing DM3phase is removed so this will send an error:
 # PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF, DMphase = phase)
 
-# we can off now play with all the things we define up to now. for example:
+# we can now play with all the things we define up to now. for example:
 testbed_1DM_romanpup = OptSy.Testbed([pup_roman, DM3, corono],
                                             ["entrancepupil", "DM3", "corono"])
 
@@ -188,11 +191,13 @@ print("number of actuators in each DMs: ",
 # if we want to define exactly the thd2, we need to add a second DM off pupil plane.
 # This can take som time to initialize becasue the DM is off pupil.
 
-# We need to increase the number of pixel in the pupil if we add another DM. I'll put it at the minimum to go faster
+# We need to increase the number of pixel in the pupil if we add another DM.
+# I'll put it at the minimum to go faster
+# because of numerical sampling for the Fresnel propagation
 modelconfig.update({'diam_pup_in_pix': 220})
 
 # Once we change modelconfig, all the previously defined systems are of the wrong dimensions so they cannot
-# be concatenated adn muste be reclacultated
+# be concatenated adn must be reclacultated
 del pup_round, DM3, corono
 pup_round = OptSy.pupil(modelconfig)
 
@@ -210,7 +215,8 @@ DM1 = OptSy.deformable_mirror(modelconfig,
                               save_fits=True,
                               Name_DM='DM1',
                               Model_local_dir=Model_local_dir)
-# we also need to "clear" the apod plane because the THD2 is like that
+# we also need to "clear" the apod plane because  there
+# is no apod plane on the thd2 bench
 Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
 corono_thd = OptSy.coronagraph(modelconfig, Coronaconfig)
 
