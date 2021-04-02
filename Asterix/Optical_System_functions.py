@@ -17,6 +17,9 @@ import Asterix.phase_amplitude_functions as phase_ampl
 
 import Asterix.fits_functions as useful
 
+Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
+model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
+
 
 ##############################################
 ##############################################
@@ -349,10 +352,10 @@ class Optical_System:
         # we pass noFPM = True and noentrance Field by default
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
-        throughput_loss = np.sum(
+        throughput = np.sum(
             np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
 
-        return throughput_loss
+        return throughput
 
     def EF_from_phase_and_ampl(self,
                                phase_abb=0.,
@@ -394,7 +397,7 @@ class Optical_System:
         if isinstance(ampl_abb, (int, float, np.float)):
             ampl_abb = np.full(
                 (self.dim_overpad_pupil, self.dim_overpad_pupil),
-                np.float(phase_abb))
+                np.float(ampl_abb))
 
         if ((phase_abb == 0.).all()) and ((ampl_abb == 0.).all()):
 
@@ -461,12 +464,7 @@ class pupil(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self,
-                 modelconfig,
-                 prad=0.,
-                 model_dir="",
-                 filename="",
-                 noPup=False):
+    def __init__(self, modelconfig, prad=0., PupType = "", filename=""):
         """ --------------------------------------------------
         Initialize a pupil object.
 
@@ -480,15 +478,17 @@ class pupil(Optical_System):
         prad : int Default is the pupil prad in the parameter
             radius in pixels of the round pupil.
 
-        directory : string (default "")
-            name of the directory where filename is
+        PupType : string (default currently "RoundPup", CleanPlane, or RomanPupman)
 
         filename : string (default "")
-            name of the .fits file
+            name and directory of the .fits file
             The pupil .fits files should be be 2D and square([dim_fits,dim_fits])
             and assumed to be centered between 4 pixels.
             if dim_fits < dim_overpad_pupil then the pupil is zero-padded
             if dim_fits > dim_overpad_pupil we raise an Exception
+
+            This is a bit dangerous because your .fits file might not be defined
+            the right way or something so be careful
 
             TODO: include here function scale_amplitude_abb, shift_phase_ramp
             TODO: include an SCC Lyot pupil function here !
@@ -508,41 +508,62 @@ class pupil(Optical_System):
         self.pup = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
                            1.)
 
-        if filename != "":
+        # known case, with known response
+        # default case: round pupil
+        if (PupType == "") or (PupType == "RoundPup"):
+            self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
 
-            # we start by a bunch of tests to check
-            # that pupil has a certain acceptable form.
-            print("we load the pupil: " + filename)
-            print("we assume it is centered in its array")
-            pup_fits = fits.getdata(os.path.join(model_dir, filename))
+        # ClearPlane (in case we want to define an empty pupil plane)
+        elif PupType == "ClearPlane":
+            self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
 
-            if len(pup_fits.shape) != 2:
-                raise Exception("file " + filename + " should be a 2D array")
-
-            if pup_fits.shape[0] != pup_fits.shape[1]:
-                raise Exception("file " + filename +
-                                " appears to be not square")
-
-            # this assume that the pupil file is squared
-            # and is centered in the file
-
-            if pup_fits.shape[0] == self.prad:
-                pup_fits_right_size = pup_fits
-            else:
-                #Rescale to the pupil size
-                pup_fits_right_size = skimage.transform.rescale(
-                    pup_fits,
-                    2 * prad / pup_fits.shape[0],
-                    preserve_range=True,
-                    anti_aliasing=True,
-                    multichannel=False)
+        elif PupType == "RomanPup":
+            #Rescale to the pupil size
+            pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_1002pix_center4pixels.fits"))
+            pup_fits_right_size = skimage.transform.rescale(
+                pup_fits,
+                2 * prad / pup_fits.shape[0],
+                preserve_range=True,
+                anti_aliasing=True,
+                multichannel=False)
 
             self.pup = proc.crop_or_pad_image(pup_fits_right_size,
                                               self.dim_overpad_pupil)
+        elif filename != "":
 
-        else:  # no filename
-            if noPup == False:
-                self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
+                # we start by a bunch of tests to check
+                # that pupil has a certain acceptable form.
+                # print("we load the pupil: " + filename)
+                # print("we assume it is centered in its array")
+                pup_fits = fits.getdata(filename)
+
+                if len(pup_fits.shape) != 2:
+                    raise Exception("file " + filename + " should be a 2D array")
+
+                if pup_fits.shape[0] != pup_fits.shape[1]:
+                    raise Exception("file " + filename +
+                                    " appears to be not square")
+
+                # this assume that the pupil file is squared
+                # and is centered in the file
+
+                if pup_fits.shape[0] == self.prad:
+                    pup_fits_right_size = pup_fits
+                else:
+                    #Rescale to the pupil size
+                    pup_fits_right_size = skimage.transform.rescale(
+                        pup_fits,
+                        2 * prad / pup_fits.shape[0],
+                        preserve_range=True,
+                        anti_aliasing=True,
+                        multichannel=False)
+
+                self.pup = proc.crop_or_pad_image(pup_fits_right_size,
+                                                self.dim_overpad_pupil)
+
+        else:  # no filename and no known. In this case, we can have a few
+            raise Exception("this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup'")
+
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
@@ -673,7 +694,7 @@ class coronagraph(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self, modelconfig, coroconfig, model_dir):
+    def __init__(self, modelconfig, coroconfig):
         """ --------------------------------------------------
         Initialize a coronograph object
 
@@ -681,7 +702,6 @@ class coronagraph(Optical_System):
         ----------
         modelconfig : general configuration parameters (sizes and dimensions)
         coroconfig : coronagraph parameters
-        model_dir : if needed, we load the mask in this directory
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
@@ -755,36 +775,18 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        if coroconfig["filename_instr_apod"] == "ClearPlane":
-            self.apod_pup = pupil(modelconfig,
-                                  prad=self.prad,
-                                  model_dir=model_dir,
-                                  noPup=True)
-
-        elif coroconfig["filename_instr_apod"] == "RoundPup":
-            self.apod_pup = pupil(modelconfig,
-                                  prad=self.prad,
-                                  model_dir=model_dir)
+        if coroconfig["filename_instr_apod"] == "ClearPlane" or coroconfig["filename_instr_apod"]  == "RoundPup":
+            self.apod_pup = pupil(modelconfig, prad=self.prad, PupType= coroconfig["filename_instr_apod"])
         else:
             self.apod_pup = pupil(modelconfig,
                                   prad=self.prad,
-                                  model_dir=model_dir,
                                   filename=coroconfig["filename_instr_apod"])
 
-        if coroconfig["filename_instr_lyot"] == "ClearPlane":
-            self.lyot_pup = pupil(modelconfig,
-                                  prad=self.lyotrad,
-                                  model_dir=model_dir,
-                                  noPup=True)
-
-        elif coroconfig["filename_instr_lyot"] == "RoundPup":
-            self.lyot_pup = pupil(modelconfig,
-                                  prad=self.lyotrad,
-                                  model_dir=model_dir)
+        if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig["filename_instr_lyot"]  == "RoundPup":
+            self.lyot_pup = pupil(modelconfig, prad=self.prad, PupType= coroconfig["filename_instr_lyot"])
         else:
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
-                                  model_dir=model_dir,
                                   filename=coroconfig["filename_instr_lyot"])
 
         self.string_os += '_lrad' + str(int(self.lyotrad))
@@ -1159,7 +1161,6 @@ class deformable_mirror(Optical_System):
                  Name_DM='DM3',
                  load_fits=True,
                  save_fits=False,
-                 model_dir='',
                  Model_local_dir=''):
         """ --------------------------------------------------
         Initialize a deformable mirror object
@@ -1174,8 +1175,6 @@ class deformable_mirror(Optical_System):
         save_fits : bool, default = False if true, we save the DM init fits for future use
         we measure and save the pushact functions
 
-        model_dir: directory to find Measured positions for each actuator in pixel and
-                    influence fun. ie Things you cannot measure yourself and need to be given
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
 
@@ -1242,7 +1241,6 @@ class deformable_mirror(Optical_System):
         self.DM_pushact = self.creatingpushact(DMconfig,
                                                load_fits=load_fits,
                                                save_fits=save_fits,
-                                               model_dir=model_dir,
                                                Model_local_dir=Model_local_dir)
 
         if self.z_position != 0:
@@ -1362,7 +1360,6 @@ class deformable_mirror(Optical_System):
                         DMconfig,
                         load_fits=False,
                         save_fits=False,
-                        model_dir='',
                         Model_local_dir=''):
         """ --------------------------------------------------
         OPD map induced in the DM plane for each actuator
@@ -1372,8 +1369,6 @@ class deformable_mirror(Optical_System):
         DMconfig : structure with all information on DMs
         load_fits : bool, default = False if true, we do not measure the DM init fits, we load them
         save_fits : bool, default = False if true, we save the DM init fits for future use
-        model_dir: directory to find Measured positions for each actuator in pixel and
-                    influence fun. ie Things you cannot measure yourself and need to be given
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
 
@@ -1577,11 +1572,11 @@ class deformable_mirror(Optical_System):
 
         if save_fits == True:
             fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_inPup_RE.fits',
+                         '_RE.fits',
                          np.real(pushact_inpup),
                          overwrite=True)
             fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_inPup_IM.fits',
+                         '_IM.fits',
                          np.imag(pushact_inpup),
                          overwrite=True)
 
@@ -1627,7 +1622,8 @@ class deformable_mirror(Optical_System):
         for i in np.arange(self.DM_pushact_inpup.shape[0]):
             actu = self.DM_pushact_inpup[i]
             # cut = cutinpupil * np.sum(np.abs(actu))
-            if np.sum(np.abs(actu * self.clearpup.pup))/ np.sum(np.abs(actu)) > cutinpupil:
+            if np.sum(np.abs(actu * self.clearpup.pup)) / np.sum(
+                    np.abs(actu)) > cutinpupil:
                 WhichInPupil.append(i)
 
         WhichInPupil = np.array(WhichInPupil)
@@ -1808,7 +1804,7 @@ class Testbed(Optical_System):
         # we concatenate the Optical Element starting by the end
         for num_optical_sys in range(len(list_os)):
 
-            # we firt check that all variables in the list are optical systems
+            # we first check that all variables in the list are optical systems
             # defined the same way.
             if not isinstance(list_os[num_optical_sys], Optical_System):
                 raise Exception("list_os[" + str(num_optical_sys) +
@@ -1820,7 +1816,7 @@ class Testbed(Optical_System):
                     "All optical systems need to be defined with the same initial modelconfig!"
                 )
 
-            # if the os if a DM we increase the number of DM counter and
+            # if the os is a DM we increase the number of DM counter and
             # store the number of act and its name
 
             for params in inspect.signature(
@@ -1864,7 +1860,7 @@ class Testbed(Optical_System):
         # noFPM so that it does not break when we run transmission and max_sum_PSFs
         # which pass this keyword by default
         known_keywords.append('noFPM')
-        # we remove doublons
+        # we remove doubloons
         # known_keywords = list(set(known_keywords))
         known_keywords = list(dict.fromkeys(known_keywords))
 
