@@ -1,28 +1,6 @@
 import numpy as np
 import scipy.optimize as opt
 
-# def butterworth(image, order, length):
-#     """ --------------------------------------------------
-#     Multiply the image by a butterworth
-
-#     Parameters:
-#     ----------
-#     image: 2D-array, input image
-#     order: butterworth order
-#     length: butterworth length
-
-#     Return:
-#     ------
-#     image*butt: 2D array, same dimension as input frame
-#     The input image is multiplied by the butterworth
-#     -------------------------------------------------- """
-
-#     dim_im = len(image)
-#     xx, yy = np.meshgrid(np.arange(dim_im) - dim_im / 2, np.arange(dim_im) - dim_im / 2)
-#     rr = np.hypot(yy, xx)
-#     butt = 1 / (1 + (np.sqrt(2) - 1) * (rr / length)**(2 * order))
-#     return image * butt
-
 
 def twoD_Gaussian(xy,
                   amplitude,
@@ -119,11 +97,11 @@ def resampling(image, new):
     v2.0 19/030/21 J Mazoyer clean names + if image is real, result is real.
     -------------------------------------------------- """
 
-    dim_im = len(image)
+    dimScience = len(image)
 
     fftimage_cropped = cropimage(
-        np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dim_im / 2,
-        dim_im / 2, new)
+        np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dimScience / 2,
+        dimScience / 2, new)
     resized_image = np.fft.fftshift(
         np.fft.fft2(np.fft.ifftshift(fftimage_cropped)))
 

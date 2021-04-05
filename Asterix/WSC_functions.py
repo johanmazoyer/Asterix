@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 __author__ = "Axel Potier"
 
 import os
@@ -13,26 +14,34 @@ def invertSVD(matrix_to_invert,
               cut,
               goal="e",
               regul="truncation",
-              visu=True,
+              visu=False,
               otherbasis=False,
-              basisDM3=0,
-              intermatrix_dir="./"):
+              basisDM3=0):
     """ --------------------------------------------------
     Invert a matrix after a Singular Value Decomposition. The inversion can be regularized.
 
     Parameters:
     ----------
-    matrix_to_invert:
-    cut:
-    goal: string, can be 'e' or 'c'
-          if 'e': the cut set the inverse singular value not to exceed
-          if 'c': the cut set the number of modes to take into account (keep the lowest inverse singular values)
-    regul: string, can be 'truncation' or 'tikhonov'
-          if 'truncation': when goal is set to 'c', the modes with the highest inverse singular values are truncated
-          if 'tikhonov': when goal is set to 'c', the modes with the highest inverse singular values are smooth (low pass filter)
-    visu: boolean, if True, plot and save the crescent inverse singular values , before regularization
-    otherbasis: boolean,
-    basisDM3: goes with other basis
+    matrix_to_invert: numpy array. The matrix
+
+    cut:    int (see below)
+
+    goal:   string, can be 'e' or 'c'
+            if 'e': the cut set the inverse singular value not to exceed
+            if 'c': the cut set the number of modes to take into account
+                            (keep the lowest inverse singular values)
+
+    regul:  string, can be 'truncation' or 'tikhonov'
+            if 'truncation': when goal is set to 'c', the modes with the highest inverse
+                            singular values are truncated
+            if 'tikhonov': when goal is set to 'c', the modes with the highest inverse
+                            singular values are smoothed (low pass filter)
+
+    visu:   boolean, if True, plot and save the crescent inverse singular values,
+                            before regularization
+
+    otherbasis:     boolean,
+    basisDM3:       goes with other basis
 
     Return:
     ------
@@ -49,7 +58,8 @@ def invertSVD(matrix_to_invert,
     if visu == True:
         plt.plot(np.diag(InvS), "r.")
         plt.yscale("log")
-    #     plt.savefig(intermatrix_dir+'invertSVDEFC_'+ '_'.join(map(str, choosepix)) + 'pix_' + str(amplitudeEFC) + 'nm_.png')
+        plt.savefig('invertSVDEFC.png')
+        plt.close()
 
     if goal == "e":
         InvS_truncated[np.where(InvS_truncated > cut)] = 0
@@ -64,7 +74,8 @@ def invertSVD(matrix_to_invert,
             if visu == True:
                 plt.plot(np.diag(InvS_truncated), "b.")
                 plt.yscale("log")
-                # plt.show()
+                plt.show()
+                plt.close()
         pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated),
                                np.transpose(U))
 
@@ -72,215 +83,6 @@ def invertSVD(matrix_to_invert,
         pseudoinverse = np.dot(np.transpose(basisDM3), pseudoinverse)
 
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
-
-
-def createvectorprobes(testbed, amplitude, posprobes, dimimages, cutsvd,
-                       wavelength):
-    """ --------------------------------------------------
-    Build the interaction matrix for pair-wise probing.
-
-    Parameters:
-    ----------
-    wavelength: float, wavelength of the  incoming flux in meter
-    testbed: testbed structure
-    amplitude: float, amplitude of the actuator pokes for pair(wise probing in nm
-    posprobes: 1D-array, index of the actuators to push and pull for pair-wise probing
-    dimimages: int, size of the output image after resampling in pixels
-    cutsvd: float, value not to exceed for the inverse eigeinvalues at each pixels
-    whichDM_to_do_probes: name of the DM to do the probes
-
-
-    Return:
-    ------
-    PWVector: 2D array, vector probe to be multiplied by the image difference matrix in order to retrieve the focal plane electric field
-    SVD: 2D array, map of the inverse singular values for each pixels and before regularization
-    -------------------------------------------------- """
-    numprobe = len(posprobes)
-    deltapsik = np.zeros((numprobe, dimimages, dimimages), dtype=complex)
-    probephase = np.zeros(
-        (numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
-    matrix = np.zeros((numprobe, 2))
-    PWVector = np.zeros((dimimages**2, 2, numprobe))
-    SVD = np.zeros((2, dimimages, dimimages))
-
-    k = 0
-
-    for i in posprobes:
-
-        # TODO: for now we use testbed.DM3.pushact but we shoudl put a
-        # which_DM_to_do_probes parameter
-        probe_surface = testbed.DM3.DM_pushact[i]
-        probephase[
-            k] = probe_surface * amplitude * 1e-9 * 2 * np.pi / wavelength
-
-        inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
-                                                          1j * probephase[k])
-        deltapsikbis = (testbed.todetector(entrance_EF=inputwavefront) /
-                        np.sqrt(testbed.maxPSF))
-
-        deltapsik[k] = proc.resampling(deltapsikbis, dimimages)
-        k = k + 1
-
-    l = 0
-    for i in np.arange(dimimages):
-        for j in np.arange(dimimages):
-            matrix[:, 0] = np.real(deltapsik[:, i, j])
-            matrix[:, 1] = np.imag(deltapsik[:, i, j])
-
-            try:
-                inversion = invertSVD(matrix, cutsvd, visu=False)
-                SVD[:, i, j] = inversion[0]
-                PWVector[l] = inversion[2]
-            except:
-                print("Careful: Error in invertSVD! for l=" + str(l))
-                SVD[:, i, j] = np.zeros(2)
-                PWVector[l] = np.zeros((2, numprobe))
-            l = l + 1
-    return [PWVector, SVD]
-
-
-def load_or_save_maskDH(intermatrix_dir, EFCconfig, dim_sampl, DH_sampling,
-                        dim_im, science_sampling):
-    """ --------------------------------------------------
-        define at a single place the complicated file name of the mask and do the saving
-        and loading depending in existence
-        THIS IS BAD, THE DH SHOULD BE CODED IN l/D and not in pixel in the DH_sampling sampling.
-        ONCE CORRECTED THIS FUNCTION CAN BE SIMPLIFIED A LOT and loaded twice, once for each dimension
-
-        Parameters:
-        ----------
-        intermatrix_dir: Directory where to save the fits
-        EFCconfig: all the EFC parameters containing shape and size of the DH.
-        dim_sampl: dimension of the re-sampled focal plane
-        DH_sampling : sampling of the re-sampled DH
-        dim_im: dimension of the FP in the detector focal plane
-        science_sampling : sampling of the FP in the detector focal plane
-
-        Return:
-        ------
-        the 2 dark hole mask in each dimensions and the string name
-    -------------------------------------------------- """
-
-    DHshape = EFCconfig["DHshape"]
-    choosepix = EFCconfig["choosepix"]
-    choosepix = [int(i) for i in choosepix]
-    circ_rad = EFCconfig["circ_rad"]
-    circ_rad = [int(i) for i in circ_rad]
-    circ_side = EFCconfig["circ_side"].lower()
-    circ_offset = EFCconfig["circ_offset"]
-    circ_angle = EFCconfig["circ_angle"]
-
-    if DHshape == "square":
-        stringdh = "_square_" + "_".join(map(str, choosepix)) + "pix_"
-    else:
-        stringdh = "_circle_" + "_".join(map(
-            str, circ_rad)) + "pix_" + str(circ_side) + '_'
-        if circ_side != 'full':
-            stringdh = stringdh + str(circ_offset) + 'pix_' + str(
-                circ_angle) + 'deg_'
-
-    fileMaskDH = "MaskDH" + stringdh
-
-    fileMaskDH_sampl = fileMaskDH + 'dim' + str(
-        dim_sampl) + 'res{:.1f}'.format(DH_sampling)
-
-    if os.path.exists(intermatrix_dir + fileMaskDH_sampl + ".fits") == True:
-        print("Mask of DH " + fileMaskDH + " already exist")
-        maskDH = fits.getdata(intermatrix_dir + fileMaskDH_sampl + ".fits")
-    else:
-        print("We measure and save " + fileMaskDH_sampl)
-        maskDH = creatingMaskDH(dim_sampl,
-                                DHshape,
-                                choosepixDH=choosepix,
-                                circ_rad=circ_rad,
-                                circ_side=circ_side,
-                                circ_offset=circ_offset,
-                                circ_angle=circ_angle)
-        fits.writeto(intermatrix_dir + fileMaskDH_sampl + ".fits", maskDH)
-
-    fileMaskDH_detect = fileMaskDH + 'dim' + str(dim_im) + 'res{:.1f}'.format(
-        science_sampling)
-
-    if os.path.exists(intermatrix_dir + fileMaskDH_detect + ".fits") == True:
-        print("Mask of DH " + fileMaskDH_detect + " already exist")
-        maskDHcontrast = fits.getdata(intermatrix_dir + fileMaskDH_detect +
-                                      ".fits")
-    else:
-        print("We measure and save " + fileMaskDH_detect)
-        maskDHcontrast = creatingMaskDH(
-            dim_im,
-            DHshape,
-            choosepixDH=[
-                element * dim_im / dim_sampl for element in choosepix
-            ],
-            circ_rad=[element * dim_im / dim_sampl for element in circ_rad],
-            circ_side=circ_side,
-            circ_offset=circ_offset * dim_im / dim_sampl,
-            circ_angle=circ_angle)
-
-        fits.writeto(intermatrix_dir + fileMaskDH_detect + ".fits",
-                     maskDHcontrast)
-    return maskDH, maskDHcontrast, stringdh
-
-
-def creatingMaskDH(dimimages,
-                   shape,
-                   choosepixDH=[8, 35, -35, 35],
-                   circ_rad=[8, 10],
-                   circ_side="full",
-                   circ_offset=8,
-                   circ_angle=0):
-    """ --------------------------------------------------
-    Create a binary mask.
-
-    Parameters:
-    ----------
-    dimimages: int, size of the output squared mask
-    shape: string, can be 'square' or 'circle' , define the shape of the binary mask.
-    choosepixDH: 1D array, if shape is 'square', define the edges of the binary mask in pixels.
-    circ_rad: 1D array, if shape is 'circle', define the inner and outer edge of the binary mask
-    circ_side: string, if shape is 'circle', can define to keep only one side of the circle
-    circ_offset : float, remove pixels that are closer than circ_offset if circ_side is set
-    circ_angle : float, if circ_side is set, remove pixels within a cone of angle circ_angle
-    Return:
-    ------
-    maskDH: 2D array, binary mask
-    -------------------------------------------------- """
-    xx, yy = np.meshgrid(
-        np.arange(dimimages) - (dimimages) / 2,
-        np.arange(dimimages) - (dimimages) / 2)
-    rr = np.hypot(yy, xx)
-    if shape == "square":
-        maskDH = np.ones((dimimages, dimimages))
-        maskDH[xx < choosepixDH[0]] = 0
-        maskDH[xx > choosepixDH[1]] = 0
-        maskDH[yy < choosepixDH[2]] = 0
-        maskDH[yy > choosepixDH[3]] = 0
-    if shape == "circle":
-        maskDH = np.ones((dimimages, dimimages))
-        maskDH[rr >= circ_rad[1]] = 0
-        maskDH[rr < circ_rad[0]] = 0
-        if circ_side == "right":
-            maskDH[xx < np.abs(circ_offset)] = 0
-            if circ_angle != 0:
-                maskDH[yy - xx / np.tan(circ_angle * np.pi / 180) > 0] = 0
-                maskDH[yy + xx / np.tan(circ_angle * np.pi / 180) < 0] = 0
-        if circ_side == "left":
-            maskDH[xx > -np.abs(circ_offset)] = 0
-            if circ_angle != 0:
-                maskDH[yy - xx / np.tan(circ_angle * np.pi / 180) < 0] = 0
-                maskDH[yy + xx / np.tan(circ_angle * np.pi / 180) > 0] = 0
-        if circ_side == "bottom":
-            maskDH[yy < np.abs(circ_offset)] = 0
-            if circ_angle != 0:
-                maskDH[yy - xx * np.tan(circ_angle * np.pi / 180) < 0] = 0
-                maskDH[yy + xx * np.tan(circ_angle * np.pi / 180) < 0] = 0
-        if circ_side == "top":
-            maskDH[yy > -np.abs(circ_offset)] = 0
-            if circ_angle != 0:
-                maskDH[yy - xx * np.tan(circ_angle * np.pi / 180) > 0] = 0
-                maskDH[yy + xx * np.tan(circ_angle * np.pi / 180) > 0] = 0
-    return maskDH
 
 
 def creatingCorrectionmatrix(input_wavefront,
@@ -315,6 +117,9 @@ def creatingCorrectionmatrix(input_wavefront,
     ------
     Gmatrixbis: 2D array, jacobian matrix for Electric Field Conjugation
     -------------------------------------------------- """
+    # TODO this is not super clear to me, I need to clean it with Raphael,
+    # with available tools. Shouldn;t we go through DM1 and 3 ?
+
     # change basis if needed
     if otherbasis == True:
         nb_fct = basisDM3.shape[0]  # number of functions in the basis
@@ -339,15 +144,13 @@ def creatingCorrectionmatrix(input_wavefront,
             print(i)
         Psivector = bas_fct[i]
 
-        # TODO for now we only keep the corono structure,
-        # we should use testbed.todetector(entrance_EF= input_wavefront, DMXX = Psivector)
-        # directly
-        #
+        # TODO we shoudl replace by perfect estimation. This is equivalent but it would be more coherent
         # also i and k are the same indice I think :-)
-        Gvector = (testbed.corono.todetector(entrance_EF=input_wavefront * 1j *
-                                             Psivector) /
-                   np.sqrt(testbed.maxPSF))
-        Gvector = proc.resampling(Gvector, dimimages)
+        # the names here are confusing
+
+        Gvector = proc.resampling(
+            testbed.todetector(entrance_EF=input_wavefront * 1j * Psivector),
+            dimimages)
         Gmatrixbis[0:int(np.sum(mask)),
                    k] = np.real(Gvector[np.where(mask == 1)]).flatten()
         Gmatrixbis[int(np.sum(mask)):,
@@ -360,18 +163,27 @@ def creatingCorrectionmatrix(input_wavefront,
 def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
                 nbDMactu):
     """ --------------------------------------------------
-    Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
+    Voltage to apply on the deformable mirror in order to minimize the speckle
+        intensity in the dark hole region
 
     Parameters:
     ----------
-    mask: Binary mask corresponding to the dark hole region
-    Result_Estimate: 2D array can be complex, focal plane electric field
-    inversed_jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
-    WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
-    nbDMactu:number of DM actuators
+    mask:               2D Binary mask corresponding to the dark hole region
+
+    Result_Estimate:    2D array can be complex, focal plane electric field
+
+    inversed_jacobian:  2D array, inverse of the jacobian matrix created
+                                with all the actuators in WhichInPupil
+
+    WhichInPupil:       1D array, index of the actuators taken into account
+                            to create the jacobian matrix
+
+    nbDMactu:           int, number of DM actuators
+
     Return:
     ------
-    solution: 1D array, voltage to apply on each deformable mirror actuator
+    solution:           1D array, voltage to apply on each deformable
+                        mirror actuator
     -------------------------------------------------- """
 
     Eab = np.zeros(2 * int(np.sum(mask)))
@@ -388,16 +200,25 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
 def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
                nbDMactu):
     """ --------------------------------------------------
-    Voltage to apply on the deformable mirror in order to minimize the speckle intensity in the dark hole region
+    Voltage to apply on the deformable mirror in order to minimize the speckle
+    intensity in the dark hole region
 
     Parameters:
     ----------
-    mask: Binary mask corresponding to the dark hole region
-    Result_Estimate: 2D array can be complex, focal plane electric field
-    Hessian_Matrix: 2D array , Hessian matrix of the DH energy
-    Jacobian: 2D array, inverse of the jacobian matrix created with all the actuators in WhichInPupil
-    WhichInPupil: 1D array, index of the actuators taken into account to create the jacobian matrix
-    nbDMactu:number of DM actuators
+    mask:               Binary mask corresponding to the dark hole region
+
+    Result_Estimate:    2D array can be complex, focal plane electric field
+
+    Hessian_Matrix:     2D array , Hessian matrix of the DH energy
+
+    Jacobian:           2D array, inverse of the jacobian matrix created with all the actuators
+                        in WhichInPupil
+
+    WhichInPupil:       1D array, index of the actuators taken into account
+                        to create the jacobian matrix
+
+    nbDMactu:           number of DM actuators
+
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -447,6 +268,80 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     return solution
 
 
+#################################################################################
+### PWD functions
+#################################################################################
+
+
+def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
+                       wavelength):
+    """ --------------------------------------------------
+    Build the interaction matrix for pair-wise probing.
+
+    Parameters:
+    ----------
+    testbed:    testbed structure
+    amplitude:  float, amplitude of the actuator pokes for pair(wise probing in nm
+    posprobes:  1D-array, index of the actuators to push and pull for pair-wise probing
+    dimEstim:  int, size of the output image after resampling in pixels
+    cutsvd:     float, value not to exceed for the inverse eigeinvalues at each pixels
+    wavelength: float, wavelength of the incoming flux in meter
+
+
+    Return:
+    ------
+    PWVector:   2D array, vector probe to be multiplied by the image difference
+                matrix in order to retrieve the focal plane electric field
+
+    SVD:        2D array, map of the inverse singular values for each pixels and
+                before regularization
+    -------------------------------------------------- """
+    numprobe = len(posprobes)
+    deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=complex)
+    probephase = np.zeros(
+        (numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
+    matrix = np.zeros((numprobe, 2))
+    PWVector = np.zeros((dimEstim**2, 2, numprobe))
+    SVD = np.zeros((2, dimEstim, dimEstim))
+
+    k = 0
+
+    for i in posprobes:
+
+        # TODO: we shoudl maybe put a which_DM_to_do_probes parameter
+        Voltage_probe = np.zeros(testbed.DM3.number_act)
+        Voltage_probe[i] = amplitude
+        probephase[k] = testbed.DM3.voltage_to_phase(Voltage_probe,
+                                                     wavelength=wavelength)
+
+        # for PW the probes are not sent in the DM but at the entrance of the testbed.
+        # with an hypothesis of small phase.
+        #  not sure the pupil multiplication is necessary
+        # inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
+        #                                                   1j * probephase[k])
+
+        deltapsik[k] = proc.resampling(
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k]), dimEstim)
+        k = k + 1
+
+    l = 0
+    for i in np.arange(dimEstim):
+        for j in np.arange(dimEstim):
+            matrix[:, 0] = np.real(deltapsik[:, i, j])
+            matrix[:, 1] = np.imag(deltapsik[:, i, j])
+
+            try:
+                inversion = invertSVD(matrix, cutsvd, visu=False)
+                SVD[:, i, j] = inversion[0]
+                PWVector[l] = inversion[2]
+            except:
+                print("Careful: Error in invertSVD! for l=" + str(l))
+                SVD[:, i, j] = np.zeros(2)
+                PWVector[l] = np.zeros((2, numprobe))
+            l = l + 1
+    return [PWVector, SVD]
+
+
 def FP_PWestimate(Difference, Vectorprobes):
     """ --------------------------------------------------
     Calculate the focal plane electric field from the prone image
@@ -478,15 +373,14 @@ def FP_PWestimate(Difference, Vectorprobes):
 
 
 def createdifference(input_wavefront,
-                     posprobes,
-                     pushact,
                      testbed,
+                     posprobes,
                      dimimages,
                      amplitudePW,
                      DM1phase=0,
                      DM3phase=0,
-                     noise=False,
-                     numphot=1e30,
+                     photon_noise=False,
+                     nb_photons=1e30,
                      wavelength=None):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
@@ -521,34 +415,40 @@ def createdifference(input_wavefront,
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
-    ## To convert in photon flux
-    contrast_to_photons = 1 / testbed.transmission() * numphot * testbed.maxPSF / testbed.sumPSF
+    #TODO if the DM1 is active we can measure once the EFthoughDM1 ans store it in entrance_EF
+    #to save time. To check
+    # if testbed.DM1.active is True:
+    #     input_wavefront = testbed.DM1.EF_through(entrance_EF=input_wavefront, DM1phase = DM1phase,wavelength=wavelength)
 
     for count, num_probe in enumerate(posprobes):
-        probephase = pushact[
-            num_probe] * amplitudePW * 1e-9 * 2 * np.pi / wavelength
+
+        Voltage_probe = np.zeros(testbed.DM3.number_act)
+        Voltage_probe[num_probe] = amplitudePW
+        probephase = testbed.DM3.voltage_to_phase(Voltage_probe,
+                                                  wavelength=wavelength)
 
         # Not 100% sure about wavelength here, so I prefeer to use
         # todetector to keep it monochromatic instead of todetector_Intensity
         # which is large band
-
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                DM1phase=DM1phase,
                                DM3phase=DM3phase - probephase,
-                               wavelength=wavelength))**2 / testbed.maxPSF
+                               wavelength=wavelength))**2
 
         Ikplus = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                DM1phase=DM1phase,
                                DM3phase=DM3phase + probephase,
-                               wavelength=wavelength))**2 / testbed.maxPSF
+                               wavelength=wavelength))**2
 
-        if noise == True:
-            Ikplus = (np.random.poisson(Ikplus * contrast_to_photons) /
-                      contrast_to_photons)
-            Ikmoins = (np.random.poisson(Ikmoins * contrast_to_photons) /
-                       contrast_to_photons)
+        if photon_noise == True:
+            Ikplus = np.random.poisson(
+                Ikplus * testbed.normPupto1 *
+                nb_photons) / (testbed.normPupto1 * nb_photons)
+            Ikmoins = np.random.poisson(
+                Ikmoins * testbed.normPupto1 *
+                nb_photons) / (testbed.normPupto1 * nb_photons)
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 
