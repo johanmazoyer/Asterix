@@ -161,6 +161,7 @@ class Estimator:
                  wavelength=None,
                  photon_noise=False,
                  nb_photons=1e30,
+                 perfect_estimation = False,
                  **kwargs):
         """ --------------------------------------------------
         Run an estimation from a testbed, with a given input wavefront
@@ -176,6 +177,11 @@ class Estimator:
         wavelength      default None, float, wavelenght of the estimation
         photon_noise    default False, boolean,  If True, add photon noise.
         nb_photons      default 1e30, int Number of photons entering the pupil
+        perfect_estimation default = False. if true This is equivalent to
+                                            have self.technique = "perfect" but even
+                                            if we are using another technique, se
+                                            sometimes need a perfect estimation
+                                            especially in EFC.
 
         Returns
         ------
@@ -188,7 +194,7 @@ class Estimator:
         if wavelength is None:
             wavelength = testbed.wavelength_0
 
-        if self.technique == "perfect":
+        if (self.technique == "perfect") or (perfect_estimation is True):
             # If polychromatic, assume a perfect estimation at one wavelength
 
             resultatestimation = testbed.todetector(entrance_EF=entrance_EF,
