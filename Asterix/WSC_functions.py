@@ -118,7 +118,14 @@ def creatingCorrectionmatrix(input_wavefront,
     Gmatrixbis: 2D array, jacobian matrix for Electric Field Conjugation
     -------------------------------------------------- """
     # TODO this is not super clear to me, I need to clean it with Raphael,
-    # with available tools. Shouldn;t we go through DM1 and 3 ?
+    # with available tools.
+    #
+    # We can save tones of ram here !! This is why computer are crashing !
+    # We duplicate pushact 2 times:  probephase, bas_fct !!!!
+
+    # other basis need to be cleared basisDM3 need to be defined in all cases
+    # and it should be the same function for each basis, just with a different
+    # basis
 
     # change basis if needed
     if otherbasis == True:
