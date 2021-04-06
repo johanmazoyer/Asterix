@@ -179,9 +179,9 @@ class Estimator:
         nb_photons      default 1e30, int Number of photons entering the pupil
         perfect_estimation default = False. if true This is equivalent to
                                             have self.technique = "perfect" but even
-                                            if we are using another technique, se
+                                            if we are using another technique, we
                                             sometimes need a perfect estimation
-                                            especially in EFC.
+                                            especially in EFC. if perfect_estimation
 
         Returns
         ------

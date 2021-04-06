@@ -424,60 +424,103 @@ def correctionLoop(parameter_file,
 
     plt.ion()
     plt.figure()
-    k = 0
-    for mode in modevector:
+    for iteration, mode in enumerate(modevector):
         print("--------------------------------------------------")
-        print("Iteration number: ", k, " EFC truncation: ", mode)
+        print("Iteration number: ", iteration, " SVD truncation: ", mode)
 
         resultatestimation = estim.estimate(thd2,
                                             entrance_EF=input_wavefront,
-                                            DM1phase=phaseDM1[k],
-                                            DM3phase=phaseDM3[k],
+                                            DM1phase=phaseDM1[iteration],
+                                            DM3phase=phaseDM3[iteration],
                                             wavelength=thd2.wavelength_0,
                                             photon_noise=photon_noise,
                                             nb_photons=nb_photons)
+
+        if Linesearch is True:
+            search_best_contrast = list()
+            for modeLinesearch in Linesearchmode:
+                perfectestimate = estim.estimate(thd2,
+                                            entrance_EF=input_wavefront,
+                                            DM1phase=phaseDM1[iteration],
+                                            DM3phase=phaseDM3[iteration],
+                                            wavelength=thd2.wavelength_0,
+                                            perfect_estimation= True)
+                perfectsolution = - gain * correc.amplitudeEFC* correc.toDM_voltage(thd2, perfectestimate, modeLinesearch)
+
+                #### to be removed #### #### #### #### #### #### #### #### ####
+                if thd2.DM1.active == True:
+                    # Phase to apply on DM1
+                    apply_on_DM1 = perfectsolution[thd2.DM3.number_act:]
+                    phaseDM1_tmp = thd2.DM1.voltage_to_phase(
+                        voltage_DM1[iteration] + apply_on_DM1, wavelength=thd2.wavelength_0)
+                else:
+                    phaseDM1_tmp = 0
+
+                apply_on_DM3 = perfectsolution[0:thd2.DM3.number_act]
+                # Phase to apply on DM3
+                phaseDM3_tmp = thd2.DM3.voltage_to_phase(
+                    voltage_DM3[iteration] + apply_on_DM3, wavelength=thd2.wavelength_0)
+                ######## #### #### #### #### #### #### #### #### #### #### ####
+
+                imagedetector_tmp = thd2.todetector_Intensity(
+                            entrance_EF=input_wavefront,
+                            DM1phase=phaseDM1_tmp,
+                            DM3phase=phaseDM3_tmp)
+
+                search_best_contrast.append(np.mean(imagedetector_tmp[np.where(MaskScience != 0)]))
+            bestcontrast = np.amin(search_best_contrast)
+            mode = Linesearchmode[np.argmin(search_best_contrast)]
+            print('Best contrast= ', bestcontrast, ' Best regul= ', mode)
+
+
 
         # TODO is amplitudeEFC really useful ? with the small phase hypothesis done when
         # measuring the matrix, everything is linear !
         solution = - gain * correc.amplitudeEFC* correc.toDM_voltage(thd2, resultatestimation, mode)
 
 
+        ### TODO Following lines should be removed  since we should put directly solution in
+        # the testbed model
+        # this step should be 3 simple lines :
+        # estimation = estim.estimate(...)
+        # DMVoltag += correc.toDM_voltage(estimation,...)
+        # imagedetector = thd2.todetector_Intensity(DMVoltag,...)
 
-        ### Following lines should all be done inside of the THD structure...
-        # or actuallly should ot be done since we should put directly solution in the testbed model
-
+        #### to be removed #### #### #### #### #### #### #### #### ####
         if thd2.DM1.active == True:
             # Phase to apply on DM1
             apply_on_DM1 = solution[thd2.DM3.number_act:]
-            voltage_DM1.append(voltage_DM1[k] + apply_on_DM1)
-            phaseDM1[k + 1] = thd2.DM1.voltage_to_phase(
-                voltage_DM1[k + 1], wavelength=thd2.wavelength_0)
+            voltage_DM1.append(voltage_DM1[iteration] + apply_on_DM1)
+            phaseDM1[iteration + 1] = thd2.DM1.voltage_to_phase(
+                voltage_DM1[iteration + 1], wavelength=thd2.wavelength_0)
+        else:
+            phaseDM1[iteration + 1] = 0
 
         apply_on_DM3 = solution[0:thd2.DM3.number_act]
 
         # Phase to apply on DM3
-        voltage_DM3.append(voltage_DM3[k] + apply_on_DM3)
-        phaseDM3[k + 1] = thd2.DM3.voltage_to_phase(
-            voltage_DM3[k + 1], wavelength=thd2.wavelength_0)
+        voltage_DM3.append(voltage_DM3[iteration] + apply_on_DM3)
+        phaseDM3[iteration + 1] = thd2.DM3.voltage_to_phase(
+            voltage_DM3[iteration + 1], wavelength=thd2.wavelength_0)
+        ########################################################################
 
-        imagedetector[k + 1] = thd2.todetector_Intensity(
+        imagedetector[iteration + 1] = thd2.todetector_Intensity(
             entrance_EF=input_wavefront,
-            DM1phase=phaseDM1[k + 1],
-            DM3phase=phaseDM3[k + 1])
+            DM1phase=phaseDM1[iteration + 1],
+            DM3phase=phaseDM3[iteration + 1])
 
-        meancontrast[k + 1] = np.mean(
-            imagedetector[k + 1][np.where(MaskScience != 0)])
-        print("Mean contrast in DH: ", meancontrast[k + 1])
+        meancontrast[iteration + 1] = np.mean(
+            imagedetector[iteration + 1][np.where(MaskScience != 0)])
+        print("Mean contrast in DH: ", meancontrast[iteration + 1])
 
         if photon_noise == True:
-            photondetector[k + 1] = np.random.poisson(
-                imagedetector[k + 1] * thd2.normPupto1 * photon_noise)
+            photondetector[iteration + 1] = np.random.poisson(
+                imagedetector[iteration + 1] * thd2.normPupto1 * photon_noise)
 
         plt.clf()
-        plt.imshow(np.log10(imagedetector[k + 1]), vmin=-8, vmax=-5)
+        plt.imshow(np.log10(imagedetector[iteration + 1]), vmin=-8, vmax=-5)
         plt.colorbar()
         plt.pause(0.01)
-        k = k + 1
 
     plt.show()
 
