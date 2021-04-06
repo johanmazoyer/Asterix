@@ -116,7 +116,7 @@ class Corrector:
                 # TODO lot of cleaning to do on the "other basis ??"
                 if self.DM3_otherbasis == True:
                     self.DM3_basis = fits.getdata(realtestbed_dir +
-                                             "Map_modes_DM3_foc.fits")
+                                                  "Map_modes_DM3_foc.fits")
                 else:
                     self.DM3_basis = 0
 
@@ -180,9 +180,11 @@ class Corrector:
 
                 if self.correction_algorithm == "em" or self.correction_algorithm == "steepest":
 
-                    self.G = np.zeros((int(np.sum(MaskEstim)), Gmatrix.shape[1]), dtype=complex)
+                    self.G = np.zeros(
+                        (int(np.sum(MaskEstim)), Gmatrix.shape[1]),
+                        dtype=complex)
                     self.G = (Gmatrix[0:int(Gmatrix.shape[0] / 2), :] +
-                        1j * Gmatrix[int(Gmatrix.shape[0] / 2):, :])
+                              1j * Gmatrix[int(Gmatrix.shape[0] / 2):, :])
                     transposecomplexG = np.transpose(np.conjugate(self.G))
                     self.M0 = np.real(np.dot(transposecomplexG, self.G))
 
@@ -190,6 +192,7 @@ class Corrector:
 
                     #### Not sure what it does... Is this still useful ?
                     # I modified it with the new mask parameters
+                    # TODO talk with raphael
                     if MaskDH.DH_shape == "square":
                         print(
                             "TO SET ON LABVIEW: ",

@@ -309,6 +309,7 @@ class Optical_System:
 
         if in_contrast == True:
             if (wavelength_vec != self.wav_vec).all():
+                # TODO to be discussed with Raphael
                 raise Exception(
                     """carefull: contrast normalization in todetector_Intensity assumes
                      it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1
@@ -352,8 +353,7 @@ class Optical_System:
         # we pass noFPM = True and noentrance Field by default
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
-        throughput = np.sum(
-            np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
+        throughput = np.sum(np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
 
         return throughput
 
@@ -419,7 +419,7 @@ class Optical_System:
             - self.norm_polychrom. float
                         the polychromatic PSF use to nomrmalize to_detector_Intensity
             - self.normPupto1, which is used to measure the photon noise
-                This it the factor that we use to measure photon noise.
+                This is the factor that we use to measure photon noise.
                 From an image in contrast, we now normalize by the total number of photons
                   (*self.norm_polychrom / self.sum_polychrom) and then account for the photons
                 lost in the process (1 / self.transmission()). Can be used as follow:
@@ -428,20 +428,20 @@ class Optical_System:
         AUTHOR : Johan Mazoyer
         """
 
-        PSFs = np.zeros((len(self.wav_vec), self.dimScience, self.dimScience),
-                        dtype=complex)
+        EF_PSF_bw = np.zeros((self.dimScience, self.dimScience), dtype=complex)
         self.norm_monochrom = np.zeros((len(self.wav_vec)))
         self.sum_monochrom = np.zeros((len(self.wav_vec)))
 
         for i, wav in enumerate(self.wav_vec):
-            PSFs[i] = self.todetector(wavelength=wav,
-                                      noFPM=True,
-                                      center_on_pixel=True,
-                                      in_contrast=False)
-            self.norm_monochrom[i] = np.max(np.abs(PSFs[i])**2)
+            EF_PSF_wl = self.todetector(wavelength=wav,
+                                        noFPM=True,
+                                        center_on_pixel=True,
+                                        in_contrast=False)
+            self.norm_monochrom[i] = np.max(np.abs(EF_PSF_wl)**2)
+            EF_PSF_bw += EF_PSF_wl
 
-        self.norm_polychrom = np.max(np.abs(np.sum(PSFs, axis=0))**2)
-        self.sum_polychrom = np.sum(np.abs(np.sum(PSFs, axis=0))**2)
+        self.norm_polychrom = np.max(np.abs(EF_PSF_bw)**2)
+        self.sum_polychrom = np.sum(np.abs(EF_PSF_bw)**2)
 
         self.normPupto1 = 1 / self.transmission(
         ) * self.norm_polychrom / self.sum_polychrom
@@ -464,7 +464,7 @@ class pupil(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self, modelconfig, prad=0., PupType = "", filename=""):
+    def __init__(self, modelconfig, prad=0., PupType="", filename=""):
         """ --------------------------------------------------
         Initialize a pupil object.
 
@@ -482,13 +482,13 @@ class pupil(Optical_System):
 
         filename : string (default "")
             name and directory of the .fits file
-            The pupil .fits files should be be 2D and square([dim_fits,dim_fits])
-            and assumed to be centered between 4 pixels.
+            The pupil .fits files should be 2D and square([dim_fits,dim_fits])
+            with even number of pix and centered between 4 pixels.
             if dim_fits < dim_overpad_pupil then the pupil is zero-padded
             if dim_fits > dim_overpad_pupil we raise an Exception
 
-            This is a bit dangerous because your .fits file might not be defined
-            the right way or something so be careful
+            This is a bit dangerous because your .fits file might must be defined
+            the right way so be careful
 
             TODO: include here function scale_amplitude_abb, shift_phase_ramp
             TODO: include an SCC Lyot pupil function here !
@@ -519,7 +519,9 @@ class pupil(Optical_System):
 
         elif PupType == "RomanPup":
             #Rescale to the pupil size
-            pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_1002pix_center4pixels.fits"))
+            pup_fits = fits.getdata(
+                os.path.join(model_dir,
+                             "roman_pup_1002pix_center4pixels.fits"))
             pup_fits_right_size = skimage.transform.rescale(
                 pup_fits,
                 2 * prad / pup_fits.shape[0],
@@ -531,39 +533,40 @@ class pupil(Optical_System):
                                               self.dim_overpad_pupil)
         elif filename != "":
 
-                # we start by a bunch of tests to check
-                # that pupil has a certain acceptable form.
-                # print("we load the pupil: " + filename)
-                # print("we assume it is centered in its array")
-                pup_fits = fits.getdata(filename)
+            # we start by a bunch of tests to check
+            # that pupil has a certain acceptable form.
+            # print("we load the pupil: " + filename)
+            # print("we assume it is centered in its array")
+            pup_fits = fits.getdata(filename)
 
-                if len(pup_fits.shape) != 2:
-                    raise Exception("file " + filename + " should be a 2D array")
+            if len(pup_fits.shape) != 2:
+                raise Exception("file " + filename + " should be a 2D array")
 
-                if pup_fits.shape[0] != pup_fits.shape[1]:
-                    raise Exception("file " + filename +
-                                    " appears to be not square")
+            if pup_fits.shape[0] != pup_fits.shape[1]:
+                raise Exception("file " + filename +
+                                " appears to be not square")
 
-                # this assume that the pupil file is squared
-                # and is centered in the file
+            # this assume that the pupil file is squared
+            # and is centered in the file
 
-                if pup_fits.shape[0] == self.prad:
-                    pup_fits_right_size = pup_fits
-                else:
-                    #Rescale to the pupil size
-                    pup_fits_right_size = skimage.transform.rescale(
-                        pup_fits,
-                        2 * prad / pup_fits.shape[0],
-                        preserve_range=True,
-                        anti_aliasing=True,
-                        multichannel=False)
+            if pup_fits.shape[0] == self.prad:
+                pup_fits_right_size = pup_fits
+            else:
+                #Rescale to the pupil size
+                pup_fits_right_size = skimage.transform.rescale(
+                    pup_fits,
+                    2 * prad / pup_fits.shape[0],
+                    preserve_range=True,
+                    anti_aliasing=True,
+                    multichannel=False)
 
-                self.pup = proc.crop_or_pad_image(pup_fits_right_size,
-                                                self.dim_overpad_pupil)
+            self.pup = proc.crop_or_pad_image(pup_fits_right_size,
+                                              self.dim_overpad_pupil)
 
         else:  # no filename and no known. In this case, we can have a few
-            raise Exception("this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup'")
-
+            raise Exception(
+                "this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup'"
+            )
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
@@ -775,15 +778,21 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        if coroconfig["filename_instr_apod"] == "ClearPlane" or coroconfig["filename_instr_apod"]  == "RoundPup":
-            self.apod_pup = pupil(modelconfig, prad=self.prad, PupType= coroconfig["filename_instr_apod"])
+        if coroconfig["filename_instr_apod"] == "ClearPlane" or coroconfig[
+                "filename_instr_apod"] == "RoundPup":
+            self.apod_pup = pupil(modelconfig,
+                                  prad=self.prad,
+                                  PupType=coroconfig["filename_instr_apod"])
         else:
             self.apod_pup = pupil(modelconfig,
                                   prad=self.prad,
                                   filename=coroconfig["filename_instr_apod"])
 
-        if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig["filename_instr_lyot"]  == "RoundPup":
-            self.lyot_pup = pupil(modelconfig, prad=self.prad, PupType= coroconfig["filename_instr_lyot"])
+        if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig[
+                "filename_instr_lyot"] == "RoundPup":
+            self.lyot_pup = pupil(modelconfig,
+                                  prad=self.prad,
+                                  PupType=coroconfig["filename_instr_lyot"])
         else:
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
@@ -1254,7 +1263,7 @@ class deformable_mirror(Optical_System):
             self.DM_pushact_inpup = self.DM_pushact
             # This is a duplicate of the same file but coherent and
             # allows you to easily concatenate wherever are the DMs
-            # this is not taking memmery this is just 2 names for the
+            # this is not taking memory this is just 2 names for the
             # same object in memory:
             # print(id(self.DM_pushact_inpup))
             # print(id(self.DM_pushact))
