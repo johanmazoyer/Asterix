@@ -220,8 +220,6 @@ def correctionLoop(parameter_file,
     Correctionconfig = config["Correctionconfig"]
     Correctionconfig.update(NewCorrectionconfig)
 
-    correction_algorithm = Correctionconfig["correction_algorithm"]
-    Linearization = Correctionconfig["Linearization"]
     Nbiter_corr = [int(i) for i in Correctionconfig["Nbiter_corr"]]
     Nbmode_corr = [int(i) for i in Correctionconfig["Nbmode_corr"]]
     Linesearch = Correctionconfig["Linesearch"]
