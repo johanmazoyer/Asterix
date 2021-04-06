@@ -98,6 +98,10 @@ class Corrector:
             # DM3
             if self.DM3_otherbasis == True:
                 testbed.DM1.WhichInPupil = np.arange(testbed.DM3.number_act)
+                self.DM3_basis = fits.getdata(realtestbed_dir +
+                                              "Map_modes_DM3_foc.fits")
+            else:
+                self.DM3_basis = 0
 
             #useful string
             string_dims_EFCMatrix = '_EFCampl' + str(
@@ -106,63 +110,51 @@ class Corrector:
 
             # Creating EFC control matrix
             fileEFCMatrix = "MatrixEFC" + string_dhshape + string_dims_EFCMatrix
+            fileDirectMatrix = "DirectMatrix" + string_dhshape + string_dims_EFCMatrix
 
-            if os.path.exists(matrix_dir + fileEFCMatrix + ".fits") == True:
+            if os.path.exists(matrix_dir + fileEFCMatrix +
+                              ".fits") & os.path.exists(matrix_dir +
+                                                        fileDirectMatrix +
+                                                        ".fits"):
                 print("The matrix " + fileEFCMatrix + " already exists")
+                self.Gmatrix = fits.getdata(matrix_dir + fileDirectMatrix +
+                                            ".fits")
                 invertGDH = fits.getdata(matrix_dir + fileEFCMatrix + ".fits")
+
             else:
+                # Creating EFC Interaction Matrix if does not exist
 
-                # Actuator basis or another one?
-                # TODO lot of cleaning to do on the "other basis ??"
-                if self.DM3_otherbasis == True:
-                    self.DM3_basis = fits.getdata(realtestbed_dir +
-                                                  "Map_modes_DM3_foc.fits")
+                print("Saving " + fileDirectMatrix + " ...")
+
+                if testbed.DM1.active == True:
+                    DM_pushact = np.concatenate(
+                        (testbed.DM3.DM_pushact, testbed.DM1.DM_pushact_inpup))
+                    DM_WhichInPupil = np.concatenate(
+                        (testbed.DM3.WhichInPupil,
+                         testbed.DM3.number_act + testbed.DM1.WhichInPupil))
                 else:
-                    self.DM3_basis = 0
+                    DM_pushact = testbed.DM3.DM_pushact
+                    DM_WhichInPupil = testbed.DM3.WhichInPupil
 
-                # Creating EFC Interaction matrix
-                fileDirectMatrix = "DirectMatrix" + string_dhshape + string_dims_EFCMatrix
+                self.Gmatrix = wsc.creatingCorrectionmatrix(
+                    testbed.entrancepupil.pup,
+                    testbed,
+                    estimator.dimEstim,
+                    DM_pushact * self.amplitudeEFC * 2 * np.pi * 1e-9 /
+                    testbed.wavelength_0,
+                    MaskEstim,
+                    DM_WhichInPupil,
+                    otherbasis=self.DM3_otherbasis,
+                    basisDM3=self.DM3_basis,
+                )
 
-                if os.path.exists(matrix_dir + fileDirectMatrix +
-                                  ".fits") == True:
-                    print("The matrix " + fileDirectMatrix + " already exists")
-                    Gmatrix = fits.getdata(matrix_dir + fileDirectMatrix +
-                                           ".fits")
-                else:
-
-                    # Creating EFC Interaction Matrix if does not exist
-                    print("Saving " + fileDirectMatrix + " ...")
-
-                    if testbed.DM1.active == True:
-                        DM_pushact = np.concatenate(
-                            (testbed.DM3.DM_pushact,
-                             testbed.DM1.DM_pushact_inpup))
-                        DM_WhichInPupil = np.concatenate(
-                            (testbed.DM3.WhichInPupil, testbed.DM3.number_act +
-                             testbed.DM1.WhichInPupil))
-                    else:
-                        DM_pushact = testbed.DM3.DM_pushact
-                        DM_WhichInPupil = testbed.DM3.WhichInPupil
-
-                    self.Gmatrix = wsc.creatingCorrectionmatrix(
-                        testbed.entrancepupil.pup,
-                        testbed,
-                        estimator.dimEstim,
-                        DM_pushact * self.amplitudeEFC * 2 * np.pi * 1e-9 /
-                        testbed.wavelength_0,
-                        MaskEstim,
-                        DM_WhichInPupil,
-                        otherbasis=self.DM3_otherbasis,
-                        basisDM3=self.DM3_basis,
-                    )
-
-                    fits.writeto(matrix_dir + fileDirectMatrix + ".fits",
-                                 self.Gmatrix)
+                fits.writeto(matrix_dir + fileDirectMatrix + ".fits",
+                             self.Gmatrix)
 
                 # Calculating and saving EFC Control Matrix
                 print("Saving " + fileEFCMatrix + " ...")
                 SVD, SVD_trunc, invertGDH = wsc.invertSVD(
-                    Gmatrix,
+                    self.Gmatrix,
                     self.Nbmodes,
                     goal="c",
                     regul=self.regularization,
@@ -181,10 +173,11 @@ class Corrector:
                 if self.correction_algorithm == "em" or self.correction_algorithm == "steepest":
 
                     self.G = np.zeros(
-                        (int(np.sum(MaskEstim)), Gmatrix.shape[1]),
+                        (int(np.sum(MaskEstim)), self.Gmatrix.shape[1]),
                         dtype=complex)
-                    self.G = (Gmatrix[0:int(Gmatrix.shape[0] / 2), :] +
-                              1j * Gmatrix[int(Gmatrix.shape[0] / 2):, :])
+                    self.G = (
+                        self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
+                        1j * self.Gmatrix[int(self.Gmatrix.shape[0] / 2):, :])
                     transposecomplexG = np.transpose(np.conjugate(self.G))
                     self.M0 = np.real(np.dot(transposecomplexG, self.G))
 
