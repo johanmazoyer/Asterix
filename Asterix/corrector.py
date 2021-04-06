@@ -79,15 +79,17 @@ class Corrector:
         if self.correction_algorithm == "efc" or self.correction_algorithm == "em" or self.correction_algorithm == "steepest":
 
             self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
-            self.Nbmodes = Correctionconfig["Nbmodes"]
             self.regularization = Correctionconfig["regularization"]
 
             self.DM1_otherbasis = Correctionconfig["DM1_otherbasis"]
             self.DM3_otherbasis = Correctionconfig["DM3_otherbasis"]
 
-            MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
+            self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
                                               estimator.Estim_sampling)
-            string_dhshape = MaskDH.tostring()
+
+            # in the initialization we have not inverted the matrix just yet so
+            self.previousmode = np.nan
+
             # I think currently the name of the actuator inside the pupil is
             # used as the basis, which is not ideal at all, these are 2 different things.
 
@@ -103,23 +105,14 @@ class Corrector:
             else:
                 self.DM3_basis = 0
 
-            #useful string
-            string_dims_EFCMatrix = '_EFCampl' + str(
-                self.amplitudeEFC) + "_modes" + str(
-                    self.Nbmodes) + testbed.string_os
+            fileDirectMatrix = "DirectMatrix_EFCampl" + str(
+                self.amplitudeEFC)+ MaskDH.string_mask + testbed.string_os
 
-            # Creating EFC control matrix
-            fileEFCMatrix = "MatrixEFC" + string_dhshape + string_dims_EFCMatrix
-            fileDirectMatrix = "DirectMatrix" + string_dhshape + string_dims_EFCMatrix
-
-            if os.path.exists(matrix_dir + fileEFCMatrix +
-                              ".fits") & os.path.exists(matrix_dir +
-                                                        fileDirectMatrix +
+            if os.path.exists(matrix_dir + fileDirectMatrix +
                                                         ".fits"):
-                print("The matrix " + fileEFCMatrix + " already exists")
+                print("The matrix " + fileDirectMatrix + " already exists")
                 self.Gmatrix = fits.getdata(matrix_dir + fileDirectMatrix +
                                             ".fits")
-                invertGDH = fits.getdata(matrix_dir + fileEFCMatrix + ".fits")
 
             else:
                 # Creating EFC Interaction Matrix if does not exist
@@ -142,7 +135,7 @@ class Corrector:
                     estimator.dimEstim,
                     DM_pushact * self.amplitudeEFC * 2 * np.pi * 1e-9 /
                     testbed.wavelength_0,
-                    MaskEstim,
+                    self.MaskEstim,
                     DM_WhichInPupil,
                     otherbasis=self.DM3_otherbasis,
                     basisDM3=self.DM3_basis,
@@ -151,29 +144,11 @@ class Corrector:
                 fits.writeto(matrix_dir + fileDirectMatrix + ".fits",
                              self.Gmatrix)
 
-                # Calculating and saving EFC Control Matrix
-                print("Saving " + fileEFCMatrix + " ...")
-                SVD, SVD_trunc, invertGDH = wsc.invertSVD(
-                    self.Gmatrix,
-                    self.Nbmodes,
-                    goal="c",
-                    regul=self.regularization,
-                    otherbasis=self.DM3_otherbasis,
-                    basisDM3=self.DM3_basis)
-                fits.writeto(matrix_dir + fileEFCMatrix + ".fits", invertGDH)
-
-                plt.clf()
-                plt.plot(SVD, "r.")
-                plt.yscale("log")
-
-                figSVDEFC = matrix_dir + "invertSVDEFC_square" + string_dhshape + string_dims_EFCMatrix + ".png"
-
-                plt.savefig(figSVDEFC)
 
                 if self.correction_algorithm == "em" or self.correction_algorithm == "steepest":
 
                     self.G = np.zeros(
-                        (int(np.sum(MaskEstim)), self.Gmatrix.shape[1]),
+                        (int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]),
                         dtype=complex)
                     self.G = (
                         self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
@@ -192,6 +167,24 @@ class Corrector:
                             str(estimator.dimEstim / 2 + np.array(
                                 np.fft.fftshift(MaskDH.corner_pos *
                                                 estimator.Estim_sampling))))
+
+                    Nbmodes = Correctionconfig["Nbmodes"]
+                    SVD, _ , invertGDH = wsc.invertSVD(
+                        self.Gmatrix,
+                        Nbmodes,
+                        goal="c",
+                        regul=self.regularization,
+                        otherbasis=self.DM3_otherbasis,
+                        basisDM3=self.DM3_basis)
+
+
+                    plt.clf()
+                    plt.plot(SVD, "r.")
+                    plt.yscale("log")
+
+                    figSVDEFC = matrix_dir + "SVD_Modes"+str(Nbmodes)+'_' + fileDirectMatrix + ".png"
+
+                    plt.savefig(figSVDEFC)
 
                     EFCmatrix_DM3 = np.zeros(
                         (invertGDH.shape[1], testbed.DM3.number_act),
@@ -221,7 +214,7 @@ class Corrector:
         else:
             raise Exception("This correction algorithm is not yet implemented")
 
-    def toDM_voltage(self, testbed, estimate, **kwargs):
+    def toDM_voltage(self, testbed, estimate, mode, **kwargs):
         """ --------------------------------------------------
         Run an correction from a testbed, and return the DM voltage for one or 2 DMS
 
@@ -229,6 +222,191 @@ class Corrector:
         -------------------------------------------------- """
 
         if self.correction_algorithm == "efc":
-            pass
+            _, _, invertGDH = wsc.invertSVD(
+                    self.Gmatrix,
+                    mode,
+                    goal="c",
+                    visu=False,
+                    regul=self.regularization,
+                    otherbasis=self.DM3_otherbasis,
+                    basisDM3=self.DM3_basis,
+                )
+
+            if testbed.DM1.active == True:
+                return wsc.solutionEFC(
+                    self.MaskEstim, estimate, invertGDH,
+                    np.concatenate(
+                        (testbed.DM3.WhichInPupil,
+                         testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
+                    testbed.DM3.number_act + testbed.DM1.number_act)
+                # TODO Concatenate should be done in the THD2 structure
+            else:
+                return wsc.solutionEFC(self.MaskEstim, estimate,
+                                            invertGDH, testbed.DM3.WhichInPupil,
+                                            testbed.DM3.number_act)
+
+
+        if self.correction_algorithm == "em":
+            if mode != self.previousmode:
+                self.previousmode = mode
+                _, _, invertM0 = wsc.invertSVD(
+                    self.M0,
+                    mode,
+                    goal="c",
+                    visu=False,
+                    regul=self.regularization,
+                    otherbasis=self.DM3_otherbasis,
+                    basisDM3=self.DM3_basis)
+
+                # TODO Concatenate should be done in the THD2 structure
+            if testbed.DM1.active == True:
+                return wsc.solutionEM(
+                    self.MaskEstim, estimate, invertM0, self.G,
+                    np.concatenate(
+                        (testbed.DM3.WhichInPupil,
+                         testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
+                    testbed.DM3.number_act + testbed.DM1.number_act)
+                # TODO Concatenate should be done in the THD2 structure
+            else:
+                return wsc.solutionEM(self.MaskEstim, estimate,
+                                           invertM0, self.G, testbed.DM3.WhichInPupil,
+                                           testbed.DM3.number_act)
+
+        if self.correction_algorithm == "steepest":
+            if testbed.DM1.active == True:
+                return wsc.solutionSteepest(
+                    self.MaskEstim, estimate, self.M0, self.G,
+                    np.concatenate(
+                        (testbed.DM3.WhichInPupil,
+                         testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
+                    testbed.DM3.number_act + testbed.DM1.number_act)
+                # Concatenate should be done in the THD2 structure
+            else:
+                return wsc.solutionSteepest(self.MaskEstim, estimate,
+                                                 self.M0, self.G, testbed.DM3.WhichInPupil,
+                                                 testbed.DM3.number_act)
         else:
             raise Exception("This correction algorithm is not yet implemented")
+
+
+
+
+# In storage, this was not well designed.
+
+# if Linearization == True:
+
+#     # Calculate the control matrix for the current aberrations
+#     # TODO nto sure of waht it does. I think this is something that
+#     # recalcuate the jacobian centering on the new wavefront. In practice this
+#     # is useless because we cannot remeasure matrix at each iteration !!!
+#      # this is not how it shoud be done
+#     # (needed because of linearization of the problem?)
+#     if thd2.DM1.active == True:
+#         correc.Gmatrix = wsc.creatingCorrectionmatrix(
+#             input_wavefront,
+#             thd2,
+#             estim.dimEstim,
+#             np.concatenate(
+#                 (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
+#             correc.amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
+#             MaskEstim,
+#             np.concatenate(
+#                 (thd2.DM3.WhichInPupil,
+#                  thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
+#             otherbasis=correc.DM3_otherbasis,
+#             basisDM3=correc.DM3_basis)
+#     else:
+#         correc.Gmatrix = wsc.creatingCorrectionmatrix(
+#             input_wavefront,
+#             thd2,
+#             estim.dimEstim,
+#             thd2.DM3.DM_pushact * correc.amplitudeEFC * 2 * np.pi * 1e-9 /
+#             wavelength_0,
+#             MaskEstim,
+#             thd2.DM3.WhichInPupil,
+#             otherbasis=correc.DM3_otherbasis,
+#             basisDM3=correc.DM3_basis)
+
+# Use the control matrix simulated for a null input aberration
+# if Linesearch is False:
+#     if mode != previousmode or k == 0:
+#         _,_ ,invertGDH = wsc.invertSVD(
+#             correc.Gmatrix,
+#             mode,
+#             goal="c",
+#             visu=False,
+#             regul=correc.regularization,
+#             otherbasis=correc.DM3_otherbasis,
+#             basisDM3=correc.DM3_basis,
+#         )
+
+# else:
+#     # Look for the best number of modes for the control matrix
+#     # TODO. This is not the correct way to code it. In practice this is juat
+#     # exactly the same as EFC loop except for in one case we have a previously fixed
+#     # "modes" for each iteration nd in the other a researched modes at each iteration.
+#     # Bu coding twice exactly the same stuff is not a good idea
+#     # (uses the interaction matrix calculated for a null input aberration)
+#     meancontrasttemp = np.zeros(len(Linesearchmode))
+#     b = 0
+#     for mode in Linesearchmode:
+
+#         SVD, SVD_trunc, invertGDH = wsc.invertSVD(
+#             correc.Gmatrix,
+#             mode,
+#             goal="c",
+#             visu=False,
+#             regul=correc.regularization,
+#             otherbasis=correc.DM3_otherbasis,
+#             basisDM3=correc.DM3_basis,
+#         )
+#         if thd2.DM1.active == True:
+
+#             solution1 = wsc.solutionEFC(
+#                 MaskEstim, resultatestimation, invertGDH,
+#                 np.concatenate(
+#                     (thd2.DM3.WhichInPupil,
+#                      thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
+#                 thd2.DM3.number_act + thd2.DM1.number_act)
+
+#             apply_on_DM1 = solution1[DM3.number_act:] * (
+#                 -gain * correc.amplitudeEFC)
+#             voltage_DM1_tmp = voltage_DM1[k] + apply_on_DM1
+#             phaseDM1_tmp = thd2.DM1.voltage_to_phase(
+#                 voltage_DM1_tmp, wavelength=thd2.wavelength_0)
+
+#         else:
+#             solution1 = wsc.solutionEFC(MaskEstim,
+#                                         resultatestimation,
+#                                         invertGDH,
+#                                         thd2.DM3.WhichInPupil,
+#                                         thd2.DM3.number_act)
+
+#             phaseDM1_tmp = 0.
+
+#         # Phase to apply on DM3
+
+#         apply_on_DM3 = solution1[0:DM3.number_act] * (-gain *
+#                                                       correc.amplitudeEFC)
+#         # Phase to apply on DM3
+#         voltage_DM3_tmp = voltage_DM3[k] + apply_on_DM3
+#         phaseDM3_tmp = thd2.DM3.voltage_to_phase(
+#             voltage_DM3_tmp, wavelength=thd2.wavelength_0)
+
+#         imagedetectortemp = thd2.todetector_Intensity(
+#             entrance_EF=input_wavefront,
+#             DM1phase=phaseDM1_tmp,
+#             DM3phase=phaseDM3_tmp)
+
+#         meancontrasttemp[b] = np.mean(
+#             imagedetectortemp[np.where(MaskScience != 0)])
+
+#         print('contraste moyen avec regul ', mode, '=',
+#               meancontrasttemp[b])
+
+#         b = b + 1
+
+#     bestcontrast = np.amin(meancontrasttemp)
+#     bestregul = Linesearchmode[np.argmin(meancontrasttemp)]
+#     print('Meilleur contraste= ', bestcontrast, ' Best regul= ',
+#           bestregul)

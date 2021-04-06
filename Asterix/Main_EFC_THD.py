@@ -424,7 +424,6 @@ def correctionLoop(parameter_file,
 
     plt.ion()
     plt.figure()
-    previousmode = modevector[0]
     k = 0
     for mode in modevector:
         print("--------------------------------------------------")
@@ -438,192 +437,24 @@ def correctionLoop(parameter_file,
                                             photon_noise=photon_noise,
                                             nb_photons=nb_photons)
 
-        # Find the solution of actuator motions to apply
-        if correction_algorithm == "EFC":
+        # TODO is amplitudeEFC really useful ? with the small phase hypothesis done when
+        # measuring the matrix, everything is linear !
+        solution = - gain * correc.amplitudeEFC* correc.toDM_voltage(thd2, resultatestimation, mode)
 
-            if Linearization == True:
 
-                # Calculate the control matrix for the current aberrations
-                # (needed because of linearization of the problem?)
-                if thd2.DM1.active == True:
-                    correc.Gmatrix = wsc.creatingCorrectionmatrix(
-                        input_wavefront,
-                        thd2,
-                        estim.dimEstim,
-                        np.concatenate(
-                            (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
-                        correc.amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
-                        MaskEstim,
-                        np.concatenate(
-                            (thd2.DM3.WhichInPupil,
-                             thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
-                        otherbasis=correc.DM3_otherbasis,
-                        basisDM3=correc.DM3_basis)
-                else:
-                    correc.Gmatrix = wsc.creatingCorrectionmatrix(
-                        input_wavefront,
-                        thd2,
-                        estim.dimEstim,
-                        thd2.DM3.DM_pushact * correc.amplitudeEFC * 2 * np.pi * 1e-9 /
-                        wavelength_0,
-                        MaskEstim,
-                        thd2.DM3.WhichInPupil,
-                        otherbasis=correc.DM3_otherbasis,
-                        basisDM3=correc.DM3_basis)
 
-            # Use the control matrix simulated for a null input aberration
-            if Linesearch is False:
-                if mode != previousmode or k == 0:
-                    invertGDH = wsc.invertSVD(
-                        correc.Gmatrix,
-                        mode,
-                        goal="c",
-                        visu=False,
-                        regul=correc.regularization,
-                        otherbasis=correc.DM3_otherbasis,
-                        basisDM3=correc.DM3_basis,
-                    )[2]
-
-            else:
-                # Look for the best number of modes for the control matrix
-                # (uses the interaction matrix calculated for a null input aberration)
-                meancontrasttemp = np.zeros(len(Linesearchmode))
-                b = 0
-                for mode in Linesearchmode:
-
-                    SVD, SVD_trunc, invertGDH = wsc.invertSVD(
-                        correc.Gmatrix,
-                        mode,
-                        goal="c",
-                        visu=False,
-                        regul=correc.regularization,
-                        otherbasis=correc.DM3_otherbasis,
-                        basisDM3=correc.DM3_basis,
-                    )
-                    if thd2.DM1.active == True:
-
-                        solution1 = wsc.solutionEFC(
-                            MaskEstim, resultatestimation, invertGDH,
-                            np.concatenate(
-                                (thd2.DM3.WhichInPupil,
-                                 thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
-                            thd2.DM3.number_act + thd2.DM1.number_act)
-
-                        apply_on_DM1 = solution1[DM3.number_act:] * (
-                            -gain * correc.amplitudeEFC)
-                        voltage_DM1_tmp = voltage_DM1[k] + apply_on_DM1
-                        phaseDM1_tmp = thd2.DM1.voltage_to_phase(
-                            voltage_DM1_tmp, wavelength=thd2.wavelength_0)
-
-                    else:
-                        solution1 = wsc.solutionEFC(MaskEstim,
-                                                    resultatestimation,
-                                                    invertGDH,
-                                                    thd2.DM3.WhichInPupil,
-                                                    thd2.DM3.number_act)
-
-                        phaseDM1_tmp = 0.
-
-                    # Phase to apply on DM3
-
-                    apply_on_DM3 = solution1[0:DM3.number_act] * (-gain *
-                                                                  correc.amplitudeEFC)
-                    # Phase to apply on DM3
-                    voltage_DM3_tmp = voltage_DM3[k] + apply_on_DM3
-                    phaseDM3_tmp = thd2.DM3.voltage_to_phase(
-                        voltage_DM3_tmp, wavelength=thd2.wavelength_0)
-
-                    imagedetectortemp = thd2.todetector_Intensity(
-                        entrance_EF=input_wavefront,
-                        DM1phase=phaseDM1_tmp,
-                        DM3phase=phaseDM3_tmp)
-
-                    meancontrasttemp[b] = np.mean(
-                        imagedetectortemp[np.where(MaskScience != 0)])
-
-                    print('contraste moyen avec regul ', mode, '=',
-                          meancontrasttemp[b])
-
-                    b = b + 1
-
-                bestcontrast = np.amin(meancontrasttemp)
-                bestregul = Linesearchmode[np.argmin(meancontrasttemp)]
-                print('Meilleur contraste= ', bestcontrast, ' Best regul= ',
-                      bestregul)
-
-                invertGDH = wsc.invertSVD(
-                    correc.Gmatrix,
-                    bestregul,
-                    goal="c",
-                    visu=False,
-                    regul=correc.regularization,
-                    otherbasis=correc.DM3_otherbasis,
-                    basisDM3=correc.DM3_basis,
-                )[2]
-
-            if thd2.DM1.active == True:
-                solution1 = wsc.solutionEFC(
-                    MaskEstim, resultatestimation, invertGDH,
-                    np.concatenate(
-                        (thd2.DM3.WhichInPupil,
-                         thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
-                    thd2.DM3.number_act + thd2.DM1.number_act)
-                # Concatenate should be done in the THD2 structure
-            else:
-                solution1 = wsc.solutionEFC(MaskEstim, resultatestimation,
-                                            invertGDH, thd2.DM3.WhichInPupil,
-                                            thd2.DM3.number_act)
-
-        if correction_algorithm == "EM":
-            if mode != previousmode or k == 0:
-                invertM0 = wsc.invertSVD(
-                    correc.M0,
-                    mode,
-                    goal="c",
-                    visu=False,
-                    regul=correc.regularization,
-                    otherbasis=correc.DM3_otherbasis,
-                    basisDM3=correc.DM3_basis,
-                )[2]
-
-            # Concatenate can be done in the THD2 structure
-            if thd2.DM1.active == True:
-                solution1 = wsc.solutionEM(
-                    MaskEstim, resultatestimation, invertM0, correc.G,
-                    np.concatenate(
-                        (thd2.DM3.WhichInPupil,
-                         thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
-                    thd2.DM3.number_act + thd2.DM1.number_act)
-                # Concatenate should be done in the THD2 structure
-            else:
-                solution1 = wsc.solutionEM(MaskEstim, resultatestimation,
-                                           invertM0, correc.G, thd2.DM3.WhichInPupil,
-                                           thd2.DM3.number_act)
-
-        if correction_algorithm == "steepest":
-            if thd2.DM1.active == True:
-                solution1 = wsc.solutionSteepest(
-                    MaskEstim, resultatestimation, correc.M0, correc.G,
-                    np.concatenate(
-                        (thd2.DM3.WhichInPupil,
-                         thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
-                    thd2.DM3.number_act + thd2.DM1.number_act)
-                # Concatenate should be done in the THD2 structure
-            else:
-                solution1 = wsc.solutionSteepest(MaskEstim, resultatestimation,
-                                                 correc.M0, correc.G, thd2.DM3.WhichInPupil,
-                                                 thd2.DM3.number_act)
+        ### Following lines should all be done inside of the THD structure...
+        # or actuallly should ot be done since we should put directly solution in the testbed model
 
         if thd2.DM1.active == True:
             # Phase to apply on DM1
-            apply_on_DM1 = solution1[thd2.DM3.number_act:] * (-gain *
-                                                              correc.amplitudeEFC)
+            apply_on_DM1 = solution[thd2.DM3.number_act:]
             voltage_DM1.append(voltage_DM1[k] + apply_on_DM1)
             phaseDM1[k + 1] = thd2.DM1.voltage_to_phase(
                 voltage_DM1[k + 1], wavelength=thd2.wavelength_0)
 
-        apply_on_DM3 = solution1[0:thd2.DM3.number_act] * (-gain *
-                                                           correc.amplitudeEFC)
+        apply_on_DM3 = solution[0:thd2.DM3.number_act]
+
         # Phase to apply on DM3
         voltage_DM3.append(voltage_DM3[k] + apply_on_DM3)
         phaseDM3[k + 1] = thd2.DM3.voltage_to_phase(
@@ -646,7 +477,6 @@ def correctionLoop(parameter_file,
         plt.imshow(np.log10(imagedetector[k + 1]), vmin=-8, vmax=-5)
         plt.colorbar()
         plt.pause(0.01)
-        previousmode = mode
         k = k + 1
 
     plt.show()
