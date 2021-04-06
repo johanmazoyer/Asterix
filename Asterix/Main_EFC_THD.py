@@ -220,6 +220,14 @@ def correctionLoop(parameter_file,
     Correctionconfig = config["Correctionconfig"]
     Correctionconfig.update(NewCorrectionconfig)
 
+    correction_algorithm = Correctionconfig["correction_algorithm"]
+    Linearization = Correctionconfig["Linearization"]
+    Nbiter_corr = [int(i) for i in Correctionconfig["Nbiter_corr"]]
+    Nbmode_corr = [int(i) for i in Correctionconfig["Nbmode_corr"]]
+    Linesearch = Correctionconfig["Linesearch"]
+    Linesearchmode = [int(i) for i in Correctionconfig["Linesearchmode"]]
+    gain = Correctionconfig["gain"]
+
     ##################
     ##################
     ###SIMU CONFIG
@@ -240,14 +248,7 @@ def correctionLoop(parameter_file,
     phase_abb_filename = SIMUconfig["phase_abb_filename"]
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
-    correction_algorithm = SIMUconfig["correction_algorithm"]
-    Linearization = SIMUconfig["Linearization"]
-    Nbiter_corr = [int(i) for i in SIMUconfig["Nbiter_corr"]]
-    Nbmode_corr = [int(i) for i in SIMUconfig["Nbmode_corr"]]
-    Linesearch = SIMUconfig["Linesearch"]
-    Linesearchmode = SIMUconfig["Linesearchmode"]
-    Linesearchmode = [int(i) for i in Linesearchmode]
-    gain = SIMUconfig["gain"]
+
 
     ##THEN DO
 

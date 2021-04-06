@@ -16,7 +16,7 @@ def quickshow(tab):
     Johan's quick function
     """
 
-    tmp = tab
+    tmp = np.copy(tab)
     # tmp = tmp.T
     plt.axis('off')
     plt.imshow(tmp, origin='lower', cmap='gray')
