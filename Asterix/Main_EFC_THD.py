@@ -68,8 +68,6 @@ def create_interaction_matrices(parameter_file,
     ### DM CONFIG
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
-    DM1_creating_pushact = DMconfig["DM1_creating_pushact"]
-    DM3_creating_pushact = DMconfig["DM3_creating_pushact"]
 
     ##################
     ##################
@@ -114,15 +112,11 @@ def create_interaction_matrices(parameter_file,
     pup_round = OptSy.pupil(modelconfig)
     DM1 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
-                                  load_fits=not DM1_creating_pushact,
-                                  save_fits=DM3_creating_pushact,
                                   Name_DM='DM1',
                                   Model_local_dir=Model_local_dir)
 
     DM3 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
-                                  load_fits=not DM3_creating_pushact,
-                                  save_fits=DM3_creating_pushact,
                                   Name_DM='DM3',
                                   Model_local_dir=Model_local_dir)
 
@@ -198,9 +192,6 @@ def correctionLoop(parameter_file,
     ### DM CONFIG
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
-
-    DM1_misregistration = DMconfig["DM1_misregistration"]
-    DM3_misregistration = DMconfig["DM3_misregistration"]
 
     ##################
     ##################
@@ -317,6 +308,23 @@ def correctionLoop(parameter_file,
                        matrix_dir=intermatrix_dir)
 
 
+    ## Adding error on the DM model. Now that the matrix is measured, we can
+    # introduce a small movememnt on one DM or the other. By changeing DM_pushact
+    # we are changeing the position of the actuator and therre the phase of the
+    # DM for a given voltage when using DM.voltage_to_phase
+
+    # TODO can be automatized in a for loop over all DMs nad maybe put in
+    # correction config
+    if thd2.DM3.misregistration == True:
+        print("DM3 Misregistration!")
+        thd2.DM3.DM_pushact = thd2.DM3.creatingpushact(DMconfig)
+
+    if thd2.DM1.misregistration == True:
+        print("DM1 Misregistration!")
+        thd2.DM1.DM_pushact = thd2.DM1.creatingpushact(DMconfig)
+
+
+
     ## Phase map and amplitude map for the static aberrations
     if set_phase_abb == True:
         if phase_abb_filename == '':
@@ -370,28 +378,7 @@ def correctionLoop(parameter_file,
     amplitude_abb_up = ampfinal
     phase_abb_up = phase_up
 
-    # ## To convert in photon flux
-    # contrast_to_photons = 1 / thd2.transmission(
-    # ) * nb_photons * thd2.maxPSF / thd2.sumPSF
 
-    ## Adding error on the DM model?
-    if DM3_misregistration == True:
-        print("DM3 Misregistration!")
-        pushactonDM3 = thd2.DM3.creatingpushact(DMconfig,
-                                                load_fits=False,
-                                                save_fits=False)
-    else:
-        pushactonDM3 = thd2.DM3.DM_pushact
-
-    # not really defined for DM1 but it is there.
-    if thd2.DM1.active == True:
-        if DM1_misregistration == True:
-            print("DM1 Misregistration!")
-            pushactonDM1 = thd2.DM1.creatingpushact(DMconfig,
-                                                    load_fits=False,
-                                                    save_fits=False)
-        else:
-            pushactonDM1 = thd2.DM1.DM_pushact
 
     ## Correction loop
     nbiter = len(modevector)

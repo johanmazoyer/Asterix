@@ -118,22 +118,22 @@ class Corrector:
                 # Creating EFC Interaction Matrix if does not exist
 
                 print("Saving " + fileDirectMatrix + " ...")
-
+                #TODO Concatenation should be done in testbed
                 if testbed.DM1.active == True:
-                    DM_pushact = np.concatenate(
-                        (testbed.DM3.DM_pushact, testbed.DM1.DM_pushact_inpup))
+                    DM_pushact_inpup = np.concatenate(
+                        (testbed.DM3.DM_pushact_inpup, testbed.DM1.DM_pushact_inpup))
                     DM_WhichInPupil = np.concatenate(
                         (testbed.DM3.WhichInPupil,
                          testbed.DM3.number_act + testbed.DM1.WhichInPupil))
                 else:
-                    DM_pushact = testbed.DM3.DM_pushact
+                    DM_pushact_inpup = testbed.DM3.DM_pushact_inpup
                     DM_WhichInPupil = testbed.DM3.WhichInPupil
 
                 self.Gmatrix = wsc.creatingCorrectionmatrix(
                     testbed.entrancepupil.pup,
                     testbed,
                     estimator.dimEstim,
-                    DM_pushact * self.amplitudeEFC * 2 * np.pi * 1e-9 /
+                    DM_pushact_inpup * self.amplitudeEFC * 2 * np.pi * 1e-9 /
                     testbed.wavelength_0,
                     self.MaskEstim,
                     DM_WhichInPupil,
@@ -307,7 +307,7 @@ class Corrector:
 #             thd2,
 #             estim.dimEstim,
 #             np.concatenate(
-#                 (thd2.DM3.DM_pushact, thd2.DM1.DM_pushact_inpup)) *
+#                 (thd2.DM3.DM_pushact , thd2.DM1.DM_pushact_inpup)) *
 #             correc.amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
 #             MaskEstim,
 #             np.concatenate(

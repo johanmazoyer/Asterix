@@ -1168,8 +1168,6 @@ class deformable_mirror(Optical_System):
                  modelconfig,
                  DMconfig,
                  Name_DM='DM3',
-                 load_fits=True,
-                 save_fits=False,
                  Model_local_dir=''):
         """ --------------------------------------------------
         Initialize a deformable mirror object
@@ -1180,8 +1178,6 @@ class deformable_mirror(Optical_System):
         modelconfig : general configuration parameters (sizes and dimensions)
         DMconfig : DM parameters
         Name_DM : the name of the DM, which allows to find it in the parameter file
-        load_fits : bool, default = True if true, we do not measure the DM init fits, we load them
-        save_fits : bool, default = False if true, we save the DM init fits for future use
         we measure and save the pushact functions
 
         Model_local_dir: directory to save things you can measure yourself
@@ -1201,8 +1197,11 @@ class deformable_mirror(Optical_System):
 
         MinimumSurfaceRatioInThePupil = DMconfig[
             "MinimumSurfaceRatioInThePupil"]
-        DMconfig[self.Name_DM + "_misregistration"] = False
-        # no misregistration in the initialization part, only in the correction part
+
+
+        # For intialization, we assume no misregistration, we introduce it after
+        # estimation and correction matrices are created.
+        self.misregistration = False
 
         # first thing we do is to open filename_grid_actu to check the number of
         # actuator of this DM
@@ -1248,15 +1247,11 @@ class deformable_mirror(Optical_System):
 
         # DM_pushact is always in the DM plane
         self.DM_pushact = self.creatingpushact(DMconfig,
-                                               load_fits=load_fits,
-                                               save_fits=save_fits,
                                                Model_local_dir=Model_local_dir)
 
         if self.z_position != 0:
             # DM_pushact_inpup is always in the pupil plane
             self.DM_pushact_inpup = self.creatingpushact_inpup(
-                load_fits=load_fits,
-                save_fits=save_fits,
                 Model_local_dir=Model_local_dir)
         else:
             # if the DM plane IS the pupil plane
@@ -1271,9 +1266,10 @@ class deformable_mirror(Optical_System):
         # create or load 'which actuators are in pupil'
         self.WhichInPupil = self.creatingWhichinPupil(
             MinimumSurfaceRatioInThePupil,
-            load_fits=load_fits,
-            save_fits=save_fits,
             Model_local_dir=Model_local_dir)
+
+        self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
+        # now if we relaunch self.DM_pushact, it will be different due to misregistration
 
     def EF_through(self,
                    entrance_EF=1.,
@@ -1362,19 +1358,13 @@ class deformable_mirror(Optical_System):
 
         return EF_after_DM
 
-    def creatingpushact(self,
-                        DMconfig,
-                        load_fits=False,
-                        save_fits=False,
-                        Model_local_dir=''):
+    def creatingpushact(self, DMconfig, Model_local_dir=''):
         """ --------------------------------------------------
         OPD map induced in the DM plane for each actuator
 
         Parameters
         ----------
         DMconfig : structure with all information on DMs
-        load_fits : bool, default = False if true, we do not measure the DM init fits, we load them
-        save_fits : bool, default = False if true, we save the DM init fits for future use
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
 
@@ -1389,7 +1379,7 @@ class deformable_mirror(Optical_System):
 
         Name_pushact_fits = "PushAct" + self.string_os
 
-        if (load_fits == True) and (
+        if (self.misregistration is False) and (
                 os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
             return fits.getdata(
                 os.path.join(Model_local_dir, Name_pushact_fits + '.fits'))
@@ -1408,8 +1398,7 @@ class deformable_mirror(Optical_System):
         x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
         xy_ActuN = [x_ActuN, y_ActuN]
 
-        misregistration = DMconfig[self.Name_DM + "_misregistration"]
-        if misregistration == True:
+        if self.misregistration == True:
             xerror = DMconfig[self.Name_DM + "_xerror"]
             yerror = DMconfig[self.Name_DM + "_yerror"]
             angerror = DMconfig[self.Name_DM + "_angerror"]
@@ -1514,17 +1503,15 @@ class deformable_mirror(Optical_System):
 
             pushact[i] = Psivector
 
-        if save_fits == True and misregistration == False:
+        if self.misregistration == False and (
+                not os.path.exists(Model_local_dir + Name_pushact_fits +
+                                   '.fits')):
             fits.writeto(Model_local_dir + Name_pushact_fits + '.fits',
-                         pushact,
-                         overwrite=True)
+                         pushact)
 
         return pushact
 
-    def creatingpushact_inpup(self,
-                              load_fits=False,
-                              save_fits=False,
-                              Model_local_dir=''):
+    def creatingpushact_inpup(self, Model_local_dir=''):
         """ --------------------------------------------------
         OPD map induced by out-of-pupil DM in the pupil plane for each actuator
         ## Create the influence functions of an out-of-pupil DM
@@ -1532,8 +1519,6 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        load_fits : bool, default = False. if true, we just load creatingpushact_inpup fits
-        save_fits : bool, default = False if true, we save the creatingpushact_inpup fits
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
         Returns
@@ -1543,10 +1528,10 @@ class deformable_mirror(Optical_System):
 
         Name_pushact_inpup_fits = "PushActInPup" + self.string_os
 
-        if (load_fits is True) and (os.path.exists(
-                Model_local_dir + Name_pushact_inpup_fits + '_RE.fits')) and (
-                    os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
-                                   '_IM.fits')):
+        if (os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                           '_RE.fits')
+            ) and (os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                                  '_IM.fits')):
             DM_pushact_inpup_real = fits.getdata(
                 os.path.join(Model_local_dir,
                              Name_pushact_inpup_fits + '_RE.fits'))
@@ -1576,22 +1561,23 @@ class deformable_mirror(Optical_System):
                 -self.z_position, self.diam_pup_in_m / 2, self.prad)
             pushact_inpup[i] = EF_back_in_pup_plane
 
-        if save_fits == True:
-            fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_RE.fits',
-                         np.real(pushact_inpup),
-                         overwrite=True)
-            fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_IM.fits',
-                         np.imag(pushact_inpup),
-                         overwrite=True)
+            if not ((os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                                    '_RE.fits')) and
+                    (os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                                    '_IM.fits'))):
+                fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
+                             '_RE.fits',
+                             np.real(pushact_inpup),
+                             overwrite=True)
+                fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
+                             '_IM.fits',
+                             np.imag(pushact_inpup),
+                             overwrite=True)
 
         return pushact_inpup
 
     def creatingWhichinPupil(self,
                              cutinpupil,
-                             load_fits=False,
-                             save_fits=False,
                              Model_local_dir=''):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
@@ -1600,8 +1586,6 @@ class deformable_mirror(Optical_System):
         ----------
         cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account
                     (between 0 and 1, ratio of an actuator perfectly centered in the entrance pupil)
-        load_fits : bool, default = False if true, we do not measure WhichInPup fits, we load it
-        save_fits : bool, default = False if true, we save the WhichInPup fits for future use
         Model_local_dir: directory to save things you can measure yourself
                         and can save to save time
         Return:
@@ -1611,9 +1595,7 @@ class deformable_mirror(Optical_System):
 
         Name_WhichInPup_fits = "ActinPup" + self.string_os
 
-        if load_fits is True and (os.path.exists(Model_local_dir +
-                                                 Name_WhichInPup_fits +
-                                                 '.fits')):
+        if os.path.exists(Model_local_dir + Name_WhichInPup_fits + '.fits'):
             return useful.check_and_load_fits(Model_local_dir,
                                               Name_WhichInPup_fits)
 
@@ -1634,7 +1616,8 @@ class deformable_mirror(Optical_System):
 
         WhichInPupil = np.array(WhichInPupil)
 
-        if save_fits == True:
+        if not os.path.exists(Model_local_dir + Name_WhichInPup_fits +
+                                   '.fits'):
             fits.writeto(Model_local_dir + Name_WhichInPup_fits + '.fits',
                          WhichInPupil,
                          overwrite=True)
