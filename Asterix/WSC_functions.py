@@ -323,9 +323,8 @@ def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
 
         # for PW the probes are not sent in the DM but at the entrance of the testbed.
         # with an hypothesis of small phase.
-        #  not sure the pupil multiplication is necessary
-        # inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
-        #                                                   1j * probephase[k])
+        # I tried to remove "1+"". It breaks the code
+        # (coronagraph does not "remove the 1 exactly")
 
         deltapsik[k] = proc.resampling(
             testbed.todetector(entrance_EF=1 + 1j * probephase[k]), dimEstim)
