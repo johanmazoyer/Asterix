@@ -161,8 +161,6 @@ class Optical_System:
         """ --------------------------------------------------
         Propagate the electric field from entrance plane through the system and then
         to Science focal plane.
-        TODO can be made polychromatic but maybe not because people
-        will do bad things with it like the intensity of summed EF :-)
 
         Parameters
         ----------
@@ -309,7 +307,6 @@ class Optical_System:
 
         if in_contrast == True:
             if (wavelength_vec != self.wav_vec).all():
-                # TODO to be discussed with Raphael
                 raise Exception(
                     """carefull: contrast normalization in todetector_Intensity assumes
                      it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1
@@ -428,7 +425,7 @@ class Optical_System:
         AUTHOR : Johan Mazoyer
         """
 
-        EF_PSF_bw = np.zeros((self.dimScience, self.dimScience), dtype=complex)
+        PSF_bw = np.zeros((self.dimScience, self.dimScience))
         self.norm_monochrom = np.zeros((len(self.wav_vec)))
         self.sum_monochrom = np.zeros((len(self.wav_vec)))
 
@@ -1085,7 +1082,7 @@ class coronagraph(Optical_System):
         Returns
         ------
         shift(Knife) :list of len(self.wav_vec) 2D arrays giving the complex transmission of the
-            Knife edge coronagraph mask. TODO A CHECKER YA PTET UN SOUCIS DE SHIFT
+            Knife edge coronagraph mask.
 
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
