@@ -50,7 +50,8 @@ def invertSVD(matrix_to_invert,
     pseudoinverse: Regularized inverse of the input matrix
     -------------------------------------------------- """
     U, s, V = np.linalg.svd(matrix_to_invert, full_matrices=False)
-    # print(s)
+    #print(np.max(np.abs(U @ np.diag(s) @ V)))
+
     S = np.diag(s)
     InvS = np.linalg.inv(S)
     InvS_truncated = np.linalg.inv(S)

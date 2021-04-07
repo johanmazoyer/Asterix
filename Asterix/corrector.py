@@ -82,22 +82,14 @@ class Corrector:
             self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
             self.regularization = Correctionconfig["regularization"]
 
-            self.DM1_otherbasis = Correctionconfig["DM1_otherbasis"]
-            self.DM3_otherbasis = Correctionconfig["DM3_otherbasis"]
-
             self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
                                               estimator.Estim_sampling)
 
-            # in the initialization we have not inverted the matrix just yet so
-            self.previousmode = np.nan
 
             # I think currently the name of the actuator inside the pupil is
             # used as the basis, which is not ideal at all, these are 2 different things.
-
-            # DM1
-            if self.DM1_otherbasis == True:
-                testbed.DM1.WhichInPupil = np.arange(testbed.DM1.number_act)
-
+            self.DM1_otherbasis = Correctionconfig["DM1_otherbasis"]
+            self.DM3_otherbasis = Correctionconfig["DM3_otherbasis"]
             # DM3
             if self.DM3_otherbasis == True:
                 testbed.DM1.WhichInPupil = np.arange(testbed.DM3.number_act)
@@ -105,6 +97,8 @@ class Corrector:
                                               "Map_modes_DM3_foc.fits")
             else:
                 self.DM3_basis = 0
+
+
 
             fileDirectMatrix = "DirectMatrix_EFCampl" + str(
                 self.amplitudeEFC)+ MaskDH.string_mask + testbed.string_os
@@ -218,6 +212,13 @@ class Corrector:
 
         else:
             raise Exception("This correction algorithm is not yet implemented")
+
+
+        ######################
+        # Preparation of the correction loop
+        ######################
+        # in the initialization we have not inverted the matrix just yet so
+        self.previousmode = np.nan
 
     def toDM_voltage(self, testbed, estimate, mode, **kwargs):
         """ --------------------------------------------------

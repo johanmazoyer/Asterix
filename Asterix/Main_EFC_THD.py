@@ -300,7 +300,6 @@ def correctionLoop(parameter_file,
 
     #initalize the DH masks
     mask_dh = MaskDH(Correctionconfig)
-    MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim, estim.Estim_sampling)
     MaskScience = mask_dh.creatingMaskDH(thd2.dimScience,
                                          thd2.Science_sampling)
 

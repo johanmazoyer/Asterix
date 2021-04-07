@@ -430,10 +430,11 @@ class Optical_System:
         self.sum_monochrom = np.zeros((len(self.wav_vec)))
 
         for i, wav in enumerate(self.wav_vec):
-            PSF_wl = np.abs(self.todetector(wavelength=wav,
-                                        noFPM=True,
-                                        center_on_pixel=True,
-                                        in_contrast=False))**2
+            PSF_wl = np.abs(
+                self.todetector(wavelength=wav,
+                                noFPM=True,
+                                center_on_pixel=True,
+                                in_contrast=False))**2
 
             self.norm_monochrom[i] = np.max(PSF_wl)
             PSF_bw += PSF_wl
@@ -1118,9 +1119,9 @@ class coronagraph(Optical_System):
             Knife[np.where(yy < (maxdimension_array_fpm / 2 -
                                  self.knife_coro_offset * ld_p_0))] = 1
 
-        knife_allwl = list()
+        knife_allwl = np.zeros((len(self.wav_vec),maxdimension_array_fpm,maxdimension_array_fpm))
         for i in range(len(self.wav_vec)):
-            knife_allwl.append(Knife)
+            knife_allwl[i] = Knife
 
         return knife_allwl
 
@@ -1198,7 +1199,6 @@ class deformable_mirror(Optical_System):
         MinimumSurfaceRatioInThePupil = DMconfig[
             "MinimumSurfaceRatioInThePupil"]
 
-
         # For intialization, we assume no misregistration, we introduce it after
         # estimation and correction matrices are created.
         self.misregistration = False
@@ -1249,8 +1249,8 @@ class deformable_mirror(Optical_System):
         start_time = time.time()
         self.DM_pushact = self.creatingpushact(DMconfig,
                                                Model_local_dir=Model_local_dir)
-        print("time for DM_pushact for "+self.string_os, time.time() - start_time)
-
+        print("time for DM_pushact for " + self.string_os,
+              time.time() - start_time)
 
         start_time = time.time()
 
@@ -1267,14 +1267,15 @@ class deformable_mirror(Optical_System):
             # same object in memory:
             # print(id(self.DM_pushact_inpup))
             # print(id(self.DM_pushact))
-        print("time for DM_pushact_inpup for "+self.string_os, time.time() - start_time)
+        print("time for DM_pushact_inpup for " + self.string_os,
+              time.time() - start_time)
 
         start_time = time.time()
         # create or load 'which actuators are in pupil'
         self.WhichInPupil = self.creatingWhichinPupil(
-            MinimumSurfaceRatioInThePupil,
-            Model_local_dir=Model_local_dir)
-        print("time for WhichInPupil for "+self.string_os, time.time() - start_time)
+            MinimumSurfaceRatioInThePupil, Model_local_dir=Model_local_dir)
+        print("time for WhichInPupil for " + self.string_os,
+              time.time() - start_time)
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
         # now if we relaunch self.DM_pushact, it will be different due to misregistration
@@ -1437,11 +1438,12 @@ class deformable_mirror(Optical_System):
             im_ActuN = fits.getdata(model_dir + filename_ActuN)
             im_ActuN_dim = proc.crop_or_pad_image(im_ActuN, dim_array)
 
-            ytmp, xtmp = np.unravel_index(
+            xy_ActuN = np.unravel_index(
                 np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
+
             # shift by (0.5,0.5) pixel because the pupil is
             # centered between pixels
-            xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
+            xy_ActuN = xy_ActuN - 0.5
 
         #Position for each actuator in pixel for the numerical simulation
         simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
@@ -1505,15 +1507,15 @@ class deformable_mirror(Optical_System):
                     (simu_grid[1, i] + dim_array / 2 - xycenttmp,
                      simu_grid[0, i] + dim_array / 2 - xycenttmp))
 
-                xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
+                xy0 = np.unravel_index(Psivector.argmax(), Psivector.shape)
                 x, y = np.mgrid[0:dim_array, 0:dim_array]
                 xy = (x, y)
                 Psivector = proc.twoD_Gaussian(xy,
                                                1,
                                                1 + gausserror,
                                                1 + gausserror,
-                                               xo,
-                                               yo,
+                                               xy0[0],
+                                               xy0[1],
                                                0,
                                                0,
                                                flatten=False)
@@ -1594,9 +1596,7 @@ class deformable_mirror(Optical_System):
 
         return pushact_inpup
 
-    def creatingWhichinPupil(self,
-                             cutinpupil,
-                             Model_local_dir=''):
+    def creatingWhichinPupil(self, cutinpupil, Model_local_dir=''):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
 
@@ -1635,7 +1635,7 @@ class deformable_mirror(Optical_System):
         WhichInPupil = np.array(WhichInPupil)
 
         if not os.path.exists(Model_local_dir + Name_WhichInPup_fits +
-                                   '.fits'):
+                              '.fits'):
             fits.writeto(Model_local_dir + Name_WhichInPup_fits + '.fits',
                          WhichInPupil,
                          overwrite=True)
