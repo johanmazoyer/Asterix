@@ -434,13 +434,15 @@ def correctionLoop(parameter_file,
 
         if Linesearch is True:
             search_best_contrast = list()
+            perfectestimate = estim.estimate(thd2,
+                            entrance_EF=input_wavefront,
+                            DM1phase=phaseDM1[iteration],
+                            DM3phase=phaseDM3[iteration],
+                            wavelength=thd2.wavelength_0,
+                            perfect_estimation= True)
+
             for modeLinesearch in Linesearchmode:
-                perfectestimate = estim.estimate(thd2,
-                                            entrance_EF=input_wavefront,
-                                            DM1phase=phaseDM1[iteration],
-                                            DM3phase=phaseDM3[iteration],
-                                            wavelength=thd2.wavelength_0,
-                                            perfect_estimation= True)
+
                 perfectsolution = - gain * correc.amplitudeEFC* correc.toDM_voltage(thd2, perfectestimate, modeLinesearch)
 
                 #### to be removed #### #### #### #### #### #### #### #### ####

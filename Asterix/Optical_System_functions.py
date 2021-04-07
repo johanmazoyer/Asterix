@@ -423,7 +423,7 @@ class Optical_System:
                 From an image in contrast, we now normalize by the total number of photons
                   (*self.norm_polychrom / self.sum_polychrom) and then account for the photons
                 lost in the process (1 / self.transmission()). Can be used as follow:
-                Im_ntensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
+                Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
 
         AUTHOR : Johan Mazoyer
         """
@@ -433,16 +433,19 @@ class Optical_System:
         self.sum_monochrom = np.zeros((len(self.wav_vec)))
 
         for i, wav in enumerate(self.wav_vec):
-            EF_PSF_wl = self.todetector(wavelength=wav,
+            PSF_wl = np.abs(self.todetector(wavelength=wav,
                                         noFPM=True,
                                         center_on_pixel=True,
-                                        in_contrast=False)
-            self.norm_monochrom[i] = np.max(np.abs(EF_PSF_wl)**2)
-            EF_PSF_bw += EF_PSF_wl
+                                        in_contrast=False))**2
 
-        self.norm_polychrom = np.max(np.abs(EF_PSF_bw)**2)
-        self.sum_polychrom = np.sum(np.abs(EF_PSF_bw)**2)
+            self.norm_monochrom[i] = np.max(PSF_wl)
+            PSF_bw += PSF_wl
 
+        self.norm_polychrom = np.max(PSF_bw)
+        self.sum_polychrom = np.sum(PSF_bw)
+
+        # TODO Careful. We think we should MULTIPLY by self.transmission and not divide
+        # by self.transmission
         self.normPupto1 = 1 / self.transmission(
         ) * self.norm_polychrom / self.sum_polychrom
 
