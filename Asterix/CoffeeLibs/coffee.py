@@ -33,7 +33,6 @@ class Estimator:
 
     def estimate(self,i_foc,i_div):
 
-        # Random pour l'instant parce que le modèle l'oblige
         N = self.tbed.dimScience
         EF_ini   = np.zeros((N,N))
 
