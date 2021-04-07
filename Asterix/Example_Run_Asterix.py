@@ -7,16 +7,16 @@ Asterixroot = os.path.dirname(os.path.realpath(__file__))
 # These five cases need to converge before pull request !
 
 #### INITIALISATION 1DM IN PW + EFC
-start_time = time.time()
-Main_EFC_THD.create_interaction_matrices(
-    Asterixroot + os.path.sep + 'Example_param_file.ini',
-    NewDMconfig={'DM1_active': False},
-    NewEstimationconfig={'estimation': 'pw'},
-    NewCorrectionconfig={'DH_side': "right"})
-print('time for 1DM initialization', time.time() - start_time)
-print("")
-print("")
-print("")
+# start_time = time.time()
+# Main_EFC_THD.create_interaction_matrices(
+#     Asterixroot + os.path.sep + 'Example_param_file.ini',
+#     NewDMconfig={'DM1_active': False},
+#     NewEstimationconfig={'estimation': 'pw'},
+#     NewCorrectionconfig={'DH_side': "right"})
+# print('time for 1DM initialization', time.time() - start_time)
+# print("")
+# print("")
+# print("")
 
 #### CORRECTION 1DM IN PW + EFC
 start_time = time.time()
@@ -51,16 +51,16 @@ print("")
 print("")
 
 #### INITIALISATION 2DM IN PW + EFC
-start_time = time.time()
-Main_EFC_THD.create_interaction_matrices(
-    Asterixroot + os.path.sep + 'Example_param_file.ini',
-    NewDMconfig={'DM1_active': True},
-    NewEstimationconfig={'estimation': 'pw'},
-    NewCorrectionconfig={'DH_side': "Full"})
-print('time for 2DM initialization', time.time() - start_time)
-print("")
-print("")
-print("")
+# start_time = time.time()
+# Main_EFC_THD.create_interaction_matrices(
+#     Asterixroot + os.path.sep + 'Example_param_file.ini',
+#     NewDMconfig={'DM1_active': True},
+#     NewEstimationconfig={'estimation': 'pw'},
+#     NewCorrectionconfig={'DH_side': "Full"})
+# print('time for 2DM initialization', time.time() - start_time)
+# print("")
+# print("")
+# print("")
 
 #### CORRECTION 2DM IN PW + EFC
 start_time = time.time()
@@ -109,17 +109,17 @@ print("")
 print("")
 
 #### INITIALISATION 1DM IN perfect + EFC : Knife edge
-start_time = time.time()
-Main_EFC_THD.create_interaction_matrices(
-    Asterixroot + os.path.sep + 'Example_param_file.ini',
-    NewCoronaconfig={'corona_type': 'knife'},
-    NewDMconfig={'DM1_active': False},
-    NewEstimationconfig={'estimation': 'perfect'},
-    NewCorrectionconfig={'DH_side': "right"})
-print('time for 1DM initialization', time.time() - start_time)
-print("")
-print("")
-print("")
+# start_time = time.time()
+# Main_EFC_THD.create_interaction_matrices(
+#     Asterixroot + os.path.sep + 'Example_param_file.ini',
+#     NewCoronaconfig={'corona_type': 'knife'},
+#     NewDMconfig={'DM1_active': False},
+#     NewEstimationconfig={'estimation': 'perfect'},
+#     NewCorrectionconfig={'DH_side': "right"})
+# print('time for 1DM initialization', time.time() - start_time)
+# print("")
+# print("")
+# print("")
 
 start_time = time.time()
 phase, im = Main_EFC_THD.correctionLoop(

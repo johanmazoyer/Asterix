@@ -4,6 +4,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
+import time
 
 import Asterix.processing_functions as proc
 import Asterix.Optical_System_functions as OptSy
@@ -118,7 +119,7 @@ class Corrector:
                 # Creating EFC Interaction Matrix if does not exist
 
                 print("Saving " + fileDirectMatrix + " ...")
-                #TODO Concatenation should be done in testbed
+                start_time = time.time()
                 if testbed.DM1.active == True:
                     DM_pushact_inpup = np.concatenate(
                         (testbed.DM3.DM_pushact_inpup, testbed.DM1.DM_pushact_inpup))
@@ -128,7 +129,9 @@ class Corrector:
                 else:
                     DM_pushact_inpup = testbed.DM3.DM_pushact_inpup
                     DM_WhichInPupil = testbed.DM3.WhichInPupil
+                print("time for concat for "+testbed.string_os, time.time() - start_time)
 
+                start_time = time.time()
                 self.Gmatrix = wsc.creatingCorrectionmatrix(
                     testbed.entrancepupil.pup,
                     testbed,
@@ -143,6 +146,8 @@ class Corrector:
 
                 fits.writeto(matrix_dir + fileDirectMatrix + ".fits",
                              self.Gmatrix)
+                print("time for direct matrix "+testbed.string_os, time.time() - start_time)
+
 
 
                 if self.correction_algorithm == "em" or self.correction_algorithm == "steepest":

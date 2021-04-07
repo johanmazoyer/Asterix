@@ -239,15 +239,28 @@ def correctionLoop(parameter_file,
     nb_photons = SIMUconfig["nb_photons"]
 
 
-    ##THEN DO
-
-    ## Number of modes that is used as a function of the iteration cardinal
-    modevector = []
-    for i in np.arange(len(Nbiter_corr)):
-        modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
+    ##############################################################################
+    ### Initialization all the directories
+    ##############################################################################
     Asterix_model_dir = os.path.join(OptSy.Asterix_root, "Model") + os.path.sep
 
+
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
+    if not os.path.exists(Model_local_dir):
+        print("Creating directory " + Model_local_dir + " ...")
+        os.makedirs(Model_local_dir)
+
+    intermatrix_dir = os.path.join(Data_dir,
+                                   "Interaction_Matrices") + os.path.sep
+    if not os.path.exists(intermatrix_dir):
+        print("Creating directory " + intermatrix_dir + " ...")
+        os.makedirs(intermatrix_dir)
+
+    result_dir = os.path.join(Data_dir, "Results",
+                              Name_Experiment) + os.path.sep
+    if not os.path.exists(result_dir):
+        print("Creating directory " + result_dir + " ...")
+        os.makedirs(result_dir)
 
     # Initialize thd:
     pup_round = OptSy.pupil(modelconfig)
@@ -280,15 +293,7 @@ def correctionLoop(parameter_file,
     # To be removed when the correction and estimation class are done
     # in which case these class will be able when these things exists or not
 
-    result_dir = os.path.join(Data_dir, "Results",
-                              Name_Experiment) + os.path.sep
-    if not os.path.exists(result_dir):
-        print("Creating directory " + result_dir + " ...")
-        os.makedirs(result_dir)
 
-
-    intermatrix_dir = os.path.join(Data_dir,
-                                   "Interaction_Matrices") + os.path.sep
 
     ## Initialize Estimation
     estim = Estimator(Estimationconfig, thd2, matrix_dir=intermatrix_dir)
@@ -381,6 +386,12 @@ def correctionLoop(parameter_file,
 
 
     ## Correction loop
+
+    ## Number of modes that is used as a function of the iteration cardinal
+    modevector = []
+    for i in np.arange(len(Nbiter_corr)):
+        modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
+
     nbiter = len(modevector)
     imagedetector = np.zeros((nbiter + 1, thd2.dimScience, thd2.dimScience))
 

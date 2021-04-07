@@ -5,7 +5,7 @@ import os
 import inspect
 
 import copy
-import datetime
+import time
 import numpy as np
 import scipy.ndimage as nd
 from astropy.io import fits
@@ -1246,8 +1246,13 @@ class deformable_mirror(Optical_System):
         # from the influence function
 
         # DM_pushact is always in the DM plane
+        start_time = time.time()
         self.DM_pushact = self.creatingpushact(DMconfig,
                                                Model_local_dir=Model_local_dir)
+        print("time for DM_pushact for "+self.string_os, time.time() - start_time)
+
+
+        start_time = time.time()
 
         if self.z_position != 0:
             # DM_pushact_inpup is always in the pupil plane
@@ -1262,11 +1267,14 @@ class deformable_mirror(Optical_System):
             # same object in memory:
             # print(id(self.DM_pushact_inpup))
             # print(id(self.DM_pushact))
+        print("time for DM_pushact_inpup for "+self.string_os, time.time() - start_time)
 
+        start_time = time.time()
         # create or load 'which actuators are in pupil'
         self.WhichInPupil = self.creatingWhichinPupil(
             MinimumSurfaceRatioInThePupil,
             Model_local_dir=Model_local_dir)
+        print("time for WhichInPupil for "+self.string_os, time.time() - start_time)
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
         # now if we relaunch self.DM_pushact, it will be different due to misregistration
@@ -1360,7 +1368,17 @@ class deformable_mirror(Optical_System):
 
     def creatingpushact(self, DMconfig, Model_local_dir=''):
         """ --------------------------------------------------
-        OPD map induced in the DM plane for each actuator
+        OPD map induced in the DM plane for each actuator.
+
+        This large array is initialized at the beginning and will be use
+        to transorm a voltage into a phase for each DM. This is saved
+        in .fits to save times if the parameter have not changed
+
+        In case of "misregistration = True" we measure it once for
+        creating the interraction matrix and then once again, between
+        the matrix measrueemnt and the correction with a small mismatch
+        to simulate its effect.
+
 
         Parameters
         ----------
