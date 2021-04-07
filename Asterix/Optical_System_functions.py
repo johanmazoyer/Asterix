@@ -130,12 +130,12 @@ class Optical_System:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        if isinstance(entrance_EF, float) or isinstance(entrance_EF, np.float):
-            entrance_EF = np.full(
-                (self.dim_overpad_pupil, self.dim_overpad_pupil),
-                np.float(entrance_EF))
+        # if isinstance(entrance_EF, float) or isinstance(entrance_EF, np.float):
+        #     entrance_EF = np.full(
+        #         (self.dim_overpad_pupil, self.dim_overpad_pupil),
+        #         np.float(entrance_EF))
 
-        if isinstance(entrance_EF, np.ndarray) == False:
+        if isinstance(entrance_EF, (float, np.float, np.ndarray)) == False:
             print(entrance_EF)
             raise Exception(
                 "entrance_EF should be a float of a numpy array of floats")
@@ -389,15 +389,15 @@ class Optical_System:
                 "phase_abb and ampl_abb must be real arrays or float, not complex"
             )
 
-        if isinstance(phase_abb, (int, float, np.float)):
-            phase_abb = np.full(
-                (self.dim_overpad_pupil, self.dim_overpad_pupil),
-                np.float(phase_abb))
+        # if isinstance(phase_abb, (int, float, np.float)):
+        #     phase_abb = np.full(
+        #         (self.dim_overpad_pupil, self.dim_overpad_pupil),
+        #         np.float(phase_abb))
 
-        if isinstance(ampl_abb, (int, float, np.float)):
-            ampl_abb = np.full(
-                (self.dim_overpad_pupil, self.dim_overpad_pupil),
-                np.float(ampl_abb))
+        # if isinstance(ampl_abb, (int, float, np.float)):
+        #     ampl_abb = np.full(
+        #         (self.dim_overpad_pupil, self.dim_overpad_pupil),
+        #         np.float(ampl_abb))
 
         if ((phase_abb == 0.).all()) and ((ampl_abb == 0.).all()):
 
@@ -1265,9 +1265,6 @@ class deformable_mirror(Optical_System):
             load_fits=load_fits,
             save_fits=save_fits,
             Model_local_dir=Model_local_dir)
-
-        #initialize the max and sum of PSFs for the normalization to contrast
-        self.measure_normalization()
 
     def EF_through(self,
                    entrance_EF=1.,
