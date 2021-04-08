@@ -249,9 +249,15 @@ def create_interaction_matrices(parameter_file,
         if mask_dh.DH_shape == "square":
             print(
                 "TO SET ON LABVIEW: ",
-                str(estim.dimEstim / 2 + np.array(
-                    np.fft.fftshift(mask_dh.corner_pos *
-                                    estim.Estim_sampling))))
+                str(estim.dimEstim / 2 + np.fft.fftshift(
+                    np.array(mask_dh.corner_pos))*
+                                    estim.Estim_sampling))
+
+        
+        fits.writeto(Labview_dir + "DH_mask.fits",
+                     MaskEstim,overwrite=True)
+        fits.writeto(Labview_dir + "DH_mask_where_x_y.fits",
+                     np.array(np.where(MaskEstim==1)),overwrite=True)
 
         EFCmatrix_DM3 = np.zeros((invertGDH.shape[1], thd2.DM3.number_act),
                                  dtype=np.float32)
