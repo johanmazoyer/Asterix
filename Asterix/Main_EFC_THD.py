@@ -253,11 +253,11 @@ def create_interaction_matrices(parameter_file,
                     np.array(mask_dh.corner_pos))*
                                     estim.Estim_sampling))
 
-        
+
         fits.writeto(Labview_dir + "DH_mask.fits",
-                     MaskEstim,overwrite=True)
+                     MaskEstim.astype(np.float32),overwrite=True)
         fits.writeto(Labview_dir + "DH_mask_where_x_y.fits",
-                     np.array(np.where(MaskEstim==1)),overwrite=True)
+                     np.array(np.where(MaskEstim==1)).astype(np.float32),overwrite=True)
 
         EFCmatrix_DM3 = np.zeros((invertGDH.shape[1], thd2.DM3.number_act),
                                  dtype=np.float32)
@@ -802,6 +802,7 @@ def correctionLoop(parameter_file,
 
         plt.clf()
         plt.imshow(np.log10(imagedetector[k + 1]), vmin=-8, vmax=-5)
+        plt.gca().invert_yaxis()
         plt.colorbar()
         plt.pause(0.01)
         previousmode = mode

@@ -89,19 +89,19 @@ class MaskDH:
                     maskDH[yy +
                            xx / np.tan(self.circ_angle * np.pi / 180) > 0] = 0
             if self.DH_side == "bottom":
-                maskDH[yy < np.abs(self.circ_offset) * FP_sampling] = 0
-                if self.circ_angle != 0:
-                    maskDH[yy -
-                           xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
-                    maskDH[yy +
-                           xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
-            if self.DH_side == "top":
                 maskDH[yy > -np.abs(self.circ_offset) * FP_sampling] = 0
                 if self.circ_angle != 0:
                     maskDH[yy -
                            xx * np.tan(self.circ_angle * np.pi / 180) > 0] = 0
                     maskDH[yy +
                            xx * np.tan(self.circ_angle * np.pi / 180) > 0] = 0
+            if self.DH_side == "top":
+                maskDH[yy < np.abs(self.circ_offset) * FP_sampling] = 0
+                if self.circ_angle != 0:
+                    maskDH[yy -
+                        xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
+                    maskDH[yy +
+                        xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
         return maskDH
 
     def tostring(self):
