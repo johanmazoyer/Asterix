@@ -295,40 +295,35 @@ class Corrector:
             raise Exception("This correction algorithm is not yet implemented")
 
 
+    def cropDHInterractionMatrix(self, FullInterractionMatrix):
+        """ --------------------------------------------------
+        Crop the  Interraction Matrix. to the mask size
 
 
-# In storage, this was not well designed.
+        Parameters:
+        ----------
+        FullInterractionMatrix: Interraction matrix over the full focal plane
 
-# if Linearization == True:
 
-#     # Calculate the control matrix for the current aberrations
-#     # TODO nto sure of waht it does. I think this is something that
-#     # recalcuate the jacobian centering on the new wavefront. In practice this
-#     # is useless because we cannot remeasure matrix at each iteration !!!
-#      # this is not how it shoud be done
-#     # (needed because of linearization of the problem?)
-#     if thd2.DM1.active == True:
-#         correc.Gmatrix = wsc.creatingCorrectionmatrix(
-#             input_wavefront,
-#             thd2,
-#             estim.dimEstim,
-#             np.concatenate(
-#                 (thd2.DM3.DM_pushact , thd2.DM1.DM_pushact_inpup)) *
-#             correc.amplitudeEFC * 2 * np.pi * 1e-9 / wavelength_0,
-#             MaskEstim,
-#             np.concatenate(
-#                 (thd2.DM3.WhichInPupil,
-#                  thd2.DM3.number_act + thd2.DM1.WhichInPupil)),
-#             otherbasis=correc.DM3_otherbasis,
-#             basisDM3=correc.DM3_basis)
-#     else:
-#         correc.Gmatrix = wsc.creatingCorrectionmatrix(
-#             input_wavefront,
-#             thd2,
-#             estim.dimEstim,
-#             thd2.DM3.DM_pushact * correc.amplitudeEFC * 2 * np.pi * 1e-9 /
-#             wavelength_0,
-#             MaskEstim,
-#             thd2.DM3.WhichInPupil,
-#             otherbasis=correc.DM3_otherbasis,
-#             basisDM3=correc.DM3_basis)
+        Return: DHInterractionMatrix: matrix only inside the DH
+        ------
+
+        -------------------------------------------------- """
+        size_full_matrix = FullInterractionMatrix.shape[0]
+
+        size_DH_matrix = 2 * int(np.sum(self.MaskEstim))
+        where_mask_flatten = np.where(self.MaskEstim.flatten() == 1.)
+        DHInterractionMatrix = np.zeros(
+            (size_DH_matrix, FullInterractionMatrix.shape[1]), dtype=float)
+
+        for i in range(FullInterractionMatrix.shape[1]):
+            DHInterractionMatrix[:int(
+                size_DH_matrix /
+                2), i] = FullInterractionMatrix[:int(size_full_matrix / 2),
+                                                i][where_mask_flatten]
+            DHInterractionMatrix[int(size_DH_matrix / 2):,
+                                 i] = FullInterractionMatrix[
+                                     int(size_full_matrix / 2):,
+                                     i][where_mask_flatten]
+
+        return DHInterractionMatrix
