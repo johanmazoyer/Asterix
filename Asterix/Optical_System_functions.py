@@ -1642,6 +1642,39 @@ class deformable_mirror(Optical_System):
 
         return WhichInPupil
 
+        # this is a modified version. Currently not stable
+        # Name_WhichInPup_fits = "ActinPup" + self.string_os + "_thres" + str(threshold)
+
+        # if os.path.exists(Model_local_dir + Name_WhichInPup_fits + '.fits'):
+        #     return useful.check_and_load_fits(Model_local_dir,
+        #                                       Name_WhichInPup_fits)
+
+        # if self.z_position != 0:
+        #             # Propagation in DM plane out of pupil
+        #     Pup_inDMplane, _ = prop.prop_fresnel(self.clearpup.pup, self.wavelength_0, self.z_position,
+        #                                     self.diam_pup_in_m / 2, self.prad)
+        # else:
+        #     Pup_inDMplane = self.clearpup.pup
+
+        # WhichInPupil = []
+        # Sum_actu_with_pup = np.zeros(self.number_act)
+
+        # for num_actu in np.arange(self.number_act):
+        #     Sum_actu_with_pup[num_actu] = np.sum(np.abs(self.DM_pushact[num_actu]*Pup_inDMplane))
+
+        # Max_val = np.max(Sum_actu_with_pup)
+        # for num_actu in np.arange(self.number_act):
+        #     if Sum_actu_with_pup[num_actu] > Max_val*threshold:
+        #         WhichInPupil.append(num_actu)
+
+        # WhichInPupil = np.array(WhichInPupil)
+
+        # if not os.path.exists(Model_local_dir + Name_WhichInPup_fits +
+        #                       '.fits'):
+        #     fits.writeto(Model_local_dir + Name_WhichInPup_fits + '.fits',
+        #                  WhichInPupil,
+        #                  overwrite=True)
+
     def prop_pup_to_DM_and_back(self,
                                 entrance_EF,
                                 phase_DM,
