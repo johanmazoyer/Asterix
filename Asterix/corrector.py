@@ -163,9 +163,9 @@ class Corrector:
                 if MaskDH.DH_shape == "square":
                     print(
                         "TO SET ON LABVIEW: ",
-                        str(estimator.dimEstim / 2 + np.array(
+                        str(estimator.dimEstim / 2 +
                             np.fft.fftshift(MaskDH.corner_pos *
-                                            estimator.Estim_sampling))))
+                                            estimator.Estim_sampling)))
 
                 Nbmodes = Correctionconfig["Nbmodes"]
                 SVD, _ , invertGDH = wsc.invertSVD(
@@ -209,6 +209,10 @@ class Corrector:
                                     "Matrix_control_EFC_DM1_default.fits",
                                     EFCmatrix_DM1,
                                     overwrite=True)
+                fits.writeto(realtestbed_dir + "DH_mask.fits",
+                                    self.MaskEstim.astype(np.float32),overwrite=True)
+                fits.writeto(realtestbed_dir + "DH_mask_where_x_y.fits",
+                                    np.array(np.where(self.MaskEstim==1)).astype(np.float32),overwrite=True)
 
         else:
             raise Exception("This correction algorithm is not yet implemented")
