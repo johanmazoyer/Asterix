@@ -168,6 +168,41 @@ def creatingCorrectionmatrix(input_wavefront,
     return Gmatrixbis
 
 
+def cropDHInterractionMatrix(FullInterractionMatrix, mask):
+    """ --------------------------------------------------
+    Crop the  Interraction Matrix. to the mask size
+
+
+    Parameters:
+    ----------
+    FullInterractionMatrix: Interraction matrix over the full focal plane
+
+
+    Return: DHInterractionMatrix: matrix only inside the DH
+    ------
+
+    -------------------------------------------------- """
+    size_full_matrix = FullInterractionMatrix.shape[0]
+
+    size_DH_matrix = 2 * int(np.sum(mask))
+    where_mask_flatten = np.where(mask.flatten() == 1.)
+    DHInterractionMatrix = np.zeros(
+        (size_DH_matrix, FullInterractionMatrix.shape[1]), dtype=float)
+
+    for i in range(FullInterractionMatrix.shape[1]):
+        DHInterractionMatrix[:int(
+            size_DH_matrix /
+            2), i] = FullInterractionMatrix[:int(size_full_matrix / 2),
+                                            i][where_mask_flatten]
+        DHInterractionMatrix[int(size_DH_matrix / 2):,
+                                i] = FullInterractionMatrix[
+                                    int(size_full_matrix / 2):,
+                                    i][where_mask_flatten]
+
+    return DHInterractionMatrix
+
+
+
 def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
                 nbDMactu):
     """ --------------------------------------------------

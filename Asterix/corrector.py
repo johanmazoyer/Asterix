@@ -101,12 +101,12 @@ class Corrector:
 
 
             fileDirectMatrix = "DirectMatrix_EFCampl" + str(
-                self.amplitudeEFC)+ MaskDH.string_mask + testbed.string_os
+                self.amplitudeEFC) + testbed.string_os
 
             if os.path.exists(matrix_dir + fileDirectMatrix +
                                                         ".fits"):
                 print("The matrix " + fileDirectMatrix + " already exists")
-                self.Gmatrix = fits.getdata(matrix_dir + fileDirectMatrix +
+                interMat = fits.getdata(matrix_dir + fileDirectMatrix +
                                             ".fits")
 
             else:
@@ -126,89 +126,89 @@ class Corrector:
                 print("time for concat for "+testbed.string_os, time.time() - start_time)
 
                 start_time = time.time()
-                self.Gmatrix = wsc.creatingCorrectionmatrix(
+                interMat = wsc.creatingCorrectionmatrix(
                     testbed.entrancepupil.pup,
                     testbed,
                     estimator.dimEstim,
                     DM_pushact_inpup * self.amplitudeEFC * 2 * np.pi * 1e-9 /
                     testbed.wavelength_0,
-                    self.MaskEstim,
+                    np.ones((estimator.dimEstim,estimator.dimEstim)),
                     DM_WhichInPupil,
                     otherbasis=self.DM3_otherbasis,
                     basisDM3=self.DM3_basis,
                 )
 
-                fits.writeto(matrix_dir + fileDirectMatrix + ".fits",
-                             self.Gmatrix)
+                fits.writeto(matrix_dir + fileDirectMatrix + ".fits", interMat)
                 print("time for direct matrix "+testbed.string_os, time.time() - start_time)
 
+            self.Gmatrix = wsc.cropDHInterractionMatrix(interMat, self.MaskEstim)
 
 
-                if self.correction_algorithm == "em" or self.correction_algorithm == "steepest":
+            if self.correction_algorithm == "em" or self.correction_algorithm == "steepest":
 
-                    self.G = np.zeros(
-                        (int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]),
-                        dtype=complex)
-                    self.G = (
-                        self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
-                        1j * self.Gmatrix[int(self.Gmatrix.shape[0] / 2):, :])
-                    transposecomplexG = np.transpose(np.conjugate(self.G))
-                    self.M0 = np.real(np.dot(transposecomplexG, self.G))
+                self.G = np.zeros(
+                    (int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]),
+                    dtype=complex)
+                self.G = (
+                    self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
+                    1j * self.Gmatrix[int(self.Gmatrix.shape[0] / 2):, :])
+                transposecomplexG = np.transpose(np.conjugate(self.G))
+                self.M0 = np.real(np.dot(transposecomplexG, self.G))
 
-                if save_for_bench == True:
+            if save_for_bench == True:
 
-                    #### Not sure what it does... Is this still useful ?
-                    # I modified it with the new mask parameters
-                    # TODO talk with raphael
-                    if MaskDH.DH_shape == "square":
-                        print(
-                            "TO SET ON LABVIEW: ",
-                            str(estimator.dimEstim / 2 + np.array(
-                                np.fft.fftshift(MaskDH.corner_pos *
-                                                estimator.Estim_sampling))))
+                #### Not sure what it does... Is this still useful ?
+                # I modified it with the new mask parameters
+                # TODO talk with raphael
+                if MaskDH.DH_shape == "square":
+                    print(
+                        "TO SET ON LABVIEW: ",
+                        str(estimator.dimEstim / 2 + np.array(
+                            np.fft.fftshift(MaskDH.corner_pos *
+                                            estimator.Estim_sampling))))
 
-                    Nbmodes = Correctionconfig["Nbmodes"]
-                    SVD, _ , invertGDH = wsc.invertSVD(
-                        self.Gmatrix,
-                        Nbmodes,
-                        goal="c",
-                        regul=self.regularization,
-                        otherbasis=self.DM3_otherbasis,
-                        basisDM3=self.DM3_basis)
+                Nbmodes = Correctionconfig["Nbmodes"]
+                SVD, _ , invertGDH = wsc.invertSVD(
+                    self.Gmatrix,
+                    Nbmodes,
+                    goal="c",
+                    regul=self.regularization,
+                    otherbasis=self.DM3_otherbasis,
+                    basisDM3=self.DM3_basis)
 
 
-                    plt.clf()
-                    plt.plot(SVD, "r.")
-                    plt.yscale("log")
+                plt.clf()
+                plt.plot(SVD, "r.")
+                plt.yscale("log")
 
-                    figSVDEFC = matrix_dir + "SVD_Modes"+str(Nbmodes)+'_' + fileDirectMatrix + ".png"
+                figSVDEFC = matrix_dir + "SVD_Modes"+str(Nbmodes)+'_' + fileDirectMatrix + ".png"
 
-                    plt.savefig(figSVDEFC)
+                plt.savefig(figSVDEFC)
 
-                    EFCmatrix_DM3 = np.zeros(
-                        (invertGDH.shape[1], testbed.DM3.number_act),
+                EFCmatrix_DM3 = np.zeros(
+                    (invertGDH.shape[1], testbed.DM3.number_act),
+                    dtype=np.float32)
+                for i in np.arange(len(testbed.DM3.WhichInPupil)):
+                    EFCmatrix_DM3[:,
+                                    testbed.DM3.WhichInPupil[i]] = invertGDH[
+                                        i, :]
+                fits.writeto(realtestbed_dir +
+                                "Matrix_control_EFC_DM3_default.fits",
+                                EFCmatrix_DM3,
+                                overwrite=True)
+                if testbed.DM1.active:
+                    EFCmatrix_DM1 = np.zeros(
+                        (invertGDH.shape[1], testbed.DM1.number_act),
                         dtype=np.float32)
-                    for i in np.arange(len(testbed.DM3.WhichInPupil)):
-                        EFCmatrix_DM3[:,
-                                      testbed.DM3.WhichInPupil[i]] = invertGDH[
-                                          i, :]
+                    for i in np.arange(len(testbed.DM1.WhichInPupil)):
+                        EFCmatrix_DM1[:, testbed.DM1.
+                                        WhichInPupil[i]] = invertGDH[
+                                            i +
+                                            len(testbed.DM3.WhichInPupil), :]
                     fits.writeto(realtestbed_dir +
-                                 "Matrix_control_EFC_DM3_default.fits",
-                                 EFCmatrix_DM3,
-                                 overwrite=True)
-                    if testbed.DM1.active:
-                        EFCmatrix_DM1 = np.zeros(
-                            (invertGDH.shape[1], testbed.DM1.number_act),
-                            dtype=np.float32)
-                        for i in np.arange(len(testbed.DM1.WhichInPupil)):
-                            EFCmatrix_DM1[:, testbed.DM1.
-                                          WhichInPupil[i]] = invertGDH[
-                                              i +
-                                              len(testbed.DM3.WhichInPupil), :]
-                        fits.writeto(realtestbed_dir +
-                                     "Matrix_control_EFC_DM1_default.fits",
-                                     EFCmatrix_DM1,
-                                     overwrite=True)
+                                    "Matrix_control_EFC_DM1_default.fits",
+                                    EFCmatrix_DM1,
+                                    overwrite=True)
 
         else:
             raise Exception("This correction algorithm is not yet implemented")
@@ -295,35 +295,3 @@ class Corrector:
             raise Exception("This correction algorithm is not yet implemented")
 
 
-    def cropDHInterractionMatrix(self, FullInterractionMatrix):
-        """ --------------------------------------------------
-        Crop the  Interraction Matrix. to the mask size
-
-
-        Parameters:
-        ----------
-        FullInterractionMatrix: Interraction matrix over the full focal plane
-
-
-        Return: DHInterractionMatrix: matrix only inside the DH
-        ------
-
-        -------------------------------------------------- """
-        size_full_matrix = FullInterractionMatrix.shape[0]
-
-        size_DH_matrix = 2 * int(np.sum(self.MaskEstim))
-        where_mask_flatten = np.where(self.MaskEstim.flatten() == 1.)
-        DHInterractionMatrix = np.zeros(
-            (size_DH_matrix, FullInterractionMatrix.shape[1]), dtype=float)
-
-        for i in range(FullInterractionMatrix.shape[1]):
-            DHInterractionMatrix[:int(
-                size_DH_matrix /
-                2), i] = FullInterractionMatrix[:int(size_full_matrix / 2),
-                                                i][where_mask_flatten]
-            DHInterractionMatrix[int(size_DH_matrix / 2):,
-                                 i] = FullInterractionMatrix[
-                                     int(size_full_matrix / 2):,
-                                     i][where_mask_flatten]
-
-        return DHInterractionMatrix
