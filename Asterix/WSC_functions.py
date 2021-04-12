@@ -86,7 +86,7 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def creatingCorrectionmatrix(input_wavefront,
+def creatingInterractionmatrix(input_wavefront,
                              testbed,
                              dimimages,
                              pushact,

@@ -126,7 +126,7 @@ class Corrector:
                 print("time for concat for "+testbed.string_os, time.time() - start_time)
 
                 start_time = time.time()
-                interMat = wsc.creatingCorrectionmatrix(
+                interMat = wsc.creatingInterractionmatrix(
                     testbed.entrancepupil.pup,
                     testbed,
                     estimator.dimEstim,
