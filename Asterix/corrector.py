@@ -99,7 +99,6 @@ class Corrector:
                 self.DM3_basis = 0
 
 
-
             fileDirectMatrix = "DirectMatrix_EFCampl" + str(
                 self.amplitudeEFC) + testbed.string_os
 
@@ -110,7 +109,7 @@ class Corrector:
                                             ".fits")
 
             else:
-                # Creating EFC Interaction Matrix if does not exist
+                # Creating Interaction Matrix if does not exist
 
                 print("Saving " + fileDirectMatrix + " ...")
                 start_time = time.time()
