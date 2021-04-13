@@ -90,12 +90,8 @@ def invertSVD(matrix_to_invert,
 
 def creatingInterractionmatrix(input_wavefront,
                              testbed,
-                             dimimages,
-                             pushact,
-                             mask,
-                             Whichact,
-                             otherbasis=False,
-                             basisDM3=0):
+                             dimEstim,
+                             amplitudeEFC):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
@@ -105,26 +101,18 @@ def creatingInterractionmatrix(input_wavefront,
         input wavefront in pupil plane
     testbed: Optical_element
         testbed structure
-    dimimages: int
-        size of the output image after resampling in pixels
-    pushact: 3D-array
-        phase created by the pokes of each actuator of DM with the wished amplitude
-    mask: 2D array
-        binary mask whose pixel=1 will be taken into account
-    Whichact: 1D array
-        index of the actuators taken into account to create the jacobian matrix
-    otherbasis:
-    basisDM3:
+    dimEstim: int
+        size of the output image in teh estimator
+    amplitudeEFC:
 
     Return:
     ------
-    Gmatrixbis: 2D array, jacobian matrix for Electric Field Conjugation
+    InterMat: 2D array, jacobian matrix for Electric Field Conjugation
     -------------------------------------------------- """
 
-    amplitudeEFC = 17
 
     print("Start Interraction Matrix")
-    InterMat = np.zeros((2 * int(np.sum(mask)), len(testbed.WhichInPupil)))
+    InterMat = np.zeros((2 * int(dimEstim**2), len(testbed.WhichInPupil)))
 
 
     print("For DM3")
@@ -143,11 +131,11 @@ def creatingInterractionmatrix(input_wavefront,
         phaseDM = testbed.DM3.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
         Gvector = proc.resampling(
             testbed.todetector(entrance_EF=input_wavefront * 1j *  phaseDM * amplitudeEFC),
-            dimimages)
+            dimEstim)
 
-        InterMat[:dimimages**2,
+        InterMat[:dimEstim**2,
                    i] = np.real(Gvector).flatten()
-        InterMat[dimimages**2:,
+        InterMat[dimEstim**2:,
                    i] = np.imag(Gvector).flatten()
 
     if testbed.DM1.active == True:
@@ -159,7 +147,7 @@ def creatingInterractionmatrix(input_wavefront,
         for i in range(basis_size):
             basis[i][testbed.DM1.WhichInPupil[i]] = 1
 
-        Pup_inDMplane =  prop.prop_fresnel(testbed.entrancepupil,
+        Pup_inDMplane, _ =  prop.prop_fresnel(testbed.entrancepupil.pup,
                                              testbed.DM1.wavelength_0, testbed.DM1.z_position,
                                              testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
 
@@ -174,11 +162,11 @@ def creatingInterractionmatrix(input_wavefront,
                             -testbed.DM1.z_position, testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
             Gvector = proc.resampling(
                 testbed.todetector(entrance_EF=input_wavefront * 1j *  EF_back_in_pup_plane * amplitudeEFC),
-                dimimages)
+                dimEstim)
 
-            InterMat[:dimimages**2, len(testbed.DM3.WhichInPupil) +
+            InterMat[:dimEstim**2, len(testbed.DM3.WhichInPupil) +
                     i] = np.real(Gvector).flatten()
-            InterMat[dimimages**2:, len(testbed.DM3.WhichInPupil)+
+            InterMat[dimEstim**2:, len(testbed.DM3.WhichInPupil)+
                     i] = np.imag(Gvector).flatten()
 
     print("End Interraction Matrix")

@@ -114,28 +114,13 @@ class Corrector:
 
                 print("Saving " + fileDirectMatrix + " ...")
                 start_time = time.time()
-                if testbed.DM1.active == True:
-                    DM_pushact_inpup = np.concatenate(
-                        (testbed.DM3.DM_pushact_inpup, testbed.DM1.DM_pushact_inpup))
-                    DM_WhichInPupil = np.concatenate(
-                        (testbed.DM3.WhichInPupil,
-                         testbed.DM3.number_act + testbed.DM1.WhichInPupil))
-                else:
-                    DM_pushact_inpup = testbed.DM3.DM_pushact_inpup
-                    DM_WhichInPupil = testbed.DM3.WhichInPupil
-                print("time for concat for "+testbed.string_os, time.time() - start_time)
 
                 start_time = time.time()
                 interMat = wsc.creatingInterractionmatrix(
                     testbed.entrancepupil.pup,
                     testbed,
                     estimator.dimEstim,
-                    DM_pushact_inpup * self.amplitudeEFC * 2 * np.pi * 1e-9 /
-                    testbed.wavelength_0,
-                    np.ones((estimator.dimEstim,estimator.dimEstim)),
-                    DM_WhichInPupil,
-                    otherbasis=self.DM3_otherbasis,
-                    basisDM3=self.DM3_basis,
+                    self.amplitudeEFC
                 )
 
                 fits.writeto(matrix_dir + fileDirectMatrix + ".fits", interMat)
