@@ -120,49 +120,29 @@ def creatingInterractionmatrix(input_wavefront,
     ------
     Gmatrixbis: 2D array, jacobian matrix for Electric Field Conjugation
     -------------------------------------------------- """
-    # TODO this is not super clear to me, I need to clean it with Raphael,
-    # with available tools.
-    #
-    # We can save tones of ram here !! This is why computer are crashing !
-    # We duplicate pushact 2 times:  probephase, bas_fct !!!!
 
-    # other basis need to be cleared basisDM3 need to be defined in all cases
-    # and it should be the same function for each basis, just with a different
-    # basis
-
-    # change basis if needed
-    # if otherbasis == True:
-    #     nb_fct = basisDM3.shape[0]  # number of functions in the basis
-    #     tmp = pushact.reshape(pushact.shape[0],
-    #                           pushact.shape[1] * pushact.shape[2])
-    #     bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
-    #                                      pushact.shape[2])
-    # else:
-    #     probephase = np.zeros((pushact.shape[0], testbed.dim_overpad_pupil,
-    #                            testbed.dim_overpad_pupil),
-    #                           dtype=complex)
-    #     for k in range(pushact.shape[0]):
-    #         probephase[k] = pushact[k]
-
-    #     bas_fct = np.array([probephase[ind] for ind in Whichact])
-    #     nb_fct = len(Whichact)
-
+    amplitudeEFC = 17
 
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(np.sum(mask)), len(testbed.WhichInPupil)))
+
+
     print("For DM3")
+    #the basis in now defined here only for actuator basis but it should be done
+    # in the corection initialization
+    basis_size = len(testbed.DM3.WhichInPupil)
+    basis = np.zeros((basis_size,testbed.DM3.number_act))
+    for i in range(basis_size):
+        basis[i][testbed.DM3.WhichInPupil[i]] = 1
 
-    basisDM3_size = len(testbed.DM3.WhichInPupil)
-    basis = np.array([copy.deepcopy(testbed.DM3.DM_pushact[num_act_in_pup]) for num_act_in_pup in testbed.DM3.WhichInPupil])
-
-    for i in range(basisDM3_size):
+    for i in range(basis_size):
 
         if i %10:
-            useful.progress(i, basisDM3_size, status='')
+            useful.progress(i, basis_size, status='')
 
-
+        phaseDM = testbed.DM3.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
         Gvector = proc.resampling(
-            testbed.todetector(entrance_EF=input_wavefront * 1j * basis[i]),
+            testbed.todetector(entrance_EF=input_wavefront * 1j *  phaseDM * amplitudeEFC),
             dimimages)
 
         InterMat[:dimimages**2,
@@ -170,29 +150,37 @@ def creatingInterractionmatrix(input_wavefront,
         InterMat[dimimages**2:,
                    i] = np.imag(Gvector).flatten()
 
-    # if testbed.DM1.active == True:
-    #     print("for DM1")
-    #     Pup_inDMplane =  prop.prop_fresnel(testbed.entrancepupil,
-    #                                         testbed.DM1.wavelength_0, testbed.DM1.z_position,
-    #                                         testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
-    #     for i, num_act_in_pup in enumerate(testbed.DM1.WhichInPupil):
+    if testbed.DM1.active == True:
+        print("For DM1")
+        #the basis in now defined here only for actuator basis but it should be done
+        # in the corection initialization
+        basis_size = len(testbed.DM1.WhichInPupil)
+        basis = np.zeros((basis_size,testbed.DM1.number_act))
+        for i in range(basis_size):
+            basis[i][testbed.DM1.WhichInPupil[i]] = 1
 
-    #         if i %10:
-    #             useful.progress(i, len(testbed.DM1.WhichInPupil), status='')
+        Pup_inDMplane =  prop.prop_fresnel(testbed.entrancepupil,
+                                             testbed.DM1.wavelength_0, testbed.DM1.z_position,
+                                             testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
 
-    #         basis_vector = testbed.DM3.DM_pushact[num_act_in_pup]
+        for i in range(basis_size):
 
-    #         EF_back_in_pup_plane, _ = prop.prop_fresnel(
-    #             Pup_inDMplane * basis_vector, testbed.DM1.wavelength_0,
-    #             -testbed.DM1.z_position, testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+            if i %10:
+                useful.progress(i, basis_size, status='')
 
-    #         Gvector = proc.resampling(
-    #             testbed.todetector(entrance_EF=input_wavefront * 1j * EF_back_in_pup_plane),
-    #             dimimages)
-    #         InterMat[:dimimages**2, len(testbed.DM3.WhichInPupil)+
-    #                 i] = np.real(Gvector[np.where(mask == 1)]).flatten()
-    #         InterMat[dimimages**2:,len(testbed.DM3.WhichInPupil)+
-    #                 i] = np.imag(Gvector[np.where(mask == 1)]).flatten()
+            phaseDM = testbed.DM1.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
+            EF_back_in_pup_plane, _ = prop.prop_fresnel(
+                            Pup_inDMplane * phaseDM, testbed.DM1.wavelength_0,
+                            -testbed.DM1.z_position, testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+            Gvector = proc.resampling(
+                testbed.todetector(entrance_EF=input_wavefront * 1j *  EF_back_in_pup_plane * amplitudeEFC),
+                dimimages)
+
+            InterMat[:dimimages**2, len(testbed.DM3.WhichInPupil) +
+                    i] = np.real(Gvector).flatten()
+            InterMat[dimimages**2:, len(testbed.DM3.WhichInPupil)+
+                    i] = np.imag(Gvector).flatten()
+
     print("End Interraction Matrix")
     return InterMat
 

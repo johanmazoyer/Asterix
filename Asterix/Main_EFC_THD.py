@@ -515,6 +515,7 @@ def correctionLoop(parameter_file,
             photondetector[iteration + 1] = np.random.poisson(
                 imagedetector[iteration + 1] * thd2.normPupto1 * photon_noise)
 
+        plt.clf()
         plt.imshow(np.log10(imagedetector[iteration + 1]), vmin=-8, vmax=-5)
         plt.gca().invert_yaxis()
         plt.colorbar()
