@@ -2,10 +2,12 @@
 __author__ = "Axel Potier"
 
 import os
+import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
+import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
@@ -129,43 +131,70 @@ def creatingInterractionmatrix(input_wavefront,
     # basis
 
     # change basis if needed
-    if otherbasis == True:
-        nb_fct = basisDM3.shape[0]  # number of functions in the basis
-        tmp = pushact.reshape(pushact.shape[0],
-                              pushact.shape[1] * pushact.shape[2])
-        bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
-                                         pushact.shape[2])
-    else:
-        probephase = np.zeros((pushact.shape[0], testbed.dim_overpad_pupil,
-                               testbed.dim_overpad_pupil),
-                              dtype=complex)
-        for k in range(pushact.shape[0]):
-            probephase[k] = pushact[k]
+    # if otherbasis == True:
+    #     nb_fct = basisDM3.shape[0]  # number of functions in the basis
+    #     tmp = pushact.reshape(pushact.shape[0],
+    #                           pushact.shape[1] * pushact.shape[2])
+    #     bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
+    #                                      pushact.shape[2])
+    # else:
+    #     probephase = np.zeros((pushact.shape[0], testbed.dim_overpad_pupil,
+    #                            testbed.dim_overpad_pupil),
+    #                           dtype=complex)
+    #     for k in range(pushact.shape[0]):
+    #         probephase[k] = pushact[k]
 
-        bas_fct = np.array([probephase[ind] for ind in Whichact])
-        nb_fct = len(Whichact)
-    print("Start EFC")
-    Gmatrixbis = np.zeros((2 * int(np.sum(mask)), nb_fct))
-    k = 0
-    for i in range(nb_fct):
-        if i % 100 == 0:
-            print(i)
-        Psivector = bas_fct[i]
+    #     bas_fct = np.array([probephase[ind] for ind in Whichact])
+    #     nb_fct = len(Whichact)
 
-        # TODO we shoudl replace by perfect estimation. This is equivalent but it would be more coherent
-        # also i and k are the same indice I think :-)
-        # the names here are confusing
+
+    print("Start Interraction Matrix")
+    InterMat = np.zeros((2 * int(np.sum(mask)), len(testbed.WhichInPupil)))
+    print("For DM3")
+
+    basisDM3_size = len(testbed.DM3.WhichInPupil)
+    basis = np.array([copy.deepcopy(testbed.DM3.DM_pushact[num_act_in_pup]) for num_act_in_pup in testbed.DM3.WhichInPupil])
+
+    for i in range(basisDM3_size):
+
+        if i %10:
+            useful.progress(i, basisDM3_size, status='')
+
 
         Gvector = proc.resampling(
-            testbed.todetector(entrance_EF=input_wavefront * 1j * Psivector),
+            testbed.todetector(entrance_EF=input_wavefront * 1j * basis[i]),
             dimimages)
-        Gmatrixbis[0:int(np.sum(mask)),
-                   k] = np.real(Gvector[np.where(mask == 1)]).flatten()
-        Gmatrixbis[int(np.sum(mask)):,
-                   k] = np.imag(Gvector[np.where(mask == 1)]).flatten()
-        k = k + 1
-    print("End EFC")
-    return Gmatrixbis
+
+        InterMat[:dimimages**2,
+                   i] = np.real(Gvector).flatten()
+        InterMat[dimimages**2:,
+                   i] = np.imag(Gvector).flatten()
+
+    # if testbed.DM1.active == True:
+    #     print("for DM1")
+    #     Pup_inDMplane =  prop.prop_fresnel(testbed.entrancepupil,
+    #                                         testbed.DM1.wavelength_0, testbed.DM1.z_position,
+    #                                         testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+    #     for i, num_act_in_pup in enumerate(testbed.DM1.WhichInPupil):
+
+    #         if i %10:
+    #             useful.progress(i, len(testbed.DM1.WhichInPupil), status='')
+
+    #         basis_vector = testbed.DM3.DM_pushact[num_act_in_pup]
+
+    #         EF_back_in_pup_plane, _ = prop.prop_fresnel(
+    #             Pup_inDMplane * basis_vector, testbed.DM1.wavelength_0,
+    #             -testbed.DM1.z_position, testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+
+    #         Gvector = proc.resampling(
+    #             testbed.todetector(entrance_EF=input_wavefront * 1j * EF_back_in_pup_plane),
+    #             dimimages)
+    #         InterMat[:dimimages**2, len(testbed.DM3.WhichInPupil)+
+    #                 i] = np.real(Gvector[np.where(mask == 1)]).flatten()
+    #         InterMat[dimimages**2:,len(testbed.DM3.WhichInPupil)+
+    #                 i] = np.imag(Gvector[np.where(mask == 1)]).flatten()
+    print("End Interraction Matrix")
+    return InterMat
 
 
 def cropDHInterractionMatrix(FullInterractionMatrix, mask):
