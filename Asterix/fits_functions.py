@@ -16,11 +16,12 @@ def quickshow(tab):
     Johan's quick function
     """
 
-    tmp = tab
+    tmp = np.copy(tab)
     # tmp = tmp.T
     plt.axis('off')
     plt.imshow(tmp, origin='lower', cmap='gray')
     plt.show()
+    plt.close()
 
 
 def save_plane_in_fits(dir_save_fits, name_plane, image):
@@ -88,6 +89,7 @@ def quickpng(tab, dir='', name='tmp'):
         name = name + str(int(random() * 100))
     plt.tight_layout()
     plt.savefig(dir + name + '.png', dpi=300)
+    plt.close()
 
 
 def check_and_load_fits(directory, filename):

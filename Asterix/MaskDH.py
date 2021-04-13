@@ -39,7 +39,7 @@ class MaskDH:
         else:
             raise Exception("Not valid DH Shape")
 
-        self.name_string = self.tostring()
+        self.string_mask = self.tostring()
 
     def creatingMaskDH(self, dimFP, FP_sampling):
         """ --------------------------------------------------

@@ -5,7 +5,7 @@ import os
 import inspect
 
 import copy
-import datetime
+import time
 import numpy as np
 import scipy.ndimage as nd
 from astropy.io import fits
@@ -161,8 +161,6 @@ class Optical_System:
         """ --------------------------------------------------
         Propagate the electric field from entrance plane through the system and then
         to Science focal plane.
-        TODO can be made polychromatic but maybe not because people
-        will do bad things with it like the intensity of summed EF :-)
 
         Parameters
         ----------
@@ -352,8 +350,7 @@ class Optical_System:
         # we pass noFPM = True and noentrance Field by default
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
-        throughput = np.sum(
-            np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
+        throughput = np.sum(np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
 
         return throughput
 
@@ -419,30 +416,34 @@ class Optical_System:
             - self.norm_polychrom. float
                         the polychromatic PSF use to nomrmalize to_detector_Intensity
             - self.normPupto1, which is used to measure the photon noise
-                This it the factor that we use to measure photon noise.
+                This is the factor that we use to measure photon noise.
                 From an image in contrast, we now normalize by the total number of photons
                   (*self.norm_polychrom / self.sum_polychrom) and then account for the photons
                 lost in the process (1 / self.transmission()). Can be used as follow:
-                Im_ntensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
+                Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
 
         AUTHOR : Johan Mazoyer
         """
 
-        PSFs = np.zeros((len(self.wav_vec), self.dimScience, self.dimScience),
-                        dtype=complex)
+        PSF_bw = np.zeros((self.dimScience, self.dimScience))
         self.norm_monochrom = np.zeros((len(self.wav_vec)))
         self.sum_monochrom = np.zeros((len(self.wav_vec)))
 
         for i, wav in enumerate(self.wav_vec):
-            PSFs[i] = self.todetector(wavelength=wav,
-                                      noFPM=True,
-                                      center_on_pixel=True,
-                                      in_contrast=False)
-            self.norm_monochrom[i] = np.max(np.abs(PSFs[i])**2)
+            PSF_wl = np.abs(
+                self.todetector(wavelength=wav,
+                                noFPM=True,
+                                center_on_pixel=True,
+                                in_contrast=False))**2
 
-        self.norm_polychrom = np.max(np.abs(np.sum(PSFs, axis=0))**2)
-        self.sum_polychrom = np.sum(np.abs(np.sum(PSFs, axis=0))**2)
+            self.norm_monochrom[i] = np.max(PSF_wl)
+            PSF_bw += PSF_wl
 
+        self.norm_polychrom = np.max(PSF_bw)
+        self.sum_polychrom = np.sum(PSF_bw)
+
+        # TODO Careful. We think we should MULTIPLY by self.transmission and not divide
+        # by self.transmission
         self.normPupto1 = 1 / self.transmission(
         ) * self.norm_polychrom / self.sum_polychrom
 
@@ -464,7 +465,7 @@ class pupil(Optical_System):
 
     AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
-    def __init__(self, modelconfig, prad=0., PupType = "", filename=""):
+    def __init__(self, modelconfig, prad=0., PupType="", filename=""):
         """ --------------------------------------------------
         Initialize a pupil object.
 
@@ -482,13 +483,13 @@ class pupil(Optical_System):
 
         filename : string (default "")
             name and directory of the .fits file
-            The pupil .fits files should be be 2D and square([dim_fits,dim_fits])
-            and assumed to be centered between 4 pixels.
+            The pupil .fits files should be 2D and square([dim_fits,dim_fits])
+            with even number of pix and centered between 4 pixels.
             if dim_fits < dim_overpad_pupil then the pupil is zero-padded
             if dim_fits > dim_overpad_pupil we raise an Exception
 
-            This is a bit dangerous because your .fits file might not be defined
-            the right way or something so be careful
+            This is a bit dangerous because your .fits file might must be defined
+            the right way so be careful
 
             TODO: include here function scale_amplitude_abb, shift_phase_ramp
             TODO: include an SCC Lyot pupil function here !
@@ -519,7 +520,9 @@ class pupil(Optical_System):
 
         elif PupType == "RomanPup":
             #Rescale to the pupil size
-            pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_1002pix_center4pixels.fits"))
+            pup_fits = fits.getdata(
+                os.path.join(model_dir,
+                             "roman_pup_1002pix_center4pixels.fits"))
             pup_fits_right_size = skimage.transform.rescale(
                 pup_fits,
                 2 * prad / pup_fits.shape[0],
@@ -531,39 +534,40 @@ class pupil(Optical_System):
                                               self.dim_overpad_pupil)
         elif filename != "":
 
-                # we start by a bunch of tests to check
-                # that pupil has a certain acceptable form.
-                # print("we load the pupil: " + filename)
-                # print("we assume it is centered in its array")
-                pup_fits = fits.getdata(filename)
+            # we start by a bunch of tests to check
+            # that pupil has a certain acceptable form.
+            # print("we load the pupil: " + filename)
+            # print("we assume it is centered in its array")
+            pup_fits = fits.getdata(filename)
 
-                if len(pup_fits.shape) != 2:
-                    raise Exception("file " + filename + " should be a 2D array")
+            if len(pup_fits.shape) != 2:
+                raise Exception("file " + filename + " should be a 2D array")
 
-                if pup_fits.shape[0] != pup_fits.shape[1]:
-                    raise Exception("file " + filename +
-                                    " appears to be not square")
+            if pup_fits.shape[0] != pup_fits.shape[1]:
+                raise Exception("file " + filename +
+                                " appears to be not square")
 
-                # this assume that the pupil file is squared
-                # and is centered in the file
+            # this assume that the pupil file is squared
+            # and is centered in the file
 
-                if pup_fits.shape[0] == self.prad:
-                    pup_fits_right_size = pup_fits
-                else:
-                    #Rescale to the pupil size
-                    pup_fits_right_size = skimage.transform.rescale(
-                        pup_fits,
-                        2 * prad / pup_fits.shape[0],
-                        preserve_range=True,
-                        anti_aliasing=True,
-                        multichannel=False)
+            if pup_fits.shape[0] == self.prad:
+                pup_fits_right_size = pup_fits
+            else:
+                #Rescale to the pupil size
+                pup_fits_right_size = skimage.transform.rescale(
+                    pup_fits,
+                    2 * prad / pup_fits.shape[0],
+                    preserve_range=True,
+                    anti_aliasing=True,
+                    multichannel=False)
 
-                self.pup = proc.crop_or_pad_image(pup_fits_right_size,
-                                                self.dim_overpad_pupil)
+            self.pup = proc.crop_or_pad_image(pup_fits_right_size,
+                                              self.dim_overpad_pupil)
 
         else:  # no filename and no known. In this case, we can have a few
-            raise Exception("this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup'")
-
+            raise Exception(
+                "this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup'"
+            )
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
@@ -775,15 +779,21 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        if coroconfig["filename_instr_apod"] == "ClearPlane" or coroconfig["filename_instr_apod"]  == "RoundPup":
-            self.apod_pup = pupil(modelconfig, prad=self.prad, PupType= coroconfig["filename_instr_apod"])
+        if coroconfig["filename_instr_apod"] == "ClearPlane" or coroconfig[
+                "filename_instr_apod"] == "RoundPup":
+            self.apod_pup = pupil(modelconfig,
+                                  prad=self.prad,
+                                  PupType=coroconfig["filename_instr_apod"])
         else:
             self.apod_pup = pupil(modelconfig,
                                   prad=self.prad,
                                   filename=coroconfig["filename_instr_apod"])
 
-        if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig["filename_instr_lyot"]  == "RoundPup":
-            self.lyot_pup = pupil(modelconfig, prad=self.prad, PupType= coroconfig["filename_instr_lyot"])
+        if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig[
+                "filename_instr_lyot"] == "RoundPup":
+            self.lyot_pup = pupil(modelconfig,
+                                  prad=self.prad,
+                                  PupType=coroconfig["filename_instr_lyot"])
         else:
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
@@ -1073,7 +1083,7 @@ class coronagraph(Optical_System):
         Returns
         ------
         shift(Knife) :list of len(self.wav_vec) 2D arrays giving the complex transmission of the
-            Knife edge coronagraph mask. TODO A CHECKER YA PTET UN SOUCIS DE SHIFT
+            Knife edge coronagraph mask.
 
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
@@ -1109,9 +1119,9 @@ class coronagraph(Optical_System):
             Knife[np.where(yy < (maxdimension_array_fpm / 2 -
                                  self.knife_coro_offset * ld_p_0))] = 1
 
-        knife_allwl = list()
+        knife_allwl = np.zeros((len(self.wav_vec),maxdimension_array_fpm,maxdimension_array_fpm))
         for i in range(len(self.wav_vec)):
-            knife_allwl.append(Knife)
+            knife_allwl[i] = Knife
 
         return knife_allwl
 
@@ -1159,8 +1169,6 @@ class deformable_mirror(Optical_System):
                  modelconfig,
                  DMconfig,
                  Name_DM='DM3',
-                 load_fits=True,
-                 save_fits=False,
                  Model_local_dir=''):
         """ --------------------------------------------------
         Initialize a deformable mirror object
@@ -1171,8 +1179,6 @@ class deformable_mirror(Optical_System):
         modelconfig : general configuration parameters (sizes and dimensions)
         DMconfig : DM parameters
         Name_DM : the name of the DM, which allows to find it in the parameter file
-        load_fits : bool, default = True if true, we do not measure the DM init fits, we load them
-        save_fits : bool, default = False if true, we save the DM init fits for future use
         we measure and save the pushact functions
 
         Model_local_dir: directory to save things you can measure yourself
@@ -1192,8 +1198,10 @@ class deformable_mirror(Optical_System):
 
         MinimumSurfaceRatioInThePupil = DMconfig[
             "MinimumSurfaceRatioInThePupil"]
-        DMconfig[self.Name_DM + "_misregistration"] = False
-        # no misregistration in the initialization part, only in the correction part
+
+        # For intialization, we assume no misregistration, we introduce it after
+        # estimation and correction matrices are created.
+        self.misregistration = False
 
         # first thing we do is to open filename_grid_actu to check the number of
         # actuator of this DM
@@ -1238,33 +1246,39 @@ class deformable_mirror(Optical_System):
         # from the influence function
 
         # DM_pushact is always in the DM plane
+        start_time = time.time()
         self.DM_pushact = self.creatingpushact(DMconfig,
-                                               load_fits=load_fits,
-                                               save_fits=save_fits,
                                                Model_local_dir=Model_local_dir)
+        print("time for DM_pushact for " + self.string_os,
+              time.time() - start_time)
+
+        start_time = time.time()
 
         if self.z_position != 0:
             # DM_pushact_inpup is always in the pupil plane
             self.DM_pushact_inpup = self.creatingpushact_inpup(
-                load_fits=load_fits,
-                save_fits=save_fits,
                 Model_local_dir=Model_local_dir)
         else:
             # if the DM plane IS the pupil plane
             self.DM_pushact_inpup = self.DM_pushact
             # This is a duplicate of the same file but coherent and
             # allows you to easily concatenate wherever are the DMs
-            # this is not taking memmery this is just 2 names for the
+            # this is not taking memory this is just 2 names for the
             # same object in memory:
             # print(id(self.DM_pushact_inpup))
             # print(id(self.DM_pushact))
+        print("time for DM_pushact_inpup for " + self.string_os,
+              time.time() - start_time)
 
+        start_time = time.time()
         # create or load 'which actuators are in pupil'
         self.WhichInPupil = self.creatingWhichinPupil(
-            MinimumSurfaceRatioInThePupil,
-            load_fits=load_fits,
-            save_fits=save_fits,
-            Model_local_dir=Model_local_dir)
+            MinimumSurfaceRatioInThePupil, Model_local_dir=Model_local_dir)
+        print("time for WhichInPupil for " + self.string_os,
+              time.time() - start_time)
+
+        self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
+        # now if we relaunch self.DM_pushact, it will be different due to misregistration
 
     def EF_through(self,
                    entrance_EF=1.,
@@ -1353,19 +1367,23 @@ class deformable_mirror(Optical_System):
 
         return EF_after_DM
 
-    def creatingpushact(self,
-                        DMconfig,
-                        load_fits=False,
-                        save_fits=False,
-                        Model_local_dir=''):
+    def creatingpushact(self, DMconfig, Model_local_dir=''):
         """ --------------------------------------------------
-        OPD map induced in the DM plane for each actuator
+        OPD map induced in the DM plane for each actuator.
+
+        This large array is initialized at the beginning and will be use
+        to transorm a voltage into a phase for each DM. This is saved
+        in .fits to save times if the parameter have not changed
+
+        In case of "misregistration = True" we measure it once for
+        creating the interraction matrix and then once again, between
+        the matrix measrueemnt and the correction with a small mismatch
+        to simulate its effect.
+
 
         Parameters
         ----------
         DMconfig : structure with all information on DMs
-        load_fits : bool, default = False if true, we do not measure the DM init fits, we load them
-        save_fits : bool, default = False if true, we save the DM init fits for future use
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
 
@@ -1380,7 +1398,7 @@ class deformable_mirror(Optical_System):
 
         Name_pushact_fits = "PushAct" + self.string_os
 
-        if (load_fits == True) and (
+        if (self.misregistration is False) and (
                 os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
             return fits.getdata(
                 os.path.join(Model_local_dir, Name_pushact_fits + '.fits'))
@@ -1399,8 +1417,7 @@ class deformable_mirror(Optical_System):
         x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
         xy_ActuN = [x_ActuN, y_ActuN]
 
-        misregistration = DMconfig[self.Name_DM + "_misregistration"]
-        if misregistration == True:
+        if self.misregistration == True:
             xerror = DMconfig[self.Name_DM + "_xerror"]
             yerror = DMconfig[self.Name_DM + "_yerror"]
             angerror = DMconfig[self.Name_DM + "_angerror"]
@@ -1421,11 +1438,12 @@ class deformable_mirror(Optical_System):
             im_ActuN = fits.getdata(model_dir + filename_ActuN)
             im_ActuN_dim = proc.crop_or_pad_image(im_ActuN, dim_array)
 
-            ytmp, xtmp = np.unravel_index(
+            xy_ActuN = np.unravel_index(
                 np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
+
             # shift by (0.5,0.5) pixel because the pupil is
             # centered between pixels
-            xy_ActuN = [xtmp - 0.5, ytmp - 0.5]
+            xy_ActuN = xy_ActuN - 0.5
 
         #Position for each actuator in pixel for the numerical simulation
         simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
@@ -1489,15 +1507,15 @@ class deformable_mirror(Optical_System):
                     (simu_grid[1, i] + dim_array / 2 - xycenttmp,
                      simu_grid[0, i] + dim_array / 2 - xycenttmp))
 
-                xo, yo = np.unravel_index(Psivector.argmax(), Psivector.shape)
+                xy0 = np.unravel_index(Psivector.argmax(), Psivector.shape)
                 x, y = np.mgrid[0:dim_array, 0:dim_array]
                 xy = (x, y)
                 Psivector = proc.twoD_Gaussian(xy,
                                                1,
                                                1 + gausserror,
                                                1 + gausserror,
-                                               xo,
-                                               yo,
+                                               xy0[0],
+                                               xy0[1],
                                                0,
                                                0,
                                                flatten=False)
@@ -1505,17 +1523,15 @@ class deformable_mirror(Optical_System):
 
             pushact[i] = Psivector
 
-        if save_fits == True and misregistration == False:
+        if self.misregistration == False and (
+                not os.path.exists(Model_local_dir + Name_pushact_fits +
+                                   '.fits')):
             fits.writeto(Model_local_dir + Name_pushact_fits + '.fits',
-                         pushact,
-                         overwrite=True)
+                         pushact)
 
         return pushact
 
-    def creatingpushact_inpup(self,
-                              load_fits=False,
-                              save_fits=False,
-                              Model_local_dir=''):
+    def creatingpushact_inpup(self, Model_local_dir=''):
         """ --------------------------------------------------
         OPD map induced by out-of-pupil DM in the pupil plane for each actuator
         ## Create the influence functions of an out-of-pupil DM
@@ -1523,8 +1539,6 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        load_fits : bool, default = False. if true, we just load creatingpushact_inpup fits
-        save_fits : bool, default = False if true, we save the creatingpushact_inpup fits
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
         Returns
@@ -1534,10 +1548,10 @@ class deformable_mirror(Optical_System):
 
         Name_pushact_inpup_fits = "PushActInPup" + self.string_os
 
-        if (load_fits is True) and (os.path.exists(
-                Model_local_dir + Name_pushact_inpup_fits + '_RE.fits')) and (
-                    os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
-                                   '_IM.fits')):
+        if (os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                           '_RE.fits')
+            ) and (os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                                  '_IM.fits')):
             DM_pushact_inpup_real = fits.getdata(
                 os.path.join(Model_local_dir,
                              Name_pushact_inpup_fits + '_RE.fits'))
@@ -1567,23 +1581,22 @@ class deformable_mirror(Optical_System):
                 -self.z_position, self.diam_pup_in_m / 2, self.prad)
             pushact_inpup[i] = EF_back_in_pup_plane
 
-        if save_fits == True:
-            fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_RE.fits',
-                         np.real(pushact_inpup),
-                         overwrite=True)
-            fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
-                         '_IM.fits',
-                         np.imag(pushact_inpup),
-                         overwrite=True)
+            if not ((os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                                    '_RE.fits')) and
+                    (os.path.exists(Model_local_dir + Name_pushact_inpup_fits +
+                                    '_IM.fits'))):
+                fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
+                             '_RE.fits',
+                             np.real(pushact_inpup),
+                             overwrite=True)
+                fits.writeto(Model_local_dir + Name_pushact_inpup_fits +
+                             '_IM.fits',
+                             np.imag(pushact_inpup),
+                             overwrite=True)
 
         return pushact_inpup
 
-    def creatingWhichinPupil(self,
-                             cutinpupil,
-                             load_fits=False,
-                             save_fits=False,
-                             Model_local_dir=''):
+    def creatingWhichinPupil(self, cutinpupil, Model_local_dir=''):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
 
@@ -1591,8 +1604,6 @@ class deformable_mirror(Optical_System):
         ----------
         cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account
                     (between 0 and 1, ratio of an actuator perfectly centered in the entrance pupil)
-        load_fits : bool, default = False if true, we do not measure WhichInPup fits, we load it
-        save_fits : bool, default = False if true, we save the WhichInPup fits for future use
         Model_local_dir: directory to save things you can measure yourself
                         and can save to save time
         Return:
@@ -1602,9 +1613,7 @@ class deformable_mirror(Optical_System):
 
         Name_WhichInPup_fits = "ActinPup" + self.string_os
 
-        if load_fits is True and (os.path.exists(Model_local_dir +
-                                                 Name_WhichInPup_fits +
-                                                 '.fits')):
+        if os.path.exists(Model_local_dir + Name_WhichInPup_fits + '.fits'):
             return useful.check_and_load_fits(Model_local_dir,
                                               Name_WhichInPup_fits)
 
@@ -1625,12 +1634,46 @@ class deformable_mirror(Optical_System):
 
         WhichInPupil = np.array(WhichInPupil)
 
-        if save_fits == True:
+        if not os.path.exists(Model_local_dir + Name_WhichInPup_fits +
+                              '.fits'):
             fits.writeto(Model_local_dir + Name_WhichInPup_fits + '.fits',
                          WhichInPupil,
                          overwrite=True)
 
         return WhichInPupil
+
+        # this is a modified version. Currently not stable
+        # Name_WhichInPup_fits = "ActinPup" + self.string_os + "_thres" + str(threshold)
+
+        # if os.path.exists(Model_local_dir + Name_WhichInPup_fits + '.fits'):
+        #     return useful.check_and_load_fits(Model_local_dir,
+        #                                       Name_WhichInPup_fits)
+
+        # if self.z_position != 0:
+        #             # Propagation in DM plane out of pupil
+        #     Pup_inDMplane, _ = prop.prop_fresnel(self.clearpup.pup, self.wavelength_0, self.z_position,
+        #                                     self.diam_pup_in_m / 2, self.prad)
+        # else:
+        #     Pup_inDMplane = self.clearpup.pup
+
+        # WhichInPupil = []
+        # Sum_actu_with_pup = np.zeros(self.number_act)
+
+        # for num_actu in np.arange(self.number_act):
+        #     Sum_actu_with_pup[num_actu] = np.sum(np.abs(self.DM_pushact[num_actu]*Pup_inDMplane))
+
+        # Max_val = np.max(Sum_actu_with_pup)
+        # for num_actu in np.arange(self.number_act):
+        #     if Sum_actu_with_pup[num_actu] > Max_val*threshold:
+        #         WhichInPupil.append(num_actu)
+
+        # WhichInPupil = np.array(WhichInPupil)
+
+        # if not os.path.exists(Model_local_dir + Name_WhichInPup_fits +
+        #                       '.fits'):
+        #     fits.writeto(Model_local_dir + Name_WhichInPup_fits + '.fits',
+        #                  WhichInPupil,
+        #                  overwrite=True)
 
     def prop_pup_to_DM_and_back(self,
                                 entrance_EF,
@@ -1787,13 +1830,14 @@ class Testbed(Optical_System):
         self.exitpup_rad = list_os[-1].exitpup_rad
 
         self.number_DMs = 0
-        self.number_of_acts_in_DMs = []
-        self.name_of_DMs = []
+        self.number_act = 0
+        self.name_of_DMs = list()
+        self.WhichInPupil = []
 
         # this is the collection of all the possible keywords that can be used in
         # practice in the final testbed.EF_through, so that can be used in
         # all the EF_through functions
-        known_keywords = []
+        known_keywords = list()
 
         # we store the name of all the sub systems
         self.subsystems = list_os_names
@@ -1836,10 +1880,12 @@ class Testbed(Optical_System):
                         num_optical_sys]
                     continue
 
-                # else
+                # elsetestbed.DM3.number_act + testbed.DM1.number_act
                 self.number_DMs += 1
-                self.number_of_acts_in_DMs.append(
-                    list_os[num_optical_sys].number_act)
+                self.WhichInPupil = np.concatenate(
+                    (self.WhichInPupil,
+                     self.number_act + list_os[num_optical_sys].WhichInPupil))
+                self.number_act += list_os[num_optical_sys].number_act
                 self.name_of_DMs.append(list_os_names[num_optical_sys])
 
             # concatenation of the EF_through functions

@@ -50,7 +50,8 @@ def invertSVD(matrix_to_invert,
     pseudoinverse: Regularized inverse of the input matrix
     -------------------------------------------------- """
     U, s, V = np.linalg.svd(matrix_to_invert, full_matrices=False)
-    # print(s)
+    #print(np.max(np.abs(U @ np.diag(s) @ V)))
+
     S = np.diag(s)
     InvS = np.linalg.inv(S)
     InvS_truncated = np.linalg.inv(S)
@@ -118,7 +119,14 @@ def creatingCorrectionmatrix(input_wavefront,
     Gmatrixbis: 2D array, jacobian matrix for Electric Field Conjugation
     -------------------------------------------------- """
     # TODO this is not super clear to me, I need to clean it with Raphael,
-    # with available tools. Shouldn;t we go through DM1 and 3 ?
+    # with available tools.
+    #
+    # We can save tones of ram here !! This is why computer are crashing !
+    # We duplicate pushact 2 times:  probephase, bas_fct !!!!
+
+    # other basis need to be cleared basisDM3 need to be defined in all cases
+    # and it should be the same function for each basis, just with a different
+    # basis
 
     # change basis if needed
     if otherbasis == True:
@@ -158,6 +166,41 @@ def creatingCorrectionmatrix(input_wavefront,
         k = k + 1
     print("End EFC")
     return Gmatrixbis
+
+
+def cropDHInterractionMatrix(FullInterractionMatrix, mask):
+    """ --------------------------------------------------
+    Crop the  Interraction Matrix. to the mask size
+
+
+    Parameters:
+    ----------
+    FullInterractionMatrix: Interraction matrix over the full focal plane
+
+
+    Return: DHInterractionMatrix: matrix only inside the DH
+    ------
+
+    -------------------------------------------------- """
+    size_full_matrix = FullInterractionMatrix.shape[0]
+
+    size_DH_matrix = 2 * int(np.sum(mask))
+    where_mask_flatten = np.where(mask.flatten() == 1.)
+    DHInterractionMatrix = np.zeros(
+        (size_DH_matrix, FullInterractionMatrix.shape[1]), dtype=float)
+
+    for i in range(FullInterractionMatrix.shape[1]):
+        DHInterractionMatrix[:int(
+            size_DH_matrix /
+            2), i] = FullInterractionMatrix[:int(size_full_matrix / 2),
+                                            i][where_mask_flatten]
+        DHInterractionMatrix[int(size_DH_matrix / 2):,
+                                i] = FullInterractionMatrix[
+                                    int(size_full_matrix / 2):,
+                                    i][where_mask_flatten]
+
+    return DHInterractionMatrix
+
 
 
 def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
@@ -316,9 +359,8 @@ def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
 
         # for PW the probes are not sent in the DM but at the entrance of the testbed.
         # with an hypothesis of small phase.
-        #  not sure the pupil multiplication is necessary
-        # inputwavefront = testbed.entrancepupil.EF_through(entrance_EF=1 +
-        #                                                   1j * probephase[k])
+        # I tried to remove "1+"". It breaks the code
+        # (coronagraph does not "remove the 1 exactly")
 
         deltapsik[k] = proc.resampling(
             testbed.todetector(entrance_EF=1 + 1j * probephase[k]), dimEstim)

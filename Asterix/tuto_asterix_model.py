@@ -115,7 +115,6 @@ rhoc_phase = 4.3
 slope_phase = 3
 phase = pup_round.random_phase_map(phaserms, rhoc_phase, slope_phase)
 
-
 # # from this phase we create a electrical field. This is a general
 # aberrated field before any pupil multiplication.
 aberrated_EF = corono.EF_from_phase_and_ampl(phase_abb=phase)
@@ -162,10 +161,10 @@ EF_though_DM = DM3.EF_through(entrance_EF=aberrated_EF, DMphase=phase)
 # The concatenate function takes 2 parameters:
 #                               - a list of Optical Systems
 #                               - A list of the same size of the name of those system so that you can access it
-# The list order is form the first optics system to the last in the
+# The list order is from the first optics system to the last in the
 # path of the light (so usually from entrance pupil to Lyot pupil)
 testbed_1DM = OptSy.Testbed([pup_round, DM3, corono],
-                                   ["entrancepupil", "DM3", "corono"])
+                            ["entrancepupil", "DM3", "corono"])
 
 # each of the subsystem can now be access individually with the name you gave it:
 # testbed_1DM.entrancepupil, testbed.DM3, etc
@@ -179,7 +178,7 @@ PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF,
 
 # we can now play with all the things we define up to now. for example:
 testbed_1DM_romanpup = OptSy.Testbed([pup_roman, DM3, corono],
-                                            ["entrancepupil", "DM3", "corono"])
+                                     ["entrancepupil", "DM3", "corono"])
 
 # if you have DMs in your system, these are saved in the structure so that you can access it:
 print("number of DMs in testbed_1DM_romanpup:",
@@ -222,7 +221,7 @@ corono_thd = OptSy.coronagraph(modelconfig, Coronaconfig)
 
 # and then just concatenate
 thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono_thd],
-                            ["entrancepupil", "DM1", "DM3", "corono"])
+                     ["entrancepupil", "DM1", "DM3", "corono"])
 
 # if you have DMs in your system, these are saved in the structure so that you can access it:
 print("number of DMs in thd2:", thd2.number_DMs)
@@ -247,7 +246,7 @@ DMnew = OptSy.deformable_mirror(modelconfig,
 pupil_inbetween_DM = OptSy.pupil(modelconfig)
 
 # and a roman entrance pupil
-pup_roman = OptSy.pupil(modelconfig,PupType="RomanPup")
+pup_roman = OptSy.pupil(modelconfig, PupType="RomanPup")
 
 #lets concatenate everything !
 testbed_3DM = OptSy.Testbed(
