@@ -1401,9 +1401,7 @@ class deformable_mirror(Optical_System):
                 os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
             pushact3d = fits.getdata(
                 os.path.join(Model_local_dir, Name_pushact_fits + '.fits'))
-            return pushact3d.reshape(
-                pushact3d.shape[0],
-                pushact3d.shape[1] * pushact3d.shape[2])
+            return pushact3d
 
         diam_pup_in_pix = 2 * self.prad
         diam_pup_in_m = self.diam_pup_in_m
@@ -1531,11 +1529,7 @@ class deformable_mirror(Optical_System):
             fits.writeto(Model_local_dir + Name_pushact_fits + '.fits',
                          pushact3d)
 
-
-
-        return pushact3d.reshape(
-                pushact3d.shape[0],
-                pushact3d.shape[1] * pushact3d.shape[2])
+        return pushact3d
 
 
 
@@ -1635,7 +1629,7 @@ class deformable_mirror(Optical_System):
         # pushactu inside of fresnel(Pup).
         for i in np.arange(self.DM_pushact.shape[0]):
 
-            actu = self.DM_pushact[i].reshape(self.dim_overpad_pupil,self.dim_overpad_pupil)
+            actu = self.DM_pushact[i]
             # cut = cutinpupil * np.sum(np.abs(actu))
             if np.sum(np.abs(actu * self.clearpup.pup)) / np.sum(
                     np.abs(actu)) > cutinpupil:
@@ -1758,6 +1752,9 @@ class deformable_mirror(Optical_System):
     def voltage_to_phase(self, actu_vect, wavelength=None):
         """ --------------------------------------------------
         Generate the phase applied on one DM for a give vector of actuator amplitude
+        We decided to do it without matrix multiplication to save time because a
+        lot of the time we have lot of zeros in it
+
 
         Parameters:
         ----------
@@ -1773,11 +1770,14 @@ class deformable_mirror(Optical_System):
         if wavelength is None:
             wavelength = self.wavelength_0
 
-        surface_reshaped = np.dot(
-            actu_vect, self.DM_pushact
-            )
+        where_non_zero_voltage = np.where(actu_vect != 0)
+        surface_to_phase = 2 * np.pi * 1e-9 / wavelength
 
-        phase_on_DM = surface_reshaped.reshape(self.dim_overpad_pupil,self.dim_overpad_pupil) * 2 * np.pi * 1e-9 / wavelength
+        # TODO is there a clean way to do it directly with np.sum to save time ?
+        # I think I can use einstein notation np.einsum which is faster and cleaner
+        phase_on_DM = np.zeros((self.dim_overpad_pupil,self.dim_overpad_pupil))
+        for i in where_non_zero_voltage[0]:
+           phase_on_DM += self.DM_pushact[i,:,:]*actu_vect[i]* surface_to_phase
 
         return phase_on_DM
 

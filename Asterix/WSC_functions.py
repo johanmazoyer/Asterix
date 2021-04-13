@@ -6,6 +6,7 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
+import time
 
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
@@ -139,6 +140,7 @@ def creatingInterractionmatrix(input_wavefront,
                    i] = np.imag(Gvector).flatten()
 
     if testbed.DM1.active == True:
+        print("")
         print("For DM1")
         #the basis in now defined here only for actuator basis but it should be done
         # in the corection initialization
