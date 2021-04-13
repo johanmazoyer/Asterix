@@ -1,3 +1,5 @@
+
+import sys
 import os
 import glob
 import numpy as np
@@ -136,3 +138,15 @@ def from_param_to_header(config):
         for scalar in config[str(sect)].scalars:
             header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
     return header
+
+
+
+def progress(count, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 0)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+    sys.stdout.flush()
