@@ -1350,7 +1350,7 @@ class deformable_mirror(Optical_System):
             name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      entrance_EF)
+                                      EF_after_DM)
 
         return EF_after_DM
 

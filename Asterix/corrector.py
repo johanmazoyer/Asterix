@@ -116,7 +116,7 @@ class Corrector:
 
                 start_time = time.time()
                 interMat = wsc.creatingInterractionmatrix(
-                    testbed.entrancepupil.pup,
+                    1.,
                     testbed,
                     estimator.dimEstim,
                     self.amplitudeEFC
