@@ -38,7 +38,7 @@ print("")
 print("")
 print("")
 
-#### CORRECTION 2DM IN PW + EFC
+### CORRECTION 2DM IN PW + EFC
 start_time = time.time()
 phase, im = Main_EFC_THD.correctionLoop(
     Asterixroot + os.path.sep + 'Example_param_file.ini',
@@ -61,10 +61,9 @@ phase, im = Main_EFC_THD.correctionLoop(
     Asterixroot + os.path.sep + 'Example_param_file.ini',
     NewDMconfig={'DM1_active': True},
     NewEstimationconfig={'estimation': 'Perfect'},
-    NewCorrectionconfig={'DH_side': "Full",'Nbiter_corr': ["2", "1", "1", "1", "3", "2", "1", "2", "4", "3"],
+    NewCorrectionconfig={'DH_side': "Full",'Nbiter_corr': ["1", "3", "4", "1", "3"],
         'Nbmode_corr': [
-            "500", "800", "500", "1000", "700", "900", "1000", "900", "700",
-            "900"
+            "1100", "1000", "900", "500", "900"
         ]
     })
 print('total time correction 2DM perfect', time.time() - start_time)

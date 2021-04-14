@@ -2,10 +2,13 @@
 __author__ = "Axel Potier"
 
 import os
+import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
+import time
 
+import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
@@ -86,14 +89,10 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def creatingCorrectionmatrix(input_wavefront,
+def creatingInterractionmatrix(input_wavefront,
                              testbed,
-                             dimimages,
-                             pushact,
-                             mask,
-                             Whichact,
-                             otherbasis=False,
-                             basisDM3=0):
+                             dimEstim,
+                             amplitudeEFC):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
@@ -103,69 +102,77 @@ def creatingCorrectionmatrix(input_wavefront,
         input wavefront in pupil plane
     testbed: Optical_element
         testbed structure
-    dimimages: int
-        size of the output image after resampling in pixels
-    pushact: 3D-array
-        phase created by the pokes of each actuator of DM with the wished amplitude
-    mask: 2D array
-        binary mask whose pixel=1 will be taken into account
-    Whichact: 1D array
-        index of the actuators taken into account to create the jacobian matrix
-    otherbasis:
-    basisDM3:
+    dimEstim: int
+        size of the output image in teh estimator
+    amplitudeEFC:
 
     Return:
     ------
-    Gmatrixbis: 2D array, jacobian matrix for Electric Field Conjugation
+    InterMat: 2D array, jacobian matrix for Electric Field Conjugation
     -------------------------------------------------- """
-    # TODO this is not super clear to me, I need to clean it with Raphael,
-    # with available tools.
-    #
-    # We can save tones of ram here !! This is why computer are crashing !
-    # We duplicate pushact 2 times:  probephase, bas_fct !!!!
 
-    # other basis need to be cleared basisDM3 need to be defined in all cases
-    # and it should be the same function for each basis, just with a different
-    # basis
 
-    # change basis if needed
-    if otherbasis == True:
-        nb_fct = basisDM3.shape[0]  # number of functions in the basis
-        tmp = pushact.reshape(pushact.shape[0],
-                              pushact.shape[1] * pushact.shape[2])
-        bas_fct = basisDM3 @ tmp.reshape(nb_fct, pushact.shape[1],
-                                         pushact.shape[2])
-    else:
-        probephase = np.zeros((pushact.shape[0], testbed.dim_overpad_pupil,
-                               testbed.dim_overpad_pupil),
-                              dtype=complex)
-        for k in range(pushact.shape[0]):
-            probephase[k] = pushact[k]
+    print("Start Interraction Matrix")
+    InterMat = np.zeros((2 * int(dimEstim**2), len(testbed.WhichInPupil)))
 
-        bas_fct = np.array([probephase[ind] for ind in Whichact])
-        nb_fct = len(Whichact)
-    print("Start EFC")
-    Gmatrixbis = np.zeros((2 * int(np.sum(mask)), nb_fct))
-    k = 0
-    for i in range(nb_fct):
-        if i % 100 == 0:
-            print(i)
-        Psivector = bas_fct[i]
 
-        # TODO we shoudl replace by perfect estimation. This is equivalent but it would be more coherent
-        # also i and k are the same indice I think :-)
-        # the names here are confusing
+    print("For DM3")
+    #the basis in now defined here only for actuator basis but it should be done
+    # in the corection initialization
+    basis_size = len(testbed.DM3.WhichInPupil)
+    basis = np.zeros((basis_size,testbed.DM3.number_act))
+    for i in range(basis_size):
+        basis[i][testbed.DM3.WhichInPupil[i]] = 1
 
+    for i in range(basis_size):
+
+        if i %10:
+            useful.progress(i, basis_size, status='')
+
+        phaseDM = testbed.DM3.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
         Gvector = proc.resampling(
-            testbed.todetector(entrance_EF=input_wavefront * 1j * Psivector),
-            dimimages)
-        Gmatrixbis[0:int(np.sum(mask)),
-                   k] = np.real(Gvector[np.where(mask == 1)]).flatten()
-        Gmatrixbis[int(np.sum(mask)):,
-                   k] = np.imag(Gvector[np.where(mask == 1)]).flatten()
-        k = k + 1
-    print("End EFC")
-    return Gmatrixbis
+            testbed.todetector(entrance_EF=input_wavefront * 1j *  phaseDM * amplitudeEFC),
+            dimEstim)
+
+        InterMat[:dimEstim**2,
+                   i] = np.real(Gvector).flatten()
+        InterMat[dimEstim**2:,
+                   i] = np.imag(Gvector).flatten()
+
+    if testbed.DM1.active == True:
+        print("")
+        print("For DM1")
+        #the basis in now defined here only for actuator basis but it should be done
+        # in the corection initialization
+        basis_size = len(testbed.DM1.WhichInPupil)
+        basis = np.zeros((basis_size,testbed.DM1.number_act))
+        for i in range(basis_size):
+            basis[i][testbed.DM1.WhichInPupil[i]] = 1
+
+        Pup_inDMplane, _ =  prop.prop_fresnel(testbed.entrancepupil.pup,
+                                             testbed.DM1.wavelength_0, testbed.DM1.z_position,
+                                             testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+
+        for i in range(basis_size):
+
+            if i %10:
+                useful.progress(i, basis_size, status='')
+
+            phaseDM = testbed.DM1.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
+            EF_back_in_pup_plane, _ = prop.prop_fresnel(
+                            Pup_inDMplane * phaseDM, testbed.DM1.wavelength_0,
+                            -testbed.DM1.z_position, testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+            Gvector = proc.resampling(
+                testbed.todetector(entrance_EF=input_wavefront * 1j *  EF_back_in_pup_plane * amplitudeEFC),
+                dimEstim)
+
+            InterMat[:dimEstim**2, len(testbed.DM3.WhichInPupil) +
+                    i] = np.real(Gvector).flatten()
+            InterMat[dimEstim**2:, len(testbed.DM3.WhichInPupil)+
+                    i] = np.imag(Gvector).flatten()
+
+    print("End Interraction Matrix")
+    return InterMat
 
 
 def cropDHInterractionMatrix(FullInterractionMatrix, mask):
