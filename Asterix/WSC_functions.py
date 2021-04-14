@@ -13,6 +13,10 @@ import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
 
+#################################################################################
+### Correction functions
+#################################################################################
+
 def invertSVD(matrix_to_invert,
               cut,
               goal="e",
@@ -115,61 +119,43 @@ def creatingInterractionmatrix(input_wavefront,
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2), len(testbed.WhichInPupil)))
 
-
-    print("For DM3")
-    #the basis in now defined here only for actuator basis but it should be done
-    # in the corection initialization
-    basis_size = len(testbed.DM3.WhichInPupil)
-    basis = np.zeros((basis_size,testbed.DM3.number_act))
-    for i in range(basis_size):
-        basis[i][testbed.DM3.WhichInPupil[i]] = 1
-
-    for i in range(basis_size):
-
-        if i %10:
-            useful.progress(i, basis_size, status='')
-
-        phaseDM = testbed.DM3.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
-        Gvector = proc.resampling(
-            testbed.todetector(entrance_EF=input_wavefront * 1j *  phaseDM * amplitudeEFC),
-            dimEstim)
-
-        InterMat[:dimEstim**2,
-                   i] = np.real(Gvector).flatten()
-        InterMat[dimEstim**2:,
-                   i] = np.imag(Gvector).flatten()
-
     if testbed.DM1.active == True:
-        print("")
-        print("For DM1")
-        #the basis in now defined here only for actuator basis but it should be done
-        # in the corection initialization
-        basis_size = len(testbed.DM1.WhichInPupil)
-        basis = np.zeros((basis_size,testbed.DM1.number_act))
-        for i in range(basis_size):
-            basis[i][testbed.DM1.WhichInPupil[i]] = 1
+        DMs_here = [testbed.DM3, testbed.DM1]
+    else:
+        DMs_here = [testbed.DM3]
 
-        Pup_inDMplane, _ =  prop.prop_fresnel(testbed.entrancepupil.pup,
-                                             testbed.DM1.wavelength_0, testbed.DM1.z_position,
-                                             testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+    pos_in_matrix = 0
+    for DM in DMs_here:
+        print("Start "+ DM.Name_DM)
 
-        for i in range(basis_size):
+        basis = DM_basis(DM, basis_type = 'actuator')
+
+        if DM.z_position != 0:
+            #make something smarter to check automatically the name of the entrance pup
+            Pup_inDMplane, _ =  prop.prop_fresnel(testbed.entrancepupil.pup,
+                                        DM.wavelength_0, DM.z_position,
+                                        DM.diam_pup_in_m / 2, DM.prad)
+
+        for i in range(basis.shape[0]):
 
             if i %10:
-                useful.progress(i, basis_size, status='')
+                useful.progress(i, basis.shape[0], status='')
 
-            phaseDM = testbed.DM1.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
-            EF_back_in_pup_plane, _ = prop.prop_fresnel(
-                            Pup_inDMplane * phaseDM, testbed.DM1.wavelength_0,
-                            -testbed.DM1.z_position, testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+            phaseDM = DM.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
+            if DM.z_position != 0:
+                phaseDM, _ = prop.prop_fresnel(
+                                Pup_inDMplane * phaseDM, DM.wavelength_0,
+                                -DM.z_position, DM.diam_pup_in_m / 2, DM.prad)
+
             Gvector = proc.resampling(
-                testbed.todetector(entrance_EF=input_wavefront * 1j *  EF_back_in_pup_plane * amplitudeEFC),
+                testbed.todetector(entrance_EF=input_wavefront * 1j *  phaseDM * amplitudeEFC),
                 dimEstim)
 
-            InterMat[:dimEstim**2, len(testbed.DM3.WhichInPupil) +
-                    i] = np.real(Gvector).flatten()
-            InterMat[dimEstim**2:, len(testbed.DM3.WhichInPupil)+
-                    i] = np.imag(Gvector).flatten()
+            InterMat[:dimEstim**2,
+                    pos_in_matrix] = np.real(Gvector).flatten()
+            InterMat[dimEstim**2:,
+                    pos_in_matrix] = np.imag(Gvector).flatten()
+            pos_in_matrix += 1
 
     print("End Interraction Matrix")
     return InterMat
@@ -208,6 +194,29 @@ def cropDHInterractionMatrix(FullInterractionMatrix, mask):
 
     return DHInterractionMatrix
 
+def DM_basis(DM,basis_type = 'actuator'):
+    """ --------------------------------------------------
+    Create a DM basis.
+    This could be set in the DM class ?
+    TODO do a sine / cosine basis and a
+    TODO do a zernike basis
+
+    Parameters:
+    ----------
+    DM: a DM object (Optical System)
+    basis_type: string, default 'actuator' the type of basis
+
+    Return:
+    ------
+    a 2d numpy array [Size basis, Number act in the DM]
+    -------------------------------------------------- """
+
+    if basis_type == 'actuator':
+        basis_size = len(DM.WhichInPupil)
+        basis = np.zeros((basis_size,DM.number_act))
+        for i in range(basis_size):
+            basis[i][DM.WhichInPupil[i]] = 1
+    return basis
 
 
 def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,

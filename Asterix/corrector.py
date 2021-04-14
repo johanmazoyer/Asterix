@@ -216,6 +216,7 @@ class Corrector:
         -------------------------------------------------- """
 
         if self.correction_algorithm == "efc":
+            # TODO gné ? I need to add a condition like if mode != self.previousmode i think
             _, _, invertGDH = wsc.invertSVD(
                     self.Gmatrix,
                     mode,
