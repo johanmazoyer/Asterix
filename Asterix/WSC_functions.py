@@ -117,7 +117,7 @@ def creatingInterractionmatrix(input_wavefront,
     total_number_basis_modes = 0
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
-        total_number_basis_modes += len(DM.basis.shape[0])
+        total_number_basis_modes += DM.basis.shape[0]
 
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2),total_number_basis_modes ))
