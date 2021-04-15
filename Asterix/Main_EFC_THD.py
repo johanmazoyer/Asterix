@@ -380,10 +380,10 @@ def correctionLoop(parameter_file,
     nbiter = len(modevector)
     imagedetector = np.zeros((nbiter + 1, thd2.dimScience, thd2.dimScience))
 
-    phaseDM3 = np.zeros(
-        (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
-    phaseDM1 = np.zeros(
-        (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
+    # phaseDM3 = np.zeros(
+    #     (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
+    # phaseDM1 = np.zeros(
+    #     (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
     meancontrast = np.zeros(nbiter + 1)
 
     voltage_DMs = [0.]  # initialize with no voltage
@@ -410,8 +410,7 @@ def correctionLoop(parameter_file,
 
         resultatestimation = estim.estimate(thd2,
                                             entrance_EF=input_wavefront,
-                                            DM1phase=phaseDM1[iteration],
-                                            DM3phase=phaseDM3[iteration],
+                                            voltage_vector = voltage_DMs[iteration],
                                             wavelength=thd2.wavelength_0,
                                             photon_noise=photon_noise,
                                             nb_photons=nb_photons)
@@ -420,8 +419,7 @@ def correctionLoop(parameter_file,
             search_best_contrast = list()
             perfectestimate = estim.estimate(thd2,
                                              entrance_EF=input_wavefront,
-                                             DM1phase=phaseDM1[iteration],
-                                             DM3phase=phaseDM3[iteration],
+                                             voltage_vector = 0.,
                                              wavelength=thd2.wavelength_0,
                                              perfect_estimation=True)
 
@@ -430,25 +428,10 @@ def correctionLoop(parameter_file,
                 perfectsolution = -gain * correc.amplitudeEFC * correc.toDM_voltage(
                     thd2, perfectestimate, modeLinesearch)
 
-               #### to be removed #### #### #### #### #### #### #### #### ####
-
                 tmpvoltage_DMs = voltage_DMs[iteration] + perfectsolution
-                DM_phases = thd2.voltage_to_phases(tmpvoltage_DMs)
-
-                if DM_phases.shape[0] == 1:
-                    phaseDM1_tmp = 0
-                    phaseDM3_tmp =  DM_phases[0]
-
-                elif DM_phases.shape[0] == 2:
-                    phaseDM1_tmp = DM_phases[0]
-                    phaseDM3_tmp =  DM_phases[1]
-                ########################################################################
-
 
                 imagedetector_tmp = thd2.todetector_Intensity(
-                    entrance_EF=input_wavefront,
-                    DM1phase=phaseDM1_tmp,
-                    DM3phase=phaseDM3_tmp)
+                    entrance_EF=input_wavefront,voltage_vector = tmpvoltage_DMs)
 
                 search_best_contrast.append(
                     np.mean(imagedetector_tmp[np.where(MaskScience != 0)]))
@@ -461,6 +444,9 @@ def correctionLoop(parameter_file,
         solution = -gain * correc.amplitudeEFC * correc.toDM_voltage(
             thd2, resultatestimation, mode)
 
+        voltage_DMs.append(voltage_DMs[iteration] + solution)
+
+
         ### TODO Following lines should be removed  since we should put directly solution in
         # the testbed model
         # this step should be 3 simple lines :
@@ -469,22 +455,19 @@ def correctionLoop(parameter_file,
         # imagedetector = thd2.todetector_Intensity(DMVoltag,...)
 
         #### to be removed #### #### #### #### #### #### #### #### ####
-        voltage_DMs.append(voltage_DMs[iteration] + solution)
-        DM_phases = thd2.voltage_to_phases(voltage_DMs[iteration+1])
+        # DM_phases = thd2.voltage_to_phases(voltage_DMs[iteration+1])
 
-        if DM_phases.shape[0] == 1:
-            phaseDM1[iteration + 1] = 0
-            phaseDM3[iteration + 1] =  DM_phases[0]
+        # if DM_phases.shape[0] == 1:
+        #     phaseDM1[iteration + 1] = 0
+        #     phaseDM3[iteration + 1] =  DM_phases[0]
 
-        elif DM_phases.shape[0] == 2:
-            phaseDM1[iteration + 1] = DM_phases[0]
-            phaseDM3[iteration + 1] =  DM_phases[1]
+        # elif DM_phases.shape[0] == 2:
+        #     phaseDM1[iteration + 1] = DM_phases[0]
+        #     phaseDM3[iteration + 1] =  DM_phases[1]
         ########################################################################
 
         imagedetector[iteration + 1] = thd2.todetector_Intensity(
-            entrance_EF=input_wavefront,
-            DM1phase=phaseDM1[iteration + 1],
-            DM3phase=phaseDM3[iteration + 1])
+            entrance_EF=input_wavefront,voltage_vector =voltage_DMs[iteration + 1])
 
         meancontrast[iteration + 1] = np.mean(
             imagedetector[iteration + 1][np.where(MaskScience != 0)])
@@ -511,14 +494,14 @@ def correctionLoop(parameter_file,
                  header,
                  overwrite=True)
 
-    fits.writeto(result_dir + current_time_str + "_Phase_on_DM1" + ".fits",
-                    phaseDM1,
-                    header,
-                    overwrite=True)
-    fits.writeto(result_dir + current_time_str + "_Phase_on_DM3" + ".fits",
-                 phaseDM3,
-                 header,
-                 overwrite=True)
+    # fits.writeto(result_dir + current_time_str + "_Phase_on_DM1" + ".fits",
+    #                 phaseDM1,
+    #                 header,
+    #                 overwrite=True)
+    # fits.writeto(result_dir + current_time_str + "_Phase_on_DM3" + ".fits",
+    #              phaseDM3,
+    #              header,
+    #              overwrite=True)
     fits.writeto(result_dir + current_time_str + "_Mean_Contrast_DH" + ".fits",
                  meancontrast,
                  header,

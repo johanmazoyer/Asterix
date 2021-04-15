@@ -1839,12 +1839,15 @@ class Testbed(Optical_System):
         if 'DMphase' in known_keywords:
             known_keywords.remove('DMphase')
             # there is at least a DM, we add voltage_vector as an authorize kw
+
             known_keywords.append('voltage_vector')
+            self.EF_through = self._control_testbed_with_voltages(self.EF_through)
 
         # to avoid mis-use we only use specific keywords.
         known_keywords.remove('kwargs')
 
         self.EF_through = _clean_EF_through(self.EF_through, known_keywords)
+
 
 
         #initialize the max and sum of PSFs for the normalization to contrast
@@ -1870,13 +1873,24 @@ class Testbed(Optical_System):
 
         Return:
         ------
-            2D array
-            phase map in the same unit as actu_vect * DM_pushact)
+            3D array
+            phases map for each DMS in the same unit as actu_vect * DM_pushact by order of light path
+
+        AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
         DMphases = np.zeros((self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
         indice_acum_number_act = 0
 
+        if isinstance(actu_vect, float) :
+            return np.zeros(self.number_DMs) + actu_vect
+
+        if len(actu_vect) != self.number_act:
+            raise Exception("voltage vector must be 0 or array of dimension testbed.number_act,"+
+                            "sum of all DM.number_act")
+
+
         for i, DM_name in enumerate(self.name_of_DMs):
+
             DM = vars(self)[DM_name]
             actu_vect_DM = actu_vect[indice_acum_number_act: indice_acum_number_act + DM.number_act]
             DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
@@ -1885,37 +1899,33 @@ class Testbed(Optical_System):
 
         return DMphases
 
-    # def _phase_to_tension(self):
-    #     """ --------------------------------------------------
-    #     A function to rename the
+    def _control_testbed_with_voltages(self,testbed_EF_through):
+        """ --------------------------------------------------
+        A function to controle the testbed with a single function
 
-    #     parameter:
-    #         DM_EF_through_function : the function of which we want to change the params
-    #         name_var : string the name of the  new name variable
+        parameter:
+            DM_EF_through_function : the function of which we want to change the params
+            name_var : string the name of the  new name variable
 
-    #     Returns
-    #         ------
-    #         the_new_function: with name_var as a param
+        Returns
+            ------
+            the_new_function: with name_var as a param
 
 
-    #     AUTHOR : Johan Mazoyer
-    #     -------------------------------------------------- """
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
 
-    #     for DM_name in self.name_of_DMs:
-    #         list_os_names[num_optical_sys] + "phase"
-    #         DM = vars(self)[DM_name]
+        def wrapper(**kwargs):
+            if 'voltage_vector' in kwargs:
+                voltage_vector = kwargs['voltage_vector']
+                DM_phase = self.voltage_to_phases(voltage_vector)
+                for i, DM_name in enumerate(self.name_of_DMs):
+                    name_phase = DM_name + "phase"
+                    kwargs[name_phase] = DM_phase[i]
 
-    #     def wrapper(**kwargs):
-    #         kwargs[name_var] = 0.
-    #         if name_var not in kwargs.keys():
-    #             kwargs[name_var] = 0.
-    #         new_kwargs = copy.copy(kwargs)
+            return testbed_EF_through(**kwargs)
 
-    #         new_kwargs['DMphase'] = kwargs[name_var]
-
-    #         return DM_EF_through_function(**new_kwargs)
-
-    #     return wrapper
+        return wrapper
 
 
 

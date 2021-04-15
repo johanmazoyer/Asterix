@@ -156,8 +156,7 @@ class Estimator:
     def estimate(self,
                  testbed,
                  entrance_EF=0.,
-                 DM1phase=0.,
-                 DM3phase=0.,
+                 voltage_vector = 0.,
                  wavelength=None,
                  photon_noise=False,
                  nb_photons=1e30,
@@ -198,8 +197,7 @@ class Estimator:
             # If polychromatic, assume a perfect estimation at one wavelength
 
             resultatestimation = testbed.todetector(entrance_EF=entrance_EF,
-                                                    DM1phase=DM1phase,
-                                                    DM3phase=DM3phase)
+                                                    voltage_vector= voltage_vector)
 
             if photon_noise == True:
                 resultatestimation = np.random.poisson(
@@ -214,8 +212,7 @@ class Estimator:
                                               self.posprobes,
                                               self.dimEstim,
                                               self.amplitudePW,
-                                              DM1phase=DM1phase,
-                                              DM3phase=DM3phase,
+                                              voltage_vector = voltage_vector,
                                               photon_noise=photon_noise,
                                               nb_photons=nb_photons)
 

@@ -108,6 +108,7 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
 
+
     pos_in_matrix = 0
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
@@ -419,8 +420,7 @@ def createdifference(input_wavefront,
                      posprobes,
                      dimimages,
                      amplitudePW,
-                     DM1phase=0,
-                     DM3phase=0,
+                     voltage_vector=0.,
                      photon_noise=False,
                      nb_photons=1e30,
                      wavelength=None):
@@ -463,24 +463,31 @@ def createdifference(input_wavefront,
     #     input_wavefront = testbed.DM1.EF_through(entrance_EF=input_wavefront, DM1phase = DM1phase,wavelength=wavelength)
 
     for count, num_probe in enumerate(posprobes):
+        # TODO we need to bo a "which DM to probe parameter"
 
-        Voltage_probe = np.zeros(testbed.DM3.number_act)
-        Voltage_probe[num_probe] = amplitudePW
-        probephase = testbed.DM3.voltage_to_phase(Voltage_probe)
+        Voltage_probe = np.zeros(testbed.number_act)
+        indice_acum_number_act = 0
+
+        for DM_name in testbed.name_of_DMs:
+            DM = vars(testbed)[DM_name]
+            if DM_name == "DM3":
+                Voltage_probeDMprobe = np.zeros(DM.number_act)
+                Voltage_probeDMprobe[num_probe] = amplitudePW
+                Voltage_probe[indice_acum_number_act:indice_acum_number_act+DM.number_act] = Voltage_probeDMprobe
+
+            indice_acum_number_act += DM.number_act
 
         # Not 100% sure about wavelength here, so I prefeer to use
         # todetector to keep it monochromatic instead of todetector_Intensity
         # which is large band
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
-                               DM1phase=DM1phase,
-                               DM3phase=DM3phase - probephase,
+                               voltage_vector=voltage_vector - Voltage_probe,
                                wavelength=wavelength))**2
 
         Ikplus = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
-                               DM1phase=DM1phase,
-                               DM3phase=DM3phase + probephase,
+                               voltage_vector=voltage_vector + Voltage_probe,
                                wavelength=wavelength))**2
 
         if photon_noise == True:
