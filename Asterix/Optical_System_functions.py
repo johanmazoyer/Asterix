@@ -1684,6 +1684,29 @@ class deformable_mirror(Optical_System):
 
         return phase_on_DM
 
+    def create_DM_basis(self,basis_type = 'actuator'):
+        """ --------------------------------------------------
+        Create a DM basis.
+        TODO do a sine / cosine basis and a
+        TODO do a zernike basis
+
+        Parameters:
+        ----------
+        DM: a DM object (Optical System)
+        basis_type: string, default 'actuator' the type of basis
+
+        Return:
+        ------
+        a 2d numpy array [Size basis, Number act in the DM]
+        -------------------------------------------------- """
+
+        if basis_type == 'actuator':
+            basis_size = len(self.WhichInPupil)
+            basis = np.zeros((basis_size,self.number_act))
+            for i in range(basis_size):
+                basis[i][self.WhichInPupil[i]] = 1
+        return basis
+
 
 ##############################################
 ##############################################

@@ -74,6 +74,10 @@ class Corrector:
         if isinstance(testbed, OptSy.Optical_System) == False:
             raise Exception("testbed must be an Optical_System objet")
 
+        for DM_name in testbed.name_of_DMs:
+            DM = vars(testbed)[DM_name]
+            DM.basis = DM.create_DM_basis(basis_type = 'actuator')
+
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
 
@@ -84,19 +88,6 @@ class Corrector:
 
             self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
                                               estimator.Estim_sampling)
-
-
-            # I think currently the name of the actuator inside the pupil is
-            # used as the basis, which is not ideal at all, these are 2 different things.
-            self.DM1_otherbasis = Correctionconfig["DM1_otherbasis"]
-            self.DM3_otherbasis = Correctionconfig["DM3_otherbasis"]
-            # DM3
-            if self.DM3_otherbasis == True:
-                testbed.DM1.WhichInPupil = np.arange(testbed.DM3.number_act)
-                self.DM3_basis = fits.getdata(realtestbed_dir +
-                                              "Map_modes_DM3_foc.fits")
-            else:
-                self.DM3_basis = 0
 
 
             fileDirectMatrix = "DirectMatrix_EFCampl" + str(
@@ -156,9 +147,7 @@ class Corrector:
                     self.Gmatrix,
                     Nbmodes,
                     goal="c",
-                    regul=self.regularization,
-                    otherbasis=self.DM3_otherbasis,
-                    basisDM3=self.DM3_basis)
+                    regul=self.regularization)
 
 
                 plt.clf()
@@ -223,30 +212,17 @@ class Corrector:
         -------------------------------------------------- """
 
         if self.correction_algorithm == "efc":
-            # TODO gné ? I need to add a condition like if mode != self.previousmode i think
             if mode != self.previousmode:
                 _, _, invertGDH = wsc.invertSVD(
                         self.Gmatrix,
                         mode,
                         goal="c",
                         visu=False,
-                        regul=self.regularization,
-                        otherbasis=self.DM3_otherbasis,
-                        basisDM3=self.DM3_basis,
+                        regul=self.regularization
                     )
 
-            if testbed.DM1.active == True:
-                return wsc.solutionEFC(
-                    self.MaskEstim, estimate, invertGDH,
-                    np.concatenate(
-                        (testbed.DM3.WhichInPupil,
-                         testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
-                    testbed.DM3.number_act + testbed.DM1.number_act)
-                # TODO Concatenate should be done in the THD2 structure
-            else:
-                return wsc.solutionEFC(self.MaskEstim, estimate,
-                                            invertGDH, testbed.DM3.WhichInPupil,
-                                            testbed.DM3.number_act)
+            return wsc.solutionEFC(self.MaskEstim, estimate,
+                                            invertGDH, testbed)
 
 
         if self.correction_algorithm == "em":
@@ -257,37 +233,15 @@ class Corrector:
                     mode,
                     goal="c",
                     visu=False,
-                    regul=self.regularization,
-                    otherbasis=self.DM3_otherbasis,
-                    basisDM3=self.DM3_basis)
+                    regul=self.regularization)
 
-            # TODO Concatenate should be done in the THD2 structure
-            if testbed.DM1.active == True:
-                return wsc.solutionEM(
-                    self.MaskEstim, estimate, invertM0, self.G,
-                    np.concatenate(
-                        (testbed.DM3.WhichInPupil,
-                        testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
-                    testbed.DM3.number_act + testbed.DM1.number_act)
-                # TODO Concatenate should be done in the THD2 structure
-            else:
-                return wsc.solutionEM(self.MaskEstim, estimate,
-                                        invertM0, self.G, testbed.DM3.WhichInPupil,
-                                        testbed.DM3.number_act)
+            return wsc.solutionEM(self.MaskEstim, estimate,
+                                        invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
-            if testbed.DM1.active == True:
-                return wsc.solutionSteepest(
-                    self.MaskEstim, estimate, self.M0, self.G,
-                    np.concatenate(
-                        (testbed.DM3.WhichInPupil,
-                         testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
-                    testbed.DM3.number_act + testbed.DM1.number_act)
-                # Concatenate should be done in the THD2 structure
-            else:
-                return wsc.solutionSteepest(self.MaskEstim, estimate,
-                                                 self.M0, self.G, testbed.DM3.WhichInPupil,
-                                                 testbed.DM3.number_act)
+
+            return wsc.solutionSteepest(self.MaskEstim, estimate,
+                                                 self.M0, self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")
 

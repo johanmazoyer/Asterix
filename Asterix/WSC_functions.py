@@ -120,11 +120,9 @@ def creatingInterractionmatrix(input_wavefront,
     InterMat = np.zeros((2 * int(dimEstim**2), len(testbed.WhichInPupil)))
 
     pos_in_matrix = 0
-    for DM_name in reversed(testbed.name_of_DMs):
+    for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
         print("Start "+ DM_name)
-
-        basis = DM_basis(DM, basis_type = 'actuator')
 
         if DM.z_position != 0:
 
@@ -133,12 +131,12 @@ def creatingInterractionmatrix(input_wavefront,
                                         DM.wavelength_0, DM.z_position,
                                         DM.diam_pup_in_m / 2, DM.prad)
 
-        for i in range(basis.shape[0]):
+        for i in range(DM.basis.shape[0]):
 
             if i %10:
-                useful.progress(i, basis.shape[0], status='')
+                useful.progress(i, DM.basis.shape[0], status='')
 
-            phaseDM = DM.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
+            phaseDM = DM.voltage_to_phase(DM.basis[i],wavelength = testbed.wavelength_0)
             if DM.z_position != 0:
                 phaseDM, _ = prop.prop_fresnel(
                                 Pup_inDMplane * phaseDM, DM.wavelength_0,
@@ -191,33 +189,26 @@ def cropDHInterractionMatrix(FullInterractionMatrix, mask):
 
     return DHInterractionMatrix
 
-def DM_basis(DM,basis_type = 'actuator'):
-    """ --------------------------------------------------
-    Create a DM basis.
-    This could be set in the DM class ?
-    TODO do a sine / cosine basis and a
-    TODO do a zernike basis
 
-    Parameters:
-    ----------
-    DM: a DM object (Optical System)
-    basis_type: string, default 'actuator' the type of basis
+def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
+    indice_acum_basis_size = 0
+    indice_acum_number_act = 0
 
-    Return:
-    ------
-    a 2d numpy array [Size basis, Number act in the DM]
-    -------------------------------------------------- """
+    vector_actuator_voltage = np.zeros(testbed.number_act)
+    for DM_name in testbed.name_of_DMs:
+        DM = vars(testbed)[DM_name]
+        vector_basis_voltage_for_DM = vector_basis_voltage[indice_acum_basis_size:indice_acum_basis_size+DM.basis.shape[0]]
+        print(DM.basis.shape, vector_basis_voltage_for_DM.shape)
+        vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis), vector_basis_voltage_for_DM)
 
-    if basis_type == 'actuator':
-        basis_size = len(DM.WhichInPupil)
-        basis = np.zeros((basis_size,DM.number_act))
-        for i in range(basis_size):
-            basis[i][DM.WhichInPupil[i]] = 1
-    return basis
+        vector_actuator_voltage[indice_acum_number_act: indice_acum_number_act + DM.number_act] = vector_actu_voltage_for_DM
 
+        indice_acum_basis_size += DM.basis.shape[0]
+        indice_acum_number_act += DM.number_act
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
-                nbDMactu):
+    return vector_actuator_voltage
+
+def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
         intensity in the dark hole region
@@ -231,30 +222,23 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
     inversed_jacobian:  2D array, inverse of the jacobian matrix created
                                 with all the actuators in WhichInPupil
 
-    WhichInPupil:       1D array, index of the actuators taken into account
-                            to create the jacobian matrix
-
-    nbDMactu:           int, number of DM actuators
-
     Return:
     ------
     solution:           1D array, voltage to apply on each deformable
                         mirror actuator
     -------------------------------------------------- """
 
-    Eab = np.zeros(2 * int(np.sum(mask)))
-    Resultatbis = Result_Estimate[np.where(mask == 1)]
-    Eab[0:int(np.sum(mask))] = np.real(Resultatbis).flatten()
-    Eab[int(np.sum(mask)):] = np.imag(Resultatbis).flatten()
-    cool = np.dot(inversed_jacobian, Eab)
+    EF_vector = np.zeros(2 * int(np.sum(mask)))
+    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
+    EF_vector[0:int(np.sum(mask))] = np.real(Resultat_cropdh).flatten()
+    EF_vector[int(np.sum(mask)):] = np.imag(Resultat_cropdh).flatten()
+    produit_mat = np.dot(inversed_jacobian, EF_vector)
 
-    solution = np.zeros(nbDMactu)
-    solution[WhichInPupil] = cool
-    return solution
+    return basis_voltage_to_act_voltage(produit_mat, testbed)
 
 
-def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
-               nbDMactu):
+
+def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region
@@ -281,18 +265,18 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
     -------------------------------------------------- """
 
     Eab = np.zeros(int(np.sum(mask)))
-    Resultatbis = Result_Estimate[np.where(mask == 1)]
+    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
     Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
-                         Resultatbis)).flatten()
-    cool = np.dot(Hessian_Matrix, Eab)
+                         Resultat_cropdh)).flatten()
+    produit_mat = np.dot(Hessian_Matrix, Eab)
 
-    solution = np.zeros(nbDMactu)
-    solution[WhichInPupil] = cool
-    return solution
+    return basis_voltage_to_act_voltage(produit_mat, testbed)
+
+
 
 
 def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
-                     WhichInPupil, nbDMactu):
+                    testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize
     the speckle intensity in the dark hole region
@@ -313,15 +297,14 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     -------------------------------------------------- """
 
     Eab = np.zeros(int(np.sum(mask)))
-    Resultatbis = Result_Estimate[np.where(mask == 1)]
+    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
     Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
-                         Resultatbis)).flatten()
+                         Resultat_cropdh)).flatten()
     pas = 2e3
-    cool = pas * 2 * Eab
+    solution = pas * 2 * Eab
 
-    solution = np.zeros(nbDMactu)
-    solution[WhichInPupil] = cool
-    return solution
+    return basis_voltage_to_act_voltage(solution, testbed)
+
 
 
 #################################################################################
