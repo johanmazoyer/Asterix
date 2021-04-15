@@ -74,6 +74,11 @@ class Corrector:
         if isinstance(testbed, OptSy.Optical_System) == False:
             raise Exception("testbed must be an Optical_System objet")
 
+        basis_type = Correctionconfig["DM_basis"].lower()
+        for DM_name in testbed.name_of_DMs:
+            DM = vars(testbed)[DM_name]
+            DM.basis = DM.create_DM_basis(basis_type=basis_type)
+
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
 
@@ -83,30 +88,15 @@ class Corrector:
             self.regularization = Correctionconfig["regularization"]
 
             self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
-                                              estimator.Estim_sampling)
-
-
-            # I think currently the name of the actuator inside the pupil is
-            # used as the basis, which is not ideal at all, these are 2 different things.
-            self.DM1_otherbasis = Correctionconfig["DM1_otherbasis"]
-            self.DM3_otherbasis = Correctionconfig["DM3_otherbasis"]
-            # DM3
-            if self.DM3_otherbasis == True:
-                testbed.DM1.WhichInPupil = np.arange(testbed.DM3.number_act)
-                self.DM3_basis = fits.getdata(realtestbed_dir +
-                                              "Map_modes_DM3_foc.fits")
-            else:
-                self.DM3_basis = 0
-
+                                                   estimator.Estim_sampling)
 
             fileDirectMatrix = "DirectMatrix_EFCampl" + str(
                 self.amplitudeEFC) + testbed.string_os
 
-            if os.path.exists(matrix_dir + fileDirectMatrix +
-                                                        ".fits"):
+            if os.path.exists(matrix_dir + fileDirectMatrix + ".fits"):
                 print("The matrix " + fileDirectMatrix + " already exists")
                 interMat = fits.getdata(matrix_dir + fileDirectMatrix +
-                                            ".fits")
+                                        ".fits")
 
             else:
                 # Creating Interaction Matrix if does not exist
@@ -116,17 +106,15 @@ class Corrector:
 
                 start_time = time.time()
                 interMat = wsc.creatingInterractionmatrix(
-                    testbed.entrancepupil.pup,
-                    testbed,
-                    estimator.dimEstim,
-                    self.amplitudeEFC
-                )
+                    1., testbed, estimator.dimEstim, self.amplitudeEFC)
 
                 fits.writeto(matrix_dir + fileDirectMatrix + ".fits", interMat)
-                print("time for direct matrix "+testbed.string_os, time.time() - start_time)
+                print("time for direct matrix " + testbed.string_os,
+                      time.time() - start_time)
+                print("")
 
-            self.Gmatrix = wsc.cropDHInterractionMatrix(interMat, self.MaskEstim)
-
+            self.Gmatrix = wsc.cropDHInterractionMatrix(
+                interMat, self.MaskEstim)
 
             if self.correction_algorithm == "em" or self.correction_algorithm == "steepest":
 
@@ -141,9 +129,6 @@ class Corrector:
 
             if save_for_bench == True:
 
-                #### Not sure what it does... Is this still useful ?
-                # I modified it with the new mask parameters
-                # TODO talk with raphael
                 if MaskDH.DH_shape == "square":
                     print(
                         "TO SET ON LABVIEW: ",
@@ -152,55 +137,68 @@ class Corrector:
                                             estimator.Estim_sampling)))
 
                 Nbmodes = Correctionconfig["Nbmodes"]
-                SVD, _ , invertGDH = wsc.invertSVD(
-                    self.Gmatrix,
-                    Nbmodes,
-                    goal="c",
-                    regul=self.regularization,
-                    otherbasis=self.DM3_otherbasis,
-                    basisDM3=self.DM3_basis)
-
+                SVD, _, invertGDH = wsc.invertSVD(self.Gmatrix,
+                                                  Nbmodes,
+                                                  goal="c",
+                                                  regul=self.regularization)
 
                 plt.clf()
                 plt.plot(SVD, "r.")
                 plt.yscale("log")
 
-                figSVDEFC = matrix_dir + "SVD_Modes"+str(Nbmodes)+'_' + fileDirectMatrix + ".png"
+                figSVDEFC = matrix_dir + "SVD_Modes" + str(
+                    Nbmodes) + '_' + fileDirectMatrix + ".png"
 
                 plt.savefig(figSVDEFC)
+
+                if testbed.DM1.active:
+                    separation_DM1_DM3 = len(testbed.DM1.WhichInPupil)
+                else:
+                    separation_DM1_DM3 = 0
 
                 EFCmatrix_DM3 = np.zeros(
                     (invertGDH.shape[1], testbed.DM3.number_act),
                     dtype=np.float32)
                 for i in np.arange(len(testbed.DM3.WhichInPupil)):
-                    EFCmatrix_DM3[:,
-                                    testbed.DM3.WhichInPupil[i]] = invertGDH[
-                                        i, :]
+                    EFCmatrix_DM3[:, testbed.DM3.WhichInPupil[i]] = invertGDH[
+                        i + separation_DM1_DM3, :]
                 fits.writeto(realtestbed_dir +
-                                "Matrix_control_EFC_DM3_default.fits",
-                                EFCmatrix_DM3,
-                                overwrite=True)
+                             "Matrix_control_EFC_DM3_default.fits",
+                             EFCmatrix_DM3,
+                             overwrite=True)
                 if testbed.DM1.active:
                     EFCmatrix_DM1 = np.zeros(
                         (invertGDH.shape[1], testbed.DM1.number_act),
                         dtype=np.float32)
                     for i in np.arange(len(testbed.DM1.WhichInPupil)):
-                        EFCmatrix_DM1[:, testbed.DM1.
-                                        WhichInPupil[i]] = invertGDH[
-                                            i +
-                                            len(testbed.DM3.WhichInPupil), :]
+                        EFCmatrix_DM1[:,
+                                      testbed.DM1.WhichInPupil[i]] = invertGDH[
+                                          i, :]
                     fits.writeto(realtestbed_dir +
-                                    "Matrix_control_EFC_DM1_default.fits",
-                                    EFCmatrix_DM1,
-                                    overwrite=True)
+                                 "Matrix_control_EFC_DM1_default.fits",
+                                 EFCmatrix_DM1,
+                                 overwrite=True)
                 fits.writeto(realtestbed_dir + "DH_mask.fits",
-                                    self.MaskEstim.astype(np.float32),overwrite=True)
+                             self.MaskEstim.astype(np.float32),
+                             overwrite=True)
                 fits.writeto(realtestbed_dir + "DH_mask_where_x_y.fits",
-                                    np.array(np.where(self.MaskEstim==1)).astype(np.float32),overwrite=True)
+                             np.array(np.where(self.MaskEstim == 1)).astype(
+                                 np.float32),
+                             overwrite=True)
 
         else:
             raise Exception("This correction algorithm is not yet implemented")
 
+        ## Adding error on the DM model. Now that the matrix is measured, we can
+        # introduce a small movememnt on one DM or the other. By changeing DM_pushact
+        # we are changeing the position of the actuator and therre the phase of the
+        # DM for a given voltage when using DM.voltage_to_phase
+
+        for DM_name in testbed.name_of_DMs:
+            DM = vars(testbed)[DM_name]
+            if DM.misregistration == True:
+                print(DM_name + "Misregistration!")
+                DM.DM_pushact = DM.creatingpushact(DM.DMconfig)
 
         ######################
         # Preparation of the correction loop
@@ -216,70 +214,31 @@ class Corrector:
         -------------------------------------------------- """
 
         if self.correction_algorithm == "efc":
-            _, _, invertGDH = wsc.invertSVD(
-                    self.Gmatrix,
-                    mode,
-                    goal="c",
-                    visu=False,
-                    regul=self.regularization,
-                    otherbasis=self.DM3_otherbasis,
-                    basisDM3=self.DM3_basis,
-                )
+            if mode != self.previousmode:
+                _, _, invertGDH = wsc.invertSVD(self.Gmatrix,
+                                                mode,
+                                                goal="c",
+                                                visu=False,
+                                                regul=self.regularization)
 
-            if testbed.DM1.active == True:
-                return wsc.solutionEFC(
-                    self.MaskEstim, estimate, invertGDH,
-                    np.concatenate(
-                        (testbed.DM3.WhichInPupil,
-                         testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
-                    testbed.DM3.number_act + testbed.DM1.number_act)
-                # TODO Concatenate should be done in the THD2 structure
-            else:
-                return wsc.solutionEFC(self.MaskEstim, estimate,
-                                            invertGDH, testbed.DM3.WhichInPupil,
-                                            testbed.DM3.number_act)
-
+            return wsc.solutionEFC(self.MaskEstim, estimate, invertGDH,
+                                   testbed)
 
         if self.correction_algorithm == "em":
             if mode != self.previousmode:
                 self.previousmode = mode
-                _, _, invertM0 = wsc.invertSVD(
-                    self.M0,
-                    mode,
-                    goal="c",
-                    visu=False,
-                    regul=self.regularization,
-                    otherbasis=self.DM3_otherbasis,
-                    basisDM3=self.DM3_basis)
+                _, _, invertM0 = wsc.invertSVD(self.M0,
+                                               mode,
+                                               goal="c",
+                                               visu=False,
+                                               regul=self.regularization)
 
-                # TODO Concatenate should be done in the THD2 structure
-            if testbed.DM1.active == True:
-                return wsc.solutionEM(
-                    self.MaskEstim, estimate, invertM0, self.G,
-                    np.concatenate(
-                        (testbed.DM3.WhichInPupil,
-                         testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
-                    testbed.DM3.number_act + testbed.DM1.number_act)
-                # TODO Concatenate should be done in the THD2 structure
-            else:
-                return wsc.solutionEM(self.MaskEstim, estimate,
-                                           invertM0, self.G, testbed.DM3.WhichInPupil,
-                                           testbed.DM3.number_act)
+            return wsc.solutionEM(self.MaskEstim, estimate, invertM0, self.G,
+                                  testbed)
 
         if self.correction_algorithm == "steepest":
-            if testbed.DM1.active == True:
-                return wsc.solutionSteepest(
-                    self.MaskEstim, estimate, self.M0, self.G,
-                    np.concatenate(
-                        (testbed.DM3.WhichInPupil,
-                         testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
-                    testbed.DM3.number_act + testbed.DM1.number_act)
-                # Concatenate should be done in the THD2 structure
-            else:
-                return wsc.solutionSteepest(self.MaskEstim, estimate,
-                                                 self.M0, self.G, testbed.DM3.WhichInPupil,
-                                                 testbed.DM3.number_act)
+
+            return wsc.solutionSteepest(self.MaskEstim, estimate, self.M0,
+                                        self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")
-
-

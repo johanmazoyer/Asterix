@@ -12,14 +12,12 @@ import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
+#################################################################################
+### Correction functions
+#################################################################################
 
-def invertSVD(matrix_to_invert,
-              cut,
-              goal="e",
-              regul="truncation",
-              visu=False,
-              otherbasis=False,
-              basisDM3=0):
+
+def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False):
     """ --------------------------------------------------
     Invert a matrix after a Singular Value Decomposition. The inversion can be regularized.
 
@@ -42,9 +40,6 @@ def invertSVD(matrix_to_invert,
 
     visu:   boolean, if True, plot and save the crescent inverse singular values,
                             before regularization
-
-    otherbasis:     boolean,
-    basisDM3:       goes with other basis
 
     Return:
     ------
@@ -83,16 +78,11 @@ def invertSVD(matrix_to_invert,
         pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated),
                                np.transpose(U))
 
-    if otherbasis == True:
-        pseudoinverse = np.dot(np.transpose(basisDM3), pseudoinverse)
-
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def creatingInterractionmatrix(input_wavefront,
-                             testbed,
-                             dimEstim,
-                             amplitudeEFC):
+def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
+                               amplitudeEFC):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
@@ -104,73 +94,55 @@ def creatingInterractionmatrix(input_wavefront,
         testbed structure
     dimEstim: int
         size of the output image in teh estimator
-    amplitudeEFC:
+    amplitudeEFC: float, amplitude of the EFC probe on the DM
 
     Return:
     ------
     InterMat: 2D array, jacobian matrix for Electric Field Conjugation
     -------------------------------------------------- """
-
+    total_number_basis_modes = 0
+    for DM_name in testbed.name_of_DMs:
+        DM = vars(testbed)[DM_name]
+        total_number_basis_modes += DM.basis.shape[0]
 
     print("Start Interraction Matrix")
-    InterMat = np.zeros((2 * int(dimEstim**2), len(testbed.WhichInPupil)))
+    InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
 
-
-    print("For DM3")
-    #the basis in now defined here only for actuator basis but it should be done
-    # in the corection initialization
-    basis_size = len(testbed.DM3.WhichInPupil)
-    basis = np.zeros((basis_size,testbed.DM3.number_act))
-    for i in range(basis_size):
-        basis[i][testbed.DM3.WhichInPupil[i]] = 1
-
-    for i in range(basis_size):
-
-        if i %10:
-            useful.progress(i, basis_size, status='')
-
-        phaseDM = testbed.DM3.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
-        Gvector = proc.resampling(
-            testbed.todetector(entrance_EF=input_wavefront * 1j *  phaseDM * amplitudeEFC),
-            dimEstim)
-
-        InterMat[:dimEstim**2,
-                   i] = np.real(Gvector).flatten()
-        InterMat[dimEstim**2:,
-                   i] = np.imag(Gvector).flatten()
-
-    if testbed.DM1.active == True:
+    pos_in_matrix = 0
+    for DM_name in testbed.name_of_DMs:
+        DM = vars(testbed)[DM_name]
         print("")
-        print("For DM1")
-        #the basis in now defined here only for actuator basis but it should be done
-        # in the corection initialization
-        basis_size = len(testbed.DM1.WhichInPupil)
-        basis = np.zeros((basis_size,testbed.DM1.number_act))
-        for i in range(basis_size):
-            basis[i][testbed.DM1.WhichInPupil[i]] = 1
+        print("Start " + DM_name)
 
-        Pup_inDMplane, _ =  prop.prop_fresnel(testbed.entrancepupil.pup,
-                                             testbed.DM1.wavelength_0, testbed.DM1.z_position,
-                                             testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+        if DM.z_position != 0:
 
-        for i in range(basis_size):
+            #TODO make something smarter to check automatically the name of the entrance pup
+            Pup_inDMplane, _ = prop.prop_fresnel(testbed.entrancepupil.pup,
+                                                 DM.wavelength_0,
+                                                 DM.z_position,
+                                                 DM.diam_pup_in_m / 2, DM.prad)
 
-            if i %10:
-                useful.progress(i, basis_size, status='')
+        for i in range(DM.basis.shape[0]):
 
-            phaseDM = testbed.DM1.voltage_to_phase(basis[i],wavelength = testbed.wavelength_0)
-            EF_back_in_pup_plane, _ = prop.prop_fresnel(
-                            Pup_inDMplane * phaseDM, testbed.DM1.wavelength_0,
-                            -testbed.DM1.z_position, testbed.DM1.diam_pup_in_m / 2, testbed.DM1.prad)
+            if i % 10:
+                useful.progress(i, DM.basis.shape[0], status='')
+
+            phaseDM = DM.voltage_to_phase(DM.basis[i],
+                                          wavelength=testbed.wavelength_0)
+            if DM.z_position != 0:
+                phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * phaseDM,
+                                               DM.wavelength_0, -DM.z_position,
+                                               DM.diam_pup_in_m / 2, DM.prad)
+
             Gvector = proc.resampling(
-                testbed.todetector(entrance_EF=input_wavefront * 1j *  EF_back_in_pup_plane * amplitudeEFC),
-                dimEstim)
+                testbed.todetector(entrance_EF=input_wavefront * 1j * phaseDM *
+                                   amplitudeEFC), dimEstim)
 
-            InterMat[:dimEstim**2, len(testbed.DM3.WhichInPupil) +
-                    i] = np.real(Gvector).flatten()
-            InterMat[dimEstim**2:, len(testbed.DM3.WhichInPupil)+
-                    i] = np.imag(Gvector).flatten()
+            InterMat[:dimEstim**2, pos_in_matrix] = np.real(Gvector).flatten()
+            InterMat[dimEstim**2:, pos_in_matrix] = np.imag(Gvector).flatten()
+            pos_in_matrix += 1
 
+    print("")
     print("End Interraction Matrix")
     return InterMat
 
@@ -179,11 +151,11 @@ def cropDHInterractionMatrix(FullInterractionMatrix, mask):
     """ --------------------------------------------------
     Crop the  Interraction Matrix. to the mask size
 
-
     Parameters:
     ----------
     FullInterractionMatrix: Interraction matrix over the full focal plane
 
+    mask : a binary mask to delimitate the DH
 
     Return: DHInterractionMatrix: matrix only inside the DH
     ------
@@ -197,21 +169,59 @@ def cropDHInterractionMatrix(FullInterractionMatrix, mask):
         (size_DH_matrix, FullInterractionMatrix.shape[1]), dtype=float)
 
     for i in range(FullInterractionMatrix.shape[1]):
-        DHInterractionMatrix[:int(
-            size_DH_matrix /
-            2), i] = FullInterractionMatrix[:int(size_full_matrix / 2),
-                                            i][where_mask_flatten]
+        DHInterractionMatrix[:int(size_DH_matrix / 2),
+                             i] = FullInterractionMatrix[:int(
+                                 size_full_matrix / 2), i][where_mask_flatten]
         DHInterractionMatrix[int(size_DH_matrix / 2):,
-                                i] = FullInterractionMatrix[
-                                    int(size_full_matrix / 2):,
-                                    i][where_mask_flatten]
+                             i] = FullInterractionMatrix[int(size_full_matrix /
+                                                             2):,
+                                                         i][where_mask_flatten]
 
     return DHInterractionMatrix
 
 
+def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
+    """ --------------------------------------------------
+    transform a vector of voltages on the mode of a basis in a  vector of
+    voltages of the actuators of the DMs of the system
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
-                nbDMactu):
+    Parameters:
+    ----------
+    vector_basis_voltage: 1D-array real : dim (total(basisDM sizes))
+                     vector of voltages on the mode of the basis for all
+                     DMs by order of the light path
+    testbed: Optical_element
+        testbed structure (with DMs)
+
+
+    Return:
+    ------
+    vector_actuator_voltage: 1D-array real : dim (total(DM actuators))
+                     vector of base coefficients for all actuators of the DMs by order of the light path
+    -------------------------------------------------- """
+
+    indice_acum_basis_size = 0
+    indice_acum_number_act = 0
+
+    vector_actuator_voltage = np.zeros(testbed.number_act)
+    for DM_name in testbed.name_of_DMs:
+        DM = vars(testbed)[DM_name]
+        vector_basis_voltage_for_DM = vector_basis_voltage[
+            indice_acum_basis_size:indice_acum_basis_size + DM.basis.shape[0]]
+
+        vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis),
+                                            vector_basis_voltage_for_DM)
+
+        vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
+                                DM.number_act] = vector_actu_voltage_for_DM
+
+        indice_acum_basis_size += DM.basis.shape[0]
+        indice_acum_number_act += DM.number_act
+
+    return vector_actuator_voltage
+
+
+def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
         intensity in the dark hole region
@@ -222,13 +232,10 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
 
     Result_Estimate:    2D array can be complex, focal plane electric field
 
-    inversed_jacobian:  2D array, inverse of the jacobian matrix created
-                                with all the actuators in WhichInPupil
+    inversed_jacobian:  2D array, inverse of the jacobian matrix linking the
+                                    estimation to the basis coefficient
 
-    WhichInPupil:       1D array, index of the actuators taken into account
-                            to create the jacobian matrix
-
-    nbDMactu:           int, number of DM actuators
+    testbed: a testbed with one or more DM
 
     Return:
     ------
@@ -236,19 +243,16 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, WhichInPupil,
                         mirror actuator
     -------------------------------------------------- """
 
-    Eab = np.zeros(2 * int(np.sum(mask)))
-    Resultatbis = Result_Estimate[np.where(mask == 1)]
-    Eab[0:int(np.sum(mask))] = np.real(Resultatbis).flatten()
-    Eab[int(np.sum(mask)):] = np.imag(Resultatbis).flatten()
-    cool = np.dot(inversed_jacobian, Eab)
+    EF_vector = np.zeros(2 * int(np.sum(mask)))
+    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
+    EF_vector[0:int(np.sum(mask))] = np.real(Resultat_cropdh).flatten()
+    EF_vector[int(np.sum(mask)):] = np.imag(Resultat_cropdh).flatten()
+    produit_mat = np.dot(inversed_jacobian, EF_vector)
 
-    solution = np.zeros(nbDMactu)
-    solution[WhichInPupil] = cool
-    return solution
+    return basis_voltage_to_act_voltage(produit_mat, testbed)
 
 
-def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
-               nbDMactu):
+def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region
@@ -261,13 +265,10 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
 
     Hessian_Matrix:     2D array , Hessian matrix of the DH energy
 
-    Jacobian:           2D array, inverse of the jacobian matrix created with all the actuators
-                        in WhichInPupil
+    Jacobian:           2D array, inverse of the jacobian matrix created linking the
+                                    estimation to the basis coefficient
 
-    WhichInPupil:       1D array, index of the actuators taken into account
-                        to create the jacobian matrix
-
-    nbDMactu:           number of DM actuators
+    testbed: a testbed with one or more DM
 
     Return:
     ------
@@ -275,18 +276,15 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, WhichInPupil,
     -------------------------------------------------- """
 
     Eab = np.zeros(int(np.sum(mask)))
-    Resultatbis = Result_Estimate[np.where(mask == 1)]
+    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
     Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
-                         Resultatbis)).flatten()
-    cool = np.dot(Hessian_Matrix, Eab)
+                         Resultat_cropdh)).flatten()
+    produit_mat = np.dot(Hessian_Matrix, Eab)
 
-    solution = np.zeros(nbDMactu)
-    solution[WhichInPupil] = cool
-    return solution
+    return basis_voltage_to_act_voltage(produit_mat, testbed)
 
 
-def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
-                     WhichInPupil, nbDMactu):
+def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize
     the speckle intensity in the dark hole region
@@ -296,26 +294,23 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     mask: Binary mask corresponding to the dark hole region
     Result_Estimate: 2D array can be complex, focal plane electric field
     Hessian_Matrix: 2D array , Hessian matrix of the DH energy
-    Jacobian: 2D array, inverse of the jacobian matrix created with all
-                the actuators in WhichInPupil
-    WhichInPupil: 1D array, index of the actuators taken into account
-                to create the jacobian matrix
-    nbDMactu:number of DM actuators
+    Jacobian: 2D array, inverse of the jacobian matrix linking the
+                                    estimation to the basis coefficient
+    testbed: a testbed with one or more DM
+
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
     -------------------------------------------------- """
 
     Eab = np.zeros(int(np.sum(mask)))
-    Resultatbis = Result_Estimate[np.where(mask == 1)]
+    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
     Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
-                         Resultatbis)).flatten()
+                         Resultat_cropdh)).flatten()
     pas = 2e3
-    cool = pas * 2 * Eab
+    solution = pas * 2 * Eab
 
-    solution = np.zeros(nbDMactu)
-    solution[WhichInPupil] = cool
-    return solution
+    return basis_voltage_to_act_voltage(solution, testbed)
 
 
 #################################################################################

@@ -1197,8 +1197,7 @@ class deformable_mirror(Optical_System):
         self.z_position = DMconfig[self.Name_DM + "_z_position"]
         self.active = DMconfig[self.Name_DM + "_active"]
 
-        self.WhichInPup_threshold = DMconfig[
-            "MinimumSurfaceRatioInThePupil"]
+        self.WhichInPup_threshold = DMconfig["MinimumSurfaceRatioInThePupil"]
 
         # For intialization, we assume no misregistration, we introduce it after
         # estimation and correction matrices are created.
@@ -1210,12 +1209,14 @@ class deformable_mirror(Optical_System):
             model_dir +
             DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
 
-        self.string_os += '_' + self.Name_DM +"_z" + str(int(self.z_position * 100)) + "_Nact" + str(
-            int(self.number_act))
+        self.string_os += '_' + self.Name_DM + "_z" + str(
+            int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
 
         if self.active == False:
             print(self.Name_DM + ' is not activated')
             return
+
+        self.DMconfig = DMconfig
 
         # We need a pupil in creatingpushact_inpup() and for
         # which in pup. THIS IS NOT THE ENTRANCE PUPIL,
@@ -1254,15 +1255,15 @@ class deformable_mirror(Optical_System):
         print("time for DM_pushact for " + self.string_os,
               time.time() - start_time)
 
-
         start_time = time.time()
         # create or load 'which actuators are in pupil'
-        self.WhichInPupil = self.creatingWhichinPupil(Model_local_dir=Model_local_dir)
+        self.WhichInPupil = self.creatingWhichinPupil(
+            Model_local_dir=Model_local_dir)
         print("time for WhichInPupil for " + self.string_os,
               time.time() - start_time)
 
         # update the threshold for useful acts
-        self.string_os +=  "_Used" + str(len(self.WhichInPupil))
+        self.string_os += "_Used" + str(len(self.WhichInPupil))
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
         # now if we relaunch self.DM_pushact, it will be different due to misregistration
@@ -1350,7 +1351,7 @@ class deformable_mirror(Optical_System):
             name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      entrance_EF)
+                                      EF_after_DM)
 
         return EF_after_DM
 
@@ -1560,7 +1561,8 @@ class deformable_mirror(Optical_System):
 
         Max_val = np.max(Sum_actu_with_pup)
         for num_actu in np.arange(self.number_act):
-            if Sum_actu_with_pup[num_actu] > Max_val * self.WhichInPup_threshold:
+            if Sum_actu_with_pup[
+                    num_actu] > Max_val * self.WhichInPup_threshold:
                 WhichInPupil.append(num_actu)
 
         WhichInPupil = np.array(WhichInPupil)
@@ -1671,7 +1673,7 @@ class deformable_mirror(Optical_System):
         where_non_zero_voltage = np.where(actu_vect != 0)
         surface_to_phase = 2 * np.pi * 1e-9 / wavelength
 
-        if einstein_sum == True or len(where_non_zero_voltage[0]) < 3 :
+        if einstein_sum == True or len(where_non_zero_voltage[0]) < 3:
             phase_on_DM = np.einsum(
                 'i,ijk->jk', actu_vect[where_non_zero_voltage],
                 self.DM_pushact[where_non_zero_voltage]) * surface_to_phase
@@ -1683,6 +1685,29 @@ class deformable_mirror(Optical_System):
                     i, :, :] * actu_vect[i] * surface_to_phase
 
         return phase_on_DM
+
+    def create_DM_basis(self, basis_type='actuator'):
+        """ --------------------------------------------------
+        Create a DM basis.
+        TODO do a sine / cosine basis and a
+        TODO do a zernike basis
+
+        Parameters:
+        ----------
+        DM: a DM object (Optical System)
+        basis_type: string, default 'actuator' the type of basis
+
+        Return:
+        ------
+        a 2d numpy array [Size basis, Number act in the DM]
+        -------------------------------------------------- """
+
+        if basis_type == 'actuator':
+            basis_size = len(self.WhichInPupil)
+            basis = np.zeros((basis_size, self.number_act))
+            for i in range(basis_size):
+                basis[i][self.WhichInPupil[i]] = 1
+        return basis
 
 
 ##############################################
@@ -1740,7 +1765,6 @@ class Testbed(Optical_System):
         self.number_DMs = 0
         self.number_act = 0
         self.name_of_DMs = list()
-        self.WhichInPupil = []
 
         # this is the collection of all the possible keywords that can be used in
         # practice in the final testbed.EF_through, so that can be used in
@@ -1788,11 +1812,7 @@ class Testbed(Optical_System):
                         num_optical_sys]
                     continue
 
-                # elsetestbed.DM3.number_act + testbed.DM1.number_act
                 self.number_DMs += 1
-                self.WhichInPupil = np.concatenate(
-                    (self.WhichInPupil,
-                     self.number_act + list_os[num_optical_sys].WhichInPupil))
                 self.number_act += list_os[num_optical_sys].number_act
                 self.name_of_DMs.append(list_os_names[num_optical_sys])
 
