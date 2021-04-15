@@ -1763,7 +1763,6 @@ class Testbed(Optical_System):
         self.number_DMs = 0
         self.number_act = 0
         self.name_of_DMs = list()
-        self.WhichInPupil = []
 
         # this is the collection of all the possible keywords that can be used in
         # practice in the final testbed.EF_through, so that can be used in
@@ -1813,9 +1812,6 @@ class Testbed(Optical_System):
 
                 # elsetestbed.DM3.number_act + testbed.DM1.number_act
                 self.number_DMs += 1
-                self.WhichInPupil = np.concatenate(
-                    (self.WhichInPupil,
-                     self.number_act + list_os[num_optical_sys].WhichInPupil))
                 self.number_act += list_os[num_optical_sys].number_act
                 self.name_of_DMs.append(list_os_names[num_optical_sys])
 

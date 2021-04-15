@@ -114,10 +114,13 @@ def creatingInterractionmatrix(input_wavefront,
     ------
     InterMat: 2D array, jacobian matrix for Electric Field Conjugation
     -------------------------------------------------- """
-
+    total_number_basis_modes = 0
+    for DM_name in testbed.name_of_DMs:
+        DM = vars(testbed)[DM_name]
+        total_number_basis_modes += len(DM.basis.shape[0])
 
     print("Start Interraction Matrix")
-    InterMat = np.zeros((2 * int(dimEstim**2), len(testbed.WhichInPupil)))
+    InterMat = np.zeros((2 * int(dimEstim**2),total_number_basis_modes ))
 
     pos_in_matrix = 0
     for DM_name in testbed.name_of_DMs:
@@ -161,11 +164,11 @@ def cropDHInterractionMatrix(FullInterractionMatrix, mask):
     """ --------------------------------------------------
     Crop the  Interraction Matrix. to the mask size
 
-
     Parameters:
     ----------
     FullInterractionMatrix: Interraction matrix over the full focal plane
 
+    mask : a binary mask to delimitate the DH
 
     Return: DHInterractionMatrix: matrix only inside the DH
     ------
@@ -220,8 +223,10 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed):
 
     Result_Estimate:    2D array can be complex, focal plane electric field
 
-    inversed_jacobian:  2D array, inverse of the jacobian matrix created
-                                with all the actuators in WhichInPupil
+    inversed_jacobian:  2D array, inverse of the jacobian matrix linking the
+                                    estimation to the basis coefficient
+
+    testbed: a testbed with one or more DM
 
     Return:
     ------
@@ -252,13 +257,10 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
 
     Hessian_Matrix:     2D array , Hessian matrix of the DH energy
 
-    Jacobian:           2D array, inverse of the jacobian matrix created with all the actuators
-                        in WhichInPupil
+    Jacobian:           2D array, inverse of the jacobian matrix created linking the
+                                    estimation to the basis coefficient
 
-    WhichInPupil:       1D array, index of the actuators taken into account
-                        to create the jacobian matrix
-
-    nbDMactu:           number of DM actuators
+    testbed: a testbed with one or more DM
 
     Return:
     ------
@@ -287,11 +289,10 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     mask: Binary mask corresponding to the dark hole region
     Result_Estimate: 2D array can be complex, focal plane electric field
     Hessian_Matrix: 2D array , Hessian matrix of the DH energy
-    Jacobian: 2D array, inverse of the jacobian matrix created with all
-                the actuators in WhichInPupil
-    WhichInPupil: 1D array, index of the actuators taken into account
-                to create the jacobian matrix
-    nbDMactu:number of DM actuators
+    Jacobian: 2D array, inverse of the jacobian matrix linking the
+                                    estimation to the basis coefficient
+    testbed: a testbed with one or more DM
+
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
