@@ -197,6 +197,18 @@ class Corrector:
         else:
             raise Exception("This correction algorithm is not yet implemented")
 
+        ## Adding error on the DM model. Now that the matrix is measured, we can
+        # introduce a small movememnt on one DM or the other. By changeing DM_pushact
+        # we are changeing the position of the actuator and therre the phase of the
+        # DM for a given voltage when using DM.voltage_to_phase
+
+        for DM_name in testbed.name_of_DMs:
+            DM = vars(testbed)[DM_name]
+            if DM.misregistration == True:
+                print(DM_name + "Misregistration!")
+                DM.DM_pushact = DM.creatingpushact(DM.DMconfig)
+
+
 
         ######################
         # Preparation of the correction loop

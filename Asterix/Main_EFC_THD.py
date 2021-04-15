@@ -313,22 +313,6 @@ def correctionLoop(parameter_file,
                        matrix_dir=intermatrix_dir)
 
 
-    ## Adding error on the DM model. Now that the matrix is measured, we can
-    # introduce a small movememnt on one DM or the other. By changeing DM_pushact
-    # we are changeing the position of the actuator and therre the phase of the
-    # DM for a given voltage when using DM.voltage_to_phase
-
-    # TODO can be automatized in a for loop over all DMs nad maybe put in
-    # correction config
-    if thd2.DM3.misregistration == True:
-        print("DM3 Misregistration!")
-        thd2.DM3.DM_pushact = thd2.DM3.creatingpushact(DMconfig)
-
-    if thd2.DM1.misregistration == True:
-        print("DM1 Misregistration!")
-        thd2.DM1.DM_pushact = thd2.DM1.creatingpushact(DMconfig)
-
-
 
     ## Phase map and amplitude map for the static aberrations
     if set_phase_abb == True:

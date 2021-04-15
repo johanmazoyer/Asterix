@@ -1217,6 +1217,8 @@ class deformable_mirror(Optical_System):
             print(self.Name_DM + ' is not activated')
             return
 
+        self.DMconfig = DMconfig
+
         # We need a pupil in creatingpushact_inpup() and for
         # which in pup. THIS IS NOT THE ENTRANCE PUPIL,
         # this is a clear pupil of the same size
