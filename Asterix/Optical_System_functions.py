@@ -1406,7 +1406,7 @@ class deformable_mirror(Optical_System):
         x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
         xy_ActuN = [x_ActuN, y_ActuN]
 
-        if self.misregistration == True:
+        if self.misregistration:
             xerror = DMconfig[self.Name_DM + "_xerror"]
             yerror = DMconfig[self.Name_DM + "_yerror"]
             angerror = DMconfig[self.Name_DM + "_angerror"]
@@ -1512,7 +1512,7 @@ class deformable_mirror(Optical_System):
 
             pushact3d[i] = Psivector
 
-        if self.misregistration == False and (
+        if self.misregistration is False and (
                 not os.path.exists(Model_local_dir + Name_pushact_fits +
                                    '.fits')):
             fits.writeto(Model_local_dir + Name_pushact_fits + '.fits',

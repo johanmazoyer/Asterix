@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import time
 
+import Asterix.fits_functions as useful
 import Asterix.processing_functions as proc
 import Asterix.Optical_System_functions as OptSy
 
@@ -196,8 +197,8 @@ class Corrector:
 
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
-            if DM.misregistration == True:
-                print(DM_name + "Misregistration!")
+            if DM.misregistration:
+                print(DM_name + " Misregistration!")
                 DM.DM_pushact = DM.creatingpushact(DM.DMconfig)
 
         ######################
