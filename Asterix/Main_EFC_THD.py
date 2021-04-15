@@ -446,15 +446,21 @@ def correctionLoop(parameter_file,
                 perfectsolution = - gain * correc.amplitudeEFC* correc.toDM_voltage(thd2, perfectestimate, modeLinesearch)
 
                 #### to be removed #### #### #### #### #### #### #### #### ####
+                if thd2.DM1.active:
+                    separation_DM1_DM3 = len(thd2.DM1.WhichInPupil)
+                else:
+                    separation_DM1_DM3 = 0
+
                 if thd2.DM1.active == True:
+
                     # Phase to apply on DM1
-                    apply_on_DM1 = perfectsolution[thd2.DM3.number_act:]
+                    apply_on_DM1 = perfectsolution[:thd2.DM1.number_act]
                     phaseDM1_tmp = thd2.DM1.voltage_to_phase(
                         voltage_DM1[iteration] + apply_on_DM1, wavelength=thd2.wavelength_0)
                 else:
                     phaseDM1_tmp = 0
 
-                apply_on_DM3 = perfectsolution[0:thd2.DM3.number_act]
+                apply_on_DM3 = perfectsolution[separation_DM1_DM3 + thd2.DM3.number_act:]
                 # Phase to apply on DM3
                 phaseDM3_tmp = thd2.DM3.voltage_to_phase(
                     voltage_DM3[iteration] + apply_on_DM3, wavelength=thd2.wavelength_0)
@@ -485,16 +491,21 @@ def correctionLoop(parameter_file,
         # imagedetector = thd2.todetector_Intensity(DMVoltag,...)
 
         #### to be removed #### #### #### #### #### #### #### #### ####
+        if thd2.DM1.active:
+            separation_DM1_DM3 = len(thd2.DM1.WhichInPupil)
+        else:
+            separation_DM1_DM3 = 0
+
         if thd2.DM1.active == True:
             # Phase to apply on DM1
-            apply_on_DM1 = solution[thd2.DM3.number_act:]
+            apply_on_DM1 = solution[:thd2.DM1.number_act]
             voltage_DM1.append(voltage_DM1[iteration] + apply_on_DM1)
             phaseDM1[iteration + 1] = thd2.DM1.voltage_to_phase(
                 voltage_DM1[iteration + 1], wavelength=thd2.wavelength_0)
         else:
             phaseDM1[iteration + 1] = 0
 
-        apply_on_DM3 = solution[0:thd2.DM3.number_act]
+        apply_on_DM3 = solution[separation_DM1_DM3 + thd2.DM3.number_act:]
 
         # Phase to apply on DM3
         voltage_DM3.append(voltage_DM3[iteration] + apply_on_DM3)

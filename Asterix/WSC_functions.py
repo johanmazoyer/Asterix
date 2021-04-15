@@ -122,6 +122,7 @@ def creatingInterractionmatrix(input_wavefront,
     pos_in_matrix = 0
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
+        print("")
         print("Start "+ DM_name)
 
         if DM.z_position != 0:
@@ -198,7 +199,7 @@ def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
         vector_basis_voltage_for_DM = vector_basis_voltage[indice_acum_basis_size:indice_acum_basis_size+DM.basis.shape[0]]
-        print(DM.basis.shape, vector_basis_voltage_for_DM.shape)
+
         vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis), vector_basis_voltage_for_DM)
 
         vector_actuator_voltage[indice_acum_number_act: indice_acum_number_act + DM.number_act] = vector_actu_voltage_for_DM
