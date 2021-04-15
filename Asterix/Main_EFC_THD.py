@@ -300,8 +300,8 @@ def correctionLoop(parameter_file,
     ## Initialize Estimation
     estim = Estimator(Estimationconfig, thd2,
                                 matrix_dir=intermatrix_dir,
-                            save_for_bench=onbench,
-                            realtestbed_dir=Labview_dir)
+                                save_for_bench=onbench,
+                                realtestbed_dir=Labview_dir)
 
     #initalize the DH masks
     mask_dh = MaskDH(Correctionconfig)
