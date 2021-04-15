@@ -448,7 +448,7 @@ def correctionLoop(parameter_file,
                 #### to be removed #### #### #### #### #### #### #### #### ####
 
                 if thd2.DM1.active == True:
-                    separation_DM1_DM3 = len(thd2.DM1.WhichInPupil)
+                    separation_DM1_DM3 = thd2.DM1.number_act
 
                     # Phase to apply on DM1
                     apply_on_DM1 = perfectsolution[:thd2.DM1.number_act]
@@ -492,7 +492,7 @@ def correctionLoop(parameter_file,
 
         if thd2.DM1.active == True:
             # Phase to apply on DM1
-            separation_DM1_DM3 = len(thd2.DM1.number_act)
+            separation_DM1_DM3 = thd2.DM1.number_act
             apply_on_DM1 = solution[:thd2.DM1.number_act]
             voltage_DM1.append(voltage_DM1[iteration] + apply_on_DM1)
             phaseDM1[iteration + 1] = thd2.DM1.voltage_to_phase(
