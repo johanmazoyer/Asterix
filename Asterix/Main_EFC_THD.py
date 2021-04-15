@@ -292,8 +292,6 @@ def correctionLoop(parameter_file,
     # there is an error if it thinks they are not defined (although in practice
     # they are).
     thd2.entrancepupil = pup_round
-    thd2.DM1 = DM1
-    thd2.DM3 = DM3
     # In practice this is done inside the Testbed initialization already !
     # and these lines are useless and I only put them to calm
     # To be removed when the correction and estimation class are done
@@ -388,8 +386,7 @@ def correctionLoop(parameter_file,
         (nbiter + 1, thd2.dim_overpad_pupil, thd2.dim_overpad_pupil))
     meancontrast = np.zeros(nbiter + 1)
 
-    voltage_DM1 = [0.]  # initialize with no voltage
-    voltage_DM3 = [0.]  # initialize with no voltage
+    voltage_DMs = [0.]  # initialize with no voltage
 
     # Initial wavefront in pupil plane
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
@@ -433,27 +430,20 @@ def correctionLoop(parameter_file,
                 perfectsolution = -gain * correc.amplitudeEFC * correc.toDM_voltage(
                     thd2, perfectestimate, modeLinesearch)
 
-                #### to be removed #### #### #### #### #### #### #### #### ####
+               #### to be removed #### #### #### #### #### #### #### #### ####
 
+                tmpvoltage_DMs = voltage_DMs[iteration] + perfectsolution
+                DM_phases = thd2.voltage_to_phases(tmpvoltage_DMs)
 
-                if thd2.DM1.active == True:
-                    separation_DM1_DM3 = thd2.DM1.number_act
-
-                    # Phase to apply on DM1
-                    apply_on_DM1 = perfectsolution[:thd2.DM1.number_act]
-                    phaseDM1_tmp = thd2.DM1.voltage_to_phase(
-                        voltage_DM1[iteration] + apply_on_DM1)
-                else:
-                    separation_DM1_DM3 = 0
+                if DM_phases.shape[0] == 1:
                     phaseDM1_tmp = 0
+                    phaseDM3_tmp =  DM_phases[0]
 
-                apply_on_DM3 = perfectsolution[
-                    separation_DM1_DM3:separation_DM1_DM3 +
-                    thd2.DM3.number_act]
-                # Phase to apply on DM3
-                phaseDM3_tmp = thd2.DM3.voltage_to_phase(
-                    voltage_DM3[iteration] + apply_on_DM3)
-                ######## #### #### #### #### #### #### #### #### #### #### ####
+                elif DM_phases.shape[0] == 2:
+                    phaseDM1_tmp = DM_phases[0]
+                    phaseDM3_tmp =  DM_phases[1]
+                ########################################################################
+
 
                 imagedetector_tmp = thd2.todetector_Intensity(
                     entrance_EF=input_wavefront,
@@ -479,24 +469,16 @@ def correctionLoop(parameter_file,
         # imagedetector = thd2.todetector_Intensity(DMVoltag,...)
 
         #### to be removed #### #### #### #### #### #### #### #### ####
-        if thd2.DM1.active == True:
-            # Phase to apply on DM1
-            separation_DM1_DM3 = thd2.DM1.number_act
-            apply_on_DM1 = solution[:thd2.DM1.number_act]
-            voltage_DM1.append(voltage_DM1[iteration] + apply_on_DM1)
-            phaseDM1[iteration + 1] = thd2.DM1.voltage_to_phase(
-                voltage_DM1[iteration + 1])
-        else:
+        voltage_DMs.append(voltage_DMs[iteration] + solution)
+        DM_phases = thd2.voltage_to_phases(voltage_DMs[iteration+1])
+
+        if DM_phases.shape[0] == 1:
             phaseDM1[iteration + 1] = 0
-            separation_DM1_DM3 = 0
+            phaseDM3[iteration + 1] =  DM_phases[0]
 
-        apply_on_DM3 = solution[separation_DM1_DM3:separation_DM1_DM3 +
-                                thd2.DM3.number_act]
-
-        # Phase to apply on DM3
-        voltage_DM3.append(voltage_DM3[iteration] + apply_on_DM3)
-        phaseDM3[iteration + 1] = thd2.DM3.voltage_to_phase(
-            voltage_DM3[iteration + 1])
+        elif DM_phases.shape[0] == 2:
+            phaseDM1[iteration + 1] = DM_phases[0]
+            phaseDM3[iteration + 1] =  DM_phases[1]
         ########################################################################
 
         imagedetector[iteration + 1] = thd2.todetector_Intensity(
@@ -528,11 +510,11 @@ def correctionLoop(parameter_file,
                  imagedetector,
                  header,
                  overwrite=True)
-    if thd2.DM1.active == True:
-        fits.writeto(result_dir + current_time_str + "_Phase_on_DM1" + ".fits",
-                     phaseDM1,
-                     header,
-                     overwrite=True)
+
+    fits.writeto(result_dir + current_time_str + "_Phase_on_DM1" + ".fits",
+                    phaseDM1,
+                    header,
+                    overwrite=True)
     fits.writeto(result_dir + current_time_str + "_Phase_on_DM3" + ".fits",
                  phaseDM3,
                  header,
