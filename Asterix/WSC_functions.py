@@ -119,19 +119,16 @@ def creatingInterractionmatrix(input_wavefront,
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2), len(testbed.WhichInPupil)))
 
-    if testbed.DM1.active == True:
-        DMs_here = [testbed.DM3, testbed.DM1]
-    else:
-        DMs_here = [testbed.DM3]
-
     pos_in_matrix = 0
-    for DM in DMs_here:
-        print("Start "+ DM.Name_DM)
+    for DM_name in reversed(testbed.name_of_DMs):
+        DM = vars(testbed)[DM_name]
+        print("Start "+ DM_name)
 
         basis = DM_basis(DM, basis_type = 'actuator')
 
         if DM.z_position != 0:
-            #make something smarter to check automatically the name of the entrance pup
+
+            #TODO make something smarter to check automatically the name of the entrance pup
             Pup_inDMplane, _ =  prop.prop_fresnel(testbed.entrancepupil.pup,
                                         DM.wavelength_0, DM.z_position,
                                         DM.diam_pup_in_m / 2, DM.prad)

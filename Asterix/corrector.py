@@ -169,13 +169,20 @@ class Corrector:
 
                 plt.savefig(figSVDEFC)
 
+                if testbed.DM1.active:
+                    separation_DM1_DM3 = len(testbed.DM1.WhichInPupil)
+                else:
+                    separation_DM1_DM3 = 0
+
+
+
                 EFCmatrix_DM3 = np.zeros(
                     (invertGDH.shape[1], testbed.DM3.number_act),
                     dtype=np.float32)
                 for i in np.arange(len(testbed.DM3.WhichInPupil)):
                     EFCmatrix_DM3[:,
                                     testbed.DM3.WhichInPupil[i]] = invertGDH[
-                                        i, :]
+                                        i + separation_DM1_DM3, :]
                 fits.writeto(realtestbed_dir +
                                 "Matrix_control_EFC_DM3_default.fits",
                                 EFCmatrix_DM3,
@@ -187,8 +194,8 @@ class Corrector:
                     for i in np.arange(len(testbed.DM1.WhichInPupil)):
                         EFCmatrix_DM1[:, testbed.DM1.
                                         WhichInPupil[i]] = invertGDH[
-                                            i +
-                                            len(testbed.DM3.WhichInPupil), :]
+                                            i
+                                            , :]
                     fits.writeto(realtestbed_dir +
                                     "Matrix_control_EFC_DM1_default.fits",
                                     EFCmatrix_DM1,
@@ -217,15 +224,16 @@ class Corrector:
 
         if self.correction_algorithm == "efc":
             # TODO gné ? I need to add a condition like if mode != self.previousmode i think
-            _, _, invertGDH = wsc.invertSVD(
-                    self.Gmatrix,
-                    mode,
-                    goal="c",
-                    visu=False,
-                    regul=self.regularization,
-                    otherbasis=self.DM3_otherbasis,
-                    basisDM3=self.DM3_basis,
-                )
+            if mode != self.previousmode:
+                _, _, invertGDH = wsc.invertSVD(
+                        self.Gmatrix,
+                        mode,
+                        goal="c",
+                        visu=False,
+                        regul=self.regularization,
+                        otherbasis=self.DM3_otherbasis,
+                        basisDM3=self.DM3_basis,
+                    )
 
             if testbed.DM1.active == True:
                 return wsc.solutionEFC(
@@ -253,19 +261,19 @@ class Corrector:
                     otherbasis=self.DM3_otherbasis,
                     basisDM3=self.DM3_basis)
 
-                # TODO Concatenate should be done in the THD2 structure
+            # TODO Concatenate should be done in the THD2 structure
             if testbed.DM1.active == True:
                 return wsc.solutionEM(
                     self.MaskEstim, estimate, invertM0, self.G,
                     np.concatenate(
                         (testbed.DM3.WhichInPupil,
-                         testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
+                        testbed.DM3.number_act + testbed.DM1.WhichInPupil)),
                     testbed.DM3.number_act + testbed.DM1.number_act)
                 # TODO Concatenate should be done in the THD2 structure
             else:
                 return wsc.solutionEM(self.MaskEstim, estimate,
-                                           invertM0, self.G, testbed.DM3.WhichInPupil,
-                                           testbed.DM3.number_act)
+                                        invertM0, self.G, testbed.DM3.WhichInPupil,
+                                        testbed.DM3.number_act)
 
         if self.correction_algorithm == "steepest":
             if testbed.DM1.active == True:
