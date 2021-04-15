@@ -12,18 +12,12 @@ import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
-
 #################################################################################
 ### Correction functions
 #################################################################################
 
-def invertSVD(matrix_to_invert,
-              cut,
-              goal="e",
-              regul="truncation",
-              visu=False,
-              otherbasis=False,
-              basisDM3=0):
+
+def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False):
     """ --------------------------------------------------
     Invert a matrix after a Singular Value Decomposition. The inversion can be regularized.
 
@@ -46,9 +40,6 @@ def invertSVD(matrix_to_invert,
 
     visu:   boolean, if True, plot and save the crescent inverse singular values,
                             before regularization
-
-    otherbasis:     boolean,
-    basisDM3:       goes with other basis
 
     Return:
     ------
@@ -87,16 +78,11 @@ def invertSVD(matrix_to_invert,
         pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated),
                                np.transpose(U))
 
-    if otherbasis == True:
-        pseudoinverse = np.dot(np.transpose(basisDM3), pseudoinverse)
-
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def creatingInterractionmatrix(input_wavefront,
-                             testbed,
-                             dimEstim,
-                             amplitudeEFC):
+def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
+                               amplitudeEFC):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
@@ -108,7 +94,7 @@ def creatingInterractionmatrix(input_wavefront,
         testbed structure
     dimEstim: int
         size of the output image in teh estimator
-    amplitudeEFC:
+    amplitudeEFC: float, amplitude of the EFC probe on the DM
 
     Return:
     ------
@@ -120,40 +106,40 @@ def creatingInterractionmatrix(input_wavefront,
         total_number_basis_modes += DM.basis.shape[0]
 
     print("Start Interraction Matrix")
-    InterMat = np.zeros((2 * int(dimEstim**2),total_number_basis_modes ))
+    InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
 
     pos_in_matrix = 0
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
         print("")
-        print("Start "+ DM_name)
+        print("Start " + DM_name)
 
         if DM.z_position != 0:
 
             #TODO make something smarter to check automatically the name of the entrance pup
-            Pup_inDMplane, _ =  prop.prop_fresnel(testbed.entrancepupil.pup,
-                                        DM.wavelength_0, DM.z_position,
-                                        DM.diam_pup_in_m / 2, DM.prad)
+            Pup_inDMplane, _ = prop.prop_fresnel(testbed.entrancepupil.pup,
+                                                 DM.wavelength_0,
+                                                 DM.z_position,
+                                                 DM.diam_pup_in_m / 2, DM.prad)
 
         for i in range(DM.basis.shape[0]):
 
-            if i %10:
+            if i % 10:
                 useful.progress(i, DM.basis.shape[0], status='')
 
-            phaseDM = DM.voltage_to_phase(DM.basis[i],wavelength = testbed.wavelength_0)
+            phaseDM = DM.voltage_to_phase(DM.basis[i],
+                                          wavelength=testbed.wavelength_0)
             if DM.z_position != 0:
-                phaseDM, _ = prop.prop_fresnel(
-                                Pup_inDMplane * phaseDM, DM.wavelength_0,
-                                -DM.z_position, DM.diam_pup_in_m / 2, DM.prad)
+                phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * phaseDM,
+                                               DM.wavelength_0, -DM.z_position,
+                                               DM.diam_pup_in_m / 2, DM.prad)
 
             Gvector = proc.resampling(
-                testbed.todetector(entrance_EF=input_wavefront * 1j *  phaseDM * amplitudeEFC),
-                dimEstim)
+                testbed.todetector(entrance_EF=input_wavefront * 1j * phaseDM *
+                                   amplitudeEFC), dimEstim)
 
-            InterMat[:dimEstim**2,
-                    pos_in_matrix] = np.real(Gvector).flatten()
-            InterMat[dimEstim**2:,
-                    pos_in_matrix] = np.imag(Gvector).flatten()
+            InterMat[:dimEstim**2, pos_in_matrix] = np.real(Gvector).flatten()
+            InterMat[dimEstim**2:, pos_in_matrix] = np.imag(Gvector).flatten()
             pos_in_matrix += 1
 
     print("End Interraction Matrix")
@@ -182,35 +168,57 @@ def cropDHInterractionMatrix(FullInterractionMatrix, mask):
         (size_DH_matrix, FullInterractionMatrix.shape[1]), dtype=float)
 
     for i in range(FullInterractionMatrix.shape[1]):
-        DHInterractionMatrix[:int(
-            size_DH_matrix /
-            2), i] = FullInterractionMatrix[:int(size_full_matrix / 2),
-                                            i][where_mask_flatten]
+        DHInterractionMatrix[:int(size_DH_matrix / 2),
+                             i] = FullInterractionMatrix[:int(
+                                 size_full_matrix / 2), i][where_mask_flatten]
         DHInterractionMatrix[int(size_DH_matrix / 2):,
-                                i] = FullInterractionMatrix[
-                                    int(size_full_matrix / 2):,
-                                    i][where_mask_flatten]
+                             i] = FullInterractionMatrix[int(size_full_matrix /
+                                                             2):,
+                                                         i][where_mask_flatten]
 
     return DHInterractionMatrix
 
 
 def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
+    """ --------------------------------------------------
+    transform a vector of voltages on the mode of a basis in a  vector of
+    voltages of the actuators of the DMs of the system
+
+    Parameters:
+    ----------
+    vector_basis_voltage: 1D-array real : dim (total(basisDM sizes))
+                     vector of voltages on the mode of the basis for all
+                     DMs by order of the light path
+    testbed: Optical_element
+        testbed structure (with DMs)
+
+
+    Return:
+    ------
+    vector_actuator_voltage: 1D-array real : dim (total(DM actuators))
+                     vector of base coefficients for all actuators of the DMs by order of the light path
+    -------------------------------------------------- """
+
     indice_acum_basis_size = 0
     indice_acum_number_act = 0
 
     vector_actuator_voltage = np.zeros(testbed.number_act)
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
-        vector_basis_voltage_for_DM = vector_basis_voltage[indice_acum_basis_size:indice_acum_basis_size+DM.basis.shape[0]]
+        vector_basis_voltage_for_DM = vector_basis_voltage[
+            indice_acum_basis_size:indice_acum_basis_size + DM.basis.shape[0]]
 
-        vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis), vector_basis_voltage_for_DM)
+        vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis),
+                                            vector_basis_voltage_for_DM)
 
-        vector_actuator_voltage[indice_acum_number_act: indice_acum_number_act + DM.number_act] = vector_actu_voltage_for_DM
+        vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
+                                DM.number_act] = vector_actu_voltage_for_DM
 
         indice_acum_basis_size += DM.basis.shape[0]
         indice_acum_number_act += DM.number_act
 
     return vector_actuator_voltage
+
 
 def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed):
     """ --------------------------------------------------
@@ -241,7 +249,6 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed):
     produit_mat = np.dot(inversed_jacobian, EF_vector)
 
     return basis_voltage_to_act_voltage(produit_mat, testbed)
-
 
 
 def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
@@ -276,10 +283,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
     return basis_voltage_to_act_voltage(produit_mat, testbed)
 
 
-
-
-def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
-                    testbed):
+def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize
     the speckle intensity in the dark hole region
@@ -306,7 +310,6 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     solution = pas * 2 * Eab
 
     return basis_voltage_to_act_voltage(solution, testbed)
-
 
 
 #################################################################################

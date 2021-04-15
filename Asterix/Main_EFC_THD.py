@@ -145,7 +145,6 @@ def create_interaction_matrices(parameter_file,
                        realtestbed_dir=Labview_dir)
 
 
-
 #######################################################
 #######################################################
 ######## Simulation of a correction loop
@@ -158,7 +157,6 @@ def correctionLoop(parameter_file,
                    NewEstimationconfig={},
                    NewCorrectionconfig={},
                    NewSIMUconfig={}):
-
 
     ### CONFIGURATION FILE
     configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
@@ -239,12 +237,10 @@ def correctionLoop(parameter_file,
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
 
-
     ##############################################################################
     ### Initialization all the directories
     ##############################################################################
     Asterix_model_dir = os.path.join(OptSy.Asterix_root, "Model") + os.path.sep
-
 
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
     if not os.path.exists(Model_local_dir):
@@ -294,8 +290,6 @@ def correctionLoop(parameter_file,
     # To be removed when the correction and estimation class are done
     # in which case these class will be able when these things exists or not
 
-
-
     ## Initialize Estimation
     estim = Estimator(Estimationconfig, thd2, matrix_dir=intermatrix_dir)
 
@@ -304,15 +298,12 @@ def correctionLoop(parameter_file,
     MaskScience = mask_dh.creatingMaskDH(thd2.dimScience,
                                          thd2.Science_sampling)
 
-
     #initalize the corrector
     correc = Corrector(Correctionconfig,
                        thd2,
                        mask_dh,
                        estim,
                        matrix_dir=intermatrix_dir)
-
-
 
     ## Phase map and amplitude map for the static aberrations
     if set_phase_abb == True:
@@ -367,8 +358,6 @@ def correctionLoop(parameter_file,
     amplitude_abb_up = ampfinal
     phase_abb_up = phase_up
 
-
-
     ## Correction loop
 
     ## Number of modes that is used as a function of the iteration cardinal
@@ -419,15 +408,16 @@ def correctionLoop(parameter_file,
         if Linesearch is True:
             search_best_contrast = list()
             perfectestimate = estim.estimate(thd2,
-                            entrance_EF=input_wavefront,
-                            DM1phase=phaseDM1[iteration],
-                            DM3phase=phaseDM3[iteration],
-                            wavelength=thd2.wavelength_0,
-                            perfect_estimation= True)
+                                             entrance_EF=input_wavefront,
+                                             DM1phase=phaseDM1[iteration],
+                                             DM3phase=phaseDM3[iteration],
+                                             wavelength=thd2.wavelength_0,
+                                             perfect_estimation=True)
 
             for modeLinesearch in Linesearchmode:
 
-                perfectsolution = - gain * correc.amplitudeEFC* correc.toDM_voltage(thd2, perfectestimate, modeLinesearch)
+                perfectsolution = -gain * correc.amplitudeEFC * correc.toDM_voltage(
+                    thd2, perfectestimate, modeLinesearch)
 
                 #### to be removed #### #### #### #### #### #### #### #### ####
 
@@ -437,33 +427,36 @@ def correctionLoop(parameter_file,
                     # Phase to apply on DM1
                     apply_on_DM1 = perfectsolution[:thd2.DM1.number_act]
                     phaseDM1_tmp = thd2.DM1.voltage_to_phase(
-                        voltage_DM1[iteration] + apply_on_DM1, wavelength=thd2.wavelength_0)
+                        voltage_DM1[iteration] + apply_on_DM1,
+                        wavelength=thd2.wavelength_0)
                 else:
                     separation_DM1_DM3 = 0
                     phaseDM1_tmp = 0
 
-                apply_on_DM3 = perfectsolution[separation_DM1_DM3: separation_DM1_DM3+ thd2.DM3.number_act]
+                apply_on_DM3 = perfectsolution[
+                    separation_DM1_DM3:separation_DM1_DM3 +
+                    thd2.DM3.number_act]
                 # Phase to apply on DM3
                 phaseDM3_tmp = thd2.DM3.voltage_to_phase(
-                    voltage_DM3[iteration] + apply_on_DM3, wavelength=thd2.wavelength_0)
+                    voltage_DM3[iteration] + apply_on_DM3,
+                    wavelength=thd2.wavelength_0)
                 ######## #### #### #### #### #### #### #### #### #### #### ####
 
                 imagedetector_tmp = thd2.todetector_Intensity(
-                            entrance_EF=input_wavefront,
-                            DM1phase=phaseDM1_tmp,
-                            DM3phase=phaseDM3_tmp)
+                    entrance_EF=input_wavefront,
+                    DM1phase=phaseDM1_tmp,
+                    DM3phase=phaseDM3_tmp)
 
-                search_best_contrast.append(np.mean(imagedetector_tmp[np.where(MaskScience != 0)]))
+                search_best_contrast.append(
+                    np.mean(imagedetector_tmp[np.where(MaskScience != 0)]))
             bestcontrast = np.amin(search_best_contrast)
             mode = Linesearchmode[np.argmin(search_best_contrast)]
             print('Best contrast= ', bestcontrast, ' Best regul= ', mode)
 
-
-
         # TODO is amplitudeEFC really useful ? with the small phase hypothesis done when
         # measuring the matrix, everything is linear !
-        solution = - gain * correc.amplitudeEFC* correc.toDM_voltage(thd2, resultatestimation, mode)
-
+        solution = -gain * correc.amplitudeEFC * correc.toDM_voltage(
+            thd2, resultatestimation, mode)
 
         ### TODO Following lines should be removed  since we should put directly solution in
         # the testbed model
@@ -485,8 +478,8 @@ def correctionLoop(parameter_file,
             phaseDM1[iteration + 1] = 0
             separation_DM1_DM3 = 0
 
-
-        apply_on_DM3 = solution[separation_DM1_DM3: separation_DM1_DM3+ thd2.DM3.number_act]
+        apply_on_DM3 = solution[separation_DM1_DM3:separation_DM1_DM3 +
+                                thd2.DM3.number_act]
 
         # Phase to apply on DM3
         voltage_DM3.append(voltage_DM3[iteration] + apply_on_DM3)
