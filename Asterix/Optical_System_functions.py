@@ -1864,7 +1864,7 @@ class Testbed(Optical_System):
 
         Parameters:
         ----------
-        actu_vect : 1D array
+        actu_vect : flaot or 1D array
                     values of the amplitudes for each actuator
         einstein_sum : boolean. default false
                         Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
