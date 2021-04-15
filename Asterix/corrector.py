@@ -111,6 +111,7 @@ class Corrector:
                 fits.writeto(matrix_dir + fileDirectMatrix + ".fits", interMat)
                 print("time for direct matrix " + testbed.string_os,
                       time.time() - start_time)
+                print("")
 
             self.Gmatrix = wsc.cropDHInterractionMatrix(
                 interMat, self.MaskEstim)
@@ -128,9 +129,6 @@ class Corrector:
 
             if save_for_bench == True:
 
-                #### Not sure what it does... Is this still useful ?
-                # I modified it with the new mask parameters
-                # TODO talk with raphael
                 if MaskDH.DH_shape == "square":
                     print(
                         "TO SET ON LABVIEW: ",

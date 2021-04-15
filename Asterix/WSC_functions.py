@@ -142,6 +142,7 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
             InterMat[dimEstim**2:, pos_in_matrix] = np.imag(Gvector).flatten()
             pos_in_matrix += 1
 
+    print("")
     print("End Interraction Matrix")
     return InterMat
 

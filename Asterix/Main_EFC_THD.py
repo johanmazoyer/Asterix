@@ -183,6 +183,9 @@ def correctionLoop(parameter_file,
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
 
+    #On bench or numerical simulation
+    onbench = modelconfig["onbench"]
+
     #Lambda over D in pixels
     wavelength_0 = modelconfig["wavelength_0"]
 
@@ -259,6 +262,12 @@ def correctionLoop(parameter_file,
         print("Creating directory " + result_dir + " ...")
         os.makedirs(result_dir)
 
+    if onbench == True:
+        Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
+        if not os.path.exists(Labview_dir):
+            print("Creating directory " + Labview_dir + " ...")
+            os.makedirs(Labview_dir)
+
     # Initialize thd:
     pup_round = OptSy.pupil(modelconfig)
     DM1 = OptSy.deformable_mirror(modelconfig,
@@ -291,7 +300,10 @@ def correctionLoop(parameter_file,
     # in which case these class will be able when these things exists or not
 
     ## Initialize Estimation
-    estim = Estimator(Estimationconfig, thd2, matrix_dir=intermatrix_dir)
+    estim = Estimator(Estimationconfig, thd2,
+                                matrix_dir=intermatrix_dir,
+                            save_for_bench=onbench,
+                            realtestbed_dir=Labview_dir)
 
     #initalize the DH masks
     mask_dh = MaskDH(Correctionconfig)
@@ -303,7 +315,9 @@ def correctionLoop(parameter_file,
                        thd2,
                        mask_dh,
                        estim,
-                       matrix_dir=intermatrix_dir)
+                       matrix_dir=intermatrix_dir,
+                       save_for_bench=onbench,
+                       realtestbed_dir=Labview_dir)
 
     ## Phase map and amplitude map for the static aberrations
     if set_phase_abb == True:
