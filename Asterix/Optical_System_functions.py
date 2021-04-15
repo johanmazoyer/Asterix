@@ -1643,19 +1643,19 @@ class deformable_mirror(Optical_System):
 
         return EF_back_in_pup_plane
 
-    def voltage_to_phase(self, actu_vect, wavelength=None, einstein_sum=False):
+    def voltage_to_phase(self, actu_vect, einstein_sum=False):
         """ --------------------------------------------------
         Generate the phase applied on one DM for a give vector of actuator amplitude
         We decided to do it without matrix multiplication to save time because a
         lot of the time we have lot of zeros in it
+
+        The phase is define at the reference wl and multiply by wl_ratio in DM.EF_through
 
 
         Parameters:
         ----------
         actu_vect : 1D array
                     values of the amplitudes for each actuator
-        wavelength : float. Default is self.wavelength_0 the reference wavelength
-                current wavelength in m.
         einstein_sum : boolean. default false
                         Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
                         gives the same results as normal sum. Seems ot be faster for unique actuator
@@ -1667,11 +1667,10 @@ class deformable_mirror(Optical_System):
             phase map in the same unit as actu_vect * DM_pushact)
         -------------------------------------------------- """
 
-        if wavelength is None:
-            wavelength = self.wavelength_0
-
         where_non_zero_voltage = np.where(actu_vect != 0)
-        surface_to_phase = 2 * np.pi * 1e-9 / wavelength
+
+        #TODO I reakky don't understand the 1e-9 here
+        surface_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
 
         if einstein_sum == True or len(where_non_zero_voltage[0]) < 3:
             phase_on_DM = np.einsum(
@@ -1831,20 +1830,93 @@ class Testbed(Optical_System):
         # noFPM so that it does not break when we run transmission and max_sum_PSFs
         # which pass this keyword by default
         known_keywords.append('noFPM')
+
         # we remove doubloons
         # known_keywords = list(set(known_keywords))
         known_keywords = list(dict.fromkeys(known_keywords))
 
-        # we add no
         # We remove arguments we know are wrong
         if 'DMphase' in known_keywords:
             known_keywords.remove('DMphase')
+            # there is at least a DM, we add voltage_vector as an authorize kw
+            known_keywords.append('voltage_vector')
+
+        # to avoid mis-use we only use specific keywords.
         known_keywords.remove('kwargs')
 
         self.EF_through = _clean_EF_through(self.EF_through, known_keywords)
 
+
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
+
+    def voltage_to_phases(self, actu_vect, einstein_sum=False):
+        """ --------------------------------------------------
+        Generate the phase applied on one DM for a give vector of actuator amplitude
+        We decided to do it without matrix multiplication to save time because a
+        lot of the time we have lot of zeros in it
+
+        The phase is define at the reference wl and multiply by wl_ratio in DM.EF_through
+
+
+        Parameters:
+        ----------
+        actu_vect : 1D array
+                    values of the amplitudes for each actuator
+        einstein_sum : boolean. default false
+                        Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
+                        gives the same results as normal sum. Seems ot be faster for unique actuator
+                        but slower for more complex phases
+
+        Return:
+        ------
+            2D array
+            phase map in the same unit as actu_vect * DM_pushact)
+        -------------------------------------------------- """
+        DMphases = np.zeros((self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
+        indice_acum_number_act = 0
+
+        for i, DM_name in enumerate(self.name_of_DMs):
+            DM = vars(self)[DM_name]
+            actu_vect_DM = actu_vect[indice_acum_number_act: indice_acum_number_act + DM.number_act]
+            DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
+
+            indice_acum_number_act += DM.number_act
+
+        return DMphases
+
+    # def _phase_to_tension(self):
+    #     """ --------------------------------------------------
+    #     A function to rename the
+
+    #     parameter:
+    #         DM_EF_through_function : the function of which we want to change the params
+    #         name_var : string the name of the  new name variable
+
+    #     Returns
+    #         ------
+    #         the_new_function: with name_var as a param
+
+
+    #     AUTHOR : Johan Mazoyer
+    #     -------------------------------------------------- """
+
+    #     for DM_name in self.name_of_DMs:
+    #         list_os_names[num_optical_sys] + "phase"
+    #         DM = vars(self)[DM_name]
+
+    #     def wrapper(**kwargs):
+    #         kwargs[name_var] = 0.
+    #         if name_var not in kwargs.keys():
+    #             kwargs[name_var] = 0.
+    #         new_kwargs = copy.copy(kwargs)
+
+    #         new_kwargs['DMphase'] = kwargs[name_var]
+
+    #         return DM_EF_through_function(**new_kwargs)
+
+    #     return wrapper
+
 
 
 ##############################################

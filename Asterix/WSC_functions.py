@@ -127,8 +127,7 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
             if i % 10:
                 useful.progress(i, DM.basis.shape[0], status='')
 
-            phaseDM = DM.voltage_to_phase(DM.basis[i],
-                                          wavelength=testbed.wavelength_0)
+            phaseDM = DM.voltage_to_phase(DM.basis[i])
             if DM.z_position != 0:
                 phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * phaseDM,
                                                DM.wavelength_0, -DM.z_position,
@@ -356,8 +355,7 @@ def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
         # TODO: we shoudl maybe put a which_DM_to_do_probes parameter
         Voltage_probe = np.zeros(testbed.DM3.number_act)
         Voltage_probe[i] = amplitude
-        probephase[k] = testbed.DM3.voltage_to_phase(Voltage_probe,
-                                                     wavelength=wavelength)
+        probephase[k] = testbed.DM3.voltage_to_phase(Voltage_probe)
 
         # for PW the probes are not sent in the DM but at the entrance of the testbed.
         # with an hypothesis of small phase.
@@ -468,8 +466,7 @@ def createdifference(input_wavefront,
 
         Voltage_probe = np.zeros(testbed.DM3.number_act)
         Voltage_probe[num_probe] = amplitudePW
-        probephase = testbed.DM3.voltage_to_phase(Voltage_probe,
-                                                  wavelength=wavelength)
+        probephase = testbed.DM3.voltage_to_phase(Voltage_probe)
 
         # Not 100% sure about wavelength here, so I prefeer to use
         # todetector to keep it monochromatic instead of todetector_Intensity

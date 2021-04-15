@@ -435,14 +435,14 @@ def correctionLoop(parameter_file,
 
                 #### to be removed #### #### #### #### #### #### #### #### ####
 
+
                 if thd2.DM1.active == True:
                     separation_DM1_DM3 = thd2.DM1.number_act
 
                     # Phase to apply on DM1
                     apply_on_DM1 = perfectsolution[:thd2.DM1.number_act]
                     phaseDM1_tmp = thd2.DM1.voltage_to_phase(
-                        voltage_DM1[iteration] + apply_on_DM1,
-                        wavelength=thd2.wavelength_0)
+                        voltage_DM1[iteration] + apply_on_DM1)
                 else:
                     separation_DM1_DM3 = 0
                     phaseDM1_tmp = 0
@@ -452,8 +452,7 @@ def correctionLoop(parameter_file,
                     thd2.DM3.number_act]
                 # Phase to apply on DM3
                 phaseDM3_tmp = thd2.DM3.voltage_to_phase(
-                    voltage_DM3[iteration] + apply_on_DM3,
-                    wavelength=thd2.wavelength_0)
+                    voltage_DM3[iteration] + apply_on_DM3)
                 ######## #### #### #### #### #### #### #### #### #### #### ####
 
                 imagedetector_tmp = thd2.todetector_Intensity(
@@ -480,14 +479,13 @@ def correctionLoop(parameter_file,
         # imagedetector = thd2.todetector_Intensity(DMVoltag,...)
 
         #### to be removed #### #### #### #### #### #### #### #### ####
-
         if thd2.DM1.active == True:
             # Phase to apply on DM1
             separation_DM1_DM3 = thd2.DM1.number_act
             apply_on_DM1 = solution[:thd2.DM1.number_act]
             voltage_DM1.append(voltage_DM1[iteration] + apply_on_DM1)
             phaseDM1[iteration + 1] = thd2.DM1.voltage_to_phase(
-                voltage_DM1[iteration + 1], wavelength=thd2.wavelength_0)
+                voltage_DM1[iteration + 1])
         else:
             phaseDM1[iteration + 1] = 0
             separation_DM1_DM3 = 0
@@ -498,7 +496,7 @@ def correctionLoop(parameter_file,
         # Phase to apply on DM3
         voltage_DM3.append(voltage_DM3[iteration] + apply_on_DM3)
         phaseDM3[iteration + 1] = thd2.DM3.voltage_to_phase(
-            voltage_DM3[iteration + 1], wavelength=thd2.wavelength_0)
+            voltage_DM3[iteration + 1])
         ########################################################################
 
         imagedetector[iteration + 1] = thd2.todetector_Intensity(
