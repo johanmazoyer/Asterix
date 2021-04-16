@@ -792,7 +792,7 @@ class coronagraph(Optical_System):
         if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig[
                 "filename_instr_lyot"] == "RoundPup":
             self.lyot_pup = pupil(modelconfig,
-                                  prad=self.prad,
+                                  prad=self.lyotrad,
                                   PupType=coroconfig["filename_instr_lyot"])
         else:
             self.lyot_pup = pupil(modelconfig,
