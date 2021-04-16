@@ -2,12 +2,12 @@ import numpy as np
 import skimage.transform
 from astropy.io import fits
 import Asterix.processing_functions as proc
-
+import Asterix.fits_functions as useful
 
 ##############################################
 ##############################################
 ### Pupil
-def roundpupil(dim_pp, prad):
+def roundpupil(dim_pp, prad, no_pixel = False):
     """ --------------------------------------------------
     Create a circular pupil. The center of the pupil is located between 4 pixels.
 
@@ -24,13 +24,29 @@ def roundpupil(dim_pp, prad):
         Output circular pupil
 
     AUTHOR : Axel Pottier
+    Modified by J Mazoyer to remove the pixellization
     -------------------------------------------------- """
+
+    if no_pixel == True:
+        dim_pp_small = np.copy(dim_pp)
+        dim_pp = 6000
+        prad = prad/dim_pp_small*6000
+
     xx, yy = np.meshgrid(
         np.arange(dim_pp) - (dim_pp) / 2,
         np.arange(dim_pp) - (dim_pp) / 2)
     rr = np.hypot(yy + 1 / 2, xx + 1 / 2)
     pupilnormal = np.zeros((dim_pp, dim_pp))
     pupilnormal[rr <= prad] = 1.0
+
+    if no_pixel == True:
+        pupilnormal = np.array(skimage.transform.rescale(pupilnormal,
+                                     dim_pp_small/dim_pp,
+                                     preserve_range=True,
+                                     anti_aliasing=True,
+                                     multichannel=False))
+
+
     return pupilnormal
 
 

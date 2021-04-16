@@ -31,6 +31,10 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
     name_fits = current_time_str + '_' + name_plane
 
+    # sometime the image can be a single float (0 for phase or 1 for EF).
+    if isinstance(image, (int, float, np.float)):
+        return
+
     if np.iscomplexobj(image):
         tofits_array = np.zeros((2, image.shape[0], image.shape[1]))
         tofits_array[0] = np.real(image)

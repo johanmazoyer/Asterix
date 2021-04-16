@@ -775,7 +775,8 @@ class coronagraph(Optical_System):
         # of the coronograph to a clear pupil to remove it
         # if perfect corono. THIS IS NOT THE ENTRANCE PUPIL,
         # this is a clear pupil of the same size
-        self.clearpup = pupil(modelconfig, prad=self.prad)
+        if self.perfect_coro == True:
+            self.clearpup = pupil(modelconfig, prad=self.prad)
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
@@ -792,7 +793,7 @@ class coronagraph(Optical_System):
         if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig[
                 "filename_instr_lyot"] == "RoundPup":
             self.lyot_pup = pupil(modelconfig,
-                                  prad=self.prad,
+                                  prad=self.lyotrad,
                                   PupType=coroconfig["filename_instr_lyot"])
         else:
             self.lyot_pup = pupil(modelconfig,
@@ -881,8 +882,8 @@ class coronagraph(Optical_System):
         if self.prop_apod2lyot == "fft":
             dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(
                 wavelength)]
-            input_wavefront_pad = proc.crop_or_pad_image(
-                entrance_EF, dim_fp_fft_here)
+            input_wavefront_after_apod_pad = proc.crop_or_pad_image(
+                input_wavefront_after_apod, dim_fp_fft_here)
             # Phase ramp to center focal plane between 4 pixels
 
             maskshifthalfpix = phase_ampl.shift_phase_ramp(
@@ -892,7 +893,7 @@ class coronagraph(Optical_System):
 
             #Apod plane to focal plane
             corono_focal_plane = np.fft.fft2(
-                np.fft.fftshift(input_wavefront_pad * maskshifthalfpix))
+                np.fft.fftshift(input_wavefront_after_apod_pad * maskshifthalfpix))
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
@@ -1021,6 +1022,11 @@ class coronagraph(Optical_System):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
 
         if save_all_planes_to_fits == True:
+            name_plane = 'LS' + '_wl{}'.format(
+                int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      self.lyot_pup.pup)
+
             name_plane = 'EF_PP_after_LS' + '_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,

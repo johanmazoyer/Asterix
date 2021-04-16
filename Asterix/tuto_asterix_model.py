@@ -104,6 +104,7 @@ modelconfig.update({'Delta_wav': 0})
 Coronaconfig.update({'filename_instr_apod': "RoundPup"})
 corono = OptSy.coronagraph(modelconfig, Coronaconfig)
 
+
 # For the coronagraph, we can measure 2 types of PSF: with or without mask
 No_mask_PSF = corono.todetector_Intensity(center_on_pixel=True, noFPM=True)
 # This allow us to normalize the images
@@ -144,8 +145,6 @@ FP_after_corono_in_contrast = corono.todetector_Intensity(
 # in the default parameter file, this one is in pupil
 DM3 = OptSy.deformable_mirror(modelconfig,
                               DMconfig,
-                              load_fits=False,
-                              save_fits=True,
                               Name_DM='DM3',
                               Model_local_dir=Model_local_dir)
 
@@ -184,8 +183,6 @@ testbed_1DM_romanpup = OptSy.Testbed([pup_roman, DM3, corono],
 print("number of DMs in testbed_1DM_romanpup:",
       testbed_1DM_romanpup.number_DMs)
 print("name of the DMs: ", testbed_1DM_romanpup.name_of_DMs)
-print("number of actuators in each DMs: ",
-      testbed_1DM_romanpup.number_of_acts_in_DMs)
 
 # if we want to define exactly the thd2, we need to add a second DM off pupil plane.
 # This can take som time to initialize becasue the DM is off pupil.
@@ -202,16 +199,12 @@ pup_round = OptSy.pupil(modelconfig)
 
 DM3 = OptSy.deformable_mirror(modelconfig,
                               DMconfig,
-                              load_fits=False,
-                              save_fits=True,
                               Name_DM='DM3',
                               Model_local_dir=Model_local_dir)
 
 DMconfig.update({'DM1_active': True})
 DM1 = OptSy.deformable_mirror(modelconfig,
                               DMconfig,
-                              load_fits=False,
-                              save_fits=True,
                               Name_DM='DM1',
                               Model_local_dir=Model_local_dir)
 # we also need to "clear" the apod plane because  there
@@ -226,7 +219,6 @@ thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono_thd],
 # if you have DMs in your system, these are saved in the structure so that you can access it:
 print("number of DMs in thd2:", thd2.number_DMs)
 print("name of the DMs: ", thd2.name_of_DMs)
-print("number of actuators in each DMs: ", thd2.number_of_acts_in_DMs)
 
 # And Now that we have all the tools, we can concatenate define even more complicated system
 # let's define a third DM, similar to DM1, but off pupil in the other dimension
@@ -234,8 +226,6 @@ DMconfig.update({'DM1_z_position': -15e-2})  # meter
 DMconfig.update({'DM1_active': True})
 DMnew = OptSy.deformable_mirror(modelconfig,
                                 DMconfig,
-                                load_fits=False,
-                                save_fits=True,
                                 Name_DM='DM1',
                                 Model_local_dir=Model_local_dir)
 # the Name_DM in this function is to be understand as the type of DM you want to use (DM3 is a BMC32x32 type DM
@@ -255,4 +245,3 @@ testbed_3DM = OptSy.Testbed(
 
 print("number of DMs in testbed_3DM:", testbed_3DM.number_DMs)
 print("name of the DMs: ", testbed_3DM.name_of_DMs)
-print("number of actuators in each DMs: ", testbed_3DM.number_of_acts_in_DMs)
