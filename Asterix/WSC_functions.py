@@ -422,9 +422,7 @@ def createdifference(input_wavefront,
                      voltage_vector=0.,
                      photon_noise=False,
                      nb_photons=1e30,
-                     wavelength=None,
-                     save_all_planes_to_fits=False,
-                     dir_save_all_planes=None):
+                     **kwargs):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]
@@ -453,8 +451,6 @@ def createdifference(input_wavefront,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
     -------------------------------------------------- """
-    if wavelength == None:
-        wavelength = testbed.wavelength_0
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
@@ -484,17 +480,11 @@ def createdifference(input_wavefront,
         # which is large band
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
-                               voltage_vector=voltage_vector - Voltage_probe,
-                               wavelength=wavelength,
-                               save_all_planes_to_fits=save_all_planes_to_fits,
-                               dir_save_all_planes=dir_save_all_planes))**2
+                               voltage_vector=voltage_vector - Voltage_probe))**2
 
         Ikplus = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
-                               voltage_vector=voltage_vector + Voltage_probe,
-                               wavelength=wavelength,
-                               save_all_planes_to_fits=save_all_planes_to_fits,
-                               dir_save_all_planes=dir_save_all_planes))**2
+                               voltage_vector=voltage_vector + Voltage_probe))**2
 
         if photon_noise == True:
             Ikplus = np.random.poisson(

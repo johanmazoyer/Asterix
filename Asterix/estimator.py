@@ -157,12 +157,10 @@ class Estimator:
                  testbed,
                  entrance_EF=1.,
                  voltage_vector=0.,
-                 wavelength=None,
                  photon_noise=False,
                  nb_photons=1e30,
                  perfect_estimation=False,
-                 save_all_planes_to_fits=False,
-                 dir_save_all_planes=None):
+                 **kwargs):
         """ --------------------------------------------------
         Run an estimation from a testbed, with a given input wavefront
         and a state of the DMs
@@ -191,17 +189,13 @@ class Estimator:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        if wavelength is None:
-            wavelength = testbed.wavelength_0
-
         if (self.technique == "perfect") or (perfect_estimation is True):
             # If polychromatic, assume a perfect estimation at one wavelength
 
             resultatestimation = testbed.todetector(
                 entrance_EF=entrance_EF,
                 voltage_vector=voltage_vector,
-                save_all_planes_to_fits=save_all_planes_to_fits,
-                dir_save_all_planes=dir_save_all_planes)
+                **kwargs)
 
             if photon_noise == True:
                 resultatestimation = np.random.poisson(
@@ -220,8 +214,7 @@ class Estimator:
                 voltage_vector=voltage_vector,
                 photon_noise=photon_noise,
                 nb_photons=nb_photons,
-                save_all_planes_to_fits=save_all_planes_to_fits,
-                dir_save_all_planes=dir_save_all_planes)
+                **kwargs)
 
             return wsc.FP_PWestimate(Difference, self.PWVectorprobes)
 

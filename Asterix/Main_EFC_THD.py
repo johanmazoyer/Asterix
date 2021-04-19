@@ -330,12 +330,20 @@ def correctionLoop(parameter_file,
 
     both_DM_volt = np.concatenate((DM1_volt,DM3_volt))
 
-    resultatestimation = estim.estimate(thd2,
+    resultatestimationperf = estim.estimate(thd2,
                                 voltage_vector = both_DM_volt,
                                 save_all_planes_to_fits=True,
-                                dir_save_all_planes=Labview_dir+'test_orientation/')
+                                dir_save_all_planes=Labview_dir+'test_orientation/',
+                                perfect_estimation=True)
 
-    name_plane = 'estimate_FP'
+    name_plane = 'estimateperf_FP'
+    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+                                resultatestimationperf)
+
+    resultatestimation = estim.estimate(thd2,
+                                voltage_vector = both_DM_volt)
+
+    name_plane = 'estimatePW_FP'
     useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
                                 resultatestimation)
 
@@ -348,12 +356,11 @@ def correctionLoop(parameter_file,
     useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
                                 Resultat_cropdh1d)
 
-    return_to_Lyot_plane = proc.crop_or_pad_image(
-                            prop.mft(resultatestimation,
+    return_to_Lyot_plane = prop.mft(resultatestimation,
                          thd2.dimScience,
-                         2 * thd2.prad,
+                         2 * thd2.exitpup_rad,
                          thd2.dimScience / thd2.Science_sampling,
-                         inverse=True), thd2.dim_overpad_pupil)
+                         inverse=True)
 
     name_plane = 'estimate_LSP'
     useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
