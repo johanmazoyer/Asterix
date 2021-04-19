@@ -893,7 +893,8 @@ class coronagraph(Optical_System):
 
             #Apod plane to focal plane
             corono_focal_plane = np.fft.fft2(
-                np.fft.fftshift(input_wavefront_after_apod_pad * maskshifthalfpix))
+                np.fft.fftshift(input_wavefront_after_apod_pad *
+                                maskshifthalfpix))
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
@@ -1022,8 +1023,7 @@ class coronagraph(Optical_System):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
 
         if save_all_planes_to_fits == True:
-            name_plane = 'LS' + '_wl{}'.format(
-                int(wavelength * 1e9))
+            name_plane = 'LS' + '_wl{}'.format(int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       self.lyot_pup.pup)
 
@@ -1585,16 +1585,16 @@ class deformable_mirror(Optical_System):
                                 save_all_planes_to_fits=False,
                                 dir_save_all_planes=None):
         """ --------------------------------------------------
-        Propagate the field towards an out-of-pupil plane (DM1 plane),
-        add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
+        Propagate the field towards an out-of-pupil plane ,
+        add the DM phase, and propagate to the next pupil plane
 
         Parameters
         ----------
         pupil_wavefront : 2D array (float, double or complex)
                     Wavefront in the pupil plane
 
-        phase_DM1 : 2D array
-                    Phase introduced by DM1
+        phase_DM : 2D array
+                    Phase introduced by out of PP DM
 
         wavelength : float
                     wavelength in m
@@ -1608,9 +1608,9 @@ class deformable_mirror(Optical_System):
 
         Returns
         ------
-        UDM3 : 2D array (complex)
-                Wavefront in the pupil plane after DM1
-                (corresponds to DM3 plane on THD2 bench)
+        EF_back_in_pup_plane : 2D array (complex)
+                            Wavefront in the pupil plane following the DM
+
 
         AUTHOR : Raphaël Galicher
 
@@ -1847,14 +1847,13 @@ class Testbed(Optical_System):
             # there is at least a DM, we add voltage_vector as an authorize kw
 
             known_keywords.append('voltage_vector')
-            self.EF_through = self._control_testbed_with_voltages(self.EF_through)
+            self.EF_through = self._control_testbed_with_voltages(
+                self.EF_through)
 
         # to avoid mis-use we only use specific keywords.
         known_keywords.remove('kwargs')
 
         self.EF_through = _clean_EF_through(self.EF_through, known_keywords)
-
-
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
@@ -1884,28 +1883,31 @@ class Testbed(Optical_System):
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
-        DMphases = np.zeros((self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
+        DMphases = np.zeros(
+            (self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
         indice_acum_number_act = 0
 
-        if isinstance(actu_vect, float) :
+        if isinstance(actu_vect, float):
             return np.zeros(self.number_DMs) + actu_vect
 
         if len(actu_vect) != self.number_act:
-            raise Exception("voltage vector must be 0 or array of dimension testbed.number_act,"+
-                            "sum of all DM.number_act")
-
+            raise Exception(
+                "voltage vector must be 0 or array of dimension testbed.number_act,"
+                + "sum of all DM.number_act")
 
         for i, DM_name in enumerate(self.name_of_DMs):
 
             DM = vars(self)[DM_name]
-            actu_vect_DM = actu_vect[indice_acum_number_act: indice_acum_number_act + DM.number_act]
-            DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
+            actu_vect_DM = actu_vect[
+                indice_acum_number_act:indice_acum_number_act + DM.number_act]
+            DMphases[i] = DM.voltage_to_phase(actu_vect_DM,
+                                              einstein_sum=einstein_sum)
 
             indice_acum_number_act += DM.number_act
 
         return DMphases
 
-    def _control_testbed_with_voltages(self,testbed_EF_through):
+    def _control_testbed_with_voltages(self, testbed_EF_through):
         """ --------------------------------------------------
         A function to controle the testbed with a single function
 
@@ -1920,7 +1922,6 @@ class Testbed(Optical_System):
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
-
         def wrapper(**kwargs):
             if 'voltage_vector' in kwargs:
                 voltage_vector = kwargs['voltage_vector']
@@ -1932,7 +1933,6 @@ class Testbed(Optical_System):
             return testbed_EF_through(**kwargs)
 
         return wrapper
-
 
 
 ##############################################

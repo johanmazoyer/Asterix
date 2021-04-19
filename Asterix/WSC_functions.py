@@ -348,14 +348,15 @@ def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
     PWVector = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
 
+    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]
+
     k = 0
 
     for i in posprobes:
 
-        # TODO: we shoudl maybe put a which_DM_to_do_probes parameter
-        Voltage_probe = np.zeros(testbed.DM3.number_act)
+        Voltage_probe = np.zeros(DM_probe.number_act)
         Voltage_probe[i] = amplitude
-        probephase[k] = testbed.DM3.voltage_to_phase(Voltage_probe)
+        probephase[k] = DM_probe.voltage_to_phase(Voltage_probe)
 
         # for PW the probes are not sent in the DM but at the entrance of the testbed.
         # with an hypothesis of small phase.
@@ -453,32 +454,6 @@ def createdifference(input_wavefront,
     -------------------------------------------------- """
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
-
-    if hasattr(testbed, 'name_DM_to_probe_in_PW'):
-        if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
-            raise Exception(
-                "Cannot use this DM for PW, this testbed has no DM named " +
-                testbed.name_DM_to_probe_in_PW)
-    else:
-        # Automatically check which DM to use to probe in this case
-        # this is only done once, after which testbed.name_DM_to_probe_in_PW is set
-        # for all other probings we do not test
-        number_DMs_in_PP = 0
-        for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]
-            if DM.z_position == 0.:
-                number_DMs_in_PP += 1
-                testbed.name_DM_to_probe_in_PW = DM_name
-
-        if number_DMs_in_PP > 1:
-            raise Exception(
-                "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
-            )
-
-        if number_DMs_in_PP == 0:
-            raise Exception(
-                "You have no DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
-            )
 
     for count, num_probe in enumerate(posprobes):
 

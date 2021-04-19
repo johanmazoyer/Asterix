@@ -96,6 +96,31 @@ class Estimator:
             self.posprobes = [int(i) for i in Estimationconfig["posprobes"]]
             cutsvdPW = Estimationconfig["cut"]
 
+            if hasattr(testbed, 'name_DM_to_probe_in_PW'):
+                if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
+                    raise Exception(
+                        "Cannot use this DM for PW, this testbed has no DM named " +
+                        testbed.name_DM_to_probe_in_PW)
+            else:
+                # Automatically check which DM to use to probe in this case
+                # this is only done once
+                number_DMs_in_PP = 0
+                for DM_name in testbed.name_of_DMs:
+                    DM = vars(testbed)[DM_name]
+                    if DM.z_position == 0.:
+                        number_DMs_in_PP += 1
+                        testbed.name_DM_to_probe_in_PW = DM_name
+
+                if number_DMs_in_PP > 1:
+                    raise Exception(
+                        "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                    )
+
+                if number_DMs_in_PP == 0:
+                    raise Exception(
+                        "You have no DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                    )
+
             string_dims_PWMatrix = "actProb[" + "_".join(
                 map(str, self.posprobes)) + "]PWampl" + str(
                     int(self.amplitudePW)) + "_cut" + str(int(
@@ -170,8 +195,7 @@ class Estimator:
         ----------
         testbed:        a testbed element
         entrance_EF     default 0., float or 2D array can be complex, initial EF field
-        DM1phase        default 0., float or 2D real array, phase on DM1
-        DM3phase        default 0., float or 2D real array, phase on DM1
+        voltage_vector  vector concatenation of voltages vectors for each DMs
         wavelength      default None, float, wavelenght of the estimation
         photon_noise    default False, boolean,  If True, add photon noise.
         nb_photons      default 1e30, int Number of photons entering the pupil
