@@ -454,20 +454,41 @@ def createdifference(input_wavefront,
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
-    #TODO if the DM1 is active we can measure once the EFthoughDM1 ans store it in entrance_EF
-    #to save time. To check
-    # if testbed.DM1.active is True:
-    #     input_wavefront = testbed.DM1.EF_through(entrance_EF=input_wavefront, DM1phase = DM1phase,wavelength=wavelength)
+    if hasattr(testbed, 'name_DM_to_probe_in_PW'):
+        if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
+            raise Exception(
+                "Cannot use this DM for PW, this testbed has no DM named " +
+                testbed.name_DM_to_probe_in_PW)
+    else:
+        # Automatically check which DM to use to probe in this case
+        # this is only done once, after which testbed.name_DM_to_probe_in_PW is set
+        # for all other probings we do not test
+        number_DMs_in_PP = 0
+        for DM_name in testbed.name_of_DMs:
+            DM = vars(testbed)[DM_name]
+            if DM.z_position == 0.:
+                number_DMs_in_PP += 1
+                testbed.name_DM_to_probe_in_PW = DM_name
+
+        if number_DMs_in_PP > 1:
+            raise Exception(
+                "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+            )
+
+        if number_DMs_in_PP == 0:
+            raise Exception(
+                "You have no DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+            )
 
     for count, num_probe in enumerate(posprobes):
-        # TODO we need to bo a "which DM to probe parameter"
 
         Voltage_probe = np.zeros(testbed.number_act)
         indice_acum_number_act = 0
 
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
-            if DM_name == "DM3":
+
+            if DM_name == testbed.name_DM_to_probe_in_PW:
                 Voltage_probeDMprobe = np.zeros(DM.number_act)
                 Voltage_probeDMprobe[num_probe] = amplitudePW
                 Voltage_probe[indice_acum_number_act:indice_acum_number_act +
@@ -475,16 +496,15 @@ def createdifference(input_wavefront,
 
             indice_acum_number_act += DM.number_act
 
-        # Not 100% sure about wavelength here, so I prefeer to use
-        # todetector to keep it monochromatic instead of todetector_Intensity
-        # which is large band
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
-                               voltage_vector=voltage_vector - Voltage_probe))**2
+                               voltage_vector=voltage_vector - Voltage_probe,
+                               **kwargs))**2
 
         Ikplus = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
-                               voltage_vector=voltage_vector + Voltage_probe))**2
+                               voltage_vector=voltage_vector + Voltage_probe,
+                               **kwargs))**2
 
         if photon_noise == True:
             Ikplus = np.random.poisson(

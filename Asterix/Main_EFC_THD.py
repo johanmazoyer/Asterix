@@ -332,8 +332,6 @@ def correctionLoop(parameter_file,
 
     resultatestimationperf = estim.estimate(thd2,
                                 voltage_vector = both_DM_volt,
-                                save_all_planes_to_fits=True,
-                                dir_save_all_planes=Labview_dir+'test_orientation/',
                                 perfect_estimation=True)
 
     name_plane = 'estimateperf_FP'
@@ -341,7 +339,8 @@ def correctionLoop(parameter_file,
                                 resultatestimationperf)
 
     resultatestimation = estim.estimate(thd2,
-                                voltage_vector = both_DM_volt)
+                                voltage_vector = both_DM_volt,save_all_planes_to_fits=True,
+                                dir_save_all_planes=Labview_dir+'test_orientation/')
 
     name_plane = 'estimatePW_FP'
     useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
