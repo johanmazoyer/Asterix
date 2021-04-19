@@ -356,11 +356,11 @@ def correctionLoop(parameter_file,
     useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
                                 Resultat_cropdh1d)
 
-    return_to_Lyot_plane = prop.mft(resultatestimationperf,
+    return_to_Lyot_plane = proc.crop_or_pad_image(prop.mft(resultatestimationperf,
                          estim.dimEstim,
                          2 * thd2.exitpup_rad,
                          estim.dimEstim / estim.Estim_sampling,
-                         inverse=True)
+                         inverse=True), thd2.dim_overpad_pupil)
 
     name_plane = 'estimate_LSP'
     useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
