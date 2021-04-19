@@ -108,7 +108,6 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
 
-
     pos_in_matrix = 0
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
@@ -424,7 +423,8 @@ def createdifference(input_wavefront,
                      photon_noise=False,
                      nb_photons=1e30,
                      wavelength=None,
-                     **kwargs):
+                     save_all_planes_to_fits=False,
+                     dir_save_all_planes=None):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]
@@ -474,7 +474,8 @@ def createdifference(input_wavefront,
             if DM_name == "DM3":
                 Voltage_probeDMprobe = np.zeros(DM.number_act)
                 Voltage_probeDMprobe[num_probe] = amplitudePW
-                Voltage_probe[indice_acum_number_act:indice_acum_number_act+DM.number_act] = Voltage_probeDMprobe
+                Voltage_probe[indice_acum_number_act:indice_acum_number_act +
+                              DM.number_act] = Voltage_probeDMprobe
 
             indice_acum_number_act += DM.number_act
 
@@ -484,12 +485,16 @@ def createdifference(input_wavefront,
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector - Voltage_probe,
-                               wavelength=wavelength,**kwargs))**2
+                               wavelength=wavelength,
+                               save_all_planes_to_fits=save_all_planes_to_fits,
+                               dir_save_all_planes=dir_save_all_planes))**2
 
         Ikplus = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector + Voltage_probe,
-                               wavelength=wavelength,**kwargs))**2
+                               wavelength=wavelength,
+                               save_all_planes_to_fits=save_all_planes_to_fits,
+                               dir_save_all_planes=dir_save_all_planes))**2
 
         if photon_noise == True:
             Ikplus = np.random.poisson(

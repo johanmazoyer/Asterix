@@ -326,7 +326,7 @@ def correctionLoop(parameter_file,
     else:
         DM3_volt = np.zeros(1024)
 
-    DM3_volt[512] = 1.
+    DM3_volt[497] = 1.
 
     both_DM_volt = np.concatenate((DM1_volt,DM3_volt))
 
