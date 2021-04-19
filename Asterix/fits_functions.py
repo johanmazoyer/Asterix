@@ -36,7 +36,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
         return
 
     if np.iscomplexobj(image):
-        tofits_array = np.zeros((2, image.shape[0], image.shape[1]))
+        tofits_array = np.zeros( (2,)+ image.shape )
         tofits_array[0] = np.real(image)
         tofits_array[1] = np.imag(image)
         fits.writeto(os.path.join(dir_save_fits,

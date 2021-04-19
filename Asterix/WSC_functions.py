@@ -423,7 +423,8 @@ def createdifference(input_wavefront,
                      voltage_vector=0.,
                      photon_noise=False,
                      nb_photons=1e30,
-                     wavelength=None):
+                     wavelength=None,
+                     **kwargs):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]
@@ -483,12 +484,12 @@ def createdifference(input_wavefront,
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector - Voltage_probe,
-                               wavelength=wavelength))**2
+                               wavelength=wavelength,**kwargs))**2
 
         Ikplus = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector + Voltage_probe,
-                               wavelength=wavelength))**2
+                               wavelength=wavelength,**kwargs))**2
 
         if photon_noise == True:
             Ikplus = np.random.poisson(

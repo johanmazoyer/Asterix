@@ -21,6 +21,9 @@ from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
 
+import Asterix.propagation_functions as prop
+import Asterix.processing_functions as proc
+
 __all__ = ["create_interaction_matrices", "correctionLoop"]
 
 #######################################################
@@ -308,6 +311,57 @@ def correctionLoop(parameter_file,
     MaskScience = mask_dh.creatingMaskDH(thd2.dimScience,
                                          thd2.Science_sampling)
 
+
+    #### modif pour raphael ### ################################################
+    DM1_fits_file = ''
+    DM3_fits_file = ''
+
+    if DM1_fits_file != '':
+        DM1_volt = fits.getdata(DM1_fits_file)
+    else:
+        DM1_volt = np.zeros(1156)
+
+    if DM3_fits_file != '':
+        DM3_volt = fits.getdata(DM3_fits_file)
+    else:
+        DM3_volt = np.zeros(1024)
+
+    DM3_volt[512] = 1.
+
+    both_DM_volt = np.concatenate((DM1_volt,DM3_volt))
+
+    resultatestimation = estim.estimate(thd2,
+                                voltage_vector = both_DM_volt,
+                                save_all_planes_to_fits=True,
+                                dir_save_all_planes=Labview_dir+'test_orientation/')
+
+    name_plane = 'estimate_FP'
+    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+                                resultatestimation)
+
+    MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim,
+                                                   estim.Estim_sampling)
+
+    Resultat_cropdh1d = resultatestimation[np.where(MaskEstim == 1)]
+
+    name_plane = 'estimate_FP_1D'
+    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+                                Resultat_cropdh1d)
+
+    return_to_Lyot_plane = proc.crop_or_pad_image(
+                            prop.mft(resultatestimation,
+                         thd2.dimScience,
+                         2 * thd2.prad,
+                         thd2.dimScience / thd2.Science_sampling,
+                         inverse=True), thd2.dim_overpad_pupil)
+
+    name_plane = 'estimate_LSP'
+    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+                                return_to_Lyot_plane)
+    asd
+    #### end modif pour raphael ### ################################################
+
+
     #initalize the corrector
     correc = Corrector(Correctionconfig,
                        thd2,
@@ -316,6 +370,9 @@ def correctionLoop(parameter_file,
                        matrix_dir=intermatrix_dir,
                        save_for_bench=onbench,
                        realtestbed_dir=Labview_dir)
+
+
+
 
     ## Phase map and amplitude map for the static aberrations
     if set_phase_abb == True:
@@ -452,6 +509,9 @@ def correctionLoop(parameter_file,
         if photon_noise == True:
             photondetector[iteration + 1] = np.random.poisson(
                 imagedetector[iteration + 1] * thd2.normPupto1 * photon_noise)
+
+
+
 
         plt.clf()
         plt.imshow(np.log10(imagedetector[iteration + 1]), vmin=-8, vmax=-5)

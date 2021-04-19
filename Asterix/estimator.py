@@ -197,7 +197,7 @@ class Estimator:
             # If polychromatic, assume a perfect estimation at one wavelength
 
             resultatestimation = testbed.todetector(entrance_EF=entrance_EF,
-                                                    voltage_vector= voltage_vector)
+                                                    voltage_vector= voltage_vector,**kwargs)
 
             if photon_noise == True:
                 resultatestimation = np.random.poisson(
@@ -214,7 +214,8 @@ class Estimator:
                                               self.amplitudePW,
                                               voltage_vector = voltage_vector,
                                               photon_noise=photon_noise,
-                                              nb_photons=nb_photons)
+                                              nb_photons=nb_photons,
+                                              **kwargs)
 
             return wsc.FP_PWestimate(Difference, self.PWVectorprobes)
 
