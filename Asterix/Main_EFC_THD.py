@@ -290,6 +290,7 @@ def correctionLoop(parameter_file,
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
+
     # TODO Because the code is currently setup heavily on the
     # 'default testbed' beeing thd2 having those elements, VS code thinks
     # there is an error if it thinks they are not defined (although in practice
@@ -313,58 +314,58 @@ def correctionLoop(parameter_file,
 
 
     #### modif pour raphael ### ################################################
-    DM1_fits_file = ''
-    DM3_fits_file = ''
+    # DM1_fits_file = ''
+    # DM3_fits_file = ''
 
-    if DM1_fits_file != '':
-        DM1_volt = fits.getdata(DM1_fits_file)
-    else:
-        DM1_volt = np.zeros(1156)
+    # if DM1_fits_file != '':
+    #     DM1_volt = fits.getdata(DM1_fits_file)
+    # else:
+    #     DM1_volt = np.zeros(1156)
 
-    if DM3_fits_file != '':
-        DM3_volt = fits.getdata(DM3_fits_file)
-    else:
-        DM3_volt = np.zeros(1024)
+    # if DM3_fits_file != '':
+    #     DM3_volt = fits.getdata(DM3_fits_file)
+    # else:
+    #     DM3_volt = np.zeros(1024)
 
-    DM3_volt[497] = 1.
+    # DM3_volt[497] = 1.
 
-    both_DM_volt = np.concatenate((DM1_volt,DM3_volt))
+    # both_DM_volt = np.concatenate((DM1_volt,DM3_volt))
 
-    resultatestimationperf = estim.estimate(thd2,
-                                voltage_vector = both_DM_volt,
-                                perfect_estimation=True)
+    # resultatestimationperf = estim.estimate(thd2,
+    #                             voltage_vector = both_DM_volt,
+    #                             perfect_estimation=True)
 
-    name_plane = 'estimateperf_FP'
-    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
-                                resultatestimationperf)
+    # name_plane = 'estimateperf_FP'
+    # useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+    #                             resultatestimationperf)
 
-    resultatestimation = estim.estimate(thd2,
-                                voltage_vector = both_DM_volt,save_all_planes_to_fits=True,
-                                dir_save_all_planes=Labview_dir+'test_orientation/')
+    # resultatestimation = estim.estimate(thd2,
+    #                             voltage_vector = both_DM_volt,save_all_planes_to_fits=True,
+    #                             dir_save_all_planes=Labview_dir+'test_orientation/')
 
-    name_plane = 'estimatePW_FP'
-    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
-                                resultatestimation)
+    # name_plane = 'estimatePW_FP'
+    # useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+    #                             resultatestimation)
 
-    MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim,
-                                                   estim.Estim_sampling)
+    # MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim,
+    #                                                estim.Estim_sampling)
 
-    Resultat_cropdh1d = resultatestimation[np.where(MaskEstim == 1)]
+    # Resultat_cropdh1d = resultatestimation[np.where(MaskEstim == 1)]
 
-    name_plane = 'estimate_FP_1D'
-    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
-                                Resultat_cropdh1d)
+    # name_plane = 'estimate_FP_1D'
+    # useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+    #                             Resultat_cropdh1d)
 
-    return_to_Lyot_plane = proc.crop_or_pad_image(prop.mft(resultatestimationperf,
-                         estim.dimEstim,
-                         2 * thd2.exitpup_rad,
-                         estim.dimEstim / estim.Estim_sampling,
-                         inverse=True), thd2.dim_overpad_pupil)
+    # return_to_Lyot_plane = proc.crop_or_pad_image(prop.mft(resultatestimationperf,
+    #                      estim.dimEstim,
+    #                      2 * thd2.exitpup_rad,
+    #                      estim.dimEstim / estim.Estim_sampling,
+    #                      inverse=True), thd2.dim_overpad_pupil)
 
-    name_plane = 'estimate_LSP'
-    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
-                                return_to_Lyot_plane)
-    asd
+    # name_plane = 'estimate_LSP'
+    # useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+    #                             return_to_Lyot_plane)
+    # asd
     #### end modif pour raphael ### ################################################
 
 
