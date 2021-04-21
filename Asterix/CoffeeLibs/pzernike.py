@@ -37,7 +37,7 @@ def zernike(Ro,Theta,j):
         return  np.sqrt(2*(n+1)) * R * np.sin(m*Theta)
     else:
         return np.sqrt(2*(n+1)) * R * np.cos(m*Theta)
-    
+
     
 def osa2mn(j):
     """
@@ -86,6 +86,15 @@ def pmap(w,l,norm=1):
     X,Y = np.meshgrid(np.linspace(-norm,norm,w),np.linspace(-norm,norm,l))
     return [np.sqrt(X**2+Y**2), np.arctan2(Y,X)] 
     
+
+def pzernike(Ro,Theta,poly):
+    res = np.zeros(np.shape(Ro))
+    ordre=1
+    for a in poly:
+        res += a*zernike(Ro,Theta,ordre)
+        ordre +=1
+    
+    return res
 
 # %%  Exemple
 

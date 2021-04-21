@@ -94,7 +94,9 @@ def mft(image,
     if isinstance(nbres, (float, int)):
         nbresx = float(nbres)
         nbresy = float(nbres)
-    elif isinstance(nbres, tuple) & len(nbres) == 2:
+    elif isinstance(nbres, tuple) & (len(nbres) == 2):
+    #  J'ai rajouté les parenthèses sinon ça fait 
+    #  (isinstance(nbres, tuple) & len(nbres))    == 2 :
         nbresx = nbres[0]
         nbresy = nbres[1]
     else:
@@ -129,7 +131,8 @@ def mft(image,
     AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0))
     BB = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(xx1, uu1))
     result = norm0 * np.matmul(np.matmul(AA, image), BB)
-
+   
+    print("Norme de la mft : "+str(norm0) + "=" + str(nbresx) + "*" + str(nbresy) + "/" + str(dim_input_x) + "/" + str(dim_input_y) + "/" + str(dim_output_x) + "/" + str(dim_output_y))
     return result
 
 
