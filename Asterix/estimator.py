@@ -48,7 +48,7 @@ class Estimator:
         This is where you define the pw matrix, the modified Lyot stop
         or the COFFEE gradiant...
 
-        For all large files you should do use a method of "save to fits" if
+        For all large files you should use a method of "save to fits" if
         it does not exist "load from fits" if it does, in matrix_dir
 
         Store in the structure only what you need for estimation. Everything not
@@ -95,6 +95,31 @@ class Estimator:
             self.amplitudePW = Estimationconfig["amplitudePW"]
             self.posprobes = [int(i) for i in Estimationconfig["posprobes"]]
             cutsvdPW = Estimationconfig["cut"]
+
+            if hasattr(testbed, 'name_DM_to_probe_in_PW'):
+                if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
+                    raise Exception(
+                        "Cannot use this DM for PW, this testbed has no DM named " +
+                        testbed.name_DM_to_probe_in_PW)
+            else:
+                # Automatically check which DM to use to probe in this case
+                # this is only done once
+                number_DMs_in_PP = 0
+                for DM_name in testbed.name_of_DMs:
+                    DM = vars(testbed)[DM_name]
+                    if DM.z_position == 0.:
+                        number_DMs_in_PP += 1
+                        testbed.name_DM_to_probe_in_PW = DM_name
+
+                if number_DMs_in_PP > 1:
+                    raise Exception(
+                        "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                    )
+
+                if number_DMs_in_PP == 0:
+                    raise Exception(
+                        "You have no DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                    )
 
             string_dims_PWMatrix = "actProb[" + "_".join(
                 map(str, self.posprobes)) + "]PWampl" + str(
@@ -155,12 +180,11 @@ class Estimator:
 
     def estimate(self,
                  testbed,
-                 entrance_EF=0.,
-                 DM1phase=0.,
-                 DM3phase=0.,
-                 wavelength=None,
+                 entrance_EF=1.,
+                 voltage_vector=0.,
                  photon_noise=False,
                  nb_photons=1e30,
+                 perfect_estimation=False,
                  **kwargs):
         """ --------------------------------------------------
         Run an estimation from a testbed, with a given input wavefront
@@ -171,11 +195,15 @@ class Estimator:
         ----------
         testbed:        a testbed element
         entrance_EF     default 0., float or 2D array can be complex, initial EF field
-        DM1phase        default 0., float or 2D real array, phase on DM1
-        DM3phase        default 0., float or 2D real array, phase on DM1
+        voltage_vector  vector concatenation of voltages vectors for each DMs
         wavelength      default None, float, wavelenght of the estimation
         photon_noise    default False, boolean,  If True, add photon noise.
         nb_photons      default 1e30, int Number of photons entering the pupil
+        perfect_estimation default = False. if true This is equivalent to
+                                            have self.technique = "perfect" but even
+                                            if we are using another technique, we
+                                            sometimes need a perfect estimation
+                                            especially in EFC. if perfect_estimation
 
         Returns
         ------
@@ -185,15 +213,13 @@ class Estimator:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        if wavelength is None:
-            wavelength = testbed.wavelength_0
-
-        if self.technique == "perfect":
+        if (self.technique == "perfect") or (perfect_estimation is True):
             # If polychromatic, assume a perfect estimation at one wavelength
 
-            resultatestimation = testbed.todetector(entrance_EF=entrance_EF,
-                                                    DM1phase=DM1phase,
-                                                    DM3phase=DM3phase)
+            resultatestimation = testbed.todetector(
+                entrance_EF=entrance_EF,
+                voltage_vector=voltage_vector,
+                **kwargs)
 
             if photon_noise == True:
                 resultatestimation = np.random.poisson(
@@ -203,20 +229,21 @@ class Estimator:
             return proc.resampling(resultatestimation, self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
-            Difference = wsc.createdifference(entrance_EF,
-                                              testbed,
-                                              self.posprobes,
-                                              self.dimEstim,
-                                              self.amplitudePW,
-                                              DM1phase=DM1phase,
-                                              DM3phase=DM3phase,
-                                              photon_noise=photon_noise,
-                                              nb_photons=nb_photons)
+            Difference = wsc.createdifference(
+                entrance_EF,
+                testbed,
+                self.posprobes,
+                self.dimEstim,
+                self.amplitudePW,
+                voltage_vector=voltage_vector,
+                photon_noise=photon_noise,
+                nb_photons=nb_photons,
+                **kwargs)
 
             return wsc.FP_PWestimate(Difference, self.PWVectorprobes)
 
         elif self.technique == 'coffee':
-            return np.zeros((self.dimEstim,self.dimEstim))
+            return np.zeros((self.dimEstim, self.dimEstim))
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")

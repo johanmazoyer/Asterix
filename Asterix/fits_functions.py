@@ -1,3 +1,5 @@
+
+import sys
 import os
 import glob
 import numpy as np
@@ -16,11 +18,12 @@ def quickshow(tab):
     Johan's quick function
     """
 
-    tmp = tab
+    tmp = np.copy(tab)
     # tmp = tmp.T
     plt.axis('off')
     plt.imshow(tmp, origin='lower', cmap='gray')
     plt.show()
+    plt.close()
 
 
 def save_plane_in_fits(dir_save_fits, name_plane, image):
@@ -28,8 +31,12 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
     name_fits = current_time_str + '_' + name_plane
 
+    # sometime the image can be a single float (0 for phase or 1 for EF).
+    if isinstance(image, (int, float, np.float)):
+        return
+
     if np.iscomplexobj(image):
-        tofits_array = np.zeros((2, image.shape[0], image.shape[1]))
+        tofits_array = np.zeros( (2,)+ image.shape )
         tofits_array[0] = np.real(image)
         tofits_array[1] = np.imag(image)
         fits.writeto(os.path.join(dir_save_fits,
@@ -88,6 +95,7 @@ def quickpng(tab, dir='', name='tmp'):
         name = name + str(int(random() * 100))
     plt.tight_layout()
     plt.savefig(dir + name + '.png', dpi=300)
+    plt.close()
 
 
 def check_and_load_fits(directory, filename):
@@ -134,3 +142,15 @@ def from_param_to_header(config):
         for scalar in config[str(sect)].scalars:
             header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
     return header
+
+
+
+def progress(count, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 0)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+    sys.stdout.flush()

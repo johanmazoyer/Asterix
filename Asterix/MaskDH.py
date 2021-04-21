@@ -28,7 +28,7 @@ class MaskDH:
             self.corner_pos = [
                 float(i) for i in Correctionconfig["corner_pos"]
             ]
-        if self.DH_shape == "circle":
+        elif self.DH_shape == "circle":
             self.DH_side = Correctionconfig["DH_side"].lower()
             self.Sep_Min_Max = [
                 float(i) for i in Correctionconfig["Sep_Min_Max"]
@@ -39,7 +39,7 @@ class MaskDH:
         else:
             raise Exception("Not valid DH Shape")
 
-        self.name_string = self.tostring()
+        self.string_mask = self.tostring()
 
     def creatingMaskDH(self, dimFP, FP_sampling):
         """ --------------------------------------------------
@@ -66,10 +66,10 @@ class MaskDH:
 
         if self.DH_shape == "square":
 
-            maskDH[xx < self.corner_pos * FP_sampling[0]] = 0
-            maskDH[xx > self.corner_pos * FP_sampling[1]] = 0
-            maskDH[yy < self.corner_pos * FP_sampling[2]] = 0
-            maskDH[yy > self.corner_pos * FP_sampling[3]] = 0
+            maskDH[xx < self.corner_pos[0] * FP_sampling] = 0
+            maskDH[xx > self.corner_pos[1] * FP_sampling] = 0
+            maskDH[yy < self.corner_pos[2] * FP_sampling] = 0
+            maskDH[yy > self.corner_pos[3] * FP_sampling] = 0
 
         if self.DH_shape == "circle":
             maskDH[rr >= self.Sep_Min_Max[1] * FP_sampling] = 0
@@ -89,19 +89,19 @@ class MaskDH:
                     maskDH[yy +
                            xx / np.tan(self.circ_angle * np.pi / 180) > 0] = 0
             if self.DH_side == "bottom":
-                maskDH[yy < np.abs(self.circ_offset) * FP_sampling] = 0
-                if self.circ_angle != 0:
-                    maskDH[yy -
-                           xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
-                    maskDH[yy +
-                           xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
-            if self.DH_side == "top":
                 maskDH[yy > -np.abs(self.circ_offset) * FP_sampling] = 0
                 if self.circ_angle != 0:
                     maskDH[yy -
                            xx * np.tan(self.circ_angle * np.pi / 180) > 0] = 0
                     maskDH[yy +
                            xx * np.tan(self.circ_angle * np.pi / 180) > 0] = 0
+            if self.DH_side == "top":
+                maskDH[yy < np.abs(self.circ_offset) * FP_sampling] = 0
+                if self.circ_angle != 0:
+                    maskDH[yy -
+                        xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
+                    maskDH[yy +
+                        xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
         return maskDH
 
     def tostring(self):

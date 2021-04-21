@@ -2,7 +2,7 @@ import numpy as np
 
 
 def mft(image,
-        dimpup,
+        real_dim_input,
         dim_output,
         nbres,
         inverse=False,
@@ -21,9 +21,9 @@ def mft(image,
     ----------
         image : 2D Entrance image (entrance size in x and y can be different)
 
-        dimpup : int or tupple of int of dim 2
+        real_dim_input : int or tupple of int of dim 2
                 Diameter of the support in pup (can differ from image.shape)
-                Example : dimpup = diameter of the pupil in pixel
+                Example : real_dim_input = diameter of the pupil in pixel for a padded pupil
 
         dim_output : int or tupple of int of dim 2
                 Dimension of the output in pixels (square if int, rectangular if (int, int)
@@ -58,54 +58,80 @@ def mft(image,
             0-frequency on the (dim_output_x/2+x1,dim_output_y/2+y1) pixel
 
     AUTHOR :
-       $Author: Baudoz, Galicher Mazoyer $
+       $Author: Baudoz, Galicher, Mazoyer $
 
 
     REVISION HISTORY :
         Revision 1.1  2011  Initial revision. Raphaël Galicher (from soummer, in IDL)
         Revision 2.0  2012-04-12 P. Baudoz (IDL version): added pup offset
         Revision 3.0  2020-03-10 J. Mazoyer (to python). Replace the MFT with no input offset option
+        Revision 4.0  2020-04-20 J. Mazoyer. change the normalization. Change dim_pup name to be more
+                                        coherent. Made better parameter format check
 
     """
+
+    # check dimensions and type of real_dim_input
+    error_string_real_dim_input = """dimpup must be an int (square input pupil)
+                             or tupple of int of dimension 2"""
+    if np.isscalar(real_dim_input):
+        if isinstance(real_dim_input, int):
+            real_dim_input_x = real_dim_input
+            real_dim_input_y = real_dim_input
+        else:
+            raise Exception(error_string_real_dim_input)
+    elif isinstance(real_dim_input, tuple):
+        if all(isinstance(dims, int)
+               for dims in real_dim_input) & (len(real_dim_input) == 2):
+            real_dim_input_x = real_dim_input[0]
+            real_dim_input_y = real_dim_input[1]
+        else:
+            raise Exception(error_string_real_dim_input)
+    else:
+        raise Exception(error_string_real_dim_input)
+
+    # check dimensions and type of dim_output
+    error_string_dim_output = """dim_output must be an int (square output)
+                                or tupple of int of dimension 2"""
+    if np.isscalar(dim_output):
+        if isinstance(dim_output, int):
+            dim_output_x = dim_output
+            dim_output_y = dim_output
+        else:
+            raise Exception(error_string_dim_output)
+    elif isinstance(dim_output, tuple):
+        if all(isinstance(dims, int)
+               for dims in dim_output) & (len(dim_output) == 2):
+            dim_output_x = dim_output[0]
+            dim_output_y = dim_output[1]
+        else:
+            raise Exception(error_string_dim_output)
+    else:
+        raise Exception(error_string_dim_output)
+
+    # check dimensions and type of nbres
+    error_string_nbr = """nbres must be an float or int (square output)
+                                or tupple of float or int of dimension 2"""
+    if np.isscalar(nbres):
+        if isinstance(nbres, (float, int)):
+            nbresx = float(nbres)
+            nbresy = float(nbres)
+        else:
+            raise Exception(error_string_nbr)
+    elif isinstance(nbres, tuple):
+        if all(isinstance(nbresi, (float, int))
+               for nbresi in nbres) & (len(nbres) == 2):
+            nbresx = float(nbres[0])
+            nbresy = float(nbres[1])
+        else:
+            raise Exception(error_string_nbr)
+    else:
+        raise Exception(error_string_nbr)
 
     dim_input_x = image.shape[0]
     dim_input_y = image.shape[1]
 
-    if isinstance(dimpup, int):
-        dimpup_x = dimpup
-        dimpup_y = dimpup
-    elif isinstance(dimpup, tuple) & len(dimpup) == 2:
-        dimpup_x = dimpup[0]
-        dimpup_y = dimpup[1]
-    else:
-        raise Exception("dimpup must be an int (square input pupil)" +
-                        " or tupple of int of dimension 2")
-
-    if isinstance(dim_output, int):
-        dim_output_x = dim_output
-        dim_output_y = dim_output
-    elif isinstance(dim_output, tuple) & len(dim_output) == 2:
-        dim_output_x = dim_output[0]
-        dim_output_y = dim_output[1]
-    else:
-        raise Exception("dim_output must be an int (square output)" +
-                        " or tupple of int of dimension 2")
-
-    if isinstance(nbres, (float, int)):
-        nbresx = float(nbres)
-        nbresy = float(nbres)
-    elif isinstance(nbres, tuple) & (len(nbres) == 2):
-    #  J'ai rajouté les parenthèses sinon ça fait 
-    #  (isinstance(nbres, tuple) & len(nbres))    == 2 :
-        nbresx = nbres[0]
-        nbresy = nbres[1]
-    else:
-        raise Exception(
-            "nbres must be an float (square output) or tupple of float of dimension 2"
-        )
-
-    nbresx = nbresx * dim_input_x / dimpup_x
-    nbresy = nbresy * dim_input_y / dimpup_y
+    nbresx = nbresx * dim_input_x / real_dim_input_x
+    nbresy = nbresy * dim_input_y / real_dim_input_y
 
     X0 = dim_input_x / 2 + X_offset_input
     Y0 = dim_input_y / 2 + Y_offset_input
@@ -121,18 +147,17 @@ def mft(image,
     uu1 = ((np.arange(dim_output_y) - Y1) / dim_output_y -
            1 / 2) * nbresy  #Fourier plane
 
+    norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
+                    dim_output_x / dim_output_y)
     if inverse == False:
-        norm0 = 1.
         sign_exponential = -1
     elif inverse == True:
-        norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
         sign_exponential = 1
 
     AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0))
     BB = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(xx1, uu1))
     result = norm0 * np.matmul(np.matmul(AA, image), BB)
-   
-    print("Norme de la mft : "+str(norm0) + "=" + str(nbresx) + "*" + str(nbresy) + "/" + str(dim_input_x) + "/" + str(dim_input_y) + "/" + str(dim_output_x) + "/" + str(dim_output_y))
+
     return result
 
 
