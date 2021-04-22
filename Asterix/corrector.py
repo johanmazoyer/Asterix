@@ -82,9 +82,8 @@ class Corrector:
             DM = vars(testbed)[DM_name]
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
-            basis_str += "_" + DM_name+ basis_type + str(DM.basis_size) +"mod"
-
-
+            basis_str += "_" + DM_name + "Basis" + basis_type + str(
+                DM.basis_size)
 
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
@@ -144,25 +143,22 @@ class Corrector:
                                             estimator.Estim_sampling)))
 
                 Nbmodes = Correctionconfig["Nbmodes"]
-                SVD, _, invertGDH = wsc.invertSVD(self.Gmatrix,
-                                                  Nbmodes,
-                                                  goal="c",
-                                                  regul=self.regularization)
-
-                plt.clf()
-                plt.plot(SVD, "r.")
-                plt.yscale("log")
-
-                figSVDEFC = matrix_dir + "SVD_Modes" + str(
-                    Nbmodes) + '_' + fileDirectMatrix + ".png"
-
-                plt.savefig(figSVDEFC)
+                SVD, _, invertGDH = wsc.invertSVD(
+                    self.Gmatrix,
+                    Nbmodes,
+                    goal="c",
+                    regul=self.regularization,
+                    visu=True,
+                    filename_visu=matrix_dir + "SVD_Modes" + str(Nbmodes) +
+                    '_' + fileDirectMatrix + ".png")
 
                 if testbed.DM1.active:
                     invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]
                     invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
 
-                    EFCmatrix_DM1 = np.dot(np.transpose(testbed.DM1.basis), invertGDH_DM1).astype(np.float32)
+                    EFCmatrix_DM1 = np.transpose(
+                        np.dot(np.transpose(testbed.DM1.basis),
+                               invertGDH_DM1).astype(np.float32))
                     fits.writeto(realtestbed_dir +
                                  "Matrix_control_EFC_DM1_default.fits",
                                  EFCmatrix_DM1,
@@ -170,7 +166,9 @@ class Corrector:
                 else:
                     invertGDH_DM3 = invertGDH
 
-                EFCmatrix_DM3 = np.dot(np.transpose(testbed.DM3.basis), invertGDH_DM3).astype(np.float32)
+                EFCmatrix_DM3 = np.transpose(
+                    np.dot(np.transpose(testbed.DM3.basis),
+                           invertGDH_DM3).astype(np.float32))
                 fits.writeto(realtestbed_dir +
                              "Matrix_control_EFC_DM3_default.fits",
                              EFCmatrix_DM3,
@@ -183,7 +181,7 @@ class Corrector:
                              np.array(np.where(self.MaskEstim == 1)).astype(
                                  np.float32),
                              overwrite=True)
-                sdfd
+
         else:
             raise Exception("This correction algorithm is not yet implemented")
 

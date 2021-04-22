@@ -17,7 +17,7 @@ import Asterix.fits_functions as useful
 #################################################################################
 
 
-def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False):
+def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, filename_visu = None):
     """ --------------------------------------------------
     Invert a matrix after a Singular Value Decomposition. The inversion can be regularized.
 
@@ -57,7 +57,7 @@ def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False):
     if visu == True:
         plt.plot(np.diag(InvS), "r.")
         plt.yscale("log")
-        plt.savefig('invertSVDEFC.png')
+        plt.savefig(filename_visu)
         plt.close()
 
     if goal == "e":

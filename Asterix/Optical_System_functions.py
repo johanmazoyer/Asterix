@@ -1301,11 +1301,10 @@ class deformable_mirror(Optical_System):
         print("time for WhichInPupil for " + self.string_os,
               time.time() - start_time)
 
-        # update the threshold for useful acts
-        self.string_os += "_Used" + str(len(self.WhichInPupil))
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
-        # now if we relaunch self.DM_pushact, it will be different due to misregistration
+        # now if we relaunch self.DM_pushact, and if misregistration = True
+        # it will be different due to misregistration
 
     def EF_through(self,
                    entrance_EF=1.,
