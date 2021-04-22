@@ -220,7 +220,8 @@ class Optical_System:
                                   lambda_ratio,
                                   X_offset_output=Psf_offset[0],
                                   Y_offset_output=Psf_offset[1],
-                                  inverse=False)
+                                  inverse=False,
+                                  norm='ortho')
 
         if in_contrast == True:
             focal_plane_EF /= np.sqrt(
@@ -354,58 +355,6 @@ class Optical_System:
 
         return throughput
 
-    def EF_from_phase_and_ampl(self,
-                               phase_abb=0.,
-                               ampl_abb=0.,
-                               wavelength=None):
-        """ --------------------------------------------------
-        Create an electrical field from an phase and amplitude aberrations
-
-        Parameters
-        ----------
-        phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
-            if 0, no phase aberration (default)
-
-        phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
-            if 0, no amplitude aberration (default)
-
-
-        wavelength : float. Default is the reference self.wavelength_0
-             current wavelength in m.
-
-
-        Returns
-        ------
-        EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Electric field in the pupil plane a the exit of the system
-
-        AUTHOR : Johan Mazoyer
-        """
-        if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
-            raise Exception(
-                "phase_abb and ampl_abb must be real arrays or float, not complex"
-            )
-
-        # if isinstance(phase_abb, (int, float, np.float)):
-        #     phase_abb = np.full(
-        #         (self.dim_overpad_pupil, self.dim_overpad_pupil),
-        #         np.float(phase_abb))
-
-        # if isinstance(ampl_abb, (int, float, np.float)):
-        #     ampl_abb = np.full(
-        #         (self.dim_overpad_pupil, self.dim_overpad_pupil),
-        #         np.float(ampl_abb))
-
-        if ((phase_abb == 0.).all()) and ((ampl_abb == 0.).all()):
-
-            return 1.
-
-        if wavelength is None:
-            wavelength = self.wavelength_0
-        lambda_ratio = wavelength / self.wavelength_0
-
-        return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
-
     def measure_normalization(self):
         """ --------------------------------------------------
         Functions must me used at the end of all Optical Systems initalization
@@ -446,6 +395,121 @@ class Optical_System:
         # by self.transmission
         self.normPupto1 = 1 / self.transmission(
         ) * self.norm_polychrom / self.sum_polychrom
+
+    def generate_phase_aberr(self, SIMUconfig, Model_local_dir=None):
+
+        set_phase_abb = SIMUconfig["set_phase_abb"]
+        set_random_phase = SIMUconfig["set_random_phase"]
+        phase_rms = SIMUconfig["phase_rms"]
+        phase_rhoc = SIMUconfig["phase_rhoc"]
+        phase_slope = SIMUconfig["phase_slope"]
+        phase_abb_filename = SIMUconfig["phase_abb_filename"]
+
+        ## Phase map and amplitude map for the static aberrations
+        if set_phase_abb == True:
+            if phase_abb_filename == '':
+                phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                    int(phase_rms * 1e9), int(phase_slope), phase_rhoc,
+                    self.prad)
+
+            if set_random_phase is False and os.path.isfile(
+                    Model_local_dir + phase_abb_filename + ".fits") == True:
+                return_phase = fits.getdata(Model_local_dir +
+                                            phase_abb_filename + ".fits")
+
+            else:
+                return_phase = phase_ampl.random_phase_map(
+                    self.prad, self.dim_overpad_pupil, phase_rms, phase_rhoc,
+                    phase_slope)
+
+                fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
+                             return_phase,
+                             overwrite=True)
+
+            return return_phase
+        else:
+            return 0.
+
+    def generate_ampl_aberr(self,
+                            SIMUconfig,
+                            Model_dir=None,
+                            Model_local_dir=None):
+        set_amplitude_abb = SIMUconfig["set_amplitude_abb"]
+        ampl_abb_filename = SIMUconfig["ampl_abb_filename"]
+        set_random_ampl = SIMUconfig["set_random_ampl"]
+        ampl_rms = SIMUconfig["ampl_rms"]
+        ampl_rhoc = SIMUconfig["ampl_rhoc"]
+        ampl_slope = SIMUconfig["ampl_slope"]
+
+        if set_amplitude_abb == True:
+            if ampl_abb_filename != '' and os.path.isfile(
+                    Model_local_dir + ampl_abb_filename +
+                    ".fits") == True and set_random_ampl is False:
+
+                return_ampl = phase_ampl.scale_amplitude_abb(
+                    model_dir + ampl_abb_filename + ".fits", self.prad,
+                    self.dim_overpad_pupil)
+            else:
+                ampl_abb_filename = "ampl_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                    int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
+
+                if set_random_ampl is False and os.path.isfile(
+                        Model_local_dir + ampl_abb_filename + ".fits") == True:
+                    return_ampl = fits.getdata(Model_local_dir +
+                                               ampl_abb_filename + ".fits")
+                else:
+                    return_ampl = phase_ampl.random_phase_map(
+                        self.prad, self.dim_overpad_pupil, ampl_rms, ampl_rhoc,
+                        ampl_slope)
+
+                    fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
+                                 return_ampl,
+                                 overwrite=True)
+
+            return return_ampl
+        else:
+            return 0.
+
+    def EF_from_phase_and_ampl(self,
+                               phase_abb=0.,
+                               ampl_abb=0.,
+                               wavelength=None):
+        """ --------------------------------------------------
+        Create an electrical field from an phase and amplitude aberrations
+
+        Parameters
+        ----------
+        phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
+            if 0, no phase aberration (default)
+
+        phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
+            if 0, no amplitude aberration (default)
+
+
+        wavelength : float. Default is the reference self.wavelength_0
+             current wavelength in m.
+
+
+        Returns
+        ------
+        EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+            Electric field in the pupil plane a the exit of the system
+
+        AUTHOR : Johan Mazoyer
+        """
+        if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
+            raise Exception(
+                "phase_abb and ampl_abb must be real arrays or float, not complex"
+            )
+
+        if ((phase_abb == 0.).all()) and ((ampl_abb == 0.).all()):
+
+            return 1.
+
+        if wavelength is None:
+            wavelength = self.wavelength_0
+
+        return (1 + ampl_abb) * np.exp(2 * np.pi * 1j * phase_abb / wavelength)
 
 
 ##############################################
@@ -642,49 +706,6 @@ class pupil(Optical_System):
                                       entrance_EF)
 
         return exit_EF
-
-    def random_phase_map(self, phaserms, rhoc, slope):
-        """ --------------------------------------------------
-        Create a random phase map, whose PSD decrease in f^(-slope)
-        average is null and stadard deviation is phaserms
-
-        Parameters
-        ----------
-        phaserms : float
-            standard deviation of aberration
-        rhoc : float
-            See Borde et Traub 2006
-        slope : float
-            Slope of the PSD
-        pupil : 2D array
-
-
-        Returns
-        ------
-        phase : 2D array
-            Static random phase map (or OPD) generated
-        -------------------------------------------------- """
-
-        # create a circular pupil of the same radius of the given pupil
-        # this will be the pupil over which phase rms = phaserms
-        pup = phase_ampl.roundpupil(self.prad, self.dim_overpad_pupil)
-
-        xx, yy = np.meshgrid(
-            np.arange(self.dim_overpad_pupil) - self.dim_overpad_pupil / 2,
-            np.arange(self.dim_overpad_pupil) - self.dim_overpad_pupil / 2)
-        rho = np.hypot(yy, xx)
-        PSD0 = 1
-        PSD = PSD0 / (1 + (rho / rhoc)**slope)
-        sqrtPSD = np.sqrt(2 * PSD)
-
-        randomphase = np.random.randn(
-            self.dim_overpad_pupil,
-            self.dim_overpad_pupil) + 1j * np.random.randn(
-                self.dim_overpad_pupil, self.dim_overpad_pupil)
-        phase = np.real(np.fft.ifft2(np.fft.fftshift(sqrtPSD * randomphase)))
-        phase = phase - np.mean(phase[np.where(pup == 1.)])
-        phase = phase / np.std(phase[np.where(pup == 1.)]) * phaserms
-        return phase
 
 
 ##############################################
@@ -892,9 +913,9 @@ class coronagraph(Optical_System):
                 dim_fp_fft_here, -0.5, -0.5)
 
             #Apod plane to focal plane
-            corono_focal_plane = np.fft.fft2(
-                np.fft.fftshift(input_wavefront_after_apod_pad *
-                                maskshifthalfpix))
+            corono_focal_plane = np.fft.fft2(np.fft.fftshift(
+                input_wavefront_after_apod_pad * maskshifthalfpix),
+                                             norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
@@ -913,8 +934,8 @@ class coronagraph(Optical_System):
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = np.fft.fftshift(
-                np.fft.ifft2(
-                    corono_focal_plane * FPmsk)) * maskshifthalfpix_invert
+                np.fft.ifft2(corono_focal_plane * FPmsk,
+                             norm='ortho')) * maskshifthalfpix_invert
             # we take the convention that when we are in pupil plane the field must be
             # "non-shifted". Because the shift in pupil plane is resolution dependent
             # which depend on the method (fft is not exactly science resolution because
@@ -932,7 +953,8 @@ class coronagraph(Optical_System):
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                 X_offset_output=-0.5,
                 Y_offset_output=-0.5,
-                inverse=False)
+                inverse=False,
+                norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
@@ -957,7 +979,8 @@ class coronagraph(Optical_System):
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                 X_offset_input=-0.5,
                 Y_offset_input=-0.5,
-                inverse=True)
+                inverse=True,
+                norm='ortho')
 
             # Babinet's trick
             lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
@@ -972,7 +995,8 @@ class coronagraph(Optical_System):
                                           self.Science_sampling * lambda_ratio,
                                           X_offset_output=-0.5,
                                           Y_offset_output=-0.5,
-                                          inverse=False)
+                                          inverse=False,
+                                          norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
@@ -998,7 +1022,8 @@ class coronagraph(Optical_System):
                          lambda_ratio,
                          X_offset_input=-0.5,
                          Y_offset_input=-0.5,
-                         inverse=True), self.dim_overpad_pupil)
+                         inverse=True,
+                         norm='ortho'), self.dim_overpad_pupil)
 
         else:
             raise Exception(
@@ -1176,7 +1201,7 @@ class deformable_mirror(Optical_System):
                  modelconfig,
                  DMconfig,
                  Name_DM='DM3',
-                 Model_local_dir=''):
+                 Model_local_dir=None):
         """ --------------------------------------------------
         Initialize a deformable mirror object
         TODO handle misregistration that is currently not working
@@ -1361,7 +1386,7 @@ class deformable_mirror(Optical_System):
 
         return EF_after_DM
 
-    def creatingpushact(self, DMconfig, Model_local_dir=''):
+    def creatingpushact(self, DMconfig, Model_local_dir=None):
         """ --------------------------------------------------
         OPD map induced in the DM plane for each actuator.
 
@@ -1526,7 +1551,7 @@ class deformable_mirror(Optical_System):
 
         return pushact3d
 
-    def creatingWhichinPupil(self, Model_local_dir=''):
+    def creatingWhichinPupil(self, Model_local_dir=None):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
 

@@ -227,19 +227,9 @@ def correctionLoop(parameter_file,
     ###SIMU CONFIG
     SIMUconfig = config["SIMUconfig"]
     SIMUconfig.update(NewSIMUconfig)
+
     Name_Experiment = SIMUconfig["Name_Experiment"]
-    set_amplitude_abb = SIMUconfig["set_amplitude_abb"]
-    ampl_abb_filename = SIMUconfig["ampl_abb_filename"]
-    set_random_ampl = SIMUconfig["set_random_ampl"]
-    ampl_rms = SIMUconfig["ampl_rms"]
-    ampl_rhoc = SIMUconfig["ampl_rhoc"]
-    ampl_slope = SIMUconfig["ampl_slope"]
-    set_phase_abb = SIMUconfig["set_phase_abb"]
-    set_random_phase = SIMUconfig["set_random_phase"]
-    phase_rms = SIMUconfig["phase_rms"]
-    phase_rhoc = SIMUconfig["phase_rhoc"]
-    phase_slope = SIMUconfig["phase_slope"]
-    phase_abb_filename = SIMUconfig["phase_abb_filename"]
+
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
 
@@ -291,16 +281,6 @@ def correctionLoop(parameter_file,
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
 
-    # TODO Because the code is currently setup heavily on the
-    # 'default testbed' beeing thd2 having those elements, VS code thinks
-    # there is an error if it thinks they are not defined (although in practice
-    # they are).
-    thd2.entrancepupil = pup_round
-    # In practice this is done inside the Testbed initialization already !
-    # and these lines are useless and I only put them to calm
-    # To be removed when the correction and estimation class are done
-    # in which case these class will be able when these things exists or not
-
     ## Initialize Estimation
     estim = Estimator(Estimationconfig, thd2,
                                 matrix_dir=intermatrix_dir,
@@ -314,58 +294,60 @@ def correctionLoop(parameter_file,
 
 
     #### modif pour raphael ### ################################################
-    # DM1_fits_file = ''
-    # DM3_fits_file = ''
+    DM1_fits_file = ''
+    DM3_fits_file = ''
 
-    # if DM1_fits_file != '':
-    #     DM1_volt = fits.getdata(DM1_fits_file)
-    # else:
-    #     DM1_volt = np.zeros(1156)
+    if DM1_fits_file != '':
+        DM1_volt = fits.getdata(DM1_fits_file)
+    else:
+        DM1_volt = np.zeros(1156)
 
-    # if DM3_fits_file != '':
-    #     DM3_volt = fits.getdata(DM3_fits_file)
-    # else:
-    #     DM3_volt = np.zeros(1024)
+    if DM3_fits_file != '':
+        DM3_volt = fits.getdata(DM3_fits_file)
+    else:
+        DM3_volt = np.zeros(1024)
 
-    # DM3_volt[497] = 1.
+    # DM3_volt = np.random.rand(1024)
+    DM3_volt[497] = 50
 
-    # both_DM_volt = np.concatenate((DM1_volt,DM3_volt))
 
-    # resultatestimationperf = estim.estimate(thd2,
-    #                             voltage_vector = both_DM_volt,
-    #                             perfect_estimation=True)
+    both_DM_volt = np.concatenate((DM1_volt,DM3_volt))
 
-    # name_plane = 'estimateperf_FP'
-    # useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
-    #                             resultatestimationperf)
+    resultatestimationperf = estim.estimate(thd2,
+                                voltage_vector = both_DM_volt,
+                                perfect_estimation=True)
 
-    # resultatestimation = estim.estimate(thd2,
-    #                             voltage_vector = both_DM_volt,save_all_planes_to_fits=True,
-    #                             dir_save_all_planes=Labview_dir+'test_orientation/')
+    name_plane = 'estimateperf_FP'
+    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+                                resultatestimationperf)
 
-    # name_plane = 'estimatePW_FP'
-    # useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
-    #                             resultatestimation)
+    resultatestimation = estim.estimate(thd2,
+                                voltage_vector = both_DM_volt,save_all_planes_to_fits=True,
+                                dir_save_all_planes=Labview_dir+'test_orientation/')
 
-    # MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim,
-    #                                                estim.Estim_sampling)
+    name_plane = 'estimatePW_FP'
+    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+                                resultatestimation)
 
-    # Resultat_cropdh1d = resultatestimation[np.where(MaskEstim == 1)]
+    MaskEstim = mask_dh.creatingMaskDH(estim.dimEstim,
+                                                   estim.Estim_sampling)
 
-    # name_plane = 'estimate_FP_1D'
-    # useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
-    #                             Resultat_cropdh1d)
+    Resultat_cropdh1d = resultatestimation[np.where(MaskEstim == 1)]
 
-    # return_to_Lyot_plane = proc.crop_or_pad_image(prop.mft(resultatestimationperf,
-    #                      estim.dimEstim,
-    #                      2 * thd2.exitpup_rad,
-    #                      estim.dimEstim / estim.Estim_sampling,
-    #                      inverse=True), thd2.dim_overpad_pupil)
+    name_plane = 'estimate_FP_1D'
+    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+                                Resultat_cropdh1d)
 
-    # name_plane = 'estimate_LSP'
-    # useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
-    #                             return_to_Lyot_plane)
-    # asd
+    return_to_Lyot_plane = proc.crop_or_pad_image(prop.mft(resultatestimationperf,
+                         estim.dimEstim,
+                         2 * thd2.exitpup_rad,
+                         estim.dimEstim / estim.Estim_sampling,
+                         inverse=True, norm = 'ortho'), thd2.dim_overpad_pupil)
+
+    name_plane = 'estimate_LSP'
+    useful.save_plane_in_fits(Labview_dir+'test_orientation/', name_plane,
+                                return_to_Lyot_plane)
+
     #### end modif pour raphael ### ################################################
 
 
@@ -380,61 +362,14 @@ def correctionLoop(parameter_file,
 
 
 
-
-    ## Phase map and amplitude map for the static aberrations
-    if set_phase_abb == True:
-        if phase_abb_filename == '':
-            phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
-                int(phase_rms * 1e9), int(phase_slope), phase_rhoc, thd2.prad)
-
-        if set_random_phase is False and os.path.isfile(Model_local_dir +
-                                                        phase_abb_filename +
-                                                        ".fits") == True:
-            phase_up = fits.getdata(Model_local_dir + phase_abb_filename +
-                                    ".fits")
-
-        else:
-            phase_up = thd2.entrancepupil.random_phase_map(
-                phase_rms, phase_rhoc, phase_slope)
-            if set_random_phase is False:  # save it for next time
-                fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
-                             phase_up,
-                             overwrite=True)
-
-        phase_up = phase_up * 2 * np.pi / wavelength_0  # where should we do that ? here ?
-    else:
-        phase_up = 0
-
-    if set_amplitude_abb == True:
-        if ampl_abb_filename != '' and os.path.isfile(
-                Model_local_dir + ampl_abb_filename +
-                ".fits") == True and set_random_ampl is False:
-            ampfinal = phase_ampl.scale_amplitude_abb(
-                Asterix_model_dir + ampl_abb_filename + ".fits", thd2.prad,
-                thd2.entrancepupil.pup)
-        else:
-            ampl_abb_filename = "ampl_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
-                int(ampl_rms), int(ampl_slope), ampl_rhoc, thd2.prad)
-
-            if set_random_ampl is False and os.path.isfile(Model_local_dir +
-                                                           ampl_abb_filename +
-                                                           ".fits") == True:
-                ampfinal = fits.getdata(Model_local_dir + ampl_abb_filename +
-                                        ".fits")
-            else:
-                ampfinal = thd2.entrancepupil.random_phase_map(
-                    ampl_rms / 100., ampl_rhoc, ampl_slope)
-            if set_random_ampl is False:  # save it for next time
-                fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
-                             ampfinal,
-                             overwrite=True)
-    else:
-        ampfinal = 0
-
-    amplitude_abb_up = ampfinal
-    phase_abb_up = phase_up
+    # set initial phase and amplitude and wavefront
+    phase_abb_up = thd2.generate_phase_aberr(SIMUconfig,Model_local_dir=Model_local_dir)
+    ampl_abb_up = thd2.generate_ampl_aberr(SIMUconfig,Model_local_dir=Model_local_dir)
+    input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
+                                                  ampl_abb=ampl_abb_up)
 
     ## Correction loop
+
 
     ## Number of modes that is used as a function of the iteration cardinal
     modevector = []
@@ -449,8 +384,7 @@ def correctionLoop(parameter_file,
     voltage_DMs = [0.]  # initialize with no voltage
 
     # Initial wavefront in pupil plane
-    input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
-                                                  ampl_abb=amplitude_abb_up)
+
     imagedetector[0] = thd2.todetector_Intensity(entrance_EF=input_wavefront)
 
     if photon_noise == True:
