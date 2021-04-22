@@ -84,7 +84,6 @@ class Corrector:
             DM.basis_size = DM.basis.shape[0]
             basis_str += "_" + DM_name +  basis_type +"Basis" + str(
                 DM.basis_size)
-            print(basis_str)
 
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
@@ -135,13 +134,6 @@ class Corrector:
                 self.M0 = np.real(np.dot(transposecomplexG, self.G))
 
             if save_for_bench == True:
-
-                if MaskDH.DH_shape == "square":
-                    print(
-                        "TO SET ON LABVIEW: ",
-                        str(estimator.dimEstim / 2 +
-                            np.fft.fftshift(MaskDH.corner_pos *
-                                            estimator.Estim_sampling)))
 
                 Nbmodes = Correctionconfig["Nbmodes"]
                 _, _, invertGDH = wsc.invertSVD(

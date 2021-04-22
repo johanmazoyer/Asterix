@@ -145,9 +145,9 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
         Parameters
         ----------
-        pupil_rad: TODO
+        pupil_rad: radius of the pupil on which the phaserms will be measured
 
-        dim_image: TODO
+        dim_image: size of the output (can be different than 2*pupil_rad)
 
         phaserms : float
             standard deviation of aberration

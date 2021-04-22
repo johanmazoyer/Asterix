@@ -586,7 +586,6 @@ class pupil(Optical_System):
             This is a bit dangerous because your .fits file might must be defined
             the right way so be careful
 
-            TODO: include here function scale_amplitude_abb, shift_phase_ramp
             TODO: include an SCC Lyot pupil function here !
             TODO: for now pupil .fits are monochromatic but the pupil propagation EF_through
             use wavelenght as a parameter
@@ -1235,7 +1234,6 @@ class deformable_mirror(Optical_System):
                  Model_local_dir=None):
         """ --------------------------------------------------
         Initialize a deformable mirror object
-        TODO handle misregistration that is currently not working
 
         Parameters
         ----------
@@ -1608,8 +1606,7 @@ class deformable_mirror(Optical_System):
             self.WhichInPup_threshold)
 
         if os.path.exists(Model_local_dir + Name_WhichInPup_fits + '.fits'):
-            return useful.check_and_load_fits(Model_local_dir,
-                                              Name_WhichInPup_fits)
+            return fits.getdata(Model_local_dir + Name_WhichInPup_fits + '.fits')
 
         if self.z_position != 0:
             # Propagation in DM plane out of pupil

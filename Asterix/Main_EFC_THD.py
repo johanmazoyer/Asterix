@@ -189,9 +189,6 @@ def correctionLoop(parameter_file,
     #On bench or numerical simulation
     onbench = modelconfig["onbench"]
 
-    #Lambda over D in pixels
-    wavelength_0 = modelconfig["wavelength_0"]
-
     ##################
     ##################
     ### DM CONFIG
@@ -236,7 +233,6 @@ def correctionLoop(parameter_file,
     ##############################################################################
     ### Initialization all the directories
     ##############################################################################
-    Asterix_model_dir = os.path.join(OptSy.Asterix_root, "Model") + os.path.sep
 
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
     if not os.path.exists(Model_local_dir):

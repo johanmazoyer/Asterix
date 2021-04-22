@@ -100,9 +100,17 @@ def quickpng(tab, dir='', name='tmp'):
 
     Johan's quick function
     """
-    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
     if dir == '':
-        dir = desktop
+        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+        bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
+        if os.path.exists(desktop):
+            dir = desktop
+        elif os.path.exists(bureau):
+            # of you are french are you ?
+            dir = bureau
+        else:
+            raise Exception("I cannot find your desktop, please give me a dir to save the .png")
+
     plt.figure(figsize=(10, 10))
     tmp = tab
     # tmp = tmp.T
@@ -113,30 +121,6 @@ def quickpng(tab, dir='', name='tmp'):
     plt.tight_layout()
     plt.savefig(dir + name + '.png', dpi=300)
     plt.close()
-
-
-def check_and_load_fits(directory, filename):
-    """ --------------------------------------------------
-    check existence of a .fits file and load it.
-    TODO can probably be modified to do that
-    for other format automtaically
-
-    Parameters:
-    ----------
-    directory : the directory in whih to searc
-    filename :
-
-    Return:
-    ------
-    the data result
-    raise error if the file does not exist
-    -------------------------------------------------- """
-    if os.path.exists(directory + filename + '.fits') == True:
-        return fits.getdata(os.path.join(directory, filename + '.fits'))
-    else:
-        raise Exception(
-            "You need to create " + filename + ".fits before loading it." +
-            "Please run the initialization with 'save_fits = True' before")
 
 
 def from_param_to_header(config):
@@ -162,6 +146,16 @@ def from_param_to_header(config):
 
 
 def progress(count, total, status=''):
+    """ --------------------------------------------------
+    print a progress bar for a for loop
+
+    Parameters:
+    ----------
+    count: counter in the for loop
+
+    total: number of iterations in the for loop
+
+    -------------------------------------------------- """
     bar_len = 60
     filled_len = int(round(bar_len * count / float(total)))
 
