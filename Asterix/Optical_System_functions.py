@@ -450,7 +450,7 @@ class Optical_System:
                     model_dir + ampl_abb_filename + ".fits", self.prad,
                     self.dim_overpad_pupil)
             else:
-                ampl_abb_filename = "ampl_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                     int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
 
                 if set_random_ampl is False and os.path.isfile(
@@ -459,7 +459,7 @@ class Optical_System:
                                                ampl_abb_filename + ".fits")
                 else:
                     return_ampl = phase_ampl.random_phase_map(
-                        self.prad, self.dim_overpad_pupil, ampl_rms, ampl_rhoc,
+                        self.prad, self.dim_overpad_pupil, ampl_rms/100, ampl_rhoc,
                         ampl_slope)
 
                     fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
