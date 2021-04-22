@@ -131,23 +131,17 @@ class Estimator:
             filePW = "MatrixPW_" + string_dims_PWMatrix
             if os.path.exists(matrix_dir + filePW + ".fits") == True:
                 print("The matrix " + filePW + " already exists")
-                self.PWVectorprobes = fits.getdata(matrix_dir + filePW +
+                self.PWMatrix = fits.getdata(matrix_dir + filePW +
                                                    ".fits")
             else:
                 print("Saving " + filePW + " ...")
-                self.PWVectorprobes, showsvd = wsc.createvectorprobes(
+                self.PWMatrix, _ = wsc.createPWmastrix(
                     testbed, self.amplitudePW, self.posprobes, self.dimEstim,
                     cutsvdPW, testbed.wavelength_0)
                 fits.writeto(matrix_dir + filePW + ".fits",
-                             self.PWVectorprobes)
+                             self.PWMatrix)
 
-            visuPWMap = "EigenValPW_" + string_dims_PWMatrix
-
-            if os.path.exists(matrix_dir + visuPWMap + ".fits") is False:
-                print("Saving " + visuPWMap + " ...")
-                fits.writeto(matrix_dir + visuPWMap + ".fits", showsvd[1])
-
-            # Saving PW matrices in Labview directory
+            # Saving PW matrix in Labview directory
             if save_for_bench == True:
                 probes = np.zeros(
                     (len(self.posprobes), testbed.DM3.number_act),
@@ -157,16 +151,17 @@ class Estimator:
                     dtype=np.float32)
 
                 for i in np.arange(len(self.posprobes)):
+                    # TODO WTH is the hardcoded 17. @Raphael @Axel
                     probes[i, self.posprobes[i]] = self.amplitudePW / 17
                     vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) *
                              self.dimEstim *
-                             self.dimEstim] = self.PWVectorprobes[:, 0,
+                             self.dimEstim] = self.PWMatrix[:, 0,
                                                                   i].flatten()
                     vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) *
                              self.dimEstim *
-                             self.dimEstim] = self.PWVectorprobes[:, 1,
+                             self.dimEstim] = self.PWMatrix[:, 1,
                                                                   i].flatten()
-                fits.writeto(realtestbed_dir + "Probes_EFC_default.fits",
+                fits.writeto(realtestbed_dir + "Probes_PW_default.fits",
                              probes,
                              overwrite=True)
                 fits.writeto(realtestbed_dir + "Matr_mult_estim_PW.fits",
@@ -182,6 +177,7 @@ class Estimator:
                  testbed,
                  entrance_EF=1.,
                  voltage_vector=0.,
+                 wavelength = None,
                  photon_noise=False,
                  nb_photons=1e30,
                  perfect_estimation=False,
@@ -219,6 +215,7 @@ class Estimator:
             resultatestimation = testbed.todetector(
                 entrance_EF=entrance_EF,
                 voltage_vector=voltage_vector,
+                wavelength = wavelength,
                 **kwargs)
 
             if photon_noise == True:
@@ -236,11 +233,12 @@ class Estimator:
                 self.dimEstim,
                 self.amplitudePW,
                 voltage_vector=voltage_vector,
+                wavelength = wavelength,
                 photon_noise=photon_noise,
                 nb_photons=nb_photons,
                 **kwargs)
 
-            return wsc.FP_PWestimate(Difference, self.PWVectorprobes)
+            return wsc.FP_PWestimate(Difference, self.PWMatrix)
 
         elif self.technique == 'coffee':
             return np.zeros((self.dimEstim, self.dimEstim))

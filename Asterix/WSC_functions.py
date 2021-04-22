@@ -317,7 +317,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
 #################################################################################
 
 
-def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
+def createPWmastrix(testbed, amplitude, posprobes, dimEstim, cutsvd,
                        wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
@@ -345,7 +345,7 @@ def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
     probephase = np.zeros(
         (numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
     matrix = np.zeros((numprobe, 2))
-    PWVector = np.zeros((dimEstim**2, 2, numprobe))
+    PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
 
     DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]
@@ -376,13 +376,13 @@ def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
             try:
                 inversion = invertSVD(matrix, cutsvd, visu=False)
                 SVD[:, i, j] = inversion[0]
-                PWVector[l] = inversion[2]
+                PWMatrix[l] = inversion[2]
             except:
                 print("Careful: Error in invertSVD! for l=" + str(l))
                 SVD[:, i, j] = np.zeros(2)
-                PWVector[l] = np.zeros((2, numprobe))
+                PWMatrix[l] = np.zeros((2, numprobe))
             l = l + 1
-    return [PWVector, SVD]
+    return [PWMatrix, SVD]
 
 
 def FP_PWestimate(Difference, Vectorprobes):
@@ -400,6 +400,7 @@ def FP_PWestimate(Difference, Vectorprobes):
     Difference: 3D array, cube with image difference for each probes.
                 Used for pair-wise probing
     -------------------------------------------------- """
+
     dimimages = len(Difference[0])
     numprobe = len(Vectorprobes[0, 0])
     Differenceij = np.zeros((numprobe))
@@ -412,7 +413,9 @@ def FP_PWestimate(Difference, Vectorprobes):
             Resultat[i, j] = Resultatbis[0] + 1j * Resultatbis[1]
 
             l = l + 1
-    return Resultat / 4
+    useful.save_plane_in_fits('/Users/jmazoyer/Desktop/', "4times_pwestim",
+                                      Resultat)
+    return Resultat / 4.
 
 
 def createdifference(input_wavefront,
@@ -421,6 +424,7 @@ def createdifference(input_wavefront,
                      dimimages,
                      amplitudePW,
                      voltage_vector=0.,
+                     wavelength=None,
                      photon_noise=False,
                      nb_photons=1e30,
                      **kwargs):
@@ -474,11 +478,13 @@ def createdifference(input_wavefront,
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector - Voltage_probe,
+                               wavelength=wavelength,
                                **kwargs))**2
 
         Ikplus = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector + Voltage_probe,
+                               wavelength=wavelength,
                                **kwargs))**2
 
         if photon_noise == True:
@@ -491,4 +497,5 @@ def createdifference(input_wavefront,
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 
+    useful.quickfits(Difference)
     return Difference
