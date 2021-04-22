@@ -6,6 +6,7 @@ def mft(image,
         dim_output,
         nbres,
         inverse=False,
+        norm='backward',
         X_offset_input=0,
         Y_offset_input=0,
         X_offset_output=0,
@@ -34,6 +35,14 @@ def mft(image,
         inverse : direction of the MFT
                 inverse = False, direct mft (default value)
                 inverse = True, indirect mft
+
+        norm : 'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
+                https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
+                if 'backward' no normalisation is done on MFT(inverse = False) and normliastion 1/N is done in MFT(inverse = True)
+                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normliastion is done in MFT(inverse = True)
+                if 'ortho' 1/sqrt(N) normalisation is done in both directions.
+                Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
+                The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
 
         X_offset_input :(default 0) position of the 0-frequency pixel in x for the entrance
              image with respect to the center of the entrance image (real position
@@ -150,8 +159,23 @@ def mft(image,
     norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
                     dim_output_x / dim_output_y)
     if inverse == False:
+        if norm == 'backward':
+            norm0 = 1.
+        elif norm == 'forward':
+            norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
+        elif norm == 'ortho':
+            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
+                            dim_output_x / dim_output_y)
         sign_exponential = -1
+
     elif inverse == True:
+        if norm == 'backward':
+            norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
+        elif norm == 'forward':
+            norm0 = 1.
+        elif norm == 'ortho':
+            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
+                            dim_output_x / dim_output_y)
         sign_exponential = 1
 
     AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0))
