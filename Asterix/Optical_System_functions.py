@@ -351,7 +351,8 @@ class Optical_System:
         # we pass noFPM = True and noentrance Field by default
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
-        throughput = np.sum(np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
+        throughput = np.sum(np.abs(exit_EF)**2) / np.sum(
+            np.abs(clear_entrance_pupil)**2)
 
         return throughput
 
@@ -366,9 +367,9 @@ class Optical_System:
                         the polychromatic PSF use to nomrmalize to_detector_Intensity
             - self.normPupto1, which is used to measure the photon noise
                 This is the factor that we use to measure photon noise.
-                From an image in contrast, we now normalize by the total number of photons
-                  (*self.norm_polychrom / self.sum_polychrom) and then account for the photons
-                lost in the process (1 / self.transmission()). Can be used as follow:
+                From an image in contrast, we now normalize by the total amount of energy
+                  (*self.norm_polychrom / self.sum_polychrom) and then account for the energy
+                lost in the process (self.transmission()). Can be used as follow:
                 Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
 
         AUTHOR : Johan Mazoyer
@@ -391,10 +392,8 @@ class Optical_System:
         self.norm_polychrom = np.max(PSF_bw)
         self.sum_polychrom = np.sum(PSF_bw)
 
-        # TODO Careful. We think we should MULTIPLY by self.transmission and not divide
-        # by self.transmission
-        self.normPupto1 = 1 / self.transmission(
-        ) * self.norm_polychrom / self.sum_polychrom
+        self.normPupto1 = self.transmission(
+                            ) * self.norm_polychrom / self.sum_polychrom
 
     def generate_phase_aberr(self, SIMUconfig, Model_local_dir=None):
         """ --------------------------------------------------
