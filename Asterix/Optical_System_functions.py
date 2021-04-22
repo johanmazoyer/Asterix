@@ -397,7 +397,24 @@ class Optical_System:
         ) * self.norm_polychrom / self.sum_polychrom
 
     def generate_phase_aberr(self, SIMUconfig, Model_local_dir=None):
+        """ --------------------------------------------------
+            Save and generate phase aberations
 
+            Parameters
+            ----------
+            SIMUconfig : parameter of this simualtion (describing the amplitude)
+
+            Model_local_dir: directory to save things you can measure yourself
+                        and can save to save time
+
+
+            Returns
+            ------
+            return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+                    amplitude abberation
+
+            AUTHOR : Johan Mazoyer
+        """
         set_phase_abb = SIMUconfig["set_phase_abb"]
         set_random_phase = SIMUconfig["set_random_phase"]
         phase_rms = SIMUconfig["phase_rms"]
@@ -430,10 +447,25 @@ class Optical_System:
         else:
             return 0.
 
-    def generate_ampl_aberr(self,
-                            SIMUconfig,
-                            Model_dir=None,
-                            Model_local_dir=None):
+    def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None):
+        """ --------------------------------------------------
+        Save and generate amplitude aberations
+
+        Parameters
+        ----------
+        SIMUconfig : parameter of this simualtion (describing the amplitude)
+
+        Model_local_dir: directory to save things you can measure yourself
+                    and can save to save time
+
+
+        Returns
+        ------
+        return_ampl : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+                amplitude abberation
+
+        AUTHOR : Johan Mazoyer
+        """
         set_amplitude_abb = SIMUconfig["set_amplitude_abb"]
         ampl_abb_filename = SIMUconfig["ampl_abb_filename"]
         set_random_ampl = SIMUconfig["set_random_ampl"]
@@ -1209,7 +1241,9 @@ class deformable_mirror(Optical_System):
         Parameters
         ----------
         modelconfig : general configuration parameters (sizes and dimensions)
+
         DMconfig : DM parameters
+
         Name_DM : the name of the DM, which allows to find it in the parameter file
         we measure and save the pushact functions
 
