@@ -26,7 +26,17 @@ def quickshow(tab):
 
 
 def save_plane_in_fits(dir_save_fits, name_plane, image):
+    """
+        Function to quickly save a real or complex file in fits.
 
+        dir_save_fits: directory
+        name_plane : name of the plane.
+            final name is
+            current_time_str + '_' + name_plane + '_RE_and_IM.fits' if complex
+            current_time_str + '_' + name_plane + '_RE.fits' if real
+        image : numpy array to save. Can be of any dimension
+
+    """
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
     name_fits = current_time_str + '_' + name_plane
 
@@ -50,6 +60,8 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
 
 def quickfits(tab, dir='', name='tmp'):
     """
+    Johan's quick function
+
     Function to quickly save in fits.
     By default, it will save on the desktop with a random name to avoid overwriting.
     Not sure the default saving on Desktop works for windows OS, but it work on mac and linux
@@ -57,12 +69,18 @@ def quickfits(tab, dir='', name='tmp'):
     tab: array to be saved
     dir (optionnal): directory where to save the .fits. by default the Desktop.
     name (optionnal): name of the .fits. By defaut tmp_currenttimeinms.fits
-    Johan's quick function
     """
 
-    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
     if dir == '':
-        dir = desktop
+        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+        bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
+        if os.path.exists(desktop):
+            dir = desktop
+        elif os.path.exists(bureau):
+            # of you are french are you ?
+            dir = bureau
+        else:
+            raise Exception("I cannot find your desktop, please give me a dir to save the .fits")
 
     if name == 'tmp':
         current_time_str = datetime.datetime.today().strftime(
