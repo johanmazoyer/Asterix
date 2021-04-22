@@ -103,7 +103,7 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
     total_number_basis_modes = 0
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
-        total_number_basis_modes += DM.basis.shape[0]
+        total_number_basis_modes += DM.basis_size
 
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
@@ -122,10 +122,10 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
                                                  DM.z_position,
                                                  DM.diam_pup_in_m / 2, DM.prad)
 
-        for i in range(DM.basis.shape[0]):
+        for i in range(DM.basis_size):
 
             if i % 10:
-                useful.progress(i, DM.basis.shape[0], status='')
+                useful.progress(i, DM.basis_size, status='')
 
             phaseDM = DM.voltage_to_phase(DM.basis[i])
             if DM.z_position != 0:
@@ -206,7 +206,7 @@ def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
         vector_basis_voltage_for_DM = vector_basis_voltage[
-            indice_acum_basis_size:indice_acum_basis_size + DM.basis.shape[0]]
+            indice_acum_basis_size:indice_acum_basis_size + DM.basis_size]
 
         vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis),
                                             vector_basis_voltage_for_DM)
@@ -214,7 +214,7 @@ def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
         vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
                                 DM.number_act] = vector_actu_voltage_for_DM
 
-        indice_acum_basis_size += DM.basis.shape[0]
+        indice_acum_basis_size += DM.basis_size
         indice_acum_number_act += DM.number_act
 
     return vector_actuator_voltage

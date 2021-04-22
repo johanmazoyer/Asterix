@@ -1240,6 +1240,14 @@ class deformable_mirror(Optical_System):
             model_dir +
             DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
 
+        if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
+            self.active_actuators = fits.getdata(
+                                            model_dir +
+                                            DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
+        else:
+            self.active_actuators = np.arange(self.number_act)
+
+
         self.string_os += '_' + self.Name_DM + "_z" + str(
             int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
 
@@ -1731,12 +1739,14 @@ class deformable_mirror(Optical_System):
         ------
         a 2d numpy array [Size basis, Number act in the DM]
         -------------------------------------------------- """
+        active_and_in_pup = [value for value in self.active_actuators if value in self.WhichInPupil]
+        active_and_in_pup.sort()
 
         if basis_type == 'actuator':
-            basis_size = len(self.WhichInPupil)
-            basis = np.zeros((basis_size, self.number_act))
+            basis_size = len(active_and_in_pup)
+            basis = np.zeros((basis_size, self.number_act), dtype=int)
             for i in range(basis_size):
-                basis[i][self.WhichInPupil[i]] = 1
+                basis[i][active_and_in_pup[i]] = 1
         return basis
 
 
