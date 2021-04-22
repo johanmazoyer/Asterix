@@ -82,8 +82,9 @@ class Corrector:
             DM = vars(testbed)[DM_name]
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
-            basis_str += "_" + DM_name + "Basis" + basis_type + str(
+            basis_str += "_" + DM_name +  basis_type +"Basis" + str(
                 DM.basis_size)
+            print(basis_str)
 
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
