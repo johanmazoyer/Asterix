@@ -413,8 +413,7 @@ def FP_PWestimate(Difference, Vectorprobes):
             Resultat[i, j] = Resultatbis[0] + 1j * Resultatbis[1]
 
             l = l + 1
-    useful.save_plane_in_fits('/Users/jmazoyer/Desktop/', "4times_pwestim",
-                                      Resultat)
+
     return Resultat / 4.
 
 
@@ -497,5 +496,4 @@ def createdifference(input_wavefront,
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 
-    useful.quickfits(Difference)
     return Difference
