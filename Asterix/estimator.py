@@ -99,8 +99,8 @@ class Estimator:
             if hasattr(testbed, 'name_DM_to_probe_in_PW'):
                 if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
                     raise Exception(
-                        "Cannot use this DM for PW, this testbed has no DM named " +
-                        testbed.name_DM_to_probe_in_PW)
+                        "Cannot use this DM for PW, this testbed has no DM named "
+                        + testbed.name_DM_to_probe_in_PW)
             else:
                 # Automatically check which DM to use to probe in this case
                 # this is only done once
@@ -131,15 +131,15 @@ class Estimator:
             filePW = "MatrixPW_" + string_dims_PWMatrix
             if os.path.exists(matrix_dir + filePW + ".fits") == True:
                 print("The matrix " + filePW + " already exists")
-                self.PWMatrix = fits.getdata(matrix_dir + filePW +
-                                                   ".fits")
+                self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
             else:
                 print("Saving " + filePW + " ...")
-                self.PWMatrix, _ = wsc.createPWmastrix(
-                    testbed, self.amplitudePW, self.posprobes, self.dimEstim,
-                    cutsvdPW, testbed.wavelength_0)
-                fits.writeto(matrix_dir + filePW + ".fits",
-                             self.PWMatrix)
+                self.PWMatrix, _ = wsc.createPWmastrix(testbed,
+                                                       self.amplitudePW,
+                                                       self.posprobes,
+                                                       self.dimEstim, cutsvdPW,
+                                                       testbed.wavelength_0)
+                fits.writeto(matrix_dir + filePW + ".fits", self.PWMatrix)
 
             # Saving PW matrix in Labview directory
             if save_for_bench == True:
@@ -155,12 +155,10 @@ class Estimator:
                     probes[i, self.posprobes[i]] = self.amplitudePW / 17
                     vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) *
                              self.dimEstim *
-                             self.dimEstim] = self.PWMatrix[:, 0,
-                                                                  i].flatten()
+                             self.dimEstim] = self.PWMatrix[:, 0, i].flatten()
                     vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) *
                              self.dimEstim *
-                             self.dimEstim] = self.PWMatrix[:, 1,
-                                                                  i].flatten()
+                             self.dimEstim] = self.PWMatrix[:, 1, i].flatten()
                 fits.writeto(realtestbed_dir + "Probes_PW_default.fits",
                              probes,
                              overwrite=True)
@@ -177,7 +175,7 @@ class Estimator:
                  testbed,
                  entrance_EF=1.,
                  voltage_vector=0.,
-                 wavelength = None,
+                 wavelength=None,
                  photon_noise=False,
                  nb_photons=1e30,
                  perfect_estimation=False,
@@ -215,7 +213,7 @@ class Estimator:
             resultatestimation = testbed.todetector(
                 entrance_EF=entrance_EF,
                 voltage_vector=voltage_vector,
-                wavelength = wavelength,
+                wavelength=wavelength,
                 **kwargs)
 
             if photon_noise == True:
@@ -226,17 +224,16 @@ class Estimator:
             return proc.resampling(resultatestimation, self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
-            Difference = wsc.createdifference(
-                entrance_EF,
-                testbed,
-                self.posprobes,
-                self.dimEstim,
-                self.amplitudePW,
-                voltage_vector=voltage_vector,
-                wavelength = wavelength,
-                photon_noise=photon_noise,
-                nb_photons=nb_photons,
-                **kwargs)
+            Difference = wsc.createdifference(entrance_EF,
+                                              testbed,
+                                              self.posprobes,
+                                              self.dimEstim,
+                                              self.amplitudePW,
+                                              voltage_vector=voltage_vector,
+                                              wavelength=wavelength,
+                                              photon_noise=photon_noise,
+                                              nb_photons=nb_photons,
+                                              **kwargs)
 
             return wsc.FP_PWestimate(Difference, self.PWMatrix)
 

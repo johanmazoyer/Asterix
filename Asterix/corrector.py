@@ -143,14 +143,14 @@ class Corrector:
                                             estimator.Estim_sampling)))
 
                 Nbmodes = Correctionconfig["Nbmodes"]
-                SVD, _, invertGDH = wsc.invertSVD(
+                _, _, invertGDH = wsc.invertSVD(
                     self.Gmatrix,
                     Nbmodes,
                     goal="c",
                     regul=self.regularization,
                     visu=True,
-                    filename_visu=matrix_dir + "SVD_Modes" + str(Nbmodes) +
-                    '_' + fileDirectMatrix + ".png")
+                    filename_visu=realtestbed_dir + "SVD_Modes" +
+                    str(Nbmodes) + '_' + fileDirectMatrix + ".png")
 
                 if testbed.DM1.active:
                     invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]

@@ -17,7 +17,12 @@ import Asterix.fits_functions as useful
 #################################################################################
 
 
-def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, filename_visu = None):
+def invertSVD(matrix_to_invert,
+              cut,
+              goal="e",
+              regul="truncation",
+              visu=False,
+              filename_visu=None):
     """ --------------------------------------------------
     Invert a matrix after a Singular Value Decomposition. The inversion can be regularized.
 
@@ -55,6 +60,9 @@ def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, f
     InvS_truncated = np.linalg.inv(S)
     # print(InvS)
     if visu == True:
+        plt.ion()
+        plt.figure()
+        plt.clf
         plt.plot(np.diag(InvS), "r.")
         plt.yscale("log")
         plt.savefig(filename_visu)
@@ -318,7 +326,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
 
 
 def createPWmastrix(testbed, amplitude, posprobes, dimEstim, cutsvd,
-                       wavelength):
+                    wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
 

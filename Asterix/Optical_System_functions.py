@@ -459,8 +459,8 @@ class Optical_System:
                                                ampl_abb_filename + ".fits")
                 else:
                     return_ampl = phase_ampl.random_phase_map(
-                        self.prad, self.dim_overpad_pupil, ampl_rms/100, ampl_rhoc,
-                        ampl_slope)
+                        self.prad, self.dim_overpad_pupil, ampl_rms / 100,
+                        ampl_rhoc, ampl_slope)
 
                     fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
                                  return_ampl,
@@ -1242,11 +1242,10 @@ class deformable_mirror(Optical_System):
 
         if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
             self.active_actuators = fits.getdata(
-                                            model_dir +
-                                            DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
+                model_dir +
+                DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
         else:
             self.active_actuators = np.arange(self.number_act)
-
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
             int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
@@ -1300,7 +1299,6 @@ class deformable_mirror(Optical_System):
             Model_local_dir=Model_local_dir)
         print("time for WhichInPupil for " + self.string_os,
               time.time() - start_time)
-
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
         # now if we relaunch self.DM_pushact, and if misregistration = True
@@ -1738,7 +1736,10 @@ class deformable_mirror(Optical_System):
         ------
         a 2d numpy array [Size basis, Number act in the DM]
         -------------------------------------------------- """
-        active_and_in_pup = [value for value in self.active_actuators if value in self.WhichInPupil]
+        active_and_in_pup = [
+            value for value in self.active_actuators
+            if value in self.WhichInPupil
+        ]
         active_and_in_pup.sort()
 
         if basis_type == 'actuator':

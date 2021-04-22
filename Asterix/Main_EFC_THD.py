@@ -280,12 +280,12 @@ def correctionLoop(parameter_file,
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
-
     ## Initialize Estimation
-    estim = Estimator(Estimationconfig, thd2,
-                                matrix_dir=intermatrix_dir,
-                                save_for_bench=onbench,
-                                realtestbed_dir=Labview_dir)
+    estim = Estimator(Estimationconfig,
+                      thd2,
+                      matrix_dir=intermatrix_dir,
+                      save_for_bench=onbench,
+                      realtestbed_dir=Labview_dir)
 
     #initalize the DH masks
     mask_dh = MaskDH(Correctionconfig)
@@ -301,16 +301,15 @@ def correctionLoop(parameter_file,
                        save_for_bench=onbench,
                        realtestbed_dir=Labview_dir)
 
-
-
     # set initial phase and amplitude and wavefront
-    phase_abb_up = thd2.generate_phase_aberr(SIMUconfig,Model_local_dir=Model_local_dir)
-    ampl_abb_up = thd2.generate_ampl_aberr(SIMUconfig,Model_local_dir=Model_local_dir)
+    phase_abb_up = thd2.generate_phase_aberr(SIMUconfig,
+                                             Model_local_dir=Model_local_dir)
+    ampl_abb_up = thd2.generate_ampl_aberr(SIMUconfig,
+                                           Model_local_dir=Model_local_dir)
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
                                                   ampl_abb=ampl_abb_up)
 
     ## Correction loop
-
 
     ## Number of modes that is used as a function of the iteration cardinal
     modevector = []
@@ -343,18 +342,19 @@ def correctionLoop(parameter_file,
         print("--------------------------------------------------")
         print("Iteration number: ", iteration, " SVD truncation: ", mode)
 
-        resultatestimation = estim.estimate(thd2,
-                                            entrance_EF=input_wavefront,
-                                            voltage_vector = voltage_DMs[iteration],
-                                            wavelength=thd2.wavelength_0,
-                                            photon_noise=photon_noise,
-                                            nb_photons=nb_photons)
+        resultatestimation = estim.estimate(
+            thd2,
+            entrance_EF=input_wavefront,
+            voltage_vector=voltage_DMs[iteration],
+            wavelength=thd2.wavelength_0,
+            photon_noise=photon_noise,
+            nb_photons=nb_photons)
 
         if Linesearch is True:
             search_best_contrast = list()
             perfectestimate = estim.estimate(thd2,
                                              entrance_EF=input_wavefront,
-                                             voltage_vector = 0.,
+                                             voltage_vector=0.,
                                              wavelength=thd2.wavelength_0,
                                              perfect_estimation=True)
 
@@ -366,7 +366,7 @@ def correctionLoop(parameter_file,
                 tmpvoltage_DMs = voltage_DMs[iteration] + perfectsolution
 
                 imagedetector_tmp = thd2.todetector_Intensity(
-                    entrance_EF=input_wavefront,voltage_vector = tmpvoltage_DMs)
+                    entrance_EF=input_wavefront, voltage_vector=tmpvoltage_DMs)
 
                 search_best_contrast.append(
                     np.mean(imagedetector_tmp[np.where(MaskScience != 0)]))
@@ -382,7 +382,8 @@ def correctionLoop(parameter_file,
         voltage_DMs.append(voltage_DMs[iteration] + solution)
 
         imagedetector[iteration + 1] = thd2.todetector_Intensity(
-            entrance_EF=input_wavefront,voltage_vector =voltage_DMs[iteration + 1])
+            entrance_EF=input_wavefront,
+            voltage_vector=voltage_DMs[iteration + 1])
 
         meancontrast[iteration + 1] = np.mean(
             imagedetector[iteration + 1][np.where(MaskScience != 0)])
@@ -391,9 +392,6 @@ def correctionLoop(parameter_file,
         if photon_noise == True:
             photondetector[iteration + 1] = np.random.poisson(
                 imagedetector[iteration + 1] * thd2.normPupto1 * photon_noise)
-
-
-
 
         plt.clf()
         plt.imshow(np.log10(imagedetector[iteration + 1]), vmin=-8, vmax=-5)

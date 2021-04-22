@@ -110,7 +110,6 @@ def scale_amplitude_abb(filename, prad, dim_image):
     # this will be the pupil over which phase rms = phaserms
     pupil = roundpupil(prad, dim_image)
 
-
     #File with amplitude aberrations in amplitude (not intensity)
     # centered on the pixel dim/2+1, dim/2 +1 with dim = 2*[dim/2]
     # diameter of the pupil is 148 pixels in this image
