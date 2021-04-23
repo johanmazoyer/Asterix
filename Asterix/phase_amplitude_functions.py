@@ -18,6 +18,10 @@ def roundpupil(dim_pp, prad, no_pixel=False):
         Size of the image (in pixels)
     prad : float
         Size of the pupil radius (in pixels)
+    no_pixel : boolean (defaut false).
+                If true, the pupil is first defined at a very large
+                scale (dim_pp = 6000) and then rescale to the given parameter dim_pp.
+                This limits the pixel crenellation in pupil for small pupils
 
     Returns
     ------
@@ -25,7 +29,7 @@ def roundpupil(dim_pp, prad, no_pixel=False):
         Output circular pupil
 
     AUTHOR : Axel Pottier
-    Modified by J Mazoyer to remove the pixellization
+    Modified by J Mazoyer to remove the pixel crenellation
     -------------------------------------------------- """
 
     if no_pixel == True:
