@@ -17,7 +17,12 @@ import Asterix.fits_functions as useful
 #################################################################################
 
 
-def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False):
+def invertSVD(matrix_to_invert,
+              cut,
+              goal="e",
+              regul="truncation",
+              visu=False,
+              filename_visu=None):
     """ --------------------------------------------------
     Invert a matrix after a Singular Value Decomposition. The inversion can be regularized.
 
@@ -55,9 +60,12 @@ def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False):
     InvS_truncated = np.linalg.inv(S)
     # print(InvS)
     if visu == True:
+        plt.ion()
+        plt.figure()
+        plt.clf
         plt.plot(np.diag(InvS), "r.")
         plt.yscale("log")
-        plt.savefig('invertSVDEFC.png')
+        plt.savefig(filename_visu)
         plt.close()
 
     if goal == "e":
@@ -103,7 +111,7 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
     total_number_basis_modes = 0
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
-        total_number_basis_modes += DM.basis.shape[0]
+        total_number_basis_modes += DM.basis_size
 
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
@@ -122,13 +130,12 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
                                                  DM.z_position,
                                                  DM.diam_pup_in_m / 2, DM.prad)
 
-        for i in range(DM.basis.shape[0]):
+        for i in range(DM.basis_size):
 
             if i % 10:
-                useful.progress(i, DM.basis.shape[0], status='')
+                useful.progress(i, DM.basis_size, status='')
 
-            phaseDM = DM.voltage_to_phase(DM.basis[i],
-                                          wavelength=testbed.wavelength_0)
+            phaseDM = DM.voltage_to_phase(DM.basis[i])
             if DM.z_position != 0:
                 phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * phaseDM,
                                                DM.wavelength_0, -DM.z_position,
@@ -207,7 +214,7 @@ def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
         vector_basis_voltage_for_DM = vector_basis_voltage[
-            indice_acum_basis_size:indice_acum_basis_size + DM.basis.shape[0]]
+            indice_acum_basis_size:indice_acum_basis_size + DM.basis_size]
 
         vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis),
                                             vector_basis_voltage_for_DM)
@@ -215,7 +222,7 @@ def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
         vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
                                 DM.number_act] = vector_actu_voltage_for_DM
 
-        indice_acum_basis_size += DM.basis.shape[0]
+        indice_acum_basis_size += DM.basis_size
         indice_acum_number_act += DM.number_act
 
     return vector_actuator_voltage
@@ -318,8 +325,8 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
 #################################################################################
 
 
-def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
-                       wavelength):
+def createPWmastrix(testbed, amplitude, posprobes, dimEstim, cutsvd,
+                    wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
 
@@ -346,18 +353,18 @@ def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
     probephase = np.zeros(
         (numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
     matrix = np.zeros((numprobe, 2))
-    PWVector = np.zeros((dimEstim**2, 2, numprobe))
+    PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
+
+    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]
 
     k = 0
 
     for i in posprobes:
 
-        # TODO: we shoudl maybe put a which_DM_to_do_probes parameter
-        Voltage_probe = np.zeros(testbed.DM3.number_act)
+        Voltage_probe = np.zeros(DM_probe.number_act)
         Voltage_probe[i] = amplitude
-        probephase[k] = testbed.DM3.voltage_to_phase(Voltage_probe,
-                                                     wavelength=wavelength)
+        probephase[k] = DM_probe.voltage_to_phase(Voltage_probe)
 
         # for PW the probes are not sent in the DM but at the entrance of the testbed.
         # with an hypothesis of small phase.
@@ -377,13 +384,13 @@ def createvectorprobes(testbed, amplitude, posprobes, dimEstim, cutsvd,
             try:
                 inversion = invertSVD(matrix, cutsvd, visu=False)
                 SVD[:, i, j] = inversion[0]
-                PWVector[l] = inversion[2]
+                PWMatrix[l] = inversion[2]
             except:
                 print("Careful: Error in invertSVD! for l=" + str(l))
                 SVD[:, i, j] = np.zeros(2)
-                PWVector[l] = np.zeros((2, numprobe))
+                PWMatrix[l] = np.zeros((2, numprobe))
             l = l + 1
-    return [PWVector, SVD]
+    return [PWMatrix, SVD]
 
 
 def FP_PWestimate(Difference, Vectorprobes):
@@ -401,6 +408,7 @@ def FP_PWestimate(Difference, Vectorprobes):
     Difference: 3D array, cube with image difference for each probes.
                 Used for pair-wise probing
     -------------------------------------------------- """
+
     dimimages = len(Difference[0])
     numprobe = len(Vectorprobes[0, 0])
     Differenceij = np.zeros((numprobe))
@@ -413,7 +421,8 @@ def FP_PWestimate(Difference, Vectorprobes):
             Resultat[i, j] = Resultatbis[0] + 1j * Resultatbis[1]
 
             l = l + 1
-    return Resultat / 4
+
+    return Resultat / 4.
 
 
 def createdifference(input_wavefront,
@@ -421,11 +430,11 @@ def createdifference(input_wavefront,
                      posprobes,
                      dimimages,
                      amplitudePW,
-                     DM1phase=0,
-                     DM3phase=0,
+                     voltage_vector=0.,
+                     wavelength=None,
                      photon_noise=False,
                      nb_photons=1e30,
-                     wavelength=None):
+                     **kwargs):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]
@@ -454,37 +463,36 @@ def createdifference(input_wavefront,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
     -------------------------------------------------- """
-    if wavelength == None:
-        wavelength = testbed.wavelength_0
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
-    #TODO if the DM1 is active we can measure once the EFthoughDM1 ans store it in entrance_EF
-    #to save time. To check
-    # if testbed.DM1.active is True:
-    #     input_wavefront = testbed.DM1.EF_through(entrance_EF=input_wavefront, DM1phase = DM1phase,wavelength=wavelength)
-
     for count, num_probe in enumerate(posprobes):
 
-        Voltage_probe = np.zeros(testbed.DM3.number_act)
-        Voltage_probe[num_probe] = amplitudePW
-        probephase = testbed.DM3.voltage_to_phase(Voltage_probe,
-                                                  wavelength=wavelength)
+        Voltage_probe = np.zeros(testbed.number_act)
+        indice_acum_number_act = 0
 
-        # Not 100% sure about wavelength here, so I prefeer to use
-        # todetector to keep it monochromatic instead of todetector_Intensity
-        # which is large band
+        for DM_name in testbed.name_of_DMs:
+            DM = vars(testbed)[DM_name]
+
+            if DM_name == testbed.name_DM_to_probe_in_PW:
+                Voltage_probeDMprobe = np.zeros(DM.number_act)
+                Voltage_probeDMprobe[num_probe] = amplitudePW
+                Voltage_probe[indice_acum_number_act:indice_acum_number_act +
+                              DM.number_act] = Voltage_probeDMprobe
+
+            indice_acum_number_act += DM.number_act
+
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
-                               DM1phase=DM1phase,
-                               DM3phase=DM3phase - probephase,
-                               wavelength=wavelength))**2
+                               voltage_vector=voltage_vector - Voltage_probe,
+                               wavelength=wavelength,
+                               **kwargs))**2
 
         Ikplus = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
-                               DM1phase=DM1phase,
-                               DM3phase=DM3phase + probephase,
-                               wavelength=wavelength))**2
+                               voltage_vector=voltage_vector + Voltage_probe,
+                               wavelength=wavelength,
+                               **kwargs))**2
 
         if photon_noise == True:
             Ikplus = np.random.poisson(

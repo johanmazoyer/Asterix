@@ -220,7 +220,8 @@ class Optical_System:
                                   lambda_ratio,
                                   X_offset_output=Psf_offset[0],
                                   Y_offset_output=Psf_offset[1],
-                                  inverse=False)
+                                  inverse=False,
+                                  norm='ortho')
 
         if in_contrast == True:
             focal_plane_EF /= np.sqrt(
@@ -350,9 +351,155 @@ class Optical_System:
         # we pass noFPM = True and noentrance Field by default
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
-        throughput = np.sum(np.abs(exit_EF)) / np.sum(clear_entrance_pupil)
+        throughput = np.sum(np.abs(exit_EF)**2) / np.sum(
+            np.abs(clear_entrance_pupil)**2)
 
         return throughput
+
+    def measure_normalization(self):
+        """ --------------------------------------------------
+        Functions must me used at the end of all Optical Systems initalization
+
+        Measure 3 differents values to normalize the data:
+            - self.norm_monochrom. Array of size len(self.wav_vec)
+                        the PSF per WL, use to nomrmalize to_detector
+            - self.norm_polychrom. float
+                        the polychromatic PSF use to nomrmalize to_detector_Intensity
+            - self.normPupto1, which is used to measure the photon noise
+                This is the factor that we use to measure photon noise.
+                From an image in contrast, we now normalize by the total amount of energy
+                  (*self.norm_polychrom / self.sum_polychrom) and then account for the energy
+                lost in the process (self.transmission()). Can be used as follow:
+                Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
+
+        AUTHOR : Johan Mazoyer
+        """
+
+        PSF_bw = np.zeros((self.dimScience, self.dimScience))
+        self.norm_monochrom = np.zeros((len(self.wav_vec)))
+        self.sum_monochrom = np.zeros((len(self.wav_vec)))
+
+        for i, wav in enumerate(self.wav_vec):
+            PSF_wl = np.abs(
+                self.todetector(wavelength=wav,
+                                noFPM=True,
+                                center_on_pixel=True,
+                                in_contrast=False))**2
+
+            self.norm_monochrom[i] = np.max(PSF_wl)
+            PSF_bw += PSF_wl
+
+        self.norm_polychrom = np.max(PSF_bw)
+        self.sum_polychrom = np.sum(PSF_bw)
+
+        self.normPupto1 = self.transmission(
+                            ) * self.norm_polychrom / self.sum_polychrom
+
+    def generate_phase_aberr(self, SIMUconfig, Model_local_dir=None):
+        """ --------------------------------------------------
+            Save and generate phase aberations
+
+            Parameters
+            ----------
+            SIMUconfig : parameter of this simualtion (describing the amplitude)
+
+            Model_local_dir: directory to save things you can measure yourself
+                        and can save to save time
+
+
+            Returns
+            ------
+            return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+                    amplitude abberation
+
+            AUTHOR : Johan Mazoyer
+        """
+        set_phase_abb = SIMUconfig["set_phase_abb"]
+        set_random_phase = SIMUconfig["set_random_phase"]
+        phase_rms = SIMUconfig["phase_rms"]
+        phase_rhoc = SIMUconfig["phase_rhoc"]
+        phase_slope = SIMUconfig["phase_slope"]
+        phase_abb_filename = SIMUconfig["phase_abb_filename"]
+
+        ## Phase map and amplitude map for the static aberrations
+        if set_phase_abb == True:
+            if phase_abb_filename == '':
+                phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                    int(phase_rms * 1e9), int(phase_slope), phase_rhoc,
+                    self.prad)
+
+            if set_random_phase is False and os.path.isfile(
+                    Model_local_dir + phase_abb_filename + ".fits") == True:
+                return_phase = fits.getdata(Model_local_dir +
+                                            phase_abb_filename + ".fits")
+
+            else:
+                return_phase = phase_ampl.random_phase_map(
+                    self.prad, self.dim_overpad_pupil, phase_rms, phase_rhoc,
+                    phase_slope)
+
+                fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
+                             return_phase,
+                             overwrite=True)
+
+            return return_phase
+        else:
+            return 0.
+
+    def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None):
+        """ --------------------------------------------------
+        Save and generate amplitude aberations
+
+        Parameters
+        ----------
+        SIMUconfig : parameter of this simualtion (describing the amplitude)
+
+        Model_local_dir: directory to save things you can measure yourself
+                    and can save to save time
+
+
+        Returns
+        ------
+        return_ampl : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+                amplitude abberation
+
+        AUTHOR : Johan Mazoyer
+        """
+        set_amplitude_abb = SIMUconfig["set_amplitude_abb"]
+        ampl_abb_filename = SIMUconfig["ampl_abb_filename"]
+        set_random_ampl = SIMUconfig["set_random_ampl"]
+        ampl_rms = SIMUconfig["ampl_rms"]
+        ampl_rhoc = SIMUconfig["ampl_rhoc"]
+        ampl_slope = SIMUconfig["ampl_slope"]
+
+        if set_amplitude_abb == True:
+            if ampl_abb_filename != '' and os.path.isfile(
+                    Model_local_dir + ampl_abb_filename +
+                    ".fits") == True and set_random_ampl is False:
+
+                return_ampl = phase_ampl.scale_amplitude_abb(
+                    model_dir + ampl_abb_filename + ".fits", self.prad,
+                    self.dim_overpad_pupil)
+            else:
+                ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                    int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
+
+                if set_random_ampl is False and os.path.isfile(
+                        Model_local_dir + ampl_abb_filename + ".fits") == True:
+                    return_ampl = fits.getdata(Model_local_dir +
+                                               ampl_abb_filename + ".fits")
+                else:
+                    return_ampl = phase_ampl.random_phase_map(
+                        self.prad, self.dim_overpad_pupil, ampl_rms / 100,
+                        ampl_rhoc, ampl_slope)
+
+                    fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
+                                 return_ampl,
+                                 overwrite=True)
+
+            return return_ampl
+        else:
+            return 0.
 
     def EF_from_phase_and_ampl(self,
                                phase_abb=0.,
@@ -386,66 +533,14 @@ class Optical_System:
                 "phase_abb and ampl_abb must be real arrays or float, not complex"
             )
 
-        # if isinstance(phase_abb, (int, float, np.float)):
-        #     phase_abb = np.full(
-        #         (self.dim_overpad_pupil, self.dim_overpad_pupil),
-        #         np.float(phase_abb))
-
-        # if isinstance(ampl_abb, (int, float, np.float)):
-        #     ampl_abb = np.full(
-        #         (self.dim_overpad_pupil, self.dim_overpad_pupil),
-        #         np.float(ampl_abb))
-
         if ((phase_abb == 0.).all()) and ((ampl_abb == 0.).all()):
 
             return 1.
 
         if wavelength is None:
             wavelength = self.wavelength_0
-        lambda_ratio = wavelength / self.wavelength_0
 
-        return (1 + ampl_abb) * np.exp(1j * phase_abb / lambda_ratio)
-
-    def measure_normalization(self):
-        """ --------------------------------------------------
-        Functions must me used at the end of all Optical Systems initalization
-
-        Measure 3 differents values to normalize the data:
-            - self.norm_monochrom. Array of size len(self.wav_vec)
-                        the PSF per WL, use to nomrmalize to_detector
-            - self.norm_polychrom. float
-                        the polychromatic PSF use to nomrmalize to_detector_Intensity
-            - self.normPupto1, which is used to measure the photon noise
-                This is the factor that we use to measure photon noise.
-                From an image in contrast, we now normalize by the total number of photons
-                  (*self.norm_polychrom / self.sum_polychrom) and then account for the photons
-                lost in the process (1 / self.transmission()). Can be used as follow:
-                Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
-
-        AUTHOR : Johan Mazoyer
-        """
-
-        PSF_bw = np.zeros((self.dimScience, self.dimScience))
-        self.norm_monochrom = np.zeros((len(self.wav_vec)))
-        self.sum_monochrom = np.zeros((len(self.wav_vec)))
-
-        for i, wav in enumerate(self.wav_vec):
-            PSF_wl = np.abs(
-                self.todetector(wavelength=wav,
-                                noFPM=True,
-                                center_on_pixel=True,
-                                in_contrast=False))**2
-
-            self.norm_monochrom[i] = np.max(PSF_wl)
-            PSF_bw += PSF_wl
-
-        self.norm_polychrom = np.max(PSF_bw)
-        self.sum_polychrom = np.sum(PSF_bw)
-
-        # TODO Careful. We think we should MULTIPLY by self.transmission and not divide
-        # by self.transmission
-        self.normPupto1 = 1 / self.transmission(
-        ) * self.norm_polychrom / self.sum_polychrom
+        return (1 + ampl_abb) * np.exp(2 * np.pi * 1j * phase_abb / wavelength)
 
 
 ##############################################
@@ -491,7 +586,6 @@ class pupil(Optical_System):
             This is a bit dangerous because your .fits file might must be defined
             the right way so be careful
 
-            TODO: include here function scale_amplitude_abb, shift_phase_ramp
             TODO: include an SCC Lyot pupil function here !
             TODO: for now pupil .fits are monochromatic but the pupil propagation EF_through
             use wavelenght as a parameter
@@ -643,49 +737,6 @@ class pupil(Optical_System):
 
         return exit_EF
 
-    def random_phase_map(self, phaserms, rhoc, slope):
-        """ --------------------------------------------------
-        Create a random phase map, whose PSD decrease in f^(-slope)
-        average is null and stadard deviation is phaserms
-
-        Parameters
-        ----------
-        phaserms : float
-            standard deviation of aberration
-        rhoc : float
-            See Borde et Traub 2006
-        slope : float
-            Slope of the PSD
-        pupil : 2D array
-
-
-        Returns
-        ------
-        phase : 2D array
-            Static random phase map (or OPD) generated
-        -------------------------------------------------- """
-
-        # create a circular pupil of the same radius of the given pupil
-        # this will be the pupil over which phase rms = phaserms
-        pup = phase_ampl.roundpupil(self.prad, self.dim_overpad_pupil)
-
-        xx, yy = np.meshgrid(
-            np.arange(self.dim_overpad_pupil) - self.dim_overpad_pupil / 2,
-            np.arange(self.dim_overpad_pupil) - self.dim_overpad_pupil / 2)
-        rho = np.hypot(yy, xx)
-        PSD0 = 1
-        PSD = PSD0 / (1 + (rho / rhoc)**slope)
-        sqrtPSD = np.sqrt(2 * PSD)
-
-        randomphase = np.random.randn(
-            self.dim_overpad_pupil,
-            self.dim_overpad_pupil) + 1j * np.random.randn(
-                self.dim_overpad_pupil, self.dim_overpad_pupil)
-        phase = np.real(np.fft.ifft2(np.fft.fftshift(sqrtPSD * randomphase)))
-        phase = phase - np.mean(phase[np.where(pup == 1.)])
-        phase = phase / np.std(phase[np.where(pup == 1.)]) * phaserms
-        return phase
-
 
 ##############################################
 ##############################################
@@ -775,7 +826,8 @@ class coronagraph(Optical_System):
         # of the coronograph to a clear pupil to remove it
         # if perfect corono. THIS IS NOT THE ENTRANCE PUPIL,
         # this is a clear pupil of the same size
-        self.clearpup = pupil(modelconfig, prad=self.prad)
+        if self.perfect_coro == True:
+            self.clearpup = pupil(modelconfig, prad=self.prad)
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
@@ -881,8 +933,8 @@ class coronagraph(Optical_System):
         if self.prop_apod2lyot == "fft":
             dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(
                 wavelength)]
-            input_wavefront_pad = proc.crop_or_pad_image(
-                entrance_EF, dim_fp_fft_here)
+            input_wavefront_after_apod_pad = proc.crop_or_pad_image(
+                input_wavefront_after_apod, dim_fp_fft_here)
             # Phase ramp to center focal plane between 4 pixels
 
             maskshifthalfpix = phase_ampl.shift_phase_ramp(
@@ -891,8 +943,9 @@ class coronagraph(Optical_System):
                 dim_fp_fft_here, -0.5, -0.5)
 
             #Apod plane to focal plane
-            corono_focal_plane = np.fft.fft2(
-                np.fft.fftshift(input_wavefront_pad * maskshifthalfpix))
+            corono_focal_plane = np.fft.fft2(np.fft.fftshift(
+                input_wavefront_after_apod_pad * maskshifthalfpix),
+                                             norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
@@ -911,8 +964,8 @@ class coronagraph(Optical_System):
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = np.fft.fftshift(
-                np.fft.ifft2(
-                    corono_focal_plane * FPmsk)) * maskshifthalfpix_invert
+                np.fft.ifft2(corono_focal_plane * FPmsk,
+                             norm='ortho')) * maskshifthalfpix_invert
             # we take the convention that when we are in pupil plane the field must be
             # "non-shifted". Because the shift in pupil plane is resolution dependent
             # which depend on the method (fft is not exactly science resolution because
@@ -930,7 +983,8 @@ class coronagraph(Optical_System):
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                 X_offset_output=-0.5,
                 Y_offset_output=-0.5,
-                inverse=False)
+                inverse=False,
+                norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
@@ -955,7 +1009,8 @@ class coronagraph(Optical_System):
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                 X_offset_input=-0.5,
                 Y_offset_input=-0.5,
-                inverse=True)
+                inverse=True,
+                norm='ortho')
 
             # Babinet's trick
             lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
@@ -970,7 +1025,8 @@ class coronagraph(Optical_System):
                                           self.Science_sampling * lambda_ratio,
                                           X_offset_output=-0.5,
                                           Y_offset_output=-0.5,
-                                          inverse=False)
+                                          inverse=False,
+                                          norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
@@ -996,7 +1052,8 @@ class coronagraph(Optical_System):
                          lambda_ratio,
                          X_offset_input=-0.5,
                          Y_offset_input=-0.5,
-                         inverse=True), self.dim_overpad_pupil)
+                         inverse=True,
+                         norm='ortho'), self.dim_overpad_pupil)
 
         else:
             raise Exception(
@@ -1021,6 +1078,10 @@ class coronagraph(Optical_System):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
 
         if save_all_planes_to_fits == True:
+            name_plane = 'LS' + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      self.lyot_pup.pup)
+
             name_plane = 'EF_PP_after_LS' + '_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
@@ -1170,15 +1231,16 @@ class deformable_mirror(Optical_System):
                  modelconfig,
                  DMconfig,
                  Name_DM='DM3',
-                 Model_local_dir=''):
+                 Model_local_dir=None):
         """ --------------------------------------------------
         Initialize a deformable mirror object
-        TODO handle misregistration that is currently not working
 
         Parameters
         ----------
         modelconfig : general configuration parameters (sizes and dimensions)
+
         DMconfig : DM parameters
+
         Name_DM : the name of the DM, which allows to find it in the parameter file
         we measure and save the pushact functions
 
@@ -1208,6 +1270,13 @@ class deformable_mirror(Optical_System):
         self.number_act = fits.getdata(
             model_dir +
             DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
+
+        if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
+            self.active_actuators = fits.getdata(
+                model_dir +
+                DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
+        else:
+            self.active_actuators = np.arange(self.number_act)
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
             int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
@@ -1262,11 +1331,9 @@ class deformable_mirror(Optical_System):
         print("time for WhichInPupil for " + self.string_os,
               time.time() - start_time)
 
-        # update the threshold for useful acts
-        self.string_os += "_Used" + str(len(self.WhichInPupil))
-
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
-        # now if we relaunch self.DM_pushact, it will be different due to misregistration
+        # now if we relaunch self.DM_pushact, and if misregistration = True
+        # it will be different due to misregistration
 
     def EF_through(self,
                    entrance_EF=1.,
@@ -1355,7 +1422,7 @@ class deformable_mirror(Optical_System):
 
         return EF_after_DM
 
-    def creatingpushact(self, DMconfig, Model_local_dir=''):
+    def creatingpushact(self, DMconfig, Model_local_dir=None):
         """ --------------------------------------------------
         OPD map induced in the DM plane for each actuator.
 
@@ -1406,7 +1473,7 @@ class deformable_mirror(Optical_System):
         x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
         xy_ActuN = [x_ActuN, y_ActuN]
 
-        if self.misregistration == True:
+        if self.misregistration:
             xerror = DMconfig[self.Name_DM + "_xerror"]
             yerror = DMconfig[self.Name_DM + "_yerror"]
             angerror = DMconfig[self.Name_DM + "_angerror"]
@@ -1512,7 +1579,7 @@ class deformable_mirror(Optical_System):
 
             pushact3d[i] = Psivector
 
-        if self.misregistration == False and (
+        if self.misregistration is False and (
                 not os.path.exists(Model_local_dir + Name_pushact_fits +
                                    '.fits')):
             fits.writeto(Model_local_dir + Name_pushact_fits + '.fits',
@@ -1520,7 +1587,7 @@ class deformable_mirror(Optical_System):
 
         return pushact3d
 
-    def creatingWhichinPupil(self, Model_local_dir=''):
+    def creatingWhichinPupil(self, Model_local_dir=None):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
 
@@ -1539,8 +1606,7 @@ class deformable_mirror(Optical_System):
             self.WhichInPup_threshold)
 
         if os.path.exists(Model_local_dir + Name_WhichInPup_fits + '.fits'):
-            return useful.check_and_load_fits(Model_local_dir,
-                                              Name_WhichInPup_fits)
+            return fits.getdata(Model_local_dir + Name_WhichInPup_fits + '.fits')
 
         if self.z_position != 0:
             # Propagation in DM plane out of pupil
@@ -1579,16 +1645,16 @@ class deformable_mirror(Optical_System):
                                 save_all_planes_to_fits=False,
                                 dir_save_all_planes=None):
         """ --------------------------------------------------
-        Propagate the field towards an out-of-pupil plane (DM1 plane),
-        add the DM1 phase, and propagate to the next pupil plane (DM3 plane)
+        Propagate the field towards an out-of-pupil plane ,
+        add the DM phase, and propagate to the next pupil plane
 
         Parameters
         ----------
         pupil_wavefront : 2D array (float, double or complex)
                     Wavefront in the pupil plane
 
-        phase_DM1 : 2D array
-                    Phase introduced by DM1
+        phase_DM : 2D array
+                    Phase introduced by out of PP DM
 
         wavelength : float
                     wavelength in m
@@ -1602,9 +1668,9 @@ class deformable_mirror(Optical_System):
 
         Returns
         ------
-        UDM3 : 2D array (complex)
-                Wavefront in the pupil plane after DM1
-                (corresponds to DM3 plane on THD2 bench)
+        EF_back_in_pup_plane : 2D array (complex)
+                            Wavefront in the pupil plane following the DM
+
 
         AUTHOR : Raphaël Galicher
 
@@ -1643,19 +1709,19 @@ class deformable_mirror(Optical_System):
 
         return EF_back_in_pup_plane
 
-    def voltage_to_phase(self, actu_vect, wavelength=None, einstein_sum=False):
+    def voltage_to_phase(self, actu_vect, einstein_sum=False):
         """ --------------------------------------------------
         Generate the phase applied on one DM for a give vector of actuator amplitude
         We decided to do it without matrix multiplication to save time because a
         lot of the time we have lot of zeros in it
+
+        The phase is define at the reference wl and multiply by wl_ratio in DM.EF_through
 
 
         Parameters:
         ----------
         actu_vect : 1D array
                     values of the amplitudes for each actuator
-        wavelength : float. Default is self.wavelength_0 the reference wavelength
-                current wavelength in m.
         einstein_sum : boolean. default false
                         Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
                         gives the same results as normal sum. Seems ot be faster for unique actuator
@@ -1667,11 +1733,10 @@ class deformable_mirror(Optical_System):
             phase map in the same unit as actu_vect * DM_pushact)
         -------------------------------------------------- """
 
-        if wavelength is None:
-            wavelength = self.wavelength_0
-
         where_non_zero_voltage = np.where(actu_vect != 0)
-        surface_to_phase = 2 * np.pi * 1e-9 / wavelength
+
+        #TODO I reakky don't understand the 1e-9 here
+        surface_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
 
         if einstein_sum == True or len(where_non_zero_voltage[0]) < 3:
             phase_on_DM = np.einsum(
@@ -1701,12 +1766,17 @@ class deformable_mirror(Optical_System):
         ------
         a 2d numpy array [Size basis, Number act in the DM]
         -------------------------------------------------- """
+        active_and_in_pup = [
+            value for value in self.active_actuators
+            if value in self.WhichInPupil
+        ]
+        active_and_in_pup.sort()
 
         if basis_type == 'actuator':
-            basis_size = len(self.WhichInPupil)
-            basis = np.zeros((basis_size, self.number_act))
+            basis_size = len(active_and_in_pup)
+            basis = np.zeros((basis_size, self.number_act), dtype=int)
             for i in range(basis_size):
-                basis[i][self.WhichInPupil[i]] = 1
+                basis[i][active_and_in_pup[i]] = 1
         return basis
 
 
@@ -1831,20 +1901,108 @@ class Testbed(Optical_System):
         # noFPM so that it does not break when we run transmission and max_sum_PSFs
         # which pass this keyword by default
         known_keywords.append('noFPM')
+
         # we remove doubloons
         # known_keywords = list(set(known_keywords))
         known_keywords = list(dict.fromkeys(known_keywords))
 
-        # we add no
         # We remove arguments we know are wrong
         if 'DMphase' in known_keywords:
             known_keywords.remove('DMphase')
+            # there is at least a DM, we add voltage_vector as an authorize kw
+
+            known_keywords.append('voltage_vector')
+            self.EF_through = self._control_testbed_with_voltages(
+                self.EF_through)
+
+        # to avoid mis-use we only use specific keywords.
         known_keywords.remove('kwargs')
 
         self.EF_through = _clean_EF_through(self.EF_through, known_keywords)
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
+
+    def voltage_to_phases(self, actu_vect, einstein_sum=False):
+        """ --------------------------------------------------
+        Generate the phase applied on each DMs of the testbed from a given vector of
+        actuator amplitude. I split theactu_vect and  then for each DM, it uses
+        DM.voltage_to_phase (no s)
+
+        Parameters:
+        ----------
+        actu_vect : flaot or 1D array of size testbed.number_act
+                    values of the amplitudes for each actuator and each DM
+        einstein_sum : boolean. default false
+                        Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
+                        gives the same results as normal sum. Seems ot be faster for unique actuator
+                        but slower for more complex phases
+
+        Return:
+        ------
+            3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
+            phase maps for each DMs by order of light path in the same unit as actu_vect * DM_pushact
+
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+        DMphases = np.zeros(
+            (self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
+        indice_acum_number_act = 0
+
+        if isinstance(actu_vect, float):
+            return np.zeros(self.number_DMs) + actu_vect
+
+        if len(actu_vect) != self.number_act:
+            raise Exception(
+                "voltage vector must be 0 or array of dimension testbed.number_act,"
+                + "sum of all DM.number_act")
+
+        for i, DM_name in enumerate(self.name_of_DMs):
+
+            DM = vars(self)[DM_name]
+            actu_vect_DM = actu_vect[
+                indice_acum_number_act:indice_acum_number_act + DM.number_act]
+            DMphases[i] = DM.voltage_to_phase(actu_vect_DM,
+                                              einstein_sum=einstein_sum)
+
+            indice_acum_number_act += DM.number_act
+
+        return DMphases
+
+    def _control_testbed_with_voltages(self, testbed_EF_through):
+        """ --------------------------------------------------
+        A function to go from a testbed_EF_through with several DMXX_phase
+        parameters (one for each DM), to a testbed_EF_through with a unique
+        voltage_vector parameter of size testbed.number_act (or a single float, like 0.)
+
+        the problem with DMXX_phase parameters is that it cannot be automated since it requires
+        to know the name/number of the DMs in advance.
+
+        DMXX_phase parameters can still be used, but are overridden by voltage_vector parameter
+        if present.
+
+        parameters:
+            DM_EF_through_function : the function of which we want to change the params
+            name_var : string the name of the  new name variable
+
+        Returns
+            ------
+            the_new_function: with name_var as a param
+
+
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+        def wrapper(**kwargs):
+            if 'voltage_vector' in kwargs:
+                voltage_vector = kwargs['voltage_vector']
+                DM_phase = self.voltage_to_phases(voltage_vector)
+                for i, DM_name in enumerate(self.name_of_DMs):
+                    name_phase = DM_name + "phase"
+                    kwargs[name_phase] = DM_phase[i]
+
+            return testbed_EF_through(**kwargs)
+
+        return wrapper
 
 
 ##############################################
@@ -1855,7 +2013,7 @@ class Testbed(Optical_System):
 
 def _swap_DMphase_name(DM_EF_through_function, name_var):
     """ --------------------------------------------------
-   A function to rename the DM phase
+   A function to rename the DMphase parameter to another name (usually DMXXphase)
 
     parameter:
         DM_EF_through_function : the function of which we want to change the params
@@ -1910,8 +2068,8 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
 
 def _clean_EF_through(testbed_EF_through, known_keywords):
     """ --------------------------------------------------
-    a functions to finally check that we do not set unknown keyword in
-    the testbed EF through function
+    a functions to check that we do not set unknown keyword in
+    the testbed EF through function. Maybe not necessary.
 
     parameter: 2 functions
          testbed_EF_through function

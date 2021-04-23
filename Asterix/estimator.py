@@ -96,6 +96,31 @@ class Estimator:
             self.posprobes = [int(i) for i in Estimationconfig["posprobes"]]
             cutsvdPW = Estimationconfig["cut"]
 
+            if hasattr(testbed, 'name_DM_to_probe_in_PW'):
+                if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
+                    raise Exception(
+                        "Cannot use this DM for PW, this testbed has no DM named "
+                        + testbed.name_DM_to_probe_in_PW)
+            else:
+                # Automatically check which DM to use to probe in this case
+                # this is only done once
+                number_DMs_in_PP = 0
+                for DM_name in testbed.name_of_DMs:
+                    DM = vars(testbed)[DM_name]
+                    if DM.z_position == 0.:
+                        number_DMs_in_PP += 1
+                        testbed.name_DM_to_probe_in_PW = DM_name
+
+                if number_DMs_in_PP > 1:
+                    raise Exception(
+                        "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                    )
+
+                if number_DMs_in_PP == 0:
+                    raise Exception(
+                        "You have no DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                    )
+
             string_dims_PWMatrix = "actProb[" + "_".join(
                 map(str, self.posprobes)) + "]PWampl" + str(
                     int(self.amplitudePW)) + "_cut" + str(int(
@@ -106,23 +131,17 @@ class Estimator:
             filePW = "MatrixPW_" + string_dims_PWMatrix
             if os.path.exists(matrix_dir + filePW + ".fits") == True:
                 print("The matrix " + filePW + " already exists")
-                self.PWVectorprobes = fits.getdata(matrix_dir + filePW +
-                                                   ".fits")
+                self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
             else:
                 print("Saving " + filePW + " ...")
-                self.PWVectorprobes, showsvd = wsc.createvectorprobes(
-                    testbed, self.amplitudePW, self.posprobes, self.dimEstim,
-                    cutsvdPW, testbed.wavelength_0)
-                fits.writeto(matrix_dir + filePW + ".fits",
-                             self.PWVectorprobes)
+                self.PWMatrix, _ = wsc.createPWmastrix(testbed,
+                                                       self.amplitudePW,
+                                                       self.posprobes,
+                                                       self.dimEstim, cutsvdPW,
+                                                       testbed.wavelength_0)
+                fits.writeto(matrix_dir + filePW + ".fits", self.PWMatrix)
 
-            visuPWMap = "EigenValPW_" + string_dims_PWMatrix
-
-            if os.path.exists(matrix_dir + visuPWMap + ".fits") is False:
-                print("Saving " + visuPWMap + " ...")
-                fits.writeto(matrix_dir + visuPWMap + ".fits", showsvd[1])
-
-            # Saving PW matrices in Labview directory
+            # Saving PW matrix in Labview directory
             if save_for_bench == True:
                 probes = np.zeros(
                     (len(self.posprobes), testbed.DM3.number_act),
@@ -132,16 +151,15 @@ class Estimator:
                     dtype=np.float32)
 
                 for i in np.arange(len(self.posprobes)):
+                    # TODO WTH is the hardcoded 17. @Raphael @Axel
                     probes[i, self.posprobes[i]] = self.amplitudePW / 17
                     vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) *
                              self.dimEstim *
-                             self.dimEstim] = self.PWVectorprobes[:, 0,
-                                                                  i].flatten()
+                             self.dimEstim] = self.PWMatrix[:, 0, i].flatten()
                     vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) *
                              self.dimEstim *
-                             self.dimEstim] = self.PWVectorprobes[:, 1,
-                                                                  i].flatten()
-                fits.writeto(realtestbed_dir + "Probes_EFC_default.fits",
+                             self.dimEstim] = self.PWMatrix[:, 1, i].flatten()
+                fits.writeto(realtestbed_dir + "Probes_PW_default.fits",
                              probes,
                              overwrite=True)
                 fits.writeto(realtestbed_dir + "Matr_mult_estim_PW.fits",
@@ -155,13 +173,12 @@ class Estimator:
 
     def estimate(self,
                  testbed,
-                 entrance_EF=0.,
-                 DM1phase=0.,
-                 DM3phase=0.,
+                 entrance_EF=1.,
+                 voltage_vector=0.,
                  wavelength=None,
                  photon_noise=False,
                  nb_photons=1e30,
-                 perfect_estimation = False,
+                 perfect_estimation=False,
                  **kwargs):
         """ --------------------------------------------------
         Run an estimation from a testbed, with a given input wavefront
@@ -172,8 +189,7 @@ class Estimator:
         ----------
         testbed:        a testbed element
         entrance_EF     default 0., float or 2D array can be complex, initial EF field
-        DM1phase        default 0., float or 2D real array, phase on DM1
-        DM3phase        default 0., float or 2D real array, phase on DM1
+        voltage_vector  vector concatenation of voltages vectors for each DMs
         wavelength      default None, float, wavelenght of the estimation
         photon_noise    default False, boolean,  If True, add photon noise.
         nb_photons      default 1e30, int Number of photons entering the pupil
@@ -191,15 +207,14 @@ class Estimator:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        if wavelength is None:
-            wavelength = testbed.wavelength_0
-
         if (self.technique == "perfect") or (perfect_estimation is True):
             # If polychromatic, assume a perfect estimation at one wavelength
 
-            resultatestimation = testbed.todetector(entrance_EF=entrance_EF,
-                                                    DM1phase=DM1phase,
-                                                    DM3phase=DM3phase)
+            resultatestimation = testbed.todetector(
+                entrance_EF=entrance_EF,
+                voltage_vector=voltage_vector,
+                wavelength=wavelength,
+                **kwargs)
 
             if photon_noise == True:
                 resultatestimation = np.random.poisson(
@@ -214,15 +229,16 @@ class Estimator:
                                               self.posprobes,
                                               self.dimEstim,
                                               self.amplitudePW,
-                                              DM1phase=DM1phase,
-                                              DM3phase=DM3phase,
+                                              voltage_vector=voltage_vector,
+                                              wavelength=wavelength,
                                               photon_noise=photon_noise,
-                                              nb_photons=nb_photons)
+                                              nb_photons=nb_photons,
+                                              **kwargs)
 
-            return wsc.FP_PWestimate(Difference, self.PWVectorprobes)
+            return wsc.FP_PWestimate(Difference, self.PWMatrix)
 
         elif self.technique == 'coffee':
-            return np.zeros((self.dimEstim,self.dimEstim))
+            return np.zeros((self.dimEstim, self.dimEstim))
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")

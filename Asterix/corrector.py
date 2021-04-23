@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import time
 
+import Asterix.fits_functions as useful
 import Asterix.processing_functions as proc
 import Asterix.Optical_System_functions as OptSy
 
@@ -75,9 +76,14 @@ class Corrector:
             raise Exception("testbed must be an Optical_System objet")
 
         basis_type = Correctionconfig["DM_basis"].lower()
+
+        basis_str = ""
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
+            DM.basis_size = DM.basis.shape[0]
+            basis_str += "_" + DM_name +  basis_type +"Basis" + str(
+                DM.basis_size)
 
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
@@ -91,7 +97,7 @@ class Corrector:
                                                    estimator.Estim_sampling)
 
             fileDirectMatrix = "DirectMatrix_EFCampl" + str(
-                self.amplitudeEFC) + testbed.string_os
+                self.amplitudeEFC) + basis_str + testbed.string_os
 
             if os.path.exists(matrix_dir + fileDirectMatrix + ".fits"):
                 print("The matrix " + fileDirectMatrix + " already exists")
@@ -129,55 +135,38 @@ class Corrector:
 
             if save_for_bench == True:
 
-                if MaskDH.DH_shape == "square":
-                    print(
-                        "TO SET ON LABVIEW: ",
-                        str(estimator.dimEstim / 2 +
-                            np.fft.fftshift(MaskDH.corner_pos *
-                                            estimator.Estim_sampling)))
-
                 Nbmodes = Correctionconfig["Nbmodes"]
-                SVD, _, invertGDH = wsc.invertSVD(self.Gmatrix,
-                                                  Nbmodes,
-                                                  goal="c",
-                                                  regul=self.regularization)
-
-                plt.clf()
-                plt.plot(SVD, "r.")
-                plt.yscale("log")
-
-                figSVDEFC = matrix_dir + "SVD_Modes" + str(
-                    Nbmodes) + '_' + fileDirectMatrix + ".png"
-
-                plt.savefig(figSVDEFC)
+                _, _, invertGDH = wsc.invertSVD(
+                    self.Gmatrix,
+                    Nbmodes,
+                    goal="c",
+                    regul=self.regularization,
+                    visu=True,
+                    filename_visu=realtestbed_dir + "SVD_Modes" +
+                    str(Nbmodes) + '_' + fileDirectMatrix + ".png")
 
                 if testbed.DM1.active:
-                    separation_DM1_DM3 = len(testbed.DM1.WhichInPupil)
-                else:
-                    separation_DM1_DM3 = 0
+                    invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]
+                    invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
 
-                EFCmatrix_DM3 = np.zeros(
-                    (invertGDH.shape[1], testbed.DM3.number_act),
-                    dtype=np.float32)
-                for i in np.arange(len(testbed.DM3.WhichInPupil)):
-                    EFCmatrix_DM3[:, testbed.DM3.WhichInPupil[i]] = invertGDH[
-                        i + separation_DM1_DM3, :]
-                fits.writeto(realtestbed_dir +
-                             "Matrix_control_EFC_DM3_default.fits",
-                             EFCmatrix_DM3,
-                             overwrite=True)
-                if testbed.DM1.active:
-                    EFCmatrix_DM1 = np.zeros(
-                        (invertGDH.shape[1], testbed.DM1.number_act),
-                        dtype=np.float32)
-                    for i in np.arange(len(testbed.DM1.WhichInPupil)):
-                        EFCmatrix_DM1[:,
-                                      testbed.DM1.WhichInPupil[i]] = invertGDH[
-                                          i, :]
+                    EFCmatrix_DM1 = np.transpose(
+                        np.dot(np.transpose(testbed.DM1.basis),
+                               invertGDH_DM1).astype(np.float32))
                     fits.writeto(realtestbed_dir +
                                  "Matrix_control_EFC_DM1_default.fits",
                                  EFCmatrix_DM1,
                                  overwrite=True)
+                else:
+                    invertGDH_DM3 = invertGDH
+
+                EFCmatrix_DM3 = np.transpose(
+                    np.dot(np.transpose(testbed.DM3.basis),
+                           invertGDH_DM3).astype(np.float32))
+                fits.writeto(realtestbed_dir +
+                             "Matrix_control_EFC_DM3_default.fits",
+                             EFCmatrix_DM3,
+                             overwrite=True)
+
                 fits.writeto(realtestbed_dir + "DH_mask.fits",
                              self.MaskEstim.astype(np.float32),
                              overwrite=True)
@@ -196,8 +185,8 @@ class Corrector:
 
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
-            if DM.misregistration == True:
-                print(DM_name + "Misregistration!")
+            if DM.misregistration:
+                print(DM_name + " Misregistration!")
                 DM.DM_pushact = DM.creatingpushact(DM.DMconfig)
 
         ######################
