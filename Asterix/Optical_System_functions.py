@@ -1925,17 +1925,14 @@ class Testbed(Optical_System):
 
     def voltage_to_phases(self, actu_vect, einstein_sum=False):
         """ --------------------------------------------------
-        Generate the phase applied on one DM for a give vector of actuator amplitude
-        We decided to do it without matrix multiplication to save time because a
-        lot of the time we have lot of zeros in it
-
-        The phase is define at the reference wl and multiply by wl_ratio in DM.EF_through
-
+        Generate the phase applied on each DMs of the testbed from a given vector of
+        actuator amplitude. I split theactu_vect and  then for each DM, it uses
+        DM.voltage_to_phase (no s)
 
         Parameters:
         ----------
-        actu_vect : flaot or 1D array
-                    values of the amplitudes for each actuator
+        actu_vect : flaot or 1D array of size testbed.number_act
+                    values of the amplitudes for each actuator and each DM
         einstein_sum : boolean. default false
                         Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
                         gives the same results as normal sum. Seems ot be faster for unique actuator
@@ -1943,8 +1940,8 @@ class Testbed(Optical_System):
 
         Return:
         ------
-            3D array
-            phases map for each DMS in the same unit as actu_vect * DM_pushact by order of light path
+            3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
+            phase maps for each DMs by order of light path in the same unit as actu_vect * DM_pushact
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
@@ -1974,9 +1971,17 @@ class Testbed(Optical_System):
 
     def _control_testbed_with_voltages(self, testbed_EF_through):
         """ --------------------------------------------------
-        A function to controle the testbed with a single function
+        A function to go from a testbed_EF_through with several DMXX_phase
+        parameters (one for each DM), to a testbed_EF_through with a unique
+        voltage_vector parameter of size testbed.number_act (or a single float, like 0.)
 
-        parameter:
+        the problem with DMXX_phase parameters is that it cannot be automated since it requires
+        to know the name/number of the DMs in advance.
+
+        DMXX_phase parameters can still be used, but are overridden by voltage_vector parameter
+        if present.
+
+        parameters:
             DM_EF_through_function : the function of which we want to change the params
             name_var : string the name of the  new name variable
 
@@ -2008,7 +2013,7 @@ class Testbed(Optical_System):
 
 def _swap_DMphase_name(DM_EF_through_function, name_var):
     """ --------------------------------------------------
-   A function to rename the DM phase
+   A function to rename the DMphase parameter to another name (usually DMXXphase)
 
     parameter:
         DM_EF_through_function : the function of which we want to change the params
@@ -2063,8 +2068,8 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
 
 def _clean_EF_through(testbed_EF_through, known_keywords):
     """ --------------------------------------------------
-    a functions to finally check that we do not set unknown keyword in
-    the testbed EF through function
+    a functions to check that we do not set unknown keyword in
+    the testbed EF through function. Maybe not necessary.
 
     parameter: 2 functions
          testbed_EF_through function
