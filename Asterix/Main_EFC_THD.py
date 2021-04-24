@@ -56,15 +56,14 @@ def create_interaction_matrices(parameter_file,
 
     ### CONFIG
     Data_dir = config["Data_dir"]
+    #On bench or numerical simulation
+    onbench = config["onbench"]
 
     ##################
     ##################
     ### MODEL CONFIG
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
-
-    #On bench or numerical simulation
-    onbench = modelconfig["onbench"]
 
     ##################
     ##################
@@ -179,6 +178,8 @@ def correctionLoop(parameter_file,
 
     ### CONFIG
     Data_dir = config["Data_dir"]
+    #On bench or numerical simulation
+    onbench = config["onbench"]
 
     ##################
     ##################
@@ -186,8 +187,7 @@ def correctionLoop(parameter_file,
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
 
-    #On bench or numerical simulation
-    onbench = modelconfig["onbench"]
+
 
     ##################
     ##################
@@ -213,11 +213,6 @@ def correctionLoop(parameter_file,
     Correctionconfig = config["Correctionconfig"]
     Correctionconfig.update(NewCorrectionconfig)
 
-    Nbiter_corr = [int(i) for i in Correctionconfig["Nbiter_corr"]]
-    Nbmode_corr = [int(i) for i in Correctionconfig["Nbmode_corr"]]
-    Linesearch = Correctionconfig["Linesearch"]
-    Linesearchmode = [int(i) for i in Correctionconfig["Linesearchmode"]]
-    gain = Correctionconfig["gain"]
 
     ##################
     ##################
@@ -226,6 +221,12 @@ def correctionLoop(parameter_file,
     SIMUconfig.update(NewSIMUconfig)
 
     Name_Experiment = SIMUconfig["Name_Experiment"]
+
+    Nbiter_corr = [int(i) for i in SIMUconfig["Nbiter_corr"]]
+    Nbmode_corr = [int(i) for i in SIMUconfig["Nbmode_corr"]]
+    Linesearch = SIMUconfig["Linesearch"]
+    Linesearchmode = [int(i) for i in SIMUconfig["Linesearchmode"]]
+    gain = SIMUconfig["gain"]
 
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
@@ -271,6 +272,8 @@ def correctionLoop(parameter_file,
 
     # we also need to "clear" the apod plane because the THD2 is like that
     Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
+    # this can also be a parameter in Coronaconfig.
+
     corono = OptSy.coronagraph(modelconfig, Coronaconfig)
     # and then just concatenate
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
