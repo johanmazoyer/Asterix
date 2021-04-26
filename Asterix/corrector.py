@@ -147,7 +147,6 @@ class Corrector:
 
                 if testbed.DM1.active:
                     invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]
-                    invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
 
                     EFCmatrix_DM1 = np.transpose(
                         np.dot(np.transpose(testbed.DM1.basis),
@@ -156,8 +155,12 @@ class Corrector:
                                  "Matrix_control_EFC_DM1_default.fits",
                                  EFCmatrix_DM1.astype(np.float32),
                                  overwrite=True)
-                else:
+                    if testbed.DM3.active:
+                        invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
+                elif testbed.DM3.active:
                     invertGDH_DM3 = invertGDH
+                else:
+                    raise Exception("No active DMs")
 
                 EFCmatrix_DM3 = np.transpose(
                     np.dot(np.transpose(testbed.DM3.basis),
