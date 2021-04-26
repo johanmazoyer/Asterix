@@ -157,18 +157,25 @@ class Corrector:
                                  overwrite=True)
                     if testbed.DM3.active:
                         invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
-                elif testbed.DM3.active:
-                    invertGDH_DM3 = invertGDH
-                else:
-                    raise Exception("No active DMs")
-
-                EFCmatrix_DM3 = np.transpose(
-                    np.dot(np.transpose(testbed.DM3.basis),
+                        EFCmatrix_DM3 = np.transpose(
+                                    np.dot(np.transpose(testbed.DM3.basis),
                            invertGDH_DM3))
-                fits.writeto(realtestbed_dir +
+                        fits.writeto(realtestbed_dir +
                              "Matrix_control_EFC_DM3_default.fits",
                              EFCmatrix_DM3.astype(np.float32),
                              overwrite=True)
+                elif testbed.DM3.active:
+                    invertGDH_DM3 = invertGDH
+                    EFCmatrix_DM3 = np.transpose(
+                                np.dot(np.transpose(testbed.DM3.basis),
+                        invertGDH_DM3))
+                    fits.writeto(realtestbed_dir +
+                            "Matrix_control_EFC_DM3_default.fits",
+                            EFCmatrix_DM3.astype(np.float32),
+                            overwrite=True)
+                else:
+                    raise Exception("No active DMs")
+
 
                 fits.writeto(realtestbed_dir + "DH_mask.fits",
                              self.MaskEstim.astype(np.float32),
