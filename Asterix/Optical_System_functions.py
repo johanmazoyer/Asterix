@@ -1474,10 +1474,10 @@ class deformable_mirror(Optical_System):
         xy_ActuN = [x_ActuN, y_ActuN]
 
         if self.misregistration:
-            xerror = DMconfig[self.Name_DM + "_xerror"]
-            yerror = DMconfig[self.Name_DM + "_yerror"]
-            angerror = DMconfig[self.Name_DM + "_angerror"]
-            gausserror = DMconfig[self.Name_DM + "_gausserror"]
+            xerror = float(DMconfig[self.Name_DM + "_xerror"])
+            yerror = float(DMconfig[self.Name_DM + "_yerror"])
+            angerror = float(DMconfig[self.Name_DM + "_angerror"])
+            gausserror = float(DMconfig[self.Name_DM + "_gausserror"])
         else:
             xerror = 0.
             yerror = 0.
