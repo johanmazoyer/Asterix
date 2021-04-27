@@ -7,60 +7,21 @@ Other coronagraphs (Vortex, apodisers)
 Other estimation algorithms (SCC)
 
 
-Discussion with Olivier HS on March 16th to define
-needs and plan of attack for correction and estimation. 
-It was decided: 
 
-Estimator is a class which takes as parameter:
-- the testbed structure
-- the estimation parameters
-
-It must contains 2 functions at least: 
-- an initialization (e.g. PW matrix) Estimator.__init__()
-The initialization will probaby require previous initialization of
-the testbed
-
-- an estimatation function itself with parameters
-        - the entrance EF
-        - DM voltage
-        - the WL
-Estimation = Estimator.estimate(entrance EF, DM voltage, WL)
-
-It returns the estimation as a 2D array. In all generality, it can be pupil or focal plane,
-complex or real with keywords (Estim.is_focal_plane = True, Estim.is_complex = True, Estim.whatWL) 
-to explain the form of the output and potentially prevent wronfull combination of
-estim + correc.
-
-
-Corrector is a class which takes as parameter:
-- the testbed structure
-- the correction parameters
-
-It must contains 2 functions at least: 
-- an initialization (e.g. Jacobian matrix) Estimator.__init__
-The initialization will probaby require previous initialization of
-the testbed and of the estimator
-
-- an correction function itself with parameters
-        - the estimation as a 2D array, potentially 3D for polychromatic correction
-DMVoltage = Corrector.toDM_voltage(estimation)
-It returns the DM Voltage. In all generality, it can one or 2 DMs. Depending on the testbed
-
-
-Remaining important problems 
+Remaining important problems
 - gradiant for Coffee, which heavily depends on the model but needs
-to be automtically updated when the model is changed. 
+to be automtically updated when the model is changed.
 probaby done in COFFEE estimator initialization. but to be re-discussed later
 
-- matrix recalculation should be done in correction class ? 
+- matrix recalculation should be done in correction class ?
 
 Maybe the correction loop can be another function of Corrector that use Corrector.toDM_voltages.
-Something like  Corrector.Correction_loop(Initial_EF_field). This function can allow to 
-define separatly the problematic of gains, matrix recalculation, etc. 
+Something like  Corrector.Correction_loop(Initial_EF_field). This function can allow to
+define separatly the problematic of gains, matrix recalculation, etc.
 
 Correction with repeated Jacobian
 
 polychromatic correction: inside of the correction
-polychromatic estimation: inside of the estimation function and can send, single WL, multiple WL or large bandwidth 
+polychromatic estimation: inside of the estimation function and can send, single WL, multiple WL or large bandwidth
                                 estimate with keyword to explain.
 

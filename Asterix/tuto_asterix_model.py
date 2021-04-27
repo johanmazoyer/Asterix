@@ -20,6 +20,7 @@ checks = config.validate(vtor, copy=True)
 modelconfig = config["modelconfig"]
 DMconfig = config["DMconfig"]
 Coronaconfig = config["Coronaconfig"]
+SIMUconfig = config["SIMUconfig"]
 
 # please modify
 Data_dir = '.'
@@ -52,8 +53,6 @@ pup_roman = OptSy.pupil(modelconfig, PupType="RomanPup")
 # can be defined. This can be useful for Lyot stop
 # Clear pupil of radius equal to 100 pixel
 pup_round_100 = OptSy.pupil(modelconfig, prad=100)
-# TODO a better way to define this pupil can be to indicate the radius as a percentage of
-# the radius of the initial pupil
 
 # # Careful, pup_roman is not an array, it is an Optical System object.
 # if you want to access the pupil itself as an array, you can with
@@ -110,11 +109,10 @@ No_mask_PSF = corono.todetector_Intensity(center_on_pixel=True, noFPM=True)
 # This allow us to normalize the images
 Max_No_mask_PSF = np.max(No_mask_PSF)
 
-# # lets create a random phase:
-phaserms = 50e-9  #in meter
-rhoc_phase = 4.3
-slope_phase = 3
-phase = pup_round.random_phase_map(phaserms, rhoc_phase, slope_phase)
+
+# set initial phase and amplitude and wavefront
+phase = corono.generate_phase_aberr(SIMUconfig,
+                                            Model_local_dir=Model_local_dir)
 
 # # from this phase we create a electrical field. This is a general
 # aberrated field before any pupil multiplication.
@@ -190,7 +188,7 @@ print("name of the DMs: ", testbed_1DM_romanpup.name_of_DMs)
 # We need to increase the number of pixel in the pupil if we add another DM.
 # I'll put it at the minimum to go faster
 # because of numerical sampling for the Fresnel propagation
-modelconfig.update({'diam_pup_in_pix': 220})
+modelconfig.update({'diam_pup_in_pix': 400})
 
 # Once we change modelconfig, all the previously defined systems are of the wrong dimensions so they cannot
 # be concatenated adn must be reclacultated

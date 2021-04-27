@@ -1474,10 +1474,10 @@ class deformable_mirror(Optical_System):
         xy_ActuN = [x_ActuN, y_ActuN]
 
         if self.misregistration:
-            xerror = DMconfig[self.Name_DM + "_xerror"]
-            yerror = DMconfig[self.Name_DM + "_yerror"]
-            angerror = DMconfig[self.Name_DM + "_angerror"]
-            gausserror = DMconfig[self.Name_DM + "_gausserror"]
+            xerror = float(DMconfig[self.Name_DM + "_xerror"])
+            yerror = float(DMconfig[self.Name_DM + "_yerror"])
+            angerror = float(DMconfig[self.Name_DM + "_angerror"])
+            gausserror = float(DMconfig[self.Name_DM + "_gausserror"])
         else:
             xerror = 0.
             yerror = 0.
@@ -1912,7 +1912,7 @@ class Testbed(Optical_System):
             # there is at least a DM, we add voltage_vector as an authorize kw
 
             known_keywords.append('voltage_vector')
-            self.EF_through = self._control_testbed_with_voltages(
+            self.EF_through = _control_testbed_with_voltages(self,
                 self.EF_through)
 
         # to avoid mis-use we only use specific keywords.
@@ -1968,41 +1968,6 @@ class Testbed(Optical_System):
             indice_acum_number_act += DM.number_act
 
         return DMphases
-
-    def _control_testbed_with_voltages(self, testbed_EF_through):
-        """ --------------------------------------------------
-        A function to go from a testbed_EF_through with several DMXX_phase
-        parameters (one for each DM), to a testbed_EF_through with a unique
-        voltage_vector parameter of size testbed.number_act (or a single float, like 0.)
-
-        the problem with DMXX_phase parameters is that it cannot be automated since it requires
-        to know the name/number of the DMs in advance.
-
-        DMXX_phase parameters can still be used, but are overridden by voltage_vector parameter
-        if present.
-
-        parameters:
-            DM_EF_through_function : the function of which we want to change the params
-            name_var : string the name of the  new name variable
-
-        Returns
-            ------
-            the_new_function: with name_var as a param
-
-
-        AUTHOR : Johan Mazoyer
-        -------------------------------------------------- """
-        def wrapper(**kwargs):
-            if 'voltage_vector' in kwargs:
-                voltage_vector = kwargs['voltage_vector']
-                DM_phase = self.voltage_to_phases(voltage_vector)
-                for i, DM_name in enumerate(self.name_of_DMs):
-                    name_phase = DM_name + "phase"
-                    kwargs[name_phase] = DM_phase[i]
-
-            return testbed_EF_through(**kwargs)
-
-        return wrapper
 
 
 ##############################################
@@ -2094,6 +2059,42 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
                     passed_arg +
                     'is not a EF_through valid argument. Valid args are ' +
                     str(known_keywords))
+
+        return testbed_EF_through(**kwargs)
+
+    return wrapper
+
+
+def _control_testbed_with_voltages(testbed, testbed_EF_through):
+    """ --------------------------------------------------
+    A function to go from a testbed_EF_through with several DMXX_phase
+    parameters (one for each DM), to a testbed_EF_through with a unique
+    voltage_vector parameter of size testbed.number_act (or a single float, like 0.)
+
+    the problem with DMXX_phase parameters is that it cannot be automated since it requires
+    to know the name/number of the DMs in advance.
+
+    DMXX_phase parameters can still be used, but are overridden by voltage_vector parameter
+    if present.
+
+    parameters:
+        DM_EF_through_function : the function of which we want to change the params
+        name_var : string the name of the  new name variable
+
+    Returns
+        ------
+        the_new_function: with name_var as a param
+
+
+    AUTHOR : Johan Mazoyer
+    -------------------------------------------------- """
+    def wrapper(**kwargs):
+        if 'voltage_vector' in kwargs:
+            voltage_vector = kwargs['voltage_vector']
+            DM_phase = testbed.voltage_to_phases(voltage_vector)
+            for i, DM_name in enumerate(testbed.name_of_DMs):
+                name_phase = DM_name + "phase"
+                kwargs[name_phase] = DM_phase[i]
 
         return testbed_EF_through(**kwargs)
 

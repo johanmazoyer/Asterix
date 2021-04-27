@@ -135,7 +135,7 @@ class Corrector:
 
             if save_for_bench == True:
 
-                Nbmodes = Correctionconfig["Nbmodes"]
+                Nbmodes = Correctionconfig["Nbmodes_OnTestbed"]
                 _, _, invertGDH = wsc.invertSVD(
                     self.Gmatrix,
                     Nbmodes,
@@ -147,25 +147,35 @@ class Corrector:
 
                 if testbed.DM1.active:
                     invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]
-                    invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
 
                     EFCmatrix_DM1 = np.transpose(
                         np.dot(np.transpose(testbed.DM1.basis),
-                               invertGDH_DM1).astype(np.float32))
+                               invertGDH_DM1))
                     fits.writeto(realtestbed_dir +
                                  "Matrix_control_EFC_DM1_default.fits",
-                                 EFCmatrix_DM1,
+                                 EFCmatrix_DM1.astype(np.float32),
                                  overwrite=True)
-                else:
-                    invertGDH_DM3 = invertGDH
-
-                EFCmatrix_DM3 = np.transpose(
-                    np.dot(np.transpose(testbed.DM3.basis),
-                           invertGDH_DM3).astype(np.float32))
-                fits.writeto(realtestbed_dir +
+                    if testbed.DM3.active:
+                        invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
+                        EFCmatrix_DM3 = np.transpose(
+                                    np.dot(np.transpose(testbed.DM3.basis),
+                           invertGDH_DM3))
+                        fits.writeto(realtestbed_dir +
                              "Matrix_control_EFC_DM3_default.fits",
-                             EFCmatrix_DM3,
+                             EFCmatrix_DM3.astype(np.float32),
                              overwrite=True)
+                elif testbed.DM3.active:
+                    invertGDH_DM3 = invertGDH
+                    EFCmatrix_DM3 = np.transpose(
+                                np.dot(np.transpose(testbed.DM3.basis),
+                        invertGDH_DM3))
+                    fits.writeto(realtestbed_dir +
+                            "Matrix_control_EFC_DM3_default.fits",
+                            EFCmatrix_DM3.astype(np.float32),
+                            overwrite=True)
+                else:
+                    raise Exception("No active DMs")
+
 
                 fits.writeto(realtestbed_dir + "DH_mask.fits",
                              self.MaskEstim.astype(np.float32),

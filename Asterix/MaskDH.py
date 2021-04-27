@@ -64,6 +64,9 @@ class MaskDH:
             np.arange(dimFP) - (dimFP) / 2)
         rr = np.hypot(yy, xx)
 
+        if self.DH_shape == "nodh":
+            return maskDH
+
         if self.DH_shape == "square":
 
             maskDH[xx < self.corner_pos[0] * FP_sampling] = 0
