@@ -36,6 +36,8 @@ class MaskDH:
 
             self.circ_offset = Correctionconfig["circ_offset"]
             self.circ_angle = Correctionconfig["circ_angle"]
+        elif self.DH_shape == "nodh":
+            pass
         else:
             raise Exception("Not valid DH Shape")
 
@@ -113,14 +115,18 @@ class MaskDH:
         """
 
         if self.DH_shape == "square":
-            stringdh = "MaskDH_square_[" + "_".join(map(str,
-                                                        self.corner_pos)) + "]"
+            stringdh = "MaskDH_square_" + "_".join(map(str,
+                                                        self.corner_pos))
         if self.DH_shape == "circle":
-            stringdh = "_circle_rad[" + "_".join(map(
-                str, self.Sep_Min_Max)) + "]_" + str(self.DH_side)
+            stringdh = "_circle_rad" + "_".join(map(
+                str, self.Sep_Min_Max)) + "_" + str(self.DH_side)
             if self.DH_side != 'full':
                 stringdh = stringdh + '_ang' + str(int(self.circ_angle))
                 if self.circ_offset > 0.:
                     stringdh = stringdh + '_off' + str(self.circ_offset)
+
+        if self.DH_shape == "nodh":
+            stringdh = "FullDH"
+
 
         return stringdh
