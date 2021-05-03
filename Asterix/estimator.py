@@ -131,7 +131,7 @@ class Estimator:
                         )
 
             string_dims_PWMatrix = "actProb_" + "_".join(
-                map(str, self.posprobes)) + "_PWampl" + str(
+                map(str, self.posprobes)) + "with" + testbed.name_DM_to_probe_in_PW +"_PWampl" + str(
                     int(self.amplitudePW)) + "_cut" + str(int(
                         cutsvdPW // 1000)) + "k_dimEstim" + str(
                             self.dimEstim) + testbed.string_os
