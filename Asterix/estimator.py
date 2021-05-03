@@ -130,8 +130,8 @@ class Estimator:
                             "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
                         )
 
-            string_dims_PWMatrix = "actProb[" + "_".join(
-                map(str, self.posprobes)) + "]PWampl" + str(
+            string_dims_PWMatrix = "actProb_" + "_".join(
+                map(str, self.posprobes)) + "_PWampl" + str(
                     int(self.amplitudePW)) + "_cut" + str(int(
                         cutsvdPW // 1000)) + "k_dimEstim" + str(
                             self.dimEstim) + testbed.string_os
@@ -143,12 +143,14 @@ class Estimator:
                 self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
             else:
                 print("Saving " + filePW + " ...")
-                self.PWMatrix, _ = wsc.createPWmastrix(testbed,
+                self.PWMatrix, showSVD = wsc.createPWmastrix(testbed,
                                                        self.amplitudePW,
                                                        self.posprobes,
                                                        self.dimEstim, cutsvdPW,
                                                        testbed.wavelength_0)
-                fits.writeto(matrix_dir + filePW + ".fits", self.PWMatrix)
+                fits.writeto(matrix_dir + filePW + ".fits", np.array(self.PWMatrix))
+                visuPWMap = "EigenValPW_" + string_dims_PWMatrix
+                fits.writeto(matrix_dir + visuPWMap + ".fits", np.array(showSVD[1]))
 
             # Saving PW matrix in Labview directory
             if save_for_bench == True:
