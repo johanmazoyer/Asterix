@@ -1266,16 +1266,16 @@ class deformable_mirror(Optical_System):
         self.misregistration = False
 
         # first thing we do is to open filename_grid_actu to check the number of
-        # actuator of this DM
-        self.number_act = fits.getdata(
-            model_dir +
-            DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
-
+        # actuator of this DM. We need the number of act to read and load pushact .fits
         if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
             self.active_actuators = fits.getdata(
                 model_dir +
                 DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
+            self.number_act = len(self.active_actuators)
         else:
+            self.number_act = fits.getdata(
+                model_dir +
+                DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
             self.active_actuators = np.arange(self.number_act)
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
@@ -1578,6 +1578,8 @@ class deformable_mirror(Optical_System):
             Psivector[np.where(Psivector < 1e-4)] = 0
 
             pushact3d[i] = Psivector
+
+        pushact3d = pushact3d[self.active_actuators]
 
         if self.misregistration is False and (
                 not os.path.exists(Model_local_dir + Name_pushact_fits +
