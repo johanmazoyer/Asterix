@@ -844,11 +844,13 @@ class coronagraph(Optical_System):
         if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig[
                 "filename_instr_lyot"] == "RoundPup":
             self.lyot_pup = pupil(modelconfig,
-                                  prad=self.lyotrad,
+                                  prad=self.prad,
                                   PupType=coroconfig["filename_instr_lyot"])
+        # this is very weird. if I put self.lyotrad it seems to broke the testbed ?
+        # TO test
         else:
             self.lyot_pup = pupil(modelconfig,
-                                  prad=self.lyotrad,
+                                  prad=self.prad,
                                   filename=coroconfig["filename_instr_lyot"])
 
         self.string_os += '_lrad' + str(int(self.lyotrad))
