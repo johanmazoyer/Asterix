@@ -99,20 +99,20 @@ for lap in lap_methodes:
         
         
         t = time.time() 
-        phi_est = estimator.estimate(i_foc, i_div)
+        phi_est,_ = estimator.estimate(i_foc, i_div)
         elapsed = time.time() - t
-        error = sum(sum(pow(tbed.EF_through(phi_foc) - phi_est,2)))/(N**2)
+        error = sum(sum(pow(phi_foc - phi_est,2)))/(N**2)
         
         time_list.append(elapsed)   
         error_list.append(error)
         
-        fig.set_data(phi_est)
-        plt.title("Simu for  lap :"+ str(lap) +", grad :" + grad)
-        plt.show()
-        plt.pause(0.0001)
+        # fig.set_data(phi_est)
+        # plt.title("Simu for  lap :"+ str(lap) +", grad :" + grad)
+        # plt.show()
+        # plt.pause(0.0001)
         print("Error : " + "%.5f" % error)
         print("Minimize took : " + str(elapsed/60) + " mins\n")
-        print(" ^ Simu for  lap :"+ str(lap) +", grad :" + grad+"\n")
+        print(" ^ Simu for  lap :"+ str(lap) +", grad :" + grad +"\n")
         print("----------------------------------------")
         
     if not isinstance(res_matrix,int) :    

@@ -32,11 +32,14 @@ def zernike(Ro,Theta,j):
         R += Ro**(n-2*k) * (-1)**k * factorial(n-k) / ( factorial(k) * factorial( (n+m)//2 - k )*factorial( (n-m)//2 -k) )
     
     if m == 0 :
-        return np.sqrt(n+1) * R 
+        poly = np.sqrt(n+1) * R 
     elif j%2:
-        return  np.sqrt(2*(n+1)) * R * np.sin(m*Theta)
+        poly = np.sqrt(2*(n+1)) * R * np.sin(m*Theta)
     else:
-        return np.sqrt(2*(n+1)) * R * np.cos(m*Theta)
+        poly = np.sqrt(2*(n+1)) * R * np.cos(m*Theta)
+     
+    # Normalize 1
+    return Ro.size * ( poly / sum(sum(poly**2)) )
 
     
 def osa2mn(j):

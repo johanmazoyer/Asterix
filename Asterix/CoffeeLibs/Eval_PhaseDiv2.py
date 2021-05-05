@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from CoffeeLibs.coffee import custom_bench, Estimator
-from CoffeeLibs.pzernike import pmap, zernike
-from sklearn.preprocessing import normalize
+from CoffeeLibs.pzernike import pmap, zernike, pzernike
 import numpy as np
 
 from configobj import ConfigObj
@@ -35,8 +34,7 @@ Model_local_dir = os.path.join(config["Data_dir"], "Model_local") + os.path.sep
 
 # Initialize test bed:
 tbed = custom_bench(modelconfig,model_dir=model_dir)
-tbed.grad = "np"
-tbed.lap  = "lap"
+
 
 # %% Treatment
 
@@ -48,7 +46,7 @@ estimator = Estimator(tbed,**config["Estimationconfig"])
 
 # varb  = 0 # Variance du bruit
 Neval      = 10 # Nombre de point a evaluer
-plist      = np.linspace(0, 50, Neval) # Rapport signal a bruit
+plist      = np.linspace(0, 100, Neval) # Rapport signal a bruit
 
 
 glist   = [1,1e-1,1e-2,1e-3]
@@ -58,9 +56,23 @@ Hypvar2 = 0
 
 maxiter = 15
 
-#Init fig
-# phi_foc =  normalize(zernike(Ro,Theta,4) + zernike(Ro,Theta,6)) # Astig + defoc
-# fig = plt.imshow(phi_foc)
+#Init
+coeff = 1/np.arange(1,6)
+coeff[0:3] = [0,0,0]
+            
+phi_foc =  pzernike(Ro,Theta,coeff) # Astig + defoc
+phi_div =  phi_foc + zernike(Ro,Theta,4)
+
+EF_foc = np.exp(1j*phi_foc)
+EF_div = np.exp(1j*phi_div)
+
+i_foc_0 = tbed.psf(EF_foc)
+
+i_div_0 = tbed.psf(EF_div)
+
+fig = plt.imshow(phi_foc*tbed.pup)
+plt.show()
+plt.pause(1)
 
 for RSB in plist:
     
@@ -77,25 +89,11 @@ for RSB in plist:
             # if hypp == 100 :
             #     hypp = varb
             
-            phi_foc =  normalize(zernike(Ro,Theta,4) + zernike(Ro,Theta,6)) # Astig + defoc
-            phi_div = phi_foc + zernike(Ro,Theta,4)
-            
-            
-            EF_foc = np.exp(1j*phi_foc)
-            EF_div = np.exp(1j*phi_div)
-            
-            
-            i_foc = tbed.psf(entrance_EF=EF_foc)
-            
-            i_div = tbed.psf(entrance_EF=EF_div)
-            
-            
-            # %% BBGC
             
             # Add some perturbation
             varb = 10**(-RSB/20)
-            i_foc  = i_foc + np.random.normal(0, varb, i_foc.shape)
-            i_div  = i_div + np.random.normal(0, varb, i_div.shape)
+            i_foc  = i_foc_0 + np.random.normal(0, varb, i_foc_0.shape)
+            i_div  = i_div_0 + np.random.normal(0, varb, i_div_0.shape)
             
             
             
@@ -103,17 +101,17 @@ for RSB in plist:
             
             t = time.time() 
             estimator.gtol = gtol
-            phi_est = estimator.estimate(i_foc, i_div)
+            phi_est,_ = estimator.estimate(i_foc, i_div)
             elapsed += time.time() - t
-            error   += sum(sum(pow(tbed.EF_through(phi_foc) - phi_est,2)))/(N**2)
+            error   += sum(sum(pow(phi_foc*tbed.pup - phi_est*tbed.pup,2)))/(N**2)
         
         time_list.append(elapsed/maxiter)   
         error_list.append(error/maxiter)
         
-        # fig.set_data(phi_est)
-        # plt.title("Simu for  hyper :"+str(hypp)+", varb :"+"%.2f" % varb)
-        # plt.show()
-        # plt.pause(0.0001)
+        fig.set_data(phi_est)
+        plt.title("Current")
+        plt.show()
+        plt.pause(0.01)
         print("Error : " + "%.5f" % error)
         print("Minimize took : " + str(elapsed/60) + " mins\n")
         print(" ^ Simu for  gtol :"+str(gtol)+", varb :"+"%.2f" % varb+"\n")
