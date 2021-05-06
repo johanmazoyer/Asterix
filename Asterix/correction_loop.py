@@ -85,10 +85,10 @@ def CorrectionLoop(testbed,
     # create an dictionnary to save all results
     CorrectionLoopResult = dict()
     CorrectionLoopResult["nb_total_iter"] = nbiter
-    CorrectionLoopResult["SVDmodes"] = np.array(modevector)
-    CorrectionLoopResult["voltage_DMs"] = np.array(voltage_DMs)
-    CorrectionLoopResult["FP_Intensities"] = np.array(FP_Intensities)
-    CorrectionLoopResult["MeanDHContrast"] = np.array(meancontrast)
+    CorrectionLoopResult["SVDmodes"] = modevector
+    CorrectionLoopResult["voltage_DMs"] = voltage_DMs
+    CorrectionLoopResult["FP_Intensities"] = FP_Intensities
+    CorrectionLoopResult["MeanDHContrast"] = meancontrast
 
     return CorrectionLoopResult
 
@@ -130,12 +130,12 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
     fits.writeto(result_dir + current_time_str + "_FocalPlane_Intesities" + ".fits",
-                 FP_Intensities,
+                 np.array(FP_Intensities),
                  header,
                  overwrite=True)
 
     fits.writeto(result_dir + current_time_str + "_Mean_Contrast_DH" + ".fits",
-                 meancontrast,
+                 np.array(meancontrast),
                  header,
                  overwrite=True)
 
@@ -154,7 +154,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
                      overwrite=True)
 
     if config["SIMUconfig"]["photon_noise"] == True:
-        FP_Intensities_photonnoise = FP_Intensities * 0.
+        FP_Intensities_photonnoise = np.array(FP_Intensities) * 0.
         for i in range(nb_total_iter):
             FP_Intensities_photonnoise[i] = np.random.poisson(
                 FP_Intensities[i] * testbed.normPupto1 *
