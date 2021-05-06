@@ -1953,8 +1953,8 @@ class Testbed(Optical_System):
             (self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
         indice_acum_number_act = 0
 
-        if isinstance(actu_vect, float):
-            return np.zeros(self.number_DMs) + actu_vect
+        if isinstance(actu_vect, (int,float)):
+            return np.zeros(self.number_DMs) + float(actu_vect)
 
         if len(actu_vect) != self.number_act:
             raise Exception(

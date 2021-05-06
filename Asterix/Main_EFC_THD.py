@@ -20,6 +20,7 @@ import Asterix.fits_functions as useful
 from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
+from Asterix.correction_loop import CorrectionLoop, Save_loop_results
 
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
@@ -187,8 +188,6 @@ def correctionLoop(parameter_file,
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
 
-
-
     ##################
     ##################
     ### DM CONFIG
@@ -212,7 +211,6 @@ def correctionLoop(parameter_file,
     ###EFC CONFIG
     Correctionconfig = config["Correctionconfig"]
     Correctionconfig.update(NewCorrectionconfig)
-
 
     ##################
     ##################
@@ -308,125 +306,17 @@ def correctionLoop(parameter_file,
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
                                                   ampl_abb=ampl_abb_up)
 
-    ## Correction loop
+    Resultats_correction_loop = CorrectionLoop(thd2,
+                                               estim,
+                                               correc,
+                                               MaskScience,
+                                               gain,
+                                               Nbiter_corr,
+                                               Nbmode_corr,
+                                               input_wavefront=input_wavefront,
+                                               initial_DM_voltage=0,
+                                               photon_noise=photon_noise,
+                                               nb_photons=nb_photons,
+                                               plot_iter=True)
 
-    ## Number of modes that is used as a function of the iteration cardinal
-    modevector = []
-    for i in np.arange(len(Nbiter_corr)):
-        modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
-
-    nbiter = len(modevector)
-    imagedetector = np.zeros((nbiter + 1, thd2.dimScience, thd2.dimScience))
-
-    meancontrast = np.zeros(nbiter + 1)
-
-    voltage_DMs = [0.]  # initialize with no voltage
-
-    # Initial wavefront in pupil plane
-
-    imagedetector[0] = thd2.todetector_Intensity(entrance_EF=input_wavefront)
-
-    if photon_noise == True:
-        photondetector = np.zeros(
-            (nbiter + 1, thd2.dimScience, thd2.dimScience))
-        photondetector[0] = np.random.poisson(imagedetector[0] *
-                                              thd2.normPupto1 * nb_photons)
-
-    meancontrast[0] = np.mean(imagedetector[0][np.where(MaskScience != 0)])
-    print("Mean contrast in DH: ", meancontrast[0])
-
-    plt.ion()
-    plt.figure()
-    for iteration, mode in enumerate(modevector):
-        print("--------------------------------------------------")
-        print("Iteration number: ", iteration, " SVD truncation: ", mode)
-
-        resultatestimation = estim.estimate(
-            thd2,
-            entrance_EF=input_wavefront,
-            voltage_vector=voltage_DMs[iteration],
-            wavelength=thd2.wavelength_0,
-            photon_noise=photon_noise,
-            nb_photons=nb_photons)
-
-        if Linesearch is True:
-            search_best_contrast = list()
-            perfectestimate = estim.estimate(thd2,
-                                             entrance_EF=input_wavefront,
-                                             voltage_vector=0.,
-                                             wavelength=thd2.wavelength_0,
-                                             perfect_estimation=True)
-
-            for modeLinesearch in Linesearchmode:
-
-                perfectsolution = -gain * correc.amplitudeEFC * correc.toDM_voltage(
-                    thd2, perfectestimate, modeLinesearch)
-
-                tmpvoltage_DMs = voltage_DMs[iteration] + perfectsolution
-
-                imagedetector_tmp = thd2.todetector_Intensity(
-                    entrance_EF=input_wavefront, voltage_vector=tmpvoltage_DMs)
-
-                search_best_contrast.append(
-                    np.mean(imagedetector_tmp[np.where(MaskScience != 0)]))
-            bestcontrast = np.amin(search_best_contrast)
-            mode = Linesearchmode[np.argmin(search_best_contrast)]
-            print('Best contrast= ', bestcontrast, ' Best regul= ', mode)
-
-        # TODO is amplitudeEFC really useful ? with the small phase hypothesis done when
-        # measuring the matrix, everything is linear !
-        solution = -gain * correc.amplitudeEFC * correc.toDM_voltage(
-            thd2, resultatestimation, mode)
-
-        voltage_DMs.append(voltage_DMs[iteration] + solution)
-
-        imagedetector[iteration + 1] = thd2.todetector_Intensity(
-            entrance_EF=input_wavefront,
-            voltage_vector=voltage_DMs[iteration + 1])
-
-        meancontrast[iteration + 1] = np.mean(
-            imagedetector[iteration + 1][np.where(MaskScience != 0)])
-        print("Mean contrast in DH: ", meancontrast[iteration + 1])
-
-        if photon_noise == True:
-            photondetector[iteration + 1] = np.random.poisson(
-                imagedetector[iteration + 1] * thd2.normPupto1 * photon_noise)
-
-        plt.clf()
-        plt.imshow(np.log10(imagedetector[iteration + 1]), vmin=-8, vmax=-5)
-        plt.gca().invert_yaxis()
-        plt.colorbar()
-        plt.pause(0.01)
-
-    plt.show()
-
-    ## SAVING...
-    header = useful.from_param_to_header(config)
-
-    current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
-    fits.writeto(result_dir + current_time_str + "_Detector_Images" + ".fits",
-                 imagedetector,
-                 header,
-                 overwrite=True)
-
-    fits.writeto(result_dir + current_time_str + "_Mean_Contrast_DH" + ".fits",
-                 meancontrast,
-                 header,
-                 overwrite=True)
-    config.filename = result_dir + current_time_str + "_Simulation_parameters" + ".ini"
-    config.write()
-
-    if photon_noise == True:
-        fits.writeto(result_dir + current_time_str + "_Photon_counting" +
-                     ".fits",
-                     photondetector,
-                     header,
-                     overwrite=True)
-
-    plt.clf()
-    plt.plot(meancontrast)
-    plt.yscale("log")
-    plt.xlabel("Number of iterations")
-    plt.ylabel("Mean contrast in Dark Hole")
-
-    return input_wavefront, imagedetector
+    Save_loop_results(Resultats_correction_loop, config, thd2, result_dir)

@@ -123,28 +123,6 @@ def quickpng(tab, dir='', name='tmp'):
     plt.close()
 
 
-def from_param_to_header(config):
-    """ --------------------------------------------------
-    Convert ConfigObj parameters to fits header type list
-
-    Parameters:
-    ----------
-    config: config obj
-
-    Return:
-    ------
-    header: list of parameters
-
-    Author: Axel Potier
-    -------------------------------------------------- """
-    header = fits.Header()
-    for sect in config.sections:
-        # print(config[str(sect)])
-        for scalar in config[str(sect)].scalars:
-            header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
-    return header
-
-
 def progress(count, total, status=''):
     """ --------------------------------------------------
     print a progress bar for a for loop

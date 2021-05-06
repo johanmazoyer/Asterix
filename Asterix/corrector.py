@@ -212,6 +212,9 @@ class Corrector:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
+        # TODO is amplitudeEFC really useful ? with the small phase hypothesis done when
+        # measuring the matrix, everything is linear !
+
         if self.correction_algorithm == "efc":
             if mode != self.previousmode:
                 _, _, invertGDH = wsc.invertSVD(self.Gmatrix,
@@ -220,7 +223,7 @@ class Corrector:
                                                 visu=False,
                                                 regul=self.regularization)
 
-            return wsc.solutionEFC(self.MaskEstim, estimate, invertGDH,
+            return self.amplitudeEFC * wsc.solutionEFC(self.MaskEstim, estimate, invertGDH,
                                    testbed)
 
         if self.correction_algorithm == "em":
@@ -232,12 +235,12 @@ class Corrector:
                                                visu=False,
                                                regul=self.regularization)
 
-            return wsc.solutionEM(self.MaskEstim, estimate, invertM0, self.G,
+            return self.amplitudeEFC * wsc.solutionEM(self.MaskEstim, estimate, invertM0, self.G,
                                   testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return wsc.solutionSteepest(self.MaskEstim, estimate, self.M0,
+            return self.amplitudeEFC * wsc.solutionSteepest(self.MaskEstim, estimate, self.M0,
                                         self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")
