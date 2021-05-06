@@ -3,10 +3,7 @@ __author__ = 'Raphael Galicher, Johan Mazoyer, and Axel Potier'
 
 import os
 
-
-from configobj import ConfigObj
-from validate import Validator
-
+import Asterix.fits_functions as useful
 import Asterix.Optical_System_functions as OptSy
 
 from Asterix.MaskDH import MaskDH
@@ -15,127 +12,7 @@ from Asterix.corrector import Corrector
 from Asterix.correction_loop import CorrectionLoop, Save_loop_results
 
 
-__all__ = ["create_interaction_matrices", "correctionLoop"]
-
-#######################################################
-#######################################################
-######## Interaction/control matrices for PW and EFC
-
-
-def create_interaction_matrices(parameter_file,
-                                NewMODELconfig={},
-                                NewDMconfig={},
-                                NewCoronaconfig={},
-                                NewEstimationconfig={},
-                                NewCorrectionconfig={},
-                                NewSIMUconfig={}):
-
-    ### CONFIGURATION FILE
-    configspec_file = os.path.join(OptSy.Asterix_root, "Param_configspec.ini")
-    config = ConfigObj(parameter_file,
-                       configspec=configspec_file,
-                       default_encoding="utf8")
-    _ = config.validate(Validator(), copy=True)
-
-    if not os.path.exists(parameter_file):
-        raise Exception("The parameter file " + parameter_file +
-                        " cannot be found")
-
-    if not os.path.exists(configspec_file):
-        raise Exception("The parameter config file " + configspec_file +
-                        " cannot be found")
-
-    ### CONFIG
-    Data_dir = config["Data_dir"]
-    #On bench or numerical simulation
-    onbench = config["onbench"]
-
-    ##################
-    ##################
-    ### MODEL CONFIG
-    modelconfig = config["modelconfig"]
-    modelconfig.update(NewMODELconfig)
-
-    ##################
-    ##################
-    ### DM CONFIG
-    DMconfig = config["DMconfig"]
-    DMconfig.update(NewDMconfig)
-
-    ##################
-    ##################
-    ### coronagraph CONFIG
-    Coronaconfig = config["Coronaconfig"]
-    Coronaconfig.update(NewCoronaconfig)
-
-    ##################
-    ##################
-    ### PW CONFIG
-    Estimationconfig = config["Estimationconfig"]
-    Estimationconfig.update(NewEstimationconfig)
-
-    ##################
-    ##################
-    ###EFC CONFIG
-    Correctionconfig = config["Correctionconfig"]
-    Correctionconfig.update(NewCorrectionconfig)
-
-    ##############################################################################
-    ### Initialization all the directories
-    ##############################################################################
-
-    Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
-    if not os.path.exists(Model_local_dir):
-        print("Creating directory " + Model_local_dir + " ...")
-        os.makedirs(Model_local_dir)
-
-    matrix_dir = os.path.join(Data_dir,
-                                   "Interaction_Matrices") + os.path.sep
-    if not os.path.exists(matrix_dir):
-        print("Creating directory " + matrix_dir + " ...")
-        os.makedirs(matrix_dir)
-
-    if onbench == True:
-        Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
-        if not os.path.exists(Labview_dir):
-            print("Creating directory " + Labview_dir + " ...")
-            os.makedirs(Labview_dir)
-
-    # Initialize thd:
-    pup_round = OptSy.pupil(modelconfig)
-    DM1 = OptSy.deformable_mirror(modelconfig,
-                                  DMconfig,
-                                  Name_DM='DM1',
-                                  Model_local_dir=Model_local_dir)
-
-    DM3 = OptSy.deformable_mirror(modelconfig,
-                                  DMconfig,
-                                  Name_DM='DM3',
-                                  Model_local_dir=Model_local_dir)
-
-    corono = OptSy.coronagraph(modelconfig, Coronaconfig)
-    # and then just concatenate
-    thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
-                         ["entrancepupil", "DM1", "DM3", "corono"])
-
-    # initialize the estimator
-    estim = Estimator(Estimationconfig,
-                      thd2,
-                      matrix_dir=matrix_dir,
-                      save_for_bench=onbench,
-                      realtestbed_dir=Labview_dir)
-
-    #initalize the DH masks
-    mask_dh = MaskDH(Correctionconfig)
-
-    #initalize the corrector
-    correc = Corrector(Correctionconfig,
-                       thd2,
-                       mask_dh,
-                       estim,
-                       matrix_dir=matrix_dir,
-                       save_for_bench=onbench,
-                       realtestbed_dir=Labview_dir)
+__all__ = ["runthd2"]
 
 
 #######################################################
@@ -143,29 +20,16 @@ def create_interaction_matrices(parameter_file,
 ######## Simulation of a correction loop
 
 
-def correctionLoop(parameter_file,
-                   NewMODELconfig={},
-                   NewDMconfig={},
-                   NewCoronaconfig={},
-                   NewEstimationconfig={},
-                   NewCorrectionconfig={},
-                   NewSIMUconfig={}):
+def runthd2(parameter_file,
+            NewMODELconfig={},
+            NewDMconfig={},
+            NewCoronaconfig={},
+            NewEstimationconfig={},
+            NewCorrectionconfig={},
+            NewSIMUconfig={}):
 
     ### CONFIGURATION FILE
-    configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
-    config = ConfigObj(parameter_file,
-                       configspec=configspec_file,
-                       default_encoding="utf8")
-    _ = config.validate(Validator(), copy=True)
-    # copy=True for copying the comments
-
-    if not os.path.exists(parameter_file):
-        raise Exception("The parameter file " + parameter_file +
-                        " cannot be found")
-
-    if not os.path.exists(configspec_file):
-        raise Exception("The parameter config file " + configspec_file +
-                        " cannot be found")
+    config = useful.read_parameter_file(parameter_file)
 
     ### CONFIG
     Data_dir = config["Data_dir"]
@@ -192,7 +56,6 @@ def correctionLoop(parameter_file,
     ###EFC CONFIG
     Correctionconfig = config["Correctionconfig"]
     Correctionconfig.update(NewCorrectionconfig)
-
 
     ###SIMU CONFIG
     SIMUconfig = config["SIMUconfig"]

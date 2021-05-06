@@ -1,5 +1,9 @@
 import sys
 import os
+
+from configobj import ConfigObj
+from validate import Validator
+
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,7 +11,7 @@ from astropy.io import fits
 import datetime
 
 from random import random
-
+import Asterix.Optical_System_functions as OptSy
 
 def quickshow(tab):
     """
@@ -142,3 +146,39 @@ def progress(count, total, status=''):
 
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
     sys.stdout.flush()
+
+
+def read_parameter_file(parameter_file):
+    """ --------------------------------------------------
+    check existence of the parameter file, read it and check validity
+    Parameters:
+    ----------
+    parameter_file: path to a parameter file
+
+
+    Returns
+    ------
+    config: parameter dictionnary
+    -------------------------------------------------- """
+
+    if not os.path.exists(parameter_file):
+        raise Exception("The parameter file " + parameter_file +
+                        " cannot be found")
+
+    configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
+
+    if not os.path.exists(configspec_file):
+        raise Exception("The parameter config file " + configspec_file +
+                        " cannot be found")
+
+    ### CONFIGURATION FILE
+    config = ConfigObj(parameter_file,
+                       configspec=configspec_file,
+                       default_encoding="utf8")
+    _ = config.validate(Validator(), copy=True)
+    # copy=True for copying the comments
+
+    return config
+
+
+
