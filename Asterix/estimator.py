@@ -72,6 +72,9 @@ class Estimator:
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
+        if not os.path.exists(matrix_dir):
+            print("Creating directory " + matrix_dir + " ...")
+            os.makedirs(matrix_dir)
 
         if isinstance(testbed, OptSy.Optical_System) == False:
             raise Exception("testbed must be an Optical_System objet")
@@ -154,6 +157,10 @@ class Estimator:
 
             # Saving PW matrix in Labview directory
             if save_for_bench == True:
+                if not os.path.exists(realtestbed_dir):
+                    print("Creating directory " + realtestbed_dir + " ...")
+                    os.makedirs(realtestbed_dir)
+
                 probes = np.zeros(
                     (len(self.posprobes), testbed.DM3.number_act),
                     dtype=np.float32)

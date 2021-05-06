@@ -414,6 +414,10 @@ class Optical_System:
 
             AUTHOR : Johan Mazoyer
         """
+        if not os.path.exists(Model_local_dir):
+            print("Creating directory " + Model_local_dir + " ...")
+            os.makedirs(Model_local_dir)
+
         set_phase_abb = SIMUconfig["set_phase_abb"]
         set_random_phase = SIMUconfig["set_random_phase"]
         phase_rms = SIMUconfig["phase_rms"]
@@ -465,6 +469,11 @@ class Optical_System:
 
         AUTHOR : Johan Mazoyer
         """
+
+        if not os.path.exists(Model_local_dir):
+            print("Creating directory " + Model_local_dir + " ...")
+            os.makedirs(Model_local_dir)
+
         set_amplitude_abb = SIMUconfig["set_amplitude_abb"]
         ampl_abb_filename = SIMUconfig["ampl_abb_filename"]
         set_random_ampl = SIMUconfig["set_random_ampl"]
@@ -1254,6 +1263,10 @@ class deformable_mirror(Optical_System):
 
         # Initialize the Optical_System class and inherit properties
         super().__init__(modelconfig)
+
+        if not os.path.exists(Model_local_dir):
+            print("Creating directory " + Model_local_dir + " ...")
+            os.makedirs(Model_local_dir)
 
         self.exitpup_rad = self.prad
 

@@ -2,28 +2,18 @@ __author__ = 'Raphael Galicher, Johan Mazoyer, and Axel Potier'
 # pylint: disable=invalid-name
 
 import os
-import datetime
 
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
 
 from configobj import ConfigObj
 from validate import Validator
 
-import Asterix.phase_amplitude_functions as phase_ampl
-import Asterix.WSC_functions as wsc
-
 import Asterix.Optical_System_functions as OptSy
-import Asterix.fits_functions as useful
 
 from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
 from Asterix.correction_loop import CorrectionLoop, Save_loop_results
 
-import Asterix.propagation_functions as prop
-import Asterix.processing_functions as proc
 
 __all__ = ["create_interaction_matrices", "correctionLoop"]
 
@@ -99,11 +89,11 @@ def create_interaction_matrices(parameter_file,
         print("Creating directory " + Model_local_dir + " ...")
         os.makedirs(Model_local_dir)
 
-    intermatrix_dir = os.path.join(Data_dir,
+    matrix_dir = os.path.join(Data_dir,
                                    "Interaction_Matrices") + os.path.sep
-    if not os.path.exists(intermatrix_dir):
-        print("Creating directory " + intermatrix_dir + " ...")
-        os.makedirs(intermatrix_dir)
+    if not os.path.exists(matrix_dir):
+        print("Creating directory " + matrix_dir + " ...")
+        os.makedirs(matrix_dir)
 
     if onbench == True:
         Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
@@ -131,7 +121,7 @@ def create_interaction_matrices(parameter_file,
     # initialize the estimator
     estim = Estimator(Estimationconfig,
                       thd2,
-                      matrix_dir=intermatrix_dir,
+                      matrix_dir=matrix_dir,
                       save_for_bench=onbench,
                       realtestbed_dir=Labview_dir)
 
@@ -143,7 +133,7 @@ def create_interaction_matrices(parameter_file,
                        thd2,
                        mask_dh,
                        estim,
-                       matrix_dir=intermatrix_dir,
+                       matrix_dir=matrix_dir,
                        save_for_bench=onbench,
                        realtestbed_dir=Labview_dir)
 
@@ -182,38 +172,28 @@ def correctionLoop(parameter_file,
     #On bench or numerical simulation
     onbench = config["onbench"]
 
-    ##################
-    ##################
+
     ### MODEL CONFIG
     modelconfig = config["modelconfig"]
     modelconfig.update(NewMODELconfig)
 
-    ##################
-    ##################
     ### DM CONFIG
     DMconfig = config["DMconfig"]
     DMconfig.update(NewDMconfig)
 
-    ##################
-    ##################
     ### coronagraph CONFIG
     Coronaconfig = config["Coronaconfig"]
     Coronaconfig.update(NewCoronaconfig)
 
-    ##################
-    ##################
     ### Estimation CONFIG
     Estimationconfig = config["Estimationconfig"]
     Estimationconfig.update(NewEstimationconfig)
 
-    ##################
-    ##################
     ###EFC CONFIG
     Correctionconfig = config["Correctionconfig"]
     Correctionconfig.update(NewCorrectionconfig)
 
-    ##################
-    ##################
+
     ###SIMU CONFIG
     SIMUconfig = config["SIMUconfig"]
     SIMUconfig.update(NewSIMUconfig)
@@ -223,7 +203,7 @@ def correctionLoop(parameter_file,
     Nbiter_corr = [int(i) for i in SIMUconfig["Nbiter_corr"]]
     Nbmode_corr = [int(i) for i in SIMUconfig["Nbmode_corr"]]
     Linesearch = SIMUconfig["Linesearch"]
-    Linesearchmode = [int(i) for i in SIMUconfig["Linesearchmode"]]
+    Linesearchmodes = [int(i) for i in SIMUconfig["Linesearchmodes"]]
     gain = SIMUconfig["gain"]
 
     photon_noise = SIMUconfig["photon_noise"]
@@ -234,27 +214,10 @@ def correctionLoop(parameter_file,
     ##############################################################################
 
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
-    if not os.path.exists(Model_local_dir):
-        print("Creating directory " + Model_local_dir + " ...")
-        os.makedirs(Model_local_dir)
+    matrix_dir = os.path.join(Data_dir,"Interaction_Matrices") + os.path.sep
+    result_dir = os.path.join(Data_dir, "Results",Name_Experiment) + os.path.sep
+    Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
-    intermatrix_dir = os.path.join(Data_dir,
-                                   "Interaction_Matrices") + os.path.sep
-    if not os.path.exists(intermatrix_dir):
-        print("Creating directory " + intermatrix_dir + " ...")
-        os.makedirs(intermatrix_dir)
-
-    result_dir = os.path.join(Data_dir, "Results",
-                              Name_Experiment) + os.path.sep
-    if not os.path.exists(result_dir):
-        print("Creating directory " + result_dir + " ...")
-        os.makedirs(result_dir)
-
-    if onbench == True:
-        Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
-        if not os.path.exists(Labview_dir):
-            print("Creating directory " + Labview_dir + " ...")
-            os.makedirs(Labview_dir)
 
     # Initialize thd:
     pup_round = OptSy.pupil(modelconfig)
@@ -280,7 +243,7 @@ def correctionLoop(parameter_file,
     ## Initialize Estimation
     estim = Estimator(Estimationconfig,
                       thd2,
-                      matrix_dir=intermatrix_dir,
+                      matrix_dir=matrix_dir,
                       save_for_bench=onbench,
                       realtestbed_dir=Labview_dir)
 
@@ -294,7 +257,7 @@ def correctionLoop(parameter_file,
                        thd2,
                        mask_dh,
                        estim,
-                       matrix_dir=intermatrix_dir,
+                       matrix_dir=matrix_dir,
                        save_for_bench=onbench,
                        realtestbed_dir=Labview_dir)
 
@@ -313,10 +276,11 @@ def correctionLoop(parameter_file,
                                                gain,
                                                Nbiter_corr,
                                                Nbmode_corr,
+                                               Linesearch= Linesearch,
+                                               Linesearchmodes=Linesearchmodes,
                                                input_wavefront=input_wavefront,
                                                initial_DM_voltage=0,
                                                photon_noise=photon_noise,
-                                               nb_photons=nb_photons,
-                                               plot_iter=True)
+                                               nb_photons=nb_photons)
 
     Save_loop_results(Resultats_correction_loop, config, thd2, result_dir)

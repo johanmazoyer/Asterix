@@ -71,6 +71,9 @@ class Corrector:
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
+        if not os.path.exists(matrix_dir):
+            print("Creating directory " + matrix_dir + " ...")
+            os.makedirs(matrix_dir)
 
         if isinstance(testbed, OptSy.Optical_System) == False:
             raise Exception("testbed must be an Optical_System objet")
@@ -134,6 +137,9 @@ class Corrector:
                 self.M0 = np.real(np.dot(transposecomplexG, self.G))
 
             if save_for_bench == True:
+                if not os.path.exists(realtestbed_dir):
+                    print("Creating directory " + realtestbed_dir + " ...")
+                    os.makedirs(realtestbed_dir)
 
                 Nbmodes = Correctionconfig["Nbmodes_OnTestbed"]
                 _, _, invertGDH = wsc.invertSVD(
