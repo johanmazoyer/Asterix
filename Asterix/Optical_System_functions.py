@@ -813,12 +813,13 @@ class coronagraph(Optical_System):
             self.Lyot_fpm_sampling = 30  # hard coded for now, this is very internal cooking
             self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
             self.string_os += '_' + "iwa" + str(round(self.rad_lyot_fpm, 2))
+            self.perfect_coro = False
             if self.corona_type == "classiclyot":
                 self.FPmsk = self.ClassicalLyot()
             else:
                 self.transmission_fpm = coroconfig["transmission_fpm"]
                 self.phase_fpm = coroconfig["phase_fpm"]
-                self.string_os += '_' + "trans{:.2e}".format(
+                self.string_os += '_' + "trans{:.1e}".format(
                     self.transmission_fpm)
                 self.string_os += '_' + "pha{0}".format(
                     round(self.phase_fpm, 2))
