@@ -862,13 +862,13 @@ class coronagraph(Optical_System):
         if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig[
                 "filename_instr_lyot"] == "RoundPup":
             self.lyot_pup = pupil(modelconfig,
-                                  prad=self.prad,
+                                  prad=self.lyotrad,
                                   PupType=coroconfig["filename_instr_lyot"])
         # this is very weird. if I put self.lyotrad it seems to broke the testbed ?
         # TO test
         else:
             self.lyot_pup = pupil(modelconfig,
-                                  prad=self.prad,
+                                  prad=self.lyotrad,
                                   filename=coroconfig["filename_instr_lyot"])
 
         self.string_os += '_lrad' + str(int(self.lyotrad))
@@ -1250,10 +1250,9 @@ class coronagraph(Optical_System):
         whClassicalLyotstop = np.where(ClassicalLyotstop == 1.)
 
         hlc = list()
-        for i, wav in enumerate(self.wav_vec):
+        for wav in self.wav_vec:
             hlc_here = np.ones(ClassicalLyotstop.shape, dtype=complex)
-            hlc_here[whClassicalLyotstop] = self.transmission_fpm * np.exp(
-                2 * np.pi * 1j * self.phase_fpm * self.wavelength_0 / wav)
+            hlc_here[whClassicalLyotstop] = self.transmission_fpm * np.exp(1j * self.phase_fpm * self.wavelength_0 / wav)
             hlc.append(hlc_here)
 
         return hlc
