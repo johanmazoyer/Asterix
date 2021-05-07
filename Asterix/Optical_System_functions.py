@@ -393,7 +393,7 @@ class Optical_System:
         self.sum_polychrom = np.sum(PSF_bw)
 
         self.normPupto1 = self.transmission(
-                            ) * self.norm_polychrom / self.sum_polychrom
+        ) * self.norm_polychrom / self.sum_polychrom
 
     def generate_phase_aberr(self, SIMUconfig, Model_local_dir=None):
         """ --------------------------------------------------
@@ -808,13 +808,21 @@ class coronagraph(Optical_System):
             self.string_os += '_' + str_achrom
             self.perfect_coro = True
 
-        elif self.corona_type == "classiclyot":
+        elif self.corona_type == "classiclyot" or self.corona_type == "hlc":
             self.prop_apod2lyot = 'mft-babinet'
             self.Lyot_fpm_sampling = 30  # hard coded for now, this is very internal cooking
             self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
             self.string_os += '_' + "iwa" + str(round(self.rad_lyot_fpm, 2))
-            self.FPmsk = self.ClassicalLyot()
-            self.perfect_coro = False
+            if self.corona_type == "classiclyot":
+                self.FPmsk = self.ClassicalLyot()
+            else:
+                self.transmission_fpm = coroconfig["transmission_fpm"]
+                self.phase_fpm = coroconfig["phase_fpm"]
+                self.string_os += '_' + "trans{:.2e}".format(
+                    self.transmission_fpm)
+                self.string_os += '_' + "pha{0}".format(
+                    round(self.phase_fpm, 2))
+                self.FPmsk = self.HLC()
 
         elif self.corona_type == "knife":
             self.prop_apod2lyot = 'mft'
@@ -1202,7 +1210,6 @@ class coronagraph(Optical_System):
         """ --------------------------------------------------
         Create a classical Lyot coronagraph of radius rad_LyotFP 0
 
-        rad_LyotFP : int, radius of the Lyot focal plane
 
         Returns
         ------
@@ -1220,6 +1227,35 @@ class coronagraph(Optical_System):
                                                       rad_LyotFP_pix)
 
         return [ClassicalLyotstop]
+
+    def HLC(self):
+        """ --------------------------------------------------
+        Create a HLC of radius rad_LyotFP 0
+
+        Returns
+        ------
+         classical Lyot : 2D array
+
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+
+        ld_p = self.Lyot_fpm_sampling * self.diam_lyot_in_m / self.diam_pup_in_m
+
+        rad_LyotFP_pix = self.rad_lyot_fpm * ld_p
+        self.dim_fpm = 2 * int(rad_LyotFP_pix)
+        ClassicalLyotstop = 1 - phase_ampl.roundpupil(self.dim_fpm,
+                                                      rad_LyotFP_pix)
+
+        whClassicalLyotstop = np.where(ClassicalLyotstop == 1.)
+
+        hlc = list()
+        for i, wav in enumerate(self.wav_vec):
+            hlc_here = np.ones(ClassicalLyotstop.shape, dtype=complex)
+            hlc_here[whClassicalLyotstop] = self.transmission_fpm * np.exp(
+                2 * np.pi * 1j * self.phase_fpm * self.wavelength_0 / wav)
+            hlc.append(hlc_here)
+
+        return hlc
 
     ##############################################
     ##############################################
@@ -1623,7 +1659,8 @@ class deformable_mirror(Optical_System):
             self.WhichInPup_threshold)
 
         if os.path.exists(Model_local_dir + Name_WhichInPup_fits + '.fits'):
-            return fits.getdata(Model_local_dir + Name_WhichInPup_fits + '.fits')
+            return fits.getdata(Model_local_dir + Name_WhichInPup_fits +
+                                '.fits')
 
         if self.z_position != 0:
             # Propagation in DM plane out of pupil
@@ -1929,8 +1966,8 @@ class Testbed(Optical_System):
             # there is at least a DM, we add voltage_vector as an authorize kw
 
             known_keywords.append('voltage_vector')
-            self.EF_through = _control_testbed_with_voltages(self,
-                self.EF_through)
+            self.EF_through = _control_testbed_with_voltages(
+                self, self.EF_through)
 
         # to avoid mis-use we only use specific keywords.
         known_keywords.remove('kwargs')
@@ -1966,7 +2003,7 @@ class Testbed(Optical_System):
             (self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
         indice_acum_number_act = 0
 
-        if isinstance(actu_vect, (int,float)):
+        if isinstance(actu_vect, (int, float)):
             return np.zeros(self.number_DMs) + float(actu_vect)
 
         if len(actu_vect) != self.number_act:
