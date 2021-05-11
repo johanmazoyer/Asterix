@@ -12,7 +12,7 @@ Created on Tue Mar  9 17:20:09 2021
 import numpy as np
 from scipy import ndimage
 
-
+import matplotlib.pyplot as plt
 
 # %% FFT
 
@@ -46,7 +46,7 @@ def circle(w,l,r):
     M = np.zeros([w,l])
     for x in range(0, w):
            for y in range(0, l):
-               if  pow(x-(w+1)//2,2) + pow(y-(l+1)//2,2) < pow(r,2):
+               if  pow(x-(w)//2,2) + pow(y-(l)//2,2) < pow(r,2):
                    M[x,y] = 1
     return M
 
@@ -92,6 +92,34 @@ def gradient_xy(A,mode="sobel"):
 def gradient2_xy(A):
     """ 2D spacial graident """
     return ndimage.laplace(A)
+
+
+# %% Template plots 
+
+def tempalte_plot(sim,e_sim):
+    plt.figure("Minimization Results")
+
+    tbed = sim.tbed
+    cropEF = sim.get_phi_foc()*tbed.pup
+    cropEFd = sim.get_phi_do()*tbed.pup_d
+    
+    plt.subplot(2,3,1),plt.imshow(cropEF,cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
+    plt.subplot(2,3,2),plt.imshow(e_sim.get_phi_foc(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
+    plt.subplot(2,3,3),plt.imshow(cropEF-e_sim.get_phi_foc(),cmap='jet'),plt.title("Erreur"),plt.colorbar()
+    
+    plt.subplot(2,3,4),plt.imshow(cropEFd,cmap='jet'),plt.title("Phi_do Attendu"),plt.colorbar()
+    plt.subplot(2,3,5),plt.imshow(e_sim.get_phi_do(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
+    plt.subplot(2,3,6),plt.imshow(cropEFd-e_sim.get_phi_do(),cmap='jet'),plt.title("Erreur"),plt.colorbar()
+    
+    
+    text =  "estimate flux = " + "{:.2f}".format(e_sim.get_flux()) + " --> error = +/-" + "{:.2f}".format(100*(abs(sim.get_flux()-e_sim.get_flux()))/sim.get_flux()) + "%\n"
+    text += "estimate fond = " + "{:.2f}".format(e_sim.get_fond()) + " --> error = "    + "{:.2f}".format(abs(sim.get_fond()-e_sim.get_fond()))
+    plt.suptitle(text)
+    
+    plt.figure(4)
+    plt.subplot(1,3,1),plt.imshow(sim.get_img(tbed),cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
+    plt.subplot(1,3,2),plt.imshow(e_sim.get_img(tbed),cmap='jet'),plt.title("Estimation"),plt.colorbar()
+    plt.subplot(1,3,3),plt.imshow(sim.get_img(tbed)-e_sim.get_img(tbed),cmap='jet'),plt.title("Erreur"),plt.colorbar()
 
 
 # %% Compare fft/mft 

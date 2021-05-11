@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Tue May  11 10:55:09 2021
+
+--------------------------------------------
+------------  Evals for COFFEE  ------------
+------------    under SNR       ------------
+--------------------------------------------
+
+@author: sjuillar
+"""
+
 import os
-from CoffeeLibs.coffee import custom_bench, Estimator
-from CoffeeLibs.pzernike import pmap, zernike
-from sklearn.preprocessing import normalize
+from CoffeeLibs.coffee import custom_bench, Estimator, data_simulator
 from Asterix.propagation_functions import mft
 import numpy as np
 
@@ -11,19 +20,32 @@ from validate import Validator
 
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
-import time
 import pickle
 
-# %% Initialisations
+# %% Initialisation
 
 # Chargement des parametres de la simulation
-path = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
-config = ConfigObj(path + 'my_param_file.ini', configspec=path + "..\Param_configspec.ini")
+path   = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
+config = ConfigObj(path + 'my_param_file.ini', configspec=path + "..\..\Param_configspec.ini")
 config.validate(Validator(), copy=True)
 
-# Initialize test bed:
-tbed = custom_bench(config["modelconfig"],'.')
+# Paramètres qu'il faudra ranger dans ini file..
+var   = {'downstream_EF':1, 'flux':1, 'fond':0}
+div_factors = [-1,1,0,2,-2]  # List of div factor's images diversity
+RSB         = 30000
 
+# %%  Initalisation of objetcs
+tbed      = custom_bench(config["modelconfig"],'.')
+sim       = data_simulator(tbed,var,div_factors)
+estimator = Estimator(**config["Estimationconfig"])
+
+coeff = 1/np.arange(1,6)          # Coeff to generate phi_foc
+coeff[0:3] = [0,0,0]
+
+sim.gen_zernike_phi_foc(coeff)    # On génere le phi focalisé
+sim.gen_zernike_phi_do([0,0,1])
+
+known_var = {'flux':1, 'fond':0}
 
 # %% Variables
 
@@ -35,23 +57,7 @@ nb_iter = 1    # Moyenne sur nb_iter
 
 plist   = range(start,stop,stop//Neval) 
 
-
-# %% Initalisation
-
-N = tbed.dimScience//tbed.ech
-estimator = Estimator(tbed,**config["Estimationconfig"])
-
-# Images to estimate
-[Ro,Theta] = pmap(N,N)
-phi_foc    = normalize(zernike(Ro,Theta,4) + zernike(Ro,Theta,6))
-phi_div    = phi_foc + zernike(Ro,Theta,4)
-
-EF_foc = np.exp(1j*phi_foc)
-EF_div = np.exp(1j*phi_div)
-
-i_foc_0 = tbed.psf(entrance_EF=EF_foc)
-i_div_0 = tbed.psf(entrance_EF=EF_div)
-
+N = sim.N
 
 # %% Test loop
 
@@ -67,21 +73,18 @@ for RSB in plist:
     for ii in range(nb_iter):
        
         # Add some perturbation
-        varb   = 10**(-RSB/20)
-        i_foc  = i_foc_0 + np.random.normal(0, varb, i_foc_0.shape)
-        i_div  = i_div_0 + np.random.normal(0, varb, i_div_0.shape)
-        
+        imgs = sim.gen_div_imgs(RSB) # On cree les images
+
         # Estimation      
-        t         = time.time() 
-        phi_est,_ = estimator.estimate(i_foc, i_div)
-        elapsed  += time.time() - t
-        error    += sum(sum(abs(phi_foc*tbed.pup - phi_est)))/(N**2)
+        
+        e_sim = estimator.estimate(imgs,tbed,div_factors,known_var)
+        error    += sum(sum(abs(sim.get_phi_foc()*tbed.pup - e_sim.get_phi_foc())))/(N**2)
     
     
     # Update data 
-    time_list.append(elapsed/nb_iter)   
+    time_list.append(estimator.toc/nb_iter)   
     error_list.append(error/nb_iter)
-    fig_list.append(phi_est)
+    fig_list.append(e_sim.get_phi_foc())
     
     print("Error : " + "%.5f" % error)
     print("Minimize took : " + str(elapsed/60) + " mins\n")
