@@ -13,6 +13,7 @@ import numpy as np
 from scipy import ndimage
 
 import matplotlib.pyplot as plt
+from matplotlib.widgets import TextBox
 
 # %% FFT
 
@@ -96,31 +97,57 @@ def gradient2_xy(A):
 
 # %% Template plots 
 
-def tempalte_plot(sim,e_sim):
-    plt.figure("Minimization Results")
-
+def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
+    
+    if not disp : 
+        plt.ioff()
+    
+    plt.figure("Minimization Results",figsize = (8, 6))
+    plt.suptitle(name)
+    plt.gcf().subplots_adjust(wspace = 0.4, hspace = 0.5)
     tbed = sim.tbed
     cropEF = sim.get_phi_foc()*tbed.pup
     cropEFd = sim.get_phi_do()*tbed.pup_d
     
-    plt.subplot(2,3,1),plt.imshow(cropEF,cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
-    plt.subplot(2,3,2),plt.imshow(e_sim.get_phi_foc(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
-    plt.subplot(2,3,3),plt.imshow(cropEF-e_sim.get_phi_foc(),cmap='jet'),plt.title("Erreur"),plt.colorbar()
     
-    plt.subplot(2,3,4),plt.imshow(cropEFd,cmap='jet'),plt.title("Phi_do Attendu"),plt.colorbar()
-    plt.subplot(2,3,5),plt.imshow(e_sim.get_phi_do(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
-    plt.subplot(2,3,6),plt.imshow(cropEFd-e_sim.get_phi_do(),cmap='jet'),plt.title("Erreur"),plt.colorbar()
+    plt.subplot(3,3,1),plt.imshow(cropEF,cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
+    plt.subplot(3,3,2),plt.imshow(e_sim.get_phi_foc(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
+    error = 100*abs((cropEF-e_sim.get_phi_foc())/cropEF)
+    error[np.isnan(error) | np.isinf(error)] = 0
+    plt.subplot(3,3,3),plt.imshow(error,cmap='jet'),plt.title("Erreur en %"),plt.colorbar()
     
+    plt.subplot(3,3,4),plt.imshow(cropEFd,cmap='jet'),plt.title("Phi_do Attendu"),plt.colorbar()
+    plt.subplot(3,3,5),plt.imshow(e_sim.get_phi_do(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
+    error_do = 100*abs((cropEFd-(e_sim.get_phi_do()*tbed.pup_d))/cropEFd)
+    error_do[np.isnan(error_do) | np.isinf(error_do)] = 0
+    plt.subplot(3,3,6),plt.imshow(error_do,cmap='jet'),plt.title("Erreur en %"),plt.colorbar()
     
-    text =  "estimate flux = " + "{:.2f}".format(e_sim.get_flux()) + " --> error = +/-" + "{:.2f}".format(100*(abs(sim.get_flux()-e_sim.get_flux()))/sim.get_flux()) + "%\n"
-    text += "estimate fond = " + "{:.2f}".format(e_sim.get_fond()) + " --> error = "    + "{:.2f}".format(abs(sim.get_fond()-e_sim.get_fond()))
-    plt.suptitle(text)
+    plt.subplot(3,1,3)
+    mins = int(es.toc//60)
+    sec  = 100*(es.toc-60*mins)
+    pup_size = np.sum(tbed.pup)
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    plt.axis('off')
     
-    plt.figure(4)
-    plt.subplot(1,3,1),plt.imshow(sim.get_img(tbed),cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
-    plt.subplot(1,3,2),plt.imshow(e_sim.get_img(tbed),cmap='jet'),plt.title("Estimation"),plt.colorbar()
-    plt.subplot(1,3,3),plt.imshow(sim.get_img(tbed)-e_sim.get_img(tbed),cmap='jet'),plt.title("Erreur"),plt.colorbar()
+    textbox = ""
+    if not e_sim.phi_foc_is_known() : textbox += "Erreur moyenne up : "   + "{:.3f}".format(np.sum(error)/pup_size) 
+    if not e_sim.phi_do_is_known()  : textbox += "\nErreur moyenne do : " + "{:.3e}".format(np.sum(error_do)/pup_size)
+    if not e_sim.flux_is_known()    : textbox += "\nEstimate flux = "     + "{:.2f}".format(e_sim.get_flux()) + " --> error = +/-" + "{:.3f}".format(100*(abs(sim.get_flux()-e_sim.get_flux()))/sim.get_flux()) + "%"
+    if not e_sim.fond_is_known()    : textbox += "\nEstimate fond = "     + "{:.2f}".format(e_sim.get_fond()) + " --> error = "    + "{:.2e}".format(abs(sim.get_fond()-e_sim.get_fond()))
 
+    textbox += "\n\n"+ str(es.complete_res['message']) + "\nIterations : "+ str(es.complete_res['nit'])+ "\nTime : " + str(mins) + "m" + str(sec)[:3]
+
+    plt.text(0,0,textbox,bbox=props)      
+    
+    
+    if disp : plt.show()
+    
+    if save :
+        plt.savefig("save/"+name,pad_inches=0.5)
+        if not disp : 
+            plt.cla()
+            plt.clf()
+            plt.close()
 
 # %% Compare fft/mft 
 

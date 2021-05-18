@@ -10,7 +10,7 @@ from validate import Validator
 
 # Chargement des parametres de la simulation
 path   = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
-config = ConfigObj(path + 'my_param_file.ini', configspec=path + "..\..\Param_configspec.ini")
+config = ConfigObj(path + 'my_param_file.ini', configspec=path + "..\Param_configspec.ini")
 config.validate(Validator(), copy=True)
 
 # Paramètres qu'il faudra ranger dans ini file peut-etre ?

@@ -24,13 +24,13 @@ def meanSquare(Hx,y):
 
     return np.sum(np.sum( d ))
 
-def regule(psi,hypp,mode="sobel"):
+def regule(psi,mode="sobel"):
     """Compte regule terme """
   
     psi_grad  = tls.gradient_xy(psi,mode)  # Spacial gardient
     var       = np.var(psi_grad)
     
-    return sum(sum(psi_grad)) * var**2 * hypp
+    return sum(sum(psi_grad)) * (var**2)
 
 def diff_grad_J_up(point,div_id,sim,i_ref,dphi=1e-6):
         
@@ -80,9 +80,10 @@ def DJmv_up(div_id,img,sim):
 
     tb = sim.tbed    
 
-    w    = tb.dimScience
-    wphi = tb.dimScience//tb.ech
-
+    w     = tb.dimScience
+    wphi  = tb.dimScience//tb.ech
+    alpha = sim.get_flux()
+    
     psi_u  = tb.pup   * np.exp(1j*sim.get_phi_div(div_id))
     psi_d  = tb.pup_d * np.exp(1j*sim.get_phi_do())
     
@@ -92,7 +93,7 @@ def DJmv_up(div_id,img,sim):
     diff    =  h_det - img
     
     
-    terme1  = mft( np.conj(psi_det) * diff ,w,wphi,wphi,inverse=True)
+    terme1  = mft( np.conj(psi_det) * alpha * diff ,w,wphi,wphi,inverse=True)
     terme2  = tb.corno * mft( psi_d * terme1 ,wphi,wphi,wphi)
     terme3  = mft( terme2 ,wphi,wphi,wphi,inverse=True)
     
@@ -106,6 +107,7 @@ def DJmv_down(div_id,img,sim):
     
     w    = tb.dimScience
     wphi = tb.dimScience//tb.ech
+    alpha = sim.get_flux()
 
     psi_u  = tb.pup   * np.exp(1j*sim.get_phi_div(div_id))
     psi_d  = tb.pup_d * np.exp(1j*sim.get_phi_do())
@@ -116,19 +118,19 @@ def DJmv_down(div_id,img,sim):
     diff    =  h_det - img
     
     
-    terme1  = mft( np.conj(psi_det) * diff ,w,wphi,wphi,inverse=True)
+    terme1  = mft( np.conj(psi_det) * alpha * diff ,w,wphi,wphi,inverse=True)
     terme2  = mft( tb.corno * mft( psi_u ,wphi,wphi,wphi,inverse=True),wphi,wphi,wphi)
     
     Dj = - 4 * np.imag( psi_d * terme2 * terme1 )
     
     return Dj
 
-def Dregule(psi,hypp,mode="lap"):
+def Dregule(psi,mode="lap"):
     """Compte derive of regule terme """
     if mode=="lap" :  lap =  tls.gradient2_xy(psi)
     else :            lap = tls.gradient_xy(tls.gradient_xy(psi))
     var       = np.var(tls.gradient_xy(psi))
-    return lap * var**2 * hypp
+    return lap * (var**2)
 
 # %% ######################
 """Flux fond """
@@ -152,7 +154,7 @@ def V_map_J(var,sim,imgs,hypp):
     sim.opti_update(var,imgs)
     Hx = sim.gen_div_imgs()
 
-    return  meanSquare(Hx,imgs) + regule(sim.get_phi_foc(),hypp)
+    return  meanSquare(Hx,imgs) + hypp * regule(sim.get_phi_foc()) 
 
 
 def V_grad_J(var,sim,imgs,hypp):
@@ -166,17 +168,19 @@ def V_grad_J(var,sim,imgs,hypp):
         grad_u = 0
         for div_id in range(0,imgs.shape[2]):
             grad_u += DJmv_up(div_id,imgs[:,:,div_id],sim).reshape(sim.N**2,)
-        grad_u += Dregule(sim.get_phi_foc(),hypp).reshape(sim.N**2,) # Add Regulatrisation
+        grad_u *= 1  # Ponderation
+        grad_u += hypp * Dregule(sim.get_phi_foc()).reshape(sim.N**2,) # Regulatrisation
         grad    = np.concatenate((grad, grad_u), axis=0)
 
 
-    # Other varaible gradient
+    # Other varaibles gradient
     if not sim.phi_do_is_known() : 
         grad_d = 0
         for div_id in range(0,imgs.shape[2]):
             # grad_d += diff_grad_J_down(sim.get_phi_do(),div_id,sim,imgs[:,:,div_id]).reshape(sim.N**2,)
             grad_d += DJmv_down(div_id,imgs[:,:,div_id],sim).reshape(sim.N**2,)
-        grad_d += Dregule(sim.get_phi_do(),hypp).reshape(sim.N**2,) # Add Regulatrisation
+        grad_d *= 1  # Ponderation
+        grad_d += hypp * Dregule(sim.get_phi_do()).reshape(sim.N**2,) # Regulatrisation
         grad    = np.concatenate((grad, grad_d), axis=0)
                                                   
     return  grad

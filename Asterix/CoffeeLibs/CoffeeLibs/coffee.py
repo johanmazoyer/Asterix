@@ -148,6 +148,9 @@ class data_simulator():
     def get_fond(self):
         return self.known_var['fond']
     
+    def get_know_var_bool(self):
+        return self.known_var_bool
+    
     # Checkers
     def phi_foc_is_known(self):
         return self.known_var_bool['phi_foc']
@@ -315,7 +318,7 @@ class custom_bench(Optical_System):
         # A mettre en parametres 
         self.rcorno = 3
         self.ech    = 2
-        self.zbiais = False
+        self.zbiais = True
         self.epsi   = 0
 
         # Definitions
@@ -327,6 +330,8 @@ class custom_bench(Optical_System):
         if  (modelconfig["filename_instr_pup"]=="4q") : self.corno = tls.daminer(w,w)
         elif(modelconfig["filename_instr_pup"]=="R&R"): self.corno = 2*tls.circle(w,w,self.rcorno)-1
         else                                          : self.corno = abs(tls.circle(w,w,self.rcorno)-1)
+        
+        if (modelconfig["filename_instr_pup"]!="4q")  : self.zbiais = False
         
     def EF_through(self,entrance_EF=1.,downstream_EF=1.,zbiais = False):
 
@@ -369,7 +374,7 @@ class custom_bench(Optical_System):
     
     
     def set_corono(self,cortype):
-        w    = self.dimScience
+        w    = self.dimScience//self.ech
         if  (cortype=="4q") : self.corno = tls.daminer(w,w)
         elif(cortype=="R&R"): self.corno = 2*tls.circle(w,w,self.rcorno)-1
         else                : self.corno = abs(tls.circle(w,w,self.rcorno)-1)
@@ -407,6 +412,7 @@ class custom_bench(Optical_System):
         self.into   = plt.figure("Introscpetion")
         self.intoax = self.into.add_subplot(1,1,1),plt.imshow(abs(view_list[0]),cmap='jet'),plt.suptitle(self.title_list[0]),plt.title("Energie = %.5f" % sum(sum(abs(view_list[0])**2))),plt.subplots_adjust(bottom=0.25)
         
+        plt.subplots_adjust(bottom=0.2)
         self.slide = Slider(plt.axes([0.25,0.1,0.65,0.03]),"view ",0,len(view_list)-1,valinit=0,valstep=1)
         self.slide.on_changed(self.update_introspect)
     
