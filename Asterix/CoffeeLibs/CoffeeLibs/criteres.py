@@ -87,8 +87,8 @@ def DJmv_up(div_id,img,sim):
     psi_u  = tb.pup   * np.exp(1j*sim.get_phi_div(div_id))
     psi_d  = tb.pup_d * np.exp(1j*sim.get_phi_do())
     
-    psi_det =  sim.EF_through(div_id)
-    h_det   =  sim.psf(div_id)
+    psi_det =  sim.todetector(div_id)
+    h_det   =  sim.todetector_Intensity(div_id)
 
     diff    =  h_det - img
     
@@ -112,8 +112,8 @@ def DJmv_down(div_id,img,sim):
     psi_u  = tb.pup   * np.exp(1j*sim.get_phi_div(div_id))
     psi_d  = tb.pup_d * np.exp(1j*sim.get_phi_do())
     
-    psi_det =  sim.EF_through(div_id)
-    h_det   =  sim.psf(div_id)
+    psi_det =  sim.todetector(div_id)
+    h_det   =  sim.todetector_Intensity(div_id)
 
     diff    =  h_det - img
     

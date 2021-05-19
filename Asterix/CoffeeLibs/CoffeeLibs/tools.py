@@ -102,25 +102,33 @@ def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
     if not disp : 
         plt.ioff()
     
-    plt.figure("Minimization Results",figsize = (8, 6))
-    plt.suptitle(name)
-    plt.gcf().subplots_adjust(wspace = 0.4, hspace = 0.5)
+    ## GET DATAS 
+    
     tbed = sim.tbed
+    
     cropEF = sim.get_phi_foc()*tbed.pup
     cropEFd = sim.get_phi_do()*tbed.pup_d
     
+    error    = abs( cropEF  - e_sim.get_phi_foc() )
+    error_do = abs( cropEFd - e_sim.get_phi_do()*tbed.pup_d )
+
+    ## PLOTS FIGURES
     
+    plt.figure("Minimization Results",figsize = (8, 6))
+    plt.suptitle(name)
+    plt.gcf().subplots_adjust(wspace = 0.4, hspace = 0.5)
+
     plt.subplot(3,3,1),plt.imshow(cropEF,cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
     plt.subplot(3,3,2),plt.imshow(e_sim.get_phi_foc(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
-    error = 100*abs((cropEF-e_sim.get_phi_foc())/cropEF)
-    error[np.isnan(error) | np.isinf(error)] = 0
+    
     plt.subplot(3,3,3),plt.imshow(error,cmap='jet'),plt.title("Erreur en %"),plt.colorbar()
     
     plt.subplot(3,3,4),plt.imshow(cropEFd,cmap='jet'),plt.title("Phi_do Attendu"),plt.colorbar()
     plt.subplot(3,3,5),plt.imshow(e_sim.get_phi_do(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
-    error_do = 100*abs((cropEFd-(e_sim.get_phi_do()*tbed.pup_d))/cropEFd)
-    error_do[np.isnan(error_do) | np.isinf(error_do)] = 0
-    plt.subplot(3,3,6),plt.imshow(error_do,cmap='jet'),plt.title("Erreur en %"),plt.colorbar()
+    plt.subplot(3,3,6),plt.imshow(error_do,cmap='jet'),plt.title("Erreur"),plt.colorbar()
+    
+    
+    ## PLOT TEXT BOX
     
     plt.subplot(3,1,3)
     mins = int(es.toc//60)
@@ -139,6 +147,7 @@ def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
 
     plt.text(0,0,textbox,bbox=props)      
     
+    ## DISP / SAVE 
     
     if disp : plt.show()
     

@@ -88,12 +88,12 @@ def new_row(datas,error):
 def do_a_test(name):
     
         e_sim = estimator.estimate(imgs,tbed,div_factors,known_var) # Estimation
-        error = 100*abs((cropEF-e_sim.get_phi_foc())/cropEF)
-        error[np.isnan(error) | np.isinf(error)] = 0
-        error_flux = sim.get_flux()-e_sim.get_flux()
-        error_fond = sim.get_fond()-e_sim.get_fond()
-        error_do = 100*abs((cropEFd-(e_sim.get_phi_do()*tbed.pup_d))/cropEFd)
-        error_do[np.isnan(error_do) | np.isinf(error_do)] = 0
+       
+        error      = abs( cropEF   - e_sim.get_phi_foc() )
+        error_flux = sim.get_flux()- e_sim.get_flux()
+        error_fond = sim.get_fond()- e_sim.get_fond()
+        error_do   = abs( cropEFd  - e_sim.get_phi_do()*tbed.pup_d )
+        
         new_row([name,np.sum(error)/pup_size,np.sum(error_do)/pup_size,error_flux,error_fond,estimator.toc], ((np.sum(error)/error.size)<threshold))
         
         tempalte_plot(sim,e_sim,estimator,name="fig/"+name,disp=False,save=True)

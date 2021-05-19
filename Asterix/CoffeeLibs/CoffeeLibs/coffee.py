@@ -15,7 +15,7 @@ Class Estimator :
     Estim a simulation from images
     
 Class Custom Test Bench :
-    Optical systeme
+    Optical system
 
 """
 
@@ -52,7 +52,7 @@ class data_simulator():
         
         # To keep track on what I am suppose to know
         # If default, we know everything
-        self.remeber_known_var_as_bool()
+        self.__remeber_known_var_as_bool__()
         
         
         # Set default everywhere it is needed
@@ -60,20 +60,28 @@ class data_simulator():
         elif "downstream_EF" in known_var.keys() : 
             self.set_phi_do(np.imag(np.log(known_var["downstream_EF"])))
         if phi_foc is None : self.phi_foc = zernike(Ro,Theta,1)
-        
-    # Generators
+     
+    ################################################################
+    ####  Generators  ####
+    # Generate stuff using object propreties
+    
     def gen_zernike_phi_foc(self,coeff):
+        """ Generate a zernike polynome using coeff and assign phi_foc  """
         self.phi_foc = self.gen_zernike_phi(coeff)
 
     def gen_zernike_phi_do(self,coeff):
+        """ Generate a zernike polynome using coeff and assign phi_do  """
         self.set_phi_do(self.gen_zernike_phi(coeff))
     
     def gen_zernike_phi(self,coeff):
+        """ Generate a zernike polynome using coeff and return it  """
         [Ro,Theta] = pmap(self.N,self.N)
         return pzernike(Ro,Theta,coeff)
     
     def gen_div_phi(self):
-        
+        """ Generate list of phis with different diverity
+            i.e : phi[k] = phi_foc + div_map[k]
+        """
         n = self.N
         phis = np.zeros((n,n,self.nb_div))
         
@@ -83,9 +91,15 @@ class data_simulator():
         return phis
     
     def gen_div_imgs(self,RSB=None):
+        """ Generate diversity images list from object propreties
+            with additif noise (ajusted to given SNR (RSB en français)) 
+        """
         return self.phi2img(self.gen_div_phi(),RSB)
     
-    # Setters
+    ####################################################
+    ####   Setters and getters  #####
+    # To access class propreties proprely
+    
     def set_phi_foc(self,phi_foc):
         self.phi_foc = phi_foc
         
@@ -116,7 +130,6 @@ class data_simulator():
     def set_fond(self,fond):
         self.known_var['fond'] = fond
     
-    # Getters
     def get_EF(self,defoc=0):
         return np.exp(1j*self.phi_foc)
     
@@ -124,11 +137,11 @@ class data_simulator():
         return np.exp(1j*self.get_phi_div(div_id))
     
     def get_img(self,defoc=0):
-        return self.tbed.psf(self.get_EF(defoc),**self.known_var)
+        return self.tbed.todetector_Intensity(self.get_EF(defoc),**self.known_var)
     
     def get_img_div(self,div_id,ff=True):
-        if ff : return self.tbed.psf(self.get_EF_div(div_id),**self.known_var)
-        else  : return self.tbed.psf(self.get_EF_div(div_id),self.get_EF_do())
+        if ff : return self.tbed.todetector_Intensity(self.get_EF_div(div_id),**self.known_var)
+        else  : return self.tbed.todetector_Intensity(self.get_EF_div(div_id),self.get_EF_do())
     
     def get_phi_foc(self):
         return self.phi_foc
@@ -164,31 +177,15 @@ class data_simulator():
     def fond_is_known(self):
         return self.known_var_bool['fond']
     
-    # Tools
-    def phi2img(self,phis,RSB=None):
-        
-        EFs  = np.exp(1j*phis)
-        imgs = self.tbed.psf(EFs,**self.known_var)
-        
-        if RSB is not None :
-            varb = 10**(-RSB/20)
-            imgs = imgs + np.random.normal(0, varb, imgs.shape)
-            
-        return imgs
     
-    def remeber_known_var_as_bool(self):
-        known_var_bool = {'downstream_EF':False,'flux':False,'fond':False,'phi_foc':True}
-        keys = (self.known_var).keys()
-        
-        if  self.phi_foc   is None: known_var_bool['phi_foc'] = False
-        if 'downstream_EF' in keys: known_var_bool['downstream_EF'] = True
-        if 'flux'          in keys: known_var_bool['flux'] = True
-        if 'fond'          in keys: known_var_bool['fond'] = True
-        
-        self.known_var_bool = known_var_bool
+    ############################################
+    ####   Tools 1 : Optimize wrappers ####
+    
+    # Some useful stuff -> for optimize 
+    #                   -> for display purpose
         
     def print_know_war(self):
-        
+        """ Fonction for display purposes """
         msg = "Estimator will find "
         if not self.phi_foc_is_known() : msg += "phi_foc,"
         if not self.phi_do_is_known()  : msg += "phi_do,"       
@@ -198,19 +195,7 @@ class data_simulator():
         msg += "\nWith " + str(self.nb_div) + " diversities"
         
         print(msg)
-        
-    def set_default_value(self):
-        
-        # In case known_var was an str flag
-        if not isinstance(self.known_var, dict) : self.known_var=dict()
-        keys = (self.known_var).keys()
-        
-        if 'downstream_EF' not in keys: self.set_phi_do(np.zeros((self.N,self.N)))
-        else : self.phi_do = np.imag(np.log(self.get_EF_do()))
-        if 'flux'          not in keys: self.set_flux(1)
-        if 'fond'          not in keys: self.set_fond(0)
 
-        
     # Fonctions for optimize minimizer intergration   
     def opti_unpack(self,pack):
         """Unconcatene variables from minimizer """
@@ -254,13 +239,82 @@ class data_simulator():
         if not self.flux_is_known() : self.set_flux(flux)
         if not self.fond_is_known() : self.set_fond(fond)
 
+    #######################################
+    ####   Tools 2 : tbed wrappers ####
+    
+    # call to bench   -> to avoid redonduncy 
+    #                 -> to make syntaxs clearer
+    #                 -> to manage 3D matrixs 
+
+    def phi2img(self,phis,RSB=None):
+        """ Generarate diverity images from phis """
+        
+        EFs  = np.exp(1j*phis)
+        imgs = self.__psf__(EFs)
+        
+        if RSB is not None :
+            varb = 10**(-RSB/20)
+            imgs = imgs + np.random.normal(0, varb, imgs.shape)
+            
+        return imgs
 
     def EF_through(self,div_id,ff=True):
+        """ call EF_through bench"""
         return self.tbed.EF_through(self.get_EF_div(div_id),self.get_EF_do())
 
-    def psf(self,div_id):
-        return self.tbed.psf(self.get_EF_div(div_id),**self.known_var)
+    def todetector(self,div_id,ff=True):
+        """ call EF_through bench"""
+        if isinstance(div_id, int) : return self.tbed.todetector(self.get_EF_div(div_id),self.get_EF_do())
+        else                       : return self.todetector_loop(self.get_EF_div(div_id),self.get_EF_do())    
 
+    def todetector_loop(self,EFs=1.,downstream_EF=1):
+        """ Just to make a big array of all div EFs because it is cleaner to me"""
+        shape  = (self.tbed.dimScience,self.tbed.dimScience,1)
+        res    = self.tbed.todetector(EFs[:,:,0],downstream_EF).reshape(shape)
+        
+        for ii in range(1,EFs.shape[2]):
+            out = self.tbed.todetector(EFs[:,:,ii],downstream_EF).reshape(shape)
+            res = np.append(res,out,axis=2)
+        
+        return res
+
+    def __psf__(self,EFs):
+        """ to detector intensity but EFs are 3D so we loop """
+        return self.get_flux() * abs( self.todetector_loop(EFs,self.get_EF_do()) ** 2 ) + self.get_fond()
+
+
+    def todetector_Intensity(self,div_id):
+        """ call to detector intensity bench for a specific div id image"""
+        return self.tbed.todetector_Intensity(self.get_EF_div(div_id),**self.known_var)
+
+    #######################################
+    ### Tools 3 : MISC ###
+    
+    # Some other methode -> to make syntaxs clearer
+    #                    -> to avoid redonduncy
+
+    def __remeber_known_var_as_bool__(self):
+        """ if vars wasn't set in init, there will be considere unknowns (wich mean estimator will estimate them) """
+        known_var_bool = {'downstream_EF':False,'flux':False,'fond':False,'phi_foc':True}
+        keys = (self.known_var).keys()
+        
+        if  self.phi_foc   is None: known_var_bool['phi_foc'] = False
+        if 'downstream_EF' in keys: known_var_bool['downstream_EF'] = True
+        if 'flux'          in keys: known_var_bool['flux'] = True
+        if 'fond'          in keys: known_var_bool['fond'] = True
+        
+        self.known_var_bool = known_var_bool
+        
+    def set_default_value(self):
+        """ if vars are unset, set them to default values"""
+        # In case known_var was an str flag
+        if not isinstance(self.known_var, dict) : self.known_var=dict()
+        keys = (self.known_var).keys()
+        
+        if 'downstream_EF' not in keys: self.set_phi_do(np.zeros((self.N,self.N)))
+        else : self.phi_do = np.imag(np.log(self.get_EF_do()))
+        if 'flux'          not in keys: self.set_flux(1)
+        if 'fond'          not in keys: self.set_fond(0)  
 
 # %% ESTIMATOR
     
@@ -278,6 +332,25 @@ class Estimator:
         self.setting = {'options' : options, 'method': method }
 
     def estimate(self,imgs,tbed,div_factors,known_var=dict(),phi_foc=None):
+        """ Do a COFFEE estimation
+        INPUT :
+            
+            imgs : 3D ndarry (or list of 2D maps). -> Diversity images
+            
+            tbed : Optical Sytem class.            -> Model of the bench
+            
+            div_factor : 3D ndarry (or list of 2D maps/int)
+               -> Lisr of diversity map, or int if diverity is only defoc
+               
+            known_var : dict with possible keys {downstream_EF, flux, fond}.
+               -> If any of thoses parameters are known, assign 
+                   the given key. Else do nothing.
+        
+        OUTPUT : 
+            e_sim : data_generator objetc. Minimize will estimate the best
+            e_sim propreties to mach given images. 
+            (i.e : phi_foc phi_do flux fond)
+        """
         
         # Create our simulation
         sim      = data_simulator(tbed,known_var,div_factors,phi_foc)
@@ -327,62 +400,50 @@ class custom_bench(Optical_System):
         self.pup      = tls.circle(w,w,self.prad)
         self.pup_d    = tls.circle(w,w,self.prad)
 
-        if  (modelconfig["filename_instr_pup"]=="4q") : self.corno = tls.daminer(w,w)
-        elif(modelconfig["filename_instr_pup"]=="R&R"): self.corno = 2*tls.circle(w,w,self.rcorno)-1
-        else                                          : self.corno = abs(tls.circle(w,w,self.rcorno)-1)
+        self.set_corono(modelconfig["filename_instr_pup"])
         
-        if (modelconfig["filename_instr_pup"]!="4q")  : self.zbiais = False
-        
-    def EF_through(self,entrance_EF=1.,downstream_EF=1.,zbiais = False):
+    def EF_through(self,entrance_EF=1.,downstream_EF=1.):
 
-        # If multiple EF
-        if isinstance(entrance_EF, np.ndarray) : 
-            if (entrance_EF.ndim == 3) : return self.EF_through_loop(entrance_EF,downstream_EF,zbiais)        
-        
         dim_img = self.dimScience
         dim_pup = dim_img//self.ech
 
         EF_afterentrancepup = entrance_EF*self.pup
         EF_aftercorno       = mft( self.corno * mft(EF_afterentrancepup,dim_pup,dim_pup,dim_pup,inverse=True) ,dim_pup,dim_pup,dim_pup)
-        if(zbiais)          : EF_aftercorno = EF_aftercorno - self.z_biais()
-        EF_out              = mft( downstream_EF * self.pup_d * EF_aftercorno ,dim_pup,dim_img,dim_pup,inverse=True)
+        if(self.zbiais)          : EF_aftercorno = EF_aftercorno - self.z_biais()
+        EF_out              = downstream_EF * self.pup_d * EF_aftercorno
         
         return EF_out
 
-    def EF_through_loop(self,EFs=1.,downstream_EF=1.,zbiais = False):
-
-        shape = (self.dimScience,self.dimScience,1)
-        nb_img = EFs.shape[2]
-        res    = self.EF_through(EFs[:,:,0],downstream_EF,zbiais).reshape(shape)
-        
-
-        for ii in range(1,nb_img):
-            out = self.EF_through(EFs[:,:,ii],downstream_EF,zbiais).reshape(shape)
-            res = np.append(res,out,axis=2)
-        
-        return res
+    def todetector(self,entrance_EF=1.,downstream_EF=1.):
+        w = self.dimScience//self.ech
+        return mft(self.EF_through(entrance_EF,downstream_EF),w,self.dimScience,w,inverse=True)
         
     def z_biais(self):
-        N = self.dimScience
-        return mft( self.corno * mft(self.pup,N//self.ech,N,N//self.ech,inverse=False) ,N//self.ech,N,N//self.ech)
+        N = self.dimScience//self.ech
+        return mft( self.corno * mft( self.pup ,N,N,N,inverse=True) ,N,N,N)
 
-    def psf(self,entrance_EF=1.,downstream_EF=1.,flux=1,fond=0):
+    def todetector_Intensity(self,entrance_EF=1.,downstream_EF=1.,flux=1,fond=0):
 
-        EF_out = self.EF_through(entrance_EF,downstream_EF)
+        EF_out = self.todetector(entrance_EF,downstream_EF)
 
         return flux*pow( abs( EF_out ) ,2) + fond
     
     
     def set_corono(self,cortype):
+        """ Change corono type """
         w    = self.dimScience//self.ech
         if  (cortype=="4q") : self.corno = tls.daminer(w,w)
         elif(cortype=="R&R"): self.corno = 2*tls.circle(w,w,self.rcorno)-1
         else                : self.corno = abs(tls.circle(w,w,self.rcorno)-1)
+        
+        if (cortype!="4q")  : self.zbiais = False
+        else                : self.zbiais = True
+
 
     def introspect(self,
             entrance_EF=1.,
             downstream_EF=1.):
-    
+        """ Display tools to see inside the tbench """
         view_list = []
         N = self.dimScience//self.ech
 
@@ -397,7 +458,7 @@ class custom_bench(Optical_System):
         
         view_list.append(mft(view_list[-1],N,N,N))
         
-        if(self.zbiais): view_list.append(view_list[-1] - self.EF_through(iszbiais=True))
+        if(self.zbiais): view_list.append(view_list[-1] - self.z_biais())
         
         view_list.append( downstream_EF * self.pup_d *view_list[-1] )
         
@@ -414,9 +475,10 @@ class custom_bench(Optical_System):
         
         plt.subplots_adjust(bottom=0.2)
         self.slide = Slider(plt.axes([0.25,0.1,0.65,0.03]),"view ",0,len(view_list)-1,valinit=0,valstep=1)
-        self.slide.on_changed(self.update_introspect)
+        self.slide.on_changed(self.__update_introspect__)
     
-    def update_introspect(self,val):
+    def __update_introspect__(self,val):
+        """ Handler for instrosect slider """
         view_list = self.view_list
         self.into.add_subplot(1,1,1),plt.imshow(abs(view_list[val]),cmap='jet'),plt.suptitle(self.title_list[val]),plt.title("Energie = %.5f" % sum(sum(abs(view_list[val])**2))),plt.subplots_adjust(bottom=0.25)
        

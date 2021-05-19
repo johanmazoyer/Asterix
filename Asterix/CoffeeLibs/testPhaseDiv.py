@@ -46,7 +46,7 @@ e_sim = estimator.estimate(imgs,tbed,div_factors,known_var) # Estimation
 
 from CoffeeLibs.tools import tempalte_plot
 
-tempalte_plot(sim,e_sim,estimator,disp=True,save=True) # Result of minimiz
+tempalte_plot(sim,e_sim,estimator,disp=True) # Result of minimiz
 
-# tbed.introspect(sim.get_EF(),sim.get_EF_do())  # Introdpection
+tbed.introspect(sim.get_EF(),sim.get_EF_do())  # Introdpection
 
