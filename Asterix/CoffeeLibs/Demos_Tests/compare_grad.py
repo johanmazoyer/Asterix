@@ -8,6 +8,7 @@ from configobj import ConfigObj
 from validate import Validator
 
 import matplotlib.pyplot as plt
+import pickle
 
 # %% Initialisation
 
@@ -18,11 +19,11 @@ config.validate(Validator(), copy=True)
 
 # Paramètres qu'il faudra ranger dans ini file..
 var   = {'downstream_EF':1, 'flux':1, 'fond':0}
-div_factors = [0,1]  # List of div factor's images diversity
+div_factors = [0]  # List of div factor's images diversity
 RSB         = 30000
 
 # Initalisation of objetcs
-tbed      = custom_bench(config["modelconfig"],'.')
+tbed      = custom_bench(config,'.')
 sim       = data_simulator(tbed,var,div_factors)
 
 # %% Generation de données 
@@ -31,24 +32,26 @@ coeff = 1/np.arange(1,6) # Coeff to generate phi_foc
 coeff[0:3] = [0,0,0]
 
 sim.gen_zernike_phi_foc(coeff)    # On génere le phi focalisé
-zern = sim.get_phi_foc()
 sim.gen_zernike_phi_do([0,0,1])   # On génere le phi do
 
-imgs = sim.gen_div_imgs() # On cree les images
+img = sim.todetector_Intensity(0) # On cree les images
 
 w = tbed.dimScience//tbed.ech
-point = np.zeros((w,w))
 
+
+#[flux,fond] = estime_fluxfond(sim,imgs)
 
 # %% Calcule des gradients - 
 # On chage l'object sim, ca devient une autre simulation quelquonque, les info i_foc et i_div disparaissent
 # Maitenant on va s'en servir comme la simulation a tester avec les données généré précédement
 
-# Point ou on calcule le gradients
-# sim.set_phi_do(point)
-# sim.set_phi_foc(point)
 
-[flux,fond] = estime_fluxfond(sim,imgs)
+point = np.zeros((w,w))
+# Point ou on calcule le gradients
+sim.set_phi_do(point)
+sim.set_phi_foc(point)
+
+
 # sim.known_var['flux'] = flux
 # sim.known_var['fond'] = fond
 
@@ -57,17 +60,16 @@ grad_diff_up       = 0
 grad_analytic_down = 0
 grad_diff_down     = 0
     
-for div_id in range(len(div_factors)):
-    img = imgs[:,:,div_id]
     
-    grad_diff_down     += diff_grad_J_down(sim.get_phi_do(),div_id,sim,img)
-    grad_analytic_down += DJmv_down(div_id,img,sim)
-    
-    grad_analytic_up   += DJmv_up(div_id,img,sim)
-    grad_diff_up       += diff_grad_J_up(sim.get_phi_foc(),div_id,sim,img)
-    
+grad_diff_down       += diff_grad_J_down(sim.get_phi_do(),0,sim,img)
+
+grad_analytic_down += DJmv_down(0,img,sim)
+
+grad_analytic_up   += DJmv_up(0,img,sim)
 
 
+grad_diff_up       += diff_grad_J_up(sim.get_phi_foc(),0,sim,img)
+    
 
 # %%  Plots
 
@@ -82,17 +84,10 @@ plt.subplot(2,3,5),plt.imshow(grad_diff_down,cmap='jet'),plt.title("Garident dif
 plt.subplot(2,3,6),plt.imshow((grad_diff_down-grad_analytic_down),cmap='jet'),plt.title("Erreur DOWN"),plt.colorbar()
 
 
-text = "estimate flux = "  + str(flux) +"\n"
-text += "estimate fond = " + str(fond)
-plt.suptitle(text)
-
-text  =  "estimate flux = " + "{:.2f}".format(flux) + " --> error = +/-" + "{:.2f}".format(100*(abs(sim.get_flux()-flux))/sim.get_flux()) + "%\n"
-text += "estimate fond = "  + "{:.2f}".format(fond) + " --> error = "    + "{:.2e}".format(abs(sim.get_fond()-fond))
-plt.suptitle(text)
-
-
 plt.show()
-print(text)
+
+with open('save/grad_d', 'wb') as handle:
+    pickle.dump([grad_analytic_down,grad_diff_down], handle)
 
 # %% Expériences MFT 
 

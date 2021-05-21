@@ -31,7 +31,7 @@ RSB         = 30000
 
 # %% Initalisation of objetcs
 
-tbed      = custom_bench(config["modelconfig"],'.')
+tbed      = custom_bench(config,'.')
 sim       = data_simulator(tbed,known_var,div_factors)
 estimator = Estimator(**config["Estimationconfig"])
 

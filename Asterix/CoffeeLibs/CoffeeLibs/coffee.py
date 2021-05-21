@@ -54,11 +54,8 @@ class data_simulator():
         # If default, we know everything
         self.__remeber_known_var_as_bool__()
         
-        
         # Set default everywhere it is needed
         if known_var == "default" : self.set_default_value()
-        elif "downstream_EF" in known_var.keys() : 
-            self.set_phi_do(np.imag(np.log(known_var["downstream_EF"])))
         if phi_foc is None : self.phi_foc = zernike(Ro,Theta,1)
      
     ################################################################
@@ -153,7 +150,7 @@ class data_simulator():
         return self.known_var['downstream_EF']
     
     def get_phi_do(self):
-        return self.phi_do
+        if hasattr(self, 'phi_do') : return self.phi_do
         
     def get_flux(self):
         return self.known_var['flux']
@@ -312,7 +309,6 @@ class data_simulator():
         keys = (self.known_var).keys()
         
         if 'downstream_EF' not in keys: self.set_phi_do(np.zeros((self.N,self.N)))
-        else : self.phi_do = np.imag(np.log(self.get_EF_do()))
         if 'flux'          not in keys: self.set_flux(1)
         if 'fond'          not in keys: self.set_fond(0)  
 
@@ -323,9 +319,9 @@ class Estimator:
     COFFEE estimator
     -------------------------------------------------- """
 
-    def __init__(self,hypp=1 ,method = 'BfGS', gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,**kwarg):
+    def __init__(self,var_phi=0 ,method = 'BfGS', gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,**kwarg):
         
-        self.hypp = hypp
+        self.var_phi = var_phi
         self.disp = disp
         # Minimize parameters
         options = {'disp': disp,'gtol':gtol,'eps':eps,'maxiter':maxiter}
@@ -356,11 +352,13 @@ class Estimator:
         sim      = data_simulator(tbed,known_var,div_factors,phi_foc)
         ini_pack = sim.opti_pack()
         if self.disp : sim.print_know_war()
+        sim.info  = [] # To store information during iterations
+        sim.info2 = []
         
         tic  = t.time() 
         res  = minimize(cacl.V_map_J,
                         ini_pack,
-                        args=(sim,imgs,self.hypp),
+                        args=(sim,imgs,self.var_phi),
                         jac=cacl.V_grad_J,
                         **self.setting)
         toc = t.time() - tic
@@ -368,7 +366,10 @@ class Estimator:
         mins = int(toc//60)
         sec  = 100*(toc-60*mins)
         if self.disp : print("Minimize took : " + str(mins) + "m" + str(sec)[:3])
+        
         sim.opti_unpack(res.get('x'))
+        sim.info  = np.array(sim.info)   #list to array because it is better
+        sim.info2 = np.array(sim.info2)
         
         # If you need more info after
         self.complete_res = res
@@ -383,24 +384,23 @@ class custom_bench(Optical_System):
 
     def __init__(self, modelconfig, model_dir=''):
 
-        super().__init__(modelconfig)
-        self.diam_pup_in_pix = modelconfig["diam_pup_in_pix"]
-        self.entrancepupil = pupil(modelconfig, prad=self.prad)
+        super().__init__(modelconfig["modelconfig"])
+        self.diam_pup_in_pix = modelconfig["modelconfig"]["diam_pup_in_pix"]
+        #self.entrancepupil = pupil(modelconfig, prad=self.diam_pup_in_pix)
         # self.measure_normalization()
         
         # A mettre en parametres 
-        self.rcorno = 3
+        self.rcorno = modelconfig["Coronaconfig"]["diam_lyot_in_m"]
         self.ech    = 2
-        self.zbiais = True
         self.epsi   = 0
 
         # Definitions
         w = self.dimScience//self.ech
         
-        self.pup      = tls.circle(w,w,self.prad)
-        self.pup_d    = tls.circle(w,w,self.prad)
+        self.pup      = tls.circle(w,w,self.diam_pup_in_pix//2)
+        self.pup_d    = tls.circle(w,w,self.diam_pup_in_pix//2)
 
-        self.set_corono(modelconfig["filename_instr_pup"])
+        self.set_corono(modelconfig["modelconfig"]["filename_instr_pup"])
         
     def EF_through(self,entrance_EF=1.,downstream_EF=1.):
 
@@ -436,8 +436,8 @@ class custom_bench(Optical_System):
         elif(cortype=="R&R"): self.corno = 2*tls.circle(w,w,self.rcorno)-1
         else                : self.corno = abs(tls.circle(w,w,self.rcorno)-1)
         
-        if (cortype!="4q")  : self.zbiais = False
-        else                : self.zbiais = True
+        if (cortype=="4q")  : self.zbiais = True
+        else                : self.zbiais = False
 
 
     def introspect(self,
@@ -467,8 +467,8 @@ class custom_bench(Optical_System):
 
         
         self.view_list = view_list
-        if(self.zbiais): self.title_list = ["Entrence EF", "Upsteam pupil", "MFT", "Corno", "MFT", "Downstream EF + pupil", "MFT - detecteur"]     
-        else           : self.title_list = ["Entrence EF", "Upsteam pupil", "MFT", "Corno", "MFT", "Correction zbiais" ,"Downstream EF + pupil", "MFT - detecteur"]     
+        if(self.zbiais): self.title_list = ["Entrence EF", "Upsteam pupil", "MFT", "Corno", "MFT", "Correction zbiais" ,"Downstream EF + pupil", "MFT - detecteur"]
+        else           : self.title_list = ["Entrence EF", "Upsteam pupil", "MFT", "Corno", "MFT", "Downstream EF + pupil", "MFT - detecteur"]     
 
         self.into   = plt.figure("Introscpetion")
         self.intoax = self.into.add_subplot(1,1,1),plt.imshow(abs(view_list[0]),cmap='jet'),plt.suptitle(self.title_list[0]),plt.title("Energie = %.5f" % sum(sum(abs(view_list[0])**2))),plt.subplots_adjust(bottom=0.25)

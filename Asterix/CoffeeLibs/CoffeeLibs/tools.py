@@ -13,7 +13,6 @@ import numpy as np
 from scipy import ndimage
 
 import matplotlib.pyplot as plt
-from matplotlib.widgets import TextBox
 
 # %% FFT
 
@@ -74,7 +73,7 @@ def depadding(A,ech):
 
 # %% Spacial derivate of matrix
 
-def gradient_xy(A,mode="sobel"):
+def gradient_xy(A,mode="np"):
     """ 2D spacial graident """
     
     if mode=="sobel" :
@@ -144,8 +143,14 @@ def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
     if not e_sim.fond_is_known()    : textbox += "\nEstimate fond = "     + "{:.2f}".format(e_sim.get_fond()) + " --> error = "    + "{:.2e}".format(abs(sim.get_fond()-e_sim.get_fond()))
 
     textbox += "\n\n"+ str(es.complete_res['message']) + "\nIterations : "+ str(es.complete_res['nit'])+ "\nTime : " + str(mins) + "m" + str(sec)[:3]
-
-    plt.text(0,0,textbox,bbox=props)      
+    
+    pond2 = 100 * sum(e_sim.info2) / sum(sum(e_sim.info2))
+    pond  = 100 * sum(e_sim.info) / sum(sum(e_sim.info))
+    pond   = np.round(pond,2)
+    pond2  = np.round(pond2,2)
+    textbox += "\n\nPonderation   :   " + "Jmv: " + str(pond2[0]) + "%" + ", R: " + str(pond2[1]) + "%\n" + "Par gradient  :   DJmv: " + str(sum(pond[:-1])) + "%" + ", DR: " + str(pond[-1]) + "%\nPar diversité :   " + str( 100 * pond[:-1] / np.sum(pond[:-1]) )
+    
+    plt.text(0.2,-0.3,textbox,bbox=props)      
     
     ## DISP / SAVE 
     
@@ -176,6 +181,4 @@ def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
 # plt.subplot(1,3,1),plt.imshow(i_fft,cmap='jet'),plt.title("H avec FFT"),plt.colorbar()
 # plt.subplot(1,3,2),plt.imshow(i_mft,cmap='jet'),plt.title("H avec MFT"),plt.colorbar()
 # plt.subplot(1,3,3),plt.imshow(i_mft-i_fft,cmap='jet'),plt.title("Difference"),plt.colorbar()
-
-
 
