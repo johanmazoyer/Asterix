@@ -80,13 +80,11 @@ class Corrector:
 
         basis_type = Correctionconfig["DM_basis"].lower()
 
-        basis_str = ""
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
-            basis_str += "_" + DM_name +  basis_type +"Basis" + str(
-                DM.basis_size)
+            DM.basis_type = basis_type
 
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
@@ -99,28 +97,15 @@ class Corrector:
             self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
                                                    estimator.Estim_sampling)
 
-            fileDirectMatrix = "DirectMatrix_EFCampl" + str(
-                self.amplitudeEFC) + basis_str + testbed.string_os
 
-            if os.path.exists(matrix_dir + fileDirectMatrix + ".fits"):
-                print("The matrix " + fileDirectMatrix + " already exists")
-                interMat = fits.getdata(matrix_dir + fileDirectMatrix +
-                                        ".fits")
+            start_time = time.time()
+            interMat = wsc.creatingInterractionmatrix(
+                    1., testbed, estimator.dimEstim, self.amplitudeEFC,matrix_dir)
 
-            else:
-                # Creating Interaction Matrix if does not exist
-
-                print("Saving " + fileDirectMatrix + " ...")
-                start_time = time.time()
-
-                start_time = time.time()
-                interMat = wsc.creatingInterractionmatrix(
-                    1., testbed, estimator.dimEstim, self.amplitudeEFC)
-
-                fits.writeto(matrix_dir + fileDirectMatrix + ".fits", interMat)
-                print("time for direct matrix " + testbed.string_os,
+            print("time for direct matrix " + testbed.string_os,
                       time.time() - start_time)
-                print("")
+            print("")
+
 
             self.Gmatrix = wsc.cropDHInterractionMatrix(
                 interMat, self.MaskEstim)
@@ -149,7 +134,7 @@ class Corrector:
                     regul=self.regularization,
                     visu=True,
                     filename_visu=realtestbed_dir + "SVD_Modes" +
-                    str(Nbmodes) + '_' + fileDirectMatrix + ".png")
+                    str(Nbmodes) + ".png")
 
                 if testbed.DM1.active:
                     invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]

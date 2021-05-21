@@ -23,7 +23,7 @@ print("")
 print("")
 
 start_time = time.time()
-phase, im = Main_EFC_THD.correctionLoop(
+Main_EFC_THD.runthd2(
     Asterixroot + os.path.sep + 'Example_param_file.ini',
     NewDMconfig={'DM1_active': True,'DM3_active': False},
     NewEstimationconfig={'estimation': 'pw'},
