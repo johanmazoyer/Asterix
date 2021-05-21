@@ -152,7 +152,7 @@ class Corrector:
                         np.dot(np.transpose(testbed.DM1.basis),
                                invertGDH_DM1))
                     fits.writeto(realtestbed_dir +
-                                 "Matrix_control_EFC_DM1_default.fits",
+                                 "Matrix_control_EFC_DM1.fits",
                                  EFCmatrix_DM1.astype(np.float32),
                                  overwrite=True)
                     if testbed.DM3.active:
@@ -161,7 +161,7 @@ class Corrector:
                                     np.dot(np.transpose(testbed.DM3.basis),
                            invertGDH_DM3))
                         fits.writeto(realtestbed_dir +
-                             "Matrix_control_EFC_DM3_default.fits",
+                             "Matrix_control_EFC_DM3.fits",
                              EFCmatrix_DM3.astype(np.float32),
                              overwrite=True)
                 elif testbed.DM3.active:
@@ -170,7 +170,7 @@ class Corrector:
                                 np.dot(np.transpose(testbed.DM3.basis),
                         invertGDH_DM3))
                     fits.writeto(realtestbed_dir +
-                            "Matrix_control_EFC_DM3_default.fits",
+                            "Matrix_control_EFC_DM3.fits",
                             EFCmatrix_DM3.astype(np.float32),
                             overwrite=True)
                 else:
