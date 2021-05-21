@@ -177,10 +177,11 @@ class Estimator:
                     vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) *
                              self.dimEstim *
                              self.dimEstim] = self.PWMatrix[:, 1, i].flatten()
-                fits.writeto(realtestbed_dir + "Probes_PW_default.fits",
+                namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW
+                fits.writeto(realtestbed_dir + "Probes"+ namepwmatrix+".fits",
                              probes,
                              overwrite=True)
-                fits.writeto(realtestbed_dir + "Matr_mult_estim_PW.fits",
+                fits.writeto(realtestbed_dir + "Matr_mult_estim"+namepwmatrix+".fits",
                              vectorPW,
                              overwrite=True)
         elif self.technique == 'coffee':
