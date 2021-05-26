@@ -7,20 +7,20 @@ Asterixroot = os.path.dirname(os.path.realpath(__file__))
 # These five cases need to converge before pull request !
 
 ### CORRECTION 1DM IN PW + EFC
-start_time = time.time()
-Main_EFC_THD.runthd2(
-    Asterixroot + os.path.sep + 'Example_param_file.ini',
-    NewDMconfig={'DM1_active': False},
-    NewEstimationconfig={'estimation': 'pw'},
-    NewCorrectionconfig={'DH_side': "top"},
-    NewSIMUconfig={
-        'Nbiter_corr': ["5", "5", "5"],
-        "Nbmode_corr": ["350", "380", "400"]
-    })
-print('time correction 1DM pw', time.time() - start_time)
-print("")
-print("")
-print("")
+# start_time = time.time()
+# Main_EFC_THD.runthd2(
+#     Asterixroot + os.path.sep + 'Example_param_file.ini',
+#     NewDMconfig={'DM1_active': False},
+#     NewEstimationconfig={'estimation': 'pw'},
+#     NewCorrectionconfig={'DH_side': "top"},
+#     NewSIMUconfig={
+#         'Nbiter_corr': ["5", "5", "5"],
+#         "Nbmode_corr": ["350", "380", "400"]
+#     })
+# print('time correction 1DM pw', time.time() - start_time)
+# print("")
+# print("")
+# print("")
 
 # start_time = time.time()
 # Main_EFC_THD.runthd2(
@@ -38,20 +38,20 @@ print("")
 # print("")
 
 # ### CORRECTION 1DM IN Perfect + EFC
-# start_time = time.time()
-# Main_EFC_THD.runthd2(
-#     Asterixroot + os.path.sep + 'Example_param_file.ini',
-#     NewDMconfig={'DM1_active': False},
-#     NewEstimationconfig={'estimation': 'Perfect'},
-#     NewCorrectionconfig={'DH_side': "right"},
-#     NewSIMUconfig={
-#         'Nbiter_corr': ["5", "5", "5"],
-#         "Nbmode_corr": ["350", "380", "400"]
-#     })
-# print('total time 1DM perfect', time.time() - start_time)
-# print("")
-# print("")
-# print("")
+start_time = time.time()
+Main_EFC_THD.runthd2(
+    Asterixroot + os.path.sep + 'Example_param_file.ini',
+    NewDMconfig={'DM1_active': False},
+    NewEstimationconfig={'estimation': 'Perfect'},
+    NewCorrectionconfig={'DH_side': "right"},
+    NewSIMUconfig={
+        'Nbiter_corr': ["5", "5", "5"],
+        "Nbmode_corr": ["350", "380", "400"]
+    })
+print('total time 1DM perfect', time.time() - start_time)
+print("")
+print("")
+print("")
 
 ### CORRECTION 2DM IN PW + EFC
 start_time = time.time()

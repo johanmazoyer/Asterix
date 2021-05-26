@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 
+import Asterix.fits_functions as useful
+
 
 def CorrectionLoop(testbed,
                    estimator,
@@ -78,7 +80,7 @@ def CorrectionLoop(testbed,
         resultatestimation = estimator.estimate(
             testbed,
             voltage_vector=voltage_DMs[-1],
-            entrance_EF=input_wavefront[testbed.wav_vec.tolist().index(testbed.wavelength_0)],
+            entrance_EF=input_wavefront,
             wavelength=testbed.wavelength_0,
             photon_noise=photon_noise,
             nb_photons=nb_photons,

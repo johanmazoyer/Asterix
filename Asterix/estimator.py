@@ -1,9 +1,11 @@
 # pylint: disable=invalid-name
 
+
 import os
 import numpy as np
 from astropy.io import fits
 
+import Asterix.fits_functions as useful
 import Asterix.processing_functions as proc
 import Asterix.Optical_System_functions as OptSy
 
@@ -225,6 +227,20 @@ class Estimator:
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
+
+        if isinstance(entrance_EF,  (float,int)):
+            pass
+        elif entrance_EF.shape == testbed.wav_vec.shape :
+            entrance_EF = entrance_EF[testbed.wav_vec.tolist().index(wavelength)]
+        elif entrance_EF.shape == (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
+            pass
+        elif entrance_EF.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
+            entrance_EF = entrance_EF[testbed.wav_vec.tolist().index(wavelength)]
+        else:
+            raise Exception(""""entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
+                        2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
+                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)""")
+
 
         if (self.technique == "perfect") or (perfect_estimation is True):
             # If polychromatic, assume a perfect estimation at one wavelength
