@@ -1490,7 +1490,7 @@ class deformable_mirror(Optical_System):
             return entrance_EF
 
         if self.z_position == 0:
-            EF_after_DM = self.EF_from_phase_and_ampl(
+            EF_after_DM = entrance_EF * self.EF_from_phase_and_ampl(
                                phase_abb=DMphase,
                                wavelengths=wavelength)
 
