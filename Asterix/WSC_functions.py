@@ -510,6 +510,7 @@ def createdifference(input_wavefront,
 
             indice_acum_number_act += DM.number_act
 
+        # TODO Can these be replaced by todetector_intensity ?
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector - Voltage_probe,

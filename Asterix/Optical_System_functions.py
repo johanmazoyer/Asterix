@@ -85,6 +85,7 @@ class Optical_System:
                                        endpoint=True)
         else:
             self.wav_vec = np.array([self.wavelength_0])
+            self.nb_wav = 1
 
         self.string_os = '_prad' + str(int(self.prad)) + '_wl' + str(
             int(self.wavelength_0 * 1e9)) + "_resFP" + str(
@@ -250,7 +251,8 @@ class Optical_System:
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+        entrance_EF:   3D complex array of size [nb_wav,self.dim_overpad_pupil, self.dim_overpad_pupil]
+                        or 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
         Electric field in the pupil plane a the entrance of the system.
@@ -285,20 +287,31 @@ class Optical_System:
         if wavelengths == None:
             wavelength_vec = self.wav_vec
 
-        elif isinstance(wavelengths, float) or isinstance(
-                wavelengths, np.float):
+        elif isinstance(wavelengths, (float,int)) :
             wavelength_vec = [wavelengths]
         else:
             wavelength_vec = wavelengths
-        #TODO check if wavelengths have good format float array and raise
-        # exception if not
+
+        if isinstance(entrance_EF,  (float,int)):
+            entrance_EF = np.repeat(entrance_EF, self.self.nb_wav)
+        elif entrance_EF.shape == self.wav_vec.shape :
+            pass
+        elif entrance_EF.shape == (self.dim_overpad_pupil, self.dim_overpad_pupil):
+            entrance_EF =np.repeat(entrance_EF[np.newaxis,...], 10, axis=0)
+        elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil):
+            pass
+        else:
+            raise Exception(""""entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
+                        2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
+                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)""")
+
 
         focal_plane_Intensity = np.zeros((self.dimScience, self.dimScience))
 
-        for wav in wavelength_vec:
+        for i, wav in enumerate(wavelength_vec):
             focal_plane_Intensity += np.abs(
                 self.todetector(
-                    entrance_EF=entrance_EF,
+                    entrance_EF=entrance_EF[i],
                     wavelength=wav,
                     in_contrast=False,
                     center_on_pixel=center_on_pixel,
@@ -410,7 +423,7 @@ class Optical_System:
             Returns
             ------
             return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-                    amplitude abberation
+                    phase abberation at the reference wavelength
 
             AUTHOR : Johan Mazoyer
         """
@@ -428,23 +441,24 @@ class Optical_System:
         ## Phase map and amplitude map for the static aberrations
         if set_phase_abb == True:
             if phase_abb_filename == '':
-                phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                phase_abb_filename = "opd_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                     int(phase_rms * 1e9), int(phase_slope), phase_rhoc,
                     self.prad)
 
             if set_random_phase is False and os.path.isfile(
                     Model_local_dir + phase_abb_filename + ".fits") == True:
-                return_phase = fits.getdata(Model_local_dir +
+                random_opd = fits.getdata(Model_local_dir +
                                             phase_abb_filename + ".fits")
 
             else:
-                return_phase = phase_ampl.random_phase_map(
+                random_opd = phase_ampl.random_opd_map(
                     self.prad, self.dim_overpad_pupil, phase_rms, phase_rhoc,
                     phase_slope)
 
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
-                             return_phase,
+                             random_opd,
                              overwrite=True)
+            return_phase = 2*np.pi * random_opd / self.wavelength_0
 
             return return_phase
         else:
@@ -498,7 +512,7 @@ class Optical_System:
                     return_ampl = fits.getdata(Model_local_dir +
                                                ampl_abb_filename + ".fits")
                 else:
-                    return_ampl = phase_ampl.random_phase_map(
+                    return_ampl = phase_ampl.random_opd_map(
                         self.prad, self.dim_overpad_pupil, ampl_rms / 100,
                         ampl_rhoc, ampl_slope)
 
@@ -513,14 +527,14 @@ class Optical_System:
     def EF_from_phase_and_ampl(self,
                                phase_abb=0.,
                                ampl_abb=0.,
-                               wavelength=None):
+                               wavelengths=None):
         """ --------------------------------------------------
         Create an electrical field from an phase and amplitude aberrations
 
         Parameters
         ----------
         phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
-            if 0, no phase aberration (default)
+            if 0, no phase aberration (default). phase at lambda = self.wavelength_0
 
         phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
             if 0, no amplitude aberration (default)
@@ -528,11 +542,14 @@ class Optical_System:
 
         wavelength : float. Default is the reference self.wavelength_0
              current wavelength in m.
+             if 'all'
 
 
         Returns
         ------
-        EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+        EF : 1. if no phase / amplitude
+            2D array, of size phase_abb.shape if monochromatic
+            or 3D array of size [self.nb_wav,phase_abb.shape] in case of polychromatic
             Electric field in the pupil plane a the exit of the system
 
         AUTHOR : Johan Mazoyer
@@ -546,10 +563,23 @@ class Optical_System:
 
             return 1.
 
-        if wavelength is None:
-            wavelength = self.wavelength_0
+        if wavelengths == None:
+            wavelength_vec = self.wav_vec
 
-        return (1 + ampl_abb) * np.exp(2 * np.pi * 1j * phase_abb / wavelength)
+        elif isinstance(wavelengths, (float,int)) :
+            wavelength_vec = [wavelengths]
+        else:
+            wavelength_vec = wavelengths
+
+        exit_EF = list()
+        for wavelength in wavelength_vec:
+            exit_EF.append((1 + ampl_abb) * np.exp(1j * phase_abb* self.wavelength_0 / wavelength))
+        exit_EF = np.array(exit_EF)
+
+        if len(wavelength_vec) ==1:
+            exit_EF = exit_EF[0]
+
+        return exit_EF
 
 
 ##############################################
@@ -837,7 +867,7 @@ class coronagraph(Optical_System):
         elif self.corona_type == "vortex":
             self.prop_apod2lyot = 'fft'
             phasevortex = 0  # to be defined
-            self.FPmsk = np.exp(1j * phasevortex)
+            self.FPmsk = 1.
             self.perfect_coro = True
 
         # We need a pupil only to measure the response
@@ -1147,13 +1177,20 @@ class coronagraph(Optical_System):
             else:
                 dim_fp = self.dimScience
 
-            phase = np.zeros((dim_fp, dim_fp))
+            phase4q = np.zeros((dim_fp, dim_fp))
             fqpm_thick_cut = proc.crop_or_pad_image(fqpm_thick, dim_fp)
-            phase[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
-            if self.achrom_fqpm == False:
-                phase = phase * self.wavelength_0 / wav
+            phase4q[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
+            # if self.achrom_fqpm == False:
+            #     phase4q = phase4q * self.wavelength_0 / wav
+            # fqpm.append(np.exp(1j * phase4q))
 
-            fqpm.append(np.exp(1j * phase))
+            if self.achrom_fqpm == True:
+                phase4q = phase4q *  wav / self.wavelength_0
+
+            fqpm.append(self.EF_from_phase_and_ampl(
+                               phase_abb=phase4q,
+                               wavelengths=wav))
+
 
         return fqpm
 
@@ -1452,15 +1489,15 @@ class deformable_mirror(Optical_System):
         if self.active == False or (DMphase == 0.).all():
             return entrance_EF
 
-        lambda_ratio = wavelength / self.wavelength_0
-
         if self.z_position == 0:
-            EF_after_DM = entrance_EF * np.exp(1j * DMphase / lambda_ratio)
+            EF_after_DM = self.EF_from_phase_and_ampl(
+                               phase_abb=DMphase,
+                               wavelengths=wavelength)
 
         else:
             EF_after_DM = self.prop_pup_to_DM_and_back(
                 entrance_EF,
-                DMphase / lambda_ratio,
+                DMphase ,
                 wavelength,
                 save_all_planes_to_fits=save_all_planes_to_fits,
                 dir_save_all_planes=dir_save_all_planes)
@@ -1747,7 +1784,9 @@ class deformable_mirror(Optical_System):
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       EF_inDMplane)
 
-        EF_inDMplane_after_DM = EF_inDMplane * np.exp(1j * phase_DM)
+        EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(
+                               phase_abb=phase_DM,
+                               wavelengths=wavelength)
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
@@ -1789,19 +1828,21 @@ class deformable_mirror(Optical_System):
 
         where_non_zero_voltage = np.where(actu_vect != 0)
 
-        #TODO I reakky don't understand the 1e-9 here
-        surface_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
+        #opd is in nanometer
+        # DM_pushact is in opd nanometer
+        opd_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
+
 
         if einstein_sum == True or len(where_non_zero_voltage[0]) < 3:
             phase_on_DM = np.einsum(
                 'i,ijk->jk', actu_vect[where_non_zero_voltage],
-                self.DM_pushact[where_non_zero_voltage]) * surface_to_phase
+                self.DM_pushact[where_non_zero_voltage]) * opd_to_phase
         else:
             phase_on_DM = np.zeros(
                 (self.dim_overpad_pupil, self.dim_overpad_pupil))
             for i in where_non_zero_voltage[0]:
                 phase_on_DM += self.DM_pushact[
-                    i, :, :] * actu_vect[i] * surface_to_phase
+                    i, :, :] * actu_vect[i] * opd_to_phase
 
         return phase_on_DM
 

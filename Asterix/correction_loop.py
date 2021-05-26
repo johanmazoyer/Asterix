@@ -74,11 +74,11 @@ def CorrectionLoop(testbed,
             print("--------------------------------------------------")
             print("Iteration number: ", iteration, " SVD truncation: ", mode)
 
-
+        # for now monochromatic estimation
         resultatestimation = estimator.estimate(
             testbed,
-            entrance_EF=input_wavefront,
             voltage_vector=voltage_DMs[-1],
+            entrance_EF=input_wavefront[testbed.wav_vec.tolist().index(testbed.wavelength_0)],
             wavelength=testbed.wavelength_0,
             photon_noise=photon_noise,
             nb_photons=nb_photons,
