@@ -1,6 +1,5 @@
 # pylint: disable=invalid-name
 
-
 import os
 import numpy as np
 from astropy.io import fits
@@ -111,12 +110,13 @@ class Estimator:
                 # automatically check which DM to use to probe in this case
                 # this is only done once.
                 if len(testbed.name_of_DMs) == 0:
-                     raise Exception("you need at least one activated DM to do PW")
+                    raise Exception(
+                        "you need at least one activated DM to do PW")
                 #If only one DM, we use this one, independenlty of its position
                 elif len(testbed.name_of_DMs) == 1:
-                     testbed.name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
+                    testbed.name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
                 else:
-                #If several DMs we check if there is at least one in PP
+                    #If several DMs we check if there is at least one in PP
                     number_DMs_in_PP = 0
                     for DM_name in testbed.name_of_DMs:
                         DM = vars(testbed)[DM_name]
@@ -136,10 +136,11 @@ class Estimator:
                         )
 
             string_dims_PWMatrix = "actProb_" + "_".join(
-                map(str, self.posprobes)) + "with" + testbed.name_DM_to_probe_in_PW +"_PWampl" + str(
-                    int(self.amplitudePW)) + "_cut" + str(int(
-                        cutsvdPW // 1000)) + "k_dimEstim" + str(
-                            self.dimEstim) + testbed.string_os
+                map(str, self.posprobes)
+            ) + "with" + testbed.name_DM_to_probe_in_PW + "_PWampl" + str(
+                int(self.amplitudePW)) + "_cut" + str(int(
+                    cutsvdPW // 1000)) + "k_dimEstim" + str(
+                        self.dimEstim) + testbed.string_os
 
             ####Calculating and Saving PW matrix
             filePW = "MatrixPW_" + string_dims_PWMatrix
@@ -148,14 +149,14 @@ class Estimator:
                 self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
             else:
                 print("Saving " + filePW + " ...")
-                self.PWMatrix, showSVD = wsc.createPWmastrix(testbed,
-                                                       self.amplitudePW,
-                                                       self.posprobes,
-                                                       self.dimEstim, cutsvdPW,
-                                                       testbed.wavelength_0)
-                fits.writeto(matrix_dir + filePW + ".fits", np.array(self.PWMatrix))
+                self.PWMatrix, showSVD = wsc.createPWmastrix(
+                    testbed, self.amplitudePW, self.posprobes, self.dimEstim,
+                    cutsvdPW, testbed.wavelength_0)
+                fits.writeto(matrix_dir + filePW + ".fits",
+                             np.array(self.PWMatrix))
                 visuPWMap = "EigenValPW_" + string_dims_PWMatrix
-                fits.writeto(matrix_dir + visuPWMap + ".fits", np.array(showSVD[1]))
+                fits.writeto(matrix_dir + visuPWMap + ".fits",
+                             np.array(showSVD[1]))
 
             # Saving PW matrix in Labview directory
             if save_for_bench == True:
@@ -180,10 +181,12 @@ class Estimator:
                              self.dimEstim *
                              self.dimEstim] = self.PWMatrix[:, 1, i].flatten()
                 namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW
-                fits.writeto(realtestbed_dir + "Probes"+ namepwmatrix+".fits",
+                fits.writeto(realtestbed_dir + "Probes" + namepwmatrix +
+                             ".fits",
                              probes,
                              overwrite=True)
-                fits.writeto(realtestbed_dir + "Matr_mult_estim"+namepwmatrix+".fits",
+                fits.writeto(realtestbed_dir + "Matr_mult_estim" +
+                             namepwmatrix + ".fits",
                              vectorPW,
                              overwrite=True)
         elif self.technique == 'coffee':
@@ -228,19 +231,24 @@ class Estimator:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        if isinstance(entrance_EF,  (float,int)):
+        if isinstance(entrance_EF, (float, int)):
             pass
-        elif entrance_EF.shape == testbed.wav_vec.shape :
-            entrance_EF = entrance_EF[testbed.wav_vec.tolist().index(wavelength)]
-        elif entrance_EF.shape == (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
+        elif entrance_EF.shape == testbed.wav_vec.shape:
+            entrance_EF = entrance_EF[testbed.wav_vec.tolist().index(
+                wavelength)]
+        elif entrance_EF.shape == (testbed.dim_overpad_pupil,
+                                   testbed.dim_overpad_pupil):
             pass
-        elif entrance_EF.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
-            entrance_EF = entrance_EF[testbed.wav_vec.tolist().index(wavelength)]
+        elif entrance_EF.shape == (testbed.nb_wav, testbed.dim_overpad_pupil,
+                                   testbed.dim_overpad_pupil):
+            entrance_EF = entrance_EF[testbed.wav_vec.tolist().index(
+                wavelength)]
         else:
-            raise Exception(""""entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
+            raise Exception(
+                """"entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
                         2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
-                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)""")
-
+                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"""
+            )
 
         if (self.technique == "perfect") or (perfect_estimation is True):
             # If polychromatic, assume a perfect estimation at one wavelength

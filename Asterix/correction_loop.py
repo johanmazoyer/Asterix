@@ -53,7 +53,6 @@ def CorrectionLoop(testbed,
 
     for iteration, mode in enumerate(modevector):
 
-
         if Linesearch:
             # this is elegant but must be carefully done if we want to avoid infinite loop.
             bestcontrast, bestmode = CorrectionLoop(
@@ -91,7 +90,8 @@ def CorrectionLoop(testbed,
 
         FP_Intensities.append(
             testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                                         voltage_vector=voltage_DMs[-1] + solution))
+                                         voltage_vector=voltage_DMs[-1] +
+                                         solution))
 
         if Search_best_Mode == False:
             #if we are only looking for the best mode, we do not update the DM shape
@@ -105,15 +105,14 @@ def CorrectionLoop(testbed,
             print("Mean contrast in DH: ", meancontrast[-1])
             print("")
             plt.clf()
-            plt.imshow(np.log10(FP_Intensities[-1]),
-                       vmin=-8,
-                       vmax=-5)
+            plt.imshow(np.log10(FP_Intensities[-1]), vmin=-8, vmax=-5)
             plt.gca().invert_yaxis()
             plt.colorbar()
             plt.pause(0.01)
 
     if Search_best_Mode:
-        return np.amin(meancontrast[1:]), modevector[np.argmin(meancontrast[1:])]
+        return np.amin(meancontrast[1:]), modevector[np.argmin(
+            meancontrast[1:])]
 
     else:
         # create an dictionnary to save all results

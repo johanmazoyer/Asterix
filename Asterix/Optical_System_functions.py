@@ -287,24 +287,27 @@ class Optical_System:
         if wavelengths == None:
             wavelength_vec = self.wav_vec
 
-        elif isinstance(wavelengths, (float,int)) :
+        elif isinstance(wavelengths, (float, int)):
             wavelength_vec = [wavelengths]
         else:
             wavelength_vec = wavelengths
 
-        if isinstance(entrance_EF,  (float,int)):
+        if isinstance(entrance_EF, (float, int)):
             entrance_EF = np.repeat(entrance_EF, self.self.nb_wav)
-        elif entrance_EF.shape == self.wav_vec.shape :
+        elif entrance_EF.shape == self.wav_vec.shape:
             pass
-        elif entrance_EF.shape == (self.dim_overpad_pupil, self.dim_overpad_pupil):
-            entrance_EF =np.repeat(entrance_EF[np.newaxis,...], 10, axis=0)
-        elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil):
+        elif entrance_EF.shape == (self.dim_overpad_pupil,
+                                   self.dim_overpad_pupil):
+            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...], 10, axis=0)
+        elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil,
+                                   self.dim_overpad_pupil):
             pass
         else:
-            raise Exception(""""entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
+            raise Exception(
+                """"entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
                         2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
-                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)""")
-
+                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"""
+            )
 
         focal_plane_Intensity = np.zeros((self.dimScience, self.dimScience))
 
@@ -448,17 +451,18 @@ class Optical_System:
             if set_random_phase is False and os.path.isfile(
                     Model_local_dir + phase_abb_filename + ".fits") == True:
                 random_opd = fits.getdata(Model_local_dir +
-                                            phase_abb_filename + ".fits")
+                                          phase_abb_filename + ".fits")
 
             else:
-                random_opd = phase_ampl.random_opd_map(
-                    self.prad, self.dim_overpad_pupil, phase_rms, phase_rhoc,
-                    phase_slope)
+                random_opd = phase_ampl.random_opd_map(self.prad,
+                                                       self.dim_overpad_pupil,
+                                                       phase_rms, phase_rhoc,
+                                                       phase_slope)
 
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
                              random_opd,
                              overwrite=True)
-            return_phase = 2*np.pi * random_opd / self.wavelength_0
+            return_phase = 2 * np.pi * random_opd / self.wavelength_0
 
             return return_phase
         else:
@@ -566,17 +570,19 @@ class Optical_System:
         if wavelengths == None:
             wavelength_vec = self.wav_vec
 
-        elif isinstance(wavelengths, (float,int)) :
+        elif isinstance(wavelengths, (float, int)):
             wavelength_vec = [wavelengths]
         else:
             wavelength_vec = wavelengths
 
         exit_EF = list()
         for wavelength in wavelength_vec:
-            exit_EF.append((1 + ampl_abb) * np.exp(1j * phase_abb* self.wavelength_0 / wavelength))
+            exit_EF.append(
+                (1 + ampl_abb) *
+                np.exp(1j * phase_abb * self.wavelength_0 / wavelength))
         exit_EF = np.array(exit_EF)
 
-        if len(wavelength_vec) ==1:
+        if len(wavelength_vec) == 1:
             exit_EF = exit_EF[0]
 
         return exit_EF
@@ -1185,12 +1191,11 @@ class coronagraph(Optical_System):
             # fqpm.append(np.exp(1j * phase4q))
 
             if self.achrom_fqpm == True:
-                phase4q = phase4q *  wav / self.wavelength_0
+                phase4q = phase4q * wav / self.wavelength_0
 
-            fqpm.append(self.EF_from_phase_and_ampl(
-                               phase_abb=phase4q,
-                               wavelengths=wav))
-
+            fqpm.append(
+                self.EF_from_phase_and_ampl(phase_abb=phase4q,
+                                            wavelengths=wav))
 
         return fqpm
 
@@ -1289,7 +1294,8 @@ class coronagraph(Optical_System):
         hlc = list()
         for wav in self.wav_vec:
             hlc_here = np.ones(ClassicalLyotstop.shape, dtype=complex)
-            hlc_here[whClassicalLyotstop] = self.transmission_fpm * np.exp(1j * self.phase_fpm * self.wavelength_0 / wav)
+            hlc_here[whClassicalLyotstop] = self.transmission_fpm * np.exp(
+                1j * self.phase_fpm * self.wavelength_0 / wav)
             hlc.append(hlc_here)
 
         return hlc
@@ -1491,13 +1497,12 @@ class deformable_mirror(Optical_System):
 
         if self.z_position == 0:
             EF_after_DM = entrance_EF * self.EF_from_phase_and_ampl(
-                               phase_abb=DMphase,
-                               wavelengths=wavelength)
+                phase_abb=DMphase, wavelengths=wavelength)
 
         else:
             EF_after_DM = self.prop_pup_to_DM_and_back(
                 entrance_EF,
-                DMphase ,
+                DMphase,
                 wavelength,
                 save_all_planes_to_fits=save_all_planes_to_fits,
                 dir_save_all_planes=dir_save_all_planes)
@@ -1785,8 +1790,7 @@ class deformable_mirror(Optical_System):
                                       EF_inDMplane)
 
         EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(
-                               phase_abb=phase_DM,
-                               wavelengths=wavelength)
+            phase_abb=phase_DM, wavelengths=wavelength)
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
@@ -1831,7 +1835,6 @@ class deformable_mirror(Optical_System):
         #opd is in nanometer
         # DM_pushact is in opd nanometer
         opd_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
-
 
         if einstein_sum == True or len(where_non_zero_voltage[0]) < 3:
             phase_on_DM = np.einsum(

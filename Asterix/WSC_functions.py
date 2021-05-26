@@ -90,7 +90,7 @@ def invertSVD(matrix_to_invert,
 
 
 def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
-                               amplitudeEFC,matrix_dir):
+                               amplitudeEFC, matrix_dir):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
@@ -117,7 +117,8 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
         DM = vars(testbed)[DM_name]
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
-        string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
+        string_testbed_without_DMS = string_testbed_without_DMS.replace(
+            DM_small_str, '')
 
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
@@ -125,36 +126,37 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
     pos_in_matrix = 0
     for DM_name in testbed.name_of_DMs:
 
-
         DM = vars(testbed)[DM_name]
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
-        basis_str =  DM_small_str + "_"+ DM.basis_type +"Basis" + str(
-                DM.basis_size)
+        basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(
+            DM.basis_size)
         fileDirectMatrix = "DirectMatrix_EFCampl" + str(
-                amplitudeEFC) + basis_str + string_testbed_without_DMS
+            amplitudeEFC) + basis_str + string_testbed_without_DMS
 
         if os.path.exists(matrix_dir + fileDirectMatrix + ".fits"):
-                print("The matrix " + fileDirectMatrix + " already exists")
+            print("The matrix " + fileDirectMatrix + " already exists")
 
-                InterMat[:, pos_in_matrix:pos_in_matrix+DM.basis_size] = fits.getdata(matrix_dir + fileDirectMatrix +
-                                        ".fits")
+            InterMat[:, pos_in_matrix:pos_in_matrix +
+                     DM.basis_size] = fits.getdata(matrix_dir +
+                                                   fileDirectMatrix + ".fits")
 
-                pos_in_matrix += DM.basis_size
+            pos_in_matrix += DM.basis_size
 
         else:
             # Creating Interaction Matrix for thd DM if does not exist
             init_pos_in_matrix = pos_in_matrix
             print("")
-            print(fileDirectMatrix +" does not exists:")
+            print(fileDirectMatrix + " does not exists:")
             print("Start " + DM_name)
 
             if DM.z_position != 0:
 
                 #TODO make something smarter to check automatically the name of the entrance pup
                 Pup_inDMplane, _ = prop.prop_fresnel(testbed.entrancepupil.pup,
-                                                    DM.wavelength_0,
-                                                    DM.z_position,
-                                                    DM.diam_pup_in_m / 2, DM.prad)
+                                                     DM.wavelength_0,
+                                                     DM.z_position,
+                                                     DM.diam_pup_in_m / 2,
+                                                     DM.prad)
 
             for i in range(DM.basis_size):
 
@@ -164,18 +166,25 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
                 phaseDM = DM.voltage_to_phase(DM.basis[i])
                 if DM.z_position != 0:
                     phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * phaseDM,
-                                                DM.wavelength_0, -DM.z_position,
-                                                DM.diam_pup_in_m / 2, DM.prad)
+                                                   DM.wavelength_0,
+                                                   -DM.z_position,
+                                                   DM.diam_pup_in_m / 2,
+                                                   DM.prad)
 
                 Gvector = proc.resampling(
-                    testbed.todetector(entrance_EF=input_wavefront * 1j * phaseDM *
-                                    amplitudeEFC), dimEstim)
+                    testbed.todetector(entrance_EF=input_wavefront * 1j *
+                                       phaseDM * amplitudeEFC), dimEstim)
 
-                InterMat[:dimEstim**2, pos_in_matrix] = np.real(Gvector).flatten()
-                InterMat[dimEstim**2:, pos_in_matrix] = np.imag(Gvector).flatten()
+                InterMat[:dimEstim**2,
+                         pos_in_matrix] = np.real(Gvector).flatten()
+                InterMat[dimEstim**2:,
+                         pos_in_matrix] = np.imag(Gvector).flatten()
 
                 pos_in_matrix += 1
-            fits.writeto(matrix_dir + fileDirectMatrix + ".fits", InterMat[:,init_pos_in_matrix:init_pos_in_matrix+DM.basis_size])
+            fits.writeto(
+                matrix_dir + fileDirectMatrix + ".fits",
+                InterMat[:, init_pos_in_matrix:init_pos_in_matrix +
+                         DM.basis_size])
 
     print("")
     print("End Interraction Matrix")
