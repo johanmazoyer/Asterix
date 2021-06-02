@@ -5,7 +5,9 @@ import os
 import inspect
 
 import copy
+from random import weibullvariate
 import time
+from astropy.utils.exceptions import AstropyDeprecationWarning
 import numpy as np
 import scipy.ndimage as nd
 from astropy.io import fits
@@ -436,7 +438,7 @@ class Optical_System:
 
         set_phase_abb = SIMUconfig["set_phase_abb"]
         set_random_phase = SIMUconfig["set_random_phase"]
-        phase_rms = SIMUconfig["phase_rms"]
+        opd_rms = SIMUconfig["opd_rms"]
         phase_rhoc = SIMUconfig["phase_rhoc"]
         phase_slope = SIMUconfig["phase_slope"]
         phase_abb_filename = SIMUconfig["phase_abb_filename"]
@@ -444,26 +446,26 @@ class Optical_System:
         ## Phase map and amplitude map for the static aberrations
         if set_phase_abb == True:
             if phase_abb_filename == '':
-                phase_abb_filename = "opd_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
-                    int(phase_rms * 1e9), int(phase_slope), phase_rhoc,
+                phase_abb_filename = "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                    int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc,
                     self.prad)
 
             if set_random_phase is False and os.path.isfile(
                     Model_local_dir + phase_abb_filename + ".fits") == True:
-                random_opd = fits.getdata(Model_local_dir +
+                return_phase = fits.getdata(Model_local_dir +
                                           phase_abb_filename + ".fits")
 
             else:
-                random_opd = phase_ampl.random_opd_map(self.prad,
+                phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
+
+                return_phase = phase_ampl.random_phase_map(self.prad,
                                                        self.dim_overpad_pupil,
                                                        phase_rms, phase_rhoc,
                                                        phase_slope)
 
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
-                             random_opd,
+                             return_phase,
                              overwrite=True)
-            return_phase = 2 * np.pi * random_opd / self.wavelength_0
-
             return return_phase
         else:
             return 0.
@@ -516,7 +518,7 @@ class Optical_System:
                     return_ampl = fits.getdata(Model_local_dir +
                                                ampl_abb_filename + ".fits")
                 else:
-                    return_ampl = phase_ampl.random_opd_map(
+                    return_ampl = phase_ampl.random_phase_map(
                         self.prad, self.dim_overpad_pupil, ampl_rms / 100,
                         ampl_rhoc, ampl_slope)
 
@@ -531,7 +533,7 @@ class Optical_System:
     def EF_from_phase_and_ampl(self,
                                phase_abb=0.,
                                ampl_abb=0.,
-                               wavelengths=None):
+                               wavelengths=-1.):
         """ --------------------------------------------------
         Create an electrical field from an phase and amplitude aberrations
 
@@ -563,15 +565,14 @@ class Optical_System:
                 "phase_abb and ampl_abb must be real arrays or float, not complex"
             )
 
-        if ((phase_abb == 0.).all()) and ((ampl_abb == 0.).all()):
-
+        if (isinstance(phase_abb, (float, int))) and (phase_abb == 0.) and (isinstance(ampl_abb, (float, int))) and (ampl_abb == 0.):
             return 1.
 
-        if wavelengths == None:
-            wavelength_vec = self.wav_vec
-
         elif isinstance(wavelengths, (float, int)):
-            wavelength_vec = [wavelengths]
+            if wavelengths == -1:
+                wavelength_vec = self.wav_vec
+            else:
+                wavelength_vec = [wavelengths]
         else:
             wavelength_vec = wavelengths
 
@@ -846,7 +847,7 @@ class coronagraph(Optical_System):
 
         elif self.corona_type == "classiclyot" or self.corona_type == "hlc":
             self.prop_apod2lyot = 'mft-babinet'
-            self.Lyot_fpm_sampling = 30  # hard coded for now, this is very internal cooking
+            self.Lyot_fpm_sampling = 30.  # hard coded for now, this is very internal cooking
             self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
             self.string_os += '_' + "iwa" + str(round(self.rad_lyot_fpm, 2))
             self.perfect_coro = False
@@ -856,8 +857,7 @@ class coronagraph(Optical_System):
                 self.transmission_fpm = coroconfig["transmission_fpm"]
                 self.phase_fpm = coroconfig["phase_fpm"]
                 self.string_os += '_' + "trans{:.1e}".format(
-                    self.transmission_fpm)
-                self.string_os += '_' + "pha{0}".format(
+                    self.transmission_fpm) + "_pha{0}".format(
                     round(self.phase_fpm, 2))
                 self.FPmsk = self.HLC()
 
@@ -871,9 +871,10 @@ class coronagraph(Optical_System):
             self.perfect_coro = False
 
         elif self.corona_type == "vortex":
-            self.prop_apod2lyot = 'fft'
-            phasevortex = 0  # to be defined
-            self.FPmsk = 1.
+            self.prop_apod2lyot = 'mft'
+            vortex_charge = coroconfig["vortex_charge"]
+            self.string_os += '_charge' + str(int(vortex_charge))
+            self.FPmsk = self.Vortex(charge = vortex_charge)
             self.perfect_coro = True
 
         # We need a pupil only to measure the response
@@ -900,8 +901,6 @@ class coronagraph(Optical_System):
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
                                   PupType=coroconfig["filename_instr_lyot"])
-        # this is very weird. if I put self.lyotrad it seems to broke the testbed ?
-        # TO test
         else:
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
@@ -1186,16 +1185,17 @@ class coronagraph(Optical_System):
             phase4q = np.zeros((dim_fp, dim_fp))
             fqpm_thick_cut = proc.crop_or_pad_image(fqpm_thick, dim_fp)
             phase4q[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
-            # if self.achrom_fqpm == False:
-            #     phase4q = phase4q * self.wavelength_0 / wav
-            # fqpm.append(np.exp(1j * phase4q))
 
             if self.achrom_fqpm == True:
-                phase4q = phase4q * wav / self.wavelength_0
-
-            fqpm.append(
-                self.EF_from_phase_and_ampl(phase_abb=phase4q,
-                                            wavelengths=wav))
+                # if we want to do an an achromatic_fqpm, we do not include a variation
+                # of the phase with the wl.
+                fqpm.append(np.exp(1j * phase4q))
+            else:
+                # in the general case, we use the EF_from_phase_and_ampl which handle the phase
+                # chromaticity.
+                fqpm.append(
+                    self.EF_from_phase_and_ampl(phase_abb=phase4q,
+                                                wavelengths=wav))
 
         return fqpm
 
@@ -1223,7 +1223,6 @@ class coronagraph(Optical_System):
         # to define the orientation of the coronagraph
 
         #  Number of pixels per resolution element at central wavelength
-        ld_p_0 = self.Science_sampling * self.diam_lyot_in_m / self.diam_pup_in_m
 
         xx, yy = np.meshgrid(np.arange(maxdimension_array_fpm),
                              np.arange(maxdimension_array_fpm))
@@ -1231,21 +1230,20 @@ class coronagraph(Optical_System):
         Knife = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
         if self.coro_position == "right":
             Knife[np.where(xx > (maxdimension_array_fpm / 2 +
-                                 self.knife_coro_offset * ld_p_0))] = 1
+                                 self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "left":
             Knife[np.where(xx < (maxdimension_array_fpm / 2 -
-                                 self.knife_coro_offset * ld_p_0))] = 1
+                                 self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "bottom":
             Knife[np.where(yy > (maxdimension_array_fpm / 2 +
-                                 self.knife_coro_offset * ld_p_0))] = 1
+                                 self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "top":
             Knife[np.where(yy < (maxdimension_array_fpm / 2 -
-                                 self.knife_coro_offset * ld_p_0))] = 1
+                                 self.knife_coro_offset * self.Science_sampling))] = 1
 
-        knife_allwl = np.zeros((len(self.wav_vec), maxdimension_array_fpm,
-                                maxdimension_array_fpm))
+        knife_allwl = list()
         for i in range(len(self.wav_vec)):
-            knife_allwl[i] = Knife
+            knife_allwl.append(Knife)
 
         return knife_allwl
 
@@ -1261,15 +1259,18 @@ class coronagraph(Optical_System):
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        ld_p = self.Lyot_fpm_sampling * self.diam_lyot_in_m / self.diam_pup_in_m
+        rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
 
-        rad_LyotFP_pix = self.rad_lyot_fpm * ld_p
-
-        self.dim_fpm = 2 * int(rad_LyotFP_pix)
-        ClassicalLyotstop = 1 - phase_ampl.roundpupil(self.dim_fpm,
+        self.dim_fpm = 2 * int(2.2*rad_LyotFP_pix/2)
+        ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm,
                                                       rad_LyotFP_pix)
 
-        return [ClassicalLyotstop]
+        ClassicalLyotFPM_allwl = list()
+        for wav in self.wav_vec:
+            ClassicalLyotFPM_allwl.append(ClassicalLyotFPM)
+
+        return ClassicalLyotFPM_allwl
+
 
     def HLC(self):
         """ --------------------------------------------------
@@ -1282,23 +1283,64 @@ class coronagraph(Optical_System):
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        ld_p = self.Lyot_fpm_sampling * self.diam_lyot_in_m / self.diam_pup_in_m
+        # we create a Classical Lyot Focal plane
+        ClassicalLyotFP = self.ClassicalLyot()[0]
 
-        rad_LyotFP_pix = self.rad_lyot_fpm * ld_p
-        self.dim_fpm = 2 * int(rad_LyotFP_pix)
-        ClassicalLyotstop = 1 - phase_ampl.roundpupil(self.dim_fpm,
-                                                      rad_LyotFP_pix)
+        whClassicalLyotstop = np.where(ClassicalLyotFP == 0.)
 
-        whClassicalLyotstop = np.where(ClassicalLyotstop == 1.)
+        # we define phase and amplitude for the HLC at the reference WL
+        phase_hlc = np.zeros(ClassicalLyotFP.shape)
+        phase_hlc[whClassicalLyotstop] = self.phase_fpm
+        # transmission_fpm is defined in intensity and EF_from_phase_and_ampl takes amplitude
+        ampl_hlc = np.zeros(ClassicalLyotFP.shape)
+        ampl_hlc[whClassicalLyotstop] = np.sqrt(self.transmission_fpm) - 1
 
-        hlc = list()
+        hlc_all_wl = list()
         for wav in self.wav_vec:
-            hlc_here = np.ones(ClassicalLyotstop.shape, dtype=complex)
-            hlc_here[whClassicalLyotstop] = self.transmission_fpm * np.exp(
-                1j * self.phase_fpm * self.wavelength_0 / wav)
-            hlc.append(hlc_here)
+            hlc_all_wl.append(self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc,
+                                                wavelengths=wav))
 
-        return hlc
+        return hlc_all_wl
+
+
+    def Vortex(self, charge = 2):
+        """ --------------------------------------------------
+        Create a charge2 vortex.
+        #TODO Shoyld work but need to be tested
+
+        Parameters
+        ------
+        Charge : charge of the vortex. defaut is charge 2
+
+        Returns
+        ------
+         classical Lyot : 2D array
+
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+
+        if self.prop_apod2lyot == "fft":
+            maxdimension_array_fpm = np.max(self.dim_fp_fft)
+        else:
+            maxdimension_array_fpm = self.dimScience
+
+        xx, yy = np.meshgrid(
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
+
+        phase_vortex = charge*np.angle(xx + 1j* yy)
+
+        vortex = list()
+        for i, wav in enumerate(self.wav_vec):
+            if self.prop_apod2lyot == "fft":
+                dim_fp = self.dim_fp_fft[i]
+            else:
+                dim_fp = self.dimScience
+
+            phasevortex_cut = proc.crop_or_pad_image(phase_vortex, dim_fp)
+            vortex.append(np.exp(1j * phasevortex_cut))
+
+        return vortex
 
     ##############################################
     ##############################################
@@ -1782,13 +1824,14 @@ class deformable_mirror(Optical_System):
                                             self.z_position,
                                             self.diam_pup_in_m / 2., self.prad)
 
-        # Add DM phase
+
         if save_all_planes_to_fits == True:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       EF_inDMplane)
 
+        # Add DM phase at the right WL
         EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(
             phase_abb=phase_DM, wavelengths=wavelength)
 

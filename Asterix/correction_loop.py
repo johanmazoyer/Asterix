@@ -115,7 +115,7 @@ def CorrectionLoop(testbed,
             meancontrast[1:])]
 
     else:
-        # create an dictionnary to save all results
+        # create a dictionnary to save all results
         CorrectionLoopResult = dict()
         CorrectionLoopResult["nb_total_iter"] = nbiter
         CorrectionLoopResult["SVDmodes"] = modevector

@@ -142,7 +142,7 @@ def scale_amplitude_abb(filename, prad, dim_image):
     return ampfinal
 
 
-def random_opd_map(pupil_rad, dim_image, phaserms, rhoc, slope):
+def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     """ --------------------------------------------------
         Create a random phase map, whose PSD decrease in f^(-slope)
         average is null and stadard deviation is phaserms
