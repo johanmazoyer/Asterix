@@ -295,7 +295,7 @@ class Optical_System:
             wavelength_vec = wavelengths
 
         if isinstance(entrance_EF, (float, int)):
-            entrance_EF = np.repeat(entrance_EF, self.self.nb_wav)
+            entrance_EF = np.repeat(entrance_EF, self.nb_wav)
         elif entrance_EF.shape == self.wav_vec.shape:
             pass
         elif entrance_EF.shape == (self.dim_overpad_pupil,
