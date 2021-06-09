@@ -37,14 +37,24 @@ def CorrectionLoop(testbed,
     meancontrast = list()
     voltage_DMs = list()
     FP_Intensities = list()
+    EF_estim = list()
 
     initialFP = testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                              voltage_vector=initial_DM_voltage)
+
+    estim_init = estimator.estimate(testbed,
+                                    voltage_vector=initial_DM_voltage,
+                                    entrance_EF=input_wavefront,
+                                    wavelength=testbed.wavelength_0,
+                                    photon_noise=photon_noise,
+                                    nb_photons=nb_photons)
+
     initialFP_contrast = np.mean(initialFP[np.where(maskdh_science != 0)])
 
     voltage_DMs.append(initial_DM_voltage)
     meancontrast.append(initialFP_contrast)
     FP_Intensities.append(initialFP)
+    EF_estim.append(estim_init)
 
     if not silence:
         print("Initial contrast in DH: ", initialFP_contrast)
@@ -85,6 +95,8 @@ def CorrectionLoop(testbed,
             nb_photons=nb_photons,
             perfect_estimation=Search_best_Mode)
 
+        EF_estim.append(resultatestimation)
+
         solution = -gain * corrector.toDM_voltage(testbed, resultatestimation,
                                                   mode)
 
@@ -121,6 +133,7 @@ def CorrectionLoop(testbed,
         CorrectionLoopResult["SVDmodes"] = modevector
         CorrectionLoopResult["voltage_DMs"] = voltage_DMs
         CorrectionLoopResult["FP_Intensities"] = FP_Intensities
+        CorrectionLoopResult["EF_estim"] = EF_estim
         CorrectionLoopResult["MeanDHContrast"] = meancontrast
 
         return CorrectionLoopResult
@@ -136,12 +149,13 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
     meancontrast = CorrectionLoopResult["MeanDHContrast"]
     voltage_DMs = CorrectionLoopResult["voltage_DMs"]
     nb_total_iter = CorrectionLoopResult["nb_total_iter"]
+    EF_estim = CorrectionLoopResult["EF_estim"]
 
     ## SAVING...
     header = from_param_to_header(config)
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
-    fits.writeto(result_dir + current_time_str + "_FocalPlane_Intesities" +
+    fits.writeto(result_dir + current_time_str + "_FocalPlane_Intensities" +
                  ".fits",
                  np.array(FP_Intensities),
                  header,
@@ -152,21 +166,56 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
                  header,
                  overwrite=True)
 
+    fits.writeto(result_dir + current_time_str + "_estimationFP_RE" + ".fits",
+                 np.real(np.array(EF_estim)),
+                 header,
+                 overwrite=True)
+
+    fits.writeto(result_dir + current_time_str + "_estimationFP_IM" + ".fits",
+                 np.imag(np.array(EF_estim)),
+                 header,
+                 overwrite=True)
+
+    voltage_DMs_nparray = np.zeros((nb_total_iter,testbed.number_act))
+
     DM_phases = np.zeros(
         (len(testbed.name_of_DMs), nb_total_iter, testbed.dim_overpad_pupil,
          testbed.dim_overpad_pupil))
 
     for i in range(nb_total_iter):
         allDMphases = testbed.voltage_to_phases(voltage_DMs[i])
-        for j in range(len(testbed.name_of_DMs)):
+
+        if isinstance(voltage_DMs[i], (int, float)):
+            voltage_DMs_nparray[i,:] += float(voltage_DMs[i])
+        else:
+            voltage_DMs_nparray[i,:] = voltage_DMs[i]
+
+        for j, DM_name in enumerate(testbed.name_of_DMs):
             DM_phases[j, i, :, :] = allDMphases[j]
 
+
+    indice_acum_number_act = 0
     for j, DM_name in enumerate(testbed.name_of_DMs):
-        fits.writeto(result_dir + current_time_str + DM_name + "_phases" +
-                     ".fits",
-                     DM_phases[j],
-                     header,
-                     overwrite=True)
+        fits.writeto(result_dir + current_time_str + '_' + DM_name +
+                         "_phases" + ".fits",
+                         DM_phases[j],
+                         header,
+                         overwrite=True)
+
+        DM = vars(testbed)[DM_name]
+        voltage_DMs_tosave = voltage_DMs_nparray[:,
+            indice_acum_number_act:indice_acum_number_act + DM.number_act]
+        indice_acum_number_act += DM.number_act
+
+        fits.writeto(result_dir + current_time_str + '_' + DM_name +
+                         "_voltages" + ".fits",
+                         voltage_DMs_tosave,
+                         header,
+                         overwrite=True)
+
+
+
+
 
     if config["SIMUconfig"]["photon_noise"] == True:
         FP_Intensities_photonnoise = np.array(FP_Intensities) * 0.
