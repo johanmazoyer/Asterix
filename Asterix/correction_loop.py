@@ -63,7 +63,9 @@ def CorrectionLoop(testbed,
 
         if mode > corrector.Gmatrix.shape[1]:
             if not Search_best_Mode:
-                print("You cannot use a cutoff mode ({:d}) larger than the total size of basis ({:d})".format(mode, corrector.Gmatrix.shape[1]))
+                print(
+                    "You cannot use a cutoff mode ({:d}) larger than the total size of basis ({:d})"
+                    .format(mode, corrector.Gmatrix.shape[1]))
                 print("We skip this iteration")
             continue
 
@@ -99,7 +101,6 @@ def CorrectionLoop(testbed,
             nb_photons=nb_photons,
             perfect_estimation=Search_best_Mode)
 
-
         solution = -gain * corrector.toDM_voltage(testbed, resultatestimation,
                                                   mode)
 
@@ -132,7 +133,9 @@ def CorrectionLoop(testbed,
     else:
         # create a dictionnary to save all results
 
-        modevector = [mode for mode in modevector if mode <= corrector.Gmatrix.shape[1]]
+        modevector = [
+            mode for mode in modevector if mode <= corrector.Gmatrix.shape[1]
+        ]
         nbiter = len(modevector)
 
         CorrectionLoopResult = dict()
@@ -183,7 +186,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
                  header,
                  overwrite=True)
 
-    voltage_DMs_nparray = np.zeros((nb_total_iter,testbed.number_act))
+    voltage_DMs_nparray = np.zeros((nb_total_iter, testbed.number_act))
 
     DM_phases = np.zeros(
         (len(testbed.name_of_DMs), nb_total_iter, testbed.dim_overpad_pupil,
@@ -193,36 +196,32 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
         allDMphases = testbed.voltage_to_phases(voltage_DMs[i])
 
         if isinstance(voltage_DMs[i], (int, float)):
-            voltage_DMs_nparray[i,:] += float(voltage_DMs[i])
+            voltage_DMs_nparray[i, :] += float(voltage_DMs[i])
         else:
-            voltage_DMs_nparray[i,:] = voltage_DMs[i]
+            voltage_DMs_nparray[i, :] = voltage_DMs[i]
 
         for j, DM_name in enumerate(testbed.name_of_DMs):
             DM_phases[j, i, :, :] = allDMphases[j]
 
-
     indice_acum_number_act = 0
     for j, DM_name in enumerate(testbed.name_of_DMs):
         fits.writeto(result_dir + current_time_str + '_' + DM_name +
-                         "_phases" + ".fits",
-                         DM_phases[j],
-                         header,
-                         overwrite=True)
+                     "_phases" + ".fits",
+                     DM_phases[j],
+                     header,
+                     overwrite=True)
 
         DM = vars(testbed)[DM_name]
-        voltage_DMs_tosave = voltage_DMs_nparray[:,
-            indice_acum_number_act:indice_acum_number_act + DM.number_act]
+        voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:
+                                                 indice_acum_number_act +
+                                                 DM.number_act]
         indice_acum_number_act += DM.number_act
 
         fits.writeto(result_dir + current_time_str + '_' + DM_name +
-                         "_voltages" + ".fits",
-                         voltage_DMs_tosave,
-                         header,
-                         overwrite=True)
-
-
-
-
+                     "_voltages" + ".fits",
+                     voltage_DMs_tosave,
+                     header,
+                     overwrite=True)
 
     if config["SIMUconfig"]["photon_noise"] == True:
         FP_Intensities_photonnoise = np.array(FP_Intensities) * 0.

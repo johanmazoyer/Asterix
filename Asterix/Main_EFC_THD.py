@@ -11,9 +11,7 @@ from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
 from Asterix.correction_loop import CorrectionLoop, Save_loop_results
 
-
 __all__ = ["runthd2"]
-
 
 #######################################################
 #######################################################
@@ -35,7 +33,6 @@ def runthd2(parameter_file,
     Data_dir = config["Data_dir"]
     #On bench or numerical simulation
     onbench = config["onbench"]
-
 
     ### MODEL CONFIG
     modelconfig = config["modelconfig"]
@@ -77,10 +74,10 @@ def runthd2(parameter_file,
     ##############################################################################
 
     Model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
-    matrix_dir = os.path.join(Data_dir,"Interaction_Matrices") + os.path.sep
-    result_dir = os.path.join(Data_dir, "Results",Name_Experiment) + os.path.sep
+    matrix_dir = os.path.join(Data_dir, "Interaction_Matrices") + os.path.sep
+    result_dir = os.path.join(Data_dir, "Results",
+                              Name_Experiment) + os.path.sep
     Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
-
 
     # Initialize thd:
     pup_round = OptSy.pupil(modelconfig)
@@ -139,7 +136,7 @@ def runthd2(parameter_file,
                                                gain,
                                                Nbiter_corr,
                                                Nbmode_corr,
-                                               Linesearch= Linesearch,
+                                               Linesearch=Linesearch,
                                                Linesearchmodes=Linesearchmodes,
                                                input_wavefront=input_wavefront,
                                                initial_DM_voltage=0,
