@@ -32,8 +32,6 @@ def CorrectionLoop(testbed,
     for i in np.arange(len(Nbiter_corr)):
         modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
-    nbiter = len(modevector)
-
     meancontrast = list()
     voltage_DMs = list()
     FP_Intensities = list()
@@ -62,6 +60,12 @@ def CorrectionLoop(testbed,
         plt.figure()
 
     for iteration, mode in enumerate(modevector):
+
+        if mode > corrector.Gmatrix.shape[1]:
+            if not Search_best_Mode:
+                print("You cannot use a cutoff mode ({:d}) larger than the total size of basis ({:d})".format(mode, corrector.Gmatrix.shape[1]))
+                print("We skip this iteration")
+            continue
 
         if Linesearch:
             # this is elegant but must be carefully done if we want to avoid infinite loop.
@@ -95,16 +99,15 @@ def CorrectionLoop(testbed,
             nb_photons=nb_photons,
             perfect_estimation=Search_best_Mode)
 
-        EF_estim.append(resultatestimation)
 
         solution = -gain * corrector.toDM_voltage(testbed, resultatestimation,
                                                   mode)
 
+        EF_estim.append(resultatestimation)
         FP_Intensities.append(
             testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                          voltage_vector=voltage_DMs[-1] +
                                          solution))
-
         if Search_best_Mode == False:
             #if we are only looking for the best mode, we do not update the DM shape
             # for the next iteration
@@ -128,6 +131,10 @@ def CorrectionLoop(testbed,
 
     else:
         # create a dictionnary to save all results
+
+        modevector = [mode for mode in modevector if mode <= corrector.Gmatrix.shape[1]]
+        nbiter = len(modevector)
+
         CorrectionLoopResult = dict()
         CorrectionLoopResult["nb_total_iter"] = nbiter
         CorrectionLoopResult["SVDmodes"] = modevector
