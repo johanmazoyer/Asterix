@@ -101,8 +101,14 @@ def CorrectionLoop(testbed,
             nb_photons=nb_photons,
             perfect_estimation=Search_best_Mode)
 
-        solution = -gain * corrector.toDM_voltage(testbed, resultatestimation,
-                                                  mode)
+        solution = corrector.toDM_voltage(testbed, resultatestimation,
+                                                  mode, gain = gain, ActualCurrentContrast = meancontrast[-1])
+
+        if np.isnan(solution).any():
+            # for every correction algorithm, we can break the loop by sending
+            # a nan as a correction vector
+            print("we stop the correction")
+            break
 
         EF_estim.append(resultatestimation)
         FP_Intensities.append(
@@ -136,7 +142,7 @@ def CorrectionLoop(testbed,
         modevector = [
             mode for mode in modevector if mode <= corrector.Gmatrix.shape[1]
         ]
-        nbiter = len(modevector)
+        nbiter = len(meancontrast)
 
         CorrectionLoopResult = dict()
         CorrectionLoopResult["nb_total_iter"] = nbiter

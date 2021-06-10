@@ -89,7 +89,7 @@ class Corrector:
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
 
-        if self.correction_algorithm == "efc" or self.correction_algorithm == "em" or self.correction_algorithm == "steepest":
+        if self.correction_algorithm == "efc" or self.correction_algorithm == "em" or self.correction_algorithm == "steepest" or self.correction_algorithm == "sm":
 
             self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
             self.regularization = Correctionconfig["regularization"]
@@ -193,7 +193,13 @@ class Corrector:
         # in the initialization we have not inverted the matrix just yet so
         self.previousmode = np.nan
 
-    def toDM_voltage(self, testbed, estimate, mode, ActualCurrentContrast = 1, **kwargs):
+    def toDM_voltage(self,
+                     testbed,
+                     estimate,
+                     mode,
+                     ActualCurrentContrast=1,
+                     gain=0.,
+                     **kwargs):
         """ --------------------------------------------------
         Run an correction from a testbed, and return the DM voltage for one or 2 DMS
 
@@ -209,23 +215,49 @@ class Corrector:
                                                      visu=False,
                                                      regul=self.regularization)
 
-            return self.amplitudeEFC * wsc.solutionEFC(
+            return -gain * self.amplitudeEFC * wsc.solutionEFC(
                 self.MaskEstim, estimate, self.invertGDH, testbed)
 
         if self.correction_algorithm == "sm":
-
+            # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
             if np.isnan(self.previousmode):
                 # This is the first time
-                self.last_best_alpha = 1e12
+                self.previousmode = mode
+                self.last_best_alpha = 0.1
+                self.expected_gain_in_contrast = 0.4
+                self.last_best_contrast = ActualCurrentContrast
+                self.times_we_lowered_gain = 0
+                self.count_since_last_best = 0
 
-            DesiredContrast = 0.95*ActualCurrentContrast
+            if self.last_best_contrast < ActualCurrentContrast:
+                # problem: the algorithm did not actully improved contrast last iteration
+                # it's ok if it's only once, but we
+                self.count_since_last_best += 1
+            else:
+                self.count_since_last_best = 0
+                self.last_best_contrast = ActualCurrentContrast
 
-            solutionSM, self.last_best_alpha, TestSMfailed = wsc.ssolutionSM(
-                self.MaskEstim, estimate, self.M0, self.G,
-                DesiredContrast, self.last_best_alpha, testbed)
+            if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast:
+                self.times_we_lowered_gain += 1
+                self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast)/3
+                self.count_since_last_best = 0
+                print("we do not improve contrast anymore, we change the gain to {:f}".format(self.expected_gain_in_contrast))
 
 
-            return self.amplitudeEFC * solutionSM
+
+            if self.times_we_lowered_gain == 3:
+                #it's been too long we have not increased
+                # or we're so far off linearity that SM is actually heavily degrading contrast
+                # It's time to stop !
+                return np.nan
+
+            DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
+
+            solutionSM, self.last_best_alpha = wsc.solutionSM(
+                self.MaskEstim, testbed, estimate, self.M0, self.G,
+                DesiredContrast, self.last_best_alpha)
+
+            return -self.amplitudeEFC * solutionSM
 
         if self.correction_algorithm == "em":
 
@@ -237,12 +269,12 @@ class Corrector:
                                                     visu=False,
                                                     regul=self.regularization)
 
-            return self.amplitudeEFC * wsc.solutionEM(
+            return -gain * self.amplitudeEFC * wsc.solutionEM(
                 self.MaskEstim, estimate, self.invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return self.amplitudeEFC * wsc.solutionSteepest(
+            return -gain * self.amplitudeEFC * wsc.solutionSteepest(
                 self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")

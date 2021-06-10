@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name
 __author__ = "Axel Potier"
 
+from functools import total_ordering
 import os
 import copy
 import numpy as np
@@ -51,6 +52,9 @@ def invertSVD(matrix_to_invert,
     np.diag(InvS): Inverse eigenvalues of the input matrix
     np.diag(InvS_truncated): Inverse eigenvalues of the input matrix after regularization
     pseudoinverse: Regularized inverse of the input matrix
+
+    AUTHOR : Axel Potier
+
     -------------------------------------------------- """
     U, s, V = np.linalg.svd(matrix_to_invert, full_matrices=False)
     #print(np.max(np.abs(U @ np.diag(s) @ V)))
@@ -109,6 +113,8 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
     Return:
     ------
     InterMat: 2D array, jacobian matrix for Electric Field Conjugation
+
+    AUTHOR : Axel Potier and Johan Mazoyer
     -------------------------------------------------- """
     total_number_basis_modes = 0
     string_testbed_without_DMS = testbed.string_os
@@ -204,6 +210,7 @@ def cropDHInterractionMatrix(FullInterractionMatrix, mask):
     Return: DHInterractionMatrix: matrix only inside the DH
     ------
 
+    AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
     size_full_matrix = FullInterractionMatrix.shape[0]
 
@@ -242,6 +249,8 @@ def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
     ------
     vector_actuator_voltage: 1D-array real : dim (total(DM actuators))
                      vector of base coefficients for all actuators of the DMs by order of the light path
+
+    AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
 
     indice_acum_basis_size = 0
@@ -285,6 +294,8 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed):
     ------
     solution:           1D array, voltage to apply on each deformable
                         mirror actuator
+
+    AUTHOR : Axel Potier
     -------------------------------------------------- """
 
     EF_vector = np.zeros(2 * int(np.sum(mask)))
@@ -309,7 +320,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
 
     Hessian_Matrix:     2D array , Hessian matrix of the DH energy
 
-    Jacobian:           2D array, inverse of the jacobian matrix created linking the
+    Jacobian:           2D array, jacobian matrix created linking the
                                     estimation to the basis coefficient
 
     testbed: a testbed with one or more DM
@@ -317,100 +328,122 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
+
+    AUTHOR : Axel Potier
     -------------------------------------------------- """
 
     # With notations from Potier PhD eq 4.74 p78:
     Eab = Result_Estimate[np.where(mask == 1)]
     realb0 = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
-                         Eab)).flatten()
+                            Eab)).flatten()
     produit_mat = np.dot(Hessian_Matrix, realb0)
 
     return basis_voltage_to_act_voltage(produit_mat, testbed)
 
 
-def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast, last_best_alpha, lastSMfailed, testbed):
+def solutionSM(mask, testbed, Result_Estimate, Jacob_trans_Jacob, Jacobian,
+               DesiredContrast, last_best_alpha, ):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region in the stroke min solution
+    See Axel Potier Phd for notation and Mazoyer et al. 2018a for alpha search improvement
 
     Parameters:
     ----------
     mask:               Binary mask corresponding to the dark hole region
 
+    testbed: a testbed with one or more DM
+
     Result_Estimate:    2D array can be complex, focal plane electric field
 
-    Jacob_trans_Jacob:     2D array , Hessian matrix of the DH energy
+    Jacob_trans_Jacob:     2D array , Jabobian.Transpose(Jabobian) matrix
 
-    Jacobian:           2D array, inverse of the jacobian matrix created linking the
+    Jacobian:           2D array, jacobian matrix created linking the
                                     estimation to the basis coefficient
 
-    testbed: a testbed with one or more DM
+    DesiredContrast : float : the contrast value we wish to achieve
+
+    last_best_alpha : This avoid to recalculate the best alpha at each iteration
+                            since it's often a very close value to the last one working
 
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
+    lasbestalpha : scalar. This avoid to recalculate the best alpha at each iteration
+                            since it's often a very close value
+
+    AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
 
-    # we put this keyword to True to do at least 1 SM
+    pixel_in_mask = np.sum(mask)
+
+    # With notations from Potier PhD eq 4.74 p78:
+    Eab = Result_Estimate[np.where(mask == 1)]
+
+    d0 = np.sum(np.abs(Eab)**2) / pixel_in_mask
+    M0 = Jacob_trans_Jacob / pixel_in_mask
+    realb0 = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
+                            Eab)).flatten() / pixel_in_mask
+
+    Identity_M0size = np.identity(M0.shape[0])
+
+    # we put this keyword to True to do at least 1 try
     TestSMfailed = True
 
+    while TestSMfailed:
 
-    while TestSMfailed == True:
-
-        # With notations from Potier PhD eq 4.74 p78:
-        Eab = Result_Estimate[np.where(mask == 1)]
-        d0 = Eab*Eab
-        M0 = Jacob_trans_Jacob
-        realb0 = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
-                            Eab)).flatten()
-
-        step_alpha = 1.3 #hard coded but can maybe be changed
-        if lastSMfailed == True:
-            # stroke min failed before even 1 iter
-            #last time we used it
-            alpha = last_best_alpha * step_alpha**9
-        else:
-            alpha = last_best_alpha * step_alpha**2
-
-
-
-        Identity_M0size = np.identity(M0.shape[0])
+        step_alpha = 1.3  #hard coded but can maybe be changed
+        alpha = last_best_alpha * step_alpha**2
 
         #eq 4.79 Potier Phd
-        DMSurfaceCoeff =  np.dot(np.linalg.inv(M0 + alpha*Identity_M0size), realb0)
+        DMSurfaceCoeff = np.dot(np.linalg.inv(M0 + alpha * Identity_M0size),
+                                realb0)
 
-        #eq 4.73 Potier Phd
-        ResidualEnergy = np.dot(DMSurfaceCoeff , np.dot(M0 , DMSurfaceCoeff)) - 2* np.dot(realb0 , DMSurfaceCoeff) + d0
+        ResidualEnergy = np.dot(DMSurfaceCoeff, np.dot(
+            M0, DMSurfaceCoeff)) - 2 * np.dot(realb0, DMSurfaceCoeff) + d0
         CurrentContrast = ResidualEnergy
         iteralpha = 0
 
-        while CurrentContrast >  DesiredContrast and alpha > 1e-12:
+        while CurrentContrast > DesiredContrast and alpha > 1e-12:
 
             # if this counter is not even incremented once, it means that our initial
             # alpha is probably too big
             iteralpha += 1
 
-            alpha = alpha/1.3;
+            alpha = alpha / step_alpha
             LastDMSurfaceCoeff = DMSurfaceCoeff
-            DMSurfaceCoeff =  np.dot(np.linalg.inv(M0 + alpha*Identity_M0size), realb0)
-            ResidualEnergy = np.dot(DMSurfaceCoeff , np.dot(M0 , DMSurfaceCoeff)) - 2* np.dot(realb0 , DMSurfaceCoeff) + d0
+
+            DMSurfaceCoeff = np.dot(
+                np.linalg.inv(M0 + alpha * Identity_M0size), realb0)
+            ResidualEnergy = np.dot(DMSurfaceCoeff, np.dot(
+                M0, DMSurfaceCoeff)) - 2 * np.dot(realb0, DMSurfaceCoeff) + d0
 
             LastCurrentContrast = CurrentContrast
             CurrentContrast = ResidualEnergy
 
-            if CurrentContrast < 0 or CurrentContrast > 2*LastCurrentContrast:
+            if CurrentContrast < 0 or CurrentContrast > 2 * LastCurrentContrast:
                 # this step is to check if the SM is divergeing too quickly
-                # since we at least enter the while loop it means it has not failed to we return
-                # lastSMfailed = False
-                return LastDMSurfaceCoeff, alpha
+                return basis_voltage_to_act_voltage(LastDMSurfaceCoeff,
+                                                    testbed), alpha
 
-        if iteralpha > 0:
-            # we did at least 1 iteration (the SM found a solution that dig the contrast)
-            # we pass !
+            # print(
+            #     "For alpha={:f}, Current Contrast:{:f}, Last Contrast:{:f}, Desired Contrast: {:f}"
+            #     .format(np.log10(alpha), np.log10(CurrentContrast),
+            #             np.log10(LastCurrentContrast), np.log10(DesiredContrast)))
+
+        if iteralpha == 0:
+            # we must do at least 1 iteration (the SM found a solution that dig the contrast)
+            # or we fail !
+            TestSMfailed = True
+            last_best_alpha *= 10
+            print("SM failed, we increase alpha 10 times")
+        else:
             TestSMfailed = False
 
-    print("Number of iteration in this stroke min (number of tested alpha]): {:d}".format(iteralpha))
-    return DMSurfaceCoeff, alpha
+    print(
+        "Number of iteration in this stroke min (number of tested alpha): {:d}"
+        .format(iteralpha))
+    return basis_voltage_to_act_voltage(DMSurfaceCoeff, testbed), alpha
 
     # return basis_voltage_to_act_voltage(produit_mat, testbed)
 
