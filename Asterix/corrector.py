@@ -110,7 +110,7 @@ class Corrector:
             self.Gmatrix = wsc.cropDHInterractionMatrix(
                 interMat, self.MaskEstim)
 
-            if self.correction_algorithm == "em" or self.correction_algorithm == "steepest":
+            if self.correction_algorithm == "em" or self.correction_algorithm == "steepest" or self.correction_algorithm == "sm":
 
                 self.G = np.zeros(
                     (int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]),
@@ -193,38 +193,52 @@ class Corrector:
         # in the initialization we have not inverted the matrix just yet so
         self.previousmode = np.nan
 
-    def toDM_voltage(self, testbed, estimate, mode, **kwargs):
+    def toDM_voltage(self, testbed, estimate, mode, ActualCurrentContrast = 1, **kwargs):
         """ --------------------------------------------------
         Run an correction from a testbed, and return the DM voltage for one or 2 DMS
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        # TODO is amplitudeEFC really useful ? with the small phase hypothesis done when
-        # measuring the matrix, everything is linear !
-
         if self.correction_algorithm == "efc":
             if mode != self.previousmode:
-                _, _, invertGDH = wsc.invertSVD(self.Gmatrix,
-                                                mode,
-                                                goal="c",
-                                                visu=False,
-                                                regul=self.regularization)
+                self.previousmode = mode
+                _, _, self.invertGDH = wsc.invertSVD(self.Gmatrix,
+                                                     mode,
+                                                     goal="c",
+                                                     visu=False,
+                                                     regul=self.regularization)
 
             return self.amplitudeEFC * wsc.solutionEFC(
-                self.MaskEstim, estimate, invertGDH, testbed)
+                self.MaskEstim, estimate, self.invertGDH, testbed)
+
+        if self.correction_algorithm == "sm":
+
+            if np.isnan(self.previousmode):
+                # This is the first time
+                self.last_best_alpha = 1e12
+
+            DesiredContrast = 0.95*ActualCurrentContrast
+
+            solutionSM, self.last_best_alpha, TestSMfailed = wsc.ssolutionSM(
+                self.MaskEstim, estimate, self.M0, self.G,
+                DesiredContrast, self.last_best_alpha, testbed)
+
+
+            return self.amplitudeEFC * solutionSM
 
         if self.correction_algorithm == "em":
+
             if mode != self.previousmode:
                 self.previousmode = mode
-                _, _, invertM0 = wsc.invertSVD(self.M0,
-                                               mode,
-                                               goal="c",
-                                               visu=False,
-                                               regul=self.regularization)
+                _, _, self.invertM0 = wsc.invertSVD(self.M0,
+                                                    mode,
+                                                    goal="c",
+                                                    visu=False,
+                                                    regul=self.regularization)
 
             return self.amplitudeEFC * wsc.solutionEM(
-                self.MaskEstim, estimate, invertM0, self.G, testbed)
+                self.MaskEstim, estimate, self.invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
 

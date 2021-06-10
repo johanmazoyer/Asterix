@@ -319,13 +319,100 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
     solution: 1D array, voltage to apply on each deformable mirror actuator
     -------------------------------------------------- """
 
-    Eab = np.zeros(int(np.sum(mask)))
-    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
-    Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
-                         Resultat_cropdh)).flatten()
-    produit_mat = np.dot(Hessian_Matrix, Eab)
+    # With notations from Potier PhD eq 4.74 p78:
+    Eab = Result_Estimate[np.where(mask == 1)]
+    realb0 = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
+                         Eab)).flatten()
+    produit_mat = np.dot(Hessian_Matrix, realb0)
 
     return basis_voltage_to_act_voltage(produit_mat, testbed)
+
+
+def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast, last_best_alpha, lastSMfailed, testbed):
+    """ --------------------------------------------------
+    Voltage to apply on the deformable mirror in order to minimize the speckle
+    intensity in the dark hole region in the stroke min solution
+
+    Parameters:
+    ----------
+    mask:               Binary mask corresponding to the dark hole region
+
+    Result_Estimate:    2D array can be complex, focal plane electric field
+
+    Jacob_trans_Jacob:     2D array , Hessian matrix of the DH energy
+
+    Jacobian:           2D array, inverse of the jacobian matrix created linking the
+                                    estimation to the basis coefficient
+
+    testbed: a testbed with one or more DM
+
+    Return:
+    ------
+    solution: 1D array, voltage to apply on each deformable mirror actuator
+    -------------------------------------------------- """
+
+    # we put this keyword to True to do at least 1 SM
+    TestSMfailed = True
+
+
+    while TestSMfailed == True:
+
+        # With notations from Potier PhD eq 4.74 p78:
+        Eab = Result_Estimate[np.where(mask == 1)]
+        d0 = Eab*Eab
+        M0 = Jacob_trans_Jacob
+        realb0 = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
+                            Eab)).flatten()
+
+        step_alpha = 1.3 #hard coded but can maybe be changed
+        if lastSMfailed == True:
+            # stroke min failed before even 1 iter
+            #last time we used it
+            alpha = last_best_alpha * step_alpha**9
+        else:
+            alpha = last_best_alpha * step_alpha**2
+
+
+
+        Identity_M0size = np.identity(M0.shape[0])
+
+        #eq 4.79 Potier Phd
+        DMSurfaceCoeff =  np.dot(np.linalg.inv(M0 + alpha*Identity_M0size), realb0)
+
+        #eq 4.73 Potier Phd
+        ResidualEnergy = np.dot(DMSurfaceCoeff , np.dot(M0 , DMSurfaceCoeff)) - 2* np.dot(realb0 , DMSurfaceCoeff) + d0
+        CurrentContrast = ResidualEnergy
+        iteralpha = 0
+
+        while CurrentContrast >  DesiredContrast and alpha > 1e-12:
+
+            # if this counter is not even incremented once, it means that our initial
+            # alpha is probably too big
+            iteralpha += 1
+
+            alpha = alpha/1.3;
+            LastDMSurfaceCoeff = DMSurfaceCoeff
+            DMSurfaceCoeff =  np.dot(np.linalg.inv(M0 + alpha*Identity_M0size), realb0)
+            ResidualEnergy = np.dot(DMSurfaceCoeff , np.dot(M0 , DMSurfaceCoeff)) - 2* np.dot(realb0 , DMSurfaceCoeff) + d0
+
+            LastCurrentContrast = CurrentContrast
+            CurrentContrast = ResidualEnergy
+
+            if CurrentContrast < 0 or CurrentContrast > 2*LastCurrentContrast:
+                # this step is to check if the SM is divergeing too quickly
+                # since we at least enter the while loop it means it has not failed to we return
+                # lastSMfailed = False
+                return LastDMSurfaceCoeff, alpha
+
+        if iteralpha > 0:
+            # we did at least 1 iteration (the SM found a solution that dig the contrast)
+            # we pass !
+            TestSMfailed = False
+
+    print("Number of iteration in this stroke min (number of tested alpha]): {:d}".format(iteralpha))
+    return DMSurfaceCoeff, alpha
+
+    # return basis_voltage_to_act_voltage(produit_mat, testbed)
 
 
 def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
