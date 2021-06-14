@@ -140,7 +140,7 @@ def CorrectionLoop1Matrix(testbed,
                 Linesearch=False,
                 Search_best_Mode=True,
                 input_wavefront=input_wavefront,
-                initial_DM_voltage=voltage_DMs[iteration],
+                initial_DM_voltage=CorrectionLoopResult["voltage_DMs"][iteration],
                 silence=True)
             print("Search Best Mode: ", bestmode, " contrast: ", bestcontrast)
             mode = bestmode
@@ -196,8 +196,8 @@ def CorrectionLoop1Matrix(testbed,
             plt.pause(0.01)
 
     if Search_best_Mode:
-        return np.amin(meancontrast[1:]), modevector[np.argmin(
-            meancontrast[1:])]
+        return np.amin(CorrectionLoopResult["MeanDHContrast"][1:]), modevector[np.argmin(
+            CorrectionLoopResult["MeanDHContrast"][1:])]
 
     else:
         # create a dictionnary to save all results
@@ -256,7 +256,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
         (len(testbed.name_of_DMs), nb_total_iter, testbed.dim_overpad_pupil,
          testbed.dim_overpad_pupil))
 
-    for i in range(allDMphases.shape[0]):
+    for i in range(voltage_DMs.shape[0]):
         allDMphases = testbed.voltage_to_phases(voltage_DMs[i])
 
         if isinstance(voltage_DMs[i], (int, float)):

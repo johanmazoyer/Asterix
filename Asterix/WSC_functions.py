@@ -94,7 +94,7 @@ def invertSVD(matrix_to_invert,
 
 
 def creatingInterractionmatrix( testbed, dimEstim,
-                               amplitudeEFC, matrix_dir, initial_DM_voltage = 0., input_wavefront = 1.):
+                               amplitudeEFC, matrix_dir, initial_DM_voltage = 0., input_wavefront = 1., perfect_mat = False):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
@@ -145,9 +145,17 @@ def creatingInterractionmatrix( testbed, dimEstim,
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(
             DM.basis_size)
-        fileDirectMatrix = "DirectMatrix_EFCampl" + str(
-            amplitudeEFC) + basis_str + string_testbed_without_DMS
+        
+        if perfect_mat:
+            headfile = "DirectMatrix_EFCampl"
+        else:
+            headfile = "DirectMatrixPerf_EFCampl"
 
+
+        fileDirectMatrix = headfile+ str(
+            amplitudeEFC) + basis_str + string_testbed_without_DMS
+        
+    
         if os.path.exists(matrix_dir + fileDirectMatrix + ".fits") and (initial_DM_voltage == 0.).all():
             print("The matrix " + fileDirectMatrix + " already exists")
 
@@ -164,7 +172,6 @@ def creatingInterractionmatrix( testbed, dimEstim,
             DMphase_init = DM.voltage_to_phase(actu_vect_DM)
 
             indice_acum_number_act += DM.number_act
-
 
             # Creating Interaction Matrix for thd DM if does not exist
             init_pos_in_matrix = pos_in_matrix
@@ -186,19 +193,35 @@ def creatingInterractionmatrix( testbed, dimEstim,
                 if i % 10:
                     useful.progress(i, DM.basis_size, status='')
 
-                phaseDM = DM.voltage_to_phase(DM.basis[i]) * testbed.EF_from_phase_and_ampl(phase_abb= DMphase_init)
 
-                if DM.z_position != 0:
-                    phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * phaseDM,
-                                                   DM.wavelength_0,
-                                                   -DM.z_position,
-                                                   DM.diam_pup_in_m / 2,
-                                                   DM.prad)
+                if perfect_mat:
+                    wavefront_phaseDM = testbed.EF_from_phase_and_ampl(phase_abb=DM.voltage_to_phase(DM.basis[i])* amplitudeEFC + DMphase_init)
+
+                    if DM.z_position != 0:
+                        wavefront_phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * wavefront_phaseDM,
+                                                    DM.wavelength_0,
+                                                    -DM.z_position,
+                                                    DM.diam_pup_in_m / 2,
+                                                    DM.prad)
+                    
+                    Gvector = proc.resampling(
+                        testbed.todetector(entrance_EF=wavefront_phaseDM), dimEstim)
+
+                else:
+                    
+                    phaseDM = DM.voltage_to_phase(DM.basis[i])
+                    wavefront_phaseDM = 1j * amplitudeEFC* phaseDM * testbed.EF_from_phase_and_ampl(phase_abb= DMphase_init)
 
 
-                Gvector = proc.resampling(
-                    testbed.todetector(entrance_EF=input_wavefront * 1j *
-                                       phaseDM * amplitudeEFC, voltage_vector=initial_DM_voltage), dimEstim)
+                    if DM.z_position != 0:
+                        wavefront_phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * wavefront_phaseDM,
+                                                    DM.wavelength_0,
+                                                    -DM.z_position,
+                                                    DM.diam_pup_in_m / 2,
+                                                    DM.prad)
+
+                    Gvector = proc.resampling(
+                        testbed.todetector(entrance_EF=wavefront_phaseDM), dimEstim)
 
                 InterMat[:dimEstim**2,
                          pos_in_matrix] = np.real(Gvector).flatten()
