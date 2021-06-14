@@ -93,21 +93,24 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
-                               amplitudeEFC, matrix_dir):
+def creatingInterractionmatrix( testbed, dimEstim,
+                               amplitudeEFC, matrix_dir, initial_DM_voltage = 0., input_wavefront = 1.):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
     Parameters:
     ----------
-    input_wavefront: 2D-array complex
-        input wavefront in pupil plane
+
     testbed: Optical_element
         testbed structure
     dimEstim: int
         size of the output image in teh estimator
     amplitudeEFC: float, amplitude of the EFC probe on the DM
     matrix_dir : path. save all the difficult to measure files here
+    input_wavefront: 1D-array real
+        initial DM voltage
+    input_wavefront: 2D-array complex
+        input wavefront in pupil plane
 
 
     Return:
@@ -116,6 +119,10 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
 
     AUTHOR : Axel Potier and Johan Mazoyer
     -------------------------------------------------- """
+    if isinstance(initial_DM_voltage, (int, float)):
+            initial_DM_voltage = np.zeros(testbed.number_act) + float(initial_DM_voltage)
+
+
     total_number_basis_modes = 0
     string_testbed_without_DMS = testbed.string_os
 
@@ -130,16 +137,18 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
 
     pos_in_matrix = 0
+    indice_acum_number_act = 0
     for DM_name in testbed.name_of_DMs:
 
         DM = vars(testbed)[DM_name]
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
+
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(
             DM.basis_size)
         fileDirectMatrix = "DirectMatrix_EFCampl" + str(
             amplitudeEFC) + basis_str + string_testbed_without_DMS
 
-        if os.path.exists(matrix_dir + fileDirectMatrix + ".fits"):
+        if os.path.exists(matrix_dir + fileDirectMatrix + ".fits") and (initial_DM_voltage == 0.).all():
             print("The matrix " + fileDirectMatrix + " already exists")
 
             InterMat[:, pos_in_matrix:pos_in_matrix +
@@ -149,6 +158,14 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
             pos_in_matrix += DM.basis_size
 
         else:
+
+            actu_vect_DM = initial_DM_voltage[
+            indice_acum_number_act:indice_acum_number_act + DM.number_act]
+            DMphase_init = DM.voltage_to_phase(actu_vect_DM)
+
+            indice_acum_number_act += DM.number_act
+
+
             # Creating Interaction Matrix for thd DM if does not exist
             init_pos_in_matrix = pos_in_matrix
             print("")
@@ -169,7 +186,8 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
                 if i % 10:
                     useful.progress(i, DM.basis_size, status='')
 
-                phaseDM = DM.voltage_to_phase(DM.basis[i])
+                phaseDM = DM.voltage_to_phase(DM.basis[i]) * testbed.EF_from_phase_and_ampl(phase_abb= DMphase_init)
+
                 if DM.z_position != 0:
                     phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * phaseDM,
                                                    DM.wavelength_0,
@@ -177,9 +195,10 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
                                                    DM.diam_pup_in_m / 2,
                                                    DM.prad)
 
+
                 Gvector = proc.resampling(
                     testbed.todetector(entrance_EF=input_wavefront * 1j *
-                                       phaseDM * amplitudeEFC), dimEstim)
+                                       phaseDM * amplitudeEFC, voltage_vector=initial_DM_voltage), dimEstim)
 
                 InterMat[:dimEstim**2,
                          pos_in_matrix] = np.real(Gvector).flatten()
@@ -187,10 +206,12 @@ def creatingInterractionmatrix(input_wavefront, testbed, dimEstim,
                          pos_in_matrix] = np.imag(Gvector).flatten()
 
                 pos_in_matrix += 1
-            fits.writeto(
-                matrix_dir + fileDirectMatrix + ".fits",
-                InterMat[:, init_pos_in_matrix:init_pos_in_matrix +
-                         DM.basis_size])
+
+            if (initial_DM_voltage == 0.).all():
+                fits.writeto(
+                    matrix_dir + fileDirectMatrix + ".fits",
+                    InterMat[:, init_pos_in_matrix:init_pos_in_matrix +
+                            DM.basis_size])
 
     print("")
     print("End Interraction Matrix")
@@ -387,8 +408,10 @@ def solutionSM(mask, testbed, Result_Estimate, Jacob_trans_Jacob, Jacobian,
 
     Identity_M0size = np.identity(M0.shape[0])
 
+
     # we put this keyword to True to do at least 1 try
     TestSMfailed = True
+    number_time_failed =0
 
     while TestSMfailed:
 
@@ -421,10 +444,9 @@ def solutionSM(mask, testbed, Result_Estimate, Jacob_trans_Jacob, Jacobian,
             LastCurrentContrast = CurrentContrast
             CurrentContrast = ResidualEnergy
 
-            if CurrentContrast < 0 or CurrentContrast > 2 * LastCurrentContrast:
+            if (CurrentContrast > 3 * LastCurrentContrast) or (number_time_failed>5):
                 # this step is to check if the SM is divergeing too quickly
-                return basis_voltage_to_act_voltage(LastDMSurfaceCoeff,
-                                                    testbed), alpha
+                return np.nan,np.nan
 
             # print(
             #     "For alpha={:f}, Current Contrast:{:f}, Last Contrast:{:f}, Desired Contrast: {:f}"
@@ -435,6 +457,7 @@ def solutionSM(mask, testbed, Result_Estimate, Jacob_trans_Jacob, Jacobian,
             # we must do at least 1 iteration (the SM found a solution that dig the contrast)
             # or we fail !
             TestSMfailed = True
+            number_time_failed +=1
             last_best_alpha *= 10
             print("SM failed, we increase alpha 10 times")
         else:

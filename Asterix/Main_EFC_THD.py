@@ -129,18 +129,19 @@ def runthd2(parameter_file,
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
                                                   ampl_abb=ampl_abb_up)
 
-    Resultats_correction_loop = CorrectionLoop(thd2,
-                                               estim,
-                                               correc,
-                                               MaskScience,
-                                               gain,
-                                               Nbiter_corr,
-                                               Nbmode_corr,
-                                               Linesearch=Linesearch,
-                                               Linesearchmodes=Linesearchmodes,
-                                               input_wavefront=input_wavefront,
-                                               initial_DM_voltage=0,
-                                               photon_noise=photon_noise,
-                                               nb_photons=nb_photons)
+    Resultats_correction_loop = CorrectionLoop(
+                                                thd2,
+                                                estim,
+                                                correc,
+                                                MaskScience,
+                                                gain,
+                                                Nbiter_corr,
+                                                Nbmode_corr,
+                                                Linesearch=Linesearch,
+                                                Linesearchmodes=Linesearchmodes,
+                                                input_wavefront=input_wavefront,
+                                                initial_DM_voltage=0,
+                                                photon_noise=photon_noise,
+                                                nb_photons=nb_photons)
 
     Save_loop_results(Resultats_correction_loop, config, thd2, result_dir)

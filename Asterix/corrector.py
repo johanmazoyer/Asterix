@@ -41,6 +41,7 @@ class Corrector:
                  testbed,
                  MaskDH,
                  estimator,
+                 initial_DM_voltage = 0.,
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -79,102 +80,80 @@ class Corrector:
             raise Exception("testbed must be an Optical_System objet")
 
         basis_type = Correctionconfig["DM_basis"].lower()
+        self.total_number_modes = 0
 
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
+            self.total_number_modes += DM.basis_size
             DM.basis_type = basis_type
 
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
 
-        if self.correction_algorithm == "efc" or self.correction_algorithm == "em" or self.correction_algorithm == "steepest" or self.correction_algorithm == "sm":
-
-            self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
-            self.regularization = Correctionconfig["regularization"]
-
-            self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
+        self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
+        self.regularization = Correctionconfig["regularization"]
+        self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
                                                    estimator.Estim_sampling)
 
-            start_time = time.time()
-            interMat = wsc.creatingInterractionmatrix(1., testbed,
-                                                      estimator.dimEstim,
-                                                      self.amplitudeEFC,
-                                                      matrix_dir)
+        self.matrix_dir = matrix_dir
 
-            print("time for direct matrix " + testbed.string_os,
-                  time.time() - start_time)
-            print("")
+        self.update_matrices(testbed, estimator)
 
-            self.Gmatrix = wsc.cropDHInterractionMatrix(
-                interMat, self.MaskEstim)
+        if self.correction_algorithm == "efc" and save_for_bench == True:
+            if not os.path.exists(realtestbed_dir):
+                print("Creating directory " + realtestbed_dir + " ...")
+                os.makedirs(realtestbed_dir)
 
-            if self.correction_algorithm == "em" or self.correction_algorithm == "steepest" or self.correction_algorithm == "sm":
+            Nbmodes = Correctionconfig["Nbmodes_OnTestbed"]
+            _, _, invertGDH = wsc.invertSVD(self.Gmatrix,
+                                            Nbmodes,
+                                            goal="c",
+                                            regul=self.regularization,
+                                            visu=True,
+                                            filename_visu=realtestbed_dir +
+                                            "SVD_Modes" + str(Nbmodes) +
+                                            ".png")
 
-                self.G = np.zeros(
-                    (int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]),
-                    dtype=complex)
-                self.G = (
-                    self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
-                    1j * self.Gmatrix[int(self.Gmatrix.shape[0] / 2):, :])
-                transposecomplexG = np.transpose(np.conjugate(self.G))
-                self.M0 = np.real(np.dot(transposecomplexG, self.G))
+            if testbed.DM1.active:
+                invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]
 
-            if save_for_bench == True:
-                if not os.path.exists(realtestbed_dir):
-                    print("Creating directory " + realtestbed_dir + " ...")
-                    os.makedirs(realtestbed_dir)
-
-                Nbmodes = Correctionconfig["Nbmodes_OnTestbed"]
-                _, _, invertGDH = wsc.invertSVD(self.Gmatrix,
-                                                Nbmodes,
-                                                goal="c",
-                                                regul=self.regularization,
-                                                visu=True,
-                                                filename_visu=realtestbed_dir +
-                                                "SVD_Modes" + str(Nbmodes) +
-                                                ".png")
-
-                if testbed.DM1.active:
-                    invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]
-
-                    EFCmatrix_DM1 = np.transpose(
-                        np.dot(np.transpose(testbed.DM1.basis), invertGDH_DM1))
-                    fits.writeto(realtestbed_dir +
-                                 "Matrix_control_EFC_DM1.fits",
-                                 EFCmatrix_DM1.astype(np.float32),
-                                 overwrite=True)
-                    if testbed.DM3.active:
-                        invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
-                        EFCmatrix_DM3 = np.transpose(
-                            np.dot(np.transpose(testbed.DM3.basis),
-                                   invertGDH_DM3))
-                        fits.writeto(realtestbed_dir +
-                                     "Matrix_control_EFC_DM3.fits",
-                                     EFCmatrix_DM3.astype(np.float32),
-                                     overwrite=True)
-                elif testbed.DM3.active:
-                    invertGDH_DM3 = invertGDH
+                EFCmatrix_DM1 = np.transpose(
+                    np.dot(np.transpose(testbed.DM1.basis), invertGDH_DM1))
+                fits.writeto(realtestbed_dir +
+                                "Matrix_control_EFC_DM1.fits",
+                                EFCmatrix_DM1.astype(np.float32),
+                                overwrite=True)
+                if testbed.DM3.active:
+                    invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
                     EFCmatrix_DM3 = np.transpose(
-                        np.dot(np.transpose(testbed.DM3.basis), invertGDH_DM3))
+                        np.dot(np.transpose(testbed.DM3.basis),
+                                invertGDH_DM3))
                     fits.writeto(realtestbed_dir +
-                                 "Matrix_control_EFC_DM3.fits",
-                                 EFCmatrix_DM3.astype(np.float32),
-                                 overwrite=True)
-                else:
-                    raise Exception("No active DMs")
+                                    "Matrix_control_EFC_DM3.fits",
+                                    EFCmatrix_DM3.astype(np.float32),
+                                    overwrite=True)
+            elif testbed.DM3.active:
+                invertGDH_DM3 = invertGDH
+                EFCmatrix_DM3 = np.transpose(
+                    np.dot(np.transpose(testbed.DM3.basis), invertGDH_DM3))
+                fits.writeto(realtestbed_dir +
+                                "Matrix_control_EFC_DM3.fits",
+                                EFCmatrix_DM3.astype(np.float32),
+                                overwrite=True)
+            else:
+                raise Exception("No active DMs")
 
-                fits.writeto(realtestbed_dir + "DH_mask.fits",
-                             self.MaskEstim.astype(np.float32),
-                             overwrite=True)
-                fits.writeto(realtestbed_dir + "DH_mask_where_x_y.fits",
-                             np.array(np.where(self.MaskEstim == 1)).astype(
-                                 np.float32),
-                             overwrite=True)
+            fits.writeto(realtestbed_dir + "DH_mask.fits",
+                            self.MaskEstim.astype(np.float32),
+                            overwrite=True)
+            fits.writeto(realtestbed_dir + "DH_mask_where_x_y.fits",
+                            np.array(np.where(self.MaskEstim == 1)).astype(
+                                np.float32),
+                            overwrite=True)
 
-        else:
-            raise Exception("This correction algorithm is not yet implemented")
+
 
         ## Adding error on the DM model. Now that the matrix is measured, we can
         # introduce a small movememnt on one DM or the other. By changeing DM_pushact
@@ -192,6 +171,40 @@ class Corrector:
         ######################
         # in the initialization we have not inverted the matrix just yet so
         self.previousmode = np.nan
+
+    def update_matrices(self, testbed, estimator, initial_DM_voltage = 0.,input_wavefront = 1.):
+        if self.correction_algorithm in ["efc", "em", "steepest", "sm"]:
+
+            self.G = 0
+            self.Gmatrix = 0
+            self.M0 = 0
+
+            start_time = time.time()
+            interMat = wsc.creatingInterractionmatrix(testbed,
+                                                      estimator.dimEstim,
+                                                      self.amplitudeEFC,
+                                                      self.matrix_dir, initial_DM_voltage = initial_DM_voltage)
+
+            print("time for direct matrix " + testbed.string_os,
+                  time.time() - start_time)
+            print("")
+
+            self.Gmatrix = wsc.cropDHInterractionMatrix(
+                interMat, self.MaskEstim)
+
+            if self.correction_algorithm in ["em", "steepest", "sm"]:
+
+                self.G = np.zeros(
+                    (int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]),
+                    dtype=complex)
+                self.G = (
+                    self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
+                    1j * self.Gmatrix[int(self.Gmatrix.shape[0] / 2):, :])
+                transposecomplexG = np.transpose(np.conjugate(self.G))
+                self.M0 = np.real(np.dot(transposecomplexG, self.G))
+                self.Gmatrix = 0.
+        else:
+            raise Exception("This correction algorithm is not yet implemented")
 
     def toDM_voltage(self,
                      testbed,
@@ -222,7 +235,7 @@ class Corrector:
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
             if np.isnan(self.previousmode):
                 # This is the first time
-                self.previousmode = mode
+                self.previousmode = 0
                 self.last_best_alpha = 0.1
                 self.expected_gain_in_contrast = 0.4
                 self.last_best_contrast = ActualCurrentContrast
@@ -278,3 +291,5 @@ class Corrector:
                 self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")
+
+
