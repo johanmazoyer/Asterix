@@ -222,14 +222,14 @@ class Corrector:
         if self.correction_algorithm == "efc":
             if mode != self.previousmode:
                 self.previousmode = mode
-                _, _, self.invertGDH = wsc.invertSVD(self.Gmatrix,
+                _, _, invertGDH = wsc.invertSVD(self.Gmatrix,
                                                      mode,
                                                      goal="c",
                                                      visu=False,
                                                      regul=self.regularization)
 
             return -gain * self.amplitudeEFC * wsc.solutionEFC(
-                self.MaskEstim, estimate, self.invertGDH, testbed)
+                self.MaskEstim, estimate, invertGDH, testbed)
 
         if self.correction_algorithm == "sm":
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
