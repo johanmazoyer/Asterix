@@ -660,10 +660,12 @@ class pupil(Optical_System):
             self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
 
         elif PupType == "RomanPup":
+            self.string_os += '_' + PupType
+
             #Rescale to the pupil size
             pup_fits = fits.getdata(
                 os.path.join(model_dir,
-                             "roman_pup_1002pix_center4pixels.fits"))
+                             "roman_pup_500pix_center4pixels.fits"))
             pup_fits_right_size = skimage.transform.rescale(
                 pup_fits,
                 2 * prad / pup_fits.shape[0],
@@ -673,6 +675,22 @@ class pupil(Optical_System):
 
             self.pup = proc.crop_or_pad_image(pup_fits_right_size,
                                               self.dim_overpad_pupil)
+        
+        elif PupType == "RomanLyot":
+            #Rescale to the pupil size
+            pup_fits = fits.getdata(
+                os.path.join(model_dir,
+                             "roman_lyot_500pix_center4pixels.fits"))
+            pup_fits_right_size = skimage.transform.rescale(
+                pup_fits,
+                2 * prad / pup_fits.shape[0],
+                preserve_range=True,
+                anti_aliasing=True,
+                multichannel=False)
+
+            self.pup = proc.crop_or_pad_image(pup_fits_right_size,
+                                              self.dim_overpad_pupil)
+
         elif filename != "":
 
             # we start by a bunch of tests to check
@@ -707,7 +725,7 @@ class pupil(Optical_System):
 
         else:  # no filename and no known. In this case, we can have a few
             raise Exception(
-                "this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup'"
+                "this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup', 'RomanLyot'"
             )
 
         #initialize the max and sum of PSFs for the normalization to contrast
@@ -903,6 +921,7 @@ class coronagraph(Optical_System):
                                   prad=self.lyotrad,
                                   PupType=coroconfig["filename_instr_lyot"])
         else:
+            self.string_os += coroconfig["filename_instr_lyot"]
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
                                   filename=coroconfig["filename_instr_lyot"])

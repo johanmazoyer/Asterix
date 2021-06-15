@@ -80,7 +80,7 @@ def runthd2(parameter_file,
     Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
     # Initialize thd:
-    pup_round = OptSy.pupil(modelconfig)
+    pup_round = OptSy.pupil(modelconfig, PupType=modelconfig['filename_instr_pup'])
     DM1 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
                                   Name_DM='DM1',
