@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.optimize as opt
-
+import Asterix.propagation_functions as prop
 
 def twoD_Gaussian(xy,
                   amplitude,
@@ -204,86 +204,45 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
 
 
 
-# def CosSinToTF(Coeff_Sin):
-   
-#    NbActuators = np.sqrt(Coeff_Sin.shape[0])
-#    TFCoeffs = np.zeros((NbActuators, NbActuators))
-   
-# #    TFCoeffs = Table[0, {p, 1, NbActuators}, {q, 1, NbActuators}];
-#    modulo2 = NbActuators %2 
-#    if modulo2 == 2:
+def SinCosBasis(sqrtNbActuators):
 
-#     SFLigne = np.zeros((2,NbActuators/2, NbActuators))
-#     for i in range(NbActuators/2):
-#         for j in range(NbActuators):
-#             SFLigne[i,j] = [i,j]
-#     SFLigne.flatten()
-#      Flatten[ 
-#       Table[{p, q}, {p, 1, NbActuators/2}, {q, 1, NbActuators}], {1, 
-#        2}];
+    """ --------------------------------------------------
+    For a given number of actuator accross the pupil, create coefficients for the sin/cos basis
+    Works only for a even number o
     
-#     Do[
-#      TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] = 
-#       TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] + CoffsS[[k]]/2;
-#      TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1  , 
-#        NbActuators - SFLigne[[k, 2]] + 1  ]] = 
-#       TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1  , 
-#         NbActuators - SFLigne[[k, 2]] + 1  ]] + CoffsS[[k]]/2;
-#      TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] = 
-#       TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] + 
-#        CoffsS[[NbActuators^2 /2 + k]]/(2*I);
-#      TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1  , 
-#        NbActuators - SFLigne[[k, 2]] + 1 ]] = 
-#       TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1  , 
-#         NbActuators - SFLigne[[k, 2]] + 1 ]] - 
-#        CoffsS[[NbActuators^2 /2 + k]]/(2*I);
-#      , {k, 1, NbActuators^2 /2}];,
+    Parameters
+    ----------
+    sqrtNbActuators : float. Numnber of actuator accross the pupil
     
+    Returns
+    ------
+    SinCosBasis : 3D array of [(sqrtNbActuators)^2,sqrtNbActuators,sqrtNbActuators]
+                    which contains the coefficient to apply to DMs to obtain sinus and cosinus
+    -------------------------------------------------- """
+
+    TFCoeffs = np.zeros((sqrtNbActuators**2, sqrtNbActuators,sqrtNbActuators), dtype=complex)
+    SinCos = np.zeros((sqrtNbActuators**2, sqrtNbActuators,sqrtNbActuators))
     
-#     SFLigne = 
-#      Flatten[ 
-#       Table[{p, q}, {p, 1, (NbActuators - 1)/2}, {q, 1, 
-#         NbActuators}], {1, 2}];
-    
-#     Do[
-     
-#      TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] = 
-#       TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] + CoffsS[[k]]/2;
-#      TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1, 
-#        NbActuators - SFLigne[[k, 2]] + 1]] = 
-#       TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1, 
-#         NbActuators - SFLigne[[k, 2]] + 1]] + CoffsS[[k]]/2;
-#      TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] = 
-#       TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] + 
-#        CoffsS[[(NbActuators - 1)*NbActuators /2 + k]]/(2*I);
-#      TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1, 
-#        NbActuators - SFLigne[[k, 2]] + 1]] = 
-#       TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1, 
-#         NbActuators - SFLigne[[k, 2]] + 1]] - 
-#        CoffsS[[(NbActuators - 1)*NbActuators /2 + k]]/(2*I);
-#      , {k, 1, (NbActuators - 1)*NbActuators /2}];
-    
-#     Do[
-#      TFCoeffs[[(NbActuators + 1) /2, k]] = 
-#       TFCoeffs[[(NbActuators + 1)/2, k]] + 
-#        CoffsS[[(NbActuators - 1)*NbActuators  + k]]/2;
-#      TFCoeffs[[(NbActuators + 1) /2, NbActuators - k + 1]] = 
-#       TFCoeffs[[(NbActuators + 1) /2, NbActuators - k + 1]] + 
-#        CoffsS[[ (NbActuators - 1)*NbActuators  + k]]/2;
-#      TFCoeffs[[(NbActuators + 1) /2, k]] = 
-#       TFCoeffs[[(NbActuators + 1)/2, k]] + 
-#        CoffsS[[(NbActuators - 1)*NbActuators  + (NbActuators - 1)/2 + 
-#           k]]/(2*I);
-#      TFCoeffs[[(NbActuators + 1) /2, NbActuators - k + 1]] = 
-#       TFCoeffs[[(NbActuators + 1) /2, NbActuators - k + 1]] - 
-#        CoffsS[[(NbActuators - 1)*NbActuators  + (NbActuators - 1)/2 + 
-#           k]]/(2*I);
-#      , {k, 1, (NbActuators - 1)/2}];
-    
-#     TFCoeffs[[(NbActuators + 1) /2, (NbActuators + 1) /2]] = 
-#      TFCoeffs[[(NbActuators + 1) /2, (NbActuators + 1) /2]] + 
-#       CoffsS[[(NbActuators)^2]];
-#     ];
-   
-#    Return[TFCoeffs];
-#    ];
+    for Coeff_SinCos in range(sqrtNbActuators**2 ):
+        Coeffs = np.zeros((sqrtNbActuators, sqrtNbActuators), dtype=complex)
+        
+        # It's a cosinus
+        if Coeff_SinCos < sqrtNbActuators**2//2:
+            i = Coeff_SinCos // sqrtNbActuators
+            j = Coeff_SinCos % sqrtNbActuators
+            Coeffs[i,j] = 1/2
+            Coeffs[sqrtNbActuators-i-1,sqrtNbActuators-j-1] = 1/2
+
+        # It's a sinus
+        else:
+            i = (Coeff_SinCos - sqrtNbActuators**2//2) // sqrtNbActuators
+            j = (Coeff_SinCos - sqrtNbActuators**2//2) % sqrtNbActuators
+            Coeffs[i,j] = 1/2
+            Coeffs[sqrtNbActuators-i-1,sqrtNbActuators-j-1] = 1j/2
+        TFCoeffs[Coeff_SinCos] = Coeffs
+
+        SinCos[Coeff_SinCos] = np.real(prop.mft(TFCoeffs[Coeff_SinCos],sqrtNbActuators, sqrtNbActuators, sqrtNbActuators, X_offset_input=-0.5,
+        Y_offset_input=-0.5))
+
+
+    return SinCos
