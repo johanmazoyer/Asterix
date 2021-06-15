@@ -621,7 +621,7 @@ class pupil(Optical_System):
         prad : int Default is the pupil prad in the parameter
             radius in pixels of the round pupil.
 
-        PupType : string (default currently "RoundPup", CleanPlane, or RomanPupman)
+        PupType : string (default currently "RoundPup", CleanPlane, RomanPup, RomanLyot)
 
         filename : string (default "")
             name and directory of the .fits file

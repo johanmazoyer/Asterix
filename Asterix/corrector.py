@@ -254,6 +254,7 @@ class Corrector:
                 self.times_we_lowered_gain += 1
                 self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast)/3
                 self.count_since_last_best = 0
+                self.last_best_alpha = 0.1
                 print("we do not improve contrast anymore, we change the gain to {:f}".format(self.expected_gain_in_contrast))
 
 

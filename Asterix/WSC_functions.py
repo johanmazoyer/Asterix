@@ -133,6 +133,10 @@ def creatingInterractionmatrix( testbed, dimEstim,
         string_testbed_without_DMS = string_testbed_without_DMS.replace(
             DM_small_str, '')
 
+
+    G0 = proc.resampling(
+                    testbed.todetector(voltage_vector=initial_DM_voltage), dimEstim)
+
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
 
@@ -147,9 +151,9 @@ def creatingInterractionmatrix( testbed, dimEstim,
             DM.basis_size)
         
         if perfect_mat:
-            headfile = "DirectMatrix_EFCampl"
-        else:
             headfile = "DirectMatrixPerf_EFCampl"
+        else:
+            headfile = "DirectMatrix_EFCampl"
 
 
         fileDirectMatrix = headfile+ str(
@@ -203,9 +207,6 @@ def creatingInterractionmatrix( testbed, dimEstim,
                                                     -DM.z_position,
                                                     DM.diam_pup_in_m / 2,
                                                     DM.prad)
-                    
-                    Gvector = proc.resampling(
-                        testbed.todetector(entrance_EF=wavefront_phaseDM), dimEstim)
 
                 else:
                     
@@ -220,8 +221,8 @@ def creatingInterractionmatrix( testbed, dimEstim,
                                                     DM.diam_pup_in_m / 2,
                                                     DM.prad)
 
-                    Gvector = proc.resampling(
-                        testbed.todetector(entrance_EF=wavefront_phaseDM), dimEstim)
+                Gvector = proc.resampling(
+                    testbed.todetector(entrance_EF=wavefront_phaseDM), dimEstim) - G0
 
                 InterMat[:dimEstim**2,
                          pos_in_matrix] = np.real(Gvector).flatten()
@@ -483,6 +484,8 @@ def solutionSM(mask, testbed, Result_Estimate, Jacob_trans_Jacob, Jacobian,
             number_time_failed +=1
             last_best_alpha *= 10
             print("SM failed, we increase alpha 10 times")
+            if number_time_failed > 10: 
+                return np.nan,np.nan
         else:
             TestSMfailed = False
 
