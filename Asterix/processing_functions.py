@@ -200,3 +200,90 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
             ActuN)] + measured_ActuN
     simu_grid = simu_grid * sampling_simu_over_measured
     return simu_grid
+
+
+
+
+# def CosSinToTF(Coeff_Sin):
+   
+#    NbActuators = np.sqrt(Coeff_Sin.shape[0])
+#    TFCoeffs = np.zeros((NbActuators, NbActuators))
+   
+# #    TFCoeffs = Table[0, {p, 1, NbActuators}, {q, 1, NbActuators}];
+#    modulo2 = NbActuators %2 
+#    if modulo2 == 2:
+
+#     SFLigne = np.zeros((2,NbActuators/2, NbActuators))
+#     for i in range(NbActuators/2):
+#         for j in range(NbActuators):
+#             SFLigne[i,j] = [i,j]
+#     SFLigne.flatten()
+#      Flatten[ 
+#       Table[{p, q}, {p, 1, NbActuators/2}, {q, 1, NbActuators}], {1, 
+#        2}];
+    
+#     Do[
+#      TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] = 
+#       TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] + CoffsS[[k]]/2;
+#      TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1  , 
+#        NbActuators - SFLigne[[k, 2]] + 1  ]] = 
+#       TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1  , 
+#         NbActuators - SFLigne[[k, 2]] + 1  ]] + CoffsS[[k]]/2;
+#      TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] = 
+#       TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] + 
+#        CoffsS[[NbActuators^2 /2 + k]]/(2*I);
+#      TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1  , 
+#        NbActuators - SFLigne[[k, 2]] + 1 ]] = 
+#       TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1  , 
+#         NbActuators - SFLigne[[k, 2]] + 1 ]] - 
+#        CoffsS[[NbActuators^2 /2 + k]]/(2*I);
+#      , {k, 1, NbActuators^2 /2}];,
+    
+    
+#     SFLigne = 
+#      Flatten[ 
+#       Table[{p, q}, {p, 1, (NbActuators - 1)/2}, {q, 1, 
+#         NbActuators}], {1, 2}];
+    
+#     Do[
+     
+#      TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] = 
+#       TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] + CoffsS[[k]]/2;
+#      TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1, 
+#        NbActuators - SFLigne[[k, 2]] + 1]] = 
+#       TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1, 
+#         NbActuators - SFLigne[[k, 2]] + 1]] + CoffsS[[k]]/2;
+#      TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] = 
+#       TFCoeffs[[SFLigne[[k, 1]], SFLigne[[k, 2]]]] + 
+#        CoffsS[[(NbActuators - 1)*NbActuators /2 + k]]/(2*I);
+#      TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1, 
+#        NbActuators - SFLigne[[k, 2]] + 1]] = 
+#       TFCoeffs[[NbActuators - SFLigne[[k, 1]] + 1, 
+#         NbActuators - SFLigne[[k, 2]] + 1]] - 
+#        CoffsS[[(NbActuators - 1)*NbActuators /2 + k]]/(2*I);
+#      , {k, 1, (NbActuators - 1)*NbActuators /2}];
+    
+#     Do[
+#      TFCoeffs[[(NbActuators + 1) /2, k]] = 
+#       TFCoeffs[[(NbActuators + 1)/2, k]] + 
+#        CoffsS[[(NbActuators - 1)*NbActuators  + k]]/2;
+#      TFCoeffs[[(NbActuators + 1) /2, NbActuators - k + 1]] = 
+#       TFCoeffs[[(NbActuators + 1) /2, NbActuators - k + 1]] + 
+#        CoffsS[[ (NbActuators - 1)*NbActuators  + k]]/2;
+#      TFCoeffs[[(NbActuators + 1) /2, k]] = 
+#       TFCoeffs[[(NbActuators + 1)/2, k]] + 
+#        CoffsS[[(NbActuators - 1)*NbActuators  + (NbActuators - 1)/2 + 
+#           k]]/(2*I);
+#      TFCoeffs[[(NbActuators + 1) /2, NbActuators - k + 1]] = 
+#       TFCoeffs[[(NbActuators + 1) /2, NbActuators - k + 1]] - 
+#        CoffsS[[(NbActuators - 1)*NbActuators  + (NbActuators - 1)/2 + 
+#           k]]/(2*I);
+#      , {k, 1, (NbActuators - 1)/2}];
+    
+#     TFCoeffs[[(NbActuators + 1) /2, (NbActuators + 1) /2]] = 
+#      TFCoeffs[[(NbActuators + 1) /2, (NbActuators + 1) /2]] + 
+#       CoffsS[[(NbActuators)^2]];
+#     ];
+   
+#    Return[TFCoeffs];
+#    ];

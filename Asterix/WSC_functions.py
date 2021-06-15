@@ -222,7 +222,7 @@ def creatingInterractionmatrix( testbed, dimEstim,
                                                     DM.prad)
 
                 Gvector = proc.resampling(
-                    testbed.todetector(entrance_EF=wavefront_phaseDM), dimEstim) - G0
+                    testbed.todetector(entrance_EF=wavefront_phaseDM), dimEstim) #- G0
 
                 InterMat[:dimEstim**2,
                          pos_in_matrix] = np.real(Gvector).flatten()
