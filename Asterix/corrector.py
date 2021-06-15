@@ -84,7 +84,7 @@ class Corrector:
 
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
-            DM.basis = DM.create_DM_basis(basis_type=basis_type)
+            DM.basis = DM.create_DM_basis(basis_type=basis_type, matrix_dir=matrix_dir)
             DM.basis_size = DM.basis.shape[0]
             self.total_number_modes += DM.basis_size
             DM.basis_type = basis_type
@@ -183,7 +183,7 @@ class Corrector:
             interMat = wsc.creatingInterractionmatrix(testbed,
                                                       estimator.dimEstim,
                                                       self.amplitudeEFC,
-                                                      self.matrix_dir, initial_DM_voltage = initial_DM_voltage)
+                                                      self.matrix_dir, initial_DM_voltage = initial_DM_voltage, perfect_mat=True)
 
             print("time for direct matrix " + testbed.string_os,
                   time.time() - start_time)
@@ -237,7 +237,7 @@ class Corrector:
                 # This is the first time
                 self.previousmode = 0
                 self.last_best_alpha = 0.1
-                self.expected_gain_in_contrast = 0.4
+                self.expected_gain_in_contrast = 0.8
                 self.last_best_contrast = ActualCurrentContrast
                 self.times_we_lowered_gain = 0
                 self.count_since_last_best = 0

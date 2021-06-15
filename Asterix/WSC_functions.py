@@ -142,6 +142,7 @@ def creatingInterractionmatrix( testbed, dimEstim,
 
     pos_in_matrix = 0
     indice_acum_number_act = 0
+
     for DM_name in testbed.name_of_DMs:
 
         DM = vars(testbed)[DM_name]
@@ -149,7 +150,8 @@ def creatingInterractionmatrix( testbed, dimEstim,
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(
             DM.basis_size)
-        
+
+
         if perfect_mat:
             headfile = "DirectMatrixPerf_EFCampl"
         else:
@@ -170,6 +172,18 @@ def creatingInterractionmatrix( testbed, dimEstim,
             pos_in_matrix += DM.basis_size
 
         else:
+            
+            if DM.basis_type == 'fourier':
+                print("Load Fourier Basis Phases for " + DM_name)
+                Name_FourrierBasis_fits = "Fourier_basis" + DM.string_os
+                phasesBasis = fits.getdata(matrix_dir + Name_FourrierBasis_fits + '.fits')
+
+            else:
+                phasesBasis = np.zeros((DM.basis_size, DM.dim_overpad_pupil, DM.dim_overpad_pupil))
+                for i in range(DM.basis_size):
+                    DM.voltage_to_phase(DM.basis[i])* amplitudeEFC
+                    DM.voltage_to_phase(DM.basis[i])
+
 
             actu_vect_DM = initial_DM_voltage[
             indice_acum_number_act:indice_acum_number_act + DM.number_act]
@@ -199,7 +213,7 @@ def creatingInterractionmatrix( testbed, dimEstim,
 
 
                 if perfect_mat:
-                    wavefront_phaseDM = testbed.EF_from_phase_and_ampl(phase_abb=DM.voltage_to_phase(DM.basis[i])* amplitudeEFC + DMphase_init)
+                    wavefront_phaseDM = testbed.EF_from_phase_and_ampl(phase_abb= phasesBasis[i]+ DMphase_init)
 
                     if DM.z_position != 0:
                         wavefront_phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * wavefront_phaseDM,
@@ -210,8 +224,7 @@ def creatingInterractionmatrix( testbed, dimEstim,
 
                 else:
                     
-                    phaseDM = DM.voltage_to_phase(DM.basis[i])
-                    wavefront_phaseDM = 1j * amplitudeEFC* phaseDM * testbed.EF_from_phase_and_ampl(phase_abb= DMphase_init)
+                    wavefront_phaseDM = 1j * phasesBasis[i] * testbed.EF_from_phase_and_ampl(phase_abb= DMphase_init)
 
 
                     if DM.z_position != 0:

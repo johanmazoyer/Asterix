@@ -208,7 +208,7 @@ def SinCosBasis(sqrtNbActuators):
 
     """ --------------------------------------------------
     For a given number of actuator accross the pupil, create coefficients for the sin/cos basis
-    Works only for a even number o
+    Works only for a even number of actuator accross the pupil 
     
     Parameters
     ----------
@@ -218,6 +218,8 @@ def SinCosBasis(sqrtNbActuators):
     ------
     SinCosBasis : 3D array of [(sqrtNbActuators)^2,sqrtNbActuators,sqrtNbActuators]
                     which contains the coefficient to apply to DMs to obtain sinus and cosinus
+    
+    Author: Johan Mazoyer
     -------------------------------------------------- """
 
     TFCoeffs = np.zeros((sqrtNbActuators**2, sqrtNbActuators,sqrtNbActuators), dtype=complex)

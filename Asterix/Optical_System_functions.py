@@ -7,6 +7,7 @@ import inspect
 import copy
 from random import weibullvariate
 import time
+from astropy.io.fits.convenience import writeto
 from astropy.utils.exceptions import AstropyDeprecationWarning
 import numpy as np
 import scipy.ndimage as nd
@@ -1427,15 +1428,19 @@ class deformable_mirror(Optical_System):
 
         # first thing we do is to open filename_grid_actu to check the number of
         # actuator of this DM. We need the number of act to read and load pushact .fits
+        
+        self.total_act = fits.getdata(
+                model_dir +
+                DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
+        
         if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
             self.active_actuators = fits.getdata(
                 model_dir +
                 DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
             self.number_act = len(self.active_actuators)
+            
         else:
-            self.number_act = fits.getdata(
-                model_dir +
-                DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
+            self.number_act = self.total_act
             self.active_actuators = np.arange(self.number_act)
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
@@ -1894,6 +1899,8 @@ class deformable_mirror(Optical_System):
         ------
             2D array
             phase map in the same unit as actu_vect * DM_pushact)
+        
+        Author: Johan Mazoyer
         -------------------------------------------------- """
 
         where_non_zero_voltage = np.where(actu_vect != 0)
@@ -1915,7 +1922,7 @@ class deformable_mirror(Optical_System):
 
         return phase_on_DM
 
-    def create_DM_basis(self, basis_type='actuator'):
+    def create_DM_basis(self, basis_type='actuator', matrix_dir =None):
         """ --------------------------------------------------
         Create a DM basis.
         TODO do a sine / cosine basis and a
@@ -1928,19 +1935,58 @@ class deformable_mirror(Optical_System):
 
         Return:
         ------
-        a 2d numpy array [Size basis, Number act in the DM]
+        a 2d numpy array [Size basis, Number of active act in the DM]
+
+        Author: Johan Mazoyer
         -------------------------------------------------- """
-        active_and_in_pup = [
-            value for value in self.active_actuators
-            if value in self.WhichInPupil
-        ]
-        active_and_in_pup.sort()
+
 
         if basis_type == 'actuator':
+            active_and_in_pup = [
+                value for value in self.active_actuators
+                if value in self.WhichInPupil
+            ]
+            active_and_in_pup.sort()
+
             basis_size = len(active_and_in_pup)
-            basis = np.zeros((basis_size, self.number_act), dtype=int)
+            basis = np.zeros((basis_size, self.number_act))
             for i in range(basis_size):
                 basis[i][active_and_in_pup[i]] = 1
+            
+            useful.quickfits(basis)
+        
+        if basis_type == 'fourier':
+            start_time = time.time()
+            activeact = [
+                value for value in self.active_actuators
+            ]
+            
+            sqrtnbract = int(np.sqrt(self.total_act))
+
+            cossinbasis = proc.SinCosBasis(sqrtnbract)
+
+            basis_size = cossinbasis.shape[0]
+            basis = np.zeros((basis_size, self.number_act))
+
+            for i in range(basis_size):
+                vec = cossinbasis[i].flatten()[activeact]
+                basis[i] = vec
+            
+            start_time = time.time()
+            Name_FourrierBasis_fits = "Fourier_basis" + self.string_os
+            if not os.path.exists(matrix_dir + Name_FourrierBasis_fits + '.fits'):
+                phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil, self.dim_overpad_pupil))
+                print("Start Fourier basis for " + self.string_os)
+                for i in range(basis_size):
+                    phasesFourrier[i] = self.voltage_to_phase(basis[i])
+                    if i % 10:
+                        useful.progress(i, basis_size, status='')
+                fits.writeto(matrix_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
+            print("")
+            print("time for FourierBasis for " + self.string_os,
+              time.time() - start_time)
+            
+            
         return basis
 
 
