@@ -12,6 +12,7 @@ import time
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
+import Asterix.Optical_System_functions as OptSy
 
 #################################################################################
 ### Correction functions
@@ -94,7 +95,7 @@ def invertSVD(matrix_to_invert,
 
 
 def creatingInterractionmatrix( testbed, dimEstim,
-                               amplitudeEFC, matrix_dir, initial_DM_voltage = 0., input_wavefront = 1., perfect_mat = False):
+                               amplitudeEFC, matrix_dir, initial_DM_voltage = 0., input_wavefront = 1., MatrixType = False):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
@@ -126,22 +127,45 @@ def creatingInterractionmatrix( testbed, dimEstim,
     total_number_basis_modes = 0
     string_testbed_without_DMS = testbed.string_os
 
+    pos_in_matrix = 0
+    indice_acum_number_act = 0
+
+    G0 = proc.resampling(
+                    testbed.todetector( entrance_EF =input_wavefront, voltage_vector=initial_DM_voltage), dimEstim)
+
+
     for DM_name in testbed.name_of_DMs:
         DM = vars(testbed)[DM_name]
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(
             DM_small_str, '')
+        
+        # This is for the case we take an non DM vectors already, we need to calculate
+        # the initial phase for each DM 
+        actu_vect_DM = initial_DM_voltage[
+        indice_acum_number_act:indice_acum_number_act + DM.number_act]
+        
+        if any(actu_vect_DM != 0):
+            DM.phase_init = DM.voltage_to_phase(actu_vect_DM)  
+        else:
+            DM.phase_init = 0
 
 
-    G0 = proc.resampling(
-                    testbed.todetector(voltage_vector=initial_DM_voltage), dimEstim)
+        
+    if MatrixType == 'perfect':
+        headfile = "DirectMatrixPerf_EFCampl"
+    
+    elif MatrixType == 'smallphase':
+        headfile = "DirectMatrixSP_EFCampl"
+
+    else:
+        raise Exception("This Matrix type does not exist")
+
 
     print("Start Interraction Matrix")
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
 
-    pos_in_matrix = 0
-    indice_acum_number_act = 0
 
     for DM_name in testbed.name_of_DMs:
 
@@ -152,16 +176,10 @@ def creatingInterractionmatrix( testbed, dimEstim,
             DM.basis_size)
 
 
-        if perfect_mat:
-            headfile = "DirectMatrixPerf_EFCampl"
-        else:
-            headfile = "DirectMatrix_EFCampl"
-
-
         fileDirectMatrix = headfile+ str(
             amplitudeEFC) + basis_str + string_testbed_without_DMS
         
-    
+        # matrix is saved only for the first one
         if os.path.exists(matrix_dir + fileDirectMatrix + ".fits") and (initial_DM_voltage == 0.).all():
             print("The matrix " + fileDirectMatrix + " already exists")
 
@@ -173,6 +191,11 @@ def creatingInterractionmatrix( testbed, dimEstim,
 
         else:
             
+            if (initial_DM_voltage == 0.).all():
+                print("")
+                print(fileDirectMatrix + " does not exists:")
+                print("Start " + DM_name)
+            
             if DM.basis_type == 'fourier':
                 print("Load Fourier Basis Phases for " + DM_name)
                 Name_FourrierBasis_fits = "Fourier_basis" + DM.string_os
@@ -181,62 +204,91 @@ def creatingInterractionmatrix( testbed, dimEstim,
             else:
                 phasesBasis = np.zeros((DM.basis_size, DM.dim_overpad_pupil, DM.dim_overpad_pupil))
                 for i in range(DM.basis_size):
-                    DM.voltage_to_phase(DM.basis[i])* amplitudeEFC
-                    DM.voltage_to_phase(DM.basis[i])
+                    phasesBasis[i] = DM.voltage_to_phase(DM.basis[i])* amplitudeEFC
 
-
-            actu_vect_DM = initial_DM_voltage[
-            indice_acum_number_act:indice_acum_number_act + DM.number_act]
-            DMphase_init = DM.voltage_to_phase(actu_vect_DM)
-
-            indice_acum_number_act += DM.number_act
-
-            # Creating Interaction Matrix for thd DM if does not exist
+            # Creating Interaction Matrix for the DMs if does not exist
             init_pos_in_matrix = pos_in_matrix
-            print("")
-            print(fileDirectMatrix + " does not exists:")
-            print("Start " + DM_name)
+            
 
+            positioonDMintestbed = testbed.subsystems.index(DM_name)
+            
+            OpticSysNameBefore = testbed.subsystems[:positioonDMintestbed]
+            OpticSysNameAfter = testbed.subsystems[positioonDMintestbed+1:]
+
+            # we go through all subsystme of the test bed
+
+            #First before the DM we want to actuate (aperture, other DMs, etc).
+            # This ones, we only do once ! 
+            wavefront = input_wavefront
+            
+            for osname in OpticSysNameBefore:
+                OpticSysbefore = vars(testbed)[osname]
+
+                
+                if isinstance(OpticSysbefore, OptSy.deformable_mirror):
+                    # this subsystem is a DM but not the one we actuate now
+                    wavefront = OpticSysbefore.EF_through(entrance_EF = wavefront, DMphase=OpticSysbefore.phase_init)
+                else:
+                    wavefront = OpticSysbefore.EF_through(entrance_EF = wavefront)
+                    
+            # then the DM we want to actuate !
+            # 
+            # it the DM is not in pupil plane, we can measure the first Fresnel transf only once 
             if DM.z_position != 0:
+                wavefrontinDM, _ = prop.prop_fresnel(wavefront,
+                                                    DM.wavelength_0,
+                                                    DM.z_position,
+                                                    DM.diam_pup_in_m / 2,
+                                                    DM.prad)
 
-                #TODO make something smarter to check automatically the name of the entrance pup
-                Pup_inDMplane, _ = prop.prop_fresnel(testbed.entrancepupil.pup,
-                                                     DM.wavelength_0,
-                                                     DM.z_position,
-                                                     DM.diam_pup_in_m / 2,
-                                                     DM.prad)
-
+            # now we go throught the DM basis
             for i in range(DM.basis_size):
 
                 if i % 10:
                     useful.progress(i, DM.basis_size, status='')
 
 
-                if perfect_mat:
-                    wavefront_phaseDM = testbed.EF_from_phase_and_ampl(phase_abb= phasesBasis[i]+ DMphase_init)
-
-                    if DM.z_position != 0:
-                        wavefront_phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * wavefront_phaseDM,
+                if MatrixType == 'perfect':
+                    if DM.z_position == 0:
+                        wavefront = wavefront * testbed.EF_from_phase_and_ampl(phase_abb= phasesBasis[i] + DM.phase_init)
+                    else:
+                        wavefront, _ = prop.prop_fresnel(wavefrontinDM * testbed.EF_from_phase_and_ampl(phase_abb= phasesBasis[i] + DM.phase_init),
                                                     DM.wavelength_0,
                                                     -DM.z_position,
                                                     DM.diam_pup_in_m / 2,
                                                     DM.prad)
 
-                else:
+                if MatrixType == 'smallphase':
+                    if DM.z_position == 0:
+                        wavefront = wavefront * 1j * phasesBasis[i]* testbed.EF_from_phase_and_ampl(phase_abb= DM.phase_init)
+                    else:
+                        wavefront, _ = prop.prop_fresnel(wavefront * 1j * phasesBasis[i]* testbed.EF_from_phase_and_ampl(phase_abb= DM.phase_init),
+                                                    DM.wavelength_0,
+                                                    -DM.z_position,
+                                                    DM.diam_pup_in_m / 2,
+                                                    DM.prad)
                     
-                    wavefront_phaseDM = 1j * phasesBasis[i] * testbed.EF_from_phase_and_ampl(phase_abb= DMphase_init)
+                # and finally we go through the subsystems after the DMs we want to actuate 
+                # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
+                for osname in OpticSysNameAfter:
+                    OpticSysAfter = vars(testbed)[osname]
+                    
+                    if osname != OpticSysNameAfter[-1]:
+                        if isinstance(OpticSysbefore, OptSy.deformable_mirror):
+                            # this subsystem is a DM but not the one we actuate now (after)
+                            wavefront = OpticSysAfter.EF_through(entrance_EF = wavefront, DMphase=OpticSysbefore.phase_init)
+                        else:
+                            wavefront = OpticSysAfter.EF_through(entrance_EF = wavefront)
+                    else:
+                        # this is the last one ! 
+                        Gvector = proc.resampling(OpticSysAfter.todetector(entrance_EF=wavefront), dimEstim) 
+                
 
-
-                    if DM.z_position != 0:
-                        wavefront_phaseDM, _ = prop.prop_fresnel(Pup_inDMplane * wavefront_phaseDM,
-                                                    DM.wavelength_0,
-                                                    -DM.z_position,
-                                                    DM.diam_pup_in_m / 2,
-                                                    DM.prad)
-
-                Gvector = proc.resampling(
-                    testbed.todetector(entrance_EF=wavefront_phaseDM), dimEstim) #- G0
-
+                # this needs to be thoroughly investigated: 
+                # for now only in 'perfect case':
+                if MatrixType == 'perfect':
+                    Gvector = Gvector - G0
+                    
                 InterMat[:dimEstim**2,
                          pos_in_matrix] = np.real(Gvector).flatten()
                 InterMat[dimEstim**2:,
