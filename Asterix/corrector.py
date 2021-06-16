@@ -93,7 +93,13 @@ class Corrector:
             "correction_algorithm"].lower()
         self.MatrixType = Correctionconfig["MatrixType"].lower()
 
-        self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
+        if basis_type == 'actuator':
+            self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
+        else:
+            self.amplitudeEFC = 1.
+
+
+
         self.regularization = Correctionconfig["regularization"]
         
         self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
