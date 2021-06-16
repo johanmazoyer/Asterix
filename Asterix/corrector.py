@@ -91,9 +91,11 @@ class Corrector:
 
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
+        self.MatrixType = Correctionconfig["MatrixType"].lower()
 
         self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
         self.regularization = Correctionconfig["regularization"]
+        
         self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
                                                    estimator.Estim_sampling)
 
@@ -183,7 +185,7 @@ class Corrector:
             interMat = wsc.creatingInterractionmatrix(testbed,
                                                       estimator.dimEstim,
                                                       self.amplitudeEFC,
-                                                      self.matrix_dir, initial_DM_voltage = initial_DM_voltage, perfect_mat=True)
+                                                      self.matrix_dir, initial_DM_voltage = initial_DM_voltage, MatrixType=self.MatrixType)
 
             print("time for direct matrix " + testbed.string_os,
                   time.time() - start_time)

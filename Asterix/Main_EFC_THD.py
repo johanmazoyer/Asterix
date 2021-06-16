@@ -65,6 +65,7 @@ def runthd2(parameter_file,
     Linesearch = SIMUconfig["Linesearch"]
     Linesearchmodes = [int(i) for i in SIMUconfig["Linesearchmodes"]]
     gain = SIMUconfig["gain"]
+    Number_matrix = SIMUconfig["Number_matrix"]
 
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
@@ -134,6 +135,7 @@ def runthd2(parameter_file,
                                                 estim,
                                                 correc,
                                                 MaskScience,
+                                                Number_matrix,
                                                 gain,
                                                 Nbiter_corr,
                                                 Nbmode_corr,
