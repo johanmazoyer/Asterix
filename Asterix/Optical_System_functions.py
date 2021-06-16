@@ -1526,6 +1526,9 @@ class deformable_mirror(Optical_System):
                     Can also be a float scalar in which case DM_phase is constant
                     default is 0.
 
+                    CAREFUL !! If the DM is part of a testbed. this variable name is changed
+                    to DMXXphase (DMXX: name of the DM) to avoid confusion with
+
         save_all_planes_to_fits: Bool, default False.
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
@@ -1544,7 +1547,7 @@ class deformable_mirror(Optical_System):
         # call the Optical_System super function to check
         # and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
-
+    
         if wavelength is None:
             wavelength = self.wavelength_0
 
@@ -1952,10 +1955,8 @@ class deformable_mirror(Optical_System):
             basis = np.zeros((basis_size, self.number_act))
             for i in range(basis_size):
                 basis[i][active_and_in_pup[i]] = 1
-            
-            useful.quickfits(basis)
         
-        if basis_type == 'fourier':
+        elif basis_type == 'fourier':
             start_time = time.time()
             activeact = [
                 value for value in self.active_actuators
@@ -1985,6 +1986,10 @@ class deformable_mirror(Optical_System):
             print("")
             print("time for FourierBasis for " + self.string_os,
               time.time() - start_time)
+
+        else:
+            raise Exception(basis_type + " is is not a valid basis_type")  
+        
             
             
         return basis
