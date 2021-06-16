@@ -238,6 +238,9 @@ def creatingInterractionmatrix(testbed,
             positioonDMintestbed = testbed.subsystems.index(DM_name)
             OpticSysNameBefore = testbed.subsystems[:positioonDMintestbed]
             OpticSysNameAfter = testbed.subsystems[positioonDMintestbed + 1:]
+            
+            print(OpticSysNameBefore)
+            print(OpticSysNameAfter)
 
             # we go through all subsystme of the test bed
 
@@ -248,8 +251,8 @@ def creatingInterractionmatrix(testbed,
             for osname in OpticSysNameBefore:
                 OpticSysbefore = vars(testbed)[osname]
 
-                if isinstance(OpticSysbefore, OptSy.deformable_mirror):
-                    # this subsystem is a DM but not the one we actuate now (located before the one we actuate)
+                if isinstance(OpticSysbefore, OptSy.deformable_mirror) and OptSy.active:
+                    # this subsystem is an active DM but not the one we actuate now (located before the one we actuate)
                     wavefront = OpticSysbefore.EF_through(
                         entrance_EF=wavefront,
                         DMphase=OpticSysbefore.phase_init)
@@ -305,8 +308,8 @@ def creatingInterractionmatrix(testbed,
                     OpticSysAfter = vars(testbed)[osname]
 
                     if osname != OpticSysNameAfter[-1]:
-                        if isinstance(OpticSysbefore, OptSy.deformable_mirror):
-                            # this subsystem is a DM but not the one we actuate now (located after the one we actuate)
+                        if isinstance(OpticSysbefore, OptSy.deformable_mirror) and OptSy.active:
+                            # this subsystem is an active DM but not the one we actuate now (located after the one we actuate)
                             wavefront = OpticSysAfter.EF_through(
                                 entrance_EF=wavefront,
                                 DMphase=OpticSysAfter.phase_init)
