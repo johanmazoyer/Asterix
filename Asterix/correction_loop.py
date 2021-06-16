@@ -15,6 +15,7 @@ def CorrectionLoop(testbed,
                    estimator,
                    corrector,
                    mask_dh,
+                   Number_matrix,
                    gain,
                    Nbiter_corr,
                    Nbmode_corr,
@@ -27,9 +28,6 @@ def CorrectionLoop(testbed,
                    nb_photons=0.,
                    silence=False):
 
-
-    number_mat = 2
-
     CorrectionLoopResult = dict()
     CorrectionLoopResult["nb_total_iter"] = 0
     CorrectionLoopResult["SVDmodes"] = list()
@@ -40,9 +38,11 @@ def CorrectionLoop(testbed,
     CorrectionLoopResult["MeanDHContrast"] = list()
 
 
-    for i in range(number_mat):
+    for i in range(Number_matrix):
 
-        if np.sum(initial_DM_voltage):
+        if np.sum(initial_DM_voltage) != 0:
+            print("end Matrix ",i - 1)
+            print("We restart from contrast = ",min_contrast)
             corrector.update_matrices(testbed,estimator,initial_DM_voltage=initial_DM_voltage,
                                     input_wavefront=0.)
 
