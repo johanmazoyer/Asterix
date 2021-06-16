@@ -256,7 +256,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
         (len(testbed.name_of_DMs), nb_total_iter, testbed.dim_overpad_pupil,
          testbed.dim_overpad_pupil))
 
-    for i in range(voltage_DMs.shape[0]):
+    for i in range(len(voltage_DMs)):
         allDMphases = testbed.voltage_to_phases(voltage_DMs[i])
 
         if isinstance(voltage_DMs[i], (int, float)):
