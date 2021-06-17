@@ -1985,7 +1985,6 @@ class deformable_mirror(Optical_System):
                     if i % 10:
                         useful.progress(i, basis_size, status='')
                 fits.writeto(matrix_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
-            print("")
             print("time for " + Name_FourrierBasis_fits,
               time.time() - start_time)
 

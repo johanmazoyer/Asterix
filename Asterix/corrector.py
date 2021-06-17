@@ -247,7 +247,7 @@ class Corrector:
             if self.FirstIterNewMat:
                 # This is the first time
                 self.last_best_alpha = 1e12
-                self.expected_gain_in_contrast = 0.95
+                self.expected_gain_in_contrast = 0.93
                 self.last_best_contrast = ActualCurrentContrast
                 self.times_we_lowered_gain = 0
                 self.count_since_last_best = 0

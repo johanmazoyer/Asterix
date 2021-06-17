@@ -170,13 +170,15 @@ def creatingInterractionmatrix(testbed,
         headfile += "_EFCampl" + str(amplitudeEFC)
     else:
         raise Exception("This Basis type does not exist")
-
+    print("")
     print("Start Interraction Matrix")
 
     #measure the initial FP
     G0 = proc.resampling(
         testbed.todetector(entrance_EF=input_wavefront,
                            voltage_vector=initial_DM_voltage), dimEstim)
+    
+    # useful.quickfits(np.abs(G0), dir = "/Users/jmazoyer/Desktop/toto/", name="G0")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
@@ -213,6 +215,7 @@ def creatingInterractionmatrix(testbed,
 
             if (initial_DM_voltage == 0.).all():
                 print("")
+                print("The matrix " + fileDirectMatrix + " does not exists")
                 print("Start " + DM_name)
                 
 
@@ -331,7 +334,7 @@ def creatingInterractionmatrix(testbed,
 
                 if MatrixType == 'perfect':
                     Gvector = Gvector - G0         
-                # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/toto/")   
+                # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/tutu/")   
  
                 # We fill the interraction matrix:
                 InterMat[:dimEstim**2,
