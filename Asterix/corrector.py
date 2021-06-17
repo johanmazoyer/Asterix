@@ -187,6 +187,8 @@ class Corrector:
             self.Gmatrix = 0
             self.M0 = 0
 
+            self.FirstIterNewMat = True
+
             start_time = time.time()
             interMat = wsc.creatingInterractionmatrix(testbed,
                                                       estimator.dimEstim,
@@ -230,6 +232,7 @@ class Corrector:
         if self.correction_algorithm == "efc":
             if mode != self.previousmode:
                 self.previousmode = mode
+                # we only re-invert the matrix if it is different from last time
                 _, _, self.invertGDH = wsc.invertSVD(self.Gmatrix,
                                                      mode,
                                                      goal="c",
@@ -241,14 +244,14 @@ class Corrector:
 
         if self.correction_algorithm == "sm":
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
-            if np.isnan(self.previousmode):
+            if self.FirstIterNewMat:
                 # This is the first time
-                self.previousmode = 0
-                self.last_best_alpha = 0.1
-                self.expected_gain_in_contrast = 0.8
+                self.last_best_alpha = 1e12
+                self.expected_gain_in_contrast = 0.95
                 self.last_best_contrast = ActualCurrentContrast
                 self.times_we_lowered_gain = 0
                 self.count_since_last_best = 0
+                self.FirstIterNewMat = False
 
             if self.last_best_contrast < ActualCurrentContrast:
                 # problem: the algorithm did not actully improved contrast last iteration
@@ -262,7 +265,7 @@ class Corrector:
                 self.times_we_lowered_gain += 1
                 self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast)/3
                 self.count_since_last_best = 0
-                self.last_best_alpha = 0.1
+                self.last_best_alpha = 1e12
                 print("we do not improve contrast anymore, we change the gain to {:f}".format(self.expected_gain_in_contrast))
 
 
@@ -279,7 +282,7 @@ class Corrector:
                 self.MaskEstim, testbed, estimate, self.M0, self.G,
                 DesiredContrast, self.last_best_alpha)
 
-            return -self.amplitudeEFC * solutionSM
+            return -3*self.amplitudeEFC * solutionSM
 
         if self.correction_algorithm == "em":
 
