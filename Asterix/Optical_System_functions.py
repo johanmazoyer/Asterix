@@ -1963,8 +1963,10 @@ class deformable_mirror(Optical_System):
             ]
             
             sqrtnbract = int(np.sqrt(self.total_act))
+            Name_FourrierBasis_fits = "Fourier_basis_" +self.Name_DM +'_prad' + str(self.prad) + '_nact' + str(sqrtnbract)+ 'x' + str(sqrtnbract)
 
-            cossinbasis = proc.SinCosBasis(sqrtnbract)
+
+            cossinbasis = 3*proc.SinCosBasis(sqrtnbract)
 
             basis_size = cossinbasis.shape[0]
             basis = np.zeros((basis_size, self.number_act))
@@ -1974,17 +1976,17 @@ class deformable_mirror(Optical_System):
                 basis[i] = vec
             
             start_time = time.time()
-            Name_FourrierBasis_fits = "Fourier_basis" + self.string_os
+
             if not os.path.exists(matrix_dir + Name_FourrierBasis_fits + '.fits'):
                 phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil, self.dim_overpad_pupil))
-                print("Start Fourier basis for " + self.string_os)
+                print("Start " + Name_FourrierBasis_fits)
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
                         useful.progress(i, basis_size, status='')
                 fits.writeto(matrix_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
             print("")
-            print("time for FourierBasis for " + self.string_os,
+            print("time for " + Name_FourrierBasis_fits,
               time.time() - start_time)
 
         else:

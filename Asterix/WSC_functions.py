@@ -213,13 +213,13 @@ def creatingInterractionmatrix(testbed,
 
             if (initial_DM_voltage == 0.).all():
                 print("")
-                print(fileDirectMatrix + " does not exists:")
                 print("Start " + DM_name)
+                
 
             # we measure the phase of the Basis we will apply on the DM
             if DM.basis_type == 'fourier':
-                print("Load Fourier Basis Phases for " + DM_name)
-                Name_FourrierBasis_fits = "Fourier_basis" + DM.string_os
+                sqrtnbract = int(np.sqrt(DM.total_act))
+                Name_FourrierBasis_fits = "Fourier_basis_" +DM.Name_DM +'_prad' + str(DM.prad) + '_nact' + str(sqrtnbract)+ 'x' + str(sqrtnbract)
                 phasesBasis = fits.getdata(matrix_dir +
                                            Name_FourrierBasis_fits + '.fits')
 
@@ -268,6 +268,8 @@ def creatingInterractionmatrix(testbed,
             # now we go throught the DM basis
             # Creating Interaction Matrix for the DMs if does not exist
             init_pos_in_matrix = pos_in_matrix
+            # useful.quickfits(DM.phase_init, dir = "/Users/jmazoyer/Desktop/phases/")
+            # useful.quickfits(np.abs(G0), dir = "/Users/jmazoyer/Desktop/toto/")   
 
             for i in range(DM.basis_size):
 
@@ -322,11 +324,14 @@ def creatingInterractionmatrix(testbed,
                 # Should we remove the intial FP field. This is very differnt for non ideal coronagrpah
                 # or if we have a strong initial DM voltages. This needs to be thoroughly investigated:
                 # for now only in 'perfect case':
+                # useful.quickfits(phasesBasis[i] , dir = "/Users/jmazoyer/Desktop/phases/")
+                # useful.quickfits(phasesBasis[i] + DM.phase_init, dir = "/Users/jmazoyer/Desktop/phases/")
+                
+                # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/toto/")
+
                 if MatrixType == 'perfect':
-                    Gvector = Gvector - G0
-                
-                
-            
+                    Gvector = Gvector - G0         
+                # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/toto/")   
  
                 # We fill the interraction matrix:
                 InterMat[:dimEstim**2,
