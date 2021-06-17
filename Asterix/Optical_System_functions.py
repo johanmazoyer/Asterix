@@ -1966,7 +1966,7 @@ class deformable_mirror(Optical_System):
             Name_FourrierBasis_fits = "Fourier_basis_" +self.Name_DM +'_prad' + str(self.prad) + '_nact' + str(sqrtnbract)+ 'x' + str(sqrtnbract)
 
 
-            cossinbasis = 3*proc.SinCosBasis(sqrtnbract)
+            cossinbasis = 30*proc.SinCosBasis(sqrtnbract)
 
             basis_size = cossinbasis.shape[0]
             basis = np.zeros((basis_size, self.number_act))
