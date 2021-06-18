@@ -12,6 +12,10 @@ Created on Tue Mar  9 17:20:09 2021
 import numpy as np
 from scipy import ndimage
 
+from PIL import Image
+import glob
+import os
+
 import matplotlib.pyplot as plt
 
 # %% FFT
@@ -41,12 +45,12 @@ def grad_matrix(w,l,factor):
                M[x,y] = factor * ( pow(x0-x,2) + pow(y0-y,2) )
     return M
 
-def circle(w,l,r):
+def circle(w,l,r,offset=0.5):
     """ Create a zeros matrix [w*l] with a circle of ones of raduis r at the centre"""
     M = np.zeros([w,l])
     for x in range(0, w):
            for y in range(0, l):
-               if  pow(x-(w)//2,2) + pow(y-(l)//2,2) < pow(r,2):
+               if  pow(x-(w/2) + offset ,2) + pow(y-(l/2) + offset,2) < pow(r,2):
                    M[x,y] = 1
     return M
 
@@ -77,12 +81,12 @@ def gradient_xy(A,mode="np"):
     """ 2D spacial graident """
     
     if mode=="sobel" :
-        sx = ndimage.sobel(A,axis=0,mode='constant')
-        sy = ndimage.sobel(A,axis=1,mode='constant')
+        sx = ndimage.sobel(A,axis=0,mode='constant',cval=0.0)
+        sy = ndimage.sobel(A,axis=1,mode='constant',cval=0.0)
         grad=np.hypot(sx,sy)
         
     elif mode=="np" :
-        [sx, sy]  = np.gradient(A)
+        [sx, sy]  = np.gradient(A,1)
         grad=np.hypot(sx,sy)
     else :
         grad = ndimage.gaussian_gradient_magnitude(A,sigma=0.2)
@@ -91,12 +95,64 @@ def gradient_xy(A,mode="np"):
 
 def gradient2_xy(A):
     """ 2D spacial graident """
-    return ndimage.laplace(A)
+    return ndimage.laplace(A,mode='nearest')
+
+
+# %% Operations on nymppy array
+
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]
+
+def get_pup_size(img):
+    
+    N = img.shape[0]
+    
+    #Estime pup size in pix
+    psf  = abs(ffts(img))
+    
+    psf_slice  = psf[N//2,:]
+    
+    plt.figure("FTO")
+    plt.plot(range(1,N+1),psf_slice,'g')
+    plt.show()
+    
+    # Click on coupure yourself.
+    coupure = plt.ginput(2)
+    coupure = (np.array(coupure)[:,0]).astype(int)
+    
+    plt.plot(coupure,psf_slice[coupure],'r*')
+    
+    print("pup_size = " + str((coupure[1] - coupure[0])//2))
+    return  (coupure[1] - coupure[0])//2
+
+def get_science_sampling(img):
+    
+    N = img.shape[0]
+    psf_slice  = img[N//2,:]
+
+    max_psf = max(psf_slice)
+    max_id  = int(np.where(psf_slice == max_psf)[0])
+    
+    half_values = [find_nearest(psf_slice[:max_id],max_psf/2),find_nearest(psf_slice[max_id:],max_psf/2)]
+    half_ids    = [np.where(psf_slice ==  half_values[0])[0] + 1, np.where(psf_slice ==  half_values[1])[0] + 1 ]
+    
+    plt.figure("psf")
+    plt.plot(range(1,N+1),psf_slice,'g')
+    plt.plot(half_ids,half_values,'r-')
+    plt.show()
+    
+    print("Science sampling = " + str(int(half_ids[1] - half_ids[0])))
+    return int(half_ids[1] - half_ids[0])
+
+def detector_shifts2div_factors(div_dist,Ld,F_D):
+    return np.pi*np.array(div_dist)*1e-3/(8*np.sqrt(3)*Ld*1e-9*F_D**2)
 
 
 # %% Template plots 
 
-def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
+def tempalte_plot(sim,e_sim,estimator,name="res",disp=True,save=False):
     
     if not disp : 
         plt.ioff()
@@ -104,12 +160,8 @@ def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
     ## GET DATAS 
     
     tbed = sim.tbed
-    
-    cropEF = sim.get_phi_foc()*tbed.pup
-    cropEFd = sim.get_phi_do()*tbed.pup_d
-    
-    error    = abs( cropEF  - e_sim.get_phi_foc() )
-    error_do = abs( cropEFd - e_sim.get_phi_do()*tbed.pup_d )
+    col = 2
+    error    = abs( sim.get_phi_foc()  - e_sim.get_phi_foc() ) * tbed.pup
 
     ## PLOTS FIGURES
     
@@ -117,21 +169,24 @@ def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
     plt.suptitle(name)
     plt.gcf().subplots_adjust(wspace = 0.4, hspace = 0.5)
 
-    plt.subplot(3,3,1),plt.imshow(cropEF,cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
-    plt.subplot(3,3,2),plt.imshow(e_sim.get_phi_foc(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
+    if not e_sim.phi_do_is_known():
+        col = 3
+        error_do = abs( sim.get_phi_do() - e_sim.get_phi_do()  ) * tbed.pup_d
+        plt.subplot(col,3,4),plt.imshow(sim.get_phi_do()   * tbed.pup_d,cmap='jet'),plt.title("Phi_do Attendu"),plt.colorbar()
+        plt.subplot(col,3,5),plt.imshow(e_sim.get_phi_do() * tbed.pup_d,cmap='jet'),plt.title("Estimation"),plt.colorbar()
+        plt.subplot(col,3,6),plt.imshow(error_do,cmap='jet'),plt.title("Erreur"),plt.colorbar()
+        
+
+    plt.subplot(col,3,1),plt.imshow(sim.get_phi_foc()   * tbed.pup,cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
+    plt.subplot(col,3,2),plt.imshow(e_sim.get_phi_foc() * tbed.pup,cmap='jet'),plt.title("Estimation"),plt.colorbar()
+    plt.subplot(col,3,3),plt.imshow(error,cmap='jet'),plt.title("Erreur en difference"),plt.colorbar()
     
-    plt.subplot(3,3,3),plt.imshow(error,cmap='jet'),plt.title("Erreur en %"),plt.colorbar()
-    
-    plt.subplot(3,3,4),plt.imshow(cropEFd,cmap='jet'),plt.title("Phi_do Attendu"),plt.colorbar()
-    plt.subplot(3,3,5),plt.imshow(e_sim.get_phi_do(),cmap='jet'),plt.title("Estimation"),plt.colorbar()
-    plt.subplot(3,3,6),plt.imshow(error_do,cmap='jet'),plt.title("Erreur"),plt.colorbar()
-    
-    
+
     ## PLOT TEXT BOX
     
-    plt.subplot(3,1,3)
-    mins = int(es.toc//60)
-    sec  = 100*(es.toc-60*mins)
+    plt.subplot(col,1,col)
+    mins = int(estimator.toc//60)
+    sec  = 100*(estimator.toc-60*mins)
     pup_size = np.sum(tbed.pup)
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     plt.axis('off')
@@ -142,7 +197,7 @@ def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
     if not e_sim.flux_is_known()    : textbox += "\nEstimate flux = "     + "{:.2f}".format(e_sim.get_flux()) + " --> error = +/-" + "{:.3f}".format(100*(abs(sim.get_flux()-e_sim.get_flux()))/sim.get_flux()) + "%"
     if not e_sim.fond_is_known()    : textbox += "\nEstimate fond = "     + "{:.2f}".format(e_sim.get_fond()) + " --> error = "    + "{:.2e}".format(abs(sim.get_fond()-e_sim.get_fond()))
 
-    textbox += "\n\n"+ str(es.complete_res['message']) + "\nIterations : "+ str(es.complete_res['nit'])+ "\nTime : " + str(mins) + "m" + str(sec)[:3]
+    textbox += "\n\n"+ str(estimator.complete_res['message']) + "\nIterations : "+ str(estimator.complete_res['nit'])+ "\nTime : " + str(mins) + "m" + str(sec)[:3]
     
     pond2 = 100 * sum(e_sim.info2) / sum(sum(e_sim.info2))
     pond  = 100 * sum(e_sim.info) / sum(sum(e_sim.info))
@@ -162,6 +217,122 @@ def tempalte_plot(sim,e_sim,es,name="res",disp=True,save=False):
             plt.cla()
             plt.clf()
             plt.close()
+
+def plot_sim_entries(sim,dRup,dJup,dJdo=None,dRdo=None,name="res",disp=True,save=False):
+    
+    if not disp : 
+        plt.ioff()
+    
+    ## GET DATAS 
+
+    tbed = sim.tbed
+    
+    cropEF  = sim.get_phi_foc()*tbed.pup
+    cropEFd = sim.get_phi_do()*tbed.pup_d
+    
+    plt.figure("Simulation gif",figsize = (8, 6))
+    plt.subplot(3,2,1),plt.imshow(cropEF,cmap='jet'),plt.title("Phi_up"),plt.colorbar()
+    plt.subplot(3,2,2),plt.imshow(cropEFd,cmap='jet'),plt.title("Phi_do"),plt.colorbar()
+    
+    if dJdo is not None : plt.subplot(3,2,4),plt.imshow(dJdo,cmap='jet'),plt.title("dJdo"),plt.colorbar()
+    plt.subplot(3,2,3),plt.imshow(dJup,cmap='jet'),plt.title("dJup"),plt.colorbar()
+
+    if dRdo is not None : plt.subplot(3,2,6),plt.imshow(dRdo,cmap='jet'),plt.title("dRdo"),plt.colorbar()
+    plt.subplot(3,2,5),plt.imshow(dRup,cmap='jet'),plt.title("dRup"),plt.colorbar()
+        
+    plt.suptitle(name)
+
+    ## DISP / SAVE 
+    
+    if save :
+        plt.savefig("save/iter/"+name,pad_inches=0.5)
+        if not disp : 
+            plt.cla()
+            plt.clf()
+            plt.close()
+
+
+def iter_to_gif(name="sim"):
+    
+    images = []
+    for file in sorted(glob.glob("./save/iter/*.png"), key=len):
+        images.append(Image.open(file))
+    images[0].save(fp="./save/gif/"+str(name)+".gif", format='GIF', append_images=images, save_all=True,duration=300, loop=0)
+    
+    ii=0
+    for file in sorted(glob.glob("./save/iter/*.png"), key=len):
+        images[ii].close()
+        os.remove(file)
+        ii += 1
+
+
+
+def tempalte_plot2(imgs,e_sim,estimator,name="res",disp=True,save=False):
+    
+    if not disp : 
+        plt.ioff()
+    
+ 
+    ## PLOTS FIGURES
+    e_imgs = e_sim.gen_div_imgs()
+    
+    plt.figure("Comparaison Images estimé / Image réel")
+    plt.subplot(3,3,1),plt.imshow(imgs[:,:,0],cmap='jet'),plt.colorbar(),plt.title("Image 1 reel")
+    plt.subplot(3,3,4),plt.imshow(imgs[:,:,1],cmap='jet'),plt.colorbar(),plt.title("Image 2 reel")
+    
+    plt.subplot(3,3,2),plt.imshow(e_imgs[:,:,0],cmap='jet'),plt.colorbar(),plt.title("Image 1 estimé")
+    plt.subplot(3,3,5),plt.imshow(e_imgs[:,:,1],cmap='jet'),plt.colorbar(),plt.title("Image 2 estimé")
+
+    plt.subplot(3,3,3),plt.imshow(e_imgs[:,:,0] - imgs[:,:,0],cmap='jet'),plt.colorbar(),plt.title("Erreur de recontruction Image 1")
+    plt.subplot(3,3,6),plt.imshow(e_imgs[:,:,1] - imgs[:,:,1],cmap='jet'),plt.colorbar(),plt.title("Erreur de recontruction Image 2")
+
+    ## PLOT TEXT BOX
+    
+    plt.subplot(3,1,3)
+    mins = int(estimator.toc//60)
+    sec  = 100*(estimator.toc-60*mins)
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    plt.axis('off')
+    
+    textbox = ""
+    if not e_sim.flux_is_known()    : textbox += "\nEstimate flux = "     + "{:.2f}".format(e_sim.get_flux()) 
+    if not e_sim.fond_is_known()    : textbox += "\nEstimate fond = "     + "{:.2f}".format(e_sim.get_fond())
+
+    textbox += "\n\n"+ str(estimator.complete_res['message']) + "\nIterations : "+ str(estimator.complete_res['nit'])+ "\nTime : " + str(mins) + "m" + str(sec)[:3]
+    
+    pondCritere = np.round( 100 * sum(e_sim.info)      / sum(sum(e_sim.info))     ,2)
+    pondGrad    = np.round( 100 * sum(e_sim.info_gard) / sum(sum(e_sim.info_gard)),2)
+    pondDiv     = np.round( 100 * sum(e_sim.info_div)  / sum(sum(e_sim.info_div)) ,2)
+    textbox += "\n\nPonderation   :   " + "Jmv: " + str(pondCritere[0]) + "%" + ", R: " + str(pondCritere[1]) + "%\n" + "Par gradient  :   DJmv: " + str(pondGrad[0]) + "%" + ", DR: " + str(pondGrad[1]) + "%\nPar diversité :   " + str( pondDiv )
+    
+    plt.text(0.2,-0.3,textbox,bbox=props)      
+    
+    ## DISP / SAVE 
+    
+    if disp : plt.show()
+    
+    if save :
+        plt.savefig("save/image_"+name,pad_inches=0.5)
+        if not disp : 
+            plt.cla()
+            plt.clf()
+            plt.close()
+    
+    plt.figure("Profile de la phase estimé")
+    plt.imshow(e_sim.get_phi_foc(),cmap='jet'),plt.colorbar()
+
+    
+    ## DISP / SAVE 
+    
+    if disp : plt.show()
+    
+    if save :
+        plt.savefig("save/phase_"+name,pad_inches=0.5)
+        if not disp : 
+            plt.cla()
+            plt.clf()
+            plt.close()
+
 
 # %% Compare fft/mft 
 

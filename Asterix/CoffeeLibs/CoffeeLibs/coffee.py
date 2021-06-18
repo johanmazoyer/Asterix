@@ -41,8 +41,8 @@ class data_simulator():
         
         # Things we don't want to recompute
         self.N = tbed.dimScience//tbed.ech
-        [Ro,Theta] = pmap(self.N,self.N)
-        self.defoc   = zernike(Ro,Theta,4)
+        [Ro,Theta] = pmap(self.N,self.N,tbed.diam_pup_in_pix//2)
+        self.defoc = zernike(Ro,Theta,4)
         
         # Store simulation Variables
         self.tbed = tbed
@@ -72,7 +72,7 @@ class data_simulator():
     
     def gen_zernike_phi(self,coeff):
         """ Generate a zernike polynome using coeff and return it  """
-        [Ro,Theta] = pmap(self.N,self.N)
+        [Ro,Theta] = pmap(self.N,self.N,self.tbed.diam_pup_in_pix//2)
         return pzernike(Ro,Theta,coeff)
     
     def gen_div_phi(self):
@@ -151,6 +151,7 @@ class data_simulator():
     
     def get_phi_do(self):
         if hasattr(self, 'phi_do') : return self.phi_do
+        else : return 0 
         
     def get_flux(self):
         return self.known_var['flux']
@@ -314,15 +315,18 @@ class data_simulator():
 
 # %% ESTIMATOR
     
-class Estimator:
+class coffee_estimator:
     """ --------------------------------------------------
     COFFEE estimator
     -------------------------------------------------- """
 
-    def __init__(self,var_phi=0 ,method = 'BfGS', gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,**kwarg):
+    def __init__(self,var_phi=0 ,method = 'L-BfGS-B',bound=None, gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,**kwarg):
         
         self.var_phi = var_phi
-        self.disp = disp
+        self.disp    = disp
+        self.bound   = bound
+        self.simGif  = None
+        
         # Minimize parameters
         options = {'disp': disp,'gtol':gtol,'eps':eps,'maxiter':maxiter}
         self.setting = {'options' : options, 'method': method }
@@ -352,13 +356,25 @@ class Estimator:
         sim      = data_simulator(tbed,known_var,div_factors,phi_foc)
         ini_pack = sim.opti_pack()
         if self.disp : sim.print_know_war()
-        sim.info  = [] # To store information during iterations
-        sim.info2 = []
+        
+        # To store information during iterations
+        sim.iter  = 0
+        sim.info  = [] 
+        sim.info_gard = []
+        sim.info_div  = []
+
+        
+        # Setting bounds matrix for minimize as syntaxes required
+        if self.bound is not None and self.setting['method'] == 'L-BfGS-B' :
+            mapphi = np.ones(ini_pack.shape)
+            bounds = (np.transpose([-self.bound*mapphi,self.bound*mapphi]))
+            self.setting['bounds'] = bounds 
+        
         
         tic  = t.time() 
         res  = minimize(cacl.V_map_J,
                         ini_pack,
-                        args=(sim,imgs,self.var_phi),
+                        args=(sim,imgs,self.var_phi,self.simGif),
                         jac=cacl.V_grad_J,
                         **self.setting)
         toc = t.time() - tic
@@ -367,9 +383,12 @@ class Estimator:
         sec  = 100*(toc-60*mins)
         if self.disp : print("Minimize took : " + str(mins) + "m" + str(sec)[:3])
         
-        sim.opti_unpack(res.get('x'))
-        sim.info  = np.array(sim.info)   #list to array because it is better
-        sim.info2 = np.array(sim.info2)
+        sim.opti_update(res.get('x'),imgs)
+        # list to array because it is better
+        sim.info_gard  = np.array(sim.info_gard)
+        sim.info_div   = np.array(sim.info_div)
+        sim.info       = np.array(sim.info)
+        if self.simGif : tls.iter_to_gif(self.simGif)
         
         # If you need more info after
         self.complete_res = res
@@ -390,8 +409,8 @@ class custom_bench(Optical_System):
         # self.measure_normalization()
         
         # A mettre en parametres 
-        self.rcorno = modelconfig["Coronaconfig"]["diam_lyot_in_m"]
-        self.ech    = 2
+        self.rcorno = modelconfig["Coronaconfig"]["rlyot_in_pix"]
+        self.ech    = int(modelconfig["modelconfig"]["Science_sampling"])
         self.epsi   = 0
 
         # Definitions
@@ -402,13 +421,16 @@ class custom_bench(Optical_System):
 
         self.set_corono(modelconfig["modelconfig"]["filename_instr_pup"])
         
+        self.offest = {'X_offset_input':-0.5,'Y_offset_input':-0.5,'X_offset_output':-0.5,'Y_offset_output':-0.5}
+
+        
     def EF_through(self,entrance_EF=1.,downstream_EF=1.):
 
         dim_img = self.dimScience
         dim_pup = dim_img//self.ech
 
         EF_afterentrancepup = entrance_EF*self.pup
-        EF_aftercorno       = mft( self.corno * mft(EF_afterentrancepup,dim_pup,dim_pup,dim_pup,inverse=True) ,dim_pup,dim_pup,dim_pup)
+        EF_aftercorno       = mft( self.corno * mft(EF_afterentrancepup,dim_pup,dim_pup,dim_pup,inverse=True,**self.offest) ,dim_pup,dim_pup,dim_pup,**self.offest)
         if(self.zbiais)          : EF_aftercorno = EF_aftercorno - self.z_biais()
         EF_out              = downstream_EF * self.pup_d * EF_aftercorno
         
@@ -416,11 +438,11 @@ class custom_bench(Optical_System):
 
     def todetector(self,entrance_EF=1.,downstream_EF=1.):
         w = self.dimScience//self.ech
-        return mft(self.EF_through(entrance_EF,downstream_EF),w,self.dimScience,w,inverse=True)
+        return mft(self.EF_through(entrance_EF,downstream_EF),w,self.dimScience,w,inverse=True,**self.offest)
         
     def z_biais(self):
         N = self.dimScience//self.ech
-        return mft( self.corno * mft( self.pup ,N,N,N,inverse=True) ,N,N,N)
+        return mft( self.corno * mft( self.pup ,N,N,N,inverse=True) ,N,N,N,**self.offest)
 
     def todetector_Intensity(self,entrance_EF=1.,downstream_EF=1.,flux=1,fond=0):
 
@@ -452,17 +474,17 @@ class custom_bench(Optical_System):
         
         view_list.append(view_list[-1]*self.pup)
         
-        view_list.append(mft(view_list[-1],N,N,N))
+        view_list.append(mft(view_list[-1],N,N,N,**self.offest))
         
         view_list.append(self.corno*view_list[-1])
         
-        view_list.append(mft(view_list[-1],N,N,N))
+        view_list.append(mft(view_list[-1],N,N,N,**self.offest))
         
         if(self.zbiais): view_list.append(view_list[-1] - self.z_biais())
         
         view_list.append( downstream_EF * self.pup_d *view_list[-1] )
         
-        view_list.append(mft(view_list[-1],N,N*self.ech,N))
+        view_list.append(mft(view_list[-1],N,N*self.ech,N,**self.offest))
                 
 
         

@@ -31,21 +31,22 @@ RSB         = 30000
 
 # %% Initalisation of objetcs
 
+prefix = "1pix"
+
 tbed      = custom_bench(config,'.')
 sim       = data_simulator(tbed,known_var,div_factors)
-estimator = Estimator(**config["Estimationconfig"])
 
 threshold = 3  # Error max 
 
 coeff = 1/np.arange(1,6) # Coeff to generate phi_foc
 coeff[0:3] = [0,0,0]
 
-
 sim.gen_zernike_phi_foc(coeff)    # On génere le phi focalisé
 sim.gen_zernike_phi_do([0,0,1])   # On phi do
 
 imgs = sim.gen_div_imgs()         # On cree les images
 
+# D'autres trucs utils
 cropEF   = sim.get_phi_foc()*tbed.pup
 cropEFd  = sim.get_phi_do()*tbed.pup_d
 pup_size = np.sum(tbed.pup)
@@ -87,6 +88,9 @@ def new_row(datas,error):
 
 def do_a_test(name):
     
+        name = prefix + "_" + name
+        
+        estimator.simGif = name
         e_sim = estimator.estimate(imgs,tbed,div_factors,known_var) # Estimation
        
         error      = abs( cropEF   - e_sim.get_phi_foc() )
@@ -99,53 +103,25 @@ def do_a_test(name):
         tempalte_plot(sim,e_sim,estimator,name="fig/"+name,disp=False,save=True)
 
         return np.sum(error)/pup_size
+    
+    
+def reset_estimator():
+    global estimator
+    estimator = Estimator(**config["Estimationconfig"])
+    estimator.var_phi_up =  1 / np.var(sim.get_phi_foc())
+    estimator.var_phi_do =  1 / np.var(sim.get_phi_do())
+
 
 # %% unit Test
 
 class TestCoffee(unittest.TestCase):
-    
-    def test_iter_until_conv(self):
-        
-        init_worksheet("test_iter_until_convergence",labels)
-        
-        global known_var
-        global estimator
-        estimator = Estimator(**config["Estimationconfig"])
-
-        known_var   = {'flux':1, 'fond':0}
-        
-        estimator.setting['options']['maxiter'] = 10
-        error = do_a_test("updo 10 iters")
-        
-        estimator.setting['options']['maxiter'] = 100
-        error = do_a_test("updo 100 iters")
-        
-        estimator.setting['options']['maxiter'] = 500
-        error = do_a_test("updo 500 iters")
-
-        estimator.setting['options']['maxiter'] = 1000
-        error = do_a_test("updo 1k iters")
-        
-        estimator.setting['options']['maxiter'] = 10
-        error = do_a_test("up 10 iters")
-        
-        estimator.setting['options']['maxiter'] = 100
-        error = do_a_test("up 100 iters")
-        
-        estimator.setting['options']['maxiter'] = 500
-        error = do_a_test("up 500 iters")
-
-        estimator.setting['options']['maxiter'] = 1000
-        error = do_a_test("up 1k iters")
-        
     
     def test_known_var(self):
         
         init_worksheet("test_known_var",labels)
         global known_var
         global estimator
-        estimator = Estimator(**config["Estimationconfig"])
-
+        reset_estimator()
         
         #Estimation All fixed
         known_var   = {'downstream_EF':sim.get_EF_do(), 'flux':1, 'fond':0}
@@ -177,7 +153,7 @@ class TestCoffee(unittest.TestCase):
         global estimator
         global imgs
         known_var = {'downstream_EF':sim.get_EF_do(), 'flux':1, 'fond':0}
-        estimator = Estimator(**config["Estimationconfig"])
+        reset_estimator()
 
         #Estimation All fixed
         
@@ -202,79 +178,32 @@ class TestCoffee(unittest.TestCase):
         imgs  = sim.gen_div_imgs()
         error = do_a_test("4q zbiaiz")
         
-    def test_RSB_updo(self):
-        
-        init_worksheet("RSB_updo",labels)
-        
-        global known_var
-        global estimator
-        global imgs
-        known_var = {'flux':1, 'fond':0}
-        estimator = Estimator(**config["Estimationconfig"])
-        estimator.hypp = 1
-        
-        imgs  = sim.gen_div_imgs(RSB=1)
-        error = do_a_test("RSB 1")
-        
-        imgs  = sim.gen_div_imgs(RSB=10)
-        error = do_a_test("RSB 1")
-        
-        imgs  = sim.gen_div_imgs(RSB=50)
-        error = do_a_test("RSB 1")
-        
-        imgs  = sim.gen_div_imgs(RSB=100)
-        error = do_a_test("RSB 1")
-        
-    def test_RSB_up(self):
-        
-        init_worksheet("RSB_up",labels)
-        
-        global known_var
-        global estimator
-        global imgs
-        known_var = {'downstream_EF':sim.get_EF_do(), 'flux':1, 'fond':0}
-        estimator = Estimator(**config["Estimationconfig"])
-        estimator.hypp = 1
-        
-        imgs  = sim.gen_div_imgs(RSB=1)
-        error = do_a_test("RSB 1")
-        
-        imgs  = sim.gen_div_imgs(RSB=10)
-        error = do_a_test("RSB 1")
-        
-        imgs  = sim.gen_div_imgs(RSB=50)
-        error = do_a_test("RSB 1")
-        
-        imgs  = sim.gen_div_imgs(RSB=100)
-        error = do_a_test("RSB 1")
-        
     def test_regul(self):
         
         init_worksheet("regul",labels)
         
         global known_var
         global estimator
-        
+        reset_estimator()
         known_var = {'downstream_EF':sim.get_EF_do(), 'flux':1, 'fond':0}
-        estimator = Estimator(**config["Estimationconfig"])
         
-        estimator.hypp = 10
-        error = do_a_test("regul 10")
+        estimator.var_phi_up =  0
+        estimator.var_phi_do =  0
+        error = do_a_test("No regularisation")
         
-        estimator.hypp = 1
-        error = do_a_test("regul 1")
+        estimator.var_phi_up =  1 / np.var(sim.get_phi_foc())
+        estimator.var_phi_do =  1 / np.var(sim.get_phi_do())
+        error = do_a_test("Perfect regularisation")
         
-        estimator.hypp = 1e-1
-        error = do_a_test("regul 1e-1")
+        estimator.var_phi_up =  0.5 / np.var(sim.get_phi_foc())
+        estimator.var_phi_do =  0.5 / np.var(sim.get_phi_do())
+        error = do_a_test("Regularisation halves")
         
-        estimator.hypp = 1e-2
-        error = do_a_test("regul 1e-2")
+        estimator.var_phi_up =  2 / np.var(sim.get_phi_foc())
+        estimator.var_phi_do =  2 / np.var(sim.get_phi_do())
+        error = do_a_test("Regularisation double")
         
-        estimator.hypp = 1e-3
-        error = do_a_test("regul 1e-3")
-        
-        estimator.hypp = 1e-100
-        error = do_a_test("regul 1e-100")
+
         
         
         

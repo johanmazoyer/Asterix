@@ -30,7 +30,7 @@ def regule(psi,mode="np"):
   
     psi_grad  = tls.gradient_xy(psi,mode)  # Spacial gardient
     
-    return np.sum(psi_grad)**2
+    return np.sum(psi_grad**2)
 
 def diff_grad_J_up(point,div_id,sim,i_ref,dphi=1e-6):
         
@@ -74,6 +74,23 @@ def diff_grad_J_down(point,div_id,esim,i_ref,dphi=1e-6):
                      
     return np.array(dphi_list).reshape(sim.N,sim.N) / dphi
 
+def diff_grad_R(dpoint,pup=1,mode="np",dphi=1e-6):
+    
+    dphi_list = [] # List of gradient dphi(a,b) for all possible (a,b)
+    Rpoint = regule(dpoint,pup,mode)
+    
+    w = dpoint.shape[0]
+    for a in range(0,w):
+          for b in range(0,w):
+              
+              # Delta au point courant
+              dpoint[a,b] = dpoint[a,b] + dphi
+              
+              dphi_list.append(regule(dpoint,pup,mode) - Rpoint)
+              
+              dpoint[a,b] = dpoint[a,b] - dphi
+                     
+    return np.array(dphi_list).reshape(w,w) / dphi
 
 # %% ################################
 """ Calcule gradient du critère  """
@@ -81,6 +98,7 @@ def diff_grad_J_down(point,div_id,esim,i_ref,dphi=1e-6):
 def DJmv_up(div_id,img,sim):
 
     tb = sim.tbed    
+    offset = tb.offest
 
     w     = tb.dimScience
     wphi  = tb.dimScience//tb.ech
@@ -95,9 +113,9 @@ def DJmv_up(div_id,img,sim):
     diff    =  h_det - img
     
     
-    terme1  = mft( np.conj(psi_det) * alpha * diff ,w,wphi,wphi,inverse=True)
-    terme2  = tb.corno * mft( psi_d * terme1 ,wphi,wphi,wphi)
-    terme3  = mft( terme2 ,wphi,wphi,wphi,inverse=True)
+    terme1  = mft( np.conj(psi_det) * alpha * diff ,w,wphi,wphi,inverse=True,**offset)
+    terme2  = tb.corno * mft( psi_d * terme1 ,wphi,wphi,wphi,**offset)
+    terme3  = mft( terme2 ,wphi,wphi,wphi,inverse=True,**offset)
     
     Dj = - 4 * np.imag( psi_u * terme3 )
     
@@ -106,6 +124,7 @@ def DJmv_up(div_id,img,sim):
 def DJmv_down(div_id,img,sim):
 
     tb = sim.tbed    
+    offset = tb.offest
     
     w    = tb.dimScience
     wphi = tb.dimScience//tb.ech
@@ -120,8 +139,8 @@ def DJmv_down(div_id,img,sim):
     diff    =  h_det - img
     
     
-    terme1  = mft( np.conj(psi_det) * alpha * diff ,w,wphi,wphi,inverse=True)
-    terme2  = mft( tb.corno * mft( psi_u ,wphi,wphi,wphi,inverse=True),wphi,wphi,wphi)
+    terme1  = mft( np.conj(psi_det) * alpha * diff ,w,wphi,wphi,inverse=True,**offset)
+    terme2  = mft( tb.corno * mft( psi_u ,wphi,wphi,wphi,inverse=True,**offset),wphi,wphi,wphi,**offset)
     
     Dj = - 4 * np.imag( psi_d * terme2 * terme1 )
     
@@ -131,7 +150,7 @@ def Dregule(psi,mode="lap"):
     """Compte derive of regule terme """
     if mode=="lap" :  lap =  tls.gradient2_xy(psi)
     else :            lap = tls.gradient_xy(tls.gradient_xy(psi))
-    return lap
+    return (1/2)*lap
 
 # %% ######################
 """Flux fond """
@@ -149,54 +168,61 @@ def estime_fluxfond(sim,imgs):
 # %% ############################
 """ Wrappers for optimize """
 
-def V_map_J(var,sim,imgs,hypp):
+def V_map_J(var,sim,imgs,hypp,simGif):
     """ Wrapper for minimize syntax"""
     
-    # sim = copy.deepcopy(esim)
+    #sim = copy.deepcopy(esim)
     sim.opti_update(var,imgs)
     Hx = sim.gen_div_imgs()
     
     Jmv = meanSquare(Hx,imgs)
-    R   =  hypp * regule(sim.get_phi_foc()) 
+    R   =  (1/2) * hypp * regule(sim.get_phi_foc()) 
     
-    sim.info2.append([Jmv, R])
+    sim.info.append([Jmv, R])
     
-    return  Jmv + R 
+    return  Jmv + R
 
 
-def V_grad_J(var,sim,imgs,hypp):
+def V_grad_J(var,sim,imgs,hypp,simGif):
     """ Wrapper that resize variables to fit minimize syntax"""
     
     # sim = copy.deepcopy(esim)
     sim.opti_update(var,imgs)
     
-    info = []
+    info_gard      = []
+    info_div       = []
+    sim.iter +=1
+    
+    pup  = tls.circle(sim.N, sim.N, sim.tbed.diam_pup_in_pix//2 - 1)
     
     # Compute gradient = dj/dphi
     grad = []
     if not sim.phi_foc_is_known() : 
         grad_u = 0
         for div_id in range(0,imgs.shape[2]):
-            grad_u_k = DJmv_up(div_id,imgs[:,:,div_id],sim).reshape(sim.N**2,)
-            info.append(np.sum(grad_u_k**2))
+            grad_u_k = DJmv_up(div_id,imgs[:,:,div_id],sim)
+            info_div.append(np.sum(grad_u_k**2))
             grad_u   += grad_u_k
         grad_u *= 1  # Ponderation
-        R       =  hypp * Dregule(sim.get_phi_foc()).reshape(sim.N**2,) # Regulatrisation
-        grad_u += R
-        grad    = np.concatenate((grad, grad_u), axis=0)
-        info.append(np.sum(R**2))
+        dR      =  pup * hypp * Dregule(sim.get_phi_foc()) # Regulatrisation
+        grad    = np.concatenate((grad, (grad_u + dR).reshape(sim.N**2,)), axis=0)
 
 
     # Other varaibles gradient
     if not sim.phi_do_is_known() : 
         grad_d = 0
         for div_id in range(0,imgs.shape[2]):
-            grad_d += DJmv_down(div_id,imgs[:,:,div_id],sim).reshape(sim.N**2,)
+            grad_d += DJmv_down(div_id,imgs[:,:,div_id],sim)
         grad_d *= 1  # Ponderation
-        grad_d += hypp * Dregule(sim.get_phi_do()).reshape(sim.N**2,) # Regulatrisation
-        grad    = np.concatenate((grad, grad_d), axis=0)
+        dRdo    = pup * hypp * Dregule(sim.get_phi_do()) # Regulatrisation
+        grad    = np.concatenate((grad, (grad_d + dRdo).reshape(sim.N**2,)), axis=0)
                    
-    sim.info.append(info)                            
+    if simGif and not sim.phi_do_is_known() : tls.plot_sim_entries(sim,dR,grad_u,grad_d,dRdo,name="iter"+str(sim.iter),disp=False,save=True)
+    elif simGif : tls.plot_sim_entries(sim,dR,grad_u_k,name="iter"+str(sim.iter),disp=False,save=True)              
+    
+    sim.info_gard.append([np.sum(grad_u**2),np.sum(dR)**2])     
+    sim.info_div.append(info_div)
+                    
     return  grad
 
 

@@ -39,7 +39,7 @@ def zernike(Ro,Theta,j):
         poly = np.sqrt(2*(n+1)) * R * np.cos(m*Theta)
      
     # Normalize 1
-    return Ro.size * ( poly / sum(sum(poly**2)) )
+    return poly
 
     
 def osa2mn(j):
@@ -71,7 +71,7 @@ def osa2mn(j):
     return int(n),int(m)
 
 
-def pmap(w,l,norm=1):
+def pmap(w,l,rpup):
     """
     Generate polar coordinate map of size (w,l)
 
@@ -86,8 +86,10 @@ def pmap(w,l,norm=1):
         the two 2D matrix of (ro,theta) coordinates
 
     """
-    X,Y = np.meshgrid(np.linspace(-norm,norm,w),np.linspace(-norm,norm,l))
-    return [np.sqrt(X**2+Y**2), np.arctan2(Y,X)] 
+    leng = w/2
+    coord = np.concatenate((np.arange(-leng+0.5,0) , np.arange(0.5,leng+0.5)), axis=0)
+    X,Y   = np.meshgrid(coord,coord)
+    return [np.sqrt(X**2+Y**2)/rpup, np.arctan2(Y,X)] 
     
 
 def pzernike(Ro,Theta,poly):

@@ -9,6 +9,7 @@ import Asterix.Optical_System_functions as OptSy
 
 import Asterix.WSC_functions as wsc
 
+from CoffeeLibs import coffee_estimator
 
 class Estimator:
     """ --------------------------------------------------
@@ -173,6 +174,8 @@ class Estimator:
                              vectorPW,
                              overwrite=True)
         elif self.technique == 'coffee':
+            ## TO DO  mettre un nom a ce truc
+            self.coffee_config_dict = {}
             pass
 
         else:
@@ -243,7 +246,16 @@ class Estimator:
             return wsc.FP_PWestimate(Difference, self.PWVectorprobes)
 
         elif self.technique == 'coffee':
-            return np.zeros((self.dimEstim, self.dimEstim))
+            coffee = coffee_estimator(**self.coffee_config_dict)
+            
+            ## TO DO trouver les parametres
+            div_factors = "coeff pour la diversité de phase"
+            imgs        = "Les images prisent par le banc"
+            known_var   = "est que on connait flux/fond, phi_do..."
+            e_sim  = coffee.estimate(imgs,testbed,div_factors,known_var)
+            
+            ## TO DO definir ce qu'on veux retourner
+            return e_sim.get_EF_foc()
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
