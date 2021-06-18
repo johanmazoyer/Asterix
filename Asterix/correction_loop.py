@@ -106,10 +106,16 @@ def CorrectionLoop1Matrix(testbed,
 
     nbiter = 1
 
-    CorrectionLoopResult["voltage_DMs"].append(initial_DM_voltage)
-    CorrectionLoopResult["FP_Intensities"].append(initialFP)
-    CorrectionLoopResult["EF_estim"].append(estim_init)
-    CorrectionLoopResult["MeanDHContrast"].append(initialFP_contrast)
+    thisloop_voltages_DMs = list()
+    thisloop_FP_Intensities = list()
+    thisloop_MeanDHContrast = list()
+    thisloop_EF_estim = list()
+
+    thisloop_voltages_DMs.append(initial_DM_voltage)
+    thisloop_FP_Intensities.append(initialFP)
+    thisloop_EF_estim.append(estim_init)
+    thisloop_MeanDHContrast.append(initialFP_contrast)
+
 
     if not silence:
         print("Initial contrast in DH: ", initialFP_contrast)
@@ -129,7 +135,7 @@ def CorrectionLoop1Matrix(testbed,
 
         if Linesearch:
             # this is elegant but must be carefully done if we want to avoid infinite loop.
-            bestcontrast, bestmode = CorrectionLoop(
+            bestcontrast, bestmode = CorrectionLoop1Matrix(
                 testbed,
                 estimator,
                 corrector,
@@ -137,10 +143,11 @@ def CorrectionLoop1Matrix(testbed,
                 gain,
                 np.ones(len(Linesearchmodes), dtype=int),
                 Linesearchmodes,
+                list(),
                 Linesearch=False,
                 Search_best_Mode=True,
                 input_wavefront=input_wavefront,
-                initial_DM_voltage=CorrectionLoopResult["voltage_DMs"][iteration],
+                initial_DM_voltage=thisloop_voltages_DMs[iteration],
                 silence=True)
             print("Search Best Mode: ", bestmode, " contrast: ", bestcontrast)
             mode = bestmode
@@ -152,7 +159,7 @@ def CorrectionLoop1Matrix(testbed,
         # for now monochromatic estimation
         resultatestimation = estimator.estimate(
             testbed,
-            voltage_vector=CorrectionLoopResult["voltage_DMs"][-1],
+            voltage_vector=thisloop_voltages_DMs[-1],
             entrance_EF=input_wavefront,
             wavelength=testbed.wavelength_0,
             photon_noise=photon_noise,
@@ -164,7 +171,7 @@ def CorrectionLoop1Matrix(testbed,
             resultatestimation,
             mode,
             gain=gain,
-            ActualCurrentContrast=CorrectionLoopResult["MeanDHContrast"][-1])
+            ActualCurrentContrast=thisloop_MeanDHContrast[-1])
 
         if np.isnan(solution).any():
             # for every correction algorithm, we can break the loop by sending
@@ -172,32 +179,32 @@ def CorrectionLoop1Matrix(testbed,
             print("we stop the correction")
             break
 
-        CorrectionLoopResult["FP_Intensities"].append(
+        thisloop_FP_Intensities.append(
             testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                                         voltage_vector=CorrectionLoopResult["voltage_DMs"][-1] +
+                                         voltage_vector=thisloop_voltages_DMs[-1] +
                                          solution))
-        CorrectionLoopResult["EF_estim"].append(resultatestimation)
-        CorrectionLoopResult["MeanDHContrast"].append(
-            np.mean(CorrectionLoopResult["FP_Intensities"][-1][np.where(maskdh_science != 0)]))
+        thisloop_EF_estim.append(resultatestimation)
+        thisloop_MeanDHContrast.append(
+            np.mean(thisloop_FP_Intensities[-1][np.where(maskdh_science != 0)]))
 
         if Search_best_Mode == False:
-            #if we are only looking for the best mode, we do not update the DM shape
+            # if we are only looking for the best mode, we do not update the DM shape
             # for the next iteration
-            CorrectionLoopResult["voltage_DMs"].append(CorrectionLoopResult["voltage_DMs"][-1] +
+            thisloop_voltages_DMs.append(thisloop_voltages_DMs[-1] +
                                                        solution)
 
         if not silence:
-            print("Mean contrast in DH: ", CorrectionLoopResult["MeanDHContrast"][-1])
+            print("Mean contrast in DH: ", thisloop_MeanDHContrast[-1])
             print("")
             plt.clf()
-            plt.imshow(np.log10(CorrectionLoopResult["FP_Intensities"][-1]), vmin=-8, vmax=-5)
+            plt.imshow(np.log10(thisloop_FP_Intensities[-1]), vmin=-8, vmax=-5)
             plt.gca().invert_yaxis()
             plt.colorbar()
             plt.pause(0.01)
 
     if Search_best_Mode:
-        return np.amin(CorrectionLoopResult["MeanDHContrast"][1:]), modevector[np.argmin(
-            CorrectionLoopResult["MeanDHContrast"][1:])]
+        return np.amin(thisloop_MeanDHContrast [1:]), modevector[np.argmin(
+            thisloop_MeanDHContrast[1:])]
 
     else:
         # create a dictionnary to save all results
@@ -209,6 +216,11 @@ def CorrectionLoop1Matrix(testbed,
         CorrectionLoopResult["nb_total_iter"] += nbiter
         CorrectionLoopResult["SVDmodes"].append(modevector)
         CorrectionLoopResult["Nb_iter_per_mat"].append(nbiter)
+        
+        CorrectionLoopResult["voltage_DMs"].append(thisloop_voltages_DMs)
+        CorrectionLoopResult["FP_Intensities"].append(thisloop_FP_Intensities)
+        CorrectionLoopResult["EF_estim"].append(thisloop_EF_estim)
+        CorrectionLoopResult["MeanDHContrast"].append(thisloop_MeanDHContrast)
 
         return CorrectionLoopResult
 

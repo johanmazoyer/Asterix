@@ -37,23 +37,23 @@ Asterixroot = os.path.dirname(os.path.realpath(__file__))
 # print("")
 
 # ### CORRECTION 2DM IN PW + EFC
-# start_time = time.time()
-# Main_EFC_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
-#                      NewDMconfig={'DM1_active': False},
-#                      NewEstimationconfig={'estimation': 'pw'},
-#                      NewCorrectionconfig={'DH_side': "Full"},
-#                      NewSIMUconfig={
-#                          'Nbiter_corr':
-#                          ["5", "1", "1", "1", "3", "2", "1", "2", "4", "3"],
-#                          'Nbmode_corr': [
-#                              "500", "800", "500", "1000", "700", "900", "1000",
-#                              "900", "700", "900"
-#                          ]
-#                      })
-# print('time correction 2DM pw', time.time() - start_time)
-# print("")
-# print("")
-# print("")
+start_time = time.time()
+Main_EFC_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+                     NewDMconfig={'DM1_active': True},
+                     NewEstimationconfig={'estimation': 'Perfect'},
+                     NewCorrectionconfig={'DH_side': "Full"},
+                     NewSIMUconfig={
+                         'Nbiter_corr':
+                         ["30", "1", "1", "1", "3", "2", "1", "2", "4", "3"],
+                         'Nbmode_corr': [
+                             "500", "800", "500", "1000", "700", "900", "1000",
+                             "900", "700", "900"
+                         ]
+                     })
+print('time correction 2DM pw', time.time() - start_time)
+print("")
+print("")
+print("")
 
 ### CORRECTION 2DM IN PW + EFC
 start_time = time.time()

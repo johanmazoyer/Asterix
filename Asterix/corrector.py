@@ -41,7 +41,6 @@ class Corrector:
                  testbed,
                  MaskDH,
                  estimator,
-                 initial_DM_voltage = 0.,
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -56,10 +55,13 @@ class Corrector:
 
         Parameters
         ----------
-        Estimationconfig : general estimation parameters
+        Correctionconfig : general correction parameters
 
         testbed : an Optical_System object which describe your testbed
 
+        MaskDH: binary array of size [dimEstim, dimEstim] : dark hole mask
+
+        estimator: an estimator object. This contains all information about the estimation
 
         matrix_dir: path. save all the difficult to measure files here
 
@@ -84,7 +86,8 @@ class Corrector:
 
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
-            DM.basis = DM.create_DM_basis(basis_type=basis_type, matrix_dir=matrix_dir)
+            DM.basis = DM.create_DM_basis(basis_type=basis_type,
+                                          matrix_dir=matrix_dir)
             DM.basis_size = DM.basis.shape[0]
             self.total_number_modes += DM.basis_size
             DM.basis_type = basis_type
@@ -98,12 +101,10 @@ class Corrector:
         else:
             self.amplitudeEFC = 1.
 
-
-
         self.regularization = Correctionconfig["regularization"]
-        
+
         self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
-                                                   estimator.Estim_sampling)
+                                               estimator.Estim_sampling)
 
         self.matrix_dir = matrix_dir
 
@@ -129,39 +130,34 @@ class Corrector:
 
                 EFCmatrix_DM1 = np.transpose(
                     np.dot(np.transpose(testbed.DM1.basis), invertGDH_DM1))
-                fits.writeto(realtestbed_dir +
-                                "Matrix_control_EFC_DM1.fits",
-                                EFCmatrix_DM1.astype(np.float32),
-                                overwrite=True)
+                fits.writeto(realtestbed_dir + "Matrix_control_EFC_DM1.fits",
+                             EFCmatrix_DM1.astype(np.float32),
+                             overwrite=True)
                 if testbed.DM3.active:
                     invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
                     EFCmatrix_DM3 = np.transpose(
-                        np.dot(np.transpose(testbed.DM3.basis),
-                                invertGDH_DM3))
+                        np.dot(np.transpose(testbed.DM3.basis), invertGDH_DM3))
                     fits.writeto(realtestbed_dir +
-                                    "Matrix_control_EFC_DM3.fits",
-                                    EFCmatrix_DM3.astype(np.float32),
-                                    overwrite=True)
+                                 "Matrix_control_EFC_DM3.fits",
+                                 EFCmatrix_DM3.astype(np.float32),
+                                 overwrite=True)
             elif testbed.DM3.active:
                 invertGDH_DM3 = invertGDH
                 EFCmatrix_DM3 = np.transpose(
                     np.dot(np.transpose(testbed.DM3.basis), invertGDH_DM3))
-                fits.writeto(realtestbed_dir +
-                                "Matrix_control_EFC_DM3.fits",
-                                EFCmatrix_DM3.astype(np.float32),
-                                overwrite=True)
+                fits.writeto(realtestbed_dir + "Matrix_control_EFC_DM3.fits",
+                             EFCmatrix_DM3.astype(np.float32),
+                             overwrite=True)
             else:
                 raise Exception("No active DMs")
 
             fits.writeto(realtestbed_dir + "DH_mask.fits",
-                            self.MaskEstim.astype(np.float32),
-                            overwrite=True)
+                         self.MaskEstim.astype(np.float32),
+                         overwrite=True)
             fits.writeto(realtestbed_dir + "DH_mask_where_x_y.fits",
-                            np.array(np.where(self.MaskEstim == 1)).astype(
-                                np.float32),
-                            overwrite=True)
-
-
+                         np.array(np.where(self.MaskEstim == 1)).astype(
+                             np.float32),
+                         overwrite=True)
 
         ## Adding error on the DM model. Now that the matrix is measured, we can
         # introduce a small movememnt on one DM or the other. By changeing DM_pushact
@@ -180,7 +176,29 @@ class Corrector:
         # in the initialization we have not inverted the matrix just yet so
         self.previousmode = np.nan
 
-    def update_matrices(self, testbed, estimator, initial_DM_voltage = 0.,input_wavefront = 1.):
+    def update_matrices(self,
+                        testbed,
+                        estimator,
+                        initial_DM_voltage=0.,
+                        input_wavefront=1.):
+        """ --------------------------------------------------
+        Measure the interraction matrices needed for the correction
+
+        Parameters
+        ----------
+       
+        testbed : an Optical_System object which describes your testbed
+
+        estimator: an estimator object. This contains all information about the estimation
+
+        initial_DM_voltage : initial DM voltages to measure the Matrix
+
+        input_wavefront : initial wavefront to measure the Matrix
+
+
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+
         if self.correction_algorithm in ["efc", "em", "steepest", "sm"]:
 
             self.G = 0
@@ -190,10 +208,14 @@ class Corrector:
             self.FirstIterNewMat = True
 
             start_time = time.time()
-            interMat = wsc.creatingInterractionmatrix(testbed,
-                                                      estimator.dimEstim,
-                                                      self.amplitudeEFC,
-                                                      self.matrix_dir, initial_DM_voltage = initial_DM_voltage, MatrixType=self.MatrixType)
+            interMat = wsc.creatingInterractionmatrix(
+                testbed,
+                estimator.dimEstim,
+                self.amplitudeEFC,
+                self.matrix_dir,
+                initial_DM_voltage=initial_DM_voltage,
+                input_wavefront=input_wavefront,
+                MatrixType=self.MatrixType)
 
             print("time for direct matrix " + testbed.string_os,
                   time.time() - start_time)
@@ -247,7 +269,7 @@ class Corrector:
             if self.FirstIterNewMat:
                 # This is the first time
                 self.last_best_alpha = 1e12
-                self.expected_gain_in_contrast = 0.9
+                self.expected_gain_in_contrast = 0.95
                 self.last_best_contrast = ActualCurrentContrast
                 self.times_we_lowered_gain = 0
                 self.count_since_last_best = 0
@@ -263,12 +285,13 @@ class Corrector:
 
             if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast:
                 self.times_we_lowered_gain += 1
-                self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast)/3
+                self.expected_gain_in_contrast = 1 - (
+                    1 - self.expected_gain_in_contrast) / 3
                 self.count_since_last_best = 0
                 self.last_best_alpha = 1e12
-                print("we do not improve contrast anymore, we change the gain to {:f}".format(self.expected_gain_in_contrast))
-
-
+                print(
+                    "we do not improve contrast anymore, we change the gain to {:f}"
+                    .format(self.expected_gain_in_contrast))
 
             if self.times_we_lowered_gain == 3:
                 #it's been too long we have not increased
@@ -282,7 +305,7 @@ class Corrector:
                 self.MaskEstim, testbed, estimate, self.M0, self.G,
                 DesiredContrast, self.last_best_alpha)
 
-            return -3*self.amplitudeEFC * solutionSM
+            return self.amplitudeEFC * solutionSM
 
         if self.correction_algorithm == "em":
 
@@ -303,5 +326,3 @@ class Corrector:
                 self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")
-
-
