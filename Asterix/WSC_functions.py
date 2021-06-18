@@ -128,17 +128,24 @@ def creatingInterractionmatrix(testbed,
     if isinstance(initial_DM_voltage, (int, float)):
         initial_DM_voltage = np.zeros(
             testbed.number_act) + float(initial_DM_voltage)
+        
 
-    total_number_basis_modes = 0
-    string_testbed_without_DMS = testbed.string_os
+   
 
-    indice_acum_number_act = 0
+    # This is for the case we take an non DM vectors already, we need to calculate
+        # the initial phase for each DM
+    DM_phase_init = testbed.voltage_to_phases(initial_DM_voltage)
+
 
     # First run throught the DMs to :
     #   - string matrix to create a name for the matrix
     #   - check total size of basis
-    #   - Create the initial phase for each DM
-    for DM_name in testbed.name_of_DMs:
+    #   - attched the initial phase for each DM
+    total_number_basis_modes = 0
+    string_testbed_without_DMS = testbed.string_os
+    
+
+    for i, DM_name in enumerate(testbed.name_of_DMs):
 
         DM = vars(testbed)[DM_name]
         total_number_basis_modes += DM.basis_size
@@ -146,15 +153,10 @@ def creatingInterractionmatrix(testbed,
         string_testbed_without_DMS = string_testbed_without_DMS.replace(
             DM_small_str, '')
 
-        # This is for the case we take an non DM vectors already, we need to calculate
-        # the initial phase for each DM
-        actu_vect_DM = initial_DM_voltage[
-            indice_acum_number_act:indice_acum_number_act + DM.number_act]
-
-        if any(actu_vect_DM != 0):
-            DM.phase_init = DM.voltage_to_phase(actu_vect_DM)
-        else:
-            DM.phase_init = 0
+        #attched the initial phase for each DM
+        DM.phase_init = DM_phase_init[i]
+    
+    DM_phase_init = 0
 
     # Some string manips to name the matrix if we save it
     if MatrixType == 'perfect':
@@ -173,12 +175,11 @@ def creatingInterractionmatrix(testbed,
     print("")
     print("Start Interraction Matrix")
 
-    #measure the initial FP
-    G0 = proc.resampling(
-        testbed.todetector(entrance_EF=input_wavefront,
-                           voltage_vector=initial_DM_voltage), dimEstim)
-    
-    # useful.quickfits(np.abs(G0), dir = "/Users/jmazoyer/Desktop/toto/", name="G0")
+    # useful.quickfits(testbed.todetector_Intensity(entrance_EF=input_wavefront,
+    #                        voltage_vector=initial_DM_voltage))
+
+    # useful.quickfits(np.abs(G0)**2)
+    # useful.quickfits(np.abs(G0), dir = "/Users/jmazoyer/Desktop/toto/")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
@@ -213,11 +214,16 @@ def creatingInterractionmatrix(testbed,
         else:
             # Finally we can measure the matrix if we
 
+                #measure the initial FP
+            G0 = proc.resampling(
+                testbed.todetector(entrance_EF=input_wavefront,
+                                voltage_vector=initial_DM_voltage), dimEstim)
+            
             if (initial_DM_voltage == 0.).all():
                 print("")
                 print("The matrix " + fileDirectMatrix + " does not exists")
-                print("Start " + DM_name)
-                
+            
+            print("Start " + DM_name)    
 
             # we measure the phase of the Basis we will apply on the DM
             if DM.basis_type == 'fourier':
@@ -273,6 +279,8 @@ def creatingInterractionmatrix(testbed,
             init_pos_in_matrix = pos_in_matrix
             # useful.quickfits(DM.phase_init, dir = "/Users/jmazoyer/Desktop/phases/")
             # useful.quickfits(np.abs(G0), dir = "/Users/jmazoyer/Desktop/toto/")   
+            plt.ion()
+            plt.figure()
 
             for i in range(DM.basis_size):
 
@@ -308,13 +316,14 @@ def creatingInterractionmatrix(testbed,
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
                 for osname in OpticSysNameAfter:
                     OpticSysAfter = vars(testbed)[osname]
-
                     if osname != OpticSysNameAfter[-1]:
-                        if isinstance(OpticSysNameAfter, OptSy.deformable_mirror) and OpticSysNameAfter.active:
+                        
+
+                        if isinstance(OpticSysAfter, OptSy.deformable_mirror) and OpticSysAfter.active:
                             
                             # this subsystem is an active DM but not the one we actuate now (located after the one we actuate)
-                            wavefront  = wavefront * OpticSysNameAfter.EF_from_phase_and_ampl(
-                                    phase_abb=OpticSysNameAfter.phase_init)
+                            wavefront  = wavefront * OpticSysAfter.EF_from_phase_and_ampl(
+                                    phase_abb=OpticSysAfter.phase_init)
                         else:
                             wavefront = OpticSysAfter.EF_through(
                                 entrance_EF=wavefront)
@@ -323,19 +332,22 @@ def creatingInterractionmatrix(testbed,
                         Gvector = proc.resampling(
                             OpticSysAfter.todetector(entrance_EF=wavefront),
                             dimEstim)
+                    
                         
                 # Should we remove the intial FP field. This is very differnt for non ideal coronagrpah
                 # or if we have a strong initial DM voltages. This needs to be thoroughly investigated:
                 # for now only in 'perfect case':
-                # useful.quickfits(phasesBasis[i] , dir = "/Users/jmazoyer/Desktop/phases/")
-                # useful.quickfits(phasesBasis[i] + DM.phase_init, dir = "/Users/jmazoyer/Desktop/phases/")
-                
+               
                 # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/toto/")
 
                 if MatrixType == 'perfect':
                     Gvector = Gvector - G0         
                 # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/tutu/")   
- 
+                plt.clf()
+                plt.imshow(np.log10(np.abs(Gvector)**2), vmin=-8, vmax=-5)
+                plt.gca().invert_yaxis()
+                plt.colorbar()
+                plt.pause(0.01)
                 # We fill the interraction matrix:
                 InterMat[:dimEstim**2,
                          pos_in_matrix] = np.real(Gvector).flatten()
@@ -345,13 +357,15 @@ def creatingInterractionmatrix(testbed,
                 # without changeing the matrix
 
                 pos_in_matrix += 1
-
+            
             # We fill the interraction matrix:
             if (initial_DM_voltage == 0.).all():
                 fits.writeto(
                     matrix_dir + fileDirectMatrix + ".fits",
                     InterMat[:, init_pos_in_matrix:init_pos_in_matrix +
                              DM.basis_size])
+            # else:
+            #     useful.quickfits(InterMat)
 
     print("")
     print("End Interraction Matrix")
@@ -580,7 +594,7 @@ def solutionSM(
             iteralpha += 1
 
             alpha = alpha / step_alpha
-            LastDMSurfaceCoeff = DMSurfaceCoeff
+            # LastDMSurfaceCoeff = DMSurfaceCoeff
 
             DMSurfaceCoeff = np.dot(
                 np.linalg.inv(M0 + alpha * Identity_M0size), realb0)
@@ -595,10 +609,10 @@ def solutionSM(
                 # this step is to check if the SM is divergeing too quickly
                 return np.nan, np.nan
 
-            # print(
-            #     "For alpha={:f}, Current Contrast:{:f}, Last Contrast:{:f}, Desired Contrast: {:f}"
-            #     .format(np.log10(alpha), np.log10(CurrentContrast),
-            #             np.log10(LastCurrentContrast), np.log10(DesiredContrast)))
+            print(
+                "For alpha={:f}, Current Contrast:{:f}, Last Contrast:{:f}, Desired Contrast: {:f}"
+                .format(np.log10(alpha), np.log10(CurrentContrast),
+                        np.log10(LastCurrentContrast), np.log10(DesiredContrast)))
 
         if iteralpha == 0:
             # we must do at least 1 iteration (the SM found a solution that dig the contrast)

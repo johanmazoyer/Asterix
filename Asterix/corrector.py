@@ -223,6 +223,8 @@ class Corrector:
 
             self.Gmatrix = wsc.cropDHInterractionMatrix(
                 interMat, self.MaskEstim)
+            
+            # useful.quickfits(self.Gmatrix)
 
             if self.correction_algorithm in ["em", "steepest", "sm"]:
 
@@ -268,8 +270,8 @@ class Corrector:
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
             if self.FirstIterNewMat:
                 # This is the first time
-                self.last_best_alpha = 1e12
-                self.expected_gain_in_contrast = 0.95
+                self.last_best_alpha = 1.
+                self.expected_gain_in_contrast = 0.3
                 self.last_best_contrast = ActualCurrentContrast
                 self.times_we_lowered_gain = 0
                 self.count_since_last_best = 0
@@ -288,16 +290,18 @@ class Corrector:
                 self.expected_gain_in_contrast = 1 - (
                     1 - self.expected_gain_in_contrast) / 3
                 self.count_since_last_best = 0
-                self.last_best_alpha = 1e12
+                self.last_best_alpha *= 20
                 print(
-                    "we do not improve contrast anymore, we change the gain to {:f}"
+                    "we do not improve contrast anymore, we go back to last best and change the gain to {:f}"
                     .format(self.expected_gain_in_contrast))
+                return "RebootTheLoop"
 
-            if self.times_we_lowered_gain == 3:
+            if self.times_we_lowered_gain == 5:
                 #it's been too long we have not increased
                 # or we're so far off linearity that SM is actually heavily degrading contrast
                 # It's time to stop !
-                return np.nan
+                return "StopTheLoop"
+            
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
@@ -305,7 +309,7 @@ class Corrector:
                 self.MaskEstim, testbed, estimate, self.M0, self.G,
                 DesiredContrast, self.last_best_alpha)
 
-            return self.amplitudeEFC * solutionSM
+            return - self.amplitudeEFC * solutionSM
 
         if self.correction_algorithm == "em":
 

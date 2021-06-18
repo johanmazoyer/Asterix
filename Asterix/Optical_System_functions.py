@@ -669,7 +669,7 @@ class pupil(Optical_System):
                              "roman_pup_500pix_center4pixels.fits"))
             pup_fits_right_size = skimage.transform.rescale(
                 pup_fits,
-                2 * prad / pup_fits.shape[0],
+                2 * self.prad / pup_fits.shape[0],
                 preserve_range=True,
                 anti_aliasing=True,
                 multichannel=False)
@@ -684,7 +684,7 @@ class pupil(Optical_System):
                              "roman_lyot_500pix_center4pixels.fits"))
             pup_fits_right_size = skimage.transform.rescale(
                 pup_fits,
-                2 * prad / pup_fits.shape[0],
+                2 * self.prad / pup_fits.shape[0],
                 preserve_range=True,
                 anti_aliasing=True,
                 multichannel=False)
@@ -768,6 +768,9 @@ class pupil(Optical_System):
 
         # call the Optical_System super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
+        if wavelength is None:
+            wavelength = self.wavelength_0
+
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_pupil' + '_wl{}'.format(
@@ -775,8 +778,7 @@ class pupil(Optical_System):
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       entrance_EF)
 
-        if wavelength is None:
-            wavelength = self.wavelength_0
+        
 
         if len(self.pup.shape) == 2:
             exit_EF = entrance_EF * self.pup
@@ -916,8 +918,7 @@ class coronagraph(Optical_System):
                                   prad=self.prad,
                                   filename=coroconfig["filename_instr_apod"])
 
-        if coroconfig["filename_instr_lyot"] == "ClearPlane" or coroconfig[
-                "filename_instr_lyot"] == "RoundPup":
+        if coroconfig["filename_instr_lyot"] in ["ClearPlane", "RoundPup", "RomanPup","RomanLyot"]:
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
                                   PupType=coroconfig["filename_instr_lyot"])
@@ -1965,7 +1966,7 @@ class deformable_mirror(Optical_System):
             Name_FourrierBasis_fits = "Fourier_basis_" +self.Name_DM +'_prad' + str(self.prad) + '_nact' + str(sqrtnbract)+ 'x' + str(sqrtnbract)
 
 
-            cossinbasis = proc.SinCosBasis(sqrtnbract)
+            cossinbasis = 0.01*proc.SinCosBasis(sqrtnbract)
 
             basis_size = cossinbasis.shape[0]
             basis = np.zeros((basis_size, self.number_act))
@@ -2181,6 +2182,7 @@ class Testbed(Optical_System):
                                               einstein_sum=einstein_sum)
 
             indice_acum_number_act += DM.number_act
+        # useful.quickfits(DMphases, dir="/Users/jmazoyer/Desktop/DM_phase/")
 
         return DMphases
 

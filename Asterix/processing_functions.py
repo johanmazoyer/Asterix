@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.optimize as opt
+import scipy.ndimage as nd
 import Asterix.propagation_functions as prop
 
 def twoD_Gaussian(xy,
@@ -99,14 +100,20 @@ def resampling(image, new):
 
     dimScience = len(image)
 
-    fftimage_cropped = cropimage(
-        np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dimScience / 2,
-        dimScience / 2, new)
-    resized_image = np.fft.fftshift(
-        np.fft.fft2(np.fft.ifftshift(fftimage_cropped)))
+    # THe old function is decentering the PSF (it is not centered between 4 pixels) !! 
+    # We need to talk abuot it with Raphael
+    # Replacing currenly with standard pyhton function scipy.ndimage.zoom
 
-    if np.isrealobj(image):
-        resized_image = np.real(resized_image)
+    # fftimage_cropped = cropimage(
+    #     np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dimScience / 2,
+    #     dimScience / 2, new)
+    # resized_image = np.fft.fftshift(
+    #     np.fft.fft2(np.fft.ifftshift(fftimage_cropped)))
+
+    # if np.isrealobj(image):
+    #     resized_image = np.real(resized_image)
+    
+    resized_image = nd.zoom(image, new/dimScience)
 
     return resized_image
 
