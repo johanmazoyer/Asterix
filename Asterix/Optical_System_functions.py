@@ -1928,7 +1928,6 @@ class deformable_mirror(Optical_System):
     def create_DM_basis(self, basis_type='actuator', matrix_dir =None):
         """ --------------------------------------------------
         Create a DM basis.
-        TODO do a sine / cosine basis and a
         TODO do a zernike basis
 
         Parameters:
@@ -1966,7 +1965,7 @@ class deformable_mirror(Optical_System):
             Name_FourrierBasis_fits = "Fourier_basis_" +self.Name_DM +'_prad' + str(self.prad) + '_nact' + str(sqrtnbract)+ 'x' + str(sqrtnbract)
 
 
-            cossinbasis = 0.1*proc.SinCosBasis(sqrtnbract)
+            cossinbasis = proc.SinCosBasis(sqrtnbract)
 
             basis_size = cossinbasis.shape[0]
             basis = np.zeros((basis_size, self.number_act))
