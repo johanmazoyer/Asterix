@@ -214,7 +214,7 @@ class Corrector:
                 self.matrix_dir,
                 initial_DM_voltage=initial_DM_voltage,
                 input_wavefront=input_wavefront,
-                MatrixType=self.MatrixType)
+                MatrixType=self.MatrixType, save_all_planes_to_fits=False, dir_save_all_planes = "/Users/jmazoyer/Desktop/g0_all/")
 
             print("time for direct matrix " + testbed.string_os,
                   time.time() - start_time)

@@ -101,6 +101,8 @@ def creatingInterractionmatrix(testbed,
                                initial_DM_voltage=0.,
                                input_wavefront=1.,
                                MatrixType=False,
+                               save_all_planes_to_fits=False,
+                               dir_save_all_planes=None,
                                visu=True):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
@@ -217,7 +219,9 @@ def creatingInterractionmatrix(testbed,
             #measure the initial FP. This is normalised with the testbed.
             G0 = proc.resampling(
                 testbed.todetector(entrance_EF=input_wavefront,
-                                   voltage_vector=initial_DM_voltage),
+                                   voltage_vector=initial_DM_voltage,
+                                   save_all_planes_to_fits=save_all_planes_to_fits,
+                                    dir_save_all_planes=dir_save_all_planes),
                 dimEstim)
 
             if (initial_DM_voltage == 0.).all():
@@ -260,15 +264,42 @@ def creatingInterractionmatrix(testbed,
             for osname in OpticSysNameBefore:
                 OpticSysbefore = vars(testbed)[osname]
 
+                if save_all_planes_to_fits == True:
+                        name_plane = 'EF_PP_before_' + osname + '_wl{}'.format(
+                            int(wavelength * 1e9))
+                        useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      wavefrontupstream)
                 if isinstance(
                         OpticSysbefore,
                         OptSy.deformable_mirror) and OpticSysbefore.active:
                     # this subsystem is an active DM but not the one we actuate now (located before the one we actuate)
-                    wavefrontupstream = wavefrontupstream * OpticSysbefore.EF_from_phase_and_ampl(
-                        phase_abb=OpticSysbefore.phase_init)
+
+                    if OpticSysbefore.z_position == 0:
+                        wavefrontupstream = wavefrontupstream * OpticSysbefore.EF_from_phase_and_ampl(
+                            phase_abb=OpticSysbefore.phase_init, wavelengths=wavelength)
+
+                    else:
+                        wavefrontupstream = OpticSysbefore.prop_pup_to_DM_and_back(
+                            wavefrontupstream,
+                            OpticSysbefore.phase_init,
+                            wavelength)
+                    
+                    if save_all_planes_to_fits == True:
+                        name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(
+                            int(wavelength * 1e9))
+                        useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      OpticSysbefore.phase_init)
+                    
+                    
                 else:
                     wavefrontupstream = OpticSysbefore.EF_through(
                         entrance_EF=wavefrontupstream)
+                
+                if save_all_planes_to_fits == True:
+                        name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(
+                            int(wavelength * 1e9))
+                        useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      wavefrontupstream)
 
             # then the DM we want to actuate !
             #
@@ -296,6 +327,12 @@ def creatingInterractionmatrix(testbed,
 
                         wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(
                             phase_abb=phasesBasis[i] + DM.phase_init)
+                        
+                        if save_all_planes_to_fits == True:
+                            name_plane = 'Phase_on_' + DM_name + '_wl{}'.format(
+                                int(wavelength * 1e9))
+                            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                        OpticSysbefore.phase_init)
 
                     else:
                         wavefront, _ = prop.prop_fresnel(
@@ -315,7 +352,12 @@ def creatingInterractionmatrix(testbed,
                             DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init),
                             DM.wavelength_0, -DM.z_position,
                             DM.diam_pup_in_m / 2, DM.prad)
-
+                
+                if save_all_planes_to_fits == True:
+                    name_plane = 'EF_PP_after_' + DM_name + '_wl{}'.format(
+                        int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                    wavefront)
                 # and finally we go through the subsystems after the DMs we want to actuate
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
                 for osname in OpticSysNameAfter:
@@ -324,13 +366,33 @@ def creatingInterractionmatrix(testbed,
 
                         if isinstance(OpticSysAfter, OptSy.deformable_mirror
                                       ) and OpticSysAfter.active:
-
+                            
                             # this subsystem is an active DM but not the one we actuate now (located after the one we actuate)
-                            wavefront = wavefront * OpticSysAfter.EF_from_phase_and_ampl(
-                                phase_abb=OpticSysAfter.phase_init)
+                            if OpticSysAfter.z_position == 0:
+                                wavefront = wavefront * OpticSysAfter.EF_from_phase_and_ampl(
+                                    phase_abb=OpticSysAfter.phase_init, wavelengths=wavelength)
+                            else:
+                                wavefront = OpticSysAfter.prop_pup_to_DM_and_back(
+                                    wavefront,
+                                    OpticSysAfter.phase_init,
+                                    wavelength)
+                            
+                            if save_all_planes_to_fits == True:
+                                name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(
+                                    int(wavelength * 1e9))
+                                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            OpticSysAfter.phase_init)
+
+                        
                         else:
                             wavefront = OpticSysAfter.EF_through(
                                 entrance_EF=wavefront)
+                        
+                        if save_all_planes_to_fits == True:
+                            name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(
+                                int(wavelength * 1e9))
+                            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                        wavefront)
                     else:
                         # this is the last one ! so we propagate to FP and resample to estimation size
                         # we have to be careful with the normalizatiom, by default this is the
@@ -340,6 +402,12 @@ def creatingInterractionmatrix(testbed,
                             OpticSysAfter.todetector(entrance_EF=wavefront,
                                                      in_contrast=False) /
                             normalisation_testbed_EF_contrast, dimEstim)
+                        
+                        if save_all_planes_to_fits == True:
+                            name_plane = 'FPAfterTestbed_' + osname + '_wl{}'.format(
+                                int(wavelength * 1e9))
+                            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                        Gvector)
 
                 # Should we remove the intial FP field. This is very differnt for non ideal coronagrpah
                 # or if we have a strong initial DM voltages. This needs to be thoroughly investigated:
@@ -349,6 +417,13 @@ def creatingInterractionmatrix(testbed,
 
                 if MatrixType == 'perfect':
                     Gvector = Gvector - G0
+                
+                if save_all_planes_to_fits == True:
+                        name_plane = 'Gvector_in_matrix_' + osname + '_wl{}'.format(
+                            int(wavelength * 1e9))
+                        useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                    Gvector)
+                        
                 # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/tutu/")
                 if visu:
                     plt.clf()
