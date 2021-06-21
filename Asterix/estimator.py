@@ -264,11 +264,11 @@ class Estimator:
             if "result_type" in kwargs :
                 if   kwargs["result_type"] == "simulator" : return e_sim
                 elif kwargs["result_type"] == "phase"     : return e_sim.get_phi_foc()
-                elif kwargs["result_type"] == "defaut"    : return e_sim.get_EF_foc()
                 elif kwargs["result_type"] == "complete"  : return {"phi_foc":e_sim.get_phi_foc(),"EF_do":e_sim.get_EF_do(),"flux":e_sim.get_phi_foc(),"fond":e_sim.get_phi_foc()}
+                elif kwargs["result_type"] == "default"   : pass
                 else : print("[WARNING] : wrong result_type. Set to default]")
-            else :
-                return  e_sim.get_EF_foc()
+            
+            return  e_sim.get_EF_foc()
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
