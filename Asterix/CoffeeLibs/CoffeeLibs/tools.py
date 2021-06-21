@@ -130,7 +130,7 @@ def get_pup_size(img):
 def get_science_sampling(img):
     
     N = img.shape[0]
-    psf_slice  = img[N//2,:]
+    psf_slice  = abs(ffts(img)[N//2,:])**2
 
     max_psf = max(psf_slice)
     max_id  = int(np.where(psf_slice == max_psf)[0])
@@ -138,10 +138,11 @@ def get_science_sampling(img):
     half_values = [find_nearest(psf_slice[:max_id],max_psf/2),find_nearest(psf_slice[max_id:],max_psf/2)]
     half_ids    = [np.where(psf_slice ==  half_values[0])[0] + 1, np.where(psf_slice ==  half_values[1])[0] + 1 ]
     
-    plt.figure("psf")
+    plt.figure("Transfert")
     plt.plot(range(1,N+1),psf_slice,'g')
     plt.plot(half_ids,half_values,'r-')
     plt.show()
+    k = plt.ginput(1)
     
     print("Science sampling = " + str(int(half_ids[1] - half_ids[0])))
     return int(half_ids[1] - half_ids[0])
@@ -276,15 +277,17 @@ def tempalte_plot2(imgs,e_sim,estimator,name="res",disp=True,save=False):
     ## PLOTS FIGURES
     e_imgs = e_sim.gen_div_imgs()
     
-    plt.figure("Comparaison Images estimé / Image réel")
+    plt.figure("Comparaison Images estimé / Image réel",figsize = (8, 6))
+    plt.gcf().subplots_adjust(wspace = 0.4, hspace = 0.5)
+
     plt.subplot(3,3,1),plt.imshow(imgs[:,:,0],cmap='jet'),plt.colorbar(),plt.title("Image 1 reel")
     plt.subplot(3,3,4),plt.imshow(imgs[:,:,1],cmap='jet'),plt.colorbar(),plt.title("Image 2 reel")
     
     plt.subplot(3,3,2),plt.imshow(e_imgs[:,:,0],cmap='jet'),plt.colorbar(),plt.title("Image 1 estimé")
     plt.subplot(3,3,5),plt.imshow(e_imgs[:,:,1],cmap='jet'),plt.colorbar(),plt.title("Image 2 estimé")
 
-    plt.subplot(3,3,3),plt.imshow(e_imgs[:,:,0] - imgs[:,:,0],cmap='jet'),plt.colorbar(),plt.title("Erreur de recontruction Image 1")
-    plt.subplot(3,3,6),plt.imshow(e_imgs[:,:,1] - imgs[:,:,1],cmap='jet'),plt.colorbar(),plt.title("Erreur de recontruction Image 2")
+    plt.subplot(3,3,3),plt.imshow(np.log(abs(e_imgs[:,:,0] / imgs[:,:,0])),cmap='jet'),plt.colorbar(),plt.title("Erreur de recontruction Image 1")
+    plt.subplot(3,3,6),plt.imshow(np.log(abs(e_imgs[:,:,1] / imgs[:,:,1])),cmap='jet'),plt.colorbar(),plt.title("Erreur de recontruction Image 2")
 
     ## PLOT TEXT BOX
     

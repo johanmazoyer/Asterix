@@ -17,7 +17,7 @@ from CoffeeLibs.files_manager import get_ini,get_fits_as_imgs
 div_dist = [0,12]  # List of div factor's EN DECALAGE DU DETECTEUR mm
 Ld  = 640          # longeur d'onde
 F_D = 61.5         # Nombre d'ouverture
-name = "NoCornoTests"
+name = "NoCornoTests_sansregul"
 
 # Info to get your fits
 path_root  = "imgs"                        # folder
@@ -31,10 +31,11 @@ imgs = get_fits_as_imgs(path_root,prefix,exts)
 
 # Update config from our datas
 # config["modelconfig"]["Science_sampling"] = get_science_sampling(imgs[:,:,0])
-# config["modelconfig"]["diam_pup_in_pix"]  = get_pup_size(imgs[:,:,0])
-config["modelconfig"]["Science_sampling"] = 6
-config["modelconfig"]["diam_pup_in_pix"]  = 23
 config['modelconfig']['dimScience']       = imgs.shape[0]
+config["modelconfig"]["diam_pup_in_pix"]  = get_pup_size(imgs[:,:,0])
+config["modelconfig"]["Science_sampling"] = imgs.shape[0]/config["modelconfig"]["diam_pup_in_pix"]
+
+
 
 div_factors = detector_shifts2div_factors(div_dist,Ld,F_D)
 
@@ -45,20 +46,19 @@ div_factors = detector_shifts2div_factors(div_dist,Ld,F_D)
 tbed      = custom_bench(config,'.')
 estimator = coffee_estimator(**config["Estimationconfig"])
 estimator.bound      = None
-estimator.var_phi    = 0
+estimator.var_phi    = 1e6
 estimator.simGif     = name
 
 ## Estimation ##
 
 known_var = {'downstream_EF':1}  # Variables défini comme connu
-
-e_sim = estimator.estimate(imgs,tbed,div_factors,known_var) # Estimation
+e_sim = estimator.estimate(tbed,imgs,div_factors,known_var)
 
 
 # %% Save / Load and plots 
 
 from CoffeeLibs.tools import tempalte_plot2
 
-tempalte_plot2(imgs,e_sim,estimator,name=name,disp=True,save=False)
+tempalte_plot2(imgs,e_sim,estimator,name=name,disp=True,save=True)
 
 

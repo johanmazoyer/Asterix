@@ -4,18 +4,14 @@ from CoffeeLibs.criteres import DJmv_up,diff_grad_J_up,diff_grad_J_down,DJmv_dow
 from CoffeeLibs.coffee import custom_bench, data_simulator
 import numpy as np
 
-from configobj import ConfigObj
-from validate import Validator
+from CoffeeLibs.files_manager import get_ini
 
 import matplotlib.pyplot as plt
 import pickle
 
 # %% Initialisation
 
-# Chargement des parametres de la simulation
-path   = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
-config = ConfigObj(path + 'my_param_file.ini', configspec=path + "..\..\Param_configspec.ini")
-config.validate(Validator(), copy=True)
+config = get_ini('my_param_file.ini',"..\..\Param_configspec.ini")
 
 # Paramètres qu'il faudra ranger dans ini file..
 var   = {'downstream_EF':1, 'flux':1, 'fond':0}
@@ -68,6 +64,7 @@ grad_diff_down     = 0
 grad_analytic_up   += DJmv_up(0,img,sim)
 
 grad_diff_up       += diff_grad_J_up(sim.get_phi_foc(),0,sim,img)
+
     
 
 # %%  Plots

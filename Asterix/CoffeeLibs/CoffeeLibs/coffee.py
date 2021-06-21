@@ -281,7 +281,7 @@ class data_simulator():
         return self.get_flux() * abs( self.todetector_loop(EFs,self.get_EF_do()) ** 2 ) + self.get_fond()
 
 
-    def todetector_Intensity(self,div_id):
+    def todetector_Intensity(self,div_id=0):
         """ call to detector intensity bench for a specific div id image"""
         return self.tbed.todetector_Intensity(self.get_EF_div(div_id),**self.known_var)
 
@@ -320,18 +320,22 @@ class coffee_estimator:
     COFFEE estimator
     -------------------------------------------------- """
 
-    def __init__(self,var_phi=0 ,method = 'L-BfGS-B',bound=None, gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,**kwarg):
+    def __init__(self,var_phi=0 ,method = 'L-BfGS-B',bound=None, gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,H=None,**kargs):
         
         self.var_phi = var_phi
         self.disp    = disp
         self.bound   = bound
         self.simGif  = None
-        
+
         # Minimize parameters
         options = {'disp': disp,'gtol':gtol,'eps':eps,'maxiter':maxiter}
         self.setting = {'options' : options, 'method': method }
+        
+        # Pour le gradient automatique H = matrice de gradient
+        self.H = H
+        
 
-    def estimate(self,imgs,tbed,div_factors,known_var=dict(),phi_foc=None):
+    def estimate(self,tbed,imgs,div_factors,known_var=dict(),phi_foc=None,**kwargs):
         """ Do a COFFEE estimation
         INPUT :
             
@@ -371,13 +375,14 @@ class coffee_estimator:
             self.setting['bounds'] = bounds 
         
         
-        tic  = t.time() 
+        tic  = t.time()
         res  = minimize(cacl.V_map_J,
                         ini_pack,
                         args=(sim,imgs,self.var_phi,self.simGif),
                         jac=cacl.V_grad_J,
                         **self.setting)
         toc = t.time() - tic
+        # SI GRADIENT AUTO : APELLER LES FONCTIONS POUR GRAD AUTO
        
         mins = int(toc//60)
         sec  = 100*(toc-60*mins)

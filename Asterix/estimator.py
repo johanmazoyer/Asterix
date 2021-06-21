@@ -9,7 +9,7 @@ import Asterix.Optical_System_functions as OptSy
 
 import Asterix.WSC_functions as wsc
 
-from CoffeeLibs import coffee_estimator
+from CoffeeLibs.coffee   import coffee_estimator
 
 class Estimator:
     """ --------------------------------------------------
@@ -173,10 +173,9 @@ class Estimator:
                 fits.writeto(realtestbed_dir + "Matr_mult_estim_PW.fits",
                              vectorPW,
                              overwrite=True)
+                
         elif self.technique == 'coffee':
-            ## TO DO  mettre un nom a ce truc
-            self.coffee_config_dict = {}
-            pass
+            self.coffee = coffee_estimator(**Estimationconfig)
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
@@ -208,6 +207,14 @@ class Estimator:
                                             sometimes need a perfect estimation
                                             especially in EFC. if perfect_estimation
 
+        
+        -- (for coffee only) --
+        imgs                    list of images taken from the detector
+        div_factors             list of detector translation for diversity (in m)
+                                 (order should match images)
+        (optional) known_var    dict of parameters to fix.
+        (optional) result_type  dict of result to return. Default is EF_upstream
+        
         Returns
         ------
         estimation : 2D array od size [self.dimEstim,self.dimEstim]
@@ -245,17 +252,23 @@ class Estimator:
 
             return wsc.FP_PWestimate(Difference, self.PWVectorprobes)
 
-        elif self.technique == 'coffee':
-            coffee = coffee_estimator(**self.coffee_config_dict)
+        elif self.technique == 'coffee':  
             
-            ## TO DO trouver les parametres
-            div_factors = "coeff pour la diversité de phase"
-            imgs        = "Les images prisent par le banc"
-            known_var   = "est que on connait flux/fond, phi_do..."
-            e_sim  = coffee.estimate(imgs,testbed,div_factors,known_var)
+            # Check if required keys are set
+            assert(kwargs["imgs"] and kwargs["div_factors"]), "You are missing parameters\n Requirement : imgs=dnarray, div_factors=list "
             
-            ## TO DO definir ce qu'on veux retourner
-            return e_sim.get_EF_foc()
+            ## TODO mettre tbed avant tous le reste pour que ça marche
+            e_sim  = self.coffee.estimate(testbed,**kwargs)
+            
+            # Check what to return
+            if "result_type" in kwargs :
+                if   kwargs["result_type"] == "simulator" : return e_sim
+                elif kwargs["result_type"] == "phase"     : return e_sim.get_phi_foc()
+                elif kwargs["result_type"] == "defaut"    : return e_sim.get_EF_foc()
+                elif kwargs["result_type"] == "complete"  : return {"phi_foc":e_sim.get_phi_foc(),"EF_do":e_sim.get_EF_do(),"flux":e_sim.get_phi_foc(),"fond":e_sim.get_phi_foc()}
+                else : print("[WARNING] : wrong result_type. Set to default]")
+            else :
+                return  e_sim.get_EF_foc()
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")

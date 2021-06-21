@@ -92,6 +92,24 @@ def diff_grad_R(dpoint,pup=1,mode="np",dphi=1e-6):
                      
     return np.array(dphi_list).reshape(w,w) / dphi
 
+def diff_grad_EF(point,tbed,i_ref,dphi=1e-6):
+        
+    dh_list = [] # List of gradient dphi(a,b) for all possible (a,b)
+    i_point = tbed.todetector_Intensity(point)
+    
+    N = tbed.dimScience//tbed.ech
+    for a in range(0,N):
+          for b in range(0,N):
+
+              # Delta au point courant
+              point[a,b] = point[a,b] + dphi
+              i_dpoint = tbed.todetector_Intensity(point)
+              dh_list.append(meanSquare(i_point,i_ref) - meanSquare(i_dpoint,i_ref))
+              point[a,b] = point[a,b] - dphi
+              
+    return np.array(dh_list).reshape(N,N) / dphi
+
+
 # %% ################################
 """ Calcule gradient du critère  """
 
@@ -166,7 +184,7 @@ def estime_fluxfond(sim,imgs):
 
 
 # %% ############################
-""" Wrappers for optimize """
+""" Wrappers for optimize ANALYTQIUE"""
 
 def V_map_J(var,sim,imgs,hypp,simGif):
     """ Wrapper for minimize syntax"""
@@ -189,7 +207,6 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
     # sim = copy.deepcopy(esim)
     sim.opti_update(var,imgs)
     
-    info_gard      = []
     info_div       = []
     sim.iter +=1
     
@@ -220,9 +237,74 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
     if simGif and not sim.phi_do_is_known() : tls.plot_sim_entries(sim,dR,grad_u,grad_d,dRdo,name="iter"+str(sim.iter),disp=False,save=True)
     elif simGif : tls.plot_sim_entries(sim,dR,grad_u_k,name="iter"+str(sim.iter),disp=False,save=True)              
     
-    sim.info_gard.append([np.sum(grad_u**2),np.sum(dR)**2])     
+    sim.info_gard.append([np.sum(grad_u**2),np.sum(dR**2)])     
     sim.info_div.append(info_div)
                     
     return  grad
 
+# %% ############################
+""" Wrappers for optimize AUTOMATIQUE """
 
+# TODO A implémenter dans coffee_estimator
+
+def genere_L(tbed):
+    
+    N = tbed.dimScience
+    n = tbed.dimScience//tbed.ech
+    
+    L     = 0j*np.zeros((N*N,n*n)) #Cast to complex
+    point = np.zeros((n*n,1))
+    
+    for a in range(0,n*n):
+        point[a] = 1
+        L[:,a]   = tbed.todetector(point.reshape(n,n)).reshape(N*N,)
+        point[a] = 0
+                     
+    return L
+    
+def V_map_J_auto(var,sim,imgs,L,hypp,simGif):
+    """ Wrapper for minimize syntax"""
+    
+    sim.opti_update(var,imgs)
+    N = sim.tbed.dimScience
+    n = sim.tbed.dimScience//sim.tbed.ech
+
+    Hx = np.zeros(N,N,sim.nb_div)
+    for div_id in range(sim.nb_div):
+        point       = sim.get_EF_div(div_id).reshape(n*n,)
+        Hx[:,:,div_id]  = np.dot(L,point).reshape(N,N)
+    
+    Jmv = meanSquare(Hx,imgs)
+    R   =  (1/2) * hypp * regule(sim.get_phi_foc()) 
+    
+    sim.info.append([Jmv, R])
+    
+    return  Jmv + R
+
+
+def V_map_dJ_auto(var,sim,imgs,L,hypp,simGif):
+    """ Wrapper for minimize syntax"""
+    #TODO truc
+    sim.opti_update(var,imgs)
+    n = sim.tbed.dimScience//sim.tbed.ech
+
+    dJ_matriciel = 0
+    
+    for div_id in range(sim.nb_div):
+        gamma         = gamma_terme(L,sim,imgs[:,:,div_id])
+        dJ_matriciel  = (np.dot(np.transpose(L),gamma)).reshape(n,n)
+    
+    return dJ_matriciel
+
+
+def gamma_terme(L,sim,img):
+    """ Wrapper for minimize syntax"""
+    # dh/dphi 
+
+    w  = sim.tbed.dimScience//sim.tbed.ech
+    W  = sim.tbed.dimScience
+
+    LEf     = np.dot(L,sim.get_EF(0).reshape(w*w,))
+    gamma = 4*img.reshape(W*W,)*LEf + 4*pow(LEf,3)
+
+    return gamma
