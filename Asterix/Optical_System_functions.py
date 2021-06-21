@@ -833,9 +833,16 @@ class coronagraph(Optical_System):
         super().__init__(modelconfig)
 
         #pupil and Lyot stop in m
-        self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
+        if coroconfig["filename_instr_lyot"] in ["RoundPup", "ClearPlane"]:
+            self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
+        elif coroconfig["filename_instr_lyot"] == "RomanLyot":
+            self.diam_lyot_in_m = self.diam_pup_in_m*0.800
+        elif coroconfig["filename_instr_lyot"] == "VLTLyot":
+            self.diam_lyot_in_m = self.diam_pup_in_m*0.95
+        else:
+            raise Exception("This is not a valid Lyot option")
 
-        #Lyot stop in pixel
+
         self.lyotrad = int(self.prad * self.diam_lyot_in_m /
                            self.diam_pup_in_m)
 
@@ -1077,8 +1084,16 @@ class coronagraph(Optical_System):
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane * FPmsk)
+                
+                name_plane = 'EF_FP_after_1minusFPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          corono_focal_plane * (1 - FPmsk))
+
+                                          
 
             # Focal plane to Lyot plane
+            # Babinet's trick: 
             lyotplane_before_lyot_central_part = prop.mft(
                 corono_focal_plane * (1 - FPmsk),
                 self.dim_fpm,
@@ -1414,6 +1429,8 @@ class deformable_mirror(Optical_System):
         if not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
+        
+        self.Model_local_dir = Model_local_dir
 
         self.exitpup_rad = self.prad
 
@@ -1485,15 +1502,13 @@ class deformable_mirror(Optical_System):
 
         # DM_pushact is always in the DM plane
         start_time = time.time()
-        self.DM_pushact = self.creatingpushact(DMconfig,
-                                               Model_local_dir=Model_local_dir)
+        self.DM_pushact = self.creatingpushact(DMconfig)
         print("time for DM_pushact for " + self.string_os,
               time.time() - start_time)
 
         start_time = time.time()
         # create or load 'which actuators are in pupil'
-        self.WhichInPupil = self.creatingWhichinPupil(
-            Model_local_dir=Model_local_dir)
+        self.WhichInPupil = self.creatingWhichinPupil()
         print("time for WhichInPupil for " + self.string_os,
               time.time() - start_time)
 
@@ -1590,7 +1605,7 @@ class deformable_mirror(Optical_System):
 
         return EF_after_DM
 
-    def creatingpushact(self, DMconfig, Model_local_dir=None):
+    def creatingpushact(self, DMconfig):
         """ --------------------------------------------------
         OPD map induced in the DM plane for each actuator.
 
@@ -1607,8 +1622,6 @@ class deformable_mirror(Optical_System):
         Parameters
         ----------
         DMconfig : structure with all information on DMs
-        Model_local_dir: directory to save things you can measure yourself
-                    and can save to save time
 
         Error on the model of the DM
 
@@ -1622,9 +1635,9 @@ class deformable_mirror(Optical_System):
         Name_pushact_fits = "PushAct" + self.string_os
 
         if (self.misregistration is False) and (
-                os.path.exists(Model_local_dir + Name_pushact_fits + '.fits')):
+                os.path.exists(self.Model_local_dir + Name_pushact_fits + '.fits')):
             pushact3d = fits.getdata(
-                os.path.join(Model_local_dir, Name_pushact_fits + '.fits'))
+                os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
             return pushact3d
 
         diam_pup_in_pix = 2 * self.prad
@@ -1750,14 +1763,14 @@ class deformable_mirror(Optical_System):
         pushact3d = pushact3d[self.active_actuators]
 
         if self.misregistration is False and (
-                not os.path.exists(Model_local_dir + Name_pushact_fits +
+                not os.path.exists(self.Model_local_dir + Name_pushact_fits +
                                    '.fits')):
-            fits.writeto(Model_local_dir + Name_pushact_fits + '.fits',
+            fits.writeto(self.Model_local_dir + Name_pushact_fits + '.fits',
                          pushact3d)
 
         return pushact3d
 
-    def creatingWhichinPupil(self, Model_local_dir=None):
+    def creatingWhichinPupil(self):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
 
@@ -1765,8 +1778,7 @@ class deformable_mirror(Optical_System):
         ----------
         cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account
                     (between 0 and 1, ratio of an actuator perfectly centered in the entrance pupil)
-        Model_local_dir: directory to save things you can measure yourself
-                        and can save to save time
+
         Return:
         ------
         WhichInPupil: 1D array, index of all the actuators located inside the pupil
@@ -1775,8 +1787,8 @@ class deformable_mirror(Optical_System):
         Name_WhichInPup_fits = "WhichInPup" + self.string_os + "_thres" + str(
             self.WhichInPup_threshold)
 
-        if os.path.exists(Model_local_dir + Name_WhichInPup_fits + '.fits'):
-            return fits.getdata(Model_local_dir + Name_WhichInPup_fits +
+        if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits + '.fits'):
+            return fits.getdata(self.Model_local_dir + Name_WhichInPup_fits +
                                 '.fits')
 
         if self.z_position != 0:
@@ -1804,7 +1816,7 @@ class deformable_mirror(Optical_System):
 
         WhichInPupil = np.array(WhichInPupil)
 
-        fits.writeto(Model_local_dir + Name_WhichInPup_fits + '.fits',
+        fits.writeto(self.Model_local_dir + Name_WhichInPup_fits + '.fits',
                      WhichInPupil,
                      overwrite=True)
         return WhichInPupil
@@ -1926,7 +1938,7 @@ class deformable_mirror(Optical_System):
 
         return phase_on_DM
 
-    def create_DM_basis(self, basis_type='actuator', matrix_dir =None):
+    def create_DM_basis(self, basis_type='actuator'):
         """ --------------------------------------------------
         Create a DM basis.
         TODO do a zernike basis
@@ -1966,7 +1978,7 @@ class deformable_mirror(Optical_System):
             Name_FourrierBasis_fits = "Fourier_basis_" +self.Name_DM +'_prad' + str(self.prad) + '_nact' + str(sqrtnbract)+ 'x' + str(sqrtnbract)
 
 
-            cossinbasis = 0.01*proc.SinCosBasis(sqrtnbract)
+            cossinbasis = proc.SinCosBasis(sqrtnbract)
 
             basis_size = cossinbasis.shape[0]
             basis = np.zeros((basis_size, self.number_act))
@@ -1977,14 +1989,14 @@ class deformable_mirror(Optical_System):
             
             start_time = time.time()
 
-            if not os.path.exists(matrix_dir + Name_FourrierBasis_fits + '.fits'):
+            if not os.path.exists(self.Model_local_dir + Name_FourrierBasis_fits + '.fits'):
                 phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil, self.dim_overpad_pupil))
                 print("Start " + Name_FourrierBasis_fits)
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
                         useful.progress(i, basis_size, status='')
-                fits.writeto(matrix_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
+                fits.writeto(self.Model_local_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
             print("time for " + Name_FourrierBasis_fits,
               time.time() - start_time)
 
