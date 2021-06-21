@@ -232,7 +232,7 @@ def creatingInterractionmatrix(testbed,
                 Name_FourrierBasis_fits = "Fourier_basis_" + DM.Name_DM + '_prad' + str(
                     DM.prad) + '_nact' + str(sqrtnbract) + 'x' + str(
                         sqrtnbract)
-                phasesBasis = fits.getdata(matrix_dir +
+                phasesBasis = fits.getdata(DM.Model_local_dir +
                                            Name_FourrierBasis_fits + '.fits')
 
             else:
@@ -366,8 +366,9 @@ def creatingInterractionmatrix(testbed,
                 # without changeing the matrix
 
                 pos_in_matrix += 1
-
-            # We fill the interraction matrix:
+            if visu:
+                plt.close()
+            # We save the interraction matrix:
             if (initial_DM_voltage == 0.).all():
                 fits.writeto(
                     matrix_dir + fileDirectMatrix + ".fits",

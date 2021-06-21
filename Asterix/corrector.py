@@ -41,7 +41,7 @@ class Corrector:
                  testbed,
                  MaskDH,
                  estimator,
-                 matrix_dir='',
+                 matrix_dir=None,
                  save_for_bench=False,
                  realtestbed_dir=''):
         """ --------------------------------------------------
@@ -86,8 +86,7 @@ class Corrector:
 
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
-            DM.basis = DM.create_DM_basis(basis_type=basis_type,
-                                          matrix_dir=matrix_dir)
+            DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
             self.total_number_modes += DM.basis_size
             DM.basis_type = basis_type
@@ -270,8 +269,8 @@ class Corrector:
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
             if self.FirstIterNewMat:
                 # This is the first time
-                self.last_best_alpha = 1.
-                self.expected_gain_in_contrast = 0.3
+                self.last_best_alpha = 1
+                self.expected_gain_in_contrast = 0.1
                 self.last_best_contrast = ActualCurrentContrast
                 self.times_we_lowered_gain = 0
                 self.count_since_last_best = 0
