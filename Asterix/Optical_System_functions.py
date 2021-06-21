@@ -1726,8 +1726,8 @@ class deformable_mirror(Optical_System):
             if gausserror == 0:
                 Psivector = nd.interpolation.shift(
                     actshapeinpupil,
-                    (simu_grid[1, i] + dim_array / 2 - xycenttmp + yerror,
-                     simu_grid[0, i] + dim_array / 2 - xycenttmp + xerror))
+                    (simu_grid[1, i] + dim_array / 2 - xycenttmp + yerror*pitch_actshape,
+                     simu_grid[0, i] + dim_array / 2 - xycenttmp + xerror*pitch_actshape))
 
                 # Add an error on the orientation of the grid
                 if angerror != 0:
