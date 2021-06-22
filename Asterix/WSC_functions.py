@@ -523,7 +523,7 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian,
     EF_vector[int(np.sum(mask)):] = np.imag(Resultat_cropdh).flatten()
     produit_mat = np.dot(inversed_jacobian, EF_vector)
 
-    return testbed.basis_vector_to_act_vector(produit_mat, testbed)
+    return testbed.basis_vector_to_act_vector(produit_mat)
 
 
 def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
@@ -558,7 +558,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
                             Eab)).flatten()
     produit_mat = np.dot(Hessian_Matrix, realb0)
 
-    return testbed.basis_vector_to_act_vector(produit_mat, testbed)
+    return testbed.basis_vector_to_act_vector(produit_mat)
 
 
 def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
@@ -585,7 +585,7 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
                             since it's often a very close value to the last one working
 
     testbed: a testbed with one or more DM
-    
+
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -667,9 +667,7 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
     print(
         "Number of iteration in this stroke min (number of tested alpha): {:d}"
         .format(iteralpha))
-    return testbed.basis_vector_to_act_vector(DMSurfaceCoeff, testbed), alpha
-
-    # return basis_voltage_to_act_voltage(produit_mat, testbed)
+    return testbed.basis_vector_to_act_vector(DMSurfaceCoeff), alpha
 
 
 def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
@@ -699,7 +697,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     pas = 2e3
     solution = pas * 2 * Eab
 
-    return testbed.basis_vector_to_act_vector(solution, testbed)
+    return testbed.basis_vector_to_act_vector(solution)
 
 
 #################################################################################
