@@ -60,15 +60,6 @@ def runthd2(parameter_file,
 
     Name_Experiment = SIMUconfig["Name_Experiment"]
 
-    Nbiter_corr = [int(i) for i in SIMUconfig["Nbiter_corr"]]
-    Nbmode_corr = [int(i) for i in SIMUconfig["Nbmode_corr"]]
-    Linesearch = SIMUconfig["Linesearch"]
-    Linesearchmodes = [int(i) for i in SIMUconfig["Linesearchmodes"]]
-    gain = SIMUconfig["gain"]
-    Number_matrix = SIMUconfig["Number_matrix"]
-
-    photon_noise = SIMUconfig["photon_noise"]
-    nb_photons = SIMUconfig["nb_photons"]
 
     ##############################################################################
     ### Initialization all the directories
@@ -135,15 +126,10 @@ def runthd2(parameter_file,
                                                 estim,
                                                 correc,
                                                 MaskScience,
-                                                Number_matrix,
-                                                gain,
-                                                Nbiter_corr,
-                                                Nbmode_corr,
-                                                Linesearch=Linesearch,
-                                                Linesearchmodes=Linesearchmodes,
+                                                SIMUconfig,
                                                 input_wavefront=input_wavefront,
                                                 initial_DM_voltage=0,
-                                                photon_noise=photon_noise,
-                                                nb_photons=nb_photons)
+                                                silence = False
+                                                )
 
     Save_loop_results(Resultats_correction_loop, config, thd2, result_dir)
