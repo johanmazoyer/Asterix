@@ -25,6 +25,55 @@ def CorrectionLoop(testbed: OptSy.Testbed,
                    input_wavefront=0,
                    initial_DM_voltage=0.,
                    silence=False):
+    """ --------------------------------------------------
+    Run a full loop for several Matrix. at each iteration, we update the matrix and
+    run CorrectionLoop1Matrix. 
+
+    Parameters:
+    ----------
+        
+    testbed: an Optical_System object which describes your testbed
+    
+    estimator: an estimator object. This contains all information about the estimation
+    
+    corrector: a corrector object. This contains all information about the correction
+    
+    mask_dh: binary array of size [dimScience, dimScience] : dark hole mask
+    
+    SIMUconfig: simulation parameters containing the loop parameters
+    
+    input_wavefront: initial wavefront at the beginning of this loop.
+        Electrical Field which can be a :
+            float 1. if no phase / amplitude (default)
+            2D complex array, of size phase_abb.shape if monochromatic
+            or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic   
+        
+        !!CAREFUL!!: right now we do not use this wf to measure the matrix, although update_matrices
+                    function allows it. Currently each matrix is measured with a flat field in 
+                    entrance of the testbed (input_wavefront = 1). 
+                    input_wavefront is only used in the loop once the matrix is calcultated   
+                    This can be changed but be careful.             
+
+    initial_DM_voltage. initial DM voltages at the beginning of this loop. The Matrix is measured 
+                        using this initial DM voltages. Can be:
+            float 0 if flat DMs (default)
+            1D array of size testbed.number_act
+    
+    photon_noise: boolean, default False
+                    If True, add photon noise.
+    
+    nb_photons int, optional default 1e30
+                Number of photons entering the pupil
+    
+    silence=False: Boolean, default False
+                if False, print and plot results as the loop runs
+
+    Return:
+    ------
+    CorrectionLoopResult : a dictionnary containing the results of all loops
+
+    Author: Johan Mazoyer
+    -------------------------------------------------- """
 
     CorrectionLoopResult = dict()
     CorrectionLoopResult["nb_total_iter"] = 0
@@ -34,24 +83,21 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     CorrectionLoopResult["EF_estim"] = list()
     CorrectionLoopResult["MeanDHContrast"] = list()
 
-
-    if corrector.correction_algorithm in ['efc','em','steepest']:
+    if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
 
         Nbmode_corr = [int(i) for i in SIMUconfig["Nbmode_corr"]]
         Linesearch = SIMUconfig["Linesearch"]
         Linesearchmodes = [int(i) for i in SIMUconfig["Linesearchmodes"]]
         gain = SIMUconfig["gain"]
         CorrectionLoopResult["SVDmodes"] = list()
-    
-    if corrector.correction_algorithm  == 'sm':
+
+    if corrector.correction_algorithm == 'sm':
         Linesearch = False
 
     Nbiter_corr = [int(i) for i in SIMUconfig["Nbiter_corr"]]
     Number_matrix = SIMUconfig["Number_matrix"]
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
-
-
 
     for i in range(Number_matrix):
 
@@ -105,14 +151,81 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                           input_wavefront=1.,
                           initial_DM_voltage=0.,
                           photon_noise=False,
-                          nb_photons=0.,
+                          nb_photons=1e30,
                           silence=False):
+    """ --------------------------------------------------
+    Run a loop for a given interraction matrix
+
+    Parameters:
+    ----------
+        
+    testbed: an Optical_System object which describes your testbed
+    
+    estimator: an estimator object. This contains all information about the estimation
+    
+    corrector: a corrector object. This contains all information about the correction
+    
+    mask_dh: binary array of size [dimScience, dimScience] : dark hole mask
+    
+    Nbiter_corr: int or list of int, number of iterations in the loop
+    
+    CorrectionLoopResult: dictionnary containing the result of the previous loop. 
+                            This will be updated with the result of this loop
+    
+    gain:  gain of the loop in EFC mode. 
+            float between 0 and 1, default 0.1
+    
+    Nbmode_corr: int or list of int of same size as Nbiter_corr,
+                    SVD modes for each iteration
+    
+    Linesearch: bool, default False. If True, In this mode, the function CorrectionLoop1Matrix
+                        will call itself at each iteration to find the best SVD inversion mode 
+                        among Linesearchmodes. 
+    
+    Linesearchmodes: list of int. List of modes that are probed to find the best mode at  
+                                each iteration
+    
+    Search_best_Mode: bool. default False. If true, the algorithms does not return the
+                                loop information, just the best mode and best contrast. 
+                                This mode is used in Linesearch mode
+                                Be careful when using this parameter, it can create an infinite loop
+    
+    input_wavefront: initial wavefront at the beginning of this loop.
+        Electrical Field which can be a :
+            float 1. if no phase / amplitude (default)
+            2D complex array, of size phase_abb.shape if monochromatic
+            or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic                   
+
+    initial_DM_voltage. initial DM voltages at the beginning of this loop. Can be:
+            float 0 if flat DMs (default)
+            1D array of size testbed.number_act
+    
+    photon_noise: boolean, default False
+                    If True, add photon noise.
+    
+    nb_photons int, optional default 1e30
+                Number of photons entering the pupil
+    
+    silence=False: Boolean, default False
+                if False, print and plot results as the loop runs
+
+    Return:
+    ------
+    if Search_best_Mode == True, return [bestMode, bestContrast]
+    else return CorrectionLoopResult dictionnary updated with the results from this loop
+
+    Author: Johan Mazoyer
+    -------------------------------------------------- """
+
+    if Search_best_Mode:
+        # This is to prevent an infinite loop
+        Linesearch = False
 
     thisloop_expected_iteration_number = sum(Nbiter_corr)
 
     ## Number of modes that is used as a function of the iteration cardinal
     # in the EFC case
-    if corrector.correction_algorithm in ['efc','em','steepest']:
+    if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
         modevector = []
         for i in np.arange(len(Nbiter_corr)):
             modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
@@ -145,13 +258,13 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
         print("Initial contrast in DH: ", initialFP_contrast)
         plt.ion()
         plt.figure()
-    
+
     # we start at 1 because we count the initial state as an iteration of the loop
     iteration_number = 1
-    
+
     for iteration in range(thisloop_expected_iteration_number):
 
-        if corrector.correction_algorithm in ['efc','em','steepest']:
+        if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
             mode = modevector[iteration]
 
             if mode > corrector.total_number_modes:
@@ -163,7 +276,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                 continue
 
             if Linesearch:
-                # if we are just trying to find the best mode, we just call the same loop function
+                # if we are just trying to find the best mode, we just call the function itself
                 # on the Linesearchmodes but without updating the results.
                 # this is elegant but must be carefully done if we want to avoid infinite loop.
                 bestcontrast, bestmode = CorrectionLoop1Matrix(
@@ -172,15 +285,16 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                     corrector,
                     mask_dh,
                     np.ones(len(Linesearchmodes), dtype=int),
-                    list(),               
+                    dict(),
                     Linesearchmodes,
-                    gain = gain,
+                    gain=gain,
                     Linesearch=False,
                     Search_best_Mode=True,
                     input_wavefront=input_wavefront,
                     initial_DM_voltage=thisloop_voltages_DMs[iteration],
                     silence=True)
-                print("Search Best Mode: ", bestmode, " contrast: ", bestcontrast)
+                print("Search Best Mode: ", bestmode, " contrast: ",
+                      bestcontrast)
                 mode = bestmode
 
         if not silence:
@@ -200,7 +314,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
         solution = corrector.toDM_voltage(
             testbed,
             resultatestimation,
-            mode = mode,
+            mode=mode,
             gain=gain,
             ActualCurrentContrast=thisloop_MeanDHContrast[-1])
 
@@ -209,14 +323,14 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             # the string "StopTheLoop" instead of a correction vector
             print("we stop the correction")
             break
-        
+
         elif isinstance(solution, str) and solution == "RebootTheLoop":
             # for each correction algorithm, we can break the loop by
             # the string "RebootTheLoop" instead of a correction vector
             print("we go back to last best correction")
             ze_arg_of_ze_best = np.argmin(thisloop_MeanDHContrast)
             new_voltage = thisloop_voltages_DMs[ze_arg_of_ze_best]
-        
+
         else:
             new_voltage = thisloop_voltages_DMs[-1] + solution
 
@@ -231,7 +345,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             # if we are only looking for the best mode, we do not update the DM shape
             # for the next iteration
             thisloop_voltages_DMs.append(new_voltage)
-        
+
         iteration_number += 1
         if not silence:
             print("Mean contrast in DH: ", thisloop_MeanDHContrast[-1])
@@ -250,9 +364,10 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     else:
         # create a dictionnary to save all results
 
-        if corrector.correction_algorithm in ['efc','em','steepest']:
+        if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
             modevector = [
-                mode for mode in modevector if mode <= corrector.total_number_modes
+                mode for mode in modevector
+                if mode <= corrector.total_number_modes
             ]
             CorrectionLoopResult["SVDmodes"].append(modevector)
 
@@ -263,18 +378,39 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
         CorrectionLoopResult["FP_Intensities"].extend(thisloop_FP_Intensities)
         CorrectionLoopResult["EF_estim"].extend(thisloop_EF_estim)
         CorrectionLoopResult["MeanDHContrast"].extend(thisloop_MeanDHContrast)
-        
+
         if not silence:
             plt.close()
 
         if Linesearch:
-            print("Linesearch Mode. We found the following modes to dig the contrast best:")
+            print(
+                "Linesearch Mode. We found the following modes to dig the contrast best:"
+            )
             print(modevector)
 
         return CorrectionLoopResult
 
 
 def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
+    """ --------------------------------------------------
+    Save the result from a correction loop 
+
+    Parameters:
+    ----------
+    CorrectionLoopResult: dictionnary containing the results from CorrectionLoop1Matrix or CorrectionLoop
+
+    config: complete parameter dictionnary
+
+    testbed: an Optical_System object which describes your testbed
+    
+    result_dir: directory where to save the results
+
+    Return:
+    ------
+
+
+    Author: Johan Mazoyer
+    -------------------------------------------------- """
 
     if not os.path.exists(result_dir):
         print("Creating directory " + result_dir + " ...")

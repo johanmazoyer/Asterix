@@ -99,7 +99,7 @@ class Corrector:
             self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
         else:
             self.amplitudeEFC = 1.
-        
+
         if self.correction_algorithm == "sm":
             self.expected_gain_in_contrast = 0.1
 
@@ -217,7 +217,9 @@ class Corrector:
                 self.matrix_dir,
                 initial_DM_voltage=initial_DM_voltage,
                 input_wavefront=input_wavefront,
-                MatrixType=self.MatrixType, save_all_planes_to_fits=False, dir_save_all_planes = "/Users/jmazoyer/Desktop/g0_all/")
+                MatrixType=self.MatrixType,
+                save_all_planes_to_fits=False,
+                dir_save_all_planes="/Users/jmazoyer/Desktop/g0_all/")
 
             print("time for direct matrix " + testbed.string_os,
                   time.time() - start_time)
@@ -225,7 +227,7 @@ class Corrector:
 
             self.Gmatrix = wsc.cropDHInterractionMatrix(
                 interMat, self.MaskEstim)
-            
+
             # useful.quickfits(self.Gmatrix)
 
             if self.correction_algorithm in ["em", "steepest", "sm"]:
@@ -245,12 +247,32 @@ class Corrector:
     def toDM_voltage(self,
                      testbed,
                      estimate,
-                     mode = 1.,
+                     mode=1.,
+                     gain=0.1,
                      ActualCurrentContrast=1,
-                     gain=0.,
                      **kwargs):
         """ --------------------------------------------------
-        Run an correction from a testbed, and return the DM voltage for one or 2 DMS
+        Run a correction from a estimate, and return the DM voltage compatible with the testbed
+
+        testbed: an Optical_System object which describes your testbed
+
+        estimate: 2D complex array of sixe [dimEstim, dimEstim]. 
+                    This is the result of Estimator.estimate, from which this function 
+                    send a command to the DM
+        
+        mode: int, defaut one. Use in EFC, EM, and Steepest, this is the mode we use in the SVD inversion
+                                if the mode is the same than the previous iteration, we store the inverted 
+                                matrix to avoid inverted it again
+        
+        gain:  gain of the loop in EFC mode. 
+            float between 0 and 1, default 0.1
+        
+        ActualCurrentContrast: Contrast at the current iteration of the loop 
+                                This is used by SM algorithm to find a target contrast
+
+        
+
+
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
@@ -286,21 +308,21 @@ class Corrector:
                 self.count_since_last_best = 0
                 self.last_best_contrast = ActualCurrentContrast
 
-
             if self.times_we_lowered_gain == 5:
                 #it's been too long we have not increased
                 # or we're so far off linearity that SM is actually heavily degrading contrast
                 # It's time to stop !
                 return "StopTheLoop"
-            
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
             solutionSM, self.last_best_alpha = wsc.solutionSM(
                 self.MaskEstim, testbed, estimate, self.M0, self.G,
                 DesiredContrast, self.last_best_alpha)
-            
-            if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (isinstance(solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
+
+            if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (
+                    isinstance(solutionSM, str)
+                    and solutionSM == "SMFailedTooManyTime"):
                 self.times_we_lowered_gain += 1
                 self.expected_gain_in_contrast = 1 - (
                     1 - self.expected_gain_in_contrast) / 3
@@ -311,7 +333,7 @@ class Corrector:
                     .format(self.expected_gain_in_contrast))
                 return "RebootTheLoop"
 
-            return - self.amplitudeEFC * solutionSM
+            return -self.amplitudeEFC * solutionSM
 
         if self.correction_algorithm == "em":
 
