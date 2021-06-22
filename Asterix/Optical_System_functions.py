@@ -1342,7 +1342,7 @@ class coronagraph(Optical_System):
     def Vortex(self, charge=2):
         """ --------------------------------------------------
         Create a charge2 vortex.
-        #TODO Shoyld work but need to be tested
+        #TODO Should work but need to be tested
 
         Parameters
         ------
@@ -1940,7 +1940,7 @@ class deformable_mirror(Optical_System):
     def create_DM_basis(self, basis_type='actuator'):
         """ --------------------------------------------------
         Create a DM basis.
-        TODO do a zernike basis
+        TODO do a zernike basis ?
 
         Parameters:
         ----------

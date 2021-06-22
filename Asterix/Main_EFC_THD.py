@@ -60,7 +60,6 @@ def runthd2(parameter_file,
 
     Name_Experiment = SIMUconfig["Name_Experiment"]
 
-
     ##############################################################################
     ### Initialization all the directories
     ##############################################################################
@@ -72,7 +71,8 @@ def runthd2(parameter_file,
     Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
     # Initialize thd:
-    pup_round = OptSy.pupil(modelconfig, PupType=modelconfig['filename_instr_pup'])
+    pup_round = OptSy.pupil(modelconfig,
+                            PupType=modelconfig['filename_instr_pup'])
     DM1 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
                                   Name_DM='DM1',
@@ -121,15 +121,13 @@ def runthd2(parameter_file,
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up,
                                                   ampl_abb=ampl_abb_up)
 
-    Resultats_correction_loop = CorrectionLoop(
-                                                thd2,
-                                                estim,
-                                                correc,
-                                                MaskScience,
-                                                SIMUconfig,
-                                                input_wavefront=input_wavefront,
-                                                initial_DM_voltage=0,
-                                                silence = False
-                                                )
+    Resultats_correction_loop = CorrectionLoop(thd2,
+                                               estim,
+                                               correc,
+                                               MaskScience,
+                                               SIMUconfig,
+                                               input_wavefront=input_wavefront,
+                                               initial_DM_voltage=0,
+                                               silence=False)
 
     Save_loop_results(Resultats_correction_loop, config, thd2, result_dir)

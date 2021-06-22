@@ -131,13 +131,11 @@ def CorrectionLoop(testbed: OptSy.Testbed,
         initial_DM_voltage = Resultats_correction_loop["voltage_DMs"][
             min_index]
 
-        
         if i != Number_matrix - 1:
             print("end Matrix ", i)
             print("We will restart next matrix from contrast = ", min_contrast)
         else:
             print("End correction")
-
 
     return Resultats_correction_loop
 
@@ -290,7 +288,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                 Linesearchmodes = 10 * (np.arange(0.1, 1, 0.1) *
                                         corrector.total_number_modes /
                                         10).astype(int)
-                
+
                 print("Search Best Mode among ", Linesearchmodes)
                 # if we are just trying to find the best mode, we just call the function itself
                 # on the Linesearchmodes but without updating the results.
@@ -308,7 +306,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                     input_wavefront=input_wavefront,
                     initial_DM_voltage=thisloop_voltages_DMs[iteration],
                     silence=True)
-                
+
                 print("Best Mode is ", bestmode, " with contrast: ",
                       bestcontrast)
                 modevector[iteration] = mode = bestmode
@@ -318,11 +316,11 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
 
         if not silence:
             if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
-                print("Iteration number: ", iteration +1,
+                print("Iteration number: ", iteration + 1,
                       corrector.correction_algorithm + " SVD truncation: ",
                       mode)
             else:
-                print("Iteration number: ", iteration+1)
+                print("Iteration number: ", iteration + 1)
 
         # for now monochromatic estimation
         resultatestimation = estimator.estimate(

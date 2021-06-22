@@ -220,9 +220,9 @@ class Estimator:
         perfect_estimation default = False. if true This is equivalent to
                                             have self.technique = "perfect" but even
                                             if we are using another technique, we
-                                            sometimes need a perfect estimation
-                                            especially in EFC. if perfect_estimation
-
+                                            sometimes need a perfect estimation and it 
+                                            avoid re-initialization of the estimation
+                                            
         Returns
         ------
         estimation : 2D array od size [self.dimEstim,self.dimEstim]
