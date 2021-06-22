@@ -245,7 +245,7 @@ class Corrector:
     def toDM_voltage(self,
                      testbed,
                      estimate,
-                     mode,
+                     mode = 1.,
                      ActualCurrentContrast=1,
                      gain=0.,
                      **kwargs):
