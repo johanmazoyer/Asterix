@@ -6,36 +6,53 @@ import time
 
 Asterixroot = os.path.dirname(os.path.realpath(__file__))
 
-# start_time = time.time()
-# Main_EFC_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
-#                      NewDMconfig={'DM1_active': False},
-#                      NewEstimationconfig={'estimation': 'perfect'},
-#                      NewCorrectionconfig={'DH_side': "top", 'correction_algorithm':"efc", "MatrixType":"SmallPhase", 'DM_basis':'actuator'},
-#                      NewSIMUconfig={
-#                          'Name_Experiment': "test1",
-#                          'Nbiter_corr':["8"],
-#                          'Linesearch':True
-#                      })
-# print('time correction 1DM pw', time.time() - start_time)
-# print("")
-# print("")
-# print("")
+start_time = time.time()
+Main_EFC_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+                     NewDMconfig={'DM1_active': False},
+                     NewEstimationconfig={'estimation': 'pw'},
+                     NewCorrectionconfig={'DH_side': "top", 'correction_algorithm':"efc", "MatrixType":"SmallPhase", 'DM_basis':'actuator'},
+                     NewSIMUconfig={
+                         'Name_Experiment': "testpws",
+                         'Nbiter_corr': ["5"],
+                         "Nbmode_corr": ["350"]
+                     })
+print('time correction 1DM pw', time.time() - start_time)
+print("")
+print("")
+print("")
+
+
+start_time = time.time()
+Main_EFC_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+                     NewDMconfig={'DM1_active': False},
+                     NewEstimationconfig={'estimation': 'perfect'},
+                     NewCorrectionconfig={'DH_side': "top", 'correction_algorithm':"efc", "MatrixType":"SmallPhase", 'DM_basis':'actuator'},
+                     NewSIMUconfig={
+                         'Name_Experiment': "testperf",
+                         'Nbiter_corr': ["1"],
+                         "Nbmode_corr": ["350"]
+                     })
+print('time correction 1DM pw', time.time() - start_time)
+print("")
+print("")
+print("")
+asd
 
 # ## CORRECTION 1DM IN PW + EFC
-# start_time = time.time()
-# Main_EFC_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
-#                      NewDMconfig={'DM1_active': False},
-#                      NewEstimationconfig={'estimation': 'pw'},
-#                      NewCorrectionconfig={'DH_side': "top", 'correction_algorithm':"efc", "MatrixType":"SmallPhase", 'DM_basis':'fourier'},
-#                      NewSIMUconfig={
-#                          'Name_Experiment': "test1",
-#                          'Nbiter_corr': ["8", "1", "1"],
-#                          "Nbmode_corr": ["350", "380", "400"]
-#                      })
-# print('time correction 1DM pw', time.time() - start_time)
-# print("")
-# print("")
-# print("")
+start_time = time.time()
+Main_EFC_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+                     NewDMconfig={'DM1_active': False},
+                     NewEstimationconfig={'estimation': 'perfect'},
+                     NewCorrectionconfig={'DH_side': "top", 'correction_algorithm':"efc", "MatrixType":"SmallPhase", 'DM_basis':'actuator'},
+                     NewSIMUconfig={
+                         'Name_Experiment': "test1",
+                         'Nbiter_corr': ["5", "5", "5"],
+                         "Nbmode_corr": ["350", "380", "400"]
+                     })
+print('time correction 1DM pw', time.time() - start_time)
+print("")
+print("")
+print("")
 
 start_time = time.time()
 Main_EFC_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
