@@ -103,7 +103,7 @@ def creatingInterractionmatrix(testbed,
                                MatrixType=False,
                                save_all_planes_to_fits=False,
                                dir_save_all_planes=None,
-                               visu=True):
+                               visu=False):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
@@ -690,9 +690,9 @@ def solutionSM(
             CurrentContrast = ResidualEnergy
 
             if (CurrentContrast >
-                    3 * LastCurrentContrast) or (number_time_failed > 5):
+                    3 * LastCurrentContrast):
                 # this step is to check if the SM is divergeing too quickly
-                return np.nan, np.nan
+                return "SMFailedTooManyTime", alpha
 
             print(
                 "For alpha={:f}, Current Contrast:{:f}, Last Contrast:{:f}, Desired Contrast: {:f}"
@@ -707,8 +707,8 @@ def solutionSM(
             number_time_failed += 1
             last_best_alpha *= 10
             print("SM failed, we increase alpha 10 times")
-            if number_time_failed > 10:
-                return np.nan, np.nan
+            if number_time_failed > 20:
+                return "SMFailedTooManyTime", alpha
         else:
             TestSMfailed = False
 

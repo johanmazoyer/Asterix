@@ -99,6 +99,9 @@ class Corrector:
             self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
         else:
             self.amplitudeEFC = 1.
+        
+        if self.correction_algorithm == "sm":
+            self.expected_gain_in_contrast = 0.1
 
         self.regularization = Correctionconfig["regularization"]
 
@@ -270,7 +273,6 @@ class Corrector:
             if self.FirstIterNewMat:
                 # This is the first time
                 self.last_best_alpha = 1
-                self.expected_gain_in_contrast = 0.1
                 self.last_best_contrast = ActualCurrentContrast
                 self.times_we_lowered_gain = 0
                 self.count_since_last_best = 0
@@ -284,16 +286,6 @@ class Corrector:
                 self.count_since_last_best = 0
                 self.last_best_contrast = ActualCurrentContrast
 
-            if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast:
-                self.times_we_lowered_gain += 1
-                self.expected_gain_in_contrast = 1 - (
-                    1 - self.expected_gain_in_contrast) / 3
-                self.count_since_last_best = 0
-                self.last_best_alpha *= 20
-                print(
-                    "we do not improve contrast anymore, we go back to last best and change the gain to {:f}"
-                    .format(self.expected_gain_in_contrast))
-                return "RebootTheLoop"
 
             if self.times_we_lowered_gain == 5:
                 #it's been too long we have not increased
@@ -307,6 +299,17 @@ class Corrector:
             solutionSM, self.last_best_alpha = wsc.solutionSM(
                 self.MaskEstim, testbed, estimate, self.M0, self.G,
                 DesiredContrast, self.last_best_alpha)
+            
+            if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (isinstance(solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
+                self.times_we_lowered_gain += 1
+                self.expected_gain_in_contrast = 1 - (
+                    1 - self.expected_gain_in_contrast) / 3
+                self.count_since_last_best = 0
+                self.last_best_alpha *= 20
+                print(
+                    "we do not improve contrast anymore, we go back to last best and change the gain to {:f}"
+                    .format(self.expected_gain_in_contrast))
+                return "RebootTheLoop"
 
             return - self.amplitudeEFC * solutionSM
 
