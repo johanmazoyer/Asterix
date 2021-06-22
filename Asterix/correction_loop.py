@@ -179,13 +179,14 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                     SVD modes for each iteration
     
     Linesearch: bool, default False. If True, In this mode, the function CorrectionLoop1Matrix
-                        will call itself at each iteration to find the best SVD inversion mode 
-                        among Linesearchmodes. 
+                        will call itself at each iteration with Search_best_Mode= True to find 
+                        the best SVD inversion mode among Linesearchmodes. 
     
     Linesearchmodes: list of int. List of modes that are probed to find the best mode at  
                                 each iteration
+                                TODO: Can be measured directly from the number of modes in the testbed
     
-    Search_best_Mode: bool. default False. If true, the algorithms does not return the
+    Search_best_Mode: bool. default False. If true, the algorithm does not return the
                                 loop information, just the best mode and best contrast. 
                                 This mode is used in Linesearch mode
                                 Be careful when using this parameter, it can create an infinite loop
