@@ -94,7 +94,7 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def creatingInterractionmatrix(testbed,
+def creatingInterractionmatrix(testbed: OptSy.Testbed,
                                dimEstim,
                                amplitudeEFC,
                                matrix_dir,
@@ -218,11 +218,11 @@ def creatingInterractionmatrix(testbed,
 
             #measure the initial FP. This is normalised with the testbed.
             G0 = proc.resampling(
-                testbed.todetector(entrance_EF=input_wavefront,
-                                   voltage_vector=initial_DM_voltage,
-                                   save_all_planes_to_fits=save_all_planes_to_fits,
-                                    dir_save_all_planes=dir_save_all_planes),
-                dimEstim)
+                testbed.todetector(
+                    entrance_EF=input_wavefront,
+                    voltage_vector=initial_DM_voltage,
+                    save_all_planes_to_fits=save_all_planes_to_fits,
+                    dir_save_all_planes=dir_save_all_planes), dimEstim)
 
             if (initial_DM_voltage == 0.).all():
                 print("")
@@ -265,10 +265,10 @@ def creatingInterractionmatrix(testbed,
                 OpticSysbefore = vars(testbed)[osname]
 
                 if save_all_planes_to_fits == True:
-                        name_plane = 'EF_PP_before_' + osname + '_wl{}'.format(
-                            int(wavelength * 1e9))
-                        useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      wavefrontupstream)
+                    name_plane = 'EF_PP_before_' + osname + '_wl{}'.format(
+                        int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                              wavefrontupstream)
                 if isinstance(
                         OpticSysbefore,
                         OptSy.deformable_mirror) and OpticSysbefore.active:
@@ -276,30 +276,30 @@ def creatingInterractionmatrix(testbed,
 
                     if OpticSysbefore.z_position == 0:
                         wavefrontupstream = wavefrontupstream * OpticSysbefore.EF_from_phase_and_ampl(
-                            phase_abb=OpticSysbefore.phase_init, wavelengths=wavelength)
+                            phase_abb=OpticSysbefore.phase_init,
+                            wavelengths=wavelength)
 
                     else:
                         wavefrontupstream = OpticSysbefore.prop_pup_to_DM_and_back(
-                            wavefrontupstream,
-                            OpticSysbefore.phase_init,
+                            wavefrontupstream, OpticSysbefore.phase_init,
                             wavelength)
-                    
+
                     if save_all_planes_to_fits == True:
                         name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(
                             int(wavelength * 1e9))
-                        useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      OpticSysbefore.phase_init)
-                    
-                    
+                        useful.save_plane_in_fits(dir_save_all_planes,
+                                                  name_plane,
+                                                  OpticSysbefore.phase_init)
+
                 else:
                     wavefrontupstream = OpticSysbefore.EF_through(
                         entrance_EF=wavefrontupstream)
-                
+
                 if save_all_planes_to_fits == True:
-                        name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(
-                            int(wavelength * 1e9))
-                        useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      wavefrontupstream)
+                    name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(
+                        int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                              wavefrontupstream)
 
             # then the DM we want to actuate !
             #
@@ -327,12 +327,13 @@ def creatingInterractionmatrix(testbed,
 
                         wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(
                             phase_abb=phasesBasis[i] + DM.phase_init)
-                        
+
                         if save_all_planes_to_fits == True:
                             name_plane = 'Phase_on_' + DM_name + '_wl{}'.format(
                                 int(wavelength * 1e9))
-                            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                        OpticSysbefore.phase_init)
+                            useful.save_plane_in_fits(
+                                dir_save_all_planes, name_plane,
+                                OpticSysbefore.phase_init)
 
                     else:
                         wavefront, _ = prop.prop_fresnel(
@@ -352,12 +353,12 @@ def creatingInterractionmatrix(testbed,
                             DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init),
                             DM.wavelength_0, -DM.z_position,
                             DM.diam_pup_in_m / 2, DM.prad)
-                
+
                 if save_all_planes_to_fits == True:
                     name_plane = 'EF_PP_after_' + DM_name + '_wl{}'.format(
                         int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                    wavefront)
+                                              wavefront)
                 # and finally we go through the subsystems after the DMs we want to actuate
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
                 for osname in OpticSysNameAfter:
@@ -366,33 +367,33 @@ def creatingInterractionmatrix(testbed,
 
                         if isinstance(OpticSysAfter, OptSy.deformable_mirror
                                       ) and OpticSysAfter.active:
-                            
+
                             # this subsystem is an active DM but not the one we actuate now (located after the one we actuate)
                             if OpticSysAfter.z_position == 0:
                                 wavefront = wavefront * OpticSysAfter.EF_from_phase_and_ampl(
-                                    phase_abb=OpticSysAfter.phase_init, wavelengths=wavelength)
+                                    phase_abb=OpticSysAfter.phase_init,
+                                    wavelengths=wavelength)
                             else:
                                 wavefront = OpticSysAfter.prop_pup_to_DM_and_back(
-                                    wavefront,
-                                    OpticSysAfter.phase_init,
+                                    wavefront, OpticSysAfter.phase_init,
                                     wavelength)
-                            
+
                             if save_all_planes_to_fits == True:
                                 name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(
                                     int(wavelength * 1e9))
-                                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            OpticSysAfter.phase_init)
+                                useful.save_plane_in_fits(
+                                    dir_save_all_planes, name_plane,
+                                    OpticSysAfter.phase_init)
 
-                        
                         else:
                             wavefront = OpticSysAfter.EF_through(
                                 entrance_EF=wavefront)
-                        
+
                         if save_all_planes_to_fits == True:
                             name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(
                                 int(wavelength * 1e9))
-                            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                        wavefront)
+                            useful.save_plane_in_fits(dir_save_all_planes,
+                                                      name_plane, wavefront)
                     else:
                         # this is the last one ! so we propagate to FP and resample to estimation size
                         # we have to be careful with the normalizatiom, by default this is the
@@ -402,12 +403,12 @@ def creatingInterractionmatrix(testbed,
                             OpticSysAfter.todetector(entrance_EF=wavefront,
                                                      in_contrast=False) /
                             normalisation_testbed_EF_contrast, dimEstim)
-                        
+
                         if save_all_planes_to_fits == True:
                             name_plane = 'FPAfterTestbed_' + osname + '_wl{}'.format(
                                 int(wavelength * 1e9))
-                            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                        Gvector)
+                            useful.save_plane_in_fits(dir_save_all_planes,
+                                                      name_plane, Gvector)
 
                 # Should we remove the intial FP field. This is very differnt for non ideal coronagrpah
                 # or if we have a strong initial DM voltages. This needs to be thoroughly investigated:
@@ -417,13 +418,13 @@ def creatingInterractionmatrix(testbed,
 
                 if MatrixType == 'perfect':
                     Gvector = Gvector - G0
-                
+
                 if save_all_planes_to_fits == True:
-                        name_plane = 'Gvector_in_matrix_' + osname + '_wl{}'.format(
-                            int(wavelength * 1e9))
-                        useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                    Gvector)
-                        
+                    name_plane = 'Gvector_in_matrix_' + osname + '_wl{}'.format(
+                        int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                              Gvector)
+
                 # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/tutu/")
                 if visu:
                     plt.clf()
@@ -491,7 +492,7 @@ def cropDHInterractionMatrix(FullInterractionMatrix, mask):
     return DHInterractionMatrix
 
 
-def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
+def basis_voltage_to_act_voltage(vector_basis_voltage, testbed: OptSy.Testbed):
     """ --------------------------------------------------
     transform a vector of voltages on the mode of a basis in a  vector of
     voltages of the actuators of the DMs of the system
@@ -518,13 +519,20 @@ def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
 
     vector_actuator_voltage = np.zeros(testbed.number_act)
     for DM_name in testbed.name_of_DMs:
+        
+        # we access each DM object individually
         DM = vars(testbed)[DM_name]
+        
+        # we extract the voltages for this one
+        # this voltages are in the DM basis
         vector_basis_voltage_for_DM = vector_basis_voltage[
             indice_acum_basis_size:indice_acum_basis_size + DM.basis_size]
 
+        # we change to actuator basis
         vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis),
                                             vector_basis_voltage_for_DM)
 
+        # we recreate a voltages vector, but for each actuator
         vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
                                 DM.number_act] = vector_actu_voltage_for_DM
 
@@ -534,7 +542,8 @@ def basis_voltage_to_act_voltage(vector_basis_voltage, testbed):
     return vector_actuator_voltage
 
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed):
+def solutionEFC(mask, Result_Estimate, inversed_jacobian,
+                testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
         intensity in the dark hole region
@@ -567,7 +576,8 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed):
     return basis_voltage_to_act_voltage(produit_mat, testbed)
 
 
-def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
+def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
+               testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region
@@ -601,15 +611,14 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
     return basis_voltage_to_act_voltage(produit_mat, testbed)
 
 
-def solutionSM(
-    mask,
-    testbed,
-    Result_Estimate,
-    Jacob_trans_Jacob,
-    Jacobian,
-    DesiredContrast,
-    last_best_alpha,
-):
+def solutionSM(mask,
+                testbed: OptSy.Testbed,
+                Result_Estimate,
+                Jacob_trans_Jacob,
+                Jacobian,
+                DesiredContrast,
+                last_best_alpha,
+                ):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region in the stroke min solution
@@ -689,8 +698,7 @@ def solutionSM(
             LastCurrentContrast = CurrentContrast
             CurrentContrast = ResidualEnergy
 
-            if (CurrentContrast >
-                    3 * LastCurrentContrast):
+            if (CurrentContrast > 3 * LastCurrentContrast):
                 # this step is to check if the SM is divergeing too quickly
                 return "SMFailedTooManyTime", alpha
 
@@ -720,7 +728,8 @@ def solutionSM(
     # return basis_voltage_to_act_voltage(produit_mat, testbed)
 
 
-def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
+def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
+                     testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize
     the speckle intensity in the dark hole region
@@ -754,8 +763,8 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed):
 #################################################################################
 
 
-def createPWmastrix(testbed, amplitude, posprobes, dimEstim, cutsvd,
-                    wavelength):
+def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
+                    cutsvd, wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
 
@@ -855,7 +864,7 @@ def FP_PWestimate(Difference, Vectorprobes):
 
 
 def createdifference(input_wavefront,
-                     testbed,
+                     testbed: OptSy.Testbed,
                      posprobes,
                      dimimages,
                      amplitudePW,
