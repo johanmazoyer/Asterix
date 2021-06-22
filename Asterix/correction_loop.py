@@ -36,13 +36,14 @@ def CorrectionLoop(testbed,
     CorrectionLoopResult["EF_estim"] = list()
     CorrectionLoopResult["MeanDHContrast"] = list()
 
-
-
     for i in range(Number_matrix):
 
-        corrector.update_matrices(testbed,estimator,initial_DM_voltage=initial_DM_voltage,
-                                input_wavefront=1.)
-        
+        if i > 0:
+            # the first matrix is done during initialization
+            corrector.update_matrices(testbed,
+                                      estimator,
+                                      initial_DM_voltage=initial_DM_voltage,
+                                      input_wavefront=1.)
 
         Resultats_correction_loop = CorrectionLoop1Matrix(
             testbed,
@@ -62,11 +63,12 @@ def CorrectionLoop(testbed,
 
         min_contrast = min(CorrectionLoopResult["MeanDHContrast"])
         min_index = CorrectionLoopResult["MeanDHContrast"].index(min_contrast)
-        initial_DM_voltage = Resultats_correction_loop["voltage_DMs"][min_index]
+        initial_DM_voltage = Resultats_correction_loop["voltage_DMs"][
+            min_index]
 
-        print("end Matrix ",i )
+        print("end Matrix ", i)
         if i != Number_matrix:
-            print("We will restart next matrix from contrast = ",min_contrast)
+            print("We will restart next matrix from contrast = ", min_contrast)
 
     return Resultats_correction_loop
 
@@ -94,7 +96,9 @@ def CorrectionLoop1Matrix(testbed,
         modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
     initialFP = testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                                             voltage_vector=initial_DM_voltage)
+                                             voltage_vector=initial_DM_voltage,
+                                             save_all_planes_to_fits=False,
+                                             dir_save_all_planes=None)
 
     estim_init = estimator.estimate(testbed,
                                     voltage_vector=initial_DM_voltage,
@@ -116,7 +120,6 @@ def CorrectionLoop1Matrix(testbed,
     thisloop_FP_Intensities.append(initialFP)
     thisloop_EF_estim.append(estim_init)
     thisloop_MeanDHContrast.append(initialFP_contrast)
-
 
     if not silence:
         print("Initial contrast in DH: ", initialFP_contrast)
@@ -174,15 +177,13 @@ def CorrectionLoop1Matrix(testbed,
             gain=gain,
             ActualCurrentContrast=thisloop_MeanDHContrast[-1])
 
-        
-
         if isinstance(solution, str) and solution == "StopTheLoop":
-            # for every correction algorithm, we can break the loop by 
+            # for each correction algorithm, we can break the loop by
             # the string "StopTheLoop" instead of a correction vector
             print("we stop the correction")
             break
         elif isinstance(solution, str) and solution == "RebootTheLoop":
-            # for every correction algorithm, we can break the loop by 
+            # for each correction algorithm, we can break the loop by
             # the string "RebootTheLoop" instead of a correction vector
             print("we go back to last best correction")
             ze_arg_of_ze_best = np.argmin(thisloop_MeanDHContrast)
@@ -190,14 +191,13 @@ def CorrectionLoop1Matrix(testbed,
         else:
             new_voltage = thisloop_voltages_DMs[-1] + solution
 
-            
-
         thisloop_FP_Intensities.append(
             testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                          voltage_vector=new_voltage))
         thisloop_EF_estim.append(resultatestimation)
         thisloop_MeanDHContrast.append(
-            np.mean(thisloop_FP_Intensities[-1][np.where(maskdh_science != 0)]))
+            np.mean(
+                thisloop_FP_Intensities[-1][np.where(maskdh_science != 0)]))
 
         if Search_best_Mode == False:
             # if we are only looking for the best mode, we do not update the DM shape
@@ -214,7 +214,7 @@ def CorrectionLoop1Matrix(testbed,
             plt.pause(0.01)
 
     if Search_best_Mode:
-        return np.amin(thisloop_MeanDHContrast [1:]), modevector[np.argmin(
+        return np.amin(thisloop_MeanDHContrast[1:]), modevector[np.argmin(
             thisloop_MeanDHContrast[1:])]
 
     else:
@@ -227,11 +227,13 @@ def CorrectionLoop1Matrix(testbed,
         CorrectionLoopResult["nb_total_iter"] += nbiter
         CorrectionLoopResult["SVDmodes"].append(modevector)
         CorrectionLoopResult["Nb_iter_per_mat"].append(nbiter)
-        
+
         CorrectionLoopResult["voltage_DMs"].extend(thisloop_voltages_DMs)
         CorrectionLoopResult["FP_Intensities"].extend(thisloop_FP_Intensities)
         CorrectionLoopResult["EF_estim"].extend(thisloop_EF_estim)
         CorrectionLoopResult["MeanDHContrast"].extend(thisloop_MeanDHContrast)
+        if not silence:
+            plt.close()
 
         return CorrectionLoopResult
 
