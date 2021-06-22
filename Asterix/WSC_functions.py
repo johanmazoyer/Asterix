@@ -492,56 +492,6 @@ def cropDHInterractionMatrix(FullInterractionMatrix, mask):
     return DHInterractionMatrix
 
 
-def basis_voltage_to_act_voltage(vector_basis_voltage, testbed: OptSy.Testbed):
-    """ --------------------------------------------------
-    transform a vector of voltages on the mode of a basis in a  vector of
-    voltages of the actuators of the DMs of the system
-
-    Parameters:
-    ----------
-    vector_basis_voltage: 1D-array real : dim (total(basisDM sizes))
-                     vector of voltages on the mode of the basis for all
-                     DMs by order of the light path
-    testbed: Optical_element
-        testbed structure (with DMs)
-
-
-    Return:
-    ------
-    vector_actuator_voltage: 1D-array real : dim (total(DM actuators))
-                     vector of base coefficients for all actuators of the DMs by order of the light path
-
-    AUTHOR : Johan Mazoyer
-    -------------------------------------------------- """
-
-    indice_acum_basis_size = 0
-    indice_acum_number_act = 0
-
-    vector_actuator_voltage = np.zeros(testbed.number_act)
-    for DM_name in testbed.name_of_DMs:
-        
-        # we access each DM object individually
-        DM = vars(testbed)[DM_name]
-        
-        # we extract the voltages for this one
-        # this voltages are in the DM basis
-        vector_basis_voltage_for_DM = vector_basis_voltage[
-            indice_acum_basis_size:indice_acum_basis_size + DM.basis_size]
-
-        # we change to actuator basis
-        vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis),
-                                            vector_basis_voltage_for_DM)
-
-        # we recreate a voltages vector, but for each actuator
-        vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
-                                DM.number_act] = vector_actu_voltage_for_DM
-
-        indice_acum_basis_size += DM.basis_size
-        indice_acum_number_act += DM.number_act
-
-    return vector_actuator_voltage
-
-
 def solutionEFC(mask, Result_Estimate, inversed_jacobian,
                 testbed: OptSy.Testbed):
     """ --------------------------------------------------
@@ -573,7 +523,7 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian,
     EF_vector[int(np.sum(mask)):] = np.imag(Resultat_cropdh).flatten()
     produit_mat = np.dot(inversed_jacobian, EF_vector)
 
-    return basis_voltage_to_act_voltage(produit_mat, testbed)
+    return testbed.basis_vector_to_act_vector(produit_mat, testbed)
 
 
 def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
@@ -608,17 +558,11 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
                             Eab)).flatten()
     produit_mat = np.dot(Hessian_Matrix, realb0)
 
-    return basis_voltage_to_act_voltage(produit_mat, testbed)
+    return testbed.basis_vector_to_act_vector(produit_mat, testbed)
 
 
-def solutionSM(mask,
-                testbed: OptSy.Testbed,
-                Result_Estimate,
-                Jacob_trans_Jacob,
-                Jacobian,
-                DesiredContrast,
-                last_best_alpha,
-                ):
+def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
+               DesiredContrast, last_best_alpha, testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region in the stroke min solution
@@ -627,8 +571,6 @@ def solutionSM(mask,
     Parameters:
     ----------
     mask:               Binary mask corresponding to the dark hole region
-
-    testbed: a testbed with one or more DM
 
     Result_Estimate:    2D array can be complex, focal plane electric field
 
@@ -642,6 +584,8 @@ def solutionSM(mask,
     last_best_alpha : This avoid to recalculate the best alpha at each iteration
                             since it's often a very close value to the last one working
 
+    testbed: a testbed with one or more DM
+    
     Return:
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
@@ -723,7 +667,7 @@ def solutionSM(mask,
     print(
         "Number of iteration in this stroke min (number of tested alpha): {:d}"
         .format(iteralpha))
-    return basis_voltage_to_act_voltage(DMSurfaceCoeff, testbed), alpha
+    return testbed.basis_vector_to_act_vector(DMSurfaceCoeff, testbed), alpha
 
     # return basis_voltage_to_act_voltage(produit_mat, testbed)
 
@@ -755,7 +699,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     pas = 2e3
     solution = pas * 2 * Eab
 
-    return basis_voltage_to_act_voltage(solution, testbed)
+    return testbed.basis_vector_to_act_vector(solution, testbed)
 
 
 #################################################################################

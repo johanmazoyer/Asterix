@@ -665,8 +665,7 @@ class pupil(Optical_System):
 
             #Rescale to the pupil size
             pup_fits = fits.getdata(
-                os.path.join(model_dir,
-                             "roman_pup_500pix_center4pixels.fits"))
+                os.path.join(model_dir, "roman_pup_500pix_center4pixels.fits"))
             pup_fits_right_size = skimage.transform.rescale(
                 pup_fits,
                 2 * self.prad / pup_fits.shape[0],
@@ -676,7 +675,7 @@ class pupil(Optical_System):
 
             self.pup = proc.crop_or_pad_image(pup_fits_right_size,
                                               self.dim_overpad_pupil)
-        
+
         elif PupType == "RomanLyot":
             #Rescale to the pupil size
             pup_fits = fits.getdata(
@@ -771,14 +770,11 @@ class pupil(Optical_System):
         if wavelength is None:
             wavelength = self.wavelength_0
 
-
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_pupil' + '_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       entrance_EF)
-
-        
 
         if len(self.pup.shape) == 2:
             exit_EF = entrance_EF * self.pup
@@ -836,12 +832,11 @@ class coronagraph(Optical_System):
         if coroconfig["filename_instr_lyot"] in ["RoundPup", "ClearPlane"]:
             self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
         elif coroconfig["filename_instr_lyot"] == "RomanLyot":
-            self.diam_lyot_in_m = self.diam_pup_in_m*0.800
+            self.diam_lyot_in_m = self.diam_pup_in_m * 0.800
         elif coroconfig["filename_instr_lyot"] == "VLTLyot":
-            self.diam_lyot_in_m = self.diam_pup_in_m*0.95
+            self.diam_lyot_in_m = self.diam_pup_in_m * 0.95
         else:
             raise Exception("This is not a valid Lyot option")
-
 
         self.lyotrad = int(self.prad * self.diam_lyot_in_m /
                            self.diam_pup_in_m)
@@ -925,7 +920,9 @@ class coronagraph(Optical_System):
                                   prad=self.prad,
                                   filename=coroconfig["filename_instr_apod"])
 
-        if coroconfig["filename_instr_lyot"] in ["ClearPlane", "RoundPup", "RomanPup","RomanLyot"]:
+        if coroconfig["filename_instr_lyot"] in [
+                "ClearPlane", "RoundPup", "RomanPup", "RomanLyot"
+        ]:
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
                                   PupType=coroconfig["filename_instr_lyot"])
@@ -1084,16 +1081,14 @@ class coronagraph(Optical_System):
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane * FPmsk)
-                
+
                 name_plane = 'EF_FP_after_1minusFPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane * (1 - FPmsk))
 
-                                          
-
             # Focal plane to Lyot plane
-            # Babinet's trick: 
+            # Babinet's trick:
             lyotplane_before_lyot_central_part = prop.mft(
                 corono_focal_plane * (1 - FPmsk),
                 self.dim_fpm,
@@ -1429,7 +1424,7 @@ class deformable_mirror(Optical_System):
         if not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
-        
+
         self.Model_local_dir = Model_local_dir
 
         self.exitpup_rad = self.prad
@@ -1446,17 +1441,17 @@ class deformable_mirror(Optical_System):
 
         # first thing we do is to open filename_grid_actu to check the number of
         # actuator of this DM. We need the number of act to read and load pushact .fits
-        
-        self.total_act = fits.getdata(
-                model_dir +
-                DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
-        
+
+        self.total_act = fits.getdata(model_dir +
+                                      DMconfig[self.Name_DM +
+                                               "_filename_grid_actu"]).shape[1]
+
         if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
             self.active_actuators = fits.getdata(
                 model_dir +
                 DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
             self.number_act = len(self.active_actuators)
-            
+
         else:
             self.number_act = self.total_act
             self.active_actuators = np.arange(self.number_act)
@@ -1563,7 +1558,7 @@ class deformable_mirror(Optical_System):
         # call the Optical_System super function to check
         # and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
-    
+
         if wavelength is None:
             wavelength = self.wavelength_0
 
@@ -1634,10 +1629,12 @@ class deformable_mirror(Optical_System):
 
         Name_pushact_fits = "PushAct" + self.string_os
 
-        if (self.misregistration is False) and (
-                os.path.exists(self.Model_local_dir + Name_pushact_fits + '.fits')):
+        if (self.misregistration is
+                False) and (os.path.exists(self.Model_local_dir +
+                                           Name_pushact_fits + '.fits')):
             pushact3d = fits.getdata(
-                os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
+                os.path.join(self.Model_local_dir,
+                             Name_pushact_fits + '.fits'))
             return pushact3d
 
         diam_pup_in_pix = 2 * self.prad
@@ -1726,8 +1723,9 @@ class deformable_mirror(Optical_System):
             if gausserror == 0:
                 Psivector = nd.interpolation.shift(
                     actshapeinpupil,
-                    (simu_grid[1, i] + dim_array / 2 - xycenttmp + yerror*pitch_actshape,
-                     simu_grid[0, i] + dim_array / 2 - xycenttmp + xerror*pitch_actshape))
+                    (simu_grid[1, i] + dim_array / 2 - xycenttmp +
+                     yerror * pitch_actshape, simu_grid[0, i] + dim_array / 2 -
+                     xycenttmp + xerror * pitch_actshape))
 
                 # Add an error on the orientation of the grid
                 if angerror != 0:
@@ -1787,7 +1785,8 @@ class deformable_mirror(Optical_System):
         Name_WhichInPup_fits = "WhichInPup" + self.string_os + "_thres" + str(
             self.WhichInPup_threshold)
 
-        if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits + '.fits'):
+        if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits +
+                          '.fits'):
             return fits.getdata(self.Model_local_dir + Name_WhichInPup_fits +
                                 '.fits')
 
@@ -1955,7 +1954,6 @@ class deformable_mirror(Optical_System):
         Author: Johan Mazoyer
         -------------------------------------------------- """
 
-
         if basis_type == 'actuator':
             active_and_in_pup = [
                 value for value in self.active_actuators
@@ -1967,16 +1965,14 @@ class deformable_mirror(Optical_System):
             basis = np.zeros((basis_size, self.number_act))
             for i in range(basis_size):
                 basis[i][active_and_in_pup[i]] = 1
-            
+
         elif basis_type == 'fourier':
             start_time = time.time()
-            activeact = [
-                value for value in self.active_actuators
-            ]
-            
-            sqrtnbract = int(np.sqrt(self.total_act))
-            Name_FourrierBasis_fits = "Fourier_basis_" +self.Name_DM +'_prad' + str(self.prad) + '_nact' + str(sqrtnbract)+ 'x' + str(sqrtnbract)
+            activeact = [value for value in self.active_actuators]
 
+            sqrtnbract = int(np.sqrt(self.total_act))
+            Name_FourrierBasis_fits = "Fourier_basis_" + self.Name_DM + '_prad' + str(
+                self.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
 
             cossinbasis = proc.SinCosBasis(sqrtnbract)
 
@@ -1986,25 +1982,27 @@ class deformable_mirror(Optical_System):
             for i in range(basis_size):
                 vec = cossinbasis[i].flatten()[activeact]
                 basis[i] = vec
-            
+
             start_time = time.time()
 
-            if not os.path.exists(self.Model_local_dir + Name_FourrierBasis_fits + '.fits'):
-                phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil, self.dim_overpad_pupil))
+            if not os.path.exists(self.Model_local_dir +
+                                  Name_FourrierBasis_fits + '.fits'):
+                phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil,
+                                           self.dim_overpad_pupil))
                 print("Start " + Name_FourrierBasis_fits)
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
                         useful.progress(i, basis_size, status='')
-                fits.writeto(self.Model_local_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
+                fits.writeto(
+                    self.Model_local_dir + Name_FourrierBasis_fits + '.fits',
+                    phasesFourrier)
             print("time for " + Name_FourrierBasis_fits,
-              time.time() - start_time)
+                  time.time() - start_time)
 
         else:
-            raise Exception(basis_type + " is is not a valid basis_type")  
-        
-            
-            
+            raise Exception(basis_type + " is is not a valid basis_type")
+
         return basis
 
 
@@ -2197,6 +2195,56 @@ class Testbed(Optical_System):
         # useful.quickfits(DMphases, dir="/Users/jmazoyer/Desktop/DM_phase/")
 
         return DMphases
+
+    def basis_vector_to_act_vector(self, vector_basis_voltage):
+        """ --------------------------------------------------
+        transform a vector of voltages on the mode of a basis in a  vector of
+        voltages of the actuators of the DMs of the system
+
+        Parameters:
+        ----------
+        vector_basis_voltage: 1D-array real : dim (total(basisDM sizes))
+                        vector of voltages on the mode of the basis for all
+                        DMs by order of the light path
+        testbed: Optical_element
+            testbed structure (with DMs)
+
+
+        Return:
+        ------
+        vector_actuator_voltage: 1D-array real : dim (total(DM actuators))
+                        vector of base coefficients for all actuators of the DMs by order of the light path
+
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+
+        indice_acum_basis_size = 0
+        indice_acum_number_act = 0
+
+        vector_actuator_voltage = np.zeros(self.number_act)
+        for DM_name in self.name_of_DMs:
+
+            # we access each DM object individually
+            DM = vars(self)[DM_name]
+
+            # we extract the voltages for this one
+            # this voltages are in the DM basis
+            vector_basis_voltage_for_DM = vector_basis_voltage[
+                indice_acum_basis_size:indice_acum_basis_size + DM.basis_size]
+
+            # we change to actuator basis
+            vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis),
+                                                vector_basis_voltage_for_DM)
+
+            # we recreate a voltages vector, but for each actuator
+            vector_actuator_voltage[
+                indice_acum_number_act:indice_acum_number_act +
+                DM.number_act] = vector_actu_voltage_for_DM
+
+            indice_acum_basis_size += DM.basis_size
+            indice_acum_number_act += DM.number_act
+
+        return vector_actuator_voltage
 
 
 ##############################################
