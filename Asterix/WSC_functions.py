@@ -343,13 +343,16 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                             DM.diam_pup_in_m / 2, DM.prad)
 
                 if MatrixType == 'smallphase':
+                    # TODO we added a 1+ which was initially in Axel's code and that was
+                    # removed. Not sure what's its role
                     if DM.z_position == 0:
-                        wavefront = 1j * phasesBasis[
-                            i] * wavefrontupstream * DM.EF_from_phase_and_ampl(
-                                phase_abb=DM.phase_init)
+                        wavefront = (
+                            1 + 1j * phasesBasis[i]
+                        ) * wavefrontupstream * DM.EF_from_phase_and_ampl(
+                            phase_abb=DM.phase_init)
                     else:
                         wavefront, _ = prop.prop_fresnel(
-                            wavefrontupstreaminDM * 1j * phasesBasis[i] *
+                            wavefrontupstreaminDM * (1 + 1j * phasesBasis[i]) *
                             DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init),
                             DM.wavelength_0, -DM.z_position,
                             DM.diam_pup_in_m / 2, DM.prad)
