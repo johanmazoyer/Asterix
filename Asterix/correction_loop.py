@@ -86,15 +86,12 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
         Nbmode_corr = [int(i) for i in SIMUconfig["Nbmode_corr"]]
         Linesearch = SIMUconfig["Linesearch"]
-        Linesearchmodes = [int(i) for i in SIMUconfig["Linesearchmodes"]]
         gain = SIMUconfig["gain"]
         CorrectionLoopResult["SVDmodes"] = list()
-    else: 
+    else:
         Nbmode_corr = []
         Linesearch = None
-        Linesearchmodes = []
         gain = 0.
-
 
     if corrector.correction_algorithm == 'sm':
         Linesearch = False
@@ -123,7 +120,6 @@ def CorrectionLoop(testbed: OptSy.Testbed,
             gain=gain,
             Nbmode_corr=Nbmode_corr,
             Linesearch=Linesearch,
-            Linesearchmodes=Linesearchmodes,
             input_wavefront=input_wavefront,
             initial_DM_voltage=initial_DM_voltage,
             photon_noise=photon_noise,
@@ -135,9 +131,13 @@ def CorrectionLoop(testbed: OptSy.Testbed,
         initial_DM_voltage = Resultats_correction_loop["voltage_DMs"][
             min_index]
 
-        print("end Matrix ", i)
+        
         if i != Number_matrix - 1:
+            print("end Matrix ", i)
             print("We will restart next matrix from contrast = ", min_contrast)
+        else:
+            print("End correction")
+
 
     return Resultats_correction_loop
 
@@ -151,7 +151,6 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                           gain=0.1,
                           Nbmode_corr=None,
                           Linesearch=False,
-                          Linesearchmodes=None,
                           Search_best_Mode=False,
                           input_wavefront=1.,
                           initial_DM_voltage=0.,
@@ -185,11 +184,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     
     Linesearch: bool, default False. If True, In this mode, the function CorrectionLoop1Matrix
                         will call itself at each iteration with Search_best_Mode= True to find 
-                        the best SVD inversion mode among Linesearchmodes. 
-    
-    Linesearchmodes: list of int. List of modes that are probed to find the best mode at  
-                                each iteration
-                                TODO: Can be measured directly from the number of modes in the testbed
+                        the best SVD inversion mode among a few Linesearchmodes. 
     
     Search_best_Mode: bool. default False. If true, the algorithm does not return the
                                 loop information, just the best mode and best contrast. 
@@ -227,22 +222,22 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
         # This is to prevent an infinite loop
         Linesearch = False
 
-
     thisloop_expected_iteration_number = sum(Nbiter_corr)
 
     ## Number of modes that is used as a function of the iteration cardinal
     # in the EFC case
+
     if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
         modevector = []
         if Linesearch:
             # in this case we can ignore the modes because we will search for the best one
             # at each iteration
-            modevector = [10 for i in range(thisloop_expected_iteration_number)] 
+            modevector = [
+                10 for i in range(thisloop_expected_iteration_number)
+            ]
         else:
             for i in np.arange(len(Nbiter_corr)):
                 modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
-            
-        
 
     initialFP = testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                              voltage_vector=initial_DM_voltage,
@@ -288,10 +283,15 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                         .format(mode, corrector.Gmatrix.shape[1]))
                     print("We skip this iteration")
                 continue
-        else:
-            mode = 1
 
             if Linesearch:
+
+                # we search the best cutoff mode among 10 different ones evenly separated
+                Linesearchmodes = 10 * (np.arange(0.1, 1, 0.1) *
+                                        corrector.total_number_modes /
+                                        10).astype(int)
+                
+                print("Search Best Mode among ", Linesearchmodes)
                 # if we are just trying to find the best mode, we just call the function itself
                 # on the Linesearchmodes but without updating the results.
                 # this is elegant but must be carefully done if we want to avoid infinite loop.
@@ -308,17 +308,21 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                     input_wavefront=input_wavefront,
                     initial_DM_voltage=thisloop_voltages_DMs[iteration],
                     silence=True)
-                print("Search Best Mode: ", bestmode, " contrast: ",
+                
+                print("Best Mode is ", bestmode, " with contrast: ",
                       bestcontrast)
                 modevector[iteration] = mode = bestmode
 
-        if not silence:
-            print("--------------------------------------------------")
-            if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
-                print("Iteration number: ", iteration, corrector.correction_algorithm + " SVD truncation: ", mode)
-            else:
-                print("Iteration number: ", iteration)
+        else:
+            mode = 1
 
+        if not silence:
+            if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
+                print("Iteration number: ", iteration +1,
+                      corrector.correction_algorithm + " SVD truncation: ",
+                      mode)
+            else:
+                print("Iteration number: ", iteration+1)
 
         # for now monochromatic estimation
         resultatestimation = estimator.estimate(
@@ -368,6 +372,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
         iteration_number += 1
         if not silence:
             print("Mean contrast in DH: ", thisloop_MeanDHContrast[-1])
+            print("--------------------------------------------------")
             print("")
             plt.clf()
             plt.imshow(np.log10(thisloop_FP_Intensities[-1]), vmin=-8, vmax=-5)
