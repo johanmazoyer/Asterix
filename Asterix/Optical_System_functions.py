@@ -887,7 +887,7 @@ class coronagraph(Optical_System):
 
         elif self.corona_type == "knife":
             self.prop_apod2lyot = 'mft'
-            self.coro_position = coroconfig["coro_position"].lower()
+            self.coro_position = coroconfig["knife_coro_position"].lower()
             self.knife_coro_offset = coroconfig["knife_coro_offset"]
             self.FPmsk = self.KnifeEdgeCoro()
             self.string_os += '_' + self.coro_position + "_iwa" + str(
