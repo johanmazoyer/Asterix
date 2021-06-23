@@ -419,7 +419,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
                 # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/toto/")
 
-                Gvector = Gvector - G0                    
+                Gvector = Gvector - G0
 
                 if save_all_planes_to_fits == True:
                     name_plane = 'Gvector_in_matrix_' + osname + '_wl{}'.format(
@@ -755,7 +755,8 @@ def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
         # (coronagraph does not "remove the 1 exactly")
 
         deltapsik[k] = proc.resampling(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k]) - psi0, dimEstim)
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k]) - psi0,
+            dimEstim)
         k = k + 1
 
     l = 0
@@ -865,7 +866,10 @@ def createdifference(input_wavefront,
 
             indice_acum_number_act += DM.number_act
 
-        # TODO Can these be replaced by todetector_intensity ?
+        # We do not use todetector_Intensity so that each WL is normlize with
+        # np.sqrt(self.norm_monochrom[self.wav_vec.tolist().index(wavelength)]))
+        # When we go polychromatic, lets be careful with the normalization
+
         Ikmoins = np.abs(
             testbed.todetector(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector - Voltage_probe,

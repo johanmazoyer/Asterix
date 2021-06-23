@@ -3,6 +3,7 @@ import scipy.optimize as opt
 import scipy.ndimage as nd
 import Asterix.propagation_functions as prop
 
+
 def twoD_Gaussian(xy,
                   amplitude,
                   sigma_x,
@@ -100,7 +101,7 @@ def resampling(image, new):
 
     dimScience = len(image)
 
-    # THe old function is decentering the PSF (it is not centered between 4 pixels) !! 
+    # THe old function is decentering the PSF (it is not centered between 4 pixels) !!
     # We need to talk abuot it with Raphael
     # Replacing currenly with standard pyhton function scipy.ndimage.zoom
 
@@ -112,8 +113,8 @@ def resampling(image, new):
 
     # if np.isrealobj(image):
     #     resized_image = np.real(resized_image)
-    
-    resized_image = nd.zoom(image, new/dimScience)
+
+    resized_image = nd.zoom(image, new / dimScience)
 
     return resized_image
 
@@ -209,10 +210,7 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     return simu_grid
 
 
-
-
 def SinCosBasis(sqrtNbActuators):
-
     """ --------------------------------------------------
     For a given number of actuator accross the pupil, create coefficients for the sin/cos basis
     Works only for a even number of actuator accross the pupil 
@@ -229,29 +227,34 @@ def SinCosBasis(sqrtNbActuators):
     Author: Johan Mazoyer
     -------------------------------------------------- """
 
-    TFCoeffs = np.zeros((sqrtNbActuators**2, sqrtNbActuators,sqrtNbActuators), dtype=complex)
-    SinCos = np.zeros((sqrtNbActuators**2, sqrtNbActuators,sqrtNbActuators))
-    
-    for Coeff_SinCos in range(sqrtNbActuators**2 ):
+    TFCoeffs = np.zeros((sqrtNbActuators**2, sqrtNbActuators, sqrtNbActuators),
+                        dtype=complex)
+    SinCos = np.zeros((sqrtNbActuators**2, sqrtNbActuators, sqrtNbActuators))
+
+    for Coeff_SinCos in range(sqrtNbActuators**2):
         Coeffs = np.zeros((sqrtNbActuators, sqrtNbActuators), dtype=complex)
-        
+
         # It's a cosinus
-        if Coeff_SinCos < sqrtNbActuators**2//2:
+        if Coeff_SinCos < sqrtNbActuators**2 // 2:
             i = Coeff_SinCos // sqrtNbActuators
             j = Coeff_SinCos % sqrtNbActuators
-            Coeffs[i,j] = 1/2
-            Coeffs[sqrtNbActuators-i-1,sqrtNbActuators-j-1] = 1/2
+            Coeffs[i, j] = 1 / 2
+            Coeffs[sqrtNbActuators - i - 1, sqrtNbActuators - j - 1] = 1 / 2
 
         # It's a sinus
         else:
-            i = (Coeff_SinCos - sqrtNbActuators**2//2) // sqrtNbActuators
-            j = (Coeff_SinCos - sqrtNbActuators**2//2) % sqrtNbActuators
-            Coeffs[i,j] = 1/2
-            Coeffs[sqrtNbActuators-i-1,sqrtNbActuators-j-1] = 1j/2
+            i = (Coeff_SinCos - sqrtNbActuators**2 // 2) // sqrtNbActuators
+            j = (Coeff_SinCos - sqrtNbActuators**2 // 2) % sqrtNbActuators
+            Coeffs[i, j] = 1 / 2
+            Coeffs[sqrtNbActuators - i - 1, sqrtNbActuators - j - 1] = 1j / 2
         TFCoeffs[Coeff_SinCos] = Coeffs
 
-        SinCos[Coeff_SinCos] = np.real(prop.mft(TFCoeffs[Coeff_SinCos],sqrtNbActuators, sqrtNbActuators, sqrtNbActuators, X_offset_input=-0.5,
-        Y_offset_input=-0.5))
-
+        SinCos[Coeff_SinCos] = np.real(
+            prop.mft(TFCoeffs[Coeff_SinCos],
+                     sqrtNbActuators,
+                     sqrtNbActuators,
+                     sqrtNbActuators,
+                     X_offset_input=-0.5,
+                     Y_offset_input=-0.5))
 
     return SinCos

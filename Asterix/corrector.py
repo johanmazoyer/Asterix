@@ -317,8 +317,8 @@ class Corrector:
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
             solutionSM, self.last_best_alpha = wsc.solutionSM(
-                self.MaskEstim, estimate, self.M0, self.G,
-                DesiredContrast, self.last_best_alpha, testbed)
+                self.MaskEstim, estimate, self.M0, self.G, DesiredContrast,
+                self.last_best_alpha, testbed)
 
             if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (
                     isinstance(solutionSM, str)

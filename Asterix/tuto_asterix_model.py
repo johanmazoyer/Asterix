@@ -103,16 +103,14 @@ modelconfig.update({'Delta_wav': 0})
 Coronaconfig.update({'filename_instr_apod': "RoundPup"})
 corono = OptSy.coronagraph(modelconfig, Coronaconfig)
 
-
 # For the coronagraph, we can measure 2 types of PSF: with or without mask
 No_mask_PSF = corono.todetector_Intensity(center_on_pixel=True, noFPM=True)
 # This allow us to normalize the images
 Max_No_mask_PSF = np.max(No_mask_PSF)
 
-
 # set initial phase and amplitude and wavefront
 phase = corono.generate_phase_aberr(SIMUconfig,
-                                            Model_local_dir=Model_local_dir)
+                                    Model_local_dir=Model_local_dir)
 
 # # from this phase we create a electrical field. This is a general
 # aberrated field before any pupil multiplication.
