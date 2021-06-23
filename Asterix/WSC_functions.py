@@ -419,8 +419,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
                 # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/toto/")
 
-                if MatrixType == 'perfect':
-                    Gvector = Gvector - G0
+                Gvector = Gvector - G0                    
 
                 if save_all_planes_to_fits == True:
                     name_plane = 'Gvector_in_matrix_' + osname + '_wl{}'.format(
