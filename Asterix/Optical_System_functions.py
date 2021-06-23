@@ -175,6 +175,9 @@ class Optical_System:
 
         wavelength : float. Default is self.wavelength_0 the reference wavelength
                 current wavelength in m.
+        
+        in_contrast : bool, default True. nonrmalize to np.sqrt(self.norm_monochrom[self.wav_vec.tolist().index(wavelength)]))
+         (see self.measure_normalization)
 
         center_on_pixel : bool Default False
             If True, the PSF will be centered on a pixel
@@ -262,6 +265,8 @@ class Optical_System:
 
         wavelengths : float or float array of wavelength in m.
                         Default is all wavelenthg in self.wav_vec
+        
+        in_contrast : bool, default True. nonrmalize to self.norm_polychrom (see self.measure_normalization)
 
         center_on_pixel : bool Default False
             If True, the PSF will be centered on a pixel
