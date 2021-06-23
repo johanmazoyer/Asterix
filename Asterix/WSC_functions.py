@@ -741,6 +741,7 @@ def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
 
     DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]
 
+    psi0 = testbed.todetector()
     k = 0
 
     for i in posprobes:
@@ -755,7 +756,7 @@ def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
         # (coronagraph does not "remove the 1 exactly")
 
         deltapsik[k] = proc.resampling(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k]), dimEstim)
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k]) - psi0, dimEstim)
         k = k + 1
 
     l = 0
