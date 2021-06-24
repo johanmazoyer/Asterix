@@ -1,14 +1,10 @@
 # pylint: disable=invalid-name
+# pylint: disable=trailing-whitespace
 
 import os
-
 import inspect
-
 import copy
-from random import weibullvariate
 import time
-from astropy.io.fits.convenience import writeto
-from astropy.utils.exceptions import AstropyDeprecationWarning
 import numpy as np
 import scipy.ndimage as nd
 from astropy.io import fits
@@ -17,7 +13,6 @@ import skimage.transform
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.phase_amplitude_functions as phase_ampl
-
 import Asterix.fits_functions as useful
 
 Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
@@ -2164,7 +2159,7 @@ class Testbed(Optical_System):
 
         Parameters:
         ----------
-        actu_vect : flaot or 1D array of size testbed.number_act
+        actu_vect : float or 1D array of size testbed.number_act
                     values of the amplitudes for each actuator and each DM
         einstein_sum : boolean. default false
                         Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
@@ -2192,7 +2187,7 @@ class Testbed(Optical_System):
 
         for i, DM_name in enumerate(self.name_of_DMs):
 
-            DM = vars(self)[DM_name]
+            DM = vars(self)[DM_name]  # type: deformable_mirror
             actu_vect_DM = actu_vect[
                 indice_acum_number_act:indice_acum_number_act + DM.number_act]
             DMphases[i] = DM.voltage_to_phase(actu_vect_DM,
@@ -2232,7 +2227,7 @@ class Testbed(Optical_System):
         for DM_name in self.name_of_DMs:
 
             # we access each DM object individually
-            DM = vars(self)[DM_name]
+            DM = vars(self)[DM_name]  # type: deformable_mirror
 
             # we extract the voltages for this one
             # this voltages are in the DM basis
@@ -2315,14 +2310,14 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
     return new_EF_through_fun
 
 
-def _clean_EF_through(testbed_EF_through, known_keywords):
+def _clean_EF_through(testbed_EF_through, known_keywords) :
     """ --------------------------------------------------
     a functions to check that we do not set unknown keyword in
     the testbed EF through function. Maybe not necessary.
 
     parameter: 2 functions
          testbed_EF_through function
-         inner_fun: x -> inner_fun(x)
+         known_keywords: list of strings of known keywords
 
     Returns
         ------
@@ -2349,7 +2344,7 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
     return wrapper
 
 
-def _control_testbed_with_voltages(testbed, testbed_EF_through):
+def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
     """ --------------------------------------------------
     A function to go from a testbed_EF_through with several DMXX_phase
     parameters (one for each DM), to a testbed_EF_through with a unique
