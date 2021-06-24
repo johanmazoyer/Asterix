@@ -1,5 +1,5 @@
 # pylint: disable=invalid-name
-__author__ = "Axel Potier"
+# pylint: disable=trailing-whitespace
 
 from functools import total_ordering
 import os
@@ -136,29 +136,29 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     normalisation_testbed_EF_contrast = np.sqrt(
         testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelength)])
 
-    # This is for the case we take an non DM vectors already, we need to calculate
+    # This is for the case we take a non zero DM vectors already, we need to calculate
     # the initial phase for each DM
     DM_phase_init = testbed.voltage_to_phases(initial_DM_voltage)
 
     # First run throught the DMs to :
     #   - string matrix to create a name for the matrix
     #   - check total size of basis
-    #   - attched the initial phase for each DM
+    #   - attach the initial phase to each DM
     total_number_basis_modes = 0
     string_testbed_without_DMS = testbed.string_os
 
     for i, DM_name in enumerate(testbed.name_of_DMs):
 
-        DM = vars(testbed)[DM_name]
+        DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(
             DM_small_str, '')
-
-        #attched the initial phase for each DM
+        #attach the initial phase for each DM
         DM.phase_init = DM_phase_init[i]
 
-    DM_phase_init = 0
+    # remove to save memory
+    del DM_phase_init
 
     # Some string manips to name the matrix if we save it
     if MatrixType == 'perfect':
@@ -177,18 +177,13 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     print("")
     print("Start Interraction Matrix")
 
-    # useful.quickfits(testbed.todetector_Intensity(entrance_EF=input_wavefront,
-    #                        voltage_vector=initial_DM_voltage))
-
-    # useful.quickfits(np.abs(G0)**2)
-    # useful.quickfits(np.abs(G0), dir = "/Users/jmazoyer/Desktop/toto/")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
 
     for DM_name in testbed.name_of_DMs:
 
-        DM = vars(testbed)[DM_name]
+        DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(
@@ -196,12 +191,10 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
         fileDirectMatrix = headfile + basis_str + string_testbed_without_DMS
 
-        # matrix is saved only for the first one
-        # Matrix is saved/loaded for each DM independetly which allow quick swith
+        # We only save the 'first' matrix meaning the one with no initial DM voltages
+        # Matrix is saved/loaded for each DM independetly which allow quick switch
         # For 1DM test / 2DM test
         # Matrix is saved/loaded for all the FP and then crop at the good size later
-
-        # We only save the 'first' matrix meaning the one with no initial DM voltages
 
         if os.path.exists(matrix_dir + fileDirectMatrix +
                           ".fits") and (initial_DM_voltage == 0.).all():
@@ -230,7 +223,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
             print("Start " + DM_name)
 
-            # we measure the phase of the Basis we will apply on the DM
+            # we measure the phases of the Basis we will apply on the DM
             if DM.basis_type == 'fourier':
                 sqrtnbract = int(np.sqrt(DM.total_act))
                 Name_FourrierBasis_fits = "Fourier_basis_" + DM.Name_DM + '_prad' + str(
@@ -246,25 +239,26 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                     phasesBasis[i] = DM.voltage_to_phase(
                         DM.basis[i]) * amplitudeEFC
 
-            # to be applicable to all Testbed configuration we separate the testbed in 3 parts:
+            # to be applicable to all Testbed configurations and save time we separate the testbed in 3 parts:
             # - The optics before the DM we want to actuate (these can be propagated through only once)
-            # - The Dm we want to actuate (if not in PP, the first Fresnel transform can be calculated only once)
+            # - The DM we want to actuate (if not in PP, the first Fresnel transform can be calculated only once)
             # - The optics after the DM we want to actuate (these have to be propagated through for each phase of the basis)
 
             positioonDMintestbed = testbed.subsystems.index(DM_name)
             OpticSysNameBefore = testbed.subsystems[:positioonDMintestbed]
             OpticSysNameAfter = testbed.subsystems[positioonDMintestbed + 1:]
 
-            # we go through all subsystme of the test bed
+            # we go through all subsystems of the testbed
 
-            #First before the DM we want to actuate (aperture, other DMs, etc).
+            # First before the DM we want to actuate (aperture, other DMs, etc).
             # This ones, we only do once !
             wavefrontupstream = input_wavefront
 
             for osname in OpticSysNameBefore:
-                OpticSysbefore = vars(testbed)[osname]
+                OpticSysbefore = vars(testbed)[osname] # type: OptSy.Optical_System
 
                 if save_all_planes_to_fits == True:
+                    # save PP plane before this subsystem
                     name_plane = 'EF_PP_before_' + osname + '_wl{}'.format(
                         int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
@@ -278,13 +272,13 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                         wavefrontupstream = wavefrontupstream * OpticSysbefore.EF_from_phase_and_ampl(
                             phase_abb=OpticSysbefore.phase_init,
                             wavelengths=wavelength)
-
                     else:
                         wavefrontupstream = OpticSysbefore.prop_pup_to_DM_and_back(
                             wavefrontupstream, OpticSysbefore.phase_init,
                             wavelength)
 
                     if save_all_planes_to_fits == True:
+                        # save phase on this DM
                         name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(
                             int(wavelength * 1e9))
                         useful.save_plane_in_fits(dir_save_all_planes,
@@ -296,6 +290,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                         entrance_EF=wavefrontupstream)
 
                 if save_all_planes_to_fits == True:
+                    # save PP plane after this subsystem
                     name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(
                         int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
@@ -308,14 +303,13 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 wavefrontupstreaminDM, _ = prop.prop_fresnel(
                     wavefrontupstream, DM.wavelength_0, DM.z_position,
                     DM.diam_pup_in_m / 2, DM.prad)
-            # now we go throught the DM basis
-            # Creating Interaction Matrix for the DMs if does not exist
-            init_pos_in_matrix = pos_in_matrix
-            # useful.quickfits(DM.phase_init, dir = "/Users/jmazoyer/Desktop/phases/")
-            # useful.quickfits(np.abs(G0), dir = "/Users/jmazoyer/Desktop/toto/")
+            
             if visu:
                 plt.ion()
                 plt.figure()
+
+            # now we go throught the DM basis
+            init_pos_in_matrix = pos_in_matrix # where we store the next vect in the matrix
 
             for i in range(DM.basis_size):
 
@@ -344,7 +338,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
                 if MatrixType == 'smallphase':
                     # TODO we added a 1+ which was initially in Axel's code and that was
-                    # removed. Not sure what's its role
+                    # removed. Need to be tested with and without on the testbed
                     if DM.z_position == 0:
                         wavefront = (
                             1 + 1j * phasesBasis[i]
@@ -365,7 +359,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 # and finally we go through the subsystems after the DMs we want to actuate
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
                 for osname in OpticSysNameAfter:
-                    OpticSysAfter = vars(testbed)[osname]
+                    OpticSysAfter = vars(testbed)[osname] # type: OptSy.Optical_System
                     if osname != OpticSysNameAfter[-1]:
 
                         if isinstance(OpticSysAfter, OptSy.deformable_mirror
@@ -413,12 +407,10 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                             useful.save_plane_in_fits(dir_save_all_planes,
                                                       name_plane, Gvector)
 
-                # Should we remove the intial FP field. This is very differnt for non ideal coronagrpah
-                # or if we have a strong initial DM voltages. This needs to be thoroughly investigated:
-                # for now only in 'perfect case':
-
-                # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/toto/")
-
+                # TODO Should we remove the intial FP field G0 in all casese ? For ideal
+                # corono and flat DMs, this is 0, but it's not for non ideal coronagraph 
+                # or if we have a strong initial DM voltages. This needs 
+                # to be investigated, in simulation and on the testbed
                 Gvector = Gvector - G0
 
                 if save_all_planes_to_fits == True:
@@ -427,7 +419,6 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                               Gvector)
 
-                # useful.quickfits(np.abs(Gvector), dir = "/Users/jmazoyer/Desktop/tutu/")
                 if visu:
                     plt.clf()
                     plt.imshow(np.log10(np.abs(Gvector)**2), vmin=-10, vmax=-6)
@@ -444,6 +435,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 # without changeing the matrix
 
                 pos_in_matrix += 1
+            
             if visu:
                 plt.close()
             # We save the interraction matrix:
@@ -452,15 +444,18 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                     matrix_dir + fileDirectMatrix + ".fits",
                     InterMat[:, init_pos_in_matrix:init_pos_in_matrix +
                              DM.basis_size])
-            # else:
-            #     useful.quickfits(InterMat)
 
+    # clean to save memory
+    for i, DM_name in enumerate(testbed.name_of_DMs):
+        DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
+        DM.phase_init = 0
+    
     print("")
     print("End Interraction Matrix")
     return InterMat
 
 
-def cropDHInterractionMatrix(FullInterractionMatrix, mask):
+def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray, mask:np.ndarray):
     """ --------------------------------------------------
     Crop the  Interraction Matrix. to the mask size
 
@@ -738,7 +733,7 @@ def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
     PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
 
-    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]
+    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW] # type: OptSy.deformable_mirror
 
     psi0 = testbed.todetector()
     k = 0
@@ -856,7 +851,7 @@ def createdifference(input_wavefront,
         indice_acum_number_act = 0
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]
+            DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
 
             if DM_name == testbed.name_DM_to_probe_in_PW:
                 Voltage_probeDMprobe = np.zeros(DM.number_act)
