@@ -71,19 +71,20 @@ class Corrector:
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
+        if not os.path.exists(matrix_dir):
+            print("Creating directory " + matrix_dir + " ...")
+            os.makedirs(matrix_dir)
 
         if isinstance(testbed, OptSy.Optical_System) == False:
             raise Exception("testbed must be an Optical_System objet")
 
         basis_type = Correctionconfig["DM_basis"].lower()
 
-        basis_str = ""
         for DM_name in testbed.name_of_DMs:
             DM = vars(testbed)[DM_name]
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
-            basis_str += "_" + DM_name +  basis_type +"Basis" + str(
-                DM.basis_size)
+            DM.basis_type = basis_type
 
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
@@ -96,28 +97,15 @@ class Corrector:
             self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
                                                    estimator.Estim_sampling)
 
-            fileDirectMatrix = "DirectMatrix_EFCampl" + str(
-                self.amplitudeEFC) + basis_str + testbed.string_os
+            start_time = time.time()
+            interMat = wsc.creatingInterractionmatrix(1., testbed,
+                                                      estimator.dimEstim,
+                                                      self.amplitudeEFC,
+                                                      matrix_dir)
 
-            if os.path.exists(matrix_dir + fileDirectMatrix + ".fits"):
-                print("The matrix " + fileDirectMatrix + " already exists")
-                interMat = fits.getdata(matrix_dir + fileDirectMatrix +
-                                        ".fits")
-
-            else:
-                # Creating Interaction Matrix if does not exist
-
-                print("Saving " + fileDirectMatrix + " ...")
-                start_time = time.time()
-
-                start_time = time.time()
-                interMat = wsc.creatingInterractionmatrix(
-                    1., testbed, estimator.dimEstim, self.amplitudeEFC)
-
-                fits.writeto(matrix_dir + fileDirectMatrix + ".fits", interMat)
-                print("time for direct matrix " + testbed.string_os,
-                      time.time() - start_time)
-                print("")
+            print("time for direct matrix " + testbed.string_os,
+                  time.time() - start_time)
+            print("")
 
             self.Gmatrix = wsc.cropDHInterractionMatrix(
                 interMat, self.MaskEstim)
@@ -134,48 +122,48 @@ class Corrector:
                 self.M0 = np.real(np.dot(transposecomplexG, self.G))
 
             if save_for_bench == True:
+                if not os.path.exists(realtestbed_dir):
+                    print("Creating directory " + realtestbed_dir + " ...")
+                    os.makedirs(realtestbed_dir)
 
                 Nbmodes = Correctionconfig["Nbmodes_OnTestbed"]
-                _, _, invertGDH = wsc.invertSVD(
-                    self.Gmatrix,
-                    Nbmodes,
-                    goal="c",
-                    regul=self.regularization,
-                    visu=True,
-                    filename_visu=realtestbed_dir + "SVD_Modes" +
-                    str(Nbmodes) + '_' + fileDirectMatrix + ".png")
+                _, _, invertGDH = wsc.invertSVD(self.Gmatrix,
+                                                Nbmodes,
+                                                goal="c",
+                                                regul=self.regularization,
+                                                visu=True,
+                                                filename_visu=realtestbed_dir +
+                                                "SVD_Modes" + str(Nbmodes) +
+                                                ".png")
 
                 if testbed.DM1.active:
                     invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]
 
                     EFCmatrix_DM1 = np.transpose(
-                        np.dot(np.transpose(testbed.DM1.basis),
-                               invertGDH_DM1))
+                        np.dot(np.transpose(testbed.DM1.basis), invertGDH_DM1))
                     fits.writeto(realtestbed_dir +
-                                 "Matrix_control_EFC_DM1_default.fits",
+                                 "Matrix_control_EFC_DM1.fits",
                                  EFCmatrix_DM1.astype(np.float32),
                                  overwrite=True)
                     if testbed.DM3.active:
                         invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
                         EFCmatrix_DM3 = np.transpose(
-                                    np.dot(np.transpose(testbed.DM3.basis),
-                           invertGDH_DM3))
+                            np.dot(np.transpose(testbed.DM3.basis),
+                                   invertGDH_DM3))
                         fits.writeto(realtestbed_dir +
-                             "Matrix_control_EFC_DM3_default.fits",
-                             EFCmatrix_DM3.astype(np.float32),
-                             overwrite=True)
+                                     "Matrix_control_EFC_DM3.fits",
+                                     EFCmatrix_DM3.astype(np.float32),
+                                     overwrite=True)
                 elif testbed.DM3.active:
                     invertGDH_DM3 = invertGDH
                     EFCmatrix_DM3 = np.transpose(
-                                np.dot(np.transpose(testbed.DM3.basis),
-                        invertGDH_DM3))
+                        np.dot(np.transpose(testbed.DM3.basis), invertGDH_DM3))
                     fits.writeto(realtestbed_dir +
-                            "Matrix_control_EFC_DM3_default.fits",
-                            EFCmatrix_DM3.astype(np.float32),
-                            overwrite=True)
+                                 "Matrix_control_EFC_DM3.fits",
+                                 EFCmatrix_DM3.astype(np.float32),
+                                 overwrite=True)
                 else:
                     raise Exception("No active DMs")
-
 
                 fits.writeto(realtestbed_dir + "DH_mask.fits",
                              self.MaskEstim.astype(np.float32),
@@ -212,6 +200,9 @@ class Corrector:
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
+        # TODO is amplitudeEFC really useful ? with the small phase hypothesis done when
+        # measuring the matrix, everything is linear !
+
         if self.correction_algorithm == "efc":
             if mode != self.previousmode:
                 _, _, invertGDH = wsc.invertSVD(self.Gmatrix,
@@ -220,8 +211,8 @@ class Corrector:
                                                 visu=False,
                                                 regul=self.regularization)
 
-            return wsc.solutionEFC(self.MaskEstim, estimate, invertGDH,
-                                   testbed)
+            return self.amplitudeEFC * wsc.solutionEFC(
+                self.MaskEstim, estimate, invertGDH, testbed)
 
         if self.correction_algorithm == "em":
             if mode != self.previousmode:
@@ -232,12 +223,12 @@ class Corrector:
                                                visu=False,
                                                regul=self.regularization)
 
-            return wsc.solutionEM(self.MaskEstim, estimate, invertM0, self.G,
-                                  testbed)
+            return self.amplitudeEFC * wsc.solutionEM(
+                self.MaskEstim, estimate, invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return wsc.solutionSteepest(self.MaskEstim, estimate, self.M0,
-                                        self.G, testbed)
+            return self.amplitudeEFC * wsc.solutionSteepest(
+                self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")

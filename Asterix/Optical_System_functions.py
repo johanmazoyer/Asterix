@@ -5,7 +5,9 @@ import os
 import inspect
 
 import copy
+from random import weibullvariate
 import time
+from astropy.utils.exceptions import AstropyDeprecationWarning
 import numpy as np
 import scipy.ndimage as nd
 from astropy.io import fits
@@ -85,6 +87,7 @@ class Optical_System:
                                        endpoint=True)
         else:
             self.wav_vec = np.array([self.wavelength_0])
+            self.nb_wav = 1
 
         self.string_os = '_prad' + str(int(self.prad)) + '_wl' + str(
             int(self.wavelength_0 * 1e9)) + "_resFP" + str(
@@ -250,7 +253,8 @@ class Optical_System:
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+        entrance_EF:   3D complex array of size [nb_wav,self.dim_overpad_pupil, self.dim_overpad_pupil]
+                        or 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
         Electric field in the pupil plane a the entrance of the system.
@@ -285,20 +289,34 @@ class Optical_System:
         if wavelengths == None:
             wavelength_vec = self.wav_vec
 
-        elif isinstance(wavelengths, float) or isinstance(
-                wavelengths, np.float):
+        elif isinstance(wavelengths, (float, int)):
             wavelength_vec = [wavelengths]
         else:
             wavelength_vec = wavelengths
-        #TODO check if wavelengths have good format float array and raise
-        # exception if not
+
+        if isinstance(entrance_EF, (float, int)):
+            entrance_EF = np.repeat(entrance_EF, self.nb_wav)
+        elif entrance_EF.shape == self.wav_vec.shape:
+            pass
+        elif entrance_EF.shape == (self.dim_overpad_pupil,
+                                   self.dim_overpad_pupil):
+            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...], 10, axis=0)
+        elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil,
+                                   self.dim_overpad_pupil):
+            pass
+        else:
+            raise Exception(
+                """"entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
+                        2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
+                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"""
+            )
 
         focal_plane_Intensity = np.zeros((self.dimScience, self.dimScience))
 
-        for wav in wavelength_vec:
+        for i, wav in enumerate(wavelength_vec):
             focal_plane_Intensity += np.abs(
                 self.todetector(
-                    entrance_EF=entrance_EF,
+                    entrance_EF=entrance_EF[i],
                     wavelength=wav,
                     in_contrast=False,
                     center_on_pixel=center_on_pixel,
@@ -393,7 +411,7 @@ class Optical_System:
         self.sum_polychrom = np.sum(PSF_bw)
 
         self.normPupto1 = self.transmission(
-                            ) * self.norm_polychrom / self.sum_polychrom
+        ) * self.norm_polychrom / self.sum_polychrom
 
     def generate_phase_aberr(self, SIMUconfig, Model_local_dir=None):
         """ --------------------------------------------------
@@ -410,13 +428,17 @@ class Optical_System:
             Returns
             ------
             return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-                    amplitude abberation
+                    phase abberation at the reference wavelength
 
             AUTHOR : Johan Mazoyer
         """
+        if not os.path.exists(Model_local_dir):
+            print("Creating directory " + Model_local_dir + " ...")
+            os.makedirs(Model_local_dir)
+
         set_phase_abb = SIMUconfig["set_phase_abb"]
         set_random_phase = SIMUconfig["set_random_phase"]
-        phase_rms = SIMUconfig["phase_rms"]
+        opd_rms = SIMUconfig["opd_rms"]
         phase_rhoc = SIMUconfig["phase_rhoc"]
         phase_slope = SIMUconfig["phase_slope"]
         phase_abb_filename = SIMUconfig["phase_abb_filename"]
@@ -424,9 +446,9 @@ class Optical_System:
         ## Phase map and amplitude map for the static aberrations
         if set_phase_abb == True:
             if phase_abb_filename == '':
-                phase_abb_filename = "phase_{:d}rms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
-                    int(phase_rms * 1e9), int(phase_slope), phase_rhoc,
-                    self.prad)
+                phase_abb_filename = "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                    int(opd_rms * 1e9), int(self.wavelength_0 * 1e9),
+                    int(phase_slope), phase_rhoc, self.prad)
 
             if set_random_phase is False and os.path.isfile(
                     Model_local_dir + phase_abb_filename + ".fits") == True:
@@ -434,6 +456,8 @@ class Optical_System:
                                             phase_abb_filename + ".fits")
 
             else:
+                phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
+
                 return_phase = phase_ampl.random_phase_map(
                     self.prad, self.dim_overpad_pupil, phase_rms, phase_rhoc,
                     phase_slope)
@@ -441,7 +465,6 @@ class Optical_System:
                 fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
                              return_phase,
                              overwrite=True)
-
             return return_phase
         else:
             return 0.
@@ -465,6 +488,11 @@ class Optical_System:
 
         AUTHOR : Johan Mazoyer
         """
+
+        if not os.path.exists(Model_local_dir):
+            print("Creating directory " + Model_local_dir + " ...")
+            os.makedirs(Model_local_dir)
+
         set_amplitude_abb = SIMUconfig["set_amplitude_abb"]
         ampl_abb_filename = SIMUconfig["ampl_abb_filename"]
         set_random_ampl = SIMUconfig["set_random_ampl"]
@@ -504,14 +532,14 @@ class Optical_System:
     def EF_from_phase_and_ampl(self,
                                phase_abb=0.,
                                ampl_abb=0.,
-                               wavelength=None):
+                               wavelengths=-1.):
         """ --------------------------------------------------
         Create an electrical field from an phase and amplitude aberrations
 
         Parameters
         ----------
         phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
-            if 0, no phase aberration (default)
+            if 0, no phase aberration (default). phase at lambda = self.wavelength_0
 
         phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
             if 0, no amplitude aberration (default)
@@ -519,11 +547,14 @@ class Optical_System:
 
         wavelength : float. Default is the reference self.wavelength_0
              current wavelength in m.
+             if 'all'
 
 
         Returns
         ------
-        EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+        EF : 1. if no phase / amplitude
+            2D array, of size phase_abb.shape if monochromatic
+            or 3D array of size [self.nb_wav,phase_abb.shape] in case of polychromatic
             Electric field in the pupil plane a the exit of the system
 
         AUTHOR : Johan Mazoyer
@@ -533,14 +564,30 @@ class Optical_System:
                 "phase_abb and ampl_abb must be real arrays or float, not complex"
             )
 
-        if ((phase_abb == 0.).all()) and ((ampl_abb == 0.).all()):
-
+        if (isinstance(phase_abb,
+                       (float, int))) and (phase_abb == 0.) and (isinstance(
+                           ampl_abb, (float, int))) and (ampl_abb == 0.):
             return 1.
 
-        if wavelength is None:
-            wavelength = self.wavelength_0
+        elif isinstance(wavelengths, (float, int)):
+            if wavelengths == -1:
+                wavelength_vec = self.wav_vec
+            else:
+                wavelength_vec = [wavelengths]
+        else:
+            wavelength_vec = wavelengths
 
-        return (1 + ampl_abb) * np.exp(2 * np.pi * 1j * phase_abb / wavelength)
+        exit_EF = list()
+        for wavelength in wavelength_vec:
+            exit_EF.append(
+                (1 + ampl_abb) *
+                np.exp(1j * phase_abb * self.wavelength_0 / wavelength))
+        exit_EF = np.array(exit_EF)
+
+        if len(wavelength_vec) == 1:
+            exit_EF = exit_EF[0]
+
+        return exit_EF
 
 
 ##############################################
@@ -782,8 +829,8 @@ class coronagraph(Optical_System):
         self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
         for i, wav in enumerate(self.wav_vec):
             self.dim_fp_fft[i] = int(
-                np.ceil(self.prad * self.Science_sampling * self.diam_lyot_in_m
-                        / self.diam_pup_in_m * self.wavelength_0 / wav)) * 2
+                np.ceil(self.prad * self.Science_sampling * self.wavelength_0 /
+                        wav)) * 2
             # we take the ceil to be sure that we measure at least the good resolution
             # We do not need to be exact, the mft in science_focal_plane will be
 
@@ -799,13 +846,21 @@ class coronagraph(Optical_System):
             self.string_os += '_' + str_achrom
             self.perfect_coro = True
 
-        elif self.corona_type == "classiclyot":
+        elif self.corona_type == "classiclyot" or self.corona_type == "hlc":
             self.prop_apod2lyot = 'mft-babinet'
-            self.Lyot_fpm_sampling = 30  # hard coded for now, this is very internal cooking
+            self.Lyot_fpm_sampling = 30.  # hard coded for now, this is very internal cooking
             self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
             self.string_os += '_' + "iwa" + str(round(self.rad_lyot_fpm, 2))
-            self.FPmsk = self.ClassicalLyot()
             self.perfect_coro = False
+            if self.corona_type == "classiclyot":
+                self.FPmsk = self.ClassicalLyot()
+            else:
+                self.transmission_fpm = coroconfig["transmission_fpm"]
+                self.phase_fpm = coroconfig["phase_fpm"]
+                self.string_os += '_' + "trans{:.1e}".format(
+                    self.transmission_fpm) + "_pha{0}".format(
+                        round(self.phase_fpm, 2))
+                self.FPmsk = self.HLC()
 
         elif self.corona_type == "knife":
             self.prop_apod2lyot = 'mft'
@@ -817,9 +872,10 @@ class coronagraph(Optical_System):
             self.perfect_coro = False
 
         elif self.corona_type == "vortex":
-            self.prop_apod2lyot = 'fft'
-            phasevortex = 0  # to be defined
-            self.FPmsk = np.exp(1j * phasevortex)
+            self.prop_apod2lyot = 'mft'
+            vortex_charge = coroconfig["vortex_charge"]
+            self.string_os += '_charge' + str(int(vortex_charge))
+            self.FPmsk = self.Vortex(charge=vortex_charge)
             self.perfect_coro = True
 
         # We need a pupil only to measure the response
@@ -1127,13 +1183,20 @@ class coronagraph(Optical_System):
             else:
                 dim_fp = self.dimScience
 
-            phase = np.zeros((dim_fp, dim_fp))
+            phase4q = np.zeros((dim_fp, dim_fp))
             fqpm_thick_cut = proc.crop_or_pad_image(fqpm_thick, dim_fp)
-            phase[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
-            if self.achrom_fqpm == False:
-                phase = phase * self.wavelength_0 / wav
+            phase4q[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
 
-            fqpm.append(np.exp(1j * phase))
+            if self.achrom_fqpm == True:
+                # if we want to do an an achromatic_fqpm, we do not include a variation
+                # of the phase with the wl.
+                fqpm.append(np.exp(1j * phase4q))
+            else:
+                # in the general case, we use the EF_from_phase_and_ampl which handle the phase
+                # chromaticity.
+                fqpm.append(
+                    self.EF_from_phase_and_ampl(phase_abb=phase4q,
+                                                wavelengths=wav))
 
         return fqpm
 
@@ -1161,29 +1224,31 @@ class coronagraph(Optical_System):
         # to define the orientation of the coronagraph
 
         #  Number of pixels per resolution element at central wavelength
-        ld_p_0 = self.Science_sampling * self.diam_lyot_in_m / self.diam_pup_in_m
 
         xx, yy = np.meshgrid(np.arange(maxdimension_array_fpm),
                              np.arange(maxdimension_array_fpm))
 
         Knife = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
         if self.coro_position == "right":
-            Knife[np.where(xx > (maxdimension_array_fpm / 2 +
-                                 self.knife_coro_offset * ld_p_0))] = 1
+            Knife[np.where(
+                xx > (maxdimension_array_fpm / 2 +
+                      self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "left":
-            Knife[np.where(xx < (maxdimension_array_fpm / 2 -
-                                 self.knife_coro_offset * ld_p_0))] = 1
+            Knife[np.where(
+                xx < (maxdimension_array_fpm / 2 -
+                      self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "bottom":
-            Knife[np.where(yy > (maxdimension_array_fpm / 2 +
-                                 self.knife_coro_offset * ld_p_0))] = 1
+            Knife[np.where(
+                yy > (maxdimension_array_fpm / 2 +
+                      self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "top":
-            Knife[np.where(yy < (maxdimension_array_fpm / 2 -
-                                 self.knife_coro_offset * ld_p_0))] = 1
+            Knife[np.where(
+                yy < (maxdimension_array_fpm / 2 -
+                      self.knife_coro_offset * self.Science_sampling))] = 1
 
-        knife_allwl = np.zeros((len(self.wav_vec), maxdimension_array_fpm,
-                                maxdimension_array_fpm))
+        knife_allwl = list()
         for i in range(len(self.wav_vec)):
-            knife_allwl[i] = Knife
+            knife_allwl.append(Knife)
 
         return knife_allwl
 
@@ -1191,7 +1256,6 @@ class coronagraph(Optical_System):
         """ --------------------------------------------------
         Create a classical Lyot coronagraph of radius rad_LyotFP 0
 
-        rad_LyotFP : int, radius of the Lyot focal plane
 
         Returns
         ------
@@ -1200,15 +1264,88 @@ class coronagraph(Optical_System):
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
-        ld_p = self.Lyot_fpm_sampling * self.diam_lyot_in_m / self.diam_pup_in_m
+        rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
 
-        rad_LyotFP_pix = self.rad_lyot_fpm * ld_p
-
-        self.dim_fpm = 2 * int(rad_LyotFP_pix)
-        ClassicalLyotstop = 1 - phase_ampl.roundpupil(self.dim_fpm,
+        self.dim_fpm = 2 * int(2.2 * rad_LyotFP_pix / 2)
+        ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm,
                                                       rad_LyotFP_pix)
 
-        return [ClassicalLyotstop]
+        ClassicalLyotFPM_allwl = list()
+        for wav in self.wav_vec:
+            ClassicalLyotFPM_allwl.append(ClassicalLyotFPM)
+
+        return ClassicalLyotFPM_allwl
+
+    def HLC(self):
+        """ --------------------------------------------------
+        Create a HLC of radius rad_LyotFP 0
+
+        Returns
+        ------
+         classical Lyot : 2D array
+
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+
+        # we create a Classical Lyot Focal plane
+        ClassicalLyotFP = self.ClassicalLyot()[0]
+
+        whClassicalLyotstop = np.where(ClassicalLyotFP == 0.)
+
+        # we define phase and amplitude for the HLC at the reference WL
+        phase_hlc = np.zeros(ClassicalLyotFP.shape)
+        phase_hlc[whClassicalLyotstop] = self.phase_fpm
+        # transmission_fpm is defined in intensity and EF_from_phase_and_ampl takes amplitude
+        ampl_hlc = np.zeros(ClassicalLyotFP.shape)
+        ampl_hlc[whClassicalLyotstop] = np.sqrt(self.transmission_fpm) - 1
+
+        hlc_all_wl = list()
+        for wav in self.wav_vec:
+            hlc_all_wl.append(
+                self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc,
+                                            phase_abb=phase_hlc,
+                                            wavelengths=wav))
+
+        return hlc_all_wl
+
+    def Vortex(self, charge=2):
+        """ --------------------------------------------------
+        Create a charge2 vortex.
+        #TODO Shoyld work but need to be tested
+
+        Parameters
+        ------
+        Charge : charge of the vortex. defaut is charge 2
+
+        Returns
+        ------
+         classical Lyot : 2D array
+
+        AUTHOR : Johan Mazoyer
+        -------------------------------------------------- """
+
+        if self.prop_apod2lyot == "fft":
+            maxdimension_array_fpm = np.max(self.dim_fp_fft)
+        else:
+            maxdimension_array_fpm = self.dimScience
+
+        xx, yy = np.meshgrid(
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
+
+        phase_vortex = charge * np.angle(xx + 1j * yy)
+
+        vortex = list()
+        for i, wav in enumerate(self.wav_vec):
+            if self.prop_apod2lyot == "fft":
+                dim_fp = self.dim_fp_fft[i]
+            else:
+                dim_fp = self.dimScience
+
+            phasevortex_cut = proc.crop_or_pad_image(phase_vortex, dim_fp)
+            vortex.append(np.exp(1j * phasevortex_cut))
+
+        return vortex
 
     ##############################################
     ##############################################
@@ -1253,6 +1390,10 @@ class deformable_mirror(Optical_System):
         # Initialize the Optical_System class and inherit properties
         super().__init__(modelconfig)
 
+        if not os.path.exists(Model_local_dir):
+            print("Creating directory " + Model_local_dir + " ...")
+            os.makedirs(Model_local_dir)
+
         self.exitpup_rad = self.prad
 
         self.Name_DM = Name_DM
@@ -1266,16 +1407,16 @@ class deformable_mirror(Optical_System):
         self.misregistration = False
 
         # first thing we do is to open filename_grid_actu to check the number of
-        # actuator of this DM
-        self.number_act = fits.getdata(
-            model_dir +
-            DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
-
+        # actuator of this DM. We need the number of act to read and load pushact .fits
         if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
             self.active_actuators = fits.getdata(
                 model_dir +
                 DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
+            self.number_act = len(self.active_actuators)
         else:
+            self.number_act = fits.getdata(
+                model_dir +
+                DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
             self.active_actuators = np.arange(self.number_act)
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
@@ -1401,15 +1542,14 @@ class deformable_mirror(Optical_System):
         if self.active == False or (DMphase == 0.).all():
             return entrance_EF
 
-        lambda_ratio = wavelength / self.wavelength_0
-
         if self.z_position == 0:
-            EF_after_DM = entrance_EF * np.exp(1j * DMphase / lambda_ratio)
+            EF_after_DM = entrance_EF * self.EF_from_phase_and_ampl(
+                phase_abb=DMphase, wavelengths=wavelength)
 
         else:
             EF_after_DM = self.prop_pup_to_DM_and_back(
                 entrance_EF,
-                DMphase / lambda_ratio,
+                DMphase,
                 wavelength,
                 save_all_planes_to_fits=save_all_planes_to_fits,
                 dir_save_all_planes=dir_save_all_planes)
@@ -1579,6 +1719,8 @@ class deformable_mirror(Optical_System):
 
             pushact3d[i] = Psivector
 
+        pushact3d = pushact3d[self.active_actuators]
+
         if self.misregistration is False and (
                 not os.path.exists(Model_local_dir + Name_pushact_fits +
                                    '.fits')):
@@ -1606,7 +1748,8 @@ class deformable_mirror(Optical_System):
             self.WhichInPup_threshold)
 
         if os.path.exists(Model_local_dir + Name_WhichInPup_fits + '.fits'):
-            return fits.getdata(Model_local_dir + Name_WhichInPup_fits + '.fits')
+            return fits.getdata(Model_local_dir + Name_WhichInPup_fits +
+                                '.fits')
 
         if self.z_position != 0:
             # Propagation in DM plane out of pupil
@@ -1686,14 +1829,15 @@ class deformable_mirror(Optical_System):
                                             self.z_position,
                                             self.diam_pup_in_m / 2., self.prad)
 
-        # Add DM phase
         if save_all_planes_to_fits == True:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       EF_inDMplane)
 
-        EF_inDMplane_after_DM = EF_inDMplane * np.exp(1j * phase_DM)
+        # Add DM phase at the right WL
+        EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(
+            phase_abb=phase_DM, wavelengths=wavelength)
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
@@ -1735,19 +1879,20 @@ class deformable_mirror(Optical_System):
 
         where_non_zero_voltage = np.where(actu_vect != 0)
 
-        #TODO I reakky don't understand the 1e-9 here
-        surface_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
+        #opd is in nanometer
+        # DM_pushact is in opd nanometer
+        opd_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
 
         if einstein_sum == True or len(where_non_zero_voltage[0]) < 3:
             phase_on_DM = np.einsum(
                 'i,ijk->jk', actu_vect[where_non_zero_voltage],
-                self.DM_pushact[where_non_zero_voltage]) * surface_to_phase
+                self.DM_pushact[where_non_zero_voltage]) * opd_to_phase
         else:
             phase_on_DM = np.zeros(
                 (self.dim_overpad_pupil, self.dim_overpad_pupil))
             for i in where_non_zero_voltage[0]:
                 phase_on_DM += self.DM_pushact[
-                    i, :, :] * actu_vect[i] * surface_to_phase
+                    i, :, :] * actu_vect[i] * opd_to_phase
 
         return phase_on_DM
 
@@ -1912,8 +2057,8 @@ class Testbed(Optical_System):
             # there is at least a DM, we add voltage_vector as an authorize kw
 
             known_keywords.append('voltage_vector')
-            self.EF_through = _control_testbed_with_voltages(self,
-                self.EF_through)
+            self.EF_through = _control_testbed_with_voltages(
+                self, self.EF_through)
 
         # to avoid mis-use we only use specific keywords.
         known_keywords.remove('kwargs')
@@ -1949,8 +2094,8 @@ class Testbed(Optical_System):
             (self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
         indice_acum_number_act = 0
 
-        if isinstance(actu_vect, float):
-            return np.zeros(self.number_DMs) + actu_vect
+        if isinstance(actu_vect, (int, float)):
+            return np.zeros(self.number_DMs) + float(actu_vect)
 
         if len(actu_vect) != self.number_act:
             raise Exception(
