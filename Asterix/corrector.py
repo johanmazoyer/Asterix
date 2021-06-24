@@ -1,15 +1,15 @@
 # pylint: disable=invalid-name
+# pylint: disable=trailing-whitespace
 
 import os
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
 import time
 
-import Asterix.fits_functions as useful
-import Asterix.processing_functions as proc
-import Asterix.Optical_System_functions as OptSy
+import numpy as np
+from astropy.io import fits
 
+import Asterix.fits_functions as useful
+import Asterix.Optical_System_functions as OptSy
+from Asterix.estimator import Estimator
 import Asterix.WSC_functions as wsc
 
 
@@ -38,9 +38,9 @@ class Corrector:
     -------------------------------------------------- """
     def __init__(self,
                  Correctionconfig,
-                 testbed,
+                 testbed: OptSy.Testbed,
                  MaskDH,
-                 estimator,
+                 estimator: Estimator,
                  matrix_dir=None,
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -85,7 +85,7 @@ class Corrector:
         self.total_number_modes = 0
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]
+            DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
             self.total_number_modes += DM.basis_size
@@ -167,7 +167,7 @@ class Corrector:
         # DM for a given voltage when using DM.voltage_to_phase
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]
+            DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
             if DM.misregistration:
                 print(DM_name + " Misregistration!")
                 DM.DM_pushact = DM.creatingpushact(DM.DMconfig)
@@ -179,8 +179,8 @@ class Corrector:
         self.previousmode = np.nan
 
     def update_matrices(self,
-                        testbed,
-                        estimator,
+                        testbed: OptSy.Testbed,
+                        estimator: Estimator,
                         initial_DM_voltage=0.,
                         input_wavefront=1.):
         """ --------------------------------------------------
@@ -245,7 +245,7 @@ class Corrector:
             raise Exception("This correction algorithm is not yet implemented")
 
     def toDM_voltage(self,
-                     testbed,
+                     testbed: OptSy.Testbed,
                      estimate,
                      mode=1.,
                      gain=0.1,
@@ -254,6 +254,8 @@ class Corrector:
         """ --------------------------------------------------
         Run a correction from a estimate, and return the DM voltage compatible with the testbed
 
+        Parameters
+        ----------
         testbed: an Optical_System object which describes your testbed
 
         estimate: 2D complex array of sixe [dimEstim, dimEstim]. 
@@ -271,7 +273,9 @@ class Corrector:
                                 This is used by SM algorithm to find a target contrast
 
         
-
+        Return
+        ----------
+        solution: a voltage vector to be applied to the testbed
 
 
         AUTHOR : Johan Mazoyer
