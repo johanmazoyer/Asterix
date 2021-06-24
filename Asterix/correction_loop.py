@@ -1,3 +1,6 @@
+# pylint: disable=invalid-name
+# pylint: disable=trailing-whitespace
+
 ## Correction loop
 import os
 import datetime
@@ -5,8 +8,6 @@ from astropy.io import fits
 
 import numpy as np
 import matplotlib.pyplot as plt
-import Asterix.propagation_functions as prop
-import Asterix.processing_functions as proc
 
 import Asterix.Optical_System_functions as OptSy
 
@@ -414,7 +415,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
         return CorrectionLoopResult
 
 
-def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
+def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, result_dir):
     """ --------------------------------------------------
     Save the result from a correction loop 
 
@@ -478,6 +479,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
 
     for i in range(len(voltage_DMs)):
         allDMphases = testbed.voltage_to_phases(voltage_DMs[i])
+        
 
         if isinstance(voltage_DMs[i], (int, float)):
             voltage_DMs_nparray[i, :] += float(voltage_DMs[i])
@@ -487,7 +489,11 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
         for j, DM_name in enumerate(testbed.name_of_DMs):
             DM_phases[j, i, :, :] = allDMphases[j]
 
+    DMstrokes = DM_phases*testbed.wavelength_0 / (2 * np.pi * 1e-9) / 2
+
     indice_acum_number_act = 0
+    plt.figure()
+
     for j, DM_name in enumerate(testbed.name_of_DMs):
         fits.writeto(result_dir + current_time_str + '_' + DM_name +
                      "_phases" + ".fits",
@@ -495,7 +501,13 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
                      header,
                      overwrite=True)
 
-        DM = vars(testbed)[DM_name]
+        fits.writeto(result_dir + current_time_str + '_' + DM_name +
+                     "_strokes" + ".fits",
+                     DMstrokes[j],
+                     header,
+                     overwrite=True)
+
+        DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
         voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:
                                                  indice_acum_number_act +
                                                  DM.number_act]
@@ -506,6 +518,17 @@ def Save_loop_results(CorrectionLoopResult, config, testbed, result_dir):
                      voltage_DMs_tosave,
                      header,
                      overwrite=True)
+
+        plt.plot(np.std(DMstrokes[j],axis = (1,2)), label = DM_name + " RMS")
+        plt.plot(np.max(DMstrokes[j],axis = (1,2)) - np.min(DMstrokes[j],axis = (1,2)), label = DM_name + " PV")
+
+    plt.xlabel("Number of iterations")
+    plt.ylabel("DM Strokes (nm)")
+    plt.legend()
+    plt.savefig(
+        os.path.join(result_dir,
+                     current_time_str + "_DM_Strokes" + ".pdf"))
+    plt.close()
 
     if config["SIMUconfig"]["photon_noise"] == True:
         FP_Intensities_photonnoise = np.array(FP_Intensities) * 0.
