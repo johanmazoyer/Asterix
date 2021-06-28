@@ -285,7 +285,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             if Linesearch:
 
                 # we search the best cutoff mode among 10 different ones evenly separated
-                Linesearchmodes = 10 * (np.arange(0.1, 1, 0.1) *
+                Linesearchmodes = 10 * (np.arange(0.2, 0.6, 0.03) *
                                         corrector.total_number_modes /
                                         10).astype(int)
 
