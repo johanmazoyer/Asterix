@@ -248,7 +248,6 @@ class Corrector:
                      testbed: OptSy.Testbed,
                      estimate,
                      mode=1.,
-                     gain=0.1,
                      ActualCurrentContrast=1,
                      **kwargs):
         """ --------------------------------------------------
@@ -266,8 +265,6 @@ class Corrector:
                                 if the mode is the same than the previous iteration, we store the inverted 
                                 matrix to avoid inverted it again
         
-        gain:  gain of the loop in EFC mode. 
-            float between 0 and 1, default 0.1
         
         ActualCurrentContrast: Contrast at the current iteration of the loop 
                                 This is used by SM algorithm to find a target contrast
@@ -291,7 +288,7 @@ class Corrector:
                                                      visu=False,
                                                      regul=self.regularization)
 
-            return -gain * self.amplitudeEFC * wsc.solutionEFC(
+            return - self.amplitudeEFC * wsc.solutionEFC(
                 self.MaskEstim, estimate, self.invertGDH, testbed)
 
         if self.correction_algorithm == "sm":
@@ -337,7 +334,7 @@ class Corrector:
                     .format(self.expected_gain_in_contrast))
                 return "RebootTheLoop"
 
-            return -self.amplitudeEFC * solutionSM
+            return - self.amplitudeEFC * solutionSM
 
         if self.correction_algorithm == "em":
 
@@ -349,12 +346,12 @@ class Corrector:
                                                     visu=False,
                                                     regul=self.regularization)
 
-            return -gain * self.amplitudeEFC * wsc.solutionEM(
+            return - self.amplitudeEFC * wsc.solutionEM(
                 self.MaskEstim, estimate, self.invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return -gain * self.amplitudeEFC * wsc.solutionSteepest(
+            return - self.amplitudeEFC * wsc.solutionSteepest(
                 self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")

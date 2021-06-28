@@ -22,6 +22,7 @@ def CorrectionLoop(testbed: OptSy.Testbed,
                    estimator: Estimator,
                    corrector: Corrector,
                    mask_dh: MaskDH,
+                   Loopconfig,
                    SIMUconfig,
                    input_wavefront=0,
                    initial_DM_voltage=0.,
@@ -41,7 +42,9 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     
     mask_dh: binary array of size [dimScience, dimScience] : dark hole mask
     
-    SIMUconfig: simulation parameters containing the loop parameters
+    Loopconfig: simulation parameters containing the loop parameters
+
+    SIMUconfig: simulation parameters containing the Simulation parameters
     
     input_wavefront: initial wavefront at the beginning of this loop.
         Electrical Field which can be a :
@@ -83,24 +86,34 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     CorrectionLoopResult["FP_Intensities"] = list()
     CorrectionLoopResult["EF_estim"] = list()
     CorrectionLoopResult["MeanDHContrast"] = list()
+    CorrectionLoopResult["SVDmodes"] = list()
 
+
+    # reading the simulation parameter files
+    photon_noise = SIMUconfig["photon_noise"]
+    nb_photons = SIMUconfig["nb_photons"]
+
+    # reading the loop parameter files
+    Nbiter_corr = [int(i) for i in Loopconfig["Nbiter_corr"]]
+    Number_matrix = Loopconfig["Number_matrix"]
+
+    Nbmode_corr = []
     if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
-        Nbmode_corr = [int(i) for i in SIMUconfig["Nbmode_corr"]]
-        Linesearch = SIMUconfig["Linesearch"]
-        gain = SIMUconfig["gain"]
-        CorrectionLoopResult["SVDmodes"] = list()
+        Linesearch = Loopconfig["Linesearch"]
+        gain = Loopconfig["gain"]
+        if Linesearch == False:
+            Nbmode_corr = [int(i) for i in Loopconfig["Nbmode_corr"]]
+            if len(Nbiter_corr) != len(Nbmode_corr):
+                raise Exception("""In this correction mode and if Linesearch = False, 
+                the length of Nbmode_corr must match the length of Nbiter_corr""")
+            
     else:
-        Nbmode_corr = []
         Linesearch = None
-        gain = 0.
+        gain = 1.
 
     if corrector.correction_algorithm == 'sm':
         Linesearch = False
 
-    Nbiter_corr = [int(i) for i in SIMUconfig["Nbiter_corr"]]
-    Number_matrix = SIMUconfig["Number_matrix"]
-    photon_noise = SIMUconfig["photon_noise"]
-    nb_photons = SIMUconfig["nb_photons"]
 
     for i in range(Number_matrix):
 
@@ -228,13 +241,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
 
     if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
         modevector = []
-        if Linesearch:
-            # in this case we can ignore the modes because we will search for the best one
-            # at each iteration
-            modevector = [
-                10 for i in range(thisloop_expected_iteration_number)
-            ]
-        else:
+        if not Linesearch:
             for i in np.arange(len(Nbiter_corr)):
                 modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
@@ -256,6 +263,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     thisloop_FP_Intensities = list()
     thisloop_MeanDHContrast = list()
     thisloop_EF_estim = list()
+    thisloop_actual_modes = list()
 
     thisloop_voltages_DMs.append(initial_DM_voltage)
     thisloop_FP_Intensities.append(initialFP)
@@ -273,15 +281,6 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     for iteration in range(thisloop_expected_iteration_number):
 
         if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
-            mode = modevector[iteration]
-
-            if mode > corrector.total_number_modes:
-                if not Search_best_Mode:
-                    print(
-                        "You cannot use a cutoff mode ({:d}) larger than the total size of basis ({:d})"
-                        .format(mode, corrector.Gmatrix.shape[1]))
-                    print("We skip this iteration")
-                continue
 
             if Linesearch:
 
@@ -310,18 +309,29 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
 
                 print("Best Mode is ", bestmode, " with contrast: ",
                       bestcontrast)
-                modevector[iteration] = mode = bestmode
+                mode = bestmode
+            else:
+                mode = modevector[iteration]
+
+            if mode > corrector.total_number_modes:
+                if not Search_best_Mode:
+                    print(
+                        "You cannot use a cutoff mode ({:d}) larger than the total size of basis ({:d})"
+                        .format(mode, corrector.Gmatrix.shape[1]))
+                    print("We skip this iteration")
+                continue
+
 
         else:
             mode = 1
 
         if not silence:
             if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
-                print("Iteration number: ", iteration + 1,
-                      corrector.correction_algorithm + " SVD truncation: ",
+                print("Iteration number "+ corrector.correction_algorithm +": ", iteration + 1,
+                    " SVD truncation: ",
                       mode)
             else:
-                print("Iteration number: ", iteration + 1)
+                print("Iteration number "+ corrector.correction_algorithm +": ", iteration + 1)
 
         # for now monochromatic estimation
         resultatestimation = estimator.estimate(
@@ -337,7 +347,6 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             testbed,
             resultatestimation,
             mode=mode,
-            gain=gain,
             ActualCurrentContrast=thisloop_MeanDHContrast[-1])
 
         if isinstance(solution, str) and solution == "StopTheLoop":
@@ -354,7 +363,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             new_voltage = thisloop_voltages_DMs[ze_arg_of_ze_best]
 
         else:
-            new_voltage = thisloop_voltages_DMs[-1] + solution
+            new_voltage = thisloop_voltages_DMs[-1] + gain * solution
 
         thisloop_FP_Intensities.append(
             testbed.todetector_Intensity(entrance_EF=input_wavefront,
@@ -378,6 +387,8 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             plt.gca().invert_yaxis()
             plt.colorbar()
             plt.pause(0.01)
+        
+        thisloop_actual_modes.append(mode)
 
     if Search_best_Mode:
         # in Search_best_Mode mode we return the mode that gives the best contrast
@@ -387,15 +398,10 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     else:
         # create a dictionnary to save all results
 
-        if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
-            modevector = [
-                mode for mode in modevector
-                if mode <= corrector.total_number_modes
-            ]
-            CorrectionLoopResult["SVDmodes"].append(modevector)
-
         CorrectionLoopResult["nb_total_iter"] += iteration_number
         CorrectionLoopResult["Nb_iter_per_mat"].append(iteration_number)
+
+        CorrectionLoopResult["SVDmodes"].append(thisloop_actual_modes)
 
         CorrectionLoopResult["voltage_DMs"].extend(thisloop_voltages_DMs)
         CorrectionLoopResult["FP_Intensities"].extend(thisloop_FP_Intensities)
@@ -407,9 +413,9 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
 
         if Linesearch:
             print(
-                "Linesearch Mode. We found the following modes to dig the contrast best:"
+                "Linesearch Mode. In this loop, we found the following modes to dig the contrast best:"
             )
-            print(modevector)
+            print(thisloop_actual_modes)
             print("")
 
         return CorrectionLoopResult

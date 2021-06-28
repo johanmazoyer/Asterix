@@ -22,6 +22,7 @@ def runthd2(parameter_file,
             NewCoronaconfig={},
             NewEstimationconfig={},
             NewCorrectionconfig={},
+            NewLoopconfig={},
             NewSIMUconfig={}):
 
         """ --------------------------------------------------
@@ -75,9 +76,13 @@ def runthd2(parameter_file,
         Estimationconfig = config["Estimationconfig"]
         Estimationconfig.update(NewEstimationconfig)
 
-        ###EFC CONFIG
+        ### Correction CONFIG
         Correctionconfig = config["Correctionconfig"]
         Correctionconfig.update(NewCorrectionconfig)
+
+        ### Loop CONFIG
+        Loopconfig = config["Loopconfig"]
+        Loopconfig.update(NewLoopconfig)
 
         ###SIMU CONFIG
         SIMUconfig = config["SIMUconfig"]
@@ -150,6 +155,7 @@ def runthd2(parameter_file,
                                                 estim,
                                                 correc,
                                                 MaskScience,
+                                                Loopconfig,
                                                 SIMUconfig,
                                                 input_wavefront=input_wavefront,
                                                 initial_DM_voltage=0,
