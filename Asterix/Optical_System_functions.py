@@ -303,7 +303,7 @@ class Optical_System:
             pass
         elif entrance_EF.shape == (self.dim_overpad_pupil,
                                    self.dim_overpad_pupil):
-            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...], 10, axis=0)
+            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...], self.nb_wav, axis=0)
         elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil,
                                    self.dim_overpad_pupil):
             pass
@@ -459,6 +459,7 @@ class Optical_System:
                                             phase_abb_filename + ".fits")
 
             else:
+                # TODO see with raphael these opd / phase issues
                 phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
 
                 return_phase = phase_ampl.random_phase_map(
@@ -580,17 +581,17 @@ class Optical_System:
         else:
             wavelength_vec = wavelengths
 
-        exit_EF = list()
+        entrance_EF = list()
         for wavelength in wavelength_vec:
-            exit_EF.append(
+            entrance_EF.append(
                 (1 + ampl_abb) *
                 np.exp(1j * phase_abb * self.wavelength_0 / wavelength))
-        exit_EF = np.array(exit_EF)
+        entrance_EF = np.array(entrance_EF)
 
         if len(wavelength_vec) == 1:
-            exit_EF = exit_EF[0]
+            entrance_EF = entrance_EF[0]
 
-        return exit_EF
+        return entrance_EF
 
 
 ##############################################
