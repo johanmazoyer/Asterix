@@ -153,7 +153,7 @@ def read_parameter_file(parameter_file):
     check existence of the parameter file, read it and check validity
     Parameters:
     ----------
-    parameter_file: path to a parameter file
+    parameter_file: path to a .ini parameter file
 
 
     Returns
