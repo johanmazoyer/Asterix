@@ -40,7 +40,7 @@ class Estimator:
     -------------------------------------------------- """
     def __init__(self,
                  Estimationconfig,
-                 testbed,
+                 testbed : OptSy.Testbed,
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -55,23 +55,26 @@ class Estimator:
         Store in the structure only what you need for estimation. Everything not
         used in self.estimate shoud not be stored
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ----------
-        Estimationconfig : general estimation parameters
+        Estimationconfig : dict
+                general estimation parameters
 
-        testbed : an Optical_System object which describe your testbed
+        testbed :  Optical_System.Testbed 
+                Testbed object which describe your testbed
 
-
-        matrix_dir: path. save all the difficult to measure files here
+        matrix_dir: path. 
+            save all the matrices files here
 
         save_for_bench. bool default: false
                 should we save for the real testbed in realtestbed_dir
 
-        realtestbed_dir: path save all the files the real testbed need to
-                            run your code
+        realtestbed_dir: path 
+            save all the files the real thd2 testbed need to run your code
 
 
-        AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
         if not os.path.exists(matrix_dir):
             print("Creating directory " + matrix_dir + " ...")
@@ -150,7 +153,7 @@ class Estimator:
                 self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
             else:
                 print("Saving " + filePW + " ...")
-                self.PWMatrix, showSVD = wsc.createPWmastrix(
+                self.PWMatrix, showSVD = wsc.createPWmatrix(
                     testbed, self.amplitudePW, self.posprobes, self.dimEstim,
                     cutsvdPW, testbed.wavelength_0)
                 fits.writeto(matrix_dir + filePW + ".fits",
@@ -197,7 +200,7 @@ class Estimator:
             raise Exception("This estimation algorithm is not yet implemented")
 
     def estimate(self,
-                 testbed,
+                 testbed : OptSy.Testbed,
                  entrance_EF=1.,
                  voltage_vector=0.,
                  wavelength=None,
@@ -208,28 +211,43 @@ class Estimator:
         """ --------------------------------------------------
         Run an estimation from a testbed, with a given input wavefront
         and a state of the DMs
-
+        
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
-        testbed:        a testbed element
-        entrance_EF     default 0., float or 2D array can be complex, initial EF field
-        voltage_vector  vector concatenation of voltages vectors for each DMs
-        wavelength      default None, float, wavelenght of the estimation
-        photon_noise    default False, boolean,  If True, add photon noise.
-        nb_photons      default 1e30, int Number of photons entering the pupil
-        perfect_estimation default = False. if true This is equivalent to
-                                            have self.technique = "perfect" but even
-                                            if we are using another technique, we
-                                            sometimes need a perfect estimation and it 
-                                            avoid re-initialization of the estimation
+        testbed :  Optical_System.Testbed 
+                Testbed object which describe your testbed
+
+        entrance_EF :    complex float or 2D array, default 1.
+            initial EF field
+
+        voltage_vector : 1D float array
+            vector of voltages vectors for each DMs
+
+        wavelength  :  float default None,
+            wavelength of the estimation in m
+
+        photon_noise :  boolean default False
+            If True, add photon noise
+
+        nb_photons :  int, default 1e30
+            Number of photons entering the pupil
+        
+        perfect_estimation: bool, default = False. 
+                    if true This is equivalent to have self.technique = "perfect" 
+                    but even if we are using another technique, we sometimes 
+                    need a perfect estimation and it avoid re-initialization of 
+                    the estimation.
                                             
         Returns
         ------
-        estimation : 2D array od size [self.dimEstim,self.dimEstim]
-                    estimation of the Electrical field
+        estimation : 2D array 
+                array of size [self.dimEstim,self.dimEstim]
+                estimation of the Electrical field
 
-        AUTHOR : Johan Mazoyer
+
+
         -------------------------------------------------- """
 
         if isinstance(entrance_EF, (float, int)):

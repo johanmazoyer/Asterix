@@ -31,6 +31,8 @@ def invertSVD(matrix_to_invert,
     The inversion can be regularized. We return the inverse, the singular values, 
     their inverse and the pseudo inverse.
 
+    AUTHOR : Axel Potier
+
     Parameters
     ----------
 
@@ -60,9 +62,7 @@ def invertSVD(matrix_to_invert,
     pseudoinverse :  2D numpy array
         Regularized inverse of the input matrix
 
-    Notes
-    -----
-    AUTHOR : Axel Potier
+
 
     -------------------------------------------------- """
     U, s, V = np.linalg.svd(matrix_to_invert, full_matrices=False)
@@ -119,11 +119,15 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
     The matrix size is therefore [total(DM.basis_size), 2*dimEstim^2]
 
-    We save the matrix in .fits independently for each DMs, only if the initial wavefront and DMs are flat.
+    We save the matrix in .fits independently for each DMs, only if the initial 
+    wavefront and DMs are flat.
 
-    This code works for all testbeds without prior assumption (if we have at least 1 DM of course).
-    We have optimized the code to only do once optical elements before the DM movement and repeat only what is after the DMS
+    This code works for all testbeds without prior assumption (if we have at 
+    least 1 DM of course). We have optimized the code to only do once optical 
+    elements before the DM movement and repeat only what is after the DMS
     
+    AUTHOR : Axel Potier and Johan Mazoyer
+
     Parameters
     ----------
 
@@ -166,11 +170,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     Returns
     ------
     InterMat: 2D array of size [total(DM.basis_size), 2*dimEstim^2]
-        jacobian matrix for Electric Field Conjugation
+        jacobian matrix for Electric Field Conjugation.
 
-    Notes
-    -----
-    AUTHOR : Axel Potier and Johan Mazoyer
 
     -------------------------------------------------- """
     if isinstance(initial_DM_voltage, (int, float)):
@@ -359,7 +360,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
             for i in range(DM.basis_size):
 
                 if i % 10:
-                    useful.progress(i, DM.basis_size, status='')
+                    useful._progress(i, DM.basis_size, status='')
 
                 if MatrixType == 'perfect':
                     if DM.z_position == 0:
@@ -503,6 +504,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray, mask:np.ndarray):
     """ --------------------------------------------------
     Crop the  Interraction Matrix. to the mask size
+    AUTHOR : Johan Mazoyer
 
     Parameters
     ----------
@@ -515,9 +517,8 @@ def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray, mask:np.ndarray
     DHInterractionMatrix: 2D numpy array
         matrix only inside the DH. first half is real part, second half is imag part
 
-    Notes
-    -----
-    AUTHOR : Johan Mazoyer
+
+    
     
     -------------------------------------------------- """
     size_full_matrix = FullInterractionMatrix.shape[0]
@@ -544,6 +545,8 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian,
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
         intensity in the dark hole region
+    
+    AUTHOR : Axel Potier
 
     Parameters
     ----------
@@ -565,9 +568,7 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian,
     solution:   1D array
                     voltage to apply on each deformable mirror actuator
 
-    Notes
-    -----
-    AUTHOR : Axel Potier
+    
     
     -------------------------------------------------- """
 
@@ -585,6 +586,8 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region
+    
+    AUTHOR : Axel Potier
 
     Parameters
     ----------
@@ -609,9 +612,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     solution: 1D array
         voltage to apply on each deformable mirror actuator
 
-    Notes
-    -----
-    AUTHOR : Axel Potier
+    
 
     -------------------------------------------------- """
 
@@ -630,6 +631,8 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region in the stroke min solution
     See Axel Potier Phd for notation and Mazoyer et al. 2018a for alpha search improvement
+
+    AUTHOR : Johan Mazoyer
 
     Parameters
     ----------
@@ -662,9 +665,7 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
     lasbestalpha : float
             we return the last best alpha. This avoid to recalculate the best alpha from scratch
                         at each iteration since it's often a very close value
-    Notes
-    -----
-    AUTHOR : Johan Mazoyer
+
 
     -------------------------------------------------- """
 
@@ -749,6 +750,8 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     Voltage to apply on the deformable mirror in order to minimize
     the speckle intensity in the dark hole region
 
+    AUTHOR : Axel Potier
+
     Parameters
     ----------
     mask: Binary mask 
@@ -769,9 +772,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     solution: 1D array
          voltage to apply on each deformable mirror actuator
    
-    Notes
-    -----
-    AUTHOR : Axel Potier
+    
 
     -------------------------------------------------- """
 
@@ -790,10 +791,12 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
 #################################################################################
 
 
-def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
+def createPWmatrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
                     cutsvd, wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
+
+    AUTHOR : Axel Potier
 
     Parameters
     ----------
@@ -821,9 +824,7 @@ def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
                 map of the inverse singular values for each pixels and
                 before regularization
     
-    Notes
-    -----
-    AUTHOR : Axel Potier
+    
 
     -------------------------------------------------- """
     numprobe = len(posprobes)
@@ -878,6 +879,8 @@ def FP_PWestimate(Difference, Vectorprobes):
     Calculate the focal plane electric field from the prone image
     differences and the modeled probe matrix
 
+    AUTHOR : Axel Potier
+
     Parameters
     ----------
     Difference: 3D array
@@ -892,9 +895,6 @@ def FP_PWestimate(Difference, Vectorprobes):
             cube with image difference for each probes.
             Used for pair-wise probing
 
-    Notes
-    -----
-    AUTHOR : Axel Potier
 
     -------------------------------------------------- """
 
@@ -928,6 +928,8 @@ def createdifference(input_wavefront,
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]. 
     we use testbed.name_DM_to_probe_in_PW to do the probes. 
+    
+    AUTHOR : Axel Potier
 
     Parameters
     ----------
@@ -961,9 +963,6 @@ def createdifference(input_wavefront,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
 
-    Notes
-    -----
-    AUTHOR : Axel Potier
 
     -------------------------------------------------- """
 

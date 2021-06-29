@@ -30,23 +30,19 @@ class Optical_System:
     The entrance and exit pupil plane must always of the same size (dim_overpad_pupil)
     With these convention, they can be easily assemble to create complex optical systems.
 
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
+
+    AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
     def __init__(self, modelconfig):
         """ --------------------------------------------------
         Initialize Optical_System objects
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
         modelconfig : dict
                 general configuration parameters (sizes and dimensions)
-
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
 
@@ -110,6 +106,8 @@ class Optical_System:
 
         NEED TO BE DEFINED FOR ALL Optical_System
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ----------
         entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],
@@ -133,10 +131,6 @@ class Optical_System:
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
-
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
 
@@ -171,6 +165,8 @@ class Optical_System:
         """ --------------------------------------------------
         Propagate the electric field from entrance plane through the system and then
         to Science focal plane.
+
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
@@ -208,10 +204,6 @@ class Optical_System:
                 Electric field in the focal plane.
                 the lambda / D is defined such as
                 self.wavelength_0 /  (2*self.exitpup_rad) = self.Science_sampling pixels
-
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
         if center_on_pixel == True:
@@ -266,6 +258,8 @@ class Optical_System:
         Propagate the electric field from entrance plane through the system, then
         to Science focal plane and measure intensity
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ----------
         entrance_EF:   3D complex array of size [nb_wav,self.dim_overpad_pupil, self.dim_overpad_pupil]
@@ -301,10 +295,6 @@ class Optical_System:
         focal_plane_Intensity : 2D array of size [self.dimScience, self.dimScience]
                     Intensity in the focal plane. The lambda / D is defined such as
                     self.wavelength_0 /  (2*self.exitpup_rad) = self.Science_sampling pixels
-
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
 
@@ -375,6 +365,8 @@ class Optical_System:
         By default transmission is done at the reference WL, and there is
         no reason to depend heavily on the WL.
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ------
         noFPM : bool, defaut True
@@ -386,10 +378,6 @@ class Optical_System:
         ------
         transimssion : float  
             ratio exit flux  / clear entrance pupil flux
-
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
         clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil,
@@ -419,9 +407,7 @@ class Optical_System:
                   (*self.norm_polychrom / self.sum_polychrom) and then account for the energy
                 lost in the process (self.transmission()). Can be used as follow:
                 Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
-
-        Notes
-        -----
+        
         AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
@@ -448,26 +434,25 @@ class Optical_System:
 
     def generate_phase_aberr(self, SIMUconfig, Model_local_dir=None):
         """ --------------------------------------------------
-            Save and generate phase aberations
-
-            Parameters
-            ----------
-            SIMUconfig : dict
-                        parameter of this simualtion (describing the phase)
-
-            Model_local_dir: string, default None
-                        directory to save things you can measure yourself
-                        and can save to save time
-
-
-            Returns
-            ------
-            return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-                    phase abberation at the reference wavelength
-
-        Notes
-        -----
+        
+        Generate and save  phase aberations
+        
         AUTHOR : Johan Mazoyer
+
+        Parameters
+        ----------
+        SIMUconfig : dict
+                    parameter of this simualtion (describing the phase)
+
+        Model_local_dir: string, default None
+                    directory to save things you can measure yourself
+                    and can save to save time
+
+
+        Returns
+        ------
+        return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+                phase abberation at the reference wavelength
 
         -------------------------------------------------- """
         if not os.path.exists(Model_local_dir):
@@ -510,7 +495,9 @@ class Optical_System:
 
     def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None):
         """ --------------------------------------------------
-        Save and generate amplitude aberations
+        Generate and save amplitude aberations
+
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
@@ -526,10 +513,6 @@ class Optical_System:
         ------
         return_ampl : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                 amplitude abberation
-
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
         if not os.path.exists(Model_local_dir):
@@ -580,19 +563,21 @@ class Optical_System:
         Create an electrical field from an phase and amplitude aberrations as follows:
 
         EF = (1 + ample_abb)*exp(i*phase_abb * self.wavelength_0 / wavelength)
+        can be monochromatic (return 2d compex array) or polychromatic (return 3d compex array)
+        if no phase nor amplitude, return 1.
 
-        can be monochromatic or polychromatic
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
         phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
             phase aberration at reference wavelength self.wavelength_0. if 0, no phase aberration (default)
 
-        ample_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
+        ampl_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
              amplitude aberration at reference wavelength self.wavelength_0. if 0, no amplitude aberration (default)
 
-
-        wavelengths : float or list of floats. Default is all the wl of the testbed self.wav_vec
+        wavelengths : float or list of floats. 
+                    Default is all the wl of the testbed self.wav_vec
                     wavelengths in m.
 
 
@@ -604,10 +589,6 @@ class Optical_System:
             2D array, of size phase_abb.shape if monochromatic
             or 3D array of size [self.nb_wav,phase_abb.shape] in case of polychromatic
 
-
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
 
@@ -657,9 +638,8 @@ class pupil(Optical_System):
     use default Optical_System functions to obtain PSF, transmission, etc...
     and concatenate them with other elements
 
-    Notes
-    -----
     AUTHOR : Johan Mazoyer
+
     
     -------------------------------------------------- """
     def __init__(self, modelconfig, prad=0., PupType="", filename=""):
@@ -669,6 +649,7 @@ class pupil(Optical_System):
         TODO: for now pupil .fits are monochromatic but the pupil propagation EF_through
             use wavelenght as a parameter
 
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
@@ -693,10 +674,6 @@ class pupil(Optical_System):
             This is a bit dangerous because your .fits file might must be defined
             the right way so be careful
 
-
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
         # Initialize the Optical_System class and inherit properties
@@ -797,6 +774,7 @@ class pupil(Optical_System):
                    **kwargs):
         """ --------------------------------------------------
         Propagate the electric field through the pupil
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
@@ -822,9 +800,6 @@ class pupil(Optical_System):
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Electric field in the pupil plane a the exit of the system
 
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
 
@@ -873,12 +848,14 @@ class coronagraph(Optical_System):
     initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
     coronagraph is a sub class of Optical_System.
 
-
     AUTHOR : Johan Mazoyer
+
     -------------------------------------------------- """
     def __init__(self, modelconfig, coroconfig):
         """ --------------------------------------------------
         Initialize a coronograph object
+
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
@@ -886,11 +863,8 @@ class coronagraph(Optical_System):
                 general configuration parameters (sizes and dimensions)
         coroconfig : : dict
                 coronagraph parameters
-
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
         
+
         -------------------------------------------------- """
 
         # Initialize the Optical_System class and inherit properties
@@ -1023,6 +997,8 @@ class coronagraph(Optical_System):
         Propagate the electric field from apod plane before the apod
         pupil to Lyot plane after Lyot pupil
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ----------
         entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
@@ -1049,10 +1025,7 @@ class coronagraph(Optical_System):
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                 Electric field in the pupil plane a the exit of the system
-
-        Notes
-        ------
-        AUTHOR : Johan Mazoyer
+        
 
         -------------------------------------------------- """
 
@@ -1252,6 +1225,8 @@ class coronagraph(Optical_System):
     def FQPM(self):
         """ --------------------------------------------------
         Create a Four Quadrant Phase Mask coronagraph
+        AUTHOR : Axel Potier
+        Modified by Johan Mazoyer
 
 
         Returns
@@ -1259,10 +1234,6 @@ class coronagraph(Optical_System):
         FQPM : list of len(self.wav_vec) 2D arrays   
             complex transmission of the FQPM mask at all wl
         
-        Notes
-        -----
-        AUTHOR : Axel Potier
-        Modified by Johan Mazoyer
         
         -------------------------------------------------- """
 
@@ -1310,16 +1281,14 @@ class coronagraph(Optical_System):
     def KnifeEdgeCoro(self):
         """ --------------------------------------------------
         Create a Knife edge coronagraph of size (dimScience,dimScience)
+        AUTHOR : Axel Potier
+        Modified by Johan Mazoyer
 
         Returns
         ------
         Knife FPM : list of len(self.wav_vec) 2D arrays 
                     gcomplex transmission of the Knife edge coronagraph mask at all wl
 
-        Notes
-        -----
-        AUTHOR : Axel Potier
-        Modified by Johan Mazoyer
 
         -------------------------------------------------- """
         if self.prop_apod2lyot == "fft":
@@ -1365,16 +1334,13 @@ class coronagraph(Optical_System):
     def ClassicalLyot(self):
         """ --------------------------------------------------
         Create a classical Lyot coronagraph of radius rad_LyotFP 0
-
+        AUTHOR : Johan Mazoyer
 
         Returns
         ------
         classical Lyot fpm : list of 2D numpy array
                             the FP mask at all wl
 
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
         
         -------------------------------------------------- """
 
@@ -1393,15 +1359,13 @@ class coronagraph(Optical_System):
     def HLC(self):
         """ --------------------------------------------------
         Create a HLC of radius rad_LyotFP 0
+        AUTHOR : Johan Mazoyer
 
         Returns
         ------
         classical Lyot hlc : list of 2D numpy array
                             the FP mask at all wl
         
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
         
         -------------------------------------------------- """
 
@@ -1431,6 +1395,8 @@ class coronagraph(Optical_System):
         Create a charge2 vortex.
         #TODO Should work but need to be tested
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ------
         Charge : charge of the vortex. defaut is charge 2
@@ -1440,10 +1406,7 @@ class coronagraph(Optical_System):
             vortex_fpm : list of 2D numpy array
                             the FP mask at all wl
 
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
-        
+
         -------------------------------------------------- """
 
         if self.prop_apod2lyot == "fft":
@@ -1485,6 +1448,8 @@ class deformable_mirror(Optical_System):
 
 
     AUTHOR : Johan Mazoyer
+
+
     -------------------------------------------------- """
     def __init__(self,
                  modelconfig,
@@ -1493,6 +1458,8 @@ class deformable_mirror(Optical_System):
                  Model_local_dir=None):
         """ --------------------------------------------------
         Initialize a deformable mirror object
+
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
@@ -1510,9 +1477,6 @@ class deformable_mirror(Optical_System):
                 directory to save things you can measure yourself
                     and can save to save time
         
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
         
         -------------------------------------------------- """
 
@@ -1621,6 +1585,8 @@ class deformable_mirror(Optical_System):
         if z_DM = 0, then it's just a phase multiplication
         if z_DM != 0, this is where we do the fresnel
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ----------
         entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or float scalar in which case entrance_EF is constant
@@ -1650,9 +1616,6 @@ class deformable_mirror(Optical_System):
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
 
-        Notes
-        -----
-        AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
 
@@ -1714,6 +1677,7 @@ class deformable_mirror(Optical_System):
         the matrix measrueemnt and the correction with a small mismatch
         to simulate its effect.
 
+        AUTHOR : Axel Potier
 
         Parameters
         ----------
@@ -1726,9 +1690,6 @@ class deformable_mirror(Optical_System):
                     of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]  
                     contains all the DM OPD map induced in the DM plane for each actuator.
 
-        Notes
-        -----
-        AUTHOR : Axel Potier
         
         -------------------------------------------------- """
 
@@ -1876,6 +1837,8 @@ class deformable_mirror(Optical_System):
     def creatingWhichinPupil(self):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
+        
+        AUTHOR: Johan Mazoyer
 
         Parameters
         ----------
@@ -1887,6 +1850,7 @@ class deformable_mirror(Optical_System):
         ------
         WhichInPupil: 1D array
                 index of all the actuators located inside the pupil
+
         
         -------------------------------------------------- """
 
@@ -1937,6 +1901,12 @@ class deformable_mirror(Optical_System):
         """ --------------------------------------------------
         Propagate the field towards an out-of-pupil plane ,
         add the DM phase, and propagate to the next pupil plane
+        
+        AUTHOR : Raphaël Galicher, Johan Mazoyer
+
+        REVISION HISTORY :
+            Revision 1.1  2021-02-10 Raphaël Galicher (Initial revision)
+            Revision 2.0 2021-02-28 Johan Mazoyer (Make it more general for all DMs, put in the struc)
 
         Parameters
         ----------
@@ -1962,14 +1932,7 @@ class deformable_mirror(Optical_System):
         EF_back_in_pup_plane : 2D array (complex)
                             Wavefront in the pupil plane following the DM
 
-
-        Notes
-        -----
-            AUTHOR : Raphaël Galicher, Johan Mazoyer
-
-            REVISION HISTORY :
-                Revision 1.1  2021-02-10 Raphaël Galicher (Initial revision)
-                Revision 2.0 2021-02-28 Johan Mazoyer (Make it more general for all DMs, put in the struc)
+            
 
         -------------------------------------------------- """
 
@@ -2010,6 +1973,7 @@ class deformable_mirror(Optical_System):
 
         The phase is define at the reference wl and multiply by wl_ratio in DM.EF_through
 
+        AUTHOR: Johan Mazoyer
 
         Parameters
         ----------
@@ -2025,9 +1989,6 @@ class deformable_mirror(Optical_System):
             DM_phase: 2D array
                         phase map in the same unit as actu_vect * DM_pushact)
         
-        Notes
-        -----
-            AUTHOR: Johan Mazoyer
 
         -------------------------------------------------- """
 
@@ -2055,6 +2016,8 @@ class deformable_mirror(Optical_System):
         Create a DM basis.
         TODO do a zernike basis ?
 
+        AUTHOR: Johan Mazoyer
+
         Parameters
         ----------
         basis_type: string, default 'actuator' 
@@ -2065,9 +2028,6 @@ class deformable_mirror(Optical_System):
         basis: 2d numpy array 
             basis [Size basis, Number of active act in the DM]
 
-        Notes
-        -----
-            AUTHOR: Johan Mazoyer
 
         -------------------------------------------------- """
 
@@ -2110,7 +2070,7 @@ class deformable_mirror(Optical_System):
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
-                        useful.progress(i, basis_size, status='')
+                        useful._progress(i, basis_size, status='')
                 fits.writeto(
                     self.Model_local_dir + Name_FourrierBasis_fits + '.fits',
                     phasesFourrier)
@@ -2137,8 +2097,6 @@ class Testbed(Optical_System):
     "testbed" with contains all the Optical Systems and associated EF_through functions and
     correct normlaization
 
-    Notes
-    -----
     AUTHOR : Johan Mazoyer
 
     -------------------------------------------------- """
@@ -2159,10 +2117,8 @@ class Testbed(Optical_System):
         Returns
         ------
             testbed : an optical system which is the concatenation of all the optical systems
-        
-        Notes
-        -----
-            AUTHOR : Johan Mazoyer
+
+
 
         -------------------------------------------------- """
         if len(list_os) != len(list_os_names):
@@ -2338,10 +2294,7 @@ class Testbed(Optical_System):
                         vector of base coefficients for all actuators of the DMs by order of the light path
                         size (total(DM actuators))
         
-        Notes
-        -----
-            AUTHOR : Johan Mazoyer
-        
+
         -------------------------------------------------- """
 
         indice_acum_basis_size = 0
@@ -2382,6 +2335,8 @@ class Testbed(Optical_System):
 def _swap_DMphase_name(DM_EF_through_function, name_var):
     """ --------------------------------------------------
    A function to rename the DMphase parameter to another name (usually DMXXphase)
+        
+    AUTHOR : Johan Mazoyer
 
     Parameters:
     ------
@@ -2395,9 +2350,6 @@ def _swap_DMphase_name(DM_EF_through_function, name_var):
         the_new_function: function
             with name_var as a param
 
-    Notes
-    -----
-        AUTHOR : Johan Mazoyer
     
     -------------------------------------------------- """
     def wrapper(**kwargs):
@@ -2416,6 +2368,7 @@ def _swap_DMphase_name(DM_EF_through_function, name_var):
 def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
     """ --------------------------------------------------
     A very small function to concatenate 2 functions
+    AUTHOR : Johan Mazoyer
 
     Parameters:
     ------
@@ -2429,9 +2382,7 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
         the concatenated function: function
                 x -> outer_fun(inner_fun(x))
 
-    Notes
-    -----
-        AUTHOR : Johan Mazoyer
+
 
     -------------------------------------------------- """
     def new_EF_through_fun(**kwargs):
@@ -2450,6 +2401,8 @@ def _clean_EF_through(testbed_EF_through, known_keywords) :
     a functions to check that we do not set unknown keyword in
     the testbed EF through function. Maybe not necessary.
 
+    AUTHOR : Johan Mazoyer
+
     Parameters:
     ------
          testbed_EF_through: function
@@ -2461,10 +2414,6 @@ def _clean_EF_through(testbed_EF_through, known_keywords) :
             a function where only known keywords are allowed
         
 
-    Notes
-    -----
-        AUTHOR : Johan Mazoyer
-    
     -------------------------------------------------- """
     def wrapper(**kwargs):
         for passed_arg in kwargs.keys():
@@ -2495,6 +2444,8 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
     DMXX_phase parameters can still be used, but are overridden by voltage_vector parameter
     if present.
 
+    AUTHOR : Johan Mazoyer
+
     Parameters:
     ------
         DM_EF_through_function : function
@@ -2507,10 +2458,7 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
         the_new_function: function
                 with name_var as a param
 
-    Notes
-    -----
-        AUTHOR : Johan Mazoyer
-    
+
     -------------------------------------------------- """
     def wrapper(**kwargs):
         if 'voltage_vector' in kwargs:

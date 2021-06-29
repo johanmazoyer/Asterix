@@ -32,9 +32,8 @@ class Corrector:
         DMVoltage = Corrector.toDM_voltage(estimation)
         It returns the DM Voltage. In all generality, it can one or 2 DMs. Depending on the testbed
 
-
-
     AUTHOR : Johan Mazoyer
+
     -------------------------------------------------- """
     def __init__(self,
                  Correctionconfig,
@@ -52,27 +51,33 @@ class Corrector:
 
         Store in the structure only what you need for estimation. Everything not
         used in self.estimate shoud not be stored
+        
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
-        Correctionconfig : general correction parameters
+        Correctionconfig : dict
+                general correction parameters
 
-        testbed : an Optical_System object which describe your testbed
+        testbed :  Optical_System.Testbed 
+                Testbed object which describe your testbed
 
-        MaskDH: binary array of size [dimEstim, dimEstim] : dark hole mask
+        MaskDH: 2d numpy array
+                binary array of size [dimEstim, dimEstim] : dark hole mask
 
-        estimator: an estimator object. This contains all information about the estimation
+        estimator: Estimator
+                an estimator object. This contains all information about the estimation
 
-        matrix_dir: path. save all the difficult to measure files here
+        matrix_dir: path default: None
+                save all the difficult to measure files here
 
-        save_for_bench. bool default: false
+        save_for_bench: bool default: false
                 should we save for the real testbed in realtestbed_dir
 
-        realtestbed_dir: path save all the files the real testbed need to
-                            run your code
+        realtestbed_dir: path 
+                save all the files the real testbed need to run your code
 
 
-        AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
         if not os.path.exists(matrix_dir):
             print("Creating directory " + matrix_dir + " ...")
@@ -185,20 +190,26 @@ class Corrector:
                         input_wavefront=1.):
         """ --------------------------------------------------
         Measure the interraction matrices needed for the correction
+        Is launch once in the Correction initialization and then once each time we update the matrix
+
+        AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
        
-        testbed : an Optical_System object which describes your testbed
+        testbed :  Optical_System.Testbed 
+                Testbed object which describe your testbed
 
-        estimator: an estimator object. This contains all information about the estimation
+        estimator: Estimator
+                an estimator object. This contains all information about the estimation
 
-        initial_DM_voltage : initial DM voltages to measure the Matrix
+        initial_DM_voltage : float or 1d numpy array, default 0.
+                initial DM voltages to measure the Matrix
 
-        input_wavefront : initial wavefront to measure the Matrix
+        input_wavefront : float or 2d numpy array or 3d numpy array, default 1.
+            initial wavefront to measure the Matrix
 
 
-        AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
         if self.correction_algorithm in ["efc", "em", "steepest", "sm"]:
@@ -247,35 +258,41 @@ class Corrector:
     def toDM_voltage(self,
                      testbed: OptSy.Testbed,
                      estimate,
-                     mode=1.,
-                     ActualCurrentContrast=1,
+                     mode=1,
+                     ActualCurrentContrast=1.,
                      **kwargs):
         """ --------------------------------------------------
         Run a correction from a estimate, and return the DM voltage compatible with the testbed
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ----------
-        testbed: an Optical_System object which describes your testbed
+        testbed :  Optical_System.Testbed 
+                Testbed object which describe your testbed
 
-        estimate: 2D complex array of sixe [dimEstim, dimEstim]. 
+        estimate: 2D complex array 
+                    Array of size of sixe [dimEstim, dimEstim]. 
                     This is the result of Estimator.estimate, from which this function 
                     send a command to the DM
         
-        mode: int, defaut one. Use in EFC, EM, and Steepest, this is the mode we use in the SVD inversion
-                                if the mode is the same than the previous iteration, we store the inverted 
-                                matrix to avoid inverted it again
+        mode: int, defaut 1
+                Use in EFC, EM, and Steepest, this is the mode we use in the SVD inversion
+                if the mode is the same than the previous iteration, we store the inverted 
+                matrix to avoid inverted it again
         
         
-        ActualCurrentContrast: Contrast at the current iteration of the loop 
-                                This is used by SM algorithm to find a target contrast
+        ActualCurrentContrast: float defaut 1. 
+                Use in StrokeMin to find a target contrast
+                Contrast at the current iteration of the loop 
 
         
         Return
         ----------
-        solution: a voltage vector to be applied to the testbed
+        solution: 1d numpy real float array
+            a voltage vector to be applied to the testbed
 
 
-        AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
 
         if self.correction_algorithm == "efc":

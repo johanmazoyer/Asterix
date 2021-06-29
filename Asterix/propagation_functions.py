@@ -17,10 +17,21 @@ def mft(image,
         - Return the Matrix Direct Fourier transform (MFT) of a 2D image
         - Can deal with any size, any position of
             the 0-frequency...
+    
+    AUTHORS: Baudoz, Galicher, Mazoyer $
+
+
+    REVISION HISTORY :
+        -Revision 1.1  2011  Initial revision. Raphaël Galicher (from soummer, in IDL)
+        -Revision 2.0  2012-04-12 P. Baudoz (IDL version): added pup offset
+        -Revision 3.0  2020-03-10 J. Mazoyer (to python). Replace the MFT with no input offset option
+        -Revision 4.0  2020-04-20 J. Mazoyer. change the normalization. Change dim_pup name to be more
+                                        coherent. Made better parameter format check
 
     Parameters
     ----------
-        image : 2D Entrance image (entrance size in x and y can be different)
+        image : 2D array
+            Entrance image (entrance size in x and y can be different)
 
         real_dim_input : int or tupple of int of dim 2
                 Diameter of the support in pup (can differ from image.shape)
@@ -29,14 +40,16 @@ def mft(image,
         dim_output : int or tupple of int of dim 2
                 Dimension of the output in pixels (square if int, rectangular if (int, int)
 
-        nbres: float or or tupple of float of dim 2
+        nbres: float or tupple of float of dim 2
                 Number of spatial resolution elements (same in both directions if float)
 
-        inverse : direction of the MFT
+        inverse : bool, default False
+                direction of the MFT
                 inverse = False, direct mft (default value)
                 inverse = True, indirect mft
 
-        norm : 'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
+        norm : string default 'backward'
+                'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
                 https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
                 if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse = True)
                 if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse = True)
@@ -44,38 +57,31 @@ def mft(image,
                 Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
                 The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
 
-        X_offset_input :(default 0) position of the 0-frequency pixel in x for the entrance
-             image with respect to the center of the entrance image (real position
-             of the 0-frequency pixel on dim_input_x/2+x0)
+        X_offset_input : float default 0
+                position of the 0-frequency pixel in x for the entrance
+                image with respect to the center of the entrance image (real position
+                of the 0-frequency pixel on dim_input_x/2+x0)
 
-        Y_offset_input :(default 0) position of the 0-frequency pixel in Y for the entrance
-             image with respect to the center of the entrance image (real position
-             of the 0-frequency pixel on dim_input_y/2+y0)
+        Y_offset_input : float default 0 
+                position of the 0-frequency pixel in Y for the entrance
+                image with respect to the center of the entrance image (real position
+                of the 0-frequency pixel on dim_input_y/2+y0)
 
-        X_offset_output :(default 0) position of the 0-frequency pixel in x for the output
-             image with respect to the center of the output image (real position
-             of the 0-frequency pixel on dim_output_x/2+x1)
+        X_offset_output : float default 0 
+                position of the 0-frequency pixel in x for the output
+                image with respect to the center of the output image (real position
+                of the 0-frequency pixel on dim_output_x/2+x1)
 
-        Y_offset_output :(default 0) position of the 0-frequency pixel in Y for the output
-             image with respect to the center of the output image (real position
-             of the 0-frequency pixel on dim_output_y/2+y1)
+        Y_offset_output : float default 0 
+                position of the 0-frequency pixel in Y for the output
+                image with respect to the center of the output image (real position
+                of the 0-frequency pixel on dim_output_y/2+y1)
 
     Returns
     ------
-        result : 2D array (complex)
+        result : complex 2D array
             Output is a complex array dimft x dimft with the position of the
             0-frequency on the (dim_output_x/2+x1,dim_output_y/2+y1) pixel
-
-    AUTHOR :
-       $AUTHOR: Baudoz, Galicher, Mazoyer $
-
-
-    REVISION HISTORY :
-        Revision 1.1  2011  Initial revision. Raphaël Galicher (from soummer, in IDL)
-        Revision 2.0  2012-04-12 P. Baudoz (IDL version): added pup offset
-        Revision 3.0  2020-03-10 J. Mazoyer (to python). Replace the MFT with no input offset option
-        Revision 4.0  2020-04-20 J. Mazoyer. change the normalization. Change dim_pup name to be more
-                                        coherent. Made better parameter format check
 
     """
 
@@ -190,6 +196,11 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     Fresnel propagation of electric field along a distance z
     in a collimated beam and in Free space
 
+    AUTHOR : Raphael Galicher
+
+    REVISION HISTORY :
+    - Revision 1.1  2020-01-22 Raphael Galicher Initial revision
+
     Parameters
     ----------
     pup : 2D array (complex or real)
@@ -214,11 +225,11 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
          if z>0: entrance beam radius in pixel
          if z<0: output beam radius in pixel
 
-    retscale :
-            IF NOT 0, the function returns the scales
-            of the input and output arrays
-            IF 0, the function returns the output
-            electric field (see Returns)
+    retscale int 0 or 1:
+        IF NOT 0, the function returns the scales
+        of the input and output arrays
+        IF 0, the function returns the output
+        electric field (see Returns)
 
     Returns
     ------
@@ -236,11 +247,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         dxout : float
                 lateral sampling in the output array
 
-    AUTHOR : Raphael Galicher
 
-    REVISION HISTORY :
-    Revision 1.1  2020-01-22 Raphael Galicher
-    Initial revision
 
     -------------------------------------------------- """
     # dimension of the input array

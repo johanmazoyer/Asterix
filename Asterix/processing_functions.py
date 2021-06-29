@@ -14,24 +14,41 @@ def twoD_Gaussian(xy,
                   h,
                   flatten=True):
     """ --------------------------------------------------
-    Create a gaussian in 2D
+    Create a gaussian in 2D.
+
+    Author : Axel Potier
 
     Parameters
     ----------
-    xy: Tuple object (2,dim1,dim2)  which can be created with:
+    xy: Tuple object (2,dim1,dim2)  
+        which can be created with:
         x, y = np.mgrid[0:dim1, 0:dim2]
         xy=(x,y)
-    amplitude: Peak of the gaussian function
-    sigma_x: Standard deviation of the gaussian function in the x direction
-    sigma_y: Standard deviation of the gaussian function in the y direction
-    xo: Position of the Gaussian peak in the x direction
-    yo: Position of the Gaussian peak in the y direction
-    h: Floor amplitude
-    flatten : if True (default), the 2D-array is flatten into 1D-array
+
+    amplitude: float
+        Peak of the gaussian function
+
+    sigma_x: float
+        Standard deviation of the gaussian function in the x direction
+
+    sigma_y: float
+        Standard deviation of the gaussian function in the y direction
+    xo: float
+        Position of the Gaussian peak in the x direction
+    yo: float
+        Position of the Gaussian peak in the y direction
+    h: float
+        Floor amplitude
+    flatten : bool, default True
+        if True (default), the 2D-array is flatten into 1D-array
 
     Returns
     ------
-    The array is the created 2D gaussian function
+    gauss: 2d numpy array
+        2D gaussian function
+
+
+
     -------------------------------------------------- """
     x = xy[0]
     y = xy[1]
@@ -56,11 +73,14 @@ def gauss2Dfit(data):
 
     Parameters
     ----------
-    data: 2D array, input image
+    data: 2D array
+        input image
 
     Returns
     ------
-    popt: max, sig_x, sig_y, x_cen, y_cen, angle, offset
+    popt: tupple of float
+        parameter of the gaussian: max, sig_x, sig_y, x_cen, y_cen, angle, offset
+
     -------------------------------------------------- """
     # 2D-Gaussian fit
     popt = np.zeros(8)
@@ -84,25 +104,31 @@ def gauss2Dfit(data):
 
 def resampling(image, new):
     """ --------------------------------------------------
-    Crop and then resample the focal plane image to create a 2D array with new dimensions
+    Resample the focal plane image to create a 2D array with new dimensions
+
+    - v1.0 2020 A. Potier
+    - v2.0 19/03/21 J Mazoyer clean names + if image is real, result is real.
+    - v3.0 05/2021 J Mazoyer Replacing currenly with standard pyhton function scipy.ndimage.zoom
 
     Parameters
     ----------
-    image: 2D array, input image
-    reechpup: Size of the cropped image before resempling in pixels
-    new: Size of the output image after resampling in pixels
+    image: 2D array
+        input image
+    new: int
+        Size of the output image after resampling in pixels
 
     Returns
     ------
-    Gvector: 2D array, image resampled into new dimensions
-    v1.0 2020 A. Potier
-    v2.0 19/030/21 J Mazoyer clean names + if image is real, result is real.
+    Gvector: 2D array
+        image resampled into new dimensions
+
+
     -------------------------------------------------- """
 
     dimScience = len(image)
 
     # THe old function is decentering the PSF (it is not centered between 4 pixels) !!
-    # We need to talk abuot it with Raphael
+    # TODO We need to talk abuot it with Raphael
     # Replacing currenly with standard pyhton function scipy.ndimage.zoom
 
     # fftimage_cropped = cropimage(
@@ -122,17 +148,26 @@ def resampling(image, new):
 def cropimage(img, ctr_x, ctr_y, newsizeimg):
     """ --------------------------------------------------
     Crop an image to create a 2D array with new dimensions
+    AUHTOR: Axel Potier
 
     Parameters
     ----------
-    img: 2D array, input image, can be non squared
-    ctr_x: Center of the input image in the x direction around which you make the cut
-    ctr_y: Center of the input image in the y direction around which you make the cut
+    img: 2D array
+        input image, can be non squared
+    ctr_x: float
+        Center of the input image in the x direction around which you make the cut
+    ctr_y: float
+        Center of the input image in the y direction around which you make the cut
+    
     newsizeimg: int
+        Size of the new image
 
     Returns
     ------
-    Gvector: 2D array, squared image resampled into new dimensions
+    Gvector: 2D array
+        squared image cropped into new dimensions
+
+
     -------------------------------------------------- """
     newimgs2 = newsizeimg / 2
     return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2),
@@ -141,7 +176,11 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
 
 def crop_or_pad_image(image, dimout):
     """ --------------------------------------------------
-    crop or padd with zero to a 2D image
+    crop or padd with zero to a 2D image depeding: 
+        - if dimout < dim : cropped image around pixel (dim/2,dim/2)
+        - if dimout > dim : image around pixel (dim/2,dim/2) surrounded by 0
+
+    AUTHOR: Raphael Galicher
 
     Parameters
     ----------
@@ -154,14 +193,7 @@ def crop_or_pad_image(image, dimout):
     Returns
     ------
     im_out : 2D array (float)
-            if dimout < dim : cropped image around pixel (dim/2,dim/2)
-            if dimout > dim : image around pixel (dim/2,dim/2) surrounded by 0
-
-    AUTHOR : Raphaël Galicher
-
-    REVISION HISTORY :
-    Revision 1.1  2021-02-10 Raphaël Galicher Initial revision
-    Revision 2.0  2021-02-24. JM Rename because cut_image was innacurate
+        resized image
 
 
     -------------------------------------------------- """
@@ -186,21 +218,30 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
                       sampling_simu_over_measured):
     """ --------------------------------------------------
     Convert the measred positions of actuators to positions for numerical simulation
+    
+    AUHTOR: Axel Potier
+    
     Parameters
     ----------
-    measured_grid : 2D array (float) of shape is 2 x Nb_actuator
+    measured_grid : 2D array (float) 
+                    array of shape 2 x Nb_actuator
                     x and y measured positions for each actuator (unit = pixel)
-    measured_ActuN: 1D array (float) of shape 2
-                    x and y positions of actuator ActuN same unit as measured_grid
+    measured_ActuN: 1D array (float) 
+                    arrayof shape 2. x and y positions of actuator ActuN same unit as measured_grid
     ActuN:          int
                     Index of the actuator ActuN (corresponding to measured_ActuN)
     sampling_simu_over_measured : float
                     Ratio of sampling in simulation grid over sampling in measured grid
+    
+    
     Returns
     ------
-    simu_grid : 2D array of shape is 2 x Nb_actuator
+    simu_grid : 2D array 
+                Array of shape is 2 x Nb_actuator
                 x and y positions of each actuator for simulation
                 same unit as measured_ActuN
+
+
     -------------------------------------------------- """
     simu_grid = measured_grid * 0
     for i in np.arange(measured_grid.shape[1]):
@@ -213,18 +254,23 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
 def SinCosBasis(sqrtNbActuators):
     """ --------------------------------------------------
     For a given number of actuator accross the pupil, create coefficients for the sin/cos basis
-    Works only for a even number of actuator accross the pupil 
+    Currently works only for a even number of actuator accross the pupil 
+    
+    AUTHOR: Johan Mazoyer
     
     Parameters
     ----------
-    sqrtNbActuators : float. Numnber of actuator accross the pupil
+    sqrtNbActuators : float
+        Numnber of actuator accross the pupil
     
+
     Returns
     ------
-    SinCosBasis : 3D array of [(sqrtNbActuators)^2,sqrtNbActuators,sqrtNbActuators]
-                    which contains the coefficient to apply to DMs to obtain sinus and cosinus
+    SinCosBasis : 3D array 
+                Coefficient to apply to DMs to obtain sinus and cosinus.
+                size :[(sqrtNbActuators)^2,sqrtNbActuators,sqrtNbActuators]
     
-    AUTHOR: Johan Mazoyer
+
     -------------------------------------------------- """
 
     TFCoeffs = np.zeros((sqrtNbActuators**2, sqrtNbActuators, sqrtNbActuators),

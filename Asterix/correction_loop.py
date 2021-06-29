@@ -31,6 +31,8 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     Run a full loop for several Matrix. at each iteration, we update the matrix and
     run CorrectionLoop1Matrix. 
 
+    AUTHOR : Johan Mazoyer
+
     Parameters
     ----------
         
@@ -85,9 +87,6 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     CorrectionLoopResult : dict
                 a dictionnary containing the results of all loops
 
-    Notes
-    -----
-    AUTHOR : Johan Mazoyer
     
     -------------------------------------------------- """
 
@@ -182,7 +181,9 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                           nb_photons=1e30,
                           silence=False):
     """ --------------------------------------------------
-    Run a loop for a given interraction matrix
+    Run a loop for a given interraction matrix.
+
+    AUTHOR : Johan Mazoyer
 
     Parameters
     ----------
@@ -251,10 +252,6 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     ------
     if Search_best_Mode == True, return [bestMode, bestContrast]
     else return CorrectionLoopResult dictionnary updated with the results from this loop
-
-    Notes
-    -----
-    AUTHOR : Johan Mazoyer
     
     -------------------------------------------------- """
 
@@ -457,6 +454,8 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
     The config is also saved in a .ini file
     . No return
 
+    AUTHOR : Johan Mazoyer
+    
     Parameters
     ----------
     CorrectionLoopResult: dict 
@@ -470,11 +469,6 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
     
     result_dir: path
         directory where to save the results
-
-
-    Notes
-    -----
-    AUTHOR : Johan Mazoyer
     
     -------------------------------------------------- """
 

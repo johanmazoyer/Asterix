@@ -11,6 +11,11 @@ import Asterix.fits_functions as useful
 def roundpupil(dim_pp, prad, no_pixel=False):
     """ --------------------------------------------------
     Create a circular pupil. The center of the pupil is located between 4 pixels.
+    no_pixel mode is a way to create very ovsersampled pupil that are then rescale.
+    no_pixel is currently not well tested. 
+
+    AUTHOR : Axel Pottier.
+    Modified by J Mazoyer to remove the pixel crenellation
 
     Parameters
     ----------
@@ -27,9 +32,8 @@ def roundpupil(dim_pp, prad, no_pixel=False):
     ------
     pupilnormal : 2D array
         Output circular pupil
-
-    AUTHOR : Axel Pottier
-    Modified by J Mazoyer to remove the pixel crenellation
+    
+    
     -------------------------------------------------- """
 
     if no_pixel == True:
@@ -59,6 +63,8 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     """ --------------------------------------------------
     Create a phase ramp of size (dim_pp,dim_pp) that can be used as follow
     to shift one image by (a,b) pixels : shift_im = real(fft(ifft(im)*exp(i phase ramp)))
+    
+    AUTHOR: Axel Potier
 
     Parameters
     ----------
@@ -73,6 +79,8 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     ------
     masktot : 2D array
         Phase ramp
+
+
     -------------------------------------------------- """
     if (shift_x == 0) & (shift_y == 0):
         ramp = 1
@@ -88,6 +96,8 @@ def scale_amplitude_abb(filename, prad, dim_image):
     """ --------------------------------------------------
     Scale the map of a saved amplitude map
 
+    AUTHOR : Raphael Galicher
+
     Parameters
     ----------
     filename : str
@@ -102,12 +112,7 @@ def scale_amplitude_abb(filename, prad, dim_image):
     ampfinal : 2D array (float)
             amplitude aberrations (in amplitude, not intensity)
 
-    AUTHOR : Raphael Galicher
-
-    REVISION HISTORY :
-    Revision 1.1  2021-02-18 Raphael Galicher
-    Initial revision
-
+    
     -------------------------------------------------- """
 
     # create a circular pupil of the same radius of the given pupil
@@ -144,28 +149,35 @@ def scale_amplitude_abb(filename, prad, dim_image):
 
 def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     """ --------------------------------------------------
-        Create a random phase map, whose PSD decrease in f^(-slope)
-        average is null and stadard deviation is phaserms
+    Create a random phase map, whose PSD decrease in f^(-slope)
+    average is null and stadard deviation is phaserms
 
-        Parameters
-        ----------
-        pupil_rad: radius of the pupil on which the phaserms will be measured
+    AUTHOR: Axel Potier
 
-        dim_image: size of the output (can be different than 2*pupil_rad)
+    Parameters
+    ----------
+    pupil_rad: int
+        radius of the pupil on which the phaserms will be measured
 
-        phaserms : float
-            standard deviation of aberration
-        rhoc : float
-            See Borde et Traub 2006
-        slope : float
-            Slope of the PSD
+    dim_image: int
+        size of the output (can be different than 2*pupil_rad)
 
+    phaserms : float
+        standard deviation of aberration
 
-        Returns
-        ------
-        phase : 2D array
-            Static random phase map (or OPD) generated
-        -------------------------------------------------- """
+    rhoc : float
+        See Borde et Traub 2006
+
+    slope : float
+        Slope of the PSD. See Borde et Traub 2006
+
+    Returns
+    ------
+    phase : 2D array
+        Static random phase map (or OPD) generated
+    
+    
+    -------------------------------------------------- """
 
     # create a circular pupil of the same radius of the given pupil
     # this will be the pupil over which phase rms = phaserms

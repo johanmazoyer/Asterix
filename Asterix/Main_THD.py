@@ -30,26 +30,26 @@ def runthd2(parameter_file,
         the correction method from parameter_file file
         Run the loop and save the results
 
-        Parameters
-        ----------
-        parameter_file: parameter_file: path to a .ini parameter file
-
-        NewMODELconfig
-        NewDMconfig
-        NewCoronaconfig
-        NewEstimationconfig
-        NewCorrectionconfig
-        NewSIMUconfig
-
-        Can be used to update a single parameter in one of the subsections of the parameter file.
-        This will replace the value in the parameter file. 
-
+        All NewXXXconfig can be used to update a single parameter in one of 
+        the subsections of the parameter file. This will replace the value in the parameter file. 
         e.g. : NewCoronaconfig ={'paramXXX': YYY}
 
-        Returns
-        ------
-
         AUTHOR : Johan Mazoyer
+
+
+        Parameters
+        ----------
+        parameter_file: path 
+            path to a .ini parameter file
+
+        NewMODELconfig: dict
+        NewDMconfig: dict
+        NewCoronaconfig: dict
+        NewEstimationconfig: dict
+        NewCorrectionconfig: dict
+        NewSIMUconfig: dict
+
+        
         -------------------------------------------------- """
 
         ### CONFIGURATION FILE
