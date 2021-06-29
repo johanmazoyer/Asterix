@@ -880,14 +880,22 @@ def FP_PWestimate(Difference, Vectorprobes):
 
     Parameters
     ----------
-    Difference: 3D array, cube with image difference for each probes
+    Difference: 3D array
+            cube with image difference for each probes
 
-    Vectorprobes: 2D array, model probe matrix for the same probe as for difference
+    Vectorprobes: 2D array
+            model probe matrix for the same probe as for difference
 
     Returns
     ------
-    Difference: 3D array, cube with image difference for each probes.
-                Used for pair-wise probing
+    Difference: 3D array
+            cube with image difference for each probes.
+            Used for pair-wise probing
+
+    Notes
+    -----
+    AUTHOR : Axel Potier
+
     -------------------------------------------------- """
 
     dimimages = len(Difference[0])

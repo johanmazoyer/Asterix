@@ -34,19 +34,26 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     Parameters
     ----------
         
-    testbed: an Optical_System object which describes your testbed
+    testbed: Optical_System.Testbed
+            object which describes your testbed
     
-    estimator: an estimator object. This contains all information about the estimation
+    estimator: Estimator 
+            This contains all information about the estimation
     
-    corrector: a corrector object. This contains all information about the correction
+    corrector: Corrector. 
+            This contains all information about the correction
     
-    mask_dh: binary array of size [dimScience, dimScience] : dark hole mask
+    mask_dh: 2d numpy array
+        binary array of size [dimScience, dimScience] : dark hole mask
     
-    Loopconfig: simulation parameters containing the loop parameters
+    Loopconfig: dict
+            simulation parameters containing the loop parameters
 
-    SIMUconfig: simulation parameters containing the Simulation parameters
+    SIMUconfig: dict
+            simulation parameters containing the Simulation parameters
     
-    input_wavefront: initial wavefront at the beginning of this loop.
+    input_wavefront: float or 2d complex array or 3d complex array
+    initial wavefront at the beginning of this loop.
         Electrical Field which can be a :
             float 1. if no phase / amplitude (default)
             2D complex array, of size phase_abb.shape if monochromatic
@@ -58,10 +65,11 @@ def CorrectionLoop(testbed: OptSy.Testbed,
                     input_wavefront is only used in the loop once the matrix is calcultated   
                     This can be changed but be careful.             
 
-    initial_DM_voltage. initial DM voltages at the beginning of this loop. The Matrix is measured 
-                        using this initial DM voltages. Can be:
+    initial_DM_voltage: float or 1D array
+            initial DM voltages at the beginning of this loop. The Matrix is measured 
+            using this initial DM voltages. Can be:
             float 0 if flat DMs (default)
-            1D array of size testbed.number_act
+            or 1D array of size testbed.number_act
     
     photon_noise: boolean, default False
                     If True, add photon noise.
@@ -74,9 +82,13 @@ def CorrectionLoop(testbed: OptSy.Testbed,
 
     Returns
     ------
-    CorrectionLoopResult : a dictionnary containing the results of all loops
+    CorrectionLoopResult : dict
+                a dictionnary containing the results of all loops
 
-    AUTHOR: Johan Mazoyer
+    Notes
+    -----
+    AUTHOR : Johan Mazoyer
+    
     -------------------------------------------------- """
 
     CorrectionLoopResult = dict()
@@ -175,51 +187,64 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     Parameters
     ----------
         
-    testbed: an Optical_System object which describes your testbed
+    testbed: Optical_System.Testbed
+            object which describes your testbed
     
-    estimator: an estimator object. This contains all information about the estimation
+    estimator: Estimator 
+            This contains all information about the estimation
     
-    corrector: a corrector object. This contains all information about the correction
+    corrector: Corrector. 
+            This contains all information about the correction
     
-    mask_dh: binary array of size [dimScience, dimScience] : dark hole mask
+    mask_dh: 2d numpy array
+        binary array of size [dimScience, dimScience] : dark hole mask
     
-    Nbiter_corr: int or list of int, number of iterations in the loop
+    Nbiter_corr: int or list of int
+            number of iterations in the loop
     
-    CorrectionLoopResult: dictionnary containing the result of the previous loop. 
-                            This will be updated with the result of this loop
+    CorrectionLoopResult: dict
+                dictionnary containing the result of the previous loop. 
+                This will be updated with the result of this loop
     
-    gain:  gain of the loop in EFC mode. 
-            float between 0 and 1, default 0.1
+    gain:  float between 0 and 1, default 0.1
+            gain of the loop in EFC mode. 
+            
     
     Nbmode_corr: int or list of int of same size as Nbiter_corr,
                     SVD modes for each iteration
     
-    Linesearch: bool, default False. If True, In this mode, the function CorrectionLoop1Matrix
-                        will call itself at each iteration with Search_best_Mode= True to find 
-                        the best SVD inversion mode among a few Linesearchmodes. 
+    Linesearch: bool, default False. 
+                If True, In this mode, the function CorrectionLoop1Matrix
+                will call itself at each iteration with Search_best_Mode= True to find 
+                the best SVD inversion mode among a few Linesearchmodes. 
+
+    Search_best_Mode: bool, default False. 
+                    If true, the algorithm does not return the
+                    loop information, just the best mode and best contrast. 
+                    This mode is used in Linesearch mode
+                    Be careful when using this parameter, it can create an infinite loop
     
-    Search_best_Mode: bool. default False. If true, the algorithm does not return the
-                                loop information, just the best mode and best contrast. 
-                                This mode is used in Linesearch mode
-                                Be careful when using this parameter, it can create an infinite loop
-    
-    input_wavefront: initial wavefront at the beginning of this loop.
+    input_wavefront: float or 2d complex array or 3d complex array
+        initial wavefront at the beginning of this loop.
         Electrical Field which can be a :
             float 1. if no phase / amplitude (default)
             2D complex array, of size phase_abb.shape if monochromatic
             or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic                   
 
-    initial_DM_voltage. initial DM voltages at the beginning of this loop. Can be:
+    initial_DM_voltage: float or 1D array
+            initial DM voltages at the beginning of this loop. The Matrix is measured 
+            using this initial DM voltages. Can be:
             float 0 if flat DMs (default)
-            1D array of size testbed.number_act
+            or 1D array of size testbed.number_act
+            
     
     photon_noise: boolean, default False
                     If True, add photon noise.
     
-    nb_photons int, optional default 1e30
+    nb_photons: int, optional default 1e30
                 Number of photons entering the pupil
     
-    silence=False: Boolean, default False
+    silence: Boolean, default False
                 if False, print and plot results as the loop runs
 
     Returns
@@ -227,7 +252,10 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     if Search_best_Mode == True, return [bestMode, bestContrast]
     else return CorrectionLoopResult dictionnary updated with the results from this loop
 
-    AUTHOR: Johan Mazoyer
+    Notes
+    -----
+    AUTHOR : Johan Mazoyer
+    
     -------------------------------------------------- """
 
     if Search_best_Mode:
@@ -423,23 +451,31 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
 
 def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, result_dir):
     """ --------------------------------------------------
-    Save the result from a correction loop 
+    Save the result from a correction loop in result_dir
+    
+    All fits have all parameters in the header.
+    The config is also saved in a .ini file
+    . No return
 
     Parameters
     ----------
-    CorrectionLoopResult: dictionnary containing the results from CorrectionLoop1Matrix or CorrectionLoop
+    CorrectionLoopResult: dict 
+        dictionnary containing the results from CorrectionLoop1Matrix or CorrectionLoop
 
-    config: complete parameter dictionnary
+    config: dict
+        complete parameter dictionnary
 
-    testbed: an Optical_System object which describes your testbed
+    testbed: Optical_System
+        an Optical_System object which describes your testbed
     
-    result_dir: directory where to save the results
-
-    Returns
-    ------
+    result_dir: path
+        directory where to save the results
 
 
-    AUTHOR: Johan Mazoyer
+    Notes
+    -----
+    AUTHOR : Johan Mazoyer
+    
     -------------------------------------------------- """
 
     if not os.path.exists(result_dir):

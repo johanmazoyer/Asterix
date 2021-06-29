@@ -1496,14 +1496,18 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        modelconfig : general configuration parameters (sizes and dimensions)
+        modelconfig : dict
+                general configuration parameters (sizes and dimensions)
 
-        DMconfig : DM configuration parameters dictionary 
+        DMconfig : dict
+                DM configuration parameters dictionary 
 
-        Name_DM : the name of the DM, which allows to find it in the parameter file
-        we measure and save the pushact functions
+        Name_DM : string
+                the name of the DM, which allows to find it in the parameter file
+                we measure and save the pushact functions
 
-        Model_local_dir: directory to save things you can measure yourself
+        Model_local_dir: path
+                directory to save things you can measure yourself
                     and can save to save time
         
         Notes
@@ -1632,11 +1636,13 @@ class deformable_mirror(Optical_System):
                     CAREFUL !! If the DM is part of a testbed. this variable name is changed
                     to DMXXphase (DMXX: name of the DM) to avoid confusion with
 
-        save_all_planes_to_fits: Bool, default False.
+        save_all_planes_to_fits: Bool, default False
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in
+
+        dir_save_all_planes : path, default None 
+                            directory to save all plane in
                                     fits if save_all_planes_to_fits = True
 
         Returns
@@ -1711,12 +1717,14 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        DMconfig : DM configuration parameters dictionary 
+        DMconfig : dict
+            DM configuration parameters dictionary 
 
         Returns
         ------
-        pushact : 3D numpy array of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]  
-                    which contains all the DM OPD map induced in the DM plane for each actuator.
+        pushact : 3D numpy array 
+                    of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]  
+                    contains all the DM OPD map induced in the DM plane for each actuator.
 
         Notes
         -----
@@ -1871,12 +1879,15 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account
+        cutinpupil: float
+                    minimum surface of an actuator inside the pupil to be taken into account
                     (between 0 and 1, ratio of an actuator perfectly centered in the entrance pupil)
 
         Returns
         ------
-        WhichInPupil: 1D array, index of all the actuators located inside the pupil
+        WhichInPupil: 1D array
+                index of all the actuators located inside the pupil
+        
         -------------------------------------------------- """
 
         Name_WhichInPup_fits = "WhichInPup" + self.string_os + "_thres" + str(
@@ -2004,7 +2015,7 @@ class deformable_mirror(Optical_System):
         ----------
         actu_vect : 1D array
                     values of the amplitudes for each actuator
-        einstein_sum : boolean. default false
+        einstein_sum : boolean, default false
                         Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
                         gives the same results as normal sum. Seems ot be faster for unique actuator
                         but slower for more complex phases
@@ -2046,12 +2057,13 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        DM: a DM object (Optical System)
-        basis_type: string, default 'actuator' the type of basis
+        basis_type: string, default 'actuator' 
+            the type of basis. 'fourier' or 'actuator'
 
         Returns
         ------
-        a 2d numpy array [Size basis, Number of active act in the DM]
+        basis: 2d numpy array 
+            basis [Size basis, Number of active act in the DM]
 
         Notes
         -----
@@ -2134,7 +2146,7 @@ class Testbed(Optical_System):
         """ --------------------------------------------------
         This function allow you to concatenates Optical_System obsjects to create a testbed:
         parameter:
-            list_os:        list of optical systems
+            list_os:        list of Optical_System
                             all the systems must have been defined with
                             the same modelconfig or it will send an error.
                             The list order is form the first optics system to the last in the
@@ -2316,14 +2328,15 @@ class Testbed(Optical_System):
 
         Parameters
         ----------
-        vector_basis_voltage: 1D-array real : dim (total(basisDM sizes))
-                        vector of voltages on the mode of the basis for all
+        vector_basis_voltage: 1D-array real : 
+                        vector of voltages of size (total(basisDM sizes)) on the mode of the basis for all
                         DMs by order of the light path
 
         Returns
         ------
-        vector_actuator_voltage: 1D-array real : dim (total(DM actuators))
+        vector_actuator_voltage: 1D-array real : 
                         vector of base coefficients for all actuators of the DMs by order of the light path
+                        size (total(DM actuators))
         
         Notes
         -----
@@ -2372,12 +2385,15 @@ def _swap_DMphase_name(DM_EF_through_function, name_var):
 
     Parameters:
     ------
-        DM_EF_through_function : the function of which we want to change the params
-        name_var : string the name of the  new name variable
+        DM_EF_through_function : function
+            the function of which we want to change the params
+        name_var : string 
+            the name of the  new name variable
 
     Returns
     ------
-        the_new_function: with name_var as a param
+        the_new_function: function
+            with name_var as a param
 
     Notes
     -----

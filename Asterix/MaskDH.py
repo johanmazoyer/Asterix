@@ -17,9 +17,13 @@ class MaskDH:
 
         Parameters
         ----------
-        Correctionconfig: general correction file which contains mask parameters
-
-        AUTHOR : Johan Mazoyer
+        Correctionconfig: dict
+                general correction file which contains mask parameters
+    
+        Notes
+        -----
+            AUTHOR : Johan Mazoyer
+        
         -------------------------------------------------- """
 
         self.DH_shape = Correctionconfig["DH_shape"].lower()
@@ -49,14 +53,20 @@ class MaskDH:
 
         Parameters
         ----------
-        dimFP: int, size of the output FP mask
-        FP_sampling: float, resolution of focal plane pixel  per lambda / D
+        dimFP: int
+            size of the output FP mask
+        FP_sampling: float
+            resolution of focal plane pixel  per lambda / D
 
         Returns
         ------
-        maskDH: 2D array, binary mask
+        maskDH: 2D array    
+            binary mask delimiting the DH
 
-        AUTHOR : Johan Mazoyer
+        Notes
+        -----
+            AUTHOR : Johan Mazoyer
+        
         -------------------------------------------------- """
 
         maskDH = np.ones((dimFP, dimFP))
@@ -110,9 +120,14 @@ class MaskDH:
         return maskDH
 
     def tostring(self):
-        """ create a mask String to be used to save .fits files
-         AUTHOR : Johan Mazoyer
-        """
+        """ create a mask String to be used to save .fits files.
+            directly update self.stringdh
+        
+        Notes
+        -----
+            AUTHOR : Johan Mazoyer
+        
+        -------------------------------------------------- """
 
         if self.DH_shape == "square":
             stringdh = "MaskDH_square_" + "_".join(map(str,
