@@ -37,7 +37,7 @@ def invertSVD(matrix_to_invert,
     matrix_to_invert : numpy array
                         The matrix to invert
     cut : int 
-                threshold to cut the singular values
+         threshold to cut the singular values
     goal : string, default 'e'
             if 'e': the cut set the inverse singular value not to exceed
             if 'c': the cut set the number of modes to take into account
@@ -60,6 +60,8 @@ def invertSVD(matrix_to_invert,
     pseudoinverse :  2D numpy array
         Regularized inverse of the input matrix
 
+    Notes
+    -----
     AUTHOR : Axel Potier
 
     -------------------------------------------------- """
@@ -106,33 +108,70 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                                matrix_dir,
                                initial_DM_voltage=0.,
                                input_wavefront=1.,
-                               MatrixType=False,
+                               MatrixType='',
                                save_all_planes_to_fits=False,
                                dir_save_all_planes=None,
                                visu=False):
     """ --------------------------------------------------
-    Create the jacobian matrix for Electric Field Conjugation
+    Create the jacobian matrix for Electric Field Conjugation. The Matrix is not
+    limited to the DH size but to the whole FP [dimEstim, dimEstim]. 
+    First half is real part, second half is imag part.
 
+    The matrix size is therefore [total(DM.basis_size), 2*dimEstim^2]
+
+    We save the matrix in .fits independently for each DMs, only if the initial wavefront and DMs are flat.
+
+    This code works for all testbeds without prior assumption (if we have at least 1 DM of course).
+    We have optimized the code to only do once optical elements before the DM movement and repeat only what is after the DMS
+    
     Parameters
     ----------
 
-    testbed: Optical_element
-        testbed structure
+    testbed: Testbed Optical_element
+        testbed structure with at least 1 DM
+    
     dimEstim: int
         size of the output image in teh estimator
-    amplitudeEFC: float, amplitude of the EFC probe on the DM
-    matrix_dir : path. save all the difficult to measure files here
+    
+    amplitudeEFC: float
+        amplitude of the EFC probe on the DM
+    
+    matrix_dir : path. 
+        save all the matrices here
+    
+    MatrixType: string
+            'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
+            or 'perfect' (we keep exp(i phi)).
+            in both case, if the DMs are not initially flat (non zero initial_DM_voltage), 
+                    we do not make the small phase assumption for initial DM phase
+
     input_wavefront: 1D-array real
-        initial DM voltage
+        initial DM voltage for all DMs
+    
     input_wavefront: 2D-array complex
         input wavefront in pupil plane
+    
+    save_all_planes_to_fits: Bool, default False.
+            if True, save all planes to fits for debugging purposes to dir_save_all_planes
+            This can generate a lot of fits especially if in a loop so the code force you
+            to define a repository.
 
+    dir_save_all_planes : path, default None. 
+                            directory to save all plane
+                            in fits if save_all_planes_to_fits = True
+    
+    visu : bool default false
+            if true show the focal plane intensity in 2D for each mode
 
     Returns
     ------
-    InterMat: 2D array, jacobian matrix for Electric Field Conjugation
+    InterMat: 2D array of size [total(DM.basis_size), 2*dimEstim^2]
+        jacobian matrix for Electric Field Conjugation
 
+    Notes
+    -----
     AUTHOR : Axel Potier and Johan Mazoyer
+
     -------------------------------------------------- """
     if isinstance(initial_DM_voltage, (int, float)):
         initial_DM_voltage = np.zeros(
@@ -471,10 +510,15 @@ def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray, mask:np.ndarray
 
     mask : a binary mask to delimitate the DH
 
-    Returns DHInterractionMatrix: matrix only inside the DH
+    Returns 
     ------
+    DHInterractionMatrix: 2D numpy array
+        matrix only inside the DH. first half is real part, second half is imag part
 
+    Notes
+    -----
     AUTHOR : Johan Mazoyer
+    
     -------------------------------------------------- """
     size_full_matrix = FullInterractionMatrix.shape[0]
 
@@ -503,21 +547,28 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian,
 
     Parameters
     ----------
-    mask:               2D Binary mask corresponding to the dark hole region
+    mask:               2D Binary mask 
+        corresponding to the dark hole region
 
-    Result_Estimate:    2D array can be complex, focal plane electric field
+    Result_Estimate:    2D array 
+        can be complex, focal plane electric field
 
-    inversed_jacobian:  2D array, inverse of the jacobian matrix linking the
+    inversed_jacobian:  2D array
+        inverse of the jacobian matrix linking the
                                     estimation to the basis coefficient
 
-    testbed: a testbed with one or more DM
+    testbed: Testbed Optical_element
+        a testbed with one or more DM
 
     Returns
     ------
-    solution:           1D array, voltage to apply on each deformable
-                        mirror actuator
+    solution:   1D array
+                    voltage to apply on each deformable mirror actuator
 
+    Notes
+    -----
     AUTHOR : Axel Potier
+    
     -------------------------------------------------- """
 
     EF_vector = np.zeros(2 * int(np.sum(mask)))
@@ -537,22 +588,31 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
 
     Parameters
     ----------
-    mask:               Binary mask corresponding to the dark hole region
+    mask:               Binary mask
+             corresponding to the dark hole region
 
-    Result_Estimate:    2D array can be complex, focal plane electric field
+    Result_Estimate:    2D array
+             can be complex, focal plane electric field
 
-    Hessian_Matrix:     2D array , Hessian matrix of the DH energy
+    Hessian_Matrix:     2D array 
+            Hessian matrix of the DH energy
 
-    Jacobian:           2D array, jacobian matrix created linking the
+    Jacobian:           2D array 
+            jacobian matrix created linking the
                                     estimation to the basis coefficient
 
-    testbed: a testbed with one or more DM
+    testbed: Testbed Optical_element
+        a testbed with one or more DM
 
     Returns
     ------
-    solution: 1D array, voltage to apply on each deformable mirror actuator
+    solution: 1D array
+        voltage to apply on each deformable mirror actuator
 
+    Notes
+    -----
     AUTHOR : Axel Potier
+
     -------------------------------------------------- """
 
     # With notations from Potier PhD eq 4.74 p78:
@@ -573,29 +633,39 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
 
     Parameters
     ----------
-    mask:               Binary mask corresponding to the dark hole region
+    mask:               Binary mask
+             corresponding to the dark hole region
 
-    Result_Estimate:    2D array can be complex, focal plane electric field
+    Result_Estimate:    2D array
+             can be complex, focal plane electric field
 
-    Jacob_trans_Jacob:     2D array , Jabobian.Transpose(Jabobian) matrix
+    Jacob_trans_Jacob:     2D array 
+            Jabobian.Transpose(Jabobian) matrix
 
-    Jacobian:           2D array, jacobian matrix created linking the
-                                    estimation to the basis coefficient
+    Jacobian: 2D array
+                    jacobian matrix created linking the
+                    estimation to the basis coefficient
 
-    DesiredContrast : float : the contrast value we wish to achieve
+    DesiredContrast : float
+        the contrast value we wish to achieve
 
-    last_best_alpha : This avoid to recalculate the best alpha at each iteration
-                            since it's often a very close value to the last one working
+    last_best_alpha : float
+        starting point for alpha
 
-    testbed: a testbed with one or more DM
+    testbed: Testbed Optical_element
+            a testbed with one or more DM
 
     Returns
     ------
-    solution: 1D array, voltage to apply on each deformable mirror actuator
-    lasbestalpha : scalar. This avoid to recalculate the best alpha at each iteration
-                            since it's often a very close value
-
+    solution: 1D array
+        voltage to apply on each deformable mirror actuator
+    lasbestalpha : float
+            we return the last best alpha. This avoid to recalculate the best alpha from scratch
+                        at each iteration since it's often a very close value
+    Notes
+    -----
     AUTHOR : Johan Mazoyer
+
     -------------------------------------------------- """
 
     pixel_in_mask = np.sum(mask)
@@ -681,16 +751,28 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
 
     Parameters
     ----------
-    mask: Binary mask corresponding to the dark hole region
-    Result_Estimate: 2D array can be complex, focal plane electric field
-    Hessian_Matrix: 2D array , Hessian matrix of the DH energy
-    Jacobian: 2D array, inverse of the jacobian matrix linking the
+    mask: Binary mask 
+        corresponding to the dark hole region
+    Result_Estimate: 2D array 
+        can be complex, focal plane electric field
+    Hessian_Matrix: 2D array 
+         Hessian matrix of the DH energy
+    
+    Jacobian: 2D array
+        inverse of the jacobian matrix linking the
                                     estimation to the basis coefficient
-    testbed: a testbed with one or more DM
+    testbed: Testbed Optical_element
+            a testbed with one or more DM
 
     Returns
     ------
-    solution: 1D array, voltage to apply on each deformable mirror actuator
+    solution: 1D array
+         voltage to apply on each deformable mirror actuator
+   
+    Notes
+    -----
+    AUTHOR : Axel Potier
+
     -------------------------------------------------- """
 
     Eab = np.zeros(int(np.sum(mask)))
@@ -715,21 +797,34 @@ def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
 
     Parameters
     ----------
-    testbed:    testbed structure
-    amplitude:  float, amplitude of the actuator pokes for pair(wise probing in nm
-    posprobes:  1D-array, index of the actuators to push and pull for pair-wise probing
-    dimEstim:  int, size of the output image after resampling in pixels
-    cutsvd:     float, value not to exceed for the inverse eigeinvalues at each pixels
-    wavelength: float, wavelength of the incoming flux in meter
+    testbed: Testbed Optical_element
+            a testbed with one or more DM
+    amplitude:  float
+            amplitude of the actuator pokes for pair(wise probing in nm
+    posprobes:  1D-array
+            index of the actuators to push and pull for pair-wise probing
+    dimEstim:  int
+            size of the output image after resampling in pixels
+    cutsvd:     float
+            value not to exceed for the inverse eigeinvalues at each pixels
+    wavelength: float
+            wavelength in meter
 
 
     Returns
     ------
-    PWVector:   2D array, vector probe to be multiplied by the image difference
+    PWVector:   2D array
+                vector probe to be multiplied by the image difference
                 matrix in order to retrieve the focal plane electric field
 
-    SVD:        2D array, map of the inverse singular values for each pixels and
+    SVD:        2D array
+                map of the inverse singular values for each pixels and
                 before regularization
+    
+    Notes
+    -----
+    AUTHOR : Axel Potier
+
     -------------------------------------------------- """
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=complex)
@@ -823,24 +918,33 @@ def createdifference(input_wavefront,
                      **kwargs):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
-    and calculate the difference of images [I(+probe) - I(-probe)]
+    and calculate the difference of images [I(+probe) - I(-probe)]. 
+    we use testbed.name_DM_to_probe_in_PW to do the probes. 
 
     Parameters
     ----------
     input_wavefront : 2D-array (complex)
         Input wavefront in pupil plane
+    
     posprobes : 1D-array
         Index of the actuators to push and pull for pair-wise probing
+    
     pushact : 3D-array
         OPD created by the pokes of all actuators in the DM
         Unit = phase with the amplitude of the wished probe
-    testbed: Optical system structure
+    
+    testbed: Testbed Optical_element
+            a testbed with one or more DM
+    
     dimimages : int
         Size of the output image after resampling in pixels
+    
     perfect_coro : bool, optional
         Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
+    
     noise : boolean, optional
         If True, add photon noise.
+    
     numphot : int, optional
         Number of photons entering the pupil
 
@@ -848,6 +952,11 @@ def createdifference(input_wavefront,
     ------
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
+
+    Notes
+    -----
+    AUTHOR : Axel Potier
+
     -------------------------------------------------- """
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
