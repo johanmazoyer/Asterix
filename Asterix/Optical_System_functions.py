@@ -30,17 +30,24 @@ class Optical_System:
     The entrance and exit pupil plane must always of the same size (dim_overpad_pupil)
     With these convention, they can be easily assemble to create complex optical systems.
 
-    AUTHOR : Johan Mazoyer
-    -------------------------------------------------- """
+        Notes
+        -----
+        AUTHOR : Johan Mazoyer
+
+        -------------------------------------------------- """
     def __init__(self, modelconfig):
         """ --------------------------------------------------
         Initialize Optical_System objects
 
         Parameters
         ----------
-        modelconfig : general configuration parameters (sizes and dimensions)
+        modelconfig : dict
+                general configuration parameters (sizes and dimensions)
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+
         -------------------------------------------------- """
 
         #pupil in pixel
@@ -101,32 +108,36 @@ class Optical_System:
         """ --------------------------------------------------
         Propagate the electric field from entrance pupil to exit pupil
 
+        NEED TO BE DEFINED FOR ALL Optical_System
+
         Parameters
         ----------
         entrance_EF :   2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],
                         can be complex.
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
-        Electric field in the pupil plane a the entrance of the system.
+                    Electric field in the pupil plane a the entrance of the system.
 
-        save_all_planes_to_fits: Bool, default False.
+        save_all_planes_to_fits: Bool, default False
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits
+        dir_save_all_planes : string, default None
+                            directory to save all plane in fits
                                 if save_all_planes_to_fits = True
 
 
         **kwargs: other parameters can be passed for Optical_System objects EF_trough functions
-
-        NEED TO BE DEFINED FOR ALL Optical_System
 
         Returns
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+
         -------------------------------------------------- """
 
         # if isinstance(entrance_EF, float) or isinstance(entrance_EF, np.float):
@@ -166,7 +177,7 @@ class Optical_System:
         entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
-        Electric field in the pupil plane a the entrance of the system.
+                        Electric field in the pupil plane a the entrance of the system.
 
         wavelength : float. Default is self.wavelength_0 the reference wavelength
                 current wavelength in m.
@@ -178,26 +189,30 @@ class Optical_System:
         center_on_pixel : bool Default False
             If True, the PSF will be centered on a pixel
             If False, the PSF will be centered between 4 pixels
-        This of course assume that no tip-tilt have been introduced in the entrance_EF
-        or during self.EF_through
+                This of course assume that no tip-tilt have been introduced in the entrance_EF
+                or during self.EF_through
 
         save_all_planes_to_fits: Bool, default False.
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in
-                                    fits if save_all_planes_to_fits = True
+        
+        dir_save_all_planes : string efault None. 
+                                directory to save all plane in fits if save_all_planes_to_fits = True
 
         **kwargs: other kw parameters can be passed direclty to self.EF_through function
 
         Returns
         ------
         ef_focal_plane : 2D array of size [self.dimScience, self.dimScience]
-        Electric field in the focal plane.
-            the lambda / D is defined such as
+                Electric field in the focal plane.
+                the lambda / D is defined such as
                 self.wavelength_0 /  (2*self.exitpup_rad) = self.Science_sampling pixels
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+
         -------------------------------------------------- """
         if center_on_pixel == True:
             Psf_offset = (0, 0)
@@ -257,7 +272,7 @@ class Optical_System:
                         or 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
-        Electric field in the pupil plane a the entrance of the system.
+                        Electric field in the pupil plane a the entrance of the system.
 
         wavelengths : float or float array of wavelength in m.
                         Default is all wavelenthg in self.wav_vec
@@ -268,25 +283,29 @@ class Optical_System:
         center_on_pixel : bool Default False
             If True, the PSF will be centered on a pixel
             If False, the PSF will be centered between 4 pixels
-        This of course assume that no tip-tilt have been introduced in the entrance_EF
-        or during self.EF_through
+                This of course assume that no tip-tilt have been introduced in the entrance_EF
+                or during self.EF_through
 
         save_all_planes_to_fits: Bool, default False.
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane
-                                            in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : string default None. 
+                                Directory to save all plane
+                                in fits if save_all_planes_to_fits = True
 
         **kwargs: other kw parameters can be passed direclty to self.EF_through function
 
         Returns
         ------
         focal_plane_Intensity : 2D array of size [self.dimScience, self.dimScience]
-        Intensity in the focal plane. The lambda / D is defined such as
-                self.wavelength_0 /  (2*self.exitpup_rad) = self.Science_sampling pixels
+                    Intensity in the focal plane. The lambda / D is defined such as
+                    self.wavelength_0 /  (2*self.exitpup_rad) = self.Science_sampling pixels
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+
         -------------------------------------------------- """
 
         if wavelengths == None:
@@ -356,15 +375,23 @@ class Optical_System:
         By default transmission is done at the reference WL, and there is
         no reason to depend heavily on the WL.
 
+        Parameters
+        ------
+        noFPM : bool, defaut True
+            if the optical transfert function EF_through has a noFPM parameter
+
         **kwargs: other kw parameters can be passed direclty to self.EF_through function
 
         Returns
         ------
-        float is the ratio exit flux  / clear entrance pupil flux
+        transimssion : float  
+            ratio exit flux  / clear entrance pupil flux
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
 
-        """
+        -------------------------------------------------- """
         clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil,
                                                      self.prad)
 
@@ -393,8 +420,11 @@ class Optical_System:
                 lost in the process (self.transmission()). Can be used as follow:
                 Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
-        """
+
+        -------------------------------------------------- """
 
         PSF_bw = np.zeros((self.dimScience, self.dimScience))
         self.norm_monochrom = np.zeros((len(self.wav_vec)))
@@ -422,9 +452,11 @@ class Optical_System:
 
             Parameters
             ----------
-            SIMUconfig : parameter of this simualtion (describing the amplitude)
+            SIMUconfig : dict
+                        parameter of this simualtion (describing the phase)
 
-            Model_local_dir: directory to save things you can measure yourself
+            Model_local_dir: string, default None
+                        directory to save things you can measure yourself
                         and can save to save time
 
 
@@ -433,8 +465,11 @@ class Optical_System:
             return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                     phase abberation at the reference wavelength
 
-            AUTHOR : Johan Mazoyer
-        """
+        Notes
+        -----
+        AUTHOR : Johan Mazoyer
+
+        -------------------------------------------------- """
         if not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
@@ -479,9 +514,11 @@ class Optical_System:
 
         Parameters
         ----------
-        SIMUconfig : parameter of this simualtion (describing the amplitude)
+        SIMUconfig : dict
+                    parameter of this simualtion (describing the amplitude)
 
-        Model_local_dir: directory to save things you can measure yourself
+        Model_local_dir: string, default None
+                    directory to save things you can measure yourself
                     and can save to save time
 
 
@@ -490,9 +527,11 @@ class Optical_System:
         return_ampl : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                 amplitude abberation
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
-        """
 
+        -------------------------------------------------- """
         if not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
@@ -538,31 +577,40 @@ class Optical_System:
                                ampl_abb=0.,
                                wavelengths=-1.):
         """ --------------------------------------------------
-        Create an electrical field from an phase and amplitude aberrations
+        Create an electrical field from an phase and amplitude aberrations as follows:
+
+        EF = (1 + ample_abb)*exp(i*phase_abb * self.wavelength_0 / wavelength)
+
+        can be monochromatic or polychromatic
 
         Parameters
         ----------
         phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
-            if 0, no phase aberration (default). phase at lambda = self.wavelength_0
+            phase aberration at reference wavelength self.wavelength_0. if 0, no phase aberration (default)
 
-        phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
-            if 0, no amplitude aberration (default)
+        ample_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
+             amplitude aberration at reference wavelength self.wavelength_0. if 0, no amplitude aberration (default)
 
 
-        wavelength : float. Default is the reference self.wavelength_0
-             current wavelength in m.
-             if 'all'
+        wavelengths : float or list of floats. Default is all the wl of the testbed self.wav_vec
+                    wavelengths in m.
 
 
         Returns
         ------
-        EF : 1. if no phase / amplitude
+        EF : scalar or numpy 2D array or numpy 3d array
+            Electric field in the pupil plane a the exit of the system
+            1. if no phase / amplitude
             2D array, of size phase_abb.shape if monochromatic
             or 3D array of size [self.nb_wav,phase_abb.shape] in case of polychromatic
-            Electric field in the pupil plane a the exit of the system
 
+
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
-        """
+
+        -------------------------------------------------- """
+
         if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
             raise Exception(
                 "phase_abb and ampl_abb must be real arrays or float, not complex"
@@ -603,29 +651,37 @@ class pupil(Optical_System):
     pupil is a sub class of Optical_System.
 
     Obviously you can define your pupil
-    withot that with 2d arrray multiplication (this is a fairly simple object).
+    without that with 2d arrray multiplication (this is a fairly simple object).
 
     The main advantage of defining them using Optical_System is that you can
     use default Optical_System functions to obtain PSF, transmission, etc...
     and concatenate them with other elements
 
+    Notes
+    -----
     AUTHOR : Johan Mazoyer
+    
     -------------------------------------------------- """
     def __init__(self, modelconfig, prad=0., PupType="", filename=""):
         """ --------------------------------------------------
-        Initialize a pupil object.
-
+        Initialize a pupil object.           
+        TODO: include an SCC Lyot pupil function here !
+        TODO: for now pupil .fits are monochromatic but the pupil propagation EF_through
+            use wavelenght as a parameter
 
 
         Parameters
         ----------
-        modelconfig : general configuration parameters (sizes and dimensions)
+        modelconfig : dict
+                    general configuration parameters (sizes and dimensions)
                         to initialize Optical_System class
 
-        prad : int Default is the pupil prad in the parameter
+        prad : int 
+            Default is the pupil prad in the parameter
             radius in pixels of the round pupil.
 
-        PupType : string (default currently "RoundPup", CleanPlane, RomanPup, RomanLyot)
+        PupType : string (default "RoundPup") 
+                Currently "RoundPup", "CleanPlane", "RomanPup", "RomanLyot")
 
         filename : string (default "")
             name and directory of the .fits file
@@ -637,12 +693,11 @@ class pupil(Optical_System):
             This is a bit dangerous because your .fits file might must be defined
             the right way so be careful
 
-            TODO: include an SCC Lyot pupil function here !
-            TODO: for now pupil .fits are monochromatic but the pupil propagation EF_through
-            use wavelenght as a parameter
 
-
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+
         -------------------------------------------------- """
         # Initialize the Optical_System class and inherit properties
         super().__init__(modelconfig)
@@ -748,7 +803,7 @@ class pupil(Optical_System):
         entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
-        Electric field in the pupil plane a the entrance of the system.
+                        Electric field in the pupil plane a the entrance of the system.
 
         wavelength : float. Default is self.wavelength_0 the reference wavelength
                 current wavelength in m.
@@ -757,15 +812,20 @@ class pupil(Optical_System):
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane
-                                            in fits if save_all_planes_to_fits = True
+
+        dir_save_all_planes : default None. 
+                                directory to save all plane
+                                in fits if save_all_planes_to_fits = True
 
         Returns
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Electric field in the pupil plane a the exit of the system
+                        Electric field in the pupil plane a the exit of the system
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+
         -------------------------------------------------- """
 
         # call the Optical_System super function to check and format the variable entrance_EF
@@ -822,10 +882,15 @@ class coronagraph(Optical_System):
 
         Parameters
         ----------
-        modelconfig : general configuration parameters (sizes and dimensions)
-        coroconfig : coronagraph parameters
+        modelconfig : dict
+                general configuration parameters (sizes and dimensions)
+        coroconfig : : dict
+                coronagraph parameters
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+        
         -------------------------------------------------- """
 
         # Initialize the Optical_System class and inherit properties
@@ -963,10 +1028,10 @@ class coronagraph(Optical_System):
         entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
-        Electric field in the pupil plane a the entrance of the system.
+                        Electric field in the pupil plane a the entrance of the system.
 
         wavelength : float. Default is self.wavelength_0 the reference wavelength
-                current wavelength in m.
+                        current wavelength in m.
 
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
@@ -975,15 +1040,20 @@ class coronagraph(Optical_System):
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in
+        
+        dir_save_all_planes : default None. 
+                                directory to save all plane in
                               fits if save_all_planes_to_fits = True
 
         Returns
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Electric field in the pupil plane a the exit of the system
+                Electric field in the pupil plane a the exit of the system
 
+        Notes
+        ------
         AUTHOR : Johan Mazoyer
+
         -------------------------------------------------- """
 
         # call the Optical_System super function to check and format the variable entrance_EF
@@ -1186,11 +1256,14 @@ class coronagraph(Optical_System):
 
         Returns
         ------
-        FQPM : list of len(self.wav_vec) 2D arrays giving the complex transmission of the
-            FQPM mask
-
+        FQPM : list of len(self.wav_vec) 2D arrays   
+            complex transmission of the FQPM mask at all wl
+        
+        Notes
+        -----
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
+        
         -------------------------------------------------- """
 
         if self.prop_apod2lyot == "fft":
@@ -1240,11 +1313,14 @@ class coronagraph(Optical_System):
 
         Returns
         ------
-        shift(Knife) :list of len(self.wav_vec) 2D arrays giving the complex transmission of the
-            Knife edge coronagraph mask.
+        Knife FPM : list of len(self.wav_vec) 2D arrays 
+                    gcomplex transmission of the Knife edge coronagraph mask at all wl
 
+        Notes
+        -----
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
+
         -------------------------------------------------- """
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
@@ -1293,9 +1369,13 @@ class coronagraph(Optical_System):
 
         Returns
         ------
-         classical Lyot : 2D array
+        classical Lyot fpm : list of 2D numpy array
+                            the FP mask at all wl
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+        
         -------------------------------------------------- """
 
         rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
@@ -1316,9 +1396,13 @@ class coronagraph(Optical_System):
 
         Returns
         ------
-         classical Lyot : 2D array
-
+        classical Lyot hlc : list of 2D numpy array
+                            the FP mask at all wl
+        
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+        
         -------------------------------------------------- """
 
         # we create a Classical Lyot Focal plane
@@ -1353,9 +1437,13 @@ class coronagraph(Optical_System):
 
         Returns
         ------
-         classical Lyot : 2D array
+            vortex_fpm : list of 2D numpy array
+                            the FP mask at all wl
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+        
         -------------------------------------------------- """
 
         if self.prop_apod2lyot == "fft":
@@ -1410,15 +1498,18 @@ class deformable_mirror(Optical_System):
         ----------
         modelconfig : general configuration parameters (sizes and dimensions)
 
-        DMconfig : DM parameters
+        DMconfig : DM configuration parameters dictionary 
 
         Name_DM : the name of the DM, which allows to find it in the parameter file
         we measure and save the pushact functions
 
         Model_local_dir: directory to save things you can measure yourself
                     and can save to save time
-
+        
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+        
         -------------------------------------------------- """
 
         # Initialize the Optical_System class and inherit properties
@@ -1528,16 +1619,14 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-                        Can also be a float scalar in which case entrance_EF is constant
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or float scalar in which case entrance_EF is constant
                         default is 1.
-        Electric field in the pupil plane a the entrance of the system.
+                        Electric field in the pupil plane a the entrance of the system.
 
         wavelength : float. Default is self.wavelength_0 the reference wavelength
-                current wavelength in m.
+                    current wavelength in m.
 
-        DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex.
-                    Can also be a float scalar in which case DM_phase is constant
+        DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex or float scalar in which case DM_phase is constant
                     default is 0.
 
                     CAREFUL !! If the DM is part of a testbed. this variable name is changed
@@ -1555,7 +1644,10 @@ class deformable_mirror(Optical_System):
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
 
+        Notes
+        -----
         AUTHOR : Johan Mazoyer
+
         -------------------------------------------------- """
 
         # call the Optical_System super function to check
@@ -1619,15 +1711,17 @@ class deformable_mirror(Optical_System):
 
         Parameters
         ----------
-        DMconfig : structure with all information on DMs
-
-        Error on the model of the DM
-
-        This function can to cleaned (names and comment).
+        DMconfig : DM configuration parameters dictionary 
 
         Returns
         ------
-        pushact :
+        pushact : 3D numpy array of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]  
+                    which contains all the DM OPD map induced in the DM plane for each actuator.
+
+        Notes
+        -----
+        AUTHOR : Axel Potier
+        
         -------------------------------------------------- """
 
         Name_pushact_fits = "PushAct" + self.string_os
@@ -1775,12 +1869,12 @@ class deformable_mirror(Optical_System):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
 
-        Parameters:
+        Parameters
         ----------
         cutinpupil: float, minimum surface of an actuator inside the pupil to be taken into account
                     (between 0 and 1, ratio of an actuator perfectly centered in the entrance pupil)
 
-        Return:
+        Returns
         ------
         WhichInPupil: 1D array, index of all the actuators located inside the pupil
         -------------------------------------------------- """
@@ -1844,12 +1938,13 @@ class deformable_mirror(Optical_System):
         wavelength : float
                     wavelength in m
 
-        save_all_planes_to_fits: Bool, default False.
+        save_all_planes_to_fits: Bool, default False
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
                 This can generate a lot of fits especially if in a loop so the code force you
                 to define a repository.
-        dir_save_all_planes : default None. directory to save all plane in fits
-                                            if save_all_planes_to_fits = True
+        
+        dir_save_all_planes : string default None. 
+                            directory to save all plane in fits if save_all_planes_to_fits = True
 
         Returns
         ------
@@ -1857,13 +1952,14 @@ class deformable_mirror(Optical_System):
                             Wavefront in the pupil plane following the DM
 
 
-        AUTHOR : Raphaël Galicher
+        Notes
+        -----
+            AUTHOR : Raphaël Galicher, Johan Mazoyer
 
-        REVISION HISTORY :
-        Revision 1.1  2021-02-10 Raphaël Galicher
-            Initial revision
-        Revision 2.0 2021-02-28 Johan Mazoyer
-            Make it more general for all DMs, put in the struc
+            REVISION HISTORY :
+                Revision 1.1  2021-02-10 Raphaël Galicher (Initial revision)
+                Revision 2.0 2021-02-28 Johan Mazoyer (Make it more general for all DMs, put in the struc)
+
         -------------------------------------------------- """
 
         # Propagation in DM plane out of pupil
@@ -1904,7 +2000,7 @@ class deformable_mirror(Optical_System):
         The phase is define at the reference wl and multiply by wl_ratio in DM.EF_through
 
 
-        Parameters:
+        Parameters
         ----------
         actu_vect : 1D array
                     values of the amplitudes for each actuator
@@ -1913,12 +2009,15 @@ class deformable_mirror(Optical_System):
                         gives the same results as normal sum. Seems ot be faster for unique actuator
                         but slower for more complex phases
 
-        Return:
+        Returns
         ------
-            2D array
-            phase map in the same unit as actu_vect * DM_pushact)
+            DM_phase: 2D array
+                        phase map in the same unit as actu_vect * DM_pushact)
         
-        Author: Johan Mazoyer
+        Notes
+        -----
+            AUTHOR: Johan Mazoyer
+
         -------------------------------------------------- """
 
         where_non_zero_voltage = np.where(actu_vect != 0)
@@ -1945,16 +2044,19 @@ class deformable_mirror(Optical_System):
         Create a DM basis.
         TODO do a zernike basis ?
 
-        Parameters:
+        Parameters
         ----------
         DM: a DM object (Optical System)
         basis_type: string, default 'actuator' the type of basis
 
-        Return:
+        Returns
         ------
         a 2d numpy array [Size basis, Number of active act in the DM]
 
-        Author: Johan Mazoyer
+        Notes
+        -----
+            AUTHOR: Johan Mazoyer
+
         -------------------------------------------------- """
 
         if basis_type == 'actuator':
@@ -2016,32 +2118,40 @@ class deformable_mirror(Optical_System):
 
 class Testbed(Optical_System):
     """ --------------------------------------------------
-    initialize and describe the behavior of a testbed.
+    
+    Initialize and describe the behavior of a testbed.
     This is a particular subclass of Optical System, because we do not know what is inside
     It can only be initialized by giving a list of Optical Systems and it will create a
-    "testbed" which contains all the Optical System in a
+    "testbed" with contains all the Optical Systems and associated EF_through functions and
+    correct normlaization
 
-
+    Notes
+    -----
     AUTHOR : Johan Mazoyer
+
     -------------------------------------------------- """
     def __init__(self, list_os, list_os_names):
         """ --------------------------------------------------
         This function allow you to concatenates Optical_System obsjects to create a testbed:
         parameter:
-            list_os:        a list of optical systems. all the systems must have been defined with
-                                the same modelconfig. or it will send an error.
+            list_os:        list of optical systems
+                            all the systems must have been defined with
+                            the same modelconfig or it will send an error.
                             The list order is form the first optics system to the last in the
                             path of the light (so usually from entrance pupil to Lyot pupil)
 
-            list_os_names: a list of string of the same size as list_os to define
-                            the names of the optical systems. Then can then be accessed
-                            inside the Testbed object by os_#i = Testbed.list_os_names[i]
+            list_os_names:  list of string of the same size as list_os 
+                            Name of the optical systems. 
+                            Then can then be accessed inside the Testbed object by os_#i = Testbed.list_os_names[i]
 
         Returns
-            ------
+        ------
             testbed : an optical system which is the concatenation of all the optical systems
+        
+        Notes
+        -----
+            AUTHOR : Johan Mazoyer
 
-        AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
         if len(list_os) != len(list_os_names):
             print("")
@@ -2158,7 +2268,7 @@ class Testbed(Optical_System):
         actuator amplitude. I split theactu_vect and  then for each DM, it uses
         DM.voltage_to_phase (no s)
 
-        Parameters:
+        Parameters
         ----------
         actu_vect : float or 1D array of size testbed.number_act
                     values of the amplitudes for each actuator and each DM
@@ -2167,7 +2277,7 @@ class Testbed(Optical_System):
                         gives the same results as normal sum. Seems ot be faster for unique actuator
                         but slower for more complex phases
 
-        Return:
+        Returns
         ------
             3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
             phase maps for each DMs by order of light path in the same unit as actu_vect * DM_pushact
@@ -2204,21 +2314,21 @@ class Testbed(Optical_System):
         transform a vector of voltages on the mode of a basis in a  vector of
         voltages of the actuators of the DMs of the system
 
-        Parameters:
+        Parameters
         ----------
         vector_basis_voltage: 1D-array real : dim (total(basisDM sizes))
                         vector of voltages on the mode of the basis for all
                         DMs by order of the light path
-        testbed: Optical_element
-            testbed structure (with DMs)
 
-
-        Return:
+        Returns
         ------
         vector_actuator_voltage: 1D-array real : dim (total(DM actuators))
                         vector of base coefficients for all actuators of the DMs by order of the light path
-
-        AUTHOR : Johan Mazoyer
+        
+        Notes
+        -----
+            AUTHOR : Johan Mazoyer
+        
         -------------------------------------------------- """
 
         indice_acum_basis_size = 0
@@ -2260,16 +2370,19 @@ def _swap_DMphase_name(DM_EF_through_function, name_var):
     """ --------------------------------------------------
    A function to rename the DMphase parameter to another name (usually DMXXphase)
 
-    parameter:
+    Parameters:
+    ------
         DM_EF_through_function : the function of which we want to change the params
         name_var : string the name of the  new name variable
 
     Returns
-        ------
+    ------
         the_new_function: with name_var as a param
 
-
-    AUTHOR : Johan Mazoyer
+    Notes
+    -----
+        AUTHOR : Johan Mazoyer
+    
     -------------------------------------------------- """
     def wrapper(**kwargs):
 
@@ -2288,17 +2401,22 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
     """ --------------------------------------------------
     A very small function to concatenate 2 functions
 
-    parameter: 2 functions
-         outer_fun: x -> outer_fun(x)
-         inner_fun: x -> inner_fun(x)
+    Parameters:
+    ------
+        outer_fun: function
+                x -> outer_fun(x)
+        inner_fun: function 
+                x -> inner_fun(x)
 
     Returns
         ------
-        the concatenated function:
-        concat_fun: x -> outer_fun(inner_fun(x))
+        the concatenated function: function
+                x -> outer_fun(inner_fun(x))
 
+    Notes
+    -----
+        AUTHOR : Johan Mazoyer
 
-    AUTHOR : Johan Mazoyer
     -------------------------------------------------- """
     def new_EF_through_fun(**kwargs):
 
@@ -2316,17 +2434,21 @@ def _clean_EF_through(testbed_EF_through, known_keywords) :
     a functions to check that we do not set unknown keyword in
     the testbed EF through function. Maybe not necessary.
 
-    parameter: 2 functions
-         testbed_EF_through function
+    Parameters:
+    ------
+         testbed_EF_through: function
          known_keywords: list of strings of known keywords
 
     Returns
-        ------
-        the concatenated function:
-        concat_fun: x -> outer_fun(inner_fun(x))
+    ------
+        cleaned_testbed_EF_through: function
+            a function where only known keywords are allowed
+        
 
-
-    AUTHOR : Johan Mazoyer
+    Notes
+    -----
+        AUTHOR : Johan Mazoyer
+    
     -------------------------------------------------- """
     def wrapper(**kwargs):
         for passed_arg in kwargs.keys():
@@ -2357,16 +2479,22 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
     DMXX_phase parameters can still be used, but are overridden by voltage_vector parameter
     if present.
 
-    parameters:
-        DM_EF_through_function : the function of which we want to change the params
-        name_var : string the name of the  new name variable
+    Parameters:
+    ------
+        DM_EF_through_function : function
+                the function of which we want to change the params
+        name_var : string 
+                the name of the  new name variable
 
     Returns
-        ------
-        the_new_function: with name_var as a param
+    ------
+        the_new_function: function
+                with name_var as a param
 
-
-    AUTHOR : Johan Mazoyer
+    Notes
+    -----
+        AUTHOR : Johan Mazoyer
+    
     -------------------------------------------------- """
     def wrapper(**kwargs):
         if 'voltage_vector' in kwargs:

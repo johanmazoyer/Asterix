@@ -67,7 +67,7 @@ def mft(image,
             0-frequency on the (dim_output_x/2+x1,dim_output_y/2+y1) pixel
 
     AUTHOR :
-       $Author: Baudoz, Galicher, Mazoyer $
+       $AUTHOR: Baudoz, Galicher, Mazoyer $
 
 
     REVISION HISTORY :

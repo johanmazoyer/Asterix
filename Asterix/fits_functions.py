@@ -131,7 +131,7 @@ def progress(count, total, status=''):
     """ --------------------------------------------------
     print a progress bar for a for loop
 
-    Parameters:
+    Parameters
     ----------
     count: counter in the for loop
 
@@ -151,7 +151,7 @@ def progress(count, total, status=''):
 def read_parameter_file(parameter_file):
     """ --------------------------------------------------
     check existence of the parameter file, read it and check validity
-    Parameters:
+    Parameters
     ----------
     parameter_file: path to a .ini parameter file
 

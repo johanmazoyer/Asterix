@@ -30,7 +30,7 @@ def runthd2(parameter_file,
         the correction method from parameter_file file
         Run the loop and save the results
 
-        Parameters:
+        Parameters
         ----------
         parameter_file: parameter_file: path to a .ini parameter file
 
@@ -46,7 +46,7 @@ def runthd2(parameter_file,
 
         e.g. : NewCoronaconfig ={'paramXXX': YYY}
 
-        Return:
+        Returns
         ------
 
         AUTHOR : Johan Mazoyer

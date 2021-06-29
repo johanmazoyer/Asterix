@@ -31,7 +31,7 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     Run a full loop for several Matrix. at each iteration, we update the matrix and
     run CorrectionLoop1Matrix. 
 
-    Parameters:
+    Parameters
     ----------
         
     testbed: an Optical_System object which describes your testbed
@@ -72,11 +72,11 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     silence=False: Boolean, default False
                 if False, print and plot results as the loop runs
 
-    Return:
+    Returns
     ------
     CorrectionLoopResult : a dictionnary containing the results of all loops
 
-    Author: Johan Mazoyer
+    AUTHOR: Johan Mazoyer
     -------------------------------------------------- """
 
     CorrectionLoopResult = dict()
@@ -172,7 +172,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     """ --------------------------------------------------
     Run a loop for a given interraction matrix
 
-    Parameters:
+    Parameters
     ----------
         
     testbed: an Optical_System object which describes your testbed
@@ -222,12 +222,12 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     silence=False: Boolean, default False
                 if False, print and plot results as the loop runs
 
-    Return:
+    Returns
     ------
     if Search_best_Mode == True, return [bestMode, bestContrast]
     else return CorrectionLoopResult dictionnary updated with the results from this loop
 
-    Author: Johan Mazoyer
+    AUTHOR: Johan Mazoyer
     -------------------------------------------------- """
 
     if Search_best_Mode:
@@ -425,7 +425,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
     """ --------------------------------------------------
     Save the result from a correction loop 
 
-    Parameters:
+    Parameters
     ----------
     CorrectionLoopResult: dictionnary containing the results from CorrectionLoop1Matrix or CorrectionLoop
 
@@ -435,11 +435,11 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
     
     result_dir: directory where to save the results
 
-    Return:
+    Returns
     ------
 
 
-    Author: Johan Mazoyer
+    AUTHOR: Johan Mazoyer
     -------------------------------------------------- """
 
     if not os.path.exists(result_dir):
@@ -566,15 +566,15 @@ def from_param_to_header(config):
     """ --------------------------------------------------
     Convert ConfigObj parameters to fits header type list
 
-    Parameters:
+    Parameters
     ----------
     config: config obj
 
-    Return:
+    Returns
     ------
     header: list of parameters
 
-    Author: Axel Potier
+    AUTHOR: Axel Potier
     -------------------------------------------------- """
     header = fits.Header()
     for sect in config.sections:

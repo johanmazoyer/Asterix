@@ -26,33 +26,39 @@ def invertSVD(matrix_to_invert,
               visu=False,
               filename_visu=None):
     """ --------------------------------------------------
-    Invert a matrix after a Singular Value Decomposition. The inversion can be regularized.
+    Invert a matrix after a Singular Value Decomposition
+    https://en.wikipedia.org/wiki/Singular_value_decomposition
+    The inversion can be regularized. We return the inverse, the singular values, 
+    their inverse and the pseudo inverse.
 
-    Parameters:
+    Parameters
     ----------
-    matrix_to_invert: numpy array. The matrix
 
-    cut:    int (see below)
-
-    goal:   string, can be 'e' or 'c'
+    matrix_to_invert : numpy array
+                        The matrix to invert
+    cut : int 
+                threshold to cut the singular values
+    goal : string, default 'e'
             if 'e': the cut set the inverse singular value not to exceed
             if 'c': the cut set the number of modes to take into account
                             (keep the lowest inverse singular values)
-
-    regul:  string, can be 'truncation' or 'tikhonov'
+    regul : string, default 'truncation'
             if 'truncation': when goal is set to 'c', the modes with the highest inverse
                             singular values are truncated
             if 'tikhonov': when goal is set to 'c', the modes with the highest inverse
                             singular values are smoothed (low pass filter)
-
-    visu:   boolean, if True, plot and save the crescent inverse singular values,
+    visu : boolean, default False
+            if True, plot and save the crescent inverse singular values,
                             before regularization
 
-    Return:
+    Returns
     ------
-    np.diag(InvS): Inverse eigenvalues of the input matrix
-    np.diag(InvS_truncated): Inverse eigenvalues of the input matrix after regularization
-    pseudoinverse: Regularized inverse of the input matrix
+    np.diag(InvS) : 2D numpy array
+        Inverse eigenvalues of the input matrix in a diagonal matrix
+    np.diag(InvS_truncated) : 2D numpy array 
+        Inverse eigenvalues of the input matrix after regularization in a diagonal matrix
+    pseudoinverse :  2D numpy array
+        Regularized inverse of the input matrix
 
     AUTHOR : Axel Potier
 
@@ -76,7 +82,7 @@ def invertSVD(matrix_to_invert,
     if goal == "e":
         InvS_truncated[np.where(InvS_truncated > cut)] = 0
         pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated),
-                               np.transpose(U))
+                                np.transpose(U))
 
     if goal == "c":
         if regul == "truncation":
@@ -89,7 +95,7 @@ def invertSVD(matrix_to_invert,
                 plt.show()
                 plt.close()
         pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated),
-                               np.transpose(U))
+                                np.transpose(U))
 
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
@@ -107,7 +113,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation
 
-    Parameters:
+    Parameters
     ----------
 
     testbed: Optical_element
@@ -122,7 +128,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
         input wavefront in pupil plane
 
 
-    Return:
+    Returns
     ------
     InterMat: 2D array, jacobian matrix for Electric Field Conjugation
 
@@ -459,13 +465,13 @@ def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray, mask:np.ndarray
     """ --------------------------------------------------
     Crop the  Interraction Matrix. to the mask size
 
-    Parameters:
+    Parameters
     ----------
     FullInterractionMatrix: Interraction matrix over the full focal plane
 
     mask : a binary mask to delimitate the DH
 
-    Return: DHInterractionMatrix: matrix only inside the DH
+    Returns DHInterractionMatrix: matrix only inside the DH
     ------
 
     AUTHOR : Johan Mazoyer
@@ -495,7 +501,7 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian,
     Voltage to apply on the deformable mirror in order to minimize the speckle
         intensity in the dark hole region
 
-    Parameters:
+    Parameters
     ----------
     mask:               2D Binary mask corresponding to the dark hole region
 
@@ -506,7 +512,7 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian,
 
     testbed: a testbed with one or more DM
 
-    Return:
+    Returns
     ------
     solution:           1D array, voltage to apply on each deformable
                         mirror actuator
@@ -529,7 +535,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region
 
-    Parameters:
+    Parameters
     ----------
     mask:               Binary mask corresponding to the dark hole region
 
@@ -542,7 +548,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
 
     testbed: a testbed with one or more DM
 
-    Return:
+    Returns
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
 
@@ -565,7 +571,7 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
     intensity in the dark hole region in the stroke min solution
     See Axel Potier Phd for notation and Mazoyer et al. 2018a for alpha search improvement
 
-    Parameters:
+    Parameters
     ----------
     mask:               Binary mask corresponding to the dark hole region
 
@@ -583,7 +589,7 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
 
     testbed: a testbed with one or more DM
 
-    Return:
+    Returns
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
     lasbestalpha : scalar. This avoid to recalculate the best alpha at each iteration
@@ -673,7 +679,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     Voltage to apply on the deformable mirror in order to minimize
     the speckle intensity in the dark hole region
 
-    Parameters:
+    Parameters
     ----------
     mask: Binary mask corresponding to the dark hole region
     Result_Estimate: 2D array can be complex, focal plane electric field
@@ -682,7 +688,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
                                     estimation to the basis coefficient
     testbed: a testbed with one or more DM
 
-    Return:
+    Returns
     ------
     solution: 1D array, voltage to apply on each deformable mirror actuator
     -------------------------------------------------- """
@@ -707,7 +713,7 @@ def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
 
-    Parameters:
+    Parameters
     ----------
     testbed:    testbed structure
     amplitude:  float, amplitude of the actuator pokes for pair(wise probing in nm
@@ -717,7 +723,7 @@ def createPWmastrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
     wavelength: float, wavelength of the incoming flux in meter
 
 
-    Return:
+    Returns
     ------
     PWVector:   2D array, vector probe to be multiplied by the image difference
                 matrix in order to retrieve the focal plane electric field
@@ -777,12 +783,13 @@ def FP_PWestimate(Difference, Vectorprobes):
     Calculate the focal plane electric field from the prone image
     differences and the modeled probe matrix
 
-    Parameters:
+    Parameters
     ----------
     Difference: 3D array, cube with image difference for each probes
+
     Vectorprobes: 2D array, model probe matrix for the same probe as for difference
 
-    Return:
+    Returns
     ------
     Difference: 3D array, cube with image difference for each probes.
                 Used for pair-wise probing

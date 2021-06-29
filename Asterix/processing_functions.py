@@ -16,7 +16,7 @@ def twoD_Gaussian(xy,
     """ --------------------------------------------------
     Create a gaussian in 2D
 
-    Parameters:
+    Parameters
     ----------
     xy: Tuple object (2,dim1,dim2)  which can be created with:
         x, y = np.mgrid[0:dim1, 0:dim2]
@@ -29,7 +29,7 @@ def twoD_Gaussian(xy,
     h: Floor amplitude
     flatten : if True (default), the 2D-array is flatten into 1D-array
 
-    Return:
+    Returns
     ------
     The array is the created 2D gaussian function
     -------------------------------------------------- """
@@ -54,11 +54,11 @@ def gauss2Dfit(data):
     """ --------------------------------------------------
     Return the parameter of the 2D-Gaussian that best fits data
 
-    Parameters:
+    Parameters
     ----------
     data: 2D array, input image
 
-    Return:
+    Returns
     ------
     popt: max, sig_x, sig_y, x_cen, y_cen, angle, offset
     -------------------------------------------------- """
@@ -86,13 +86,13 @@ def resampling(image, new):
     """ --------------------------------------------------
     Crop and then resample the focal plane image to create a 2D array with new dimensions
 
-    Parameters:
+    Parameters
     ----------
     image: 2D array, input image
     reechpup: Size of the cropped image before resempling in pixels
     new: Size of the output image after resampling in pixels
 
-    Return:
+    Returns
     ------
     Gvector: 2D array, image resampled into new dimensions
     v1.0 2020 A. Potier
@@ -123,14 +123,14 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
     """ --------------------------------------------------
     Crop an image to create a 2D array with new dimensions
 
-    Parameters:
+    Parameters
     ----------
     img: 2D array, input image, can be non squared
     ctr_x: Center of the input image in the x direction around which you make the cut
     ctr_y: Center of the input image in the y direction around which you make the cut
     newsizeimg: int
 
-    Return:
+    Returns
     ------
     Gvector: 2D array, squared image resampled into new dimensions
     -------------------------------------------------- """
@@ -224,7 +224,7 @@ def SinCosBasis(sqrtNbActuators):
     SinCosBasis : 3D array of [(sqrtNbActuators)^2,sqrtNbActuators,sqrtNbActuators]
                     which contains the coefficient to apply to DMs to obtain sinus and cosinus
     
-    Author: Johan Mazoyer
+    AUTHOR: Johan Mazoyer
     -------------------------------------------------- """
 
     TFCoeffs = np.zeros((sqrtNbActuators**2, sqrtNbActuators, sqrtNbActuators),
