@@ -540,11 +540,11 @@ def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray, mask:np.ndarray
     return DHInterractionMatrix
 
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian,
-                testbed: OptSy.Testbed):
+def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed: OptSy.Testbed):
+
     """ --------------------------------------------------
-    Voltage to apply on the deformable mirror in order to minimize the speckle
-        intensity in the dark hole region
+    Voltages to apply on the deformable mirrors in order to minimize the speckle
+    intensity in the dark hole region
     
     AUTHOR : Axel Potier
 

@@ -18,7 +18,7 @@ def mft(image,
         - Can deal with any size, any position of
             the 0-frequency...
     
-    AUTHORS: Baudoz, Galicher, Mazoyer $
+    AUTHORS: Baudoz, Galicher, Mazoyer
 
 
     REVISION HISTORY :

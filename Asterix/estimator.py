@@ -35,8 +35,9 @@ class Estimator:
         to explain the form of the output and potentially prevent wrongfull combination of
         estim + correc.
 
-
     AUTHOR : Johan Mazoyer
+
+
     -------------------------------------------------- """
     def __init__(self,
                  Estimationconfig,

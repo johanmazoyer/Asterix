@@ -253,6 +253,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     if Search_best_Mode == True, return [bestMode, bestContrast]
     else return CorrectionLoopResult dictionnary updated with the results from this loop
     
+
     -------------------------------------------------- """
 
     if Search_best_Mode:
@@ -469,6 +470,8 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
     
     result_dir: path
         directory where to save the results
+
+
     
     -------------------------------------------------- """
 
@@ -595,16 +598,20 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
 def from_param_to_header(config):
     """ --------------------------------------------------
     Convert ConfigObj parameters to fits header type list
+    AUTHOR: Axel Potier
 
     Parameters
     ----------
-    config: config obj
+    config: dict
+        config obj
 
     Returns
     ------
-    header: list of parameters
+    header: dict
+        list of parameters
 
-    AUTHOR: Axel Potier
+
+    
     -------------------------------------------------- """
     header = fits.Header()
     for sect in config.sections:

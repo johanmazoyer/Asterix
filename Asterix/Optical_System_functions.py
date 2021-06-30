@@ -123,14 +123,15 @@ class Optical_System:
         dir_save_all_planes : string, default None
                             directory to save all plane in fits
                                 if save_all_planes_to_fits = True
-
-
-        **kwargs: other parameters can be passed for Optical_System objects EF_trough functions
+        **kwargs: 
+            other parameters can be passed for Optical_System objects EF_trough functions
 
         Returns
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
+
+
 
         -------------------------------------------------- """
 
@@ -196,7 +197,8 @@ class Optical_System:
         dir_save_all_planes : string efault None. 
                                 directory to save all plane in fits if save_all_planes_to_fits = True
 
-        **kwargs: other kw parameters can be passed direclty to self.EF_through function
+        **kwargs: 
+            other kw parameters can be passed direclty to self.EF_through function
 
         Returns
         ------
@@ -204,6 +206,7 @@ class Optical_System:
                 Electric field in the focal plane.
                 the lambda / D is defined such as
                 self.wavelength_0 /  (2*self.exitpup_rad) = self.Science_sampling pixels
+
 
         -------------------------------------------------- """
         if center_on_pixel == True:
@@ -288,13 +291,15 @@ class Optical_System:
                                 Directory to save all plane
                                 in fits if save_all_planes_to_fits = True
 
-        **kwargs: other kw parameters can be passed direclty to self.EF_through function
+        **kwargs: 
+            other kw parameters can be passed direclty to self.EF_through function
 
         Returns
         ------
         focal_plane_Intensity : 2D array of size [self.dimScience, self.dimScience]
                     Intensity in the focal plane. The lambda / D is defined such as
                     self.wavelength_0 /  (2*self.exitpup_rad) = self.Science_sampling pixels
+
 
         -------------------------------------------------- """
 
@@ -312,7 +317,9 @@ class Optical_System:
             pass
         elif entrance_EF.shape == (self.dim_overpad_pupil,
                                    self.dim_overpad_pupil):
-            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...], self.nb_wav, axis=0)
+            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...],
+                                    self.nb_wav,
+                                    axis=0)
         elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil,
                                    self.dim_overpad_pupil):
             pass
@@ -372,12 +379,14 @@ class Optical_System:
         noFPM : bool, defaut True
             if the optical transfert function EF_through has a noFPM parameter
 
-        **kwargs: other kw parameters can be passed direclty to self.EF_through function
+        **kwargs: 
+            other kw parameters can be passed direclty to self.EF_through function
 
         Returns
         ------
         transimssion : float  
             ratio exit flux  / clear entrance pupil flux
+
 
         -------------------------------------------------- """
         clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil,
@@ -403,12 +412,14 @@ class Optical_System:
                         the polychromatic PSF use to nomrmalize to_detector_Intensity
             - self.normPupto1, which is used to measure the photon noise
                 This is the factor that we use to measure photon noise.
-                From an image in contrast, we now normalize by the total amount of energy
-                  (*self.norm_polychrom / self.sum_polychrom) and then account for the energy
-                lost in the process (self.transmission()). Can be used as follow:
+                From an image in contrast, we now normalize by the total amount of 
+                energy (*self.norm_polychrom / self.sum_polychrom) and then account for the energy
+                lost in the process (self.transmission()). 
+                Can be used as follow:
                 Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
         
         AUTHOR : Johan Mazoyer
+
 
         -------------------------------------------------- """
 
@@ -453,6 +464,7 @@ class Optical_System:
         ------
         return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                 phase abberation at the reference wavelength
+
 
         -------------------------------------------------- """
         if not os.path.exists(Model_local_dir):
@@ -513,6 +525,7 @@ class Optical_System:
         ------
         return_ampl : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                 amplitude abberation
+
 
         -------------------------------------------------- """
         if not os.path.exists(Model_local_dir):
@@ -666,7 +679,7 @@ class pupil(Optical_System):
 
         filename : string (default "")
             name and directory of the .fits file
-            The pupil .fits files should be 2D and square([dim_fits,dim_fits])
+            The pupil .fits files should be 2D and square([prad,prad])
             with even number of pix and centered between 4 pixels.
             if dim_fits < dim_overpad_pupil then the pupil is zero-padded
             if dim_fits > dim_overpad_pupil we raise an Exception
@@ -940,8 +953,11 @@ class coronagraph(Optical_System):
             self.prop_apod2lyot = 'mft'
             vortex_charge = coroconfig["vortex_charge"]
             self.string_os += '_charge' + str(int(vortex_charge))
-            self.FPmsk = self.Vortex(charge=vortex_charge)
+            self.FPmsk = self.Vortex(vortex_charge = vortex_charge)
             self.perfect_coro = True
+        
+        else:
+            raise Exception("this coronagrpah mode does not exists yet")
 
         # We need a pupil only to measure the response
         # of the coronograph to a clear pupil to remove it
@@ -1278,6 +1294,48 @@ class coronagraph(Optical_System):
 
         return fqpm
 
+    def Vortex(self, vortex_charge = 2):
+        """ --------------------------------------------------
+        Create a charge2 vortex.
+
+        AUTHOR : Johan Mazoyer
+
+        Parameters
+        ------
+        Charge : int, defaut 2
+            charge of the vortex. can be 2, 4, 6. Defaut is charge 2
+
+        Returns
+        ------
+        vortex_fpm : list of 2D numpy array
+                            the FP mask at all wl
+
+
+        -------------------------------------------------- """
+
+        if self.prop_apod2lyot == "fft":
+            maxdimension_array_fpm = np.max(self.dim_fp_fft)
+        else:
+            maxdimension_array_fpm = self.dimScience
+
+        xx, yy = np.meshgrid(
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
+
+        phase_vortex = self.vortex_charge * np.angle(xx + 1j * yy)
+
+        vortex = list()
+        for i, wav in enumerate(self.wav_vec):
+            if self.prop_apod2lyot == "fft":
+                dim_fp = self.dim_fp_fft[i]
+            else:
+                dim_fp = self.dimScience
+
+            phasevortex_cut = proc.crop_or_pad_image(phase_vortex, dim_fp)
+            vortex.append(np.exp(1j * phasevortex_cut))
+
+        return vortex
+
     def KnifeEdgeCoro(self):
         """ --------------------------------------------------
         Create a Knife edge coronagraph of size (dimScience,dimScience)
@@ -1390,51 +1448,7 @@ class coronagraph(Optical_System):
 
         return hlc_all_wl
 
-    def Vortex(self, charge=2):
-        """ --------------------------------------------------
-        Create a charge2 vortex.
-        #TODO Should work but need to be tested
-
-        AUTHOR : Johan Mazoyer
-
-        Parameters
-        ------
-        Charge : charge of the vortex. defaut is charge 2
-
-        Returns
-        ------
-            vortex_fpm : list of 2D numpy array
-                            the FP mask at all wl
-
-
-        -------------------------------------------------- """
-
-        if self.prop_apod2lyot == "fft":
-            maxdimension_array_fpm = np.max(self.dim_fp_fft)
-        else:
-            maxdimension_array_fpm = self.dimScience
-
-        xx, yy = np.meshgrid(
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
-
-        phase_vortex = charge * np.angle(xx + 1j * yy)
-
-        vortex = list()
-        for i, wav in enumerate(self.wav_vec):
-            if self.prop_apod2lyot == "fft":
-                dim_fp = self.dim_fp_fft[i]
-            else:
-                dim_fp = self.dimScience
-
-            phasevortex_cut = proc.crop_or_pad_image(phase_vortex, dim_fp)
-            vortex.append(np.exp(1j * phasevortex_cut))
-
-        return vortex
-
-    ##############################################
-    ##############################################
-    ### Propagation through coronagraph
+    
 
 
 ##############################################
@@ -2396,7 +2410,7 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
     return new_EF_through_fun
 
 
-def _clean_EF_through(testbed_EF_through, known_keywords) :
+def _clean_EF_through(testbed_EF_through, known_keywords):
     """ --------------------------------------------------
     a functions to check that we do not set unknown keyword in
     the testbed EF through function. Maybe not necessary.

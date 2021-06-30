@@ -7,7 +7,7 @@ class MaskDH:
     """ --------------------------------------------------
         A very small class to do all the mask related stuff: retrieve parameters and
         combined them measure the mask and measure the string to save matrices.
-        There are so fast to measure that we do not save them but if you
+        They're fast to measure that we do not need to save them but if you
         absolutely want to you can do it here.
     -------------------------------------------------- """
 

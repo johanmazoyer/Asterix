@@ -3,8 +3,6 @@
 
 import os
 
-from astropy.utils.exceptions import AstropyDeprecationWarning
-
 from Asterix import Main_THD
 import time
 

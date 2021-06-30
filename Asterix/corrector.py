@@ -15,16 +15,17 @@ import Asterix.WSC_functions as wsc
 
 class Corrector:
     """ --------------------------------------------------
-    Corrector Class allows you to define a corrector for one of 2 DM with
+    Corrector Class allows you to define a corrector with
     different algorithms.
 
     Corrector is a class which takes as parameter:
         - the testbed structure
         - the correction parameters
+        - the estimator
 
         It must contains 2 functions at least:
         - an initialization (e.g. Jacobian matrix) Corrector.__init__
-        The initialization will probaby require previous initialization of
+        The initialization requires previous initialization of
         the testbed and of the estimator
 
         - an correction function itself with parameters
