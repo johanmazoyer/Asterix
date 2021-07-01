@@ -255,9 +255,8 @@ class Estimator:
         elif self.technique == 'coffee':  
             
             # Check if required keys are set
-            assert(kwargs["imgs"] and kwargs["div_factors"]), "You are missing parameters\n Requirement : imgs=dnarray, div_factors=list "
+            assert("imgs" in kwargs and "div_factors" in kwargs), "You are missing parameters\n Requirement : imgs=dnarray, div_factors=list "
             
-            ## TODO mettre tbed avant tous le reste pour que ça marche
             e_sim  = self.coffee.estimate(testbed,**kwargs)
             
             # Check what to return
@@ -267,7 +266,8 @@ class Estimator:
                 elif kwargs["result_type"] == "complete"  : return {"phi_foc":e_sim.get_phi_foc(),"EF_do":e_sim.get_EF_do(),"flux":e_sim.get_phi_foc(),"fond":e_sim.get_phi_foc()}
                 elif kwargs["result_type"] == "default"   : pass
                 else : print("[WARNING] : wrong result_type. Set to default]")
-            
+            # TODO resulat type for grad auto only work with simulator and default
+
             return  e_sim.get_EF_foc()
 
         else:

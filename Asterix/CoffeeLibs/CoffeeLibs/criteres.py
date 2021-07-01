@@ -30,7 +30,7 @@ def regule(psi,mode="np"):
   
     psi_grad  = tls.gradient_xy(psi,mode)  # Spacial gardient
     
-    return np.sum(psi_grad**2)
+    return np.sum(psi_grad)**2
 
 def diff_grad_J_up(point,div_id,sim,i_ref,dphi=1e-6):
         
@@ -120,7 +120,7 @@ def DJmv_up(div_id,img,sim):
 
     w     = tb.dimScience
     wphi  = tb.dimScience//tb.ech
-    alpha = sim.get_flux()
+    alpha = sim.get_flux(div_id)
     
     psi_u  = tb.pup   * np.exp(1j*sim.get_phi_div(div_id))
     psi_d  = tb.pup_d * sim.get_EF_do()
@@ -146,7 +146,7 @@ def DJmv_down(div_id,img,sim):
     
     w    = tb.dimScience
     wphi = tb.dimScience//tb.ech
-    alpha = sim.get_flux()
+    alpha = sim.get_flux(div_id)
 
     psi_u  = tb.pup   * np.exp(1j*sim.get_phi_div(div_id))
     psi_d  = tb.pup_d * sim.get_EF_do()
@@ -167,20 +167,25 @@ def DJmv_down(div_id,img,sim):
 def Dregule(psi,mode="lap"):
     """Compte derive of regule terme """
     if mode=="lap" :  lap =  tls.gradient2_xy(psi)
-    else :            lap = tls.gradient_xy(tls.gradient_xy(psi))
+    else :            lap =  tls.gradient_xy(tls.gradient_xy(psi))
+    
     return (1/2)*lap
 
 # %% ######################
 """Flux fond """
 
 def estime_fluxfond(sim,imgs):
-    h    = sim.get_img_div(0,ff=False)
-    img  = imgs[:,:,0]
-    hsum = np.sum(h)
-    mat  = np.array( [[ np.sum(h*h) , hsum ],[ hsum , img.size ]])/img.size
-    vect = np.array( [ np.sum(sim.get_img_div(0,ff=False)*img),np.sum(img)])/img.size
-    [flux,fond]   = np.linalg.solve(mat,vect)
-    return flux,fond
+    ff_list = np.zeros((2,sim.nb_div))
+    
+    for ii in range(sim.nb_div):
+        h    = sim.get_img_div(ii,ff=False)
+        img  = imgs[:,:,ii]
+        hsum = np.sum(h)
+        mat  = np.array( [[ np.sum(h*h) , hsum ],[ hsum , img.size ]])/img.size
+        vect = np.array( [ np.sum(sim.get_img_div(ii,ff=False)*img),np.sum(img)])/img.size
+        ff_list[:,ii]   = np.linalg.solve(mat,vect)
+    
+    return ff_list
 
 
 # %% ############################
@@ -193,8 +198,11 @@ def V_map_J(var,sim,imgs,hypp,simGif):
     sim.opti_update(var,imgs)
     Hx = sim.gen_div_imgs()
     
-    Jmv = meanSquare(Hx,imgs)
-    R   =  (1/2) * hypp * regule(sim.get_phi_foc()) 
+    varb = np.median(imgs) + 1
+    
+    Jmv = meanSquare(Hx,imgs) / (sim.nb_div * varb)
+    
+    R   = (1/2) * hypp * regule(sim.get_phi_foc())
     
     sim.info.append([Jmv, R])
     
@@ -207,6 +215,8 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
     # sim = copy.deepcopy(esim)
     sim.opti_update(var,imgs)
     
+    varb = np.median(imgs) + 1
+    
     info_div       = []
     sim.iter +=1
     
@@ -216,28 +226,27 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
     grad = []
     if not sim.phi_foc_is_known() : 
         grad_u = 0
-        for div_id in range(0,imgs.shape[2]):
+        for div_id in range(0,sim.nb_div):
             grad_u_k = DJmv_up(div_id,imgs[:,:,div_id],sim)
             info_div.append(np.sum(grad_u_k**2))
             grad_u   += grad_u_k
-        grad_u *= 1  # Ponderation
-        dR      =  pup * hypp * Dregule(sim.get_phi_foc()) # Regulatrisation
-        grad    = np.concatenate((grad, (grad_u + dR).reshape(sim.N**2,)), axis=0)
-
+        grad_u *= 1/(sim.nb_div * varb)  # Ponderation
+        dR      = pup * hypp * Dregule(sim.get_phi_foc()) # Regulatrisation
+        grad    = tls.add_to_list(grad, grad_u + dR)
 
     # Other varaibles gradient
     if not sim.phi_do_is_known() : 
         grad_d = 0
-        for div_id in range(0,imgs.shape[2]):
+        for div_id in range(0,sim.nb_div):
             grad_d += DJmv_down(div_id,imgs[:,:,div_id],sim)
         grad_d *= 1  # Ponderation
         dRdo    = pup * hypp * Dregule(sim.get_phi_do()) # Regulatrisation
-        grad    = np.concatenate((grad, (grad_d + dRdo).reshape(sim.N**2,)), axis=0)
+        grad    = tls.add_to_list(grad, grad_d + dRdo)
                    
     if simGif and not sim.phi_do_is_known() : tls.plot_sim_entries(sim,dR,grad_u,grad_d,dRdo,name="iter"+str(sim.iter),disp=False,save=True)
     elif simGif : tls.plot_sim_entries(sim,dR,grad_u_k,name="iter"+str(sim.iter),disp=False,save=True)              
     
-    sim.info_gard.append([np.sum(grad_u**2),np.sum(dR**2)])     
+    sim.info_gard.append([np.sum(abs(grad_u)),np.sum(abs(dR))])     
     sim.info_div.append(info_div)
                     
     return  grad
@@ -262,39 +271,38 @@ def genere_L(tbed):
                      
     return L
     
-def V_map_J_auto(var,sim,imgs,L,hypp,simGif):
+def V_map_J_auto(var,sim,imgs,hypp,simGif,L):
     """ Wrapper for minimize syntax"""
-    
-    sim.opti_update(var,imgs)
+
+    sim.opti_auto_update(var)
     N = sim.tbed.dimScience
     n = sim.tbed.dimScience//sim.tbed.ech
 
-    Hx = np.zeros(N,N,sim.nb_div)
+    Hx = 0j*np.zeros((N,N,sim.nb_div))
     for div_id in range(sim.nb_div):
-        point       = sim.get_EF_div(div_id).reshape(n*n,)
+        point       = sim.get_EF_div(div_id,True).reshape(n*n,)
         Hx[:,:,div_id]  = np.dot(L,point).reshape(N,N)
     
     Jmv = meanSquare(Hx,imgs)
-    R   =  (1/2) * hypp * regule(sim.get_phi_foc()) 
-    
-    sim.info.append([Jmv, R])
-    
-    return  Jmv + R
+        
+    return  Jmv
 
 
-def V_map_dJ_auto(var,sim,imgs,L,hypp,simGif):
+def V_map_dJ_auto(var,sim,imgs,hypp,simGif,L):
     """ Wrapper for minimize syntax"""
-    #TODO truc
-    sim.opti_update(var,imgs)
+
+    sim.opti_auto_update(var)
     n = sim.tbed.dimScience//sim.tbed.ech
 
     dJ_matriciel = 0
     
     for div_id in range(sim.nb_div):
         gamma         = gamma_terme(L,sim,imgs[:,:,div_id])
-        dJ_matriciel  = (np.dot(np.transpose(L),gamma)).reshape(n,n)
+        dJ_matriciel += (np.dot(np.transpose(L),gamma)).reshape(n,n)
     
-    return dJ_matriciel
+    if simGif : print("# TODO")
+    
+    return tls.add_to_list([],dJ_matriciel)
 
 
 def gamma_terme(L,sim,img):
@@ -304,7 +312,7 @@ def gamma_terme(L,sim,img):
     w  = sim.tbed.dimScience//sim.tbed.ech
     W  = sim.tbed.dimScience
 
-    LEf     = np.dot(L,sim.get_EF(0).reshape(w*w,))
+    LEf     = np.dot(L,sim.get_EF_div(0,True).reshape(w*w,))
     gamma = 4*img.reshape(W*W,)*LEf + 4*pow(LEf,3)
 
     return gamma

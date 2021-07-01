@@ -20,7 +20,7 @@ F_D = 61.5         # Nombre d'ouverture
 name = "NoCornoTests_sansregul"
 
 # Info to get your fits
-path_root  = "imgs"                        # folder
+path_root  = "imgs\\256"                        # folder
 prefix     = "PSF_640nm_pup823_noLyot_P2"  # Prefix of your fits Or Name if you have only one (no need to put ".fits") 
 exts       = ["","_p12mm"]                 # List of extention of your fits
 
@@ -32,7 +32,7 @@ imgs = get_fits_as_imgs(path_root,prefix,exts)
 # Update config from our datas
 # config["modelconfig"]["Science_sampling"] = get_science_sampling(imgs[:,:,0])
 config['modelconfig']['dimScience']       = imgs.shape[0]
-config["modelconfig"]["diam_pup_in_pix"]  = get_pup_size(imgs[:,:,0])
+# config["modelconfig"]["diam_pup_in_pix"]  = get_pup_size(imgs[:,:,0])
 config["modelconfig"]["Science_sampling"] = imgs.shape[0]/config["modelconfig"]["diam_pup_in_pix"]
 
 
@@ -46,7 +46,7 @@ div_factors = detector_shifts2div_factors(div_dist,Ld,F_D)
 tbed      = custom_bench(config,'.')
 estimator = coffee_estimator(**config["Estimationconfig"])
 estimator.bound      = None
-estimator.var_phi    = 1e6
+estimator.var_phi    = 0.5e2
 estimator.simGif     = name
 
 ## Estimation ##

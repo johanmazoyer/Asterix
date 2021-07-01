@@ -37,26 +37,28 @@ from matplotlib.widgets import Slider
 
 class data_simulator():
 
-    def __init__(self,tbed, known_var = "default", div_factors = [0,1], phi_foc=None):
+    def __init__(self,tbed, known_var = "default", div_factors = [0,1], phi_foc=None,cplx = False):
+        
+        # Store simulation Variables
+        self.tbed      = tbed
+        self.phi_foc   = phi_foc
+        self.known_var = known_var
+        self.cplx      = cplx
         
         # Things we don't want to recompute
         self.N = tbed.dimScience//tbed.ech
         [Ro,Theta] = pmap(self.N,self.N,tbed.diam_pup_in_pix//2)
         self.defoc = zernike(Ro,Theta,4)
         
-        # Store simulation Variables
-        self.tbed = tbed
-        self.phi_foc = phi_foc
         self.set_div_map(div_factors)
-        self.known_var = known_var
-        
+
         # To keep track on what I am suppose to know
         # If default, we know everything
         self.__remeber_known_var_as_bool__()
         
         # Set default everywhere it is needed
         if known_var == "default" : self.set_default_value()
-        if phi_foc is None : self.phi_foc = zernike(Ro,Theta,1)
+        if phi_foc is None : self.set_phi_foc(zernike(Ro,Theta,1))
      
     ################################################################
     ####  Generators  ####
@@ -64,7 +66,7 @@ class data_simulator():
     
     def gen_zernike_phi_foc(self,coeff):
         """ Generate a zernike polynome using coeff and assign phi_foc  """
-        self.phi_foc = self.gen_zernike_phi(coeff)
+        self.set_phi_foc(self.gen_zernike_phi(coeff))
 
     def gen_zernike_phi_do(self,coeff):
         """ Generate a zernike polynome using coeff and assign phi_do  """
@@ -99,6 +101,7 @@ class data_simulator():
     
     def set_phi_foc(self,phi_foc):
         self.phi_foc = phi_foc
+        self.EF_foc  = np.exp(1j*self.phi_foc)
         
     def set_phi_do(self,phi_do):
         """Set phi downstream and EF downstream.
@@ -128,16 +131,17 @@ class data_simulator():
         self.known_var['fond'] = fond
     
     def get_EF(self,defoc=0):
-        return np.exp(1j*self.phi_foc)
+        return self.EF_foc
     
-    def get_EF_div(self,div_id):
-        return np.exp(1j*self.get_phi_div(div_id))
+    def get_EF_div(self,div_id,fromEF=False):
+        if fromEF : return self.EF_foc * self.get_defocEF(div_id)
+        else      : return np.exp(1j*self.get_phi_div(div_id))
     
-    def get_img(self,defoc=0):
-        return self.tbed.todetector_Intensity(self.get_EF(defoc),**self.known_var)
+    def get_img(self,div_id=0):
+        return self.todetector_Intensity(div_id)
     
     def get_img_div(self,div_id,ff=True):
-        if ff : return self.tbed.todetector_Intensity(self.get_EF_div(div_id),**self.known_var)
+        if ff : return self.todetector_Intensity(div_id)
         else  : return self.tbed.todetector_Intensity(self.get_EF_div(div_id),self.get_EF_do())
     
     def get_phi_foc(self):
@@ -146,6 +150,9 @@ class data_simulator():
     def get_phi_div(self,div_id):
         return self.phi_foc + self.div_map[:,:,div_id]
     
+    def get_defocEF(self,div_id):
+        return np.exp(1j*self.div_map[:,:,div_id])
+        
     def get_EF_do(self):
         return self.known_var['downstream_EF']
     
@@ -153,11 +160,13 @@ class data_simulator():
         if hasattr(self, 'phi_do') : return self.phi_do
         else : return 0 
         
-    def get_flux(self):
-        return self.known_var['flux']
+    def get_flux(self,div_id=None):
+        if div_id is None : return self.known_var['flux']
+        else              : return self.known_var['flux'][div_id]
         
-    def get_fond(self):
-        return self.known_var['fond']
+    def get_fond(self,div_id=None):
+        if div_id is None : return self.known_var['fond']
+        else              : return self.known_var['fond'][div_id]
     
     def get_know_var_bool(self):
         return self.known_var_bool
@@ -215,27 +224,38 @@ class data_simulator():
         n = self.N
         pack = []
         
-        if not self.phi_foc_is_known() : pack = np.concatenate((pack, self.get_phi_foc().reshape(n**2,)), axis=None)
+        if not self.phi_foc_is_known() and not self.cplx : pack = np.concatenate((pack, self.get_phi_foc().reshape(n**2,)), axis=None)
+        if not self.phi_foc_is_known() and     self.cplx : pack = np.concatenate((pack, tls.complex2real(self.get_phi_foc())), axis=None)
         if not self.phi_do_is_known()  : pack = np.concatenate((pack, self.get_phi_do().reshape(n**2,)), axis=None)         
 
         return pack
     
     def opti_update(self,pack,imgs):
         """Uptade sim with varaibles from minimizer optimize"""
+        
         n = self.N        
         indx = 0
 
         if not self.phi_foc_is_known() :
-            self.phi_foc = pack[:n*n].reshape(n,n)
+            if self.cplx : self.set_phi_foc(tls.real2complex(pack[:n*n].reshape(n,n),pack[n*n:2*n*n].reshape(n,n)))
+            else    : self.set_phi_foc(pack[:n*n].reshape(n,n))
             indx += n*n
         
         if not self.phi_do_is_known() : self.set_phi_do(pack[indx:indx+n*n].reshape(n,n))
         
         # Matrice Inversion
-        if (not self.flux_is_known()) | (not self.fond_is_known()) : flux,fond = cacl.estime_fluxfond(self,imgs)
+        if (not self.flux_is_known()) | (not self.fond_is_known()) : ff_list = cacl.estime_fluxfond(self,imgs)
             
-        if not self.flux_is_known() : self.set_flux(flux)
-        if not self.fond_is_known() : self.set_fond(fond)
+        if not self.flux_is_known() : self.set_flux(ff_list[0,:])
+        if not self.fond_is_known() : self.set_fond(ff_list[1,:])
+
+    def opti_auto_update(self,pack):
+        n = self.N  
+        self.EF_foc = tls.real2complex(pack[:n*n].reshape(n,n),pack[n*n:2*n*n].reshape(n,n))
+        
+    def opti_auto_pack(self):
+        pack = tls.complex2real(self.get_EF())
+        return pack
 
     #######################################
     ####   Tools 2 : tbed wrappers ####
@@ -283,7 +303,7 @@ class data_simulator():
 
     def todetector_Intensity(self,div_id=0):
         """ call to detector intensity bench for a specific div id image"""
-        return self.tbed.todetector_Intensity(self.get_EF_div(div_id),**self.known_var)
+        return self.get_flux(div_id) * self.tbed.todetector_Intensity(self.get_EF_div(div_id),self.known_var["downstream_EF"]) + self.get_fond(div_id)
 
     #######################################
     ### Tools 3 : MISC ###
@@ -320,19 +340,26 @@ class coffee_estimator:
     COFFEE estimator
     -------------------------------------------------- """
 
-    def __init__(self,var_phi=0 ,method = 'L-BfGS-B',bound=None, gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,H=None,**kargs):
+    def __init__(self,var_phi=0 ,method = 'L-BfGS-B',auto=True ,cplx=False, bound=None, gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,H=None,**kargs):
         
         self.var_phi = var_phi
         self.disp    = disp
         self.bound   = bound
         self.simGif  = None
+        self.auto    = auto
+        self.cplx    = cplx 
 
         # Minimize parameters
         options = {'disp': disp,'gtol':gtol,'eps':eps,'maxiter':maxiter}
         self.setting = {'options' : options, 'method': method }
         
         # Pour le gradient automatique H = matrice de gradient
-        self.H = H
+        if auto : 
+            self.setting["fun"] = cacl.V_map_J_auto
+            self.setting["jac"] = cacl.V_map_dJ_auto
+        else :
+            self.setting["jac"] = cacl.V_grad_J
+            self.setting["fun"]  = cacl.V_map_J
         
 
     def estimate(self,tbed,imgs,div_factors,known_var=dict(),phi_foc=None,**kwargs):
@@ -357,49 +384,66 @@ class coffee_estimator:
         """
         
         # Create our simulation
-        sim      = data_simulator(tbed,known_var,div_factors,phi_foc)
-        ini_pack = sim.opti_pack()
-        if self.disp : sim.print_know_war()
+        sim   = data_simulator(tbed,known_var,div_factors,phi_foc,cplx=self.cplx)
+        sim   = sim_init_infos(sim)
+
+
+        # Agrs : Fucntion J and DJ required arguments
+        self.setting['args'] = sim,imgs,self.var_phi,self.simGif 
         
-        # To store information during iterations
-        sim.iter  = 0
-        sim.info  = [] 
-        sim.info_gard = []
-        sim.info_div  = []
+        if self.auto : 
+            self.setting['args'] += (cacl.genere_L(tbed),)
+            self.setting['x0']    = sim.opti_auto_pack()
+            
+        else : self.setting['x0'] = sim.opti_pack()
+        
+        self.set_bounds(self.setting['x0'])
 
         
-        # Setting bounds matrix for minimize as syntaxes required
-        if self.bound is not None and self.setting['method'] == 'L-BfGS-B' :
-            mapphi = np.ones(ini_pack.shape)
-            bounds = (np.transpose([-self.bound*mapphi,self.bound*mapphi]))
-            self.setting['bounds'] = bounds 
-        
-        
+        ####  CALL TO MONIMIZE
+        if self.disp : sim.print_know_war()
         tic  = t.time()
-        res  = minimize(cacl.V_map_J,
-                        ini_pack,
-                        args=(sim,imgs,self.var_phi,self.simGif),
-                        jac=cacl.V_grad_J,
-                        **self.setting)
-        toc = t.time() - tic
-        # SI GRADIENT AUTO : APELLER LES FONCTIONS POUR GRAD AUTO
-       
-        mins = int(toc//60)
-        sec  = 100*(toc-60*mins)
-        if self.disp : print("Minimize took : " + str(mins) + "m" + str(sec)[:3])
+        res  = minimize(**self.setting)
+        toc  = t.time() - tic
         
-        sim.opti_update(res.get('x'),imgs)
-        # list to array because it is better
-        sim.info_gard  = np.array(sim.info_gard)
-        sim.info_div   = np.array(sim.info_div)
-        sim.info       = np.array(sim.info)
+        # Disp and saves
+        if self.disp : print_time(tic,toc)
         if self.simGif : tls.iter_to_gif(self.simGif)
         
-        # If you need more info after
+        # Store infos proprely
+        sim.opti_update(res.get('x'),imgs)
+        sim = sim_info2array(sim)
         self.complete_res = res
         self.toc          = toc
         
         return sim
+
+    def set_bounds(self,x0):
+        """ Setting bounds matrix for minimize as syntaxes required """
+        if self.bound is not None and self.setting['method'] == 'L-BfGS-B' :
+            mapphi = np.ones(x0.shape)
+            bounds = (np.transpose([-self.bound*mapphi,self.bound*mapphi]))
+            self.setting['bounds'] = bounds 
+
+def print_time(tic,toc):
+    mins = int(toc//60)
+    sec  = 100*(toc-60*mins)
+    print("Minimize took : " + str(mins) + "m" + str(sec)[:3])
+    
+def sim_init_infos(sim):
+    sim.iter  = 0
+    sim.info  = [] 
+    sim.info_gard = []
+    sim.info_div  = []
+    return sim
+
+def sim_info2array(sim):
+    # list to array because it is better
+    sim.info_gard  = np.array(sim.info_gard)
+    sim.info_div   = np.array(sim.info_div)
+    sim.info       = np.array(sim.info)
+    return sim
+
 
 
 # %% CUSTOM BENCH
@@ -449,11 +493,11 @@ class custom_bench(Optical_System):
         N = self.dimScience//self.ech
         return mft( self.corno * mft( self.pup ,N,N,N,inverse=True) ,N,N,N,**self.offest)
 
-    def todetector_Intensity(self,entrance_EF=1.,downstream_EF=1.,flux=1,fond=0):
+    def todetector_Intensity(self,entrance_EF=1.,downstream_EF=1.):
 
         EF_out = self.todetector(entrance_EF,downstream_EF)
 
-        return flux*pow( abs( EF_out ) ,2) + fond
+        return pow( abs( EF_out ) ,2)
     
     
     def set_corono(self,cortype):
