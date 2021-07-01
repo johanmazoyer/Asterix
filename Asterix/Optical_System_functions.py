@@ -454,6 +454,11 @@ class Optical_System:
         ----------
         SIMUconfig : dict
                     parameter of this simualtion (describing the phase)
+        
+         up_or_down : string, default, 'up'
+                    'up' or 'do', use to access the right parameters in the parameter file for 
+                        upstream (entrance pupil) or downstream (Lyot plane) aberrations
+
 
         Model_local_dir: string, default None
                     directory to save things you can measure yourself
@@ -1013,9 +1018,9 @@ class coronagraph(Optical_System):
                    entrance_EF=1.,
                    wavelength=None,
                    noFPM=False,
+                   EF_aberrations_LS = 1.,
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
-                   EF_aberrations_LS = 1.,
                    **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod
@@ -1035,6 +1040,11 @@ class coronagraph(Optical_System):
 
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
+        
+        EF_aberrations_LS: 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+                        electrical field created by the downstream aberrations introduced directly in the Lyot Stop
 
         save_all_planes_to_fits: Bool, default False.
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
