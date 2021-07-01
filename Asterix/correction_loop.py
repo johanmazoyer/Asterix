@@ -26,7 +26,8 @@ def CorrectionLoop(testbed: OptSy.Testbed,
                    SIMUconfig,
                    input_wavefront=0,
                    initial_DM_voltage=0.,
-                   silence=False):
+                   silence=False,
+                   **kwargs):
     """ --------------------------------------------------
     Run a full loop for several Matrix. at each iteration, we update the matrix and
     run CorrectionLoop1Matrix. 
@@ -132,8 +133,7 @@ def CorrectionLoop(testbed: OptSy.Testbed,
             # the first matrix is done during initialization
             corrector.update_matrices(testbed,
                                       estimator,
-                                      initial_DM_voltage=initial_DM_voltage,
-                                      input_wavefront=1.)
+                                      initial_DM_voltage=initial_DM_voltage)
 
         Resultats_correction_loop = CorrectionLoop1Matrix(
             testbed,
@@ -149,7 +149,8 @@ def CorrectionLoop(testbed: OptSy.Testbed,
             initial_DM_voltage=initial_DM_voltage,
             photon_noise=photon_noise,
             nb_photons=nb_photons,
-            silence=silence)
+            silence=silence,
+            **kwargs)
 
         min_contrast = min(CorrectionLoopResult["MeanDHContrast"])
         min_index = CorrectionLoopResult["MeanDHContrast"].index(min_contrast)
@@ -179,7 +180,8 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                           initial_DM_voltage=0.,
                           photon_noise=False,
                           nb_photons=1e30,
-                          silence=False):
+                          silence=False,
+                          **kwargs):
     """ --------------------------------------------------
     Run a loop for a given interraction matrix.
 
@@ -274,14 +276,16 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     initialFP = testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                              voltage_vector=initial_DM_voltage,
                                              save_all_planes_to_fits=False,
-                                             dir_save_all_planes=None)
+                                             dir_save_all_planes=None,
+                                             **kwargs)
 
     estim_init = estimator.estimate(testbed,
                                     voltage_vector=initial_DM_voltage,
                                     entrance_EF=input_wavefront,
                                     wavelength=testbed.wavelength_0,
                                     photon_noise=photon_noise,
-                                    nb_photons=nb_photons)
+                                    nb_photons=nb_photons,
+                                    **kwargs)
 
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
@@ -331,7 +335,8 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                     Search_best_Mode=True,
                     input_wavefront=input_wavefront,
                     initial_DM_voltage=thisloop_voltages_DMs[iteration],
-                    silence=True)
+                    silence=True,
+                    **kwargs)
 
                 print("Best Mode is ", bestmode, " with contrast: ",
                       bestcontrast)
@@ -367,7 +372,8 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             wavelength=testbed.wavelength_0,
             photon_noise=photon_noise,
             nb_photons=nb_photons,
-            perfect_estimation=Search_best_Mode)
+            perfect_estimation=Search_best_Mode,
+            **kwargs)
 
         solution = corrector.toDM_voltage(
             testbed,
@@ -393,7 +399,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
 
         thisloop_FP_Intensities.append(
             testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                                         voltage_vector=new_voltage))
+                                         voltage_vector=new_voltage,**kwargs))
         thisloop_EF_estim.append(resultatestimation)
         thisloop_MeanDHContrast.append(
             np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))

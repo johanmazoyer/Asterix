@@ -443,7 +443,7 @@ class Optical_System:
         self.normPupto1 = self.transmission(
         ) * self.norm_polychrom / self.sum_polychrom
 
-    def generate_phase_aberr(self, SIMUconfig, Model_local_dir=None):
+    def generate_phase_aberr(self, SIMUconfig, up_or_down = 'up', Model_local_dir=None):
         """ --------------------------------------------------
         
         Generate and save  phase aberations
@@ -470,13 +470,20 @@ class Optical_System:
         if not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
-
-        set_phase_abb = SIMUconfig["set_phase_abb"]
-        set_random_phase = SIMUconfig["set_random_phase"]
-        opd_rms = SIMUconfig["opd_rms"]
-        phase_rhoc = SIMUconfig["phase_rhoc"]
-        phase_slope = SIMUconfig["phase_slope"]
-        phase_abb_filename = SIMUconfig["phase_abb_filename"]
+        if up_or_down == 'up':
+            set_phase_abb = SIMUconfig["set_UPphase_abb"]
+            set_random_phase = SIMUconfig["set_UPrandom_phase"]
+            opd_rms = SIMUconfig["UPopd_rms"]
+            phase_rhoc = SIMUconfig["UPphase_rhoc"]
+            phase_slope = SIMUconfig["UPphase_slope"]
+            phase_abb_filename = SIMUconfig["UP_phase_abb_filename"]
+        else:
+            set_phase_abb = SIMUconfig["set_DOphase_abb"]
+            set_random_phase = SIMUconfig["set_DOrandom_phase"]
+            opd_rms = SIMUconfig["DOopd_rms"]
+            phase_rhoc = SIMUconfig["DOphase_rhoc"]
+            phase_slope = SIMUconfig["DOphase_slope"]
+            phase_abb_filename = SIMUconfig["DO_phase_abb_filename"]
 
         ## Phase map and amplitude map for the static aberrations
         if set_phase_abb == True:
@@ -1008,6 +1015,7 @@ class coronagraph(Optical_System):
                    noFPM=False,
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
+                   EF_aberrations_LS = 1.,
                    **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod
@@ -1214,6 +1222,10 @@ class coronagraph(Optical_System):
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       lyotplane_before_lyot)
+
+
+        # we add the downstream aberrations if we need them 
+        lyotplane_before_lyot *= EF_aberrations_LS
 
         # crop to the dim_overpad_pupil expeted size
         lyotplane_before_lyot_crop = proc.crop_or_pad_image(
