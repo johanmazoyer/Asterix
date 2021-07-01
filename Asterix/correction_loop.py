@@ -268,7 +268,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     estim_init = estimator.estimate(testbed,
                                     voltage_vector=initial_DM_voltage,
                                     entrance_EF=input_wavefront,
-                                    wavelength=testbed.wavelength_0
+                                    wavelength=testbed.wavelength_0,
                                     **kwargs)
 
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])

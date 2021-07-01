@@ -2258,6 +2258,10 @@ class Testbed(Optical_System):
         # noFPM so that it does not break when we run transmission and max_sum_PSFs
         # which pass this keyword by default
         known_keywords.append('noFPM')
+        known_keywords.append('photon_noise')
+        known_keywords.append('nb_photons')
+        known_keywords.append('in_contrast')
+        
 
         # we remove doubloons
         # known_keywords = list(set(known_keywords))
