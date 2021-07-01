@@ -73,12 +73,7 @@ def CorrectionLoop(testbed: OptSy.Testbed,
             using this initial DM voltages. Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
-    
-    photon_noise: boolean, default False
-                    If True, add photon noise.
-    
-    nb_photons int, optional default 1e30
-                Number of photons entering the pupil
+
     
     silence=False: Boolean, default False
                 if False, print and plot results as the loop runs
@@ -178,8 +173,6 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                           Search_best_Mode=False,
                           input_wavefront=1.,
                           initial_DM_voltage=0.,
-                          photon_noise=False,
-                          nb_photons=1e30,
                           silence=False,
                           **kwargs):
     """ --------------------------------------------------
@@ -240,13 +233,6 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
             
-    
-    photon_noise: boolean, default False
-                    If True, add photon noise.
-    
-    nb_photons: int, optional default 1e30
-                Number of photons entering the pupil
-    
     silence: Boolean, default False
                 if False, print and plot results as the loop runs
 
@@ -282,9 +268,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     estim_init = estimator.estimate(testbed,
                                     voltage_vector=initial_DM_voltage,
                                     entrance_EF=input_wavefront,
-                                    wavelength=testbed.wavelength_0,
-                                    photon_noise=photon_noise,
-                                    nb_photons=nb_photons,
+                                    wavelength=testbed.wavelength_0
                                     **kwargs)
 
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
@@ -370,8 +354,6 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             voltage_vector=thisloop_voltages_DMs[-1],
             entrance_EF=input_wavefront,
             wavelength=testbed.wavelength_0,
-            photon_noise=photon_noise,
-            nb_photons=nb_photons,
             perfect_estimation=Search_best_Mode,
             **kwargs)
 
@@ -574,18 +556,20 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
         os.path.join(result_dir,
                      current_time_str + "_DM_Strokes" + ".pdf"))
     plt.close()
+    # TODO Now FP_Intensities are save with photon noise if it's on
+    # We need to do them without just to save in the results
 
-    if config["SIMUconfig"]["photon_noise"] == True:
-        FP_Intensities_photonnoise = np.array(FP_Intensities) * 0.
-        for i in range(nb_total_iter):
-            FP_Intensities_photonnoise[i] = np.random.poisson(
-                FP_Intensities[i] * testbed.normPupto1 *
-                config["SIMUconfig"]["nb_photons"])
+    # if config["SIMUconfig"]["photon_noise"] == True:
+    #     FP_Intensities_photonnoise = np.array(FP_Intensities) * 0.
+    #     for i in range(nb_total_iter):
+    #         FP_Intensities_photonnoise[i] = np.random.poisson(
+    #             FP_Intensities[i] * testbed.normPupto1 *
+    #             config["SIMUconfig"]["nb_photons"])
 
-        fits.writeto(result_dir + current_time_str + "_Photon_noise" + ".fits",
-                     FP_Intensities_photonnoise,
-                     header,
-                     overwrite=True)
+    #     fits.writeto(result_dir + current_time_str + "_NoPhoton_noise" + ".fits",
+    #                  FP_Intensities_photonnoise,
+    #                  header,
+    #                  overwrite=True)
 
     config.filename = result_dir + current_time_str + "_Simulation_parameters" + ".ini"
     config.write()

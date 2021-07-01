@@ -921,8 +921,6 @@ def createdifference(input_wavefront,
                      amplitudePW,
                      voltage_vector=0.,
                      wavelength=None,
-                     photon_noise=False,
-                     nb_photons=1e30,
                      **kwargs):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
@@ -952,12 +950,6 @@ def createdifference(input_wavefront,
     perfect_coro : bool, optional
         Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
     
-    noise : boolean, optional
-        If True, add photon noise.
-    
-    numphot : int, optional
-        Number of photons entering the pupil
-
     Returns
     ------
     Difference : 3D array
@@ -984,29 +976,16 @@ def createdifference(input_wavefront,
 
             indice_acum_number_act += DM.number_act
 
-        # We do not use todetector_Intensity so that each WL is normlize with
-        # np.sqrt(self.norm_monochrom[self.wav_vec.tolist().index(wavelength)]))
-        # When we go polychromatic, lets be careful with the normalization
 
-        Ikmoins = np.abs(
-            testbed.todetector(entrance_EF=input_wavefront,
+        # When we go polychromatic, lets be careful with the normalization, because 
+        # todetector_Intensity is nomrlizing to polychromatic PSF. 
+        Ikmoins = testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector - Voltage_probe,
-                               wavelength=wavelength,
-                               **kwargs))**2
+                               wavelength=wavelength, **kwargs)
 
-        Ikplus = np.abs(
-            testbed.todetector(entrance_EF=input_wavefront,
+        Ikplus = testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                voltage_vector=voltage_vector + Voltage_probe,
-                               wavelength=wavelength,
-                               **kwargs))**2
-
-        if photon_noise == True:
-            Ikplus = np.random.poisson(
-                Ikplus * testbed.normPupto1 *
-                nb_photons) / (testbed.normPupto1 * nb_photons)
-            Ikmoins = np.random.poisson(
-                Ikmoins * testbed.normPupto1 *
-                nb_photons) / (testbed.normPupto1 * nb_photons)
+                               wavelength=wavelength, **kwargs)
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 

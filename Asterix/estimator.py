@@ -205,8 +205,6 @@ class Estimator:
                  entrance_EF=1.,
                  voltage_vector=0.,
                  wavelength=None,
-                 photon_noise=False,
-                 nb_photons=1e30,
                  perfect_estimation=False,
                  **kwargs):
         """ --------------------------------------------------
@@ -228,12 +226,6 @@ class Estimator:
 
         wavelength  :  float default None,
             wavelength of the estimation in m
-
-        photon_noise :  boolean default False
-            If True, add photon noise
-
-        nb_photons :  int, default 1e30
-            Number of photons entering the pupil
         
         perfect_estimation: bool, default = False. 
                     if true This is equivalent to have self.technique = "perfect" 
@@ -279,11 +271,6 @@ class Estimator:
                 wavelength=wavelength,
                 **kwargs)
 
-            if photon_noise == True:
-                resultatestimation = np.random.poisson(
-                    resultatestimation * testbed.normPupto1 *
-                    nb_photons) / (testbed.normPupto1 * nb_photons)
-
             return proc.resampling(resultatestimation, self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
@@ -294,8 +281,6 @@ class Estimator:
                                               self.amplitudePW,
                                               voltage_vector=voltage_vector,
                                               wavelength=wavelength,
-                                              photon_noise=photon_noise,
-                                              nb_photons=nb_photons,
                                               **kwargs)
 
             return wsc.FP_PWestimate(Difference, self.PWMatrix)
