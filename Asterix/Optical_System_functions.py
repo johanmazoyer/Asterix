@@ -476,19 +476,19 @@ class Optical_System:
             opd_rms = SIMUconfig["UPopd_rms"]
             phase_rhoc = SIMUconfig["UPphase_rhoc"]
             phase_slope = SIMUconfig["UPphase_slope"]
-            phase_abb_filename = SIMUconfig["UP_phase_abb_filename"]
+            phase_abb_filename = SIMUconfig["UPphase_abb_filename"]
         else:
             set_phase_abb = SIMUconfig["set_DOphase_abb"]
             set_random_phase = SIMUconfig["set_DOrandom_phase"]
             opd_rms = SIMUconfig["DOopd_rms"]
             phase_rhoc = SIMUconfig["DOphase_rhoc"]
             phase_slope = SIMUconfig["DOphase_slope"]
-            phase_abb_filename = SIMUconfig["DO_phase_abb_filename"]
+            phase_abb_filename = SIMUconfig["DOphase_abb_filename"]
 
         ## Phase map and amplitude map for the static aberrations
         if set_phase_abb == True:
             if phase_abb_filename == '':
-                phase_abb_filename = "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                phase_abb_filename =up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                     int(opd_rms * 1e9), int(self.wavelength_0 * 1e9),
                     int(phase_slope), phase_rhoc, self.prad)
 
