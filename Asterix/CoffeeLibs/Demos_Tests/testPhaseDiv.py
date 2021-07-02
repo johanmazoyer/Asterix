@@ -15,7 +15,7 @@ config = get_ini('my_param_file.ini',"..\..\Param_configspec.ini")
 tbed      = custom_bench(config,'.')
 name = "mySim"
 
-config["Estimationconfig"]["auto"] = False
+config["Estimationconfig"]["auto"] = True
 config["Estimationconfig"]["cplx"] = False
 
 ## -- Constructor by CoffeeLibs
