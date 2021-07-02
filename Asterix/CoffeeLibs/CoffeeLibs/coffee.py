@@ -46,8 +46,8 @@ class data_simulator():
         self.cplx      = cplx
         
         # Things we don't want to recompute
-        self.N = tbed.dimScience//tbed.ech
-        [Ro,Theta] = pmap(self.N,self.N,tbed.diam_pup_in_pix//2)
+        self.N = int(tbed.dimScience/tbed.Science_sampling)
+        [Ro,Theta] = pmap(self.N,self.N,tbed.prad//2)
         self.defoc = zernike(Ro,Theta,4)
         
         self.set_div_map(div_factors)
@@ -74,7 +74,7 @@ class data_simulator():
     
     def gen_zernike_phi(self,coeff):
         """ Generate a zernike polynome using coeff and return it  """
-        [Ro,Theta] = pmap(self.N,self.N,self.tbed.diam_pup_in_pix//2)
+        [Ro,Theta] = pmap(self.N,self.N,self.tbed.prad//2)
         return pzernike(Ro,Theta,coeff)
     
     def gen_div_phi(self):
@@ -387,16 +387,11 @@ class coffee_estimator:
         sim   = data_simulator(tbed,known_var,div_factors,phi_foc,cplx=self.cplx)
         sim   = sim_init_infos(sim)
 
-
         # Agrs : Fucntion J and DJ required arguments
         self.setting['args'] = sim,imgs,self.var_phi,self.simGif 
-        
-        if self.auto : 
-            self.setting['args'] += (cacl.genere_L(tbed),)
-            self.setting['x0']    = sim.opti_auto_pack()
-            
-        else : self.setting['x0'] = sim.opti_pack()
-        
+        if self.auto : self.setting['args'] += (cacl.genere_L(tbed),)
+    
+        self.setting['x0'] = sim.opti_pack()
         self.set_bounds(self.setting['x0'])
 
         
@@ -453,20 +448,20 @@ class custom_bench(Optical_System):
     def __init__(self, modelconfig, model_dir=''):
 
         super().__init__(modelconfig["modelconfig"])
-        self.diam_pup_in_pix = modelconfig["modelconfig"]["diam_pup_in_pix"]
-        #self.entrancepupil = pupil(modelconfig, prad=self.diam_pup_in_pix)
+        self.prad = modelconfig["modelconfig"]["diam_pup_in_pix"]
+        #self.entrancepupil = pupil(modelconfig, prad=self.prad)
         # self.measure_normalization()
         
         # A mettre en parametres 
         self.rcorno = modelconfig["Coronaconfig"]["rlyot_in_pix"]
-        self.ech    = int(modelconfig["modelconfig"]["Science_sampling"])
+        self.Science_sampling    = int(modelconfig["modelconfig"]["Science_sampling"])
         self.epsi   = 0
 
         # Definitions
-        w = self.dimScience//self.ech
+        w = self.dimScience//self.Science_sampling
         
-        self.pup      = tls.circle(w,w,self.diam_pup_in_pix//2)
-        self.pup_d    = tls.circle(w,w,self.diam_pup_in_pix//2)
+        self.pup      = tls.circle(w,w,self.prad//2)
+        self.pup_d    = tls.circle(w,w,self.prad//2)
 
         self.set_corono(modelconfig["modelconfig"]["filename_instr_pup"])
         
@@ -476,7 +471,7 @@ class custom_bench(Optical_System):
     def EF_through(self,entrance_EF=1.,downstream_EF=1.):
 
         dim_img = self.dimScience
-        dim_pup = dim_img//self.ech
+        dim_pup = dim_img//self.Science_sampling
 
         EF_afterentrancepup = entrance_EF*self.pup
         EF_aftercorno       = mft( self.corno * mft(EF_afterentrancepup,dim_pup,dim_pup,dim_pup,inverse=True,**self.offest) ,dim_pup,dim_pup,dim_pup,**self.offest)
@@ -486,11 +481,11 @@ class custom_bench(Optical_System):
         return EF_out
 
     def todetector(self,entrance_EF=1.,downstream_EF=1.):
-        w = self.dimScience//self.ech
-        return mft(self.EF_through(entrance_EF,downstream_EF),w,self.dimScience,w,inverse=True,**self.offest)
+        w = self.dimScience//self.Science_sampling
+        return w**2*mft(self.EF_through(entrance_EF,downstream_EF),w,self.dimScience,w,inverse=True,**self.offest)
         
     def z_biais(self):
-        N = self.dimScience//self.ech
+        N = self.dimScience//self.Science_sampling
         return mft( self.corno * mft( self.pup ,N,N,N,inverse=True) ,N,N,N,**self.offest)
 
     def todetector_Intensity(self,entrance_EF=1.,downstream_EF=1.):
@@ -502,7 +497,7 @@ class custom_bench(Optical_System):
     
     def set_corono(self,cortype):
         """ Change corono type """
-        w    = self.dimScience//self.ech
+        w    = self.dimScience//self.Science_sampling
         if  (cortype=="4q") : self.corno = tls.daminer(w,w)
         elif(cortype=="R&R"): self.corno = 2*tls.circle(w,w,self.rcorno)-1
         else                : self.corno = abs(tls.circle(w,w,self.rcorno)-1)
@@ -516,7 +511,7 @@ class custom_bench(Optical_System):
             downstream_EF=1.):
         """ Display tools to see inside the tbench """
         view_list = []
-        N = self.dimScience//self.ech
+        N = self.dimScience//self.Science_sampling
 
         # entrance_EF = entrance_EF * dim_pup
         view_list.append(entrance_EF)
@@ -533,7 +528,7 @@ class custom_bench(Optical_System):
         
         view_list.append( downstream_EF * self.pup_d *view_list[-1] )
         
-        view_list.append(mft(view_list[-1],N,N*self.ech,N,**self.offest))
+        view_list.append(mft(view_list[-1],N,N*self.Science_sampling,N,**self.offest))
                 
 
         

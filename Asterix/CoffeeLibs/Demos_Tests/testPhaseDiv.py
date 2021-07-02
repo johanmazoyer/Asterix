@@ -7,31 +7,36 @@ from CoffeeLibs.coffee import coffee_estimator,data_simulator,custom_bench
 from CoffeeLibs.files_manager import get_ini
 
 from Asterix.estimator import Estimator
+from Asterix.Optical_System_functions import coronagraph
 import numpy as np
 
 # %% Initialisation
 
 config = get_ini('my_param_file.ini',"..\..\Param_configspec.ini")
 tbed      = custom_bench(config,'.')
-name = "mySim"
+corono    = coronagraph(config['modelconfig'],config['Coronaconfig'])
 
-config["Estimationconfig"]["auto"] = True
-config["Estimationconfig"]["cplx"] = False
+# tbed = corono
+
+name = "mySim_auto"
+
+config["Estimationconfig"]["auto"]  = True
+config["Estimationconfig"]["cplx "] = False
 
 ## -- Constructor by CoffeeLibs
-# estimator = coffee_estimator(**config["Estimationconfig"])
-
+estimator = coffee_estimator(**config["Estimationconfig"])
+estimator.simGif = name
 ## -- Constructor by asterix
-config["Estimationconfig"]["estimation"] = "coffee"
-estimator = Estimator(config["Estimationconfig"],tbed)
+# config["Estimationconfig"]["estimation"] = "coffee"
+# estimator = Estimator(config["Estimationconfig"],tbed)
 
 
 # %% Simulation de données
 
 # Paramètres
-var   = {'downstream_EF':1, 'flux':[1e7,1e7], 'fond':[0,0]}
-div_factors = [0,1.2]  # List of div factor's images diversity
-RSB         = 5
+var   = {'downstream_EF':1, 'flux':[1,1], 'fond':[0,0]}
+div_factors = [0,1]  # List of div factor's images diversity
+RSB         = 500000000
 
 # Coeff du zernike  
 coeff = 1/np.arange(1,6)         
@@ -49,18 +54,18 @@ imgs = sim.gen_div_imgs(RSB) # Compute images
 
 # %% Traitement
 
-known_var = {'downstream_EF':1, 'fond':[0,0]}  # Variables défini comme connu
-estimator.var_phi      = 0.1 / np.var(sim.get_phi_foc())
+known_var = {'downstream_EF':1, 'flux':[1,1], 'fond':[0,0]}  # Variables défini comme connu
+estimator.var_phi      = 0 / np.var(sim.get_phi_foc())
 
 # From Asterix
-e_sim = estimator.estimate(tbed,
-                           imgs=imgs,
-                           div_factors=div_factors,
-                           known_var=known_var,
-                           result_type="simulator")
+# e_sim = estimator.estimate(tbed,
+#                            imgs=imgs,
+#                            div_factors=div_factors,
+#                            known_var=known_var,
+#                            result_type="simulator")
 
 # From CoffeeLibs
-# e_sim = estimator.estimate(tbed,imgs,div_factors,known_var) # Estimation
+e_sim = estimator.estimate(tbed,imgs,div_factors,known_var) # Estimation
 
 # %% Save / Load and plots 
 
@@ -71,7 +76,7 @@ from CoffeeLibs.tools import tempalte_plot,tempalte_plot2,tempalte_plotauto
 
 if isinstance(estimator,Estimator) : estimator = estimator.coffee
 
-tempalte_plotauto(sim,e_sim,estimator,name=name,disp=True)  
+# tempalte_plotauto(sim,e_sim,estimator,name=name,disp=True)  
 tempalte_plot(sim,e_sim,estimator,name=name,disp=True)     
 tempalte_plot2(sim.gen_div_imgs(),e_sim,estimator,name=name,disp=True)
 

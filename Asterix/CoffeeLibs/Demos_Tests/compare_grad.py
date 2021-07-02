@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
-from CoffeeLibs.criteres import DJmv_up,diff_grad_J_up,diff_grad_J_down,DJmv_down, estime_fluxfond
+from CoffeeLibs.criteres import *
 from CoffeeLibs.coffee import custom_bench, data_simulator
 import numpy as np
+import numpy.matlib as mnp
 
 from CoffeeLibs.files_manager import get_ini
 
@@ -14,8 +15,8 @@ import pickle
 config = get_ini('my_param_file.ini',"..\..\Param_configspec.ini")
 
 # Paramètres qu'il faudra ranger dans ini file..
-var   = {'downstream_EF':1, 'flux':1, 'fond':0}
-div_factors = [0]  # List of div factor's images diversity
+var   = {'downstream_EF':1, 'flux':[1,1,1,1,1], 'fond':[0,0,0,0,0]}
+div_factors = [0,1,-1,0.5,-0.5]  # List of div factor's images diversity
 RSB         = 30000
 
 # Initalisation of objetcs
@@ -32,7 +33,8 @@ sim.gen_zernike_phi_do([0,0,1])   # On génere le phi do
 
 img = sim.todetector_Intensity(0) # On cree les images
 
-w = tbed.dimScience//tbed.ech
+w = tbed.dimScience//sim.tbed.Science_sampling
+W = tbed.dimScience
 
 
 #[flux,fond] = estime_fluxfond(sim,imgs)
@@ -46,6 +48,7 @@ point = np.zeros((w,w))
 # Point ou on calcule le gradients
 sim.set_phi_do(point)
 sim.set_phi_foc(point)
+sim.gen_zernike_phi_foc(1/np.arange(1,4))  # On change le point ou calcule le gradient : EF =/= EF_reel
 
 
 # sim.known_var['flux'] = flux
@@ -61,12 +64,17 @@ grad_diff_down     = 0
 
 # grad_analytic_down += DJmv_down(0,img,sim)
 
-grad_analytic_up   += DJmv_up(0,img,sim)
+div_id = 1
 
-grad_diff_up       += diff_grad_J_up(sim.get_phi_foc(),0,sim,img)
+grad_analytic_up   += -DJmv_up(div_id,img,sim)
 
-    
+grad_diff_up       += diff_grad_J_up(sim.get_phi_foc(),div_id,sim,img)
 
+# Grad AUTO
+L             = genere_L(tbed)
+gamma         = gamma_terme(L,sim,img,div_id)
+dJ_matriciel  = (np.dot(np.conj(np.transpose(L)),gamma)).reshape(w,w)*np.conj(sim.get_EF_div(div_id))
+dJ_matriciel  = -dJ_matriciel*4
 # %%  Plots
 
 
@@ -75,9 +83,10 @@ plt.subplot(2,3,1),plt.imshow(grad_analytic_up,cmap='jet'),plt.title("Garident A
 plt.subplot(2,3,2),plt.imshow(grad_diff_up,cmap='jet'),plt.title("Garident difference UP"),plt.colorbar()
 plt.subplot(2,3,3),plt.imshow((grad_diff_up-grad_analytic_up),cmap='jet'),plt.title("Erreur UP"),plt.colorbar()
 
-# plt.subplot(2,3,4),plt.imshow(grad_analytic_down,cmap='jet'),plt.title("Garident Analytique DOWN"),plt.colorbar()
-# plt.subplot(2,3,5),plt.imshow(grad_diff_down,cmap='jet'),plt.title("Garident difference DOWN"),plt.colorbar()
-# plt.subplot(2,3,6),plt.imshow((grad_diff_down-grad_analytic_down),cmap='jet'),plt.title("Erreur DOWN"),plt.colorbar()
+
+dJ_matriciel_real = np.imag(dJ_matriciel)
+plt.subplot(2,2,3),plt.imshow(dJ_matriciel_real,cmap='jet'),plt.title("Garident Matriciel"),plt.colorbar()
+plt.subplot(2,2,4),plt.imshow((dJ_matriciel_real-grad_analytic_up),cmap='jet'),plt.title("Erreur grad matriciel"),plt.colorbar()
 
 
 plt.show()

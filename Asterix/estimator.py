@@ -43,7 +43,7 @@ class Estimator:
     def __init__(self,
                  Estimationconfig,
                  testbed : OptSy.Testbed,
-                 matrix_dir='',
+                 matrix_dir='./matrix',
                  save_for_bench=False,
                  realtestbed_dir=''):
         """ --------------------------------------------------

@@ -11,6 +11,8 @@ Created on Tue Mar  9 17:20:09 2021
 """
 
 import numpy as np
+import numpy.matlib as mnp
+
 import CoffeeLibs.tools as tls
 from CoffeeLibs.pzernike import pmap, zernike
 from Asterix.propagation_functions import mft
@@ -97,7 +99,7 @@ def diff_grad_EF(point,tbed,i_ref,dphi=1e-6):
     dh_list = [] # List of gradient dphi(a,b) for all possible (a,b)
     i_point = tbed.todetector_Intensity(point)
     
-    N = tbed.dimScience//tbed.ech
+    N = tbed.dimScience//tbed.Science_sampling
     for a in range(0,N):
           for b in range(0,N):
 
@@ -119,7 +121,7 @@ def DJmv_up(div_id,img,sim):
     offset = tb.offest
 
     w     = tb.dimScience
-    wphi  = tb.dimScience//tb.ech
+    wphi  = tb.dimScience//tb.Science_sampling
     alpha = sim.get_flux(div_id)
     
     psi_u  = tb.pup   * np.exp(1j*sim.get_phi_div(div_id))
@@ -145,7 +147,7 @@ def DJmv_down(div_id,img,sim):
     offset = tb.offest
     
     w    = tb.dimScience
-    wphi = tb.dimScience//tb.ech
+    wphi = tb.dimScience//tb.Science_sampling
     alpha = sim.get_flux(div_id)
 
     psi_u  = tb.pup   * np.exp(1j*sim.get_phi_div(div_id))
@@ -198,7 +200,7 @@ def V_map_J(var,sim,imgs,hypp,simGif):
     sim.opti_update(var,imgs)
     Hx = sim.gen_div_imgs()
     
-    varb = np.median(imgs) + 1
+    varb = 1
     
     Jmv = meanSquare(Hx,imgs) / (sim.nb_div * varb)
     
@@ -216,11 +218,12 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
     sim.opti_update(var,imgs)
     
     varb = np.median(imgs) + 1
+    varb = 1
     
     info_div       = []
     sim.iter +=1
     
-    pup  = tls.circle(sim.N, sim.N, sim.tbed.diam_pup_in_pix//2 - 1)
+    pup  = tls.circle(sim.N, sim.N, sim.tbed.prad//2 - 1)
     
     # Compute gradient = dj/dphi
     grad = []
@@ -244,12 +247,12 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
         grad    = tls.add_to_list(grad, grad_d + dRdo)
                    
     if simGif and not sim.phi_do_is_known() : tls.plot_sim_entries(sim,dR,grad_u,grad_d,dRdo,name="iter"+str(sim.iter),disp=False,save=True)
-    elif simGif : tls.plot_sim_entries(sim,dR,grad_u_k,name="iter"+str(sim.iter),disp=False,save=True)              
+    elif simGif : tls.plot_sim_entries(sim,dR,grad_u,name="iter"+str(sim.iter),disp=False,save=True)              
     
     sim.info_gard.append([np.sum(abs(grad_u)),np.sum(abs(dR))])     
     sim.info_div.append(info_div)
                     
-    return  grad
+    return  sim.N**2*grad
 
 # %% ############################
 """ Wrappers for optimize AUTOMATIQUE """
@@ -259,7 +262,7 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
 def genere_L(tbed):
     
     N = tbed.dimScience
-    n = tbed.dimScience//tbed.ech
+    n = tbed.dimScience//tbed.Science_sampling
     
     L     = 0j*np.zeros((N*N,n*n)) #Cast to complex
     point = np.zeros((n*n,1))
@@ -274,45 +277,65 @@ def genere_L(tbed):
 def V_map_J_auto(var,sim,imgs,hypp,simGif,L):
     """ Wrapper for minimize syntax"""
 
-    sim.opti_auto_update(var)
+    sim.opti_update(var,imgs)
     N = sim.tbed.dimScience
-    n = sim.tbed.dimScience//sim.tbed.ech
+    n = sim.tbed.dimScience//sim.tbed.Science_sampling
 
     Hx = 0j*np.zeros((N,N,sim.nb_div))
-    for div_id in range(sim.nb_div):
-        point       = sim.get_EF_div(div_id,True).reshape(n*n,)
-        Hx[:,:,div_id]  = np.dot(L,point).reshape(N,N)
+    for div_id in range(0,sim.nb_div):
+        point           = sim.get_EF_div(div_id).reshape(n*n,)
+        Hx[:,:,div_id]  = pow(abs(np.dot(L,point).reshape(N,N)),2)
     
-    Jmv = meanSquare(Hx,imgs)
-        
-    return  Jmv
+    R   = (1/2) * hypp * regule(sim.get_phi_foc())
+    Jmv = meanSquare(Hx,imgs)/ (sim.nb_div)
+    
+    sim.info.append([Jmv, R])
+    
+    return  Jmv + R
 
 
 def V_map_dJ_auto(var,sim,imgs,hypp,simGif,L):
     """ Wrapper for minimize syntax"""
 
-    sim.opti_auto_update(var)
-    n = sim.tbed.dimScience//sim.tbed.ech
+    sim.opti_update(var,imgs)
+    n = sim.tbed.dimScience//sim.tbed.Science_sampling
+    N = sim.tbed.dimScience
 
+    info_div       = []
+    sim.iter +=1
     dJ_matriciel = 0
     
-    for div_id in range(sim.nb_div):
-        gamma         = gamma_terme(L,sim,imgs[:,:,div_id])
-        dJ_matriciel += (np.dot(np.transpose(L),gamma)).reshape(n,n)
+    for div_id in range(0,sim.nb_div):
+        gamma         = gamma_terme(L,sim,imgs[:,:,div_id],div_id)
+        grad_u_k      = (np.dot(np.conj(np.transpose(L)),gamma)).reshape(n,n)*np.conj(sim.get_EF_div(div_id))
+        info_div.append(np.sum(np.imag(grad_u_k/(sim.N**2))))
+        dJ_matriciel += 4*np.imag(grad_u_k/ sim.nb_div / (n**2) )
+
+    pup  = tls.circle(sim.N, sim.N, sim.tbed.prad//2 - 1)
+
+    dR      = pup * hypp * Dregule(sim.get_phi_foc()) # Regulatrisation
     
-    if simGif : print("# TODO")
+    if simGif : tls.plot_sim_entries(sim,dR,dJ_matriciel,name="iter"+str(sim.iter),disp=False,save=True)
     
-    return tls.add_to_list([],dJ_matriciel)
+    sim.info_gard.append([np.sum(abs(dJ_matriciel)),np.sum(dR)])  
+    sim.info_div.append(info_div)
+
+    return tls.add_to_list([],dJ_matriciel+dR)
 
 
-def gamma_terme(L,sim,img):
+def gamma_terme(L,sim,img,div_id):
     """ Wrapper for minimize syntax"""
     # dh/dphi 
 
-    w  = sim.tbed.dimScience//sim.tbed.ech
-    W  = sim.tbed.dimScience
+    w    = sim.tbed.dimScience//sim.tbed.Science_sampling
+    W    = sim.tbed.dimScience
+    
+    EF  = sim.get_EF_div(div_id).reshape(w*w,)
+    
+    psi_det =  sim.todetector(div_id)
+    h_det   =  sim.todetector_Intensity(div_id)
+    diff    =  h_det - img
+    
+    gamma = diff * psi_det
 
-    LEf     = np.dot(L,sim.get_EF_div(0,True).reshape(w*w,))
-    gamma = 4*img.reshape(W*W,)*LEf + 4*pow(LEf,3)
-
-    return gamma
+    return gamma.reshape((W*W,))
