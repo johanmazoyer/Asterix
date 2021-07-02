@@ -1,0 +1,192 @@
+
+Asterix
+===================================
+
+Introduction
+-----------------------
+Asterix is a python based library for simulating high contrast instruments and testbeds with a strong
+focus on focal plane wavefront sensing and correction algorithms. 
+
+Asterix is publicaly available on `GitHub <https://github.com/johanmazoyer/Asterix>`_ and all contributions are welcome!
+
+The development of Asterix is led by Johan Mazoyer with major contributions Axel Potier 
+and Raphaël Galicher from LESIA (Paris Observatory)
+
+
+Setup
+--------
+.. toctree::
+    :maxdepth: 2
+
+    install
+
+
+
+Basic Usage
+----------------
+
+.. toctree::
+    :maxdepth: 2
+
+    run_asterix
+    create_my_testbed
+    estimation
+    correction
+
+
+Annex: Asterix Functions
+==================
+
+
+Main_THD.py
+-----------------
+.. automodule:: Asterix.Main_THD
+    :members:
+
+.. callgraph:: Asterix.Main_THD.runthd2
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+
+
+correction_loop.py
+-----------------
+.. automodule:: Asterix.correction_loop
+    :members:
+
+.. callgraph:: Asterix.correction_loop.CorrectionLoop
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+
+
+Optical_System_functions.py
+-----------------
+
+Optical_System: main class
+++++++++++++++++++++++++++
+.. _os-label:
+.. autoclass:: Asterix.Optical_System_functions.Optical_System
+    :members:
+    :show-inheritance:
+
+
+Optical_System: pupil subclass
+++++++++++++++++++++++++++
+.. _pupil-label:
+.. autoclass:: Asterix.Optical_System_functions.pupil
+    :members:
+    :show-inheritance:
+
+Optical_System: coronagraph subclass
+++++++++++++++++++++++++++
+.. _coronagraph-label:
+.. autoclass:: Asterix.Optical_System_functions.coronagraph
+    :members:
+    :show-inheritance:
+
+.. callgraph:: Asterix.Optical_System_functions.coronagraph.__init__
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+
+Optical_System: deformable_mirror subclass
+++++++++++++++++++++++++++
+.. _deformable-mirror-label:
+.. autoclass:: Asterix.Optical_System_functions.deformable_mirror
+    :members:
+    :show-inheritance:
+
+.. callgraph:: Asterix.Optical_System_functions.deformable_mirror.__init__
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+
+Optical_System: Testbed subclass
+++++++++++++++++++++++++++
+.. _testbed-label:
+.. autoclass:: Asterix.Optical_System_functions.Testbed
+    :members:
+    :show-inheritance:
+
+
+WSC_functions.py
+-----------------
+.. automodule:: Asterix.WSC_functions
+    :members:
+
+
+estimator.py
+-----------------
+.. _estimationfiles-label:
+.. automodule:: Asterix.estimator
+    :members:
+
+.. callgraph:: Asterix.estimator.Estimator.__init__
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+
+.. callgraph:: Asterix.estimator.Estimator.estimate
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+
+
+corrector.py
+-----------------
+.. _correctionfiles-label:
+.. automodule:: Asterix.corrector
+    :members:
+
+.. callgraph:: Asterix.corrector.Corrector.update_matrices 
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+
+.. callgraph:: Asterix.corrector.Corrector.toDM_voltage
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+
+
+MaskDH.py
+-----------------
+.. automodule:: Asterix.MaskDH
+    :members:
+
+propagation_functions.py
+-----------------
+.. automodule:: Asterix.propagation_functions
+    :members:
+
+phase_amplitude_functions.py
+-----------------
+.. automodule:: Asterix.phase_amplitude_functions
+    :members:
+
+processing_functions.py
+-----------------
+.. automodule:: Asterix.processing_functions
+    :members:
+
+
+fits_functions.py
+-----------------
+.. automodule:: Asterix.fits_functions
+    :members:
+
+
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Contents:
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

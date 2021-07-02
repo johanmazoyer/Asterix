@@ -1,6 +1,9 @@
-
 import sys
 import os
+
+from configobj import ConfigObj
+from validate import Validator
+
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,9 +11,9 @@ from astropy.io import fits
 import datetime
 
 from random import random
+import Asterix.Optical_System_functions as OptSy
 
-
-def quickshow(tab):
+def _quickshow(tab):
     """
     Function to quickly show an array.
     tab: array to be shown
@@ -27,7 +30,25 @@ def quickshow(tab):
 
 
 def save_plane_in_fits(dir_save_fits, name_plane, image):
+    """
+        Function to quickly save a real or complex file in fits.
 
+        Parameters
+        ----------
+
+        dir_save_fits: path
+            directory to save 
+        
+        name_plane : string
+            name of the plane.
+            final name is
+            - current_time_str + '_' + name_plane + '_RE_and_IM.fits' if complex
+            - current_time_str + '_' + name_plane + '_RE.fits' if real
+        
+        image : numpy array 
+            to save. Can be of any dimension
+
+    """
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
     name_fits = current_time_str + '_' + name_plane
 
@@ -36,7 +57,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
         return
 
     if np.iscomplexobj(image):
-        tofits_array = np.zeros( (2,)+ image.shape )
+        tofits_array = np.zeros((2, ) + image.shape)
         tofits_array[0] = np.real(image)
         tofits_array[1] = np.imag(image)
         fits.writeto(os.path.join(dir_save_fits,
@@ -49,8 +70,10 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
                      overwrite=True)
 
 
-def quickfits(tab, dir='', name='tmp'):
+def _quickfits(tab, dir='', name='tmp'):
     """
+    Johan's quick function
+
     Function to quickly save in fits.
     By default, it will save on the desktop with a random name to avoid overwriting.
     Not sure the default saving on Desktop works for windows OS, but it work on mac and linux
@@ -58,12 +81,18 @@ def quickfits(tab, dir='', name='tmp'):
     tab: array to be saved
     dir (optionnal): directory where to save the .fits. by default the Desktop.
     name (optionnal): name of the .fits. By defaut tmp_currenttimeinms.fits
-    Johan's quick function
     """
 
-    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
     if dir == '':
-        dir = desktop
+        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+        bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
+        if os.path.exists(desktop):
+            dir = desktop
+        elif os.path.exists(bureau):
+            # of you are french are you ?
+            dir = bureau
+        else:
+            raise Exception("I cannot find your desktop, please give me a dir to save the .fits")
 
     if name == 'tmp':
         current_time_str = datetime.datetime.today().strftime(
@@ -72,7 +101,7 @@ def quickfits(tab, dir='', name='tmp'):
     fits.writeto(os.path.join(dir, name + '.fits'), tab, overwrite=True)
 
 
-def quickpng(tab, dir='', name='tmp'):
+def _quickpng(tab, dir='', name='tmp'):
     """
     Function to quickly save in .png.
     By default, it will save on the desktop with a random name
@@ -83,9 +112,17 @@ def quickpng(tab, dir='', name='tmp'):
 
     Johan's quick function
     """
-    desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
     if dir == '':
-        dir = desktop
+        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+        bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
+        if os.path.exists(desktop):
+            dir = desktop
+        elif os.path.exists(bureau):
+            # of you are french are you ?
+            dir = bureau
+        else:
+            raise Exception("I cannot find your desktop, please give me a dir to save the .png")
+
     plt.figure(figsize=(10, 10))
     tmp = tab
     # tmp = tmp.T
@@ -98,54 +135,19 @@ def quickpng(tab, dir='', name='tmp'):
     plt.close()
 
 
-def check_and_load_fits(directory, filename):
+def _progress(count, total, status=''):
     """ --------------------------------------------------
-    check existence of a .fits file and load it.
-    TODO can probably be modified to do that
-    for other format automtaically
+    print a progress bar for a for loop
 
-    Parameters:
+    Parameters
     ----------
-    directory : the directory in whih to searc
-    filename :
+    count: int 
+        counter in the for loop
 
-    Return:
-    ------
-    the data result
-    raise error if the file does not exist
+    total: int
+        number of iterations in the for loop
+
     -------------------------------------------------- """
-    if os.path.exists(directory + filename + '.fits') == True:
-        return fits.getdata(os.path.join(directory, filename + '.fits'))
-    else:
-        raise Exception(
-            "You need to create " + filename + ".fits before loading it." +
-            "Please run the initialization with 'save_fits = True' before")
-
-
-def from_param_to_header(config):
-    """ --------------------------------------------------
-    Convert ConfigObj parameters to fits header type list
-
-    Parameters:
-    ----------
-    config: config obj
-
-    Return:
-    ------
-    header: list of parameters
-
-    Author: Axel Potier
-    -------------------------------------------------- """
-    header = fits.Header()
-    for sect in config.sections:
-        # print(config[str(sect)])
-        for scalar in config[str(sect)].scalars:
-            header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
-    return header
-
-
-
-def progress(count, total, status=''):
     bar_len = 60
     filled_len = int(round(bar_len * count / float(total)))
 
@@ -154,3 +156,45 @@ def progress(count, total, status=''):
 
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
     sys.stdout.flush()
+
+
+def read_parameter_file(parameter_file):
+    """ --------------------------------------------------
+    check existence of the parameter file, read it and check validity
+    
+    AUTHOR: Johan Mazoyer
+
+    Parameters
+    ----------
+    parameter_file: path 
+        path to a .ini parameter file
+
+    Returns
+    ------
+    config: dicto
+        parameter dictionnary
+
+
+    -------------------------------------------------- """
+
+    if not os.path.exists(parameter_file):
+        raise Exception("The parameter file " + parameter_file +
+                        " cannot be found")
+
+    configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
+
+    if not os.path.exists(configspec_file):
+        raise Exception("The parameter config file " + configspec_file +
+                        " cannot be found")
+
+    ### CONFIGURATION FILE
+    config = ConfigObj(parameter_file,
+                       configspec=configspec_file,
+                       default_encoding="utf8")
+    _ = config.validate(Validator(), copy=True)
+    # copy=True for copying the comments
+
+    return config
+
+
+

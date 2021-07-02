@@ -4,12 +4,18 @@ from astropy.io import fits
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
+
 ##############################################
 ##############################################
 ### Pupil
-def roundpupil(dim_pp, prad, no_pixel = False):
+def roundpupil(dim_pp, prad, no_pixel=False):
     """ --------------------------------------------------
     Create a circular pupil. The center of the pupil is located between 4 pixels.
+    no_pixel mode is a way to create very ovsersampled pupil that are then rescale.
+    no_pixel is currently not well tested. 
+
+    AUTHOR : Axel Pottier.
+    Modified by J Mazoyer to remove the pixel crenellation
 
     Parameters
     ----------
@@ -17,20 +23,23 @@ def roundpupil(dim_pp, prad, no_pixel = False):
         Size of the image (in pixels)
     prad : float
         Size of the pupil radius (in pixels)
+    no_pixel : boolean (defaut false).
+                If true, the pupil is first defined at a very large
+                scale (dim_pp = 6000) and then rescale to the given parameter dim_pp.
+                This limits the pixel crenellation in pupil for small pupils
 
     Returns
     ------
     pupilnormal : 2D array
         Output circular pupil
-
-    AUTHOR : Axel Pottier
-    Modified by J Mazoyer to remove the pixellization
+    
+    
     -------------------------------------------------- """
 
     if no_pixel == True:
         dim_pp_small = np.copy(dim_pp)
         dim_pp = 6000
-        prad = prad/dim_pp_small*6000
+        prad = prad / dim_pp_small * 6000
 
     xx, yy = np.meshgrid(
         np.arange(dim_pp) - (dim_pp) / 2,
@@ -40,12 +49,12 @@ def roundpupil(dim_pp, prad, no_pixel = False):
     pupilnormal[rr <= prad] = 1.0
 
     if no_pixel == True:
-        pupilnormal = np.array(skimage.transform.rescale(pupilnormal,
-                                     dim_pp_small/dim_pp,
-                                     preserve_range=True,
-                                     anti_aliasing=True,
-                                     multichannel=False))
-
+        pupilnormal = np.array(
+            skimage.transform.rescale(pupilnormal,
+                                      dim_pp_small / dim_pp,
+                                      preserve_range=True,
+                                      anti_aliasing=True,
+                                      multichannel=False))
 
     return pupilnormal
 
@@ -54,6 +63,8 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     """ --------------------------------------------------
     Create a phase ramp of size (dim_pp,dim_pp) that can be used as follow
     to shift one image by (a,b) pixels : shift_im = real(fft(ifft(im)*exp(i phase ramp)))
+    
+    AUTHOR: Axel Potier
 
     Parameters
     ----------
@@ -68,6 +79,8 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     ------
     masktot : 2D array
         Phase ramp
+
+
     -------------------------------------------------- """
     if (shift_x == 0) & (shift_y == 0):
         ramp = 1
@@ -79,9 +92,11 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     return ramp
 
 
-def scale_amplitude_abb(filename, prad, pupil):
+def scale_amplitude_abb(filename, prad, dim_image):
     """ --------------------------------------------------
     Scale the map of a saved amplitude map
+
+    AUTHOR : Raphael Galicher
 
     Parameters
     ----------
@@ -91,21 +106,18 @@ def scale_amplitude_abb(filename, prad, pupil):
     prad : float
             radius of the pupil in pixel
 
-    pupil : 2D array
-            binary pupil array
 
     Returns
     ------
     ampfinal : 2D array (float)
             amplitude aberrations (in amplitude, not intensity)
 
-    AUTHOR : Raphael Galicher
-
-    REVISION HISTORY :
-    Revision 1.1  2021-02-18 Raphael Galicher
-    Initial revision
-
+    
     -------------------------------------------------- """
+
+    # create a circular pupil of the same radius of the given pupil
+    # this will be the pupil over which phase rms = phaserms
+    pupil = roundpupil(prad, dim_image)
 
     #File with amplitude aberrations in amplitude (not intensity)
     # centered on the pixel dim/2+1, dim/2 +1 with dim = 2*[dim/2]
@@ -133,3 +145,55 @@ def scale_amplitude_abb(filename, prad, pupil):
     ampfinal = (ampfinal / np.mean(ampfinal[np.where(pupil != 0)]) - np.ones(
         (pupil.shape[1], pupil.shape[1]))) * pupil
     return ampfinal
+
+
+def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
+    """ --------------------------------------------------
+    Create a random phase map, whose PSD decrease in f^(-slope)
+    average is null and stadard deviation is phaserms
+
+    AUTHOR: Axel Potier
+
+    Parameters
+    ----------
+    pupil_rad: int
+        radius of the pupil on which the phaserms will be measured
+
+    dim_image: int
+        size of the output (can be different than 2*pupil_rad)
+
+    phaserms : float
+        standard deviation of aberration
+
+    rhoc : float
+        See Borde et Traub 2006
+
+    slope : float
+        Slope of the PSD. See Borde et Traub 2006
+
+    Returns
+    ------
+    phase : 2D array
+        Static random phase map (or OPD) generated
+    
+    
+    -------------------------------------------------- """
+
+    # create a circular pupil of the same radius of the given pupil
+    # this will be the pupil over which phase rms = phaserms
+    pup = roundpupil(pupil_rad, dim_image)
+
+    xx, yy = np.meshgrid(
+        np.arange(dim_image) - dim_image / 2,
+        np.arange(dim_image) - dim_image / 2)
+    rho = np.hypot(yy, xx)
+    PSD0 = 1
+    PSD = PSD0 / (1 + (rho / rhoc)**slope)
+    sqrtPSD = np.sqrt(2 * PSD)
+
+    randomphase = np.random.randn(
+        dim_image, dim_image) + 1j * np.random.randn(dim_image, dim_image)
+    phase = np.real(np.fft.ifft2(np.fft.fftshift(sqrtPSD * randomphase)))
+    phase = phase - np.mean(phase[np.where(pup == 1.)])
+    phase = phase / np.std(phase[np.where(pup == 1.)]) * phaserms
+    return phase
