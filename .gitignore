@@ -16,6 +16,10 @@ Labview/
 Interaction_Matrices/
 Results/
 
+save/
+imgs/
+img_procesising_tools/
+
 #ignore those for mac / vscode users
 .DS_Store
 .vscode/
