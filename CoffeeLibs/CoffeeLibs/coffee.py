@@ -45,9 +45,6 @@ class data_simulator():
         self.known_var = known_var
         self.cplx      = cplx
         
-        # Things we don't want to recompute
-        
-        # self.N = int(tbed.dimScience/tbed.Science_sampling)
         self.N     = int(tbed.dim_overpad_pupil)
         [Ro,Theta] = pmap(self.N,self.N,tbed.prad//2)
         self.defoc = zernike(Ro,Theta,4)
@@ -57,6 +54,7 @@ class data_simulator():
         # To keep track on what I am suppose to know
         # If default, we know everything
         self.__remeber_known_var_as_bool__()
+        self.fondflux_forall()
         
         # Set default everywhere it is needed
         if known_var == "default" : self.set_default_value()
@@ -191,8 +189,8 @@ class data_simulator():
     ####   Tools 1 : Optimize wrappers ####
     
     # Some useful stuff -> for optimize 
-    #                   -> for display purpose
-        
+    #                   -> for display purpose       
+
     def print_know_war(self):
         """ Fonction for display purposes """
         msg = "Estimator will find "
@@ -316,6 +314,16 @@ class data_simulator():
         if 'fond'          in keys: known_var_bool['fond'] = True
         
         self.known_var_bool = known_var_bool
+        
+    
+    def fondflux_forall(self):
+        """If flux/fond is int, them defin list of flux fond equal for each diversity """
+        if not isinstance(self.get_flux(), list): self.set_flux( [self.get_flux()] * self.nb_div)
+        if not isinstance(self.get_fond(), list): self.set_fond( [self.get_flux()] * self.nb_div)
+        
+        if (len(self.get_flux()) is not self.nb_div) or ( len(self.get_fond()) is not self.nb_div) :
+            raise Exception('Flux/fond list len have to match number of diversity')
+        
         
     def set_default_value(self):
         """ if vars are unset, set them to default values"""

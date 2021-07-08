@@ -16,12 +16,12 @@ import pickle
 config = get_ini('my_param_file.ini')
 
 # Paramètres qu'il faudra ranger dans ini file..
-var   = {'downstream_EF':1, 'flux':[1], 'fond':[0]}
+var   = {'downstream_EF':1, 'flux':1, 'fond':0}
 div_factors = [0]  # List of div factor's images diversity
 RSB         = 30000
 
 # Initalisation of objetcs
-tbed      = custom_bench(config,'.')
+# tbed      = custom_bench(config,'.')
 tbed      = coronagraph(config['modelconfig'],config['Coronaconfig'])
 
 sim       = data_simulator(tbed,var,div_factors)

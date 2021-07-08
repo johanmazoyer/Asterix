@@ -5,7 +5,7 @@ Created on Thu May  11 11:13:39 2021
 @author: sjuillar
 """
 
-from CoffeeLibs.coffee import custom_bench, Estimator, data_simulator
+from CoffeeLibs.coffee import custom_bench, coffee_estimator, data_simulator
 from CoffeeLibs.tools import tempalte_plot
 from CoffeeLibs.files_manager import get_ini
 
@@ -26,7 +26,7 @@ config = get_ini('my_param_file.ini')
 
 
 # Paramètres qu'il faudra ranger dans ini file..
-known_var   = {'downstream_EF':1, 'flux':1, 'fond':0}
+known_var   = {'downstream_EF':1, 'flux':[1], 'fond':[0]}
 div_factors = [0,1]  # List of div factor's images diversity
 RSB         = 30000
 
@@ -92,7 +92,7 @@ def do_a_test(name):
         name = prefix + "_" + name
         
         estimator.simGif = name
-        e_sim = estimator.estimate(imgs,tbed,div_factors,known_var) # Estimation
+        e_sim = estimator.estimate(tbed,imgs,div_factors,known_var) # Estimation
        
         error      = abs( cropEF   - e_sim.get_phi_foc() )
         error_flux = sim.get_flux()- e_sim.get_flux()
@@ -108,7 +108,7 @@ def do_a_test(name):
     
 def reset_estimator():
     global estimator
-    estimator = Estimator(**config["Estimationconfig"])
+    estimator = coffee_estimator(**config["Estimationconfig"])
     estimator.var_phi_up =  1 / np.var(sim.get_phi_foc())
     estimator.var_phi_do =  1 / np.var(sim.get_phi_do())
 
