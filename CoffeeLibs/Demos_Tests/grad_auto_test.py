@@ -2,6 +2,8 @@
 import os
 from CoffeeLibs.criteres import *
 from CoffeeLibs.coffee import custom_bench, data_simulator
+from Asterix.Optical_System_functions import coronagraph
+
 import numpy as np
 
 from CoffeeLibs.files_manager import get_ini
@@ -11,26 +13,28 @@ import pickle
 
 # %% Initialisation
 
-config = get_ini('my_param_file.ini',"..\..\Param_configspec.ini")
+config = get_ini('my_param_file.ini')
 
 # Paramètres qu'il faudra ranger dans ini file..
-var   = {'downstream_EF':1, 'flux':1, 'fond':0}
+var   = {'downstream_EF':1, 'flux':[1], 'fond':[0]}
 div_factors = [0]  # List of div factor's images diversity
 RSB         = 30000
 
 # Initalisation of objetcs
 tbed      = custom_bench(config,'.')
+tbed      = coronagraph(config['modelconfig'],config['Coronaconfig'])
+
 sim       = data_simulator(tbed,var,div_factors)
 
 # %% Generation de données 
 
 coeff = 1/np.arange(1,6) # Coeff to generate phi_foc
-coeff[0:3] = [0,0,1]
+coeff[0:3] = [0,0,1/1000]
 
 sim.gen_zernike_phi_foc(coeff)    # On génere le phi focalisé
 sim.gen_zernike_phi_do([0,0,1])   # On génere le phi do
 
-w = tbed.dimScience//sim.tbed.Science_sampling
+w = tbed.dim_overpad_pupil
 W = tbed.dimScience
 
 

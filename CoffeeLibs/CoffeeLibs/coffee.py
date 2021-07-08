@@ -46,7 +46,9 @@ class data_simulator():
         self.cplx      = cplx
         
         # Things we don't want to recompute
-        self.N = int(tbed.dimScience/tbed.Science_sampling)
+        
+        # self.N = int(tbed.dimScience/tbed.Science_sampling)
+        self.N     = int(tbed.dim_overpad_pupil)
         [Ro,Theta] = pmap(self.N,self.N,tbed.prad//2)
         self.defoc = zernike(Ro,Theta,4)
         
@@ -249,14 +251,6 @@ class data_simulator():
         if not self.flux_is_known() : self.set_flux(ff_list[0,:])
         if not self.fond_is_known() : self.set_fond(ff_list[1,:])
 
-    def opti_auto_update(self,pack):
-        n = self.N  
-        self.EF_foc = tls.real2complex(pack[:n*n].reshape(n,n),pack[n*n:2*n*n].reshape(n,n))
-        
-    def opti_auto_pack(self):
-        pack = tls.complex2real(self.get_EF())
-        return pack
-
     #######################################
     ####   Tools 2 : tbed wrappers ####
     
@@ -278,20 +272,20 @@ class data_simulator():
 
     def EF_through(self,div_id,ff=True):
         """ call EF_through bench"""
-        return self.tbed.EF_through(self.get_EF_div(div_id),self.get_EF_do())
+        return self.tbed.EF_through(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())
 
     def todetector(self,div_id,ff=True):
         """ call EF_through bench"""
-        if isinstance(div_id, int) : return self.tbed.todetector(self.get_EF_div(div_id),self.get_EF_do())
-        else                       : return self.todetector_loop(self.get_EF_div(div_id),self.get_EF_do())    
+        if isinstance(div_id, int) : return self.tbed.todetector(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())
+        else                       : return self.todetector_loop(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())    
 
     def todetector_loop(self,EFs=1.,downstream_EF=1):
         """ Just to make a big array of all div EFs because it is cleaner to me"""
         shape  = (self.tbed.dimScience,self.tbed.dimScience,1)
-        res    = self.tbed.todetector(EFs[:,:,0],downstream_EF).reshape(shape)
+        res    = self.tbed.todetector(EFs[:,:,0],EF_aberrations_LS=downstream_EF).reshape(shape)
         
         for ii in range(1,EFs.shape[2]):
-            out = self.tbed.todetector(EFs[:,:,ii],downstream_EF).reshape(shape)
+            out = self.tbed.todetector(EFs[:,:,ii],EF_aberrations_LS=downstream_EF).reshape(shape)
             res = np.append(res,out,axis=2)
         
         return res
@@ -303,7 +297,7 @@ class data_simulator():
 
     def todetector_Intensity(self,div_id=0):
         """ call to detector intensity bench for a specific div id image"""
-        return self.get_flux(div_id) * self.tbed.todetector_Intensity(self.get_EF_div(div_id),self.known_var["downstream_EF"]) + self.get_fond(div_id)
+        return self.get_flux(div_id) * self.tbed.todetector_Intensity(self.get_EF_div(div_id),EF_aberrations_LS=self.known_var["downstream_EF"]) + self.get_fond(div_id)
 
     #######################################
     ### Tools 3 : MISC ###
@@ -378,7 +372,7 @@ class coffee_estimator:
                    the given key. Else do nothing.
         
         OUTPUT : 
-            e_sim : data_generator objetc. Minimize will estimate the best
+            e_sim : data_simulator objetc. Minimize will estimate the best
             e_sim propreties to mach given images. 
             (i.e : phi_foc phi_do flux fond)
         """
@@ -453,22 +447,26 @@ class custom_bench(Optical_System):
         # self.measure_normalization()
         
         # A mettre en parametres 
-        self.rcorno = modelconfig["Coronaconfig"]["rlyot_in_pix"]
-        self.Science_sampling    = int(modelconfig["modelconfig"]["Science_sampling"])
+        self.rcorno = modelconfig["Coronaconfig"]["rad_lyot_fpm"]
+        if "rlyot_in_pix" in modelconfig["Coronaconfig"] : self.rcorno = modelconfig["Coronaconfig"]["rlyot_in_pix"]
+
+        self.Science_sampling = int(modelconfig["modelconfig"]["Science_sampling"])
         self.epsi   = 0
 
         # Definitions
         w = self.dimScience//self.Science_sampling
+        self.dim_overpad_pupil = w   # In this bed no overpadding
         
         self.pup      = tls.circle(w,w,self.prad//2)
         self.pup_d    = tls.circle(w,w,self.prad//2)
 
         self.set_corono(modelconfig["modelconfig"]["filename_instr_pup"])
         
+        
         self.offest = {'X_offset_input':-0.5,'Y_offset_input':-0.5,'X_offset_output':-0.5,'Y_offset_output':-0.5}
 
         
-    def EF_through(self,entrance_EF=1.,downstream_EF=1.):
+    def EF_through(self,entrance_EF=1.,EF_aberrations_LS=1.):
 
         dim_img = self.dimScience
         dim_pup = dim_img//self.Science_sampling
@@ -476,21 +474,21 @@ class custom_bench(Optical_System):
         EF_afterentrancepup = entrance_EF*self.pup
         EF_aftercorno       = mft( self.corno * mft(EF_afterentrancepup,dim_pup,dim_pup,dim_pup,inverse=True,**self.offest) ,dim_pup,dim_pup,dim_pup,**self.offest)
         if(self.zbiais)          : EF_aftercorno = EF_aftercorno - self.z_biais()
-        EF_out              = downstream_EF * self.pup_d * EF_aftercorno
+        EF_out              = EF_aberrations_LS * self.pup_d * EF_aftercorno
         
         return EF_out
 
-    def todetector(self,entrance_EF=1.,downstream_EF=1.):
+    def todetector(self,entrance_EF=1.,EF_aberrations_LS=1.):
         w = self.dimScience//self.Science_sampling
-        return w**2*mft(self.EF_through(entrance_EF,downstream_EF),w,self.dimScience,w,inverse=True,**self.offest)
+        return w**2*mft(self.EF_through(entrance_EF,EF_aberrations_LS),w,self.dimScience,w,inverse=True,**self.offest)
         
     def z_biais(self):
         N = self.dimScience//self.Science_sampling
         return mft( self.corno * mft( self.pup ,N,N,N,inverse=True) ,N,N,N,**self.offest)
 
-    def todetector_Intensity(self,entrance_EF=1.,downstream_EF=1.):
+    def todetector_Intensity(self,entrance_EF=1.,EF_aberrations_LS=1.):
 
-        EF_out = self.todetector(entrance_EF,downstream_EF)
+        EF_out = self.todetector(entrance_EF,EF_aberrations_LS)
 
         return pow( abs( EF_out ) ,2)
     
@@ -502,16 +500,18 @@ class custom_bench(Optical_System):
         elif(cortype=="R&R"): self.corno = 2*tls.circle(w,w,self.rcorno)-1
         else                : self.corno = abs(tls.circle(w,w,self.rcorno)-1)
         
-        if (cortype=="4q")  : self.zbiais = True
+        if (cortype=="4q")  : self.zbiais = False
         else                : self.zbiais = False
 
 
     def introspect(self,
             entrance_EF=1.,
-            downstream_EF=1.):
+            EF_aberrations_LS=1.):
         """ Display tools to see inside the tbench """
         view_list = []
-        N = self.dimScience//self.Science_sampling
+        plt.ion()
+
+        N = self.dim_overpad_pupil
 
         # entrance_EF = entrance_EF * dim_pup
         view_list.append(entrance_EF)
@@ -524,9 +524,9 @@ class custom_bench(Optical_System):
         
         view_list.append(mft(view_list[-1],N,N,N,**self.offest))
         
-        if(self.zbiais): view_list.append(view_list[-1] - self.z_biais())
+        if(self.zbiais): view_list.append(view_list[-1] + self.z_biais())
         
-        view_list.append( downstream_EF * self.pup_d *view_list[-1] )
+        view_list.append( EF_aberrations_LS * self.pup_d * view_list[-1] )
         
         view_list.append(mft(view_list[-1],N,N*self.Science_sampling,N,**self.offest))
                 

@@ -12,6 +12,8 @@ Created on Tue May  11 10:55:09 2021
 
 import os
 from CoffeeLibs.coffee import custom_bench, Estimator, data_simulator
+from CoffeeLibs.files_manager import get_ini
+
 from Asterix.propagation_functions import mft
 import numpy as np
 
@@ -25,9 +27,7 @@ import pickle
 # %% Initialisation
 
 # Chargement des parametres de la simulation
-path   = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
-config = ConfigObj(path + 'my_param_file.ini', configspec=path + "..\..\Param_configspec.ini")
-config.validate(Validator(), copy=True)
+config = get_ini('my_param_file.ini')
 
 # Paramètres qu'il faudra ranger dans ini file..
 var   = {'downstream_EF':1, 'flux':1, 'fond':0}

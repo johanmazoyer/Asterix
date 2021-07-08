@@ -2,6 +2,8 @@
 import os
 from CoffeeLibs.criteres import *
 from CoffeeLibs.coffee import custom_bench, data_simulator
+from Asterix.Optical_System_functions import coronagraph
+
 import numpy as np
 import numpy.matlib as mnp
 
@@ -12,7 +14,7 @@ import pickle
 
 # %% Initialisation
 
-config = get_ini('my_param_file.ini',"..\..\Param_configspec.ini")
+config = get_ini('my_param_file.ini')
 
 # Paramètres qu'il faudra ranger dans ini file..
 var   = {'downstream_EF':1, 'flux':[1,1,1,1,1], 'fond':[0,0,0,0,0]}
@@ -21,6 +23,8 @@ RSB         = 30000
 
 # Initalisation of objetcs
 tbed      = custom_bench(config,'.')
+tbed      = coronagraph(config['modelconfig'],config['Coronaconfig'])
+
 sim       = data_simulator(tbed,var,div_factors)
 
 # %% Generation de données 
@@ -33,7 +37,7 @@ sim.gen_zernike_phi_do([0,0,1])   # On génere le phi do
 
 img = sim.todetector_Intensity(0) # On cree les images
 
-w = tbed.dimScience//sim.tbed.Science_sampling
+w = tbed.dim_overpad_pupil
 W = tbed.dimScience
 
 
@@ -64,9 +68,9 @@ grad_diff_down     = 0
 
 # grad_analytic_down += DJmv_down(0,img,sim)
 
-div_id = 1
+div_id = 0
 
-grad_analytic_up   += -DJmv_up(div_id,img,sim)
+grad_analytic_up   += np.zeros((w,w))#-DJmv_up(div_id,img,sim)
 
 grad_diff_up       += diff_grad_J_up(sim.get_phi_foc(),div_id,sim,img)
 
@@ -75,6 +79,7 @@ L             = genere_L(tbed)
 gamma         = gamma_terme(L,sim,img,div_id)
 dJ_matriciel  = (np.dot(np.conj(np.transpose(L)),gamma)).reshape(w,w)*np.conj(sim.get_EF_div(div_id))
 dJ_matriciel  = -dJ_matriciel*4
+
 # %%  Plots
 
 
@@ -85,8 +90,9 @@ plt.subplot(2,3,3),plt.imshow((grad_diff_up-grad_analytic_up),cmap='jet'),plt.ti
 
 
 dJ_matriciel_real = np.imag(dJ_matriciel)
-plt.subplot(2,2,3),plt.imshow(dJ_matriciel_real,cmap='jet'),plt.title("Garident Matriciel"),plt.colorbar()
-plt.subplot(2,2,4),plt.imshow((dJ_matriciel_real-grad_analytic_up),cmap='jet'),plt.title("Erreur grad matriciel"),plt.colorbar()
+plt.subplot(2,3,4),plt.imshow(dJ_matriciel_real,cmap='jet'),plt.title("Garident Matriciel"),plt.colorbar()
+plt.subplot(2,3,5),plt.imshow(grad_diff_up,cmap='jet'),plt.title("Garident difference UP"),plt.colorbar()
+plt.subplot(2,3,6),plt.imshow((dJ_matriciel_real-grad_diff_up),cmap='jet'),plt.title("Erreur grad matriciel"),plt.colorbar()
 
 
 plt.show()

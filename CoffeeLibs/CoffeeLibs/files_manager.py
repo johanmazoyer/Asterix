@@ -22,20 +22,23 @@ from validate import Validator
 from astropy.utils.data import get_pkg_data_filename
 from astropy.io import fits
 
+import Asterix as atrx
+
+
 import numpy as np # For array
 
-def get_ini(my_file,template):
+def get_ini(my_file):
     """ Get dict congif from ini files
     INPUT :
         
         my_file  : path to the ini file
-        
-        template : path to the template ini file
 
     OUTPUT : 
         config : validated config dict 
     
     """
+    
+    template = atrx.__path__[0]+"\Param_configspec.ini"
     
     config = ConfigObj(my_file, configspec=template)
     config.validate(Validator(), copy=True)

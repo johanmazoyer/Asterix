@@ -185,6 +185,8 @@ def tempalte_plot(sim,e_sim,estimator,name="res",disp=True,save=False):
     ## GET DATAS 
     
     tbed = sim.tbed
+    if  hasattr(tbed,'pup') : pup  = tbed.pup
+    else                    : pup  = tbed.apod_pup.pup
     
     col = 2
     if np.iscomplexobj(sim.get_phi_foc()) : col = col + 1
@@ -210,9 +212,9 @@ def tempalte_plot(sim,e_sim,estimator,name="res",disp=True,save=False):
         plt.subplot(col,3,2),plt.imshow(np.imag(e_sim.get_phi_foc()) * tbed.pup,cmap='jet'),plt.title("Estimation I"),plt.colorbar()
         plt.subplot(col,3,3),plt.imshow(error,cmap='jet'),plt.title("Erreur en difference de I"),plt.colorbar()
         
-    error    = abs( np.real(sim.get_phi_foc())  - np.real(e_sim.get_phi_foc()) ) * tbed.pup
-    plt.subplot(col,3,1),plt.imshow(np.real(sim.get_phi_foc()) * tbed.pup,cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
-    plt.subplot(col,3,2),plt.imshow(np.real(e_sim.get_phi_foc()) * tbed.pup,cmap='jet'),plt.title("Estimation"),plt.colorbar()
+    error    = abs( np.real(sim.get_phi_foc())  - np.real(e_sim.get_phi_foc()) ) * pup
+    plt.subplot(col,3,1),plt.imshow(np.real(sim.get_phi_foc()) * pup,cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
+    plt.subplot(col,3,2),plt.imshow(np.real(e_sim.get_phi_foc()) * pup,cmap='jet'),plt.title("Estimation"),plt.colorbar()
     plt.subplot(col,3,3),plt.imshow(error,cmap='jet'),plt.title("Erreur en difference"),plt.colorbar()
     
 
@@ -221,7 +223,7 @@ def tempalte_plot(sim,e_sim,estimator,name="res",disp=True,save=False):
     plt.subplot(col,1,col)
     mins = int(estimator.toc//60)
     sec  = 100*(estimator.toc-60*mins)
-    pup_size = np.sum(tbed.pup)
+    pup_size = np.sum(pup)
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     plt.axis('off')
     
@@ -260,19 +262,25 @@ def plot_sim_entries(sim,dRup,dJup,dJdo=None,dRdo=None,name="res",disp=True,save
     ## GET DATAS 
 
     tbed = sim.tbed
+    if  hasattr(tbed,'pup') : pup = tbed.pup
+    else                    : pup  = tbed.apod_pup.pup
     
-    cropEF  = sim.get_phi_foc()*tbed.pup
-    cropEFd = sim.get_phi_do()*tbed.pup_d
+    
+    cropEF  = sim.get_phi_foc() * pup
+    cropEFd = sim.get_phi_do()  * pup
     
     plt.figure("Simulation gif",figsize = (8, 6))
-    plt.subplot(3,2,1),plt.imshow(cropEF,cmap='jet'),plt.title("Phi_up"),plt.colorbar()
-    plt.subplot(3,2,2),plt.imshow(cropEFd,cmap='jet'),plt.title("Phi_do"),plt.colorbar()
+    col=1
     
-    if dJdo is not None : plt.subplot(3,2,4),plt.imshow(dJdo,cmap='jet'),plt.title("dJdo"),plt.colorbar()
-    plt.subplot(3,2,3),plt.imshow(dJup,cmap='jet'),plt.title("dJup"),plt.colorbar()
-
-    if dRdo is not None : plt.subplot(3,2,6),plt.imshow(dRdo,cmap='jet'),plt.title("dRdo"),plt.colorbar()
-    plt.subplot(3,2,5),plt.imshow(dRup,cmap='jet'),plt.title("dRup"),plt.colorbar()
+    if dJdo is not None :
+        col=2
+        plt.subplot(col,3,4),plt.imshow(dJdo,cmap='jet'),plt.title("dJdo"),plt.colorbar()
+        plt.subplot(col,3,5),plt.imshow(cropEFd,cmap='jet'),plt.title("Phi_do"),plt.colorbar()
+        plt.subplot(col,3,6),plt.imshow(dRdo,cmap='jet'),plt.title("dRdo"),plt.colorbar()
+    
+    plt.subplot(col,3,1),plt.imshow(cropEF,cmap='jet'),plt.title("Phi_up"),plt.colorbar()
+    plt.subplot(col,3,2),plt.imshow(dJup,cmap='jet'),plt.title("dJup"),plt.colorbar()
+    plt.subplot(col,3,3),plt.imshow(dRup,cmap='jet'),plt.title("dRup"),plt.colorbar()
         
     plt.suptitle(name)
 
@@ -381,6 +389,8 @@ def tempalte_plotauto(sim,e_sim,estimator,name="res",disp=True,save=False):
      
     ## GET DATAS 
     tbed = sim.tbed
+    if  hasattr(tbed,'pup') : pup = tbed.pup
+    else                    : pup  = tbed.apod_pup.pup
     
     col = 2
     if np.iscomplexobj(sim.get_phi_foc()) : col = col + 1
@@ -395,14 +405,14 @@ def tempalte_plotauto(sim,e_sim,estimator,name="res",disp=True,save=False):
     ephase  = e_sim.get_EF_div(0,True)
     phase   =   sim.get_EF()
 
-    error    = abs( np.imag(phase)  - np.imag(ephase) ) * tbed.pup
-    plt.subplot(col,3,1),plt.imshow(np.imag(phase) * tbed.pup,cmap='jet'),plt.title("EF I Attendu"),plt.colorbar()
-    plt.subplot(col,3,2),plt.imshow(np.imag(ephase) * tbed.pup,cmap='jet'),plt.title("Estimation I"),plt.colorbar()
+    error    = abs( np.imag(phase)  - np.imag(ephase) ) * pup
+    plt.subplot(col,3,1),plt.imshow(np.imag(phase) * pup,cmap='jet'),plt.title("EF I Attendu"),plt.colorbar()
+    plt.subplot(col,3,2),plt.imshow(np.imag(ephase) * pup,cmap='jet'),plt.title("Estimation I"),plt.colorbar()
     plt.subplot(col,3,3),plt.imshow(error,cmap='jet'),plt.title("Erreur en difference de I"),plt.colorbar()
     
-    error    = abs( np.real(phase)  - np.real(ephase) ) * tbed.pup
-    plt.subplot(col,3,4),plt.imshow(np.real(phase) * tbed.pup,cmap='jet'),plt.title("EF R Attendu"),plt.colorbar()
-    plt.subplot(col,3,5),plt.imshow(np.real(ephase) * tbed.pup,cmap='jet'),plt.title("Estimation"),plt.colorbar()
+    error    = abs( np.real(phase)  - np.real(ephase) ) * pup
+    plt.subplot(col,3,4),plt.imshow(np.real(phase) * pup,cmap='jet'),plt.title("EF R Attendu"),plt.colorbar()
+    plt.subplot(col,3,5),plt.imshow(np.real(ephase) * pup,cmap='jet'),plt.title("Estimation"),plt.colorbar()
     plt.subplot(col,3,6),plt.imshow(error,cmap='jet'),plt.title("Erreur en difference"),plt.colorbar()  
     
     ## DISP / SAVE 

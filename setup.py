@@ -14,7 +14,7 @@ setup(
     author_email='johan.mazoyer@obspm.fr',
     license='BSD',
     include_package_data = True,
-    packages=find_packages(),
+    packages=['Asterix'],
     zip_safe=False,
     classifiers=[
         # Indicate who your project is intended for

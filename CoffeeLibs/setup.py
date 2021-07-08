@@ -16,3 +16,4 @@ setup(
     keywords='COFFEE',
     install_requires=['Asterix','numpy', 'scipy','matplotlib', 'configobj']
     )
+

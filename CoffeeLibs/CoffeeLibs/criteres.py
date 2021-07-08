@@ -217,9 +217,6 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
     # sim = copy.deepcopy(esim)
     sim.opti_update(var,imgs)
     
-    varb = np.median(imgs) + 1
-    varb = 1
-    
     info_div       = []
     sim.iter +=1
     
@@ -228,31 +225,50 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
     # Compute gradient = dj/dphi
     grad = []
     if not sim.phi_foc_is_known() : 
+        
         grad_u = 0
+        
+        
         for div_id in range(0,sim.nb_div):
+            # Calcul de Jmv pour chaque diversité
             grad_u_k = DJmv_up(div_id,imgs[:,:,div_id],sim)
-            info_div.append(np.sum(grad_u_k**2))
             grad_u   += grad_u_k
-        grad_u *= 1/(sim.nb_div * varb)  # Ponderation
-        dR      = pup * hypp * Dregule(sim.get_phi_foc()) # Regulatrisation
+            info_div.append(np.sum(grad_u_k**2))
+            
+        # Ponderation
+        varb    = np.median(imgs) + 1
+        grad_u *= 1 / (sim.nb_div * varb)  
+        
+        # Regulatrisation
+        dR = pup * hypp * Dregule(sim.get_phi_foc()) 
         grad    = tls.add_to_list(grad, grad_u + dR)
 
     # Other varaibles gradient
     if not sim.phi_do_is_known() : 
+        
         grad_d = 0
+        
+        # Jmv pour chaque diverstié
         for div_id in range(0,sim.nb_div):
             grad_d += DJmv_down(div_id,imgs[:,:,div_id],sim)
-        grad_d *= 1  # Ponderation
+        
+        # Ponderation
+        grad_d *= 1  
+        
+        # Regulatrisation
         dRdo    = pup * hypp * Dregule(sim.get_phi_do()) # Regulatrisation
         grad    = tls.add_to_list(grad, grad_d + dRdo)
-                   
+                  
+        
+    # Save and Infos
+    
     if simGif and not sim.phi_do_is_known() : tls.plot_sim_entries(sim,dR,grad_u,grad_d,dRdo,name="iter"+str(sim.iter),disp=False,save=True)
     elif simGif : tls.plot_sim_entries(sim,dR,grad_u,name="iter"+str(sim.iter),disp=False,save=True)              
     
     sim.info_gard.append([np.sum(abs(grad_u)),np.sum(abs(dR))])     
     sim.info_div.append(info_div)
                     
-    return  sim.N**2*grad
+    return  grad
 
 # %% ############################
 """ Wrappers for optimize AUTOMATIQUE """
@@ -262,7 +278,7 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
 def genere_L(tbed):
     
     N = tbed.dimScience
-    n = tbed.dimScience//tbed.Science_sampling
+    n = tbed.dim_overpad_pupil
     
     L     = 0j*np.zeros((N*N,n*n)) #Cast to complex
     point = np.zeros((n*n,1))
@@ -279,7 +295,7 @@ def V_map_J_auto(var,sim,imgs,hypp,simGif,L):
 
     sim.opti_update(var,imgs)
     N = sim.tbed.dimScience
-    n = sim.tbed.dimScience//sim.tbed.Science_sampling
+    n = sim.tbed.dim_overpad_pupil
 
     Hx = 0j*np.zeros((N,N,sim.nb_div))
     for div_id in range(0,sim.nb_div):
@@ -298,7 +314,7 @@ def V_map_dJ_auto(var,sim,imgs,hypp,simGif,L):
     """ Wrapper for minimize syntax"""
 
     sim.opti_update(var,imgs)
-    n = sim.tbed.dimScience//sim.tbed.Science_sampling
+    n = sim.tbed.dim_overpad_pupil
     N = sim.tbed.dimScience
 
     info_div       = []
@@ -308,12 +324,15 @@ def V_map_dJ_auto(var,sim,imgs,hypp,simGif,L):
     for div_id in range(0,sim.nb_div):
         gamma         = gamma_terme(L,sim,imgs[:,:,div_id],div_id)
         grad_u_k      = (np.dot(np.conj(np.transpose(L)),gamma)).reshape(n,n)*np.conj(sim.get_EF_div(div_id))
-        info_div.append(np.sum(np.imag(grad_u_k/(sim.N**2))))
-        dJ_matriciel += 4*np.imag(grad_u_k/ sim.nb_div / (n**2) )
+        info_div.append(np.sum( abs( np.imag(grad_u_k / (sim.N**2) ) ) ))
+        dJ_matriciel += 4*np.imag(grad_u_k)
 
+    # Ponderation
+    dJ_matriciel *= 1 / sim.nb_div
+    
+    # Regulatrisation
     pup  = tls.circle(sim.N, sim.N, sim.tbed.prad//2 - 1)
-
-    dR      = pup * hypp * Dregule(sim.get_phi_foc()) # Regulatrisation
+    dR      = pup * hypp * Dregule(sim.get_phi_foc()) 
     
     if simGif : tls.plot_sim_entries(sim,dR,dJ_matriciel,name="iter"+str(sim.iter),disp=False,save=True)
     
@@ -327,7 +346,7 @@ def gamma_terme(L,sim,img,div_id):
     """ Wrapper for minimize syntax"""
     # dh/dphi 
 
-    w    = sim.tbed.dimScience//sim.tbed.Science_sampling
+    w    = sim.tbed.dim_overpad_pupil
     W    = sim.tbed.dimScience
     
     EF  = sim.get_EF_div(div_id).reshape(w*w,)
