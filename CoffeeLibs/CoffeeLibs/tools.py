@@ -208,9 +208,9 @@ def tempalte_plot(sim,e_sim,estimator,name="res",disp=True,save=False):
 
     if np.iscomplexobj(sim.get_phi_foc()) : 
         error    = abs( np.imag(sim.get_phi_foc())  - np.imag(e_sim.get_phi_foc()) ) * tbed.pup
-        plt.subplot(col,3,1),plt.imshow(np.imag(sim.get_phi_foc()) * tbed.pup,cmap='jet'),plt.title("Phi_up Attendu I"),plt.colorbar()
-        plt.subplot(col,3,2),plt.imshow(np.imag(e_sim.get_phi_foc()) * tbed.pup,cmap='jet'),plt.title("Estimation I"),plt.colorbar()
-        plt.subplot(col,3,3),plt.imshow(error,cmap='jet'),plt.title("Erreur en difference de I"),plt.colorbar()
+        plt.subplot(col,3,4),plt.imshow(np.imag(sim.get_phi_foc()) * tbed.pup,cmap='jet'),plt.title("Phi_up Attendu I"),plt.colorbar()
+        plt.subplot(col,3,5),plt.imshow(np.imag(e_sim.get_phi_foc()) * tbed.pup,cmap='jet'),plt.title("Estimation I"),plt.colorbar()
+        plt.subplot(col,3,6),plt.imshow(error,cmap='jet'),plt.title("Erreur en difference de I"),plt.colorbar()
         
     error    = abs( np.real(sim.get_phi_foc())  - np.real(e_sim.get_phi_foc()) ) * pup
     plt.subplot(col,3,1),plt.imshow(np.real(sim.get_phi_foc()) * pup,cmap='jet'),plt.title("Phi_up Attendu"),plt.colorbar()
@@ -266,7 +266,7 @@ def plot_sim_entries(sim,dRup,dJup,dJdo=None,dRdo=None,name="res",disp=True,save
     else                    : pup  = tbed.apod_pup.pup
     
     
-    cropEF  = sim.get_phi_foc() * pup
+    cropEF  = np.real(sim.get_phi_foc()) * pup
     cropEFd = sim.get_phi_do()  * pup
     
     plt.figure("Simulation gif",figsize = (8, 6))

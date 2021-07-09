@@ -115,7 +115,7 @@ def diff_grad_EF(point,tbed,i_ref,dphi=1e-6):
 # %% ################################
 """ Calcule gradient du critère  """
 
-def DJmv_up(div_id,img,sim):
+def DJmv_up(div_id,img,sim,cpart=False):
 
     tb = sim.tbed    
     offset = tb.offest
@@ -137,7 +137,11 @@ def DJmv_up(div_id,img,sim):
     terme2  = tb.corno * mft( psi_d * terme1 ,wphi,wphi,wphi,**offset)
     terme3  = mft( terme2 ,wphi,wphi,wphi,inverse=True,**offset)
     
-    Dj = - 4 * np.imag( psi_u * terme3 )
+    Dj  = - 4 * np.imag( psi_u * terme3 )
+    
+    if cpart : 
+        Dj = Dj.astype('complex128')
+        Dj += - 4j * np.real( psi_u * terme3 )
     
     return Dj
 
@@ -200,7 +204,7 @@ def V_map_J(var,sim,imgs,hypp,simGif):
     sim.opti_update(var,imgs)
     Hx = sim.gen_div_imgs()
     
-    varb = 1
+    varb = np.median(imgs) + 1
     
     Jmv = meanSquare(Hx,imgs) / (sim.nb_div * varb)
     
@@ -228,10 +232,9 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
         
         grad_u = 0
         
-        
         for div_id in range(0,sim.nb_div):
             # Calcul de Jmv pour chaque diversité
-            grad_u_k = DJmv_up(div_id,imgs[:,:,div_id],sim)
+            grad_u_k = DJmv_up(div_id,imgs[:,:,div_id],sim,sim.cplx)
             grad_u   += grad_u_k
             info_div.append(np.sum(grad_u_k**2))
             
@@ -242,6 +245,7 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
         # Regulatrisation
         dR = pup * hypp * Dregule(sim.get_phi_foc()) 
         grad    = tls.add_to_list(grad, grad_u + dR)
+            
 
     # Other varaibles gradient
     if not sim.phi_do_is_known() : 
@@ -262,8 +266,8 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
         
     # Save and Infos
     
-    if simGif and not sim.phi_do_is_known() : tls.plot_sim_entries(sim,dR,grad_u,grad_d,dRdo,name="iter"+str(sim.iter),disp=False,save=True)
-    elif simGif : tls.plot_sim_entries(sim,dR,grad_u,name="iter"+str(sim.iter),disp=False,save=True)              
+    if simGif and not sim.phi_do_is_known() : tls.plot_sim_entries(sim,dR,np.real(grad_u),grad_d,dRdo,name="iter"+str(sim.iter),disp=False,save=True)
+    elif simGif : tls.plot_sim_entries(sim,np.real(dR),np.real(grad_u),name="iter"+str(sim.iter),disp=False,save=True)              
     
     sim.info_gard.append([np.sum(abs(grad_u)),np.sum(abs(dR))])     
     sim.info_div.append(info_div)
@@ -300,7 +304,7 @@ def V_map_J_auto(var,sim,imgs,hypp,simGif,L):
     Hx = 0j*np.zeros((N,N,sim.nb_div))
     for div_id in range(0,sim.nb_div):
         point           = sim.get_EF_div(div_id).reshape(n*n,)
-        Hx[:,:,div_id]  = pow(abs(np.dot(L,point).reshape(N,N)),2)
+        Hx[:,:,div_id]  = pow(abs(np.dot(L,point).reshape(N,N)),2)        
     
     R   = (1/2) * hypp * regule(sim.get_phi_foc())
     Jmv = meanSquare(Hx,imgs)/ (sim.nb_div)
@@ -326,6 +330,9 @@ def V_map_dJ_auto(var,sim,imgs,hypp,simGif,L):
         grad_u_k      = (np.dot(np.conj(np.transpose(L)),gamma)).reshape(n,n)*np.conj(sim.get_EF_div(div_id))
         info_div.append(np.sum( abs( np.imag(grad_u_k / (sim.N**2) ) ) ))
         dJ_matriciel += 4*np.imag(grad_u_k)
+        if sim.cplx :
+            dJ_matriciel.astype('complex128')
+            dJ_matriciel += -4*np.real(grad_u_k)
 
     # Ponderation
     dJ_matriciel *= 1 / sim.nb_div
@@ -334,7 +341,7 @@ def V_map_dJ_auto(var,sim,imgs,hypp,simGif,L):
     pup  = tls.circle(sim.N, sim.N, sim.tbed.prad//2 - 1)
     dR      = pup * hypp * Dregule(sim.get_phi_foc()) 
     
-    if simGif : tls.plot_sim_entries(sim,dR,dJ_matriciel,name="iter"+str(sim.iter),disp=False,save=True)
+    if simGif : tls.plot_sim_entries(sim,np.real(dR),np.real(dJ_matriciel),name="iter"+str(sim.iter),disp=False,save=True)
     
     sim.info_gard.append([np.sum(abs(dJ_matriciel)),np.sum(dR)])  
     sim.info_div.append(info_div)

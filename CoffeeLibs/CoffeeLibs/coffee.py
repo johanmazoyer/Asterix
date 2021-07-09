@@ -319,7 +319,7 @@ class data_simulator():
     def fondflux_forall(self):
         """If flux/fond is int, them defin list of flux fond equal for each diversity """
         if not isinstance(self.get_flux(), list): self.set_flux( [self.get_flux()] * self.nb_div)
-        if not isinstance(self.get_fond(), list): self.set_fond( [self.get_flux()] * self.nb_div)
+        if not isinstance(self.get_fond(), list): self.set_fond( [self.get_fond()] * self.nb_div)
         
         if (len(self.get_flux()) is not self.nb_div) or ( len(self.get_fond()) is not self.nb_div) :
             raise Exception('Flux/fond list len have to match number of diversity')

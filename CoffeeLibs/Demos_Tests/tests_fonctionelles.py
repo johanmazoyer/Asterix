@@ -26,7 +26,7 @@ config = get_ini('my_param_file.ini')
 
 
 # Paramètres qu'il faudra ranger dans ini file..
-known_var   = {'downstream_EF':1, 'flux':[1], 'fond':[0]}
+known_var   = {'downstream_EF':1, 'flux':1, 'fond':0}
 div_factors = [0,1]  # List of div factor's images diversity
 RSB         = 30000
 
@@ -95,8 +95,8 @@ def do_a_test(name):
         e_sim = estimator.estimate(tbed,imgs,div_factors,known_var) # Estimation
        
         error      = abs( cropEF   - e_sim.get_phi_foc() )
-        error_flux = sim.get_flux()- e_sim.get_flux()
-        error_fond = sim.get_fond()- e_sim.get_fond()
+        error_flux = sim.get_flux(0)- e_sim.get_flux(0)
+        error_fond = sim.get_fond(0)- e_sim.get_fond(0)
         error_do   = abs( cropEFd  - e_sim.get_phi_do()*tbed.pup_d )
         
         new_row([name,np.sum(error)/pup_size,np.sum(error_do)/pup_size,error_flux,error_fond,estimator.toc], ((np.sum(error)/error.size)<threshold))

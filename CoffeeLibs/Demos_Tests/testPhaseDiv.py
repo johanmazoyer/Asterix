@@ -11,12 +11,12 @@ import numpy as np
 
 config = get_ini('my_param_file.ini')
 
-# tbed    = custom_bench(config,'.')
-tbed      = coronagraph(config['modelconfig'],config['Coronaconfig'])
-name = "mySim_downsteam"
+tbed    = custom_bench(config,'.')
+# tbed      = coronagraph(config['modelconfig'],config['Coronaconfig'])
+name = "mySim_cplx_auto"
 
-config["Estimationconfig"]["auto"]  = True
-config["Estimationconfig"]["cplx "] = False
+config["Estimationconfig"]["auto"] = True
+config["Estimationconfig"]["cplx"] = True
 
 ## -- Constructor by CoffeeLibs
 estimator = coffee_estimator(**config["Estimationconfig"])
@@ -36,15 +36,23 @@ div_factors = [0,0.12]  # List of div factor's images diversity
 RSB         = None
 
 ## -- Coeff du zernike  
-# coeff = 1/np.arange(1,6)         
-# coeff[0:3] = [0,0,0]
-coeff = [0,0,0,1]
-# coeff = [0,0,0,1/100]
+coeff = 1/np.arange(1,6)         
+coeff[0:3] = [0,0,0]
+
 
 ## -- Generation des images avec data_simulator
 
 sim = data_simulator(tbed,var,div_factors)
-sim.gen_zernike_phi_foc(coeff)
+
+# Phi_up 
+# sim.gen_zernike_phi_foc(coeff)
+
+# Phi Complex
+phi_r = sim.gen_zernike_phi(coeff)
+phi_i =  sim.gen_zernike_phi([0,0,0.1])
+sim.set_phi_foc(phi_r+1j*phi_i)
+
+# Phi_do
 # sim.gen_zernike_phi_do([0,0,0,1/4])
 
 imgs = sim.gen_div_imgs(RSB) # Compute images 
