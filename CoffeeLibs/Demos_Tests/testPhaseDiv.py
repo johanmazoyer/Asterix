@@ -16,7 +16,7 @@ tbed    = custom_bench(config,'.')
 name = "mySim_cplx_auto"
 
 config["Estimationconfig"]["auto"] = True
-config["Estimationconfig"]["cplx"] = True
+config["Estimationconfig"]["cplx"] = False
 
 ## -- Constructor by CoffeeLibs
 estimator = coffee_estimator(**config["Estimationconfig"])
@@ -88,6 +88,13 @@ tempalte_plot2(sim.gen_div_imgs(),e_sim,estimator,name=name,disp=True)
 ## Introdpection ##
 # tbed.introspect(sim.get_EF(),sim.get_EF_do())
 
+
+## Test zbiaz ##
+
+import numpy as np
+tbed.zbiais = True
+one = np.ones((sim.N,sim.N))
+tbed.introspect(one,one)
 
 # %% Save as fits 
 

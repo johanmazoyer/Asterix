@@ -37,13 +37,14 @@ from matplotlib.widgets import Slider
 
 class data_simulator():
 
-    def __init__(self,tbed, known_var = "default", div_factors = [0,1], phi_foc=None,cplx = False):
+    def __init__(self,tbed, known_var = "default", div_factors = [0,1], phi_foc=None,cplx = False,myope=False):
         
         # Store simulation Variables
         self.tbed      = tbed
         self.phi_foc   = phi_foc
         self.known_var = known_var
         self.cplx      = cplx
+        self.myope     = myope
         
         self.N     = int(tbed.dim_overpad_pupil)
         [Ro,Theta] = pmap(self.N,self.N,tbed.prad//2)
@@ -227,6 +228,7 @@ class data_simulator():
         if not self.phi_foc_is_known() and not self.cplx : pack = np.concatenate((pack, self.get_phi_foc().reshape(n**2,)), axis=None)
         if not self.phi_foc_is_known() and     self.cplx : pack = np.concatenate((pack, tls.complex2real(self.get_phi_foc())), axis=None)
         if not self.phi_do_is_known()  : pack = np.concatenate((pack, self.get_phi_do().reshape(n**2,)), axis=None)         
+        if self.myope  : pack = np.concatenate((pack, np.zeros( (n**2*self.Nb_div,)) ), axis=None)         
 
         return pack
     
@@ -237,11 +239,19 @@ class data_simulator():
         indx = 0
 
         if not self.phi_foc_is_known() :
-            if self.cplx : self.set_phi_foc(tls.real2complex(pack[:n*n].reshape(n,n),pack[n*n:2*n*n].reshape(n,n)))
-            else    : self.set_phi_foc(pack[:n*n].reshape(n,n))
+            if self.cplx : 
+                self.set_phi_foc(tls.real2complex(pack[:n*n].reshape(n,n),pack[n*n:2*n*n].reshape(n,n)))
+                indx += 2*n*n
+            else    : 
+                self.set_phi_foc(pack[:n*n].reshape(n,n))
+                indx += n*n
+        
+        if not self.phi_do_is_known() : 
+            self.set_phi_do(pack[indx:indx+n*n].reshape(n,n))
             indx += n*n
         
-        if not self.phi_do_is_known() : self.set_phi_do(pack[indx:indx+n*n].reshape(n,n))
+        if self.myope  : 
+            self.err_div = pack[indx:indx+n*n*self.Nb_div].reshape(n,n,self.Nb_div)
         
         # Matrice Inversion
         if (not self.flux_is_known()) | (not self.fond_is_known()) : ff_list = cacl.estime_fluxfond(self,imgs)
@@ -342,14 +352,14 @@ class coffee_estimator:
     COFFEE estimator
     -------------------------------------------------- """
 
-    def __init__(self,var_phi=0 ,method = 'L-BfGS-B',auto=True ,cplx=False, bound=None, gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,H=None,**kargs):
+    def __init__(self,var_phi=0 ,method = 'L-BfGS-B',auto=True ,cplx=False,myope=False, bound=None, gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,H=None,**kargs):
         
         self.var_phi = var_phi
         self.disp    = disp
         self.bound   = bound
         self.simGif  = None
         self.auto    = auto
-        self.cplx    = cplx 
+        self.mode    = {'cplx':cplx,'myope':myope} 
 
         # Minimize parameters
         options = {'disp': disp,'gtol':gtol,'eps':eps,'maxiter':maxiter}
@@ -386,7 +396,7 @@ class coffee_estimator:
         """
         
         # Create our simulation
-        sim   = data_simulator(tbed,known_var,div_factors,phi_foc,cplx=self.cplx)
+        sim   = data_simulator(tbed,known_var,div_factors,phi_foc,**self.mode)
         sim   = sim_init_infos(sim)
 
         # Agrs : Fucntion J and DJ required arguments
@@ -492,7 +502,7 @@ class custom_bench(Optical_System):
         
     def z_biais(self):
         N = self.dimScience//self.Science_sampling
-        return mft( self.corno * mft( self.pup ,N,N,N,inverse=True) ,N,N,N,**self.offest)
+        return mft( self.corno * mft( self.pup ,N,N,N,inverse=True,**self.offest) ,N,N,N,**self.offest)
 
     def todetector_Intensity(self,entrance_EF=1.,EF_aberrations_LS=1.):
 
@@ -508,7 +518,7 @@ class custom_bench(Optical_System):
         elif(cortype=="R&R"): self.corno = 2*tls.circle(w,w,self.rcorno)-1
         else                : self.corno = abs(tls.circle(w,w,self.rcorno)-1)
         
-        if (cortype=="4q")  : self.zbiais = False
+        if (cortype=="4q")  : self.zbiais = True
         else                : self.zbiais = False
 
 
@@ -526,17 +536,17 @@ class custom_bench(Optical_System):
         
         view_list.append(view_list[-1]*self.pup)
         
-        view_list.append(mft(view_list[-1],N,N,N,**self.offest))
+        view_list.append(mft(view_list[-1],N,N,N,inverse=True,**self.offest))
         
         view_list.append(self.corno*view_list[-1])
         
         view_list.append(mft(view_list[-1],N,N,N,**self.offest))
         
-        if(self.zbiais): view_list.append(view_list[-1] + self.z_biais())
+        if(self.zbiais): view_list.append(view_list[-1] - self.z_biais())
         
         view_list.append( EF_aberrations_LS * self.pup_d * view_list[-1] )
         
-        view_list.append(mft(view_list[-1],N,N*self.Science_sampling,N,**self.offest))
+        view_list.append(mft(view_list[-1],N,N*self.Science_sampling,N,inverse=True,**self.offest))
                 
 
         

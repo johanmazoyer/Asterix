@@ -248,6 +248,7 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
             
 
     # Other varaibles gradient
+    
     if not sim.phi_do_is_known() : 
         
         grad_d = 0
@@ -263,6 +264,9 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
         dRdo    = pup * hypp * Dregule(sim.get_phi_do()) # Regulatrisation
         grad    = tls.add_to_list(grad, grad_d + dRdo)
                   
+    if sim.myope :
+        # TODO le gradient est quasi le meme que pour phi_up : adapter
+        grad    = tls.add_to_list(grad, np.zeros(sim.N,sim.N,sim.Nb_div))
         
     # Save and Infos
     
@@ -324,15 +328,14 @@ def V_map_dJ_auto(var,sim,imgs,hypp,simGif,L):
     info_div       = []
     sim.iter +=1
     dJ_matriciel = 0
+    dJ_matriciel_I = 0
     
     for div_id in range(0,sim.nb_div):
         gamma         = gamma_terme(L,sim,imgs[:,:,div_id],div_id)
         grad_u_k      = (np.dot(np.conj(np.transpose(L)),gamma)).reshape(n,n)*np.conj(sim.get_EF_div(div_id))
         info_div.append(np.sum( abs( np.imag(grad_u_k / (sim.N**2) ) ) ))
-        dJ_matriciel += 4*np.imag(grad_u_k)
-        if sim.cplx :
-            dJ_matriciel.astype('complex128')
-            dJ_matriciel += -4*np.real(grad_u_k)
+        dJ_matriciel += -4*np.imag(grad_u_k)
+        if sim.cplx : dJ_matriciel_I += 4*np.real(grad_u_k)
 
     # Ponderation
     dJ_matriciel *= 1 / sim.nb_div
@@ -346,7 +349,9 @@ def V_map_dJ_auto(var,sim,imgs,hypp,simGif,L):
     sim.info_gard.append([np.sum(abs(dJ_matriciel)),np.sum(dR)])  
     sim.info_div.append(info_div)
 
-    return tls.add_to_list([],dJ_matriciel+dR)
+    grad = tls.add_to_list([],dJ_matriciel+dR)
+    if sim.cplx : grad = tls.add_to_list([],dJ_matriciel_I+dR)
+    return grad
 
 
 def gamma_terme(L,sim,img,div_id):
