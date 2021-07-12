@@ -29,11 +29,11 @@ sim       = data_simulator(tbed,var,div_factors)
 
 # %% Generation de données 
 
-coeff = 1/np.arange(1,6) # Coeff to generate phi_foc
+coeff = 100/np.arange(1,6) # Coeff to generate phi_foc
 coeff[0:3] = [0,0,0]
 
 sim.gen_zernike_phi_foc(coeff)    # On génere le phi focalisé
-sim.gen_zernike_phi_do([0,0,1])   # On génere le phi do
+# sim.gen_zernike_phi_do([0,0,1])   # On génere le phi do
 
 img = sim.todetector_Intensity(0) # On cree les images
 
@@ -50,9 +50,9 @@ W = tbed.dimScience
 
 point = np.zeros((w,w))
 # Point ou on calcule le gradients
-sim.set_phi_do(point)
-sim.set_phi_foc(point)
-sim.gen_zernike_phi_foc(1/np.arange(1,4))  # On change le point ou calcule le gradient : EF =/= EF_reel
+# sim.set_phi_do(point)
+# sim.set_phi_foc(point)
+sim.gen_zernike_phi_foc(1/np.arange(1,65))  # On change le point ou calcule le gradient : EF =/= EF_reel
 
 
 # sim.known_var['flux'] = flux
@@ -78,7 +78,7 @@ grad_diff_up       += diff_grad_J_up(sim.get_phi_foc(),div_id,sim,img)
 L             = genere_L(tbed)
 gamma         = gamma_terme(L,sim,img,div_id)
 dJ_matriciel  = (np.dot(np.conj(np.transpose(L)),gamma)).reshape(w,w)*np.conj(sim.get_EF_div(div_id))
-dJ_matriciel  = -dJ_matriciel*4
+dJ_matriciel  = -4*np.imag(dJ_matriciel)
 
 # %%  Plots
 
@@ -89,10 +89,9 @@ plt.subplot(2,3,2),plt.imshow(grad_diff_up,cmap='jet'),plt.title("Garident diffe
 plt.subplot(2,3,3),plt.imshow((grad_diff_up-grad_analytic_up),cmap='jet'),plt.title("Erreur UP"),plt.colorbar()
 
 
-dJ_matriciel_real = np.imag(dJ_matriciel)
-plt.subplot(2,3,4),plt.imshow(dJ_matriciel_real,cmap='jet'),plt.title("Garident Matriciel"),plt.colorbar()
+plt.subplot(2,3,4),plt.imshow(dJ_matriciel,cmap='jet'),plt.title("Garident Matriciel"),plt.colorbar()
 plt.subplot(2,3,5),plt.imshow(grad_diff_up,cmap='jet'),plt.title("Garident difference UP"),plt.colorbar()
-plt.subplot(2,3,6),plt.imshow((dJ_matriciel_real-grad_diff_up),cmap='jet'),plt.title("Erreur grad matriciel"),plt.colorbar()
+plt.subplot(2,3,6),plt.imshow((dJ_matriciel-grad_diff_up),cmap='jet'),plt.title("Erreur grad matriciel"),plt.colorbar()
 
 
 plt.show()

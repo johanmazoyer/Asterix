@@ -27,12 +27,12 @@ def meanSquare(Hx,y):
 
     return np.sum(np.sum( d ))
 
-def regule(psi,mode="np"):
+def regule(psi,spup=1,mode="np"):
     """Compte regule terme """
   
-    psi_grad  = tls.gradient_xy(psi,mode)  # Spacial gardient
+    psi_grad  = spup * tls.gradient_xy(psi,mode)  # Spacial gardient
     
-    return np.sum(psi_grad)**2
+    return  np.sum(psi_grad)**2
 
 def diff_grad_J_up(point,div_id,sim,i_ref,dphi=1e-6):
         
@@ -54,7 +54,7 @@ def diff_grad_J_up(point,div_id,sim,i_ref,dphi=1e-6):
               
     return np.array(dphi_list).reshape(sim.N,sim.N) / dphi
 
-def diff_grad_J_down(point,div_id,esim,i_ref,dphi=1e-6):
+def diff_grad_J_down(point,div_id,esim,i_ref,dphi=1e-9):
     
     sim = copy.deepcopy(esim)
     dphi_list = [] # List of gradient dphi(a,b) for all possible (a,b)
@@ -170,6 +170,32 @@ def DJmv_down(div_id,img,sim):
     
     return Dj
 
+def DJmv_espi(div_id,img,sim):
+
+    tb = sim.tbed    
+    offset = tb.offest
+
+    w     = tb.dimScience
+    wphi  = tb.dimScience//tb.Science_sampling
+    alpha = sim.get_flux(div_id)
+    
+    psi_u  = tb.pup   * np.exp(1j*sim.get_div_err(div_id))
+    psi_d  = tb.pup_d * sim.get_EF_do()
+    
+    psi_det =  sim.todetector(div_id)
+    h_det   =  sim.todetector_Intensity(div_id)
+
+    diff    =  h_det - img
+    
+    
+    terme1  = mft( np.conj(psi_det) * alpha * diff ,w,wphi,wphi,inverse=True,**offset)
+    terme2  = tb.corno * mft( psi_d * terme1 ,wphi,wphi,wphi,**offset)
+    terme3  = mft( terme2 ,wphi,wphi,wphi,inverse=True,**offset)
+    
+    Dj  = - 4 * np.imag( psi_u * terme3 )
+    
+    return Dj
+
 def Dregule(psi,mode="lap"):
     """Compte derive of regule terme """
     if mode=="lap" :  lap =  tls.gradient2_xy(psi)
@@ -197,41 +223,36 @@ def estime_fluxfond(sim,imgs):
 # %% ############################
 """ Wrappers for optimize ANALYTQIUE"""
 
-def V_map_J(var,sim,imgs,hypp,simGif):
+def V_map_J(var,sim,imgs,hypp,varb,spup,simGif):
     """ Wrapper for minimize syntax"""
     
     #sim = copy.deepcopy(esim)
     sim.opti_update(var,imgs)
     Hx = sim.gen_div_imgs()
     
-    varb = np.median(imgs) + 1
-    
     Jmv = meanSquare(Hx,imgs) / (sim.nb_div * varb)
     
-    R   = (1/2) * hypp * regule(sim.get_phi_foc())
+    R   = (1/2) * hypp * regule(sim.get_phi_foc(),spup)
     
     sim.info.append([Jmv, R])
     
     return  Jmv + R
 
 
-def V_grad_J(var,sim,imgs,hypp,simGif):
+def V_grad_J(var,sim,imgs,hypp,varb,spup,simGif):
     """ Wrapper that resize variables to fit minimize syntax"""
     
-    # sim = copy.deepcopy(esim)
+    ## -- Uptate and inits -- ##
     sim.opti_update(var,imgs)
     
     info_div       = []
     sim.iter +=1
     
-    pup  = tls.circle(sim.N, sim.N, sim.tbed.prad//2 - 1)
-    
-    # Compute gradient = dj/dphi
     grad = []
+    
+    ## -- Gradient upstream -- ##
     if not sim.phi_foc_is_known() : 
-        
         grad_u = 0
-        
         for div_id in range(0,sim.nb_div):
             # Calcul de Jmv pour chaque diversité
             grad_u_k = DJmv_up(div_id,imgs[:,:,div_id],sim,sim.cplx)
@@ -239,20 +260,17 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
             info_div.append(np.sum(grad_u_k**2))
             
         # Ponderation
-        varb    = np.median(imgs) + 1
         grad_u *= 1 / (sim.nb_div * varb)  
         
         # Regulatrisation
-        dR = pup * hypp * Dregule(sim.get_phi_foc()) 
+        dR = spup * hypp * Dregule(sim.get_phi_foc()) 
         grad    = tls.add_to_list(grad, grad_u + dR)
             
 
-    # Other varaibles gradient
-    
+    ## -- Gradient Downstream -- ##
     if not sim.phi_do_is_known() : 
         
         grad_d = 0
-        
         # Jmv pour chaque diverstié
         for div_id in range(0,sim.nb_div):
             grad_d += DJmv_down(div_id,imgs[:,:,div_id],sim)
@@ -261,14 +279,25 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
         grad_d *= 1  
         
         # Regulatrisation
-        dRdo    = pup * hypp * Dregule(sim.get_phi_do()) # Regulatrisation
+        dRdo    = spup * hypp * Dregule(sim.get_phi_do()) # Regulatrisation
         grad    = tls.add_to_list(grad, grad_d + dRdo)
-                  
+           
+    ## -- gradient mode myope -- ##
     if sim.myope :
-        # TODO le gradient est quasi le meme que pour phi_up : adapter
-        grad    = tls.add_to_list(grad, np.zeros(sim.N,sim.N,sim.Nb_div))
+        grad_e = 0
+        # Jmv + R pour chaque diverstié
+        for div_id in range(0,sim.nb_div):
+            grad_e = DJmv_espi(div_id,imgs[:,:,div_id],sim)
         
-    # Save and Infos
+            # Ponderation
+            grad_e *= 1 / (sim.nb_div * varb)
+            
+            # Regulatrisation
+            dRe    = spup * hypp * Dregule(sim.get_div_err(div_id)) # Regulatrisation
+            grad   = tls.add_to_list(grad, grad_e + dRe)
+        
+        
+    ## -- Save and Infos -- ##
     
     if simGif and not sim.phi_do_is_known() : tls.plot_sim_entries(sim,dR,np.real(grad_u),grad_d,dRdo,name="iter"+str(sim.iter),disp=False,save=True)
     elif simGif : tls.plot_sim_entries(sim,np.real(dR),np.real(grad_u),name="iter"+str(sim.iter),disp=False,save=True)              
@@ -281,8 +310,6 @@ def V_grad_J(var,sim,imgs,hypp,simGif):
 # %% ############################
 """ Wrappers for optimize AUTOMATIQUE """
 
-# TODO A implémenter dans coffee_estimator
-
 def genere_L(tbed):
     
     N = tbed.dimScience
@@ -293,12 +320,12 @@ def genere_L(tbed):
     
     for a in range(0,n*n):
         point[a] = 1
-        L[:,a]   = tbed.todetector(point.reshape(n,n)).reshape(N*N,)
+        L[:,a]   = n**2 * tbed.todetector(point.reshape(n,n)).reshape(N*N,)
         point[a] = 0
                      
     return L
-    
-def V_map_J_auto(var,sim,imgs,hypp,simGif,L):
+
+def V_map_J_auto(var,sim,imgs,hypp,varb,spup,simGif,L):
     """ Wrapper for minimize syntax"""
 
     sim.opti_update(var,imgs)
@@ -310,59 +337,54 @@ def V_map_J_auto(var,sim,imgs,hypp,simGif,L):
         point           = sim.get_EF_div(div_id).reshape(n*n,)
         Hx[:,:,div_id]  = pow(abs(np.dot(L,point).reshape(N,N)),2)        
     
-    R   = (1/2) * hypp * regule(sim.get_phi_foc())
-    Jmv = meanSquare(Hx,imgs)/ (sim.nb_div)
+    R   = (1/2) * hypp * regule(sim.get_phi_foc(),spup)
+    Jmv = meanSquare(Hx,imgs) / (sim.nb_div)
     
     sim.info.append([Jmv, R])
     
     return  Jmv + R
 
 
-def V_map_dJ_auto(var,sim,imgs,hypp,simGif,L):
+def V_map_dJ_auto(var,sim,imgs,hypp,varb,spup,simGif,L):
     """ Wrapper for minimize syntax"""
 
     sim.opti_update(var,imgs)
-    n = sim.tbed.dim_overpad_pupil
-    N = sim.tbed.dimScience
+    n = sim.N
 
     info_div       = []
     sim.iter +=1
     dJ_matriciel = 0
-    dJ_matriciel_I = 0
     
     for div_id in range(0,sim.nb_div):
+        
         gamma         = gamma_terme(L,sim,imgs[:,:,div_id],div_id)
         grad_u_k      = (np.dot(np.conj(np.transpose(L)),gamma)).reshape(n,n)*np.conj(sim.get_EF_div(div_id))
-        info_div.append(np.sum( abs( np.imag(grad_u_k / (sim.N**2) ) ) ))
-        dJ_matriciel += -4*np.imag(grad_u_k)
-        if sim.cplx : dJ_matriciel_I += 4*np.real(grad_u_k)
-
+        
+        info_div.append(np.sum( abs( np.imag(grad_u_k / (n**2) ) ) ))
+        
+        dJ_matriciel += 2*np.imag(grad_u_k)
+        
+        if sim.cplx : raise Exception("Not implemented yet")
+        
     # Ponderation
     dJ_matriciel *= 1 / sim.nb_div
     
     # Regulatrisation
-    pup  = tls.circle(sim.N, sim.N, sim.tbed.prad//2 - 1)
-    dR      = pup * hypp * Dregule(sim.get_phi_foc()) 
+    dR   = spup * hypp * Dregule(sim.get_phi_foc()) 
     
     if simGif : tls.plot_sim_entries(sim,np.real(dR),np.real(dJ_matriciel),name="iter"+str(sim.iter),disp=False,save=True)
     
     sim.info_gard.append([np.sum(abs(dJ_matriciel)),np.sum(dR)])  
     sim.info_div.append(info_div)
 
-    grad = tls.add_to_list([],dJ_matriciel+dR)
-    if sim.cplx : grad = tls.add_to_list([],dJ_matriciel_I+dR)
-    return grad
+    return tls.add_to_list([],dJ_matriciel+dR)
 
 
 def gamma_terme(L,sim,img,div_id):
     """ Wrapper for minimize syntax"""
     # dh/dphi 
-
-    w    = sim.tbed.dim_overpad_pupil
     W    = sim.tbed.dimScience
-    
-    EF  = sim.get_EF_div(div_id).reshape(w*w,)
-    
+        
     psi_det =  sim.todetector(div_id)
     h_det   =  sim.todetector_Intensity(div_id)
     diff    =  h_det - img

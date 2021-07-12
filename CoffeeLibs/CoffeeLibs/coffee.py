@@ -87,6 +87,7 @@ class data_simulator():
         
         # List of phi_up = phi_foc + a*defoc
         phis = (phis + self.phi_foc.reshape(n,n,1)) + self.div_map
+        if self.myope : phis += self.div_err
         
         return phis
     
@@ -112,19 +113,24 @@ class data_simulator():
         self.known_var['downstream_EF'] = np.exp(1j*self.phi_do)
        
     def set_div_map(self,div_factors):
+        
         n = self.N
         self.set_nb_div(div_factors)
+        
         self.div_map = np.zeros((n,n,self.nb_div))
+        
         tpm = 0
         for fact in div_factors:
             if isinstance(fact, int) |  isinstance(fact, float) : self.div_map[:,:,tpm] = fact*self.defoc
             else : self.div_map[:,:,tpm] = fact
             tpm +=1
+        
+        # Init err fiv if mode myope
+        if self.myope : self.div_err = np.zeros((n,n,self.nb_div))
        
     def set_nb_div(self,div_factors):
         self.nb_div = len(div_factors)
         
-       
     def set_flux(self,flux):
         self.known_var['flux'] = flux
         
@@ -149,10 +155,13 @@ class data_simulator():
         return self.phi_foc
     
     def get_phi_div(self,div_id):
-        return self.phi_foc + self.div_map[:,:,div_id]
+        if self.myope : 
+            return self.phi_foc + self.div_map[:,:,div_id] + self.div_err[:,:,div_id] 
+        else : 
+            return self.phi_foc + self.div_map[:,:,div_id]
     
-    def get_defocEF(self,div_id):
-        return np.exp(1j*self.div_map[:,:,div_id])
+    def get_div_err(self,div_id):
+        return self.div_err[:,:,div_id]
         
     def get_EF_do(self):
         return self.known_var['downstream_EF']
@@ -168,6 +177,9 @@ class data_simulator():
     def get_fond(self,div_id=None):
         if div_id is None : return self.known_var['fond']
         else              : return self.known_var['fond'][div_id]
+        
+    def get_defocEF(self,div_id):
+        return np.exp(1j*self.div_map[:,:,div_id])
     
     def get_know_var_bool(self):
         return self.known_var_bool
@@ -228,7 +240,7 @@ class data_simulator():
         if not self.phi_foc_is_known() and not self.cplx : pack = np.concatenate((pack, self.get_phi_foc().reshape(n**2,)), axis=None)
         if not self.phi_foc_is_known() and     self.cplx : pack = np.concatenate((pack, tls.complex2real(self.get_phi_foc())), axis=None)
         if not self.phi_do_is_known()  : pack = np.concatenate((pack, self.get_phi_do().reshape(n**2,)), axis=None)         
-        if self.myope  : pack = np.concatenate((pack, np.zeros( (n**2*self.Nb_div,)) ), axis=None)         
+        if self.myope  : pack = np.concatenate((pack, np.zeros( (n**2*self.nb_div,)) ), axis=None)         
 
         return pack
     
@@ -251,7 +263,9 @@ class data_simulator():
             indx += n*n
         
         if self.myope  : 
-            self.err_div = pack[indx:indx+n*n*self.Nb_div].reshape(n,n,self.Nb_div)
+            for div_id in range(self.nb_div):
+                self.div_err[:,:,div_id] = pack[indx:indx+n*n].reshape(n,n)
+                indx += n*n
         
         # Matrice Inversion
         if (not self.flux_is_known()) | (not self.fond_is_known()) : ff_list = cacl.estime_fluxfond(self,imgs)
@@ -284,13 +298,15 @@ class data_simulator():
 
     def todetector(self,div_id,ff=True):
         """ call EF_through bench"""
-        if isinstance(div_id, int) : return self.tbed.todetector(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())
-        else                       : return self.todetector_loop(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())    
+        a = self.N**2
+        if isinstance(div_id, int) : return a*self.tbed.todetector(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())
+        else                       : return a*self.todetector_loop(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())    
 
     def todetector_loop(self,EFs=1.,downstream_EF=1):
         """ Just to make a big array of all div EFs because it is cleaner to me"""
+        a = self.N**2
         shape  = (self.tbed.dimScience,self.tbed.dimScience,1)
-        res    = self.tbed.todetector(EFs[:,:,0],EF_aberrations_LS=downstream_EF).reshape(shape)
+        res    = a * self.tbed.todetector(EFs[:,:,0],EF_aberrations_LS=downstream_EF).reshape(shape)
         
         for ii in range(1,EFs.shape[2]):
             out = self.tbed.todetector(EFs[:,:,ii],EF_aberrations_LS=downstream_EF).reshape(shape)
@@ -305,7 +321,7 @@ class data_simulator():
 
     def todetector_Intensity(self,div_id=0):
         """ call to detector intensity bench for a specific div id image"""
-        return self.get_flux(div_id) * self.tbed.todetector_Intensity(self.get_EF_div(div_id),EF_aberrations_LS=self.known_var["downstream_EF"]) + self.get_fond(div_id)
+        return self.get_flux(div_id) * abs( self.todetector(div_id) )**2 + self.get_fond(div_id)
 
     #######################################
     ### Tools 3 : MISC ###
@@ -395,25 +411,34 @@ class coffee_estimator:
             (i.e : phi_foc phi_do flux fond)
         """
         
-        # Create our simulation
+        ## -- Create our simulation -- ##
+        
         sim   = data_simulator(tbed,known_var,div_factors,phi_foc,**self.mode)
         sim   = sim_init_infos(sim)
 
-        # Agrs : Fucntion J and DJ required arguments
-        self.setting['args'] = sim,imgs,self.var_phi,self.simGif 
+        ## -- Agrs : Fucntion J and DJ required arguments -- ##
+        
+        varb = np.median(imgs) + 1   # Ponderation varb 
+        spup  = tls.circle(sim.N, sim.N, sim.tbed.prad//2 - 1) # Small pup for regularisation border effect
+        
+        self.setting['args'] = sim,imgs,self.var_phi,varb,spup,self.simGif 
         if self.auto : self.setting['args'] += (cacl.genere_L(tbed),)
     
+        ## -- xo and bounds initilisation
         self.setting['x0'] = sim.opti_pack()
         self.set_bounds(self.setting['x0'])
 
         
-        ####  CALL TO MONIMIZE
+        ## --  Estimation with minimize  -- ##
+        
         if self.disp : sim.print_know_war()
+        
         tic  = t.time()
         res  = minimize(**self.setting)
         toc  = t.time() - tic
         
-        # Disp and saves
+        ## -- Disp and saves -- ##
+        
         if self.disp : print_time(tic,toc)
         if self.simGif : tls.iter_to_gif(self.simGif)
         
