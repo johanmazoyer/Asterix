@@ -31,11 +31,11 @@ estimator.simGif = name
 ## -- Paramètres
 fu = 1
 var   = {'downstream_EF':1, 'flux':[fu,fu], 'fond':[0,0]}
-div_factors = [0,0.0002]  # List of div factor's images diversity
+div_factors = [0,0.1]  # List of div factor's images diversity
 RSB         = None
 
 ## -- Coeff du zernike  
-coeff = 1/np.arange(1,6) # Coeff to generate phi_foc
+coeff = 0.1/np.arange(1,6) # Coeff to generate phi_foc
 coeff[0:3] = [0,0,0]
 
 ## -- Generation des images avec data_simulator
@@ -60,7 +60,7 @@ imgs = sim.gen_div_imgs(RSB) # Compute images
 
 # Variables défini comme connu
 known_var = {'downstream_EF':1, 'flux':[fu,fu], 'fond':[0,0]}  
-estimator.var_phi      = 0 / np.var(sim.get_phi_foc())
+estimator.var_phi      = 1 / np.var(sim.get_phi_foc())
 
 e_sim = estimator.estimate(tbed,imgs,div_factors,known_var) # Estimation
 
@@ -71,7 +71,7 @@ if isinstance(estimator,Estimator) : estimator = estimator.coffee
 
 tempalte_plotauto(sim,e_sim,estimator,name=name,disp=True)  
 tempalte_plot(sim,e_sim,estimator,name=name,disp=True)     
-tempalte_plot2(sim.gen_div_imgs()/2,e_sim,estimator,name=name,disp=True)
+tempalte_plot2(sim.gen_div_imgs(),e_sim,estimator,name=name,disp=True)
 
 
 # %% Custom plots ##

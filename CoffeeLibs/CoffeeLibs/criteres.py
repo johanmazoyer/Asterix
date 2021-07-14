@@ -362,7 +362,7 @@ def V_map_dJ_auto(var,sim,imgs,hypp,varb,spup,simGif,L):
         
         info_div.append(np.sum( abs( np.imag(grad_u_k / (n**2) ) ) ))
         
-        dJ_matriciel += 2*np.imag(grad_u_k)
+        dJ_matriciel += 4*np.imag(grad_u_k)
         
         if sim.cplx : raise Exception("Not implemented yet")
         

@@ -309,7 +309,7 @@ class data_simulator():
         res    = a * self.tbed.todetector(EFs[:,:,0],EF_aberrations_LS=downstream_EF).reshape(shape)
         
         for ii in range(1,EFs.shape[2]):
-            out = self.tbed.todetector(EFs[:,:,ii],EF_aberrations_LS=downstream_EF).reshape(shape)
+            out = a * self.tbed.todetector(EFs[:,:,ii],EF_aberrations_LS=downstream_EF).reshape(shape)
             res = np.append(res,out,axis=2)
         
         return res
@@ -419,7 +419,7 @@ class coffee_estimator:
         ## -- Agrs : Fucntion J and DJ required arguments -- ##
         
         varb = np.median(imgs) + 1   # Ponderation varb 
-        spup  = tls.circle(sim.N, sim.N, sim.tbed.prad//2 - 1) # Small pup for regularisation border effect
+        spup  = tls.circle(sim.N, sim.N, sim.tbed.prad - 1) # Small pup for regularisation border effect
         
         self.setting['args'] = sim,imgs,self.var_phi,varb,spup,self.simGif 
         if self.auto : self.setting['args'] += (cacl.genere_L(tbed),)
