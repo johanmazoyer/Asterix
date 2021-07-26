@@ -43,7 +43,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      NewSIMUconfig={
                          'Name_Experiment': "My_second_experiment"
                      })
-print('time correction 1DM perfect estim Linesearch, efc', time.time() - start_time)
+print('time correction 1DM perfect estim (Linesearch) efc', time.time() - start_time)
 print("")
 print("")
 print("")
