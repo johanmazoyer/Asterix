@@ -37,6 +37,7 @@ Ideas for Asterix improvements
 ---------------------------------
 .. toctree::
     :maxdepth: 3
+    
     todo
 
 

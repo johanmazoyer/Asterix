@@ -1,9 +1,6 @@
 .. _todo-label:
 
-Need to do next
-----------------
-
-These are future improvements to Asterix currenly envisionned (not particularly by order of priority):
+**To Do**: These are future improvements to Asterix currenly envisionned (not particularly by order of priority):
 
 - polychromatic correction (concatenation of matrices at multiple wavelength)
 - polychromatic estimation for current estimator
@@ -13,13 +10,22 @@ These are future improvements to Asterix currenly envisionned (not particularly 
 - add tools for quick DH analysis (Contrast curves, off axis PSF for throughput measurement)
 - create a "generic DM" tool to create DM with centered sqaure any number of actuators. Curretly, DMS are very THD specific
 
+
 If you want to participate please contact us ! 
 
-These are part of the code that should be particularly checked and tested :
-- check the Fresnel transform to see if it really does what we think it does in all cases
-- check the vortex coronagraph
 
-These are part of the code that should be discussed between the authors:
+
+
+**To Check**: These are part of the code that need to be particularly checked and tested :
+
+- the Fresnel transform to see if it really does what we think it does in all cases
+- the vortex coronagraph
+
+
+
+
+**To Discuss**: These are part of the code that should be discussed between the authors:
+
 - Should we remove the intial FP field G0 in all cases when we measure the interaction matrices ?
 - discuss thisloop_expected_iteration_number.
 - the way i do the basis 
