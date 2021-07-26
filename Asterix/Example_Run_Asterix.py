@@ -23,7 +23,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      NewSIMUconfig={
                          'Name_Experiment': "My_first_experiment"
                      })
-print('time correction 2DM pw', time.time() - start_time)
+print('time correction 1DM perfect estim efc', time.time() - start_time)
 print("")
 print("")
 print("")
@@ -43,7 +43,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      NewSIMUconfig={
                          'Name_Experiment': "My_second_experiment"
                      })
-print('time correction 2DM pw', time.time() - start_time)
+print('time correction 1DM perfect estim Linesearch, efc', time.time() - start_time)
 print("")
 print("")
 print("")
@@ -64,7 +64,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      NewSIMUconfig={
                          'Name_Experiment': "My_third_experiment"
                      })
-print('time correction 2DM pw', time.time() - start_time)
+print('time correction 2DM perfect estim sm', time.time() - start_time)
 print("")
 print("")
 print("")
@@ -72,7 +72,7 @@ print("")
 start_time = time.time()
 Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      NewDMconfig={'DM1_active': True},
-                     NewEstimationconfig={'estimation': 'perfect'},
+                     NewEstimationconfig={'estimation': 'pw'},
                      NewCorrectionconfig={
                          'DH_side': "Full",
                          'correction_algorithm': "efc",
@@ -86,7 +86,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      NewSIMUconfig={
                          'Name_Experiment': "My_fourth_experiment"
                      })
-print('time correction 2DM pw', time.time() - start_time)
+print('time correction 2DM pw efc', time.time() - start_time)
 print("")
 print("")
 print("")
