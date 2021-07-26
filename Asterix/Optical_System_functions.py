@@ -2111,7 +2111,10 @@ class deformable_mirror(Optical_System):
                 basis[i] = vec
 
             start_time = time.time()
-
+            # This is a very time consuming part of the code. 
+            # from N voltage vectors with the sine and cosine value, we go N times through the
+            # voltage_to_phase functions. For this reason we save the Fourrier phases on each DMs 
+            # in a specific fits file
             if not os.path.exists(self.Model_local_dir +
                                   Name_FourrierBasis_fits + '.fits'):
                 phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil,

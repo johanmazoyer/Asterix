@@ -4,16 +4,11 @@ Correction
 ---------------
 
 This section describes how to correct the electrical field in focal plane in Asterix. Several correction modes 
-are possible in Asterix. Files can be found in :ref:`correctionfiles-label` . 
-* an initialization (e.g. Jacobian matrix) Corrector.__init__
-    The initialization requires previous initialization of
-    the testbed and of the estimator
-* an matrix update function Corrector.update_matrices
-    if we need to recompute the Jacobian in the middle of the correction using non-zero DM voltages as starting point.
-* an correction function itself which takes the results of an estimation and return
-        It returns the DM Voltage. 
-        DMVoltage = Corrector.toDM_voltage(testbed, estimate)
-        
+are possible in Asterix. Files can be found in :ref:`correctionfiles-label`;
+
+- an initialization (e.g. Jacobian matrix) ``Corrector.__init__`` : The initialization requires previous initialization of the testbed and of the estimator.
+- a matrix update function ``Corrector.update_matrices`` This function is called once during initalization abd then each time we need to recompute the Jacobian in the middle of the correction using usign differents DM voltages as starting point.
+- a correction function ``Corrector.toDM_voltage`` which takes the results of an estimation and returns the DM Voltage. 
 
 Dark Hole Mask Definition
 +++++++++++++++++++++++++++++++
@@ -31,12 +26,15 @@ and measure the string to save matrices.
     mask_dh = MaskDH(Correctionconfig)
 
                                             
-Several shape are possible for the DH using the parameter ``DH_shape`` :
-* "square" DH. Size can be defined using parameter ``corner_pos`` .
-* "circle". Size can be defined using parameters ``Sep_Min_Max`` , ``circ_offset`` , ``circ_angle`` . 
-Finally, the parameter ``DH_side`` can be set to "top", "bottom", "left", "right" and "full" to 
-create full and half dark hole
-* "noDH". In this mode, the mask is just 1. everywhere. 
+Several shape are possible for the DH using the parameter ``DH_shape``:
+
+- "square" DH. Size can be defined using the position of the corners in :math:`{\lambda}`/ D with the parameter parameter ``corner_pos``: [xmin, xmax, ymin, ymax], with 0 beeing the star position. ``DH_side`` parameter is not used and the symetry of the DH is only set using the corners positions.
+- "circle" DH Size can be defined using parameters 
+    - ``Sep_Min_Max`` : 2 element array [iwa, owa] inner and outer working angle of the dark hole
+    - ``circ_offset`` : if half DH, we remove separations closer than circ_offset (in :math:`{\lambda}`/ D) from the DH 
+    - ``circ_angle`` : if half DH, we remove the angles closer than circ_angle (in degrees) from the DH 
+    - ``DH_side`` : can be set to "top", "bottom", "left", "right" and "full" to create full and half dark hole.
+- "noDH" DH. In this mode, the mask is just 1 everywhere. 
 
 
 Interraction Matrix
@@ -58,17 +56,10 @@ This code works for all testbeds without prior assumption (if we have at least 1
 the code to only propagate once through optical elements before the activated DM and repeat only what is after 
 the activated DM.
 
-There are two main parameters for this part: ``DM_basis`` and ``MatrixType``.
+There are two main parameters for this part: 
 
-``DM_basis`` define the actuator basis that you use to describe the DM movement when building the matrix. 
-It can currenlty takes 2 modes: "actuator" (all actuators are pushed one after another) and "fourier", 
-where we use sine and cosine. Finally, there is a ``amplitudeEFC`` parameter in "actuator" mode which set the
-level to which you can push the actuators.
-
-``MatrixType`` is defining the type of estimation we do to measure the FP for each DM movement.
-It can currenlty takes 2 modes: "Perfect" (we assume a perfect estimator) and "SmallPhase" 
-(we make a small phase assumption in the matrix. This is the main EFC mode). A mode to use the actual
-estimator (a type of empirical matrix, as is currently done for SCC for example) will be implemented later).
+- ``DM_basis`` define the actuator basis that you use to describe the DM movement when building the matrix. It can currenlty takes 2 modes: "actuator" (all actuators are pushed one after another) and "fourier",  where we use sine and cosine. Finally, there is a ``amplitudeEFC`` parameter in "actuator" mode which set the level to which you can push the actuators.
+- ``MatrixType`` is defining the type of estimation we do to measure the FP for each DM movement. It can currenlty takes 2 modes: "Perfect" (we assume a perfect estimator) and "SmallPhase" (we make a small phase assumption in the matrix. This is the main EFC mode). A mode to use the actual estimator (a type of empirical matrix, as is currently done for SCC for example) will be implemented later).
 
 
 The Matrix calculation is done during initialization:
@@ -119,10 +110,8 @@ Most used method on Asterix. It is a optimizes Singular Value Decomposition, for
 - ``Nbmodes_OnTestbed`` is the number of mode that will be used for the inverse matrix for the THD2 testbed, in the Labviw directory
 - ``gain`` is the gain of the loop in EFC
 - ``Nbiter_corr`` number of iterations in each loop. Can be a single integer or a list of integer
-- ``Nbmode_corr`` number of EFC modes. Can be a single integer or a list of integer. !! if this is a 
-list, it must be of the same size than Nbiter_corr !!
-- ``Linesearch`` : boolean. If TRue the algorithm test a few inversion modes at each iteration and take the ones that 
-    minimize the contrast the most. Very time consuming
+- ``Nbmode_corr`` number of EFC modes. Can be a single integer or a list of integer. If this is a list, it must be of the same size than ``Nbiter_corr``
+- ``Linesearch`` : boolean. If TRue the algorithm test a few inversion modes at each iteration and take the ones that minimize the contrast the most. Very time consuming
 
 **Stroke Minimization (SM)**: 
 This is specifically the optimized Stroke Minimization described in `Mazoyer et al. (2018) <http://adsabs.harvard.edu/abs/2018AJ....155....7M>`_.
@@ -142,8 +131,11 @@ Correction loop
 
 
 The ``CorrectionLoop1Matrix`` function is a loop running ``Nbiter_corr`` times that is basically doing:
+
 * estimation
+
 * correction
+
 * application on DM and measure of DM
 
 The results are stored in a dictionnary then sent to ``Save_loop_results`` for ploting and saving in the folder 

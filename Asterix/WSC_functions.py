@@ -123,7 +123,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     wavefront and DMs are flat.
 
     This code works for all testbeds without prior assumption (if we have at 
-    least 1 DM of course). We have optimized the code to only do once optical 
+    least 1 DM of course). We have optimized the code to only do once the optical 
     elements before the DM movement and repeat only what is after the DMS
     
     AUTHOR : Axel Potier and Johan Mazoyer
@@ -253,9 +253,9 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
             pos_in_matrix += DM.basis_size
 
         else:
-            # Finally we can measure the matrix if we
-
-            #measure the initial FP. This is normalised with the testbed.
+            # We measure the initial Focal plane that will be removed at the end. 
+            # Be careful because todetector automatically normalized to contrast with the full testbed
+            # We checked that this is the same normalization as in Gvector
             G0 = proc.resampling(
                 testbed.todetector(
                     entrance_EF=input_wavefront,
@@ -269,7 +269,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
             print("Start " + DM_name)
 
-            # we measure the phases of the Basis we will apply on the DM
+            # we measure the phases of the Basis we will apply on the DM.
+            # In the case of the Fourier Basis, this is a bit long so we load an existing .fits file
             if DM.basis_type == 'fourier':
                 sqrtnbract = int(np.sqrt(DM.total_act))
                 Name_FourrierBasis_fits = "Fourier_basis_" + DM.Name_DM + '_prad' + str(
@@ -439,9 +440,14 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                                                       name_plane, wavefront)
                     else:
                         # this is the last one ! so we propagate to FP and resample to estimation size
-                        # we have to be careful with the normalizatiom, by default this is the
+                        # we have to be careful with the normalization, by default this is the
                         # normalization of the last optical system (probably the coronograph)
-                        # not of the full system
+                        # not of the full system (because we went through each optics one by one, not 
+                        # through the whole system at once). For this reason, we do not use the defaut 
+                        # automatic normalization (in_contrast=False) but normalize "by hand" using 
+                        # normalisation_testbed_EF_contrast which is the  max value of the PSF at this 
+                        # wavelength for the whole testbed. This is the same normalization as G0.
+
                         Gvector = proc.resampling(
                             OpticSysAfter.todetector(entrance_EF=wavefront,
                                                      in_contrast=False) /

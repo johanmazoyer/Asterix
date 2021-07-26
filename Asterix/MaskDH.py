@@ -7,8 +7,7 @@ class MaskDH:
     """ --------------------------------------------------
         A very small class to do all the mask related stuff: retrieve parameters and
         combined them measure the mask and measure the string to save matrices.
-        They're fast to measure that we do not need to save them but if you
-        absolutely want to you can do it here.
+        They're fast to measure so we do not need to save except in 'onbench' case
     -------------------------------------------------- """
 
     def __init__(self, Correctionconfig):

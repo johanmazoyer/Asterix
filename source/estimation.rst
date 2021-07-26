@@ -8,13 +8,11 @@ are possible in Asterix. Files can be found in :ref:`estimationfiles-label`.
 
 It contains 2 functions at least:
 
-- an initialization ``Estimator.__init__()`` The initialization will require previous initialization of
-the testbed (see previous section) and the [Estimationconfig] part of the parameter file. 
-It set up everything you need for the estimation (e.g. the PW matrix). 
+- an initialization ``Estimator.__init__()`` The initialization will require previous initialization of the testbed (see previous section) and the [Estimationconfig] part of the parameter file.  It set up everything you need for the estimation (e.g. the PW matrix). 
 
-- an estimatation function itself with parameters
-                - the entrance EF
-                - DM voltages
+- an estimatation function itself with parameters:
+        - the entrance EF
+        - DM voltages
 
 It returns the estimation as a 2D complex array. The size in pixel of the output is 
 set by the ``Estim_sampling`` parameter and therefore depends on the parameters ``dimScience`` 
