@@ -32,12 +32,29 @@ import time as t
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
+## Pondertion moche 
+normA = 1e5 #
+  # normA pour ~Normalisation Amplifié~
+  # pour eviter les valeurs trop faible pour le minimiseur 
+  # psq sinon images sont trop vite identiques 
+  # <=> pas bcp de diff entre deux points différents du gradient
+  # <=> point arret atteint prématurement
+  # Et que il faut que ça marche pour corono asterix ET corono moi
+  # Et que ducoup de doit changer tt la normalisation des mfts partout
+  # Parce que j'ai pas mis de flux pour le gradient auto
+  # Et c'est penbible de remplacer toute les iterations du coeff à la main
+  # J'en oublie systematiquement 1
+  # En + avec le corono Asterix ça ne marche même pas
+  # et j'ai pas le temps de faire un truc plus propre
+  # ! doit aussi être changé dans critère.py !
+  # PS : ça casse la ponderation avec la regularisation...
+  
 
 # %% DATA SIMULATOR
 
 class data_simulator():
 
-    def __init__(self,tbed, known_var = "default", div_factors = [0,1], phi_foc=None,cplx = False,myope=False):
+    def __init__(self,tbed, known_var = "default", div_factors = [0,1], phi_foc = None, cplx = False, myope = False):
         
         # Store simulation Variables
         self.tbed      = tbed
@@ -59,7 +76,7 @@ class data_simulator():
         
         # Set default everywhere it is needed
         if known_var == "default" : self.set_default_value()
-        if phi_foc is None : self.set_phi_foc(zernike(Ro,Theta,1))
+        if phi_foc is None : self.set_phi_foc(np.zeros((self.N,self.N)))
      
     ################################################################
     ####  Generators  ####
@@ -85,7 +102,7 @@ class data_simulator():
         n = self.N
         phis = np.zeros((n,n,self.nb_div))
         
-        # List of phi_up = phi_foc + a*defoc
+        # List of phi_up = phi_foc + carte de diversité
         phis = (phis + self.phi_foc.reshape(n,n,1)) + self.div_map
         if self.myope : phis += self.div_err
         
@@ -131,11 +148,15 @@ class data_simulator():
     def set_nb_div(self,div_factors):
         self.nb_div = len(div_factors)
         
-    def set_flux(self,flux):
+    def set_flux(self,flux,div_id=None):
+        if div_id is not None : self.known_var['flux'][div_id] = flux
         self.known_var['flux'] = flux
+        self.fondflux_forall()
         
-    def set_fond(self,fond):
+    def set_fond(self,fond,div_id=None):
+        if div_id is not None : self.known_var['fond'][div_id] = fond
         self.known_var['fond'] = fond
+        self.fondflux_forall()
     
     def get_EF(self,defoc=0):
         return self.EF_foc
@@ -152,7 +173,7 @@ class data_simulator():
         else  : return self.tbed.todetector_Intensity(self.get_EF_div(div_id),self.get_EF_do())
     
     def get_phi_foc(self):
-        return self.phi_foc
+        return self.phi_foc * self.tbed.pup
     
     def get_phi_div(self,div_id):
         if self.myope : 
@@ -161,8 +182,13 @@ class data_simulator():
             return self.phi_foc + self.div_map[:,:,div_id]
     
     def get_div_err(self,div_id):
+        """return error on diversity """
         return self.div_err[:,:,div_id]
-        
+
+    def get_div_est(self,div_id):
+        """return estimated diversity """
+        return self.div_map[:,:,div_id] + self.div_err[:,:,div_id]
+
     def get_EF_do(self):
         return self.known_var['downstream_EF']
     
@@ -244,6 +270,22 @@ class data_simulator():
 
         return pack
     
+    def opti_bound(self,bound = 1,phi_foc=None):
+        """Concatene variables to fit optimize minimiza syntax"""
+        
+        self.set_default_value()
+        n = self.N
+        pack = []
+        pup = self.tbed.pup
+        
+        if not self.phi_foc_is_known() and not self.cplx : pack = np.concatenate((pack, (bound*pup).reshape(n**2,)), axis=None)
+        if not self.phi_foc_is_known() and     self.cplx : pack = np.concatenate((pack, tls.complex2real(bound*pup)), axis=None)
+        if not self.phi_do_is_known()  : pack = np.concatenate((pack, (bound*pup).reshape(n**2,)), axis=None)         
+        if self.myope  : pack = np.concatenate( (pack, np.matlib.repmat((bound*pup).reshape(n**2,),self.nb_div,1) ), axis=None)         
+
+        return np.transpose([-pack,pack])
+    
+    
     def opti_update(self,pack,imgs):
         """Uptade sim with varaibles from minimizer optimize"""
         
@@ -288,7 +330,7 @@ class data_simulator():
         
         if RSB is not None :
             varb = 10**(-RSB/20)
-            imgs = imgs + np.random.normal(0, varb, imgs.shape)
+            imgs = imgs + self.get_flux()*np.random.normal(0, varb, imgs.shape)
             
         return imgs
 
@@ -298,18 +340,16 @@ class data_simulator():
 
     def todetector(self,div_id,ff=True):
         """ call EF_through bench"""
-        a = self.N**2
-        if isinstance(div_id, int) : return a*self.tbed.todetector(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())
-        else                       : return a*self.todetector_loop(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())    
+        if isinstance(div_id, int) : return normA*self.tbed.todetector(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())
+        else                       : return normA*self.todetector_loop(self.get_EF_div(div_id),EF_aberrations_LS=self.get_EF_do())    
 
     def todetector_loop(self,EFs=1.,downstream_EF=1):
         """ Just to make a big array of all div EFs because it is cleaner to me"""
-        a = self.N**2
         shape  = (self.tbed.dimScience,self.tbed.dimScience,1)
-        res    = a * self.tbed.todetector(EFs[:,:,0],EF_aberrations_LS=downstream_EF).reshape(shape)
+        res    = normA * self.tbed.todetector(EFs[:,:,0],EF_aberrations_LS=downstream_EF).reshape(shape)
         
         for ii in range(1,EFs.shape[2]):
-            out = a * self.tbed.todetector(EFs[:,:,ii],EF_aberrations_LS=downstream_EF).reshape(shape)
+            out = normA * self.tbed.todetector(EFs[:,:,ii],EF_aberrations_LS=downstream_EF).reshape(shape)
             res = np.append(res,out,axis=2)
         
         return res
@@ -344,8 +384,14 @@ class data_simulator():
     
     def fondflux_forall(self):
         """If flux/fond is int, them defin list of flux fond equal for each diversity """
-        if not isinstance(self.get_flux(), list): self.set_flux( [self.get_flux()] * self.nb_div)
-        if not isinstance(self.get_fond(), list): self.set_fond( [self.get_fond()] * self.nb_div)
+        
+        if not 'flux' in self.known_var : self.known_var['flux'] = 1
+        if not 'fond' in self.known_var : self.known_var['fond'] = 0
+        
+        fu = self.get_flux()
+        fo = self.get_fond()
+        if not (isinstance(fu,list) or isinstance(fu,np.ndarray)) : self.known_var['flux'] = [self.get_flux()] * self.nb_div
+        if not (isinstance(fo,list) or isinstance(fo,np.ndarray)) : self.known_var['fond'] = [self.get_fond()] * self.nb_div
         
         if (len(self.get_flux()) is not self.nb_div) or ( len(self.get_fond()) is not self.nb_div) :
             raise Exception('Flux/fond list len have to match number of diversity')
@@ -368,27 +414,37 @@ class coffee_estimator:
     COFFEE estimator
     -------------------------------------------------- """
 
-    def __init__(self,var_phi=0 ,method = 'L-BfGS-B',auto=True ,cplx=False,myope=False, bound=None, gtol=1e-1 , maxiter=10000, eps=1e-10,disp=False,H=None,**kargs):
+    def __init__(self,var_phi=0 ,method = 'L-BfGS-B',auto=False ,cplx=False,myope=False, bound=3, name=None,disp=False,H=None,**kargs):
         
         self.var_phi = var_phi
         self.disp    = disp
         self.bound   = bound
-        self.simGif  = None
+        self.simGif  = name
         self.auto    = auto
-        self.mode    = {'cplx':cplx,'myope':myope} 
-
+        self.cplx    = cplx
+        self.myope   = myope
+        
         # Minimize parameters
-        options = {'disp': disp,'gtol':gtol,'eps':eps,'maxiter':maxiter}
-        self.setting = {'options' : options, 'method': method }
+        self.minimiz_options = {'disp' : True} # default disp activated
+        for key in kargs.keys() :
+            if key in ['disp','maxcor','ftol','gtol','eps','maxfun','maxiter','iprint','maxls','finite_diff_rel_step'] :
+                self.minimiz_options[key] = kargs[key]
+                
+        self.setting = {'options' : self.minimiz_options, 'method': method }
+        # (option is mutable -> you change option it will change in settings :)
         
         # Pour le gradient automatique H = matrice de gradient
+        self.set_auto(auto)
+        
+        
+    def set_auto(self,auto):
+        self.auto    = auto
         if auto : 
             self.setting["fun"] = cacl.V_map_J_auto
             self.setting["jac"] = cacl.V_map_dJ_auto
         else :
             self.setting["jac"] = cacl.V_grad_J
-            self.setting["fun"]  = cacl.V_map_J
-        
+            self.setting["fun"]  = cacl.V_map_J    
 
     def estimate(self,tbed,imgs,div_factors,known_var=dict(),phi_foc=None,**kwargs):
         """ Do a COFFEE estimation
@@ -413,20 +469,23 @@ class coffee_estimator:
         
         ## -- Create our simulation -- ##
         
-        sim   = data_simulator(tbed,known_var,div_factors,phi_foc,**self.mode)
+        mode    = {'cplx':self.cplx,'myope':self.myope} 
+        sim   = data_simulator(tbed,known_var,div_factors,phi_foc,**mode)
         sim   = sim_init_infos(sim)
+        if not sim.flux_is_known() : sim.set_flux(np.sum(imgs[:,:,0])) # Pour eviter l'erreur LinAlgError: Singular matrix.
 
         ## -- Agrs : Fucntion J and DJ required arguments -- ##
         
-        varb = np.median(imgs) + 1   # Ponderation varb 
-        spup  = tls.circle(sim.N, sim.N, sim.tbed.prad - 1) # Small pup for regularisation border effect
+        varb = np.median(imgs) + 1   # Ponderation varb
+        # prad = diametre. so cut 2 pix on rad = 4 pix on diam
+        spup  = tls.circle(sim.N, sim.N, sim.tbed.prad//2 - 2) # Small pup for regularisation border effect
         
         self.setting['args'] = sim,imgs,self.var_phi,varb,spup,self.simGif 
         if self.auto : self.setting['args'] += (cacl.genere_L(tbed),)
     
         ## -- xo and bounds initilisation
-        self.setting['x0'] = sim.opti_pack()
-        self.set_bounds(self.setting['x0'])
+        self.setting['x0']     = sim.opti_pack()
+        if self.bound : self.setting['bounds'] = sim.opti_bound(self.bound)
 
         
         ## --  Estimation with minimize  -- ##
@@ -449,13 +508,6 @@ class coffee_estimator:
         self.toc          = toc
         
         return sim
-
-    def set_bounds(self,x0):
-        """ Setting bounds matrix for minimize as syntaxes required """
-        if self.bound is not None and self.setting['method'] == 'L-BfGS-B' :
-            mapphi = np.ones(x0.shape)
-            bounds = (np.transpose([-self.bound*mapphi,self.bound*mapphi]))
-            self.setting['bounds'] = bounds 
 
 def print_time(tic,toc):
     mins = int(toc//60)
@@ -523,7 +575,7 @@ class custom_bench(Optical_System):
 
     def todetector(self,entrance_EF=1.,EF_aberrations_LS=1.):
         w = self.dimScience//self.Science_sampling
-        return w**2*mft(self.EF_through(entrance_EF,EF_aberrations_LS),w,self.dimScience,w,inverse=True,**self.offest)
+        return mft(self.EF_through(entrance_EF,EF_aberrations_LS),w,self.dimScience,w,inverse=True,**self.offest)
         
     def z_biais(self):
         N = self.dimScience//self.Science_sampling
@@ -574,7 +626,6 @@ class custom_bench(Optical_System):
         view_list.append(mft(view_list[-1],N,N*self.Science_sampling,N,inverse=True,**self.offest))
                 
 
-        
         self.view_list = view_list
         if(self.zbiais): self.title_list = ["Entrence EF", "Upsteam pupil", "MFT", "Corno", "MFT", "Correction zbiais" ,"Downstream EF + pupil", "MFT - detecteur"]
         else           : self.title_list = ["Entrence EF", "Upsteam pupil", "MFT", "Corno", "MFT", "Downstream EF + pupil", "MFT - detecteur"]     
@@ -589,5 +640,6 @@ class custom_bench(Optical_System):
     def __update_introspect__(self,val):
         """ Handler for instrosect slider """
         view_list = self.view_list
+        val = int(val)
         self.into.add_subplot(1,1,1),plt.imshow(abs(view_list[val]),cmap='jet'),plt.suptitle(self.title_list[val]),plt.title("Energie = %.5f" % sum(sum(abs(view_list[val])**2))),plt.subplots_adjust(bottom=0.25)
        

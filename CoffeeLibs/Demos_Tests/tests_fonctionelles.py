@@ -3,6 +3,25 @@
 Created on Thu May  11 11:13:39 2021
 
 @author: sjuillar
+
+
+----------------   Test fonctionelle PyCoffee  -----------------
+
+
+Section 1  -> parametres de base
+
+Section 2  -> Fonction pour écrire les logs/spreadsheet etc
+
+Section 3  -> Définition des test avec unit test
+
+Section 4  -> Main ou on lance les tests
+
+----
+Fait les tests. Ecris un fichier exels avec les résultats d'erreur
+Fait aussi les figures de phase dans un fichier. (template_plot)
+
+Beware of how you reset estimator sim and tbed ! 
+
 """
 
 from CoffeeLibs.coffee import custom_bench, coffee_estimator, data_simulator
@@ -17,52 +36,69 @@ from configobj import ConfigObj
 from validate import Validator
 
 import xlsxwriter as wrt
+from datetime import datetime
 import unittest
 
-# %% Chargement des parametres
 
-# Chargement des parametres de la simulation
+# %% ################ SECTION 1 #################
+
+
+prefix = datetime.now().strftime("%d_%m_%H_%M_")# Prefix pour différentier les series. Prfix date
+
+threshold = 1 # Error max on recontruction in percent (precsion 2decimals)
+
 config = get_ini('my_param_file.ini')
 
+# Paramètres globaux 
+fu = 1e1
+known_var   = {'downstream_EF':1, 'flux':fu, 'fond':0}
+div_factors = [0,0.0000001]
+RSB         = None
 
-# Paramètres qu'il faudra ranger dans ini file..
-known_var   = {'downstream_EF':1, 'flux':1, 'fond':0}
-div_factors = [0,1]  # List of div factor's images diversity
-RSB         = 30000
+def reset_param():
+    global fu,known_var,known_var,div_factors,RSB
+    fu = 1e1
+    known_var   = {'downstream_EF':1, 'flux':fu, 'fond':0}
+    div_factors = [0,0.0000001]
+    RSB         = None
 
-# %% Initalisation of objetcs
+def reset_tbed():
+    global tbed
+    tbed      = custom_bench(config,'.')
+    
+def reset_sim():
+    global imgs,sim    
+    sim = data_simulator(tbed,known_var,div_factors)
+    coeff = 0.1/np.arange(1,7)
+    coeff[0:3] = [0,0,0]
+    
+    sim.gen_zernike_phi_foc(coeff)
+    
+    imgs = sim.gen_div_imgs(RSB) 
 
-prefix = "1pix"
 
-tbed      = custom_bench(config,'.')
-sim       = data_simulator(tbed,known_var,div_factors)
+reset_tbed()
+reset_sim()
 
-threshold = 3  # Error max 
+# %% ################ SECTION 2 #################
+# Things to write result in a ~nice~ spreadsheet
 
-coeff = 1/np.arange(1,6) # Coeff to generate phi_foc
-coeff[0:3] = [0,0,0]
 
-sim.gen_zernike_phi_foc(coeff)    # On génere le phi focalisé
-sim.gen_zernike_phi_do([0,0,1])   # On phi do
-
-imgs = sim.gen_div_imgs()         # On cree les images
-
-# D'autres trucs utils
-cropEF   = sim.get_phi_foc()*tbed.pup
-cropEFd  = sim.get_phi_do()*tbed.pup_d
-pup_size = np.sum(tbed.pup)
-
-# %% Things to write result in a ~nice~ spreadsheet
-
-book  = wrt.Workbook('./save/UnitTests.xlsx')
+log = './save/'+prefix+'test_error_log.txt'
+book  = wrt.Workbook('./save/'+prefix+'UnitTests.xlsx')
 sheet = book.add_worksheet("setting")
 sheet.write_comment(0,0,str(config))
 
-labels = ["Name","error","errror_on_phi_do","error_on_flux","error_on_fond","time"]
+labels = ["Name","%imgs","%phi_up","%phi_do","diff flux","diff fond","time (s)"]
 
 Good        = book.add_format({'font_color': 'green'})
-NotGood     = book.add_format({'bold': True, 'font_color': 'red'})
-labels_font = book.add_format({'bold': True, 'font_color': 'blue'})
+NotGood     = book.add_format({'bold': True, 'font_color': 'red','text_wrap': True})
+labels_font = book.add_format({'bold': True, 'font_color': 'blue','text_wrap': True})
+
+def write_log(name,e):
+    f = open(log, "a")
+    f.write(name +" : \n" + str(e) + '\n')
+    f.close()
 
 def fontchoice(assertRes):
     if (assertRes): return Good
@@ -88,32 +124,45 @@ def new_row(datas,error):
     col += 1
 
 def do_a_test(name):
-    
-        name = prefix + "_" + name
+        path = prefix + "_" + "unit_test/"
         
-        estimator.simGif = name
-        e_sim = estimator.estimate(tbed,imgs,div_factors,known_var) # Estimation
-       
-        error      = abs( cropEF   - e_sim.get_phi_foc() )
+        estimator.simGif = None
+        try :  e_sim = estimator.estimate(tbed,imgs,div_factors,known_var) # Estimation
+        except Exception as e : 
+            write_log(name,e)
+            return False
+        
+        # Erreur percentage 2decs precision
+        error      = 100 * np.sum(abs( sim.get_phi_foc() - e_sim.get_phi_foc() )) / np.sum(abs(sim.get_phi_foc()))
+        
         error_flux = sim.get_flux(0)- e_sim.get_flux(0)
         error_fond = sim.get_fond(0)- e_sim.get_fond(0)
-        error_do   = abs( cropEFd  - e_sim.get_phi_do()*tbed.pup_d )
         
-        new_row([name,np.sum(error)/pup_size,np.sum(error_do)/pup_size,error_flux,error_fond,estimator.toc], ((np.sum(error)/error.size)<threshold))
+        if np.sum(sim.get_phi_do()) == 0 : error_do = 0
+        else : error_do   = 100 * np.sum(abs( sim.get_phi_do()  - e_sim.get_phi_do())) /  np.sum(abs(sim.get_phi_do()))
         
-        tempalte_plot(sim,e_sim,estimator,name="fig/"+name,disp=False,save=True)
+     # Compute error of reconstruction
+        e_imgs = e_sim.gen_div_imgs(RSB)
+        error_img = []
+        for div in range(e_sim.nb_div) :
+            error_img.append( 100 * ( np.sum(abs(e_imgs[:,:,div] - imgs[:,:,div])) ) / np.sum(abs(imgs[:,:,div])) )
+        error_img = np.mean(error_img)
+            
+        new_row([name,error_img,error,error_do,error_flux,error_fond,estimator.toc], (error_img<threshold))
+        tempalte_plot(sim,e_sim,estimator,name=name,disp=False,save=True,path=path)
 
-        return np.sum(error)/pup_size
-    
+        return True
     
 def reset_estimator():
     global estimator
     estimator = coffee_estimator(**config["Estimationconfig"])
-    estimator.var_phi_up =  1 / np.var(sim.get_phi_foc())
-    estimator.var_phi_do =  1 / np.var(sim.get_phi_do())
+    estimator.minimiz_options["disp"] = False
+    estimator.var_phi =  0 / np.var(sim.get_phi_foc())
+    estimator.bound = None
 
 
-# %% unit Test
+# %% ################ SECTION 3 #################
+# unit Test
 
 class TestCoffee(unittest.TestCase):
     
@@ -122,27 +171,33 @@ class TestCoffee(unittest.TestCase):
         init_worksheet("test_known_var",labels)
         global known_var
         global estimator
+        global sim
+        global imgs
+        reset_tbed()
         reset_estimator()
+        reset_sim()
         
-        #Estimation All fixed
-        known_var   = {'downstream_EF':sim.get_EF_do(), 'flux':1, 'fond':0}
-        error = do_a_test("All fixed")
+        # _________
+        known_var   = {'downstream_EF':sim.get_EF_do(), 'flux':fu, 'fond':0}
+        self.assertTrue(do_a_test("All fixed"))
         
-        known_var   = {'downstream_EF':sim.get_EF_do()}
-        error = do_a_test("downstream_EF fixed")
+        # _________
+        known_var   = {'downstream_EF':sim.get_EF_do(), 'flux':fu}
+        self.assertTrue(do_a_test("Estime fond"))
         
-        known_var   = {'flux':1, 'fond':0}
-        error = do_a_test("Flux_fond fixed")
-
-        
-        known_var   = {'flux':1}
-        error = do_a_test("Flux fixed")
-        
+        # _________
         known_var   = {'downstream_EF':sim.get_EF_do(),'fond':0}
-        error = do_a_test("Fond and downstream_EF fixed")
+        self.assertTrue(do_a_test("Estime flux"))
         
+        # _________
+        sim.gen_zernike_phi_do([0,0,0.5])
+        imgs  = sim.gen_div_imgs()
+        known_var   = {'flux':fu, 'fond':0}
+        self.assertTrue(do_a_test("Estime downstream EF"))
+        
+        # _________
         known_var   = {}
-        error = do_a_test("Estime All")
+        self.assertTrue(do_a_test("Estime All"))
 
     def test_diff_corono(self):
         
@@ -153,31 +208,41 @@ class TestCoffee(unittest.TestCase):
         global tbed
         global estimator
         global imgs
-        known_var = {'downstream_EF':sim.get_EF_do(), 'flux':1, 'fond':0}
+        known_var = {'downstream_EF':sim.get_EF_do(), 'flux':fu, 'fond':0}
+        reset_tbed()
         reset_estimator()
+        reset_sim()
 
         #Estimation All fixed
         
         tbed.set_corono("lyot")
         sim.tbed = tbed
         imgs  = sim.gen_div_imgs()
-        error = do_a_test("lyot")
+        self.assertTrue(do_a_test("lyot"))
         
         tbed.set_corono("R&R") 
         sim.tbed = tbed
         imgs  = sim.gen_div_imgs()
-        error = do_a_test("lyot")
+        self.assertTrue(do_a_test("R&R"))
         
         tbed.set_corono("4q") 
+        tbed.zbiais = False
         sim.tbed = tbed
         imgs  = sim.gen_div_imgs()
-        error = do_a_test("4q")
+        self.assertTrue(do_a_test("4q no zbiaiz"))
         
-        tbed.set_corono("4q zbiaiz")
+        tbed.set_corono("4q")
         tbed.zbiais = True
         sim.tbed = tbed
+        global div_factors
+        div_factors = [0,0.1]
+        coeff = 1/np.arange(1,7)
+        coeff[0:3] = [0,0,0]
+        reset_sim()
+        sim.gen_zernike_phi_foc(coeff)
         imgs  = sim.gen_div_imgs()
-        error = do_a_test("4q zbiaiz")
+        self.assertTrue(do_a_test("4q"))
+        reset_param()
         
     def test_regul(self):
         
@@ -185,31 +250,82 @@ class TestCoffee(unittest.TestCase):
         
         global known_var
         global estimator
+        reset_tbed()
         reset_estimator()
-        known_var = {'downstream_EF':sim.get_EF_do(), 'flux':1, 'fond':0}
+        reset_sim()
+        known_var = {'downstream_EF':sim.get_EF_do(), 'flux':fu, 'fond':0}
         
-        estimator.var_phi_up =  0
-        estimator.var_phi_do =  0
-        error = do_a_test("No regularisation")
+        # _________
+        estimator.var_phi =  0
+        self.assertTrue(do_a_test("No regularisation"))
         
-        estimator.var_phi_up =  1 / np.var(sim.get_phi_foc())
-        estimator.var_phi_do =  1 / np.var(sim.get_phi_do())
-        error = do_a_test("Perfect regularisation")
+        # _________
+        estimator.var_phi =  1 / np.var(sim.get_phi_foc())
+        self.assertTrue(do_a_test("Perfect regularisation"))
         
-        estimator.var_phi_up =  0.5 / np.var(sim.get_phi_foc())
-        estimator.var_phi_do =  0.5 / np.var(sim.get_phi_do())
-        error = do_a_test("Regularisation halves")
+        # _________
+        estimator.var_phi =  0.5 / np.var(sim.get_phi_foc())
+        self.assertTrue(do_a_test("Regularisation halves"))
         
-        estimator.var_phi_up =  2 / np.var(sim.get_phi_foc())
-        estimator.var_phi_do =  2 / np.var(sim.get_phi_do())
-        error = do_a_test("Regularisation double")
+        # _________
+        estimator.var_phi =  2 / np.var(sim.get_phi_foc())
+        self.assertTrue(do_a_test("Regularisation double"))
+        
+    def test_mode(self):
+        
+        init_worksheet("modes",labels)
+        
+        global known_var
+        global estimator
+        global tbed
+        global sim
+        global imgs
+        global normA
+        known_var = {'downstream_EF':1, 'flux':1, 'fond':0}
+        reset_tbed()
+        reset_estimator()
+        reset_sim()
+
+        tbed.rcorno = 0
+        tbed.set_corono("lyot")
+        sim.tbed = tbed
+        imgs  = sim.gen_div_imgs()
+        
+        # _________
+        estimator.myope = True
+        # TODO changer la diversité
+        self.assertTrue(do_a_test("Myope"))
+        estimator.myope = False
+
+        # _________
+        estimator.set_auto(True)
+        self.assertTrue(do_a_test("Auto"))
+        estimator.set_auto(False)
+
+        # _________
+        estimator.cplx = True
+        known_var = {'downstream_EF':1, 'flux':1e3, 'fond':0}
+        reset_sim()
+        tbed.set_corono("4q") 
+        sim.tbed = tbed
+
+        coeff = 1/np.arange(1,7)
+        coeff[0:3] = [0,0,0]
+        
+        phi_r = sim.gen_zernike_phi(coeff)
+        phi_i =  sim.gen_zernike_phi([0,0.1,0.1])
+        sim.set_phi_foc(phi_r+1j*phi_i)
+        
+        imgs = sim.gen_div_imgs(RSB) 
+
+        self.assertTrue(do_a_test("Complex"))
         
 
         
         
         
         
-# %% Main
+# %% ################ SECTION 4 - Main ##########
 
 unittest.main()
 book.close()

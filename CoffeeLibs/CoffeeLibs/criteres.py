@@ -18,6 +18,10 @@ from CoffeeLibs.pzernike import pmap, zernike
 from Asterix.propagation_functions import mft
 import copy
 
+# Ponderation moche :-)
+# A changer aussi dans coffee
+normA = 1e5
+
 # %% #######################
 """ Calcule critère  """
 
@@ -34,8 +38,9 @@ def regule(psi,spup=1,mode="np"):
     
     return  np.sum(psi_grad)**2
 
-def diff_grad_J_up(point,div_id,sim,i_ref,dphi=1e-6):
+def diff_grad_J_up(point,div_id,esim,i_ref,dphi=1e-6):
         
+    sim = copy.deepcopy(esim)
     dphi_list = [] # List of gradient dphi(a,b) for all possible (a,b)
     i_point = sim.get_img_div(div_id)
 
@@ -137,11 +142,12 @@ def DJmv_up(div_id,img,sim,cpart=False):
     terme2  = tb.corno * mft( psi_d * terme1 ,wphi,wphi,wphi,**offset)
     terme3  = mft( terme2 ,wphi,wphi,wphi,inverse=True,**offset)
     
-    Dj  = - 4 * np.imag( psi_u * terme3 )
+    Dj  = - normA * 4 * np.imag( psi_u * terme3 )
     
     if cpart : 
-        Dj = Dj.astype('complex128')
-        Dj += - 4j * np.real( psi_u * terme3 )
+        Dj  =  Dj.astype('complex128')
+        Dj +=  - normA * 4j * np.real( psi_u * terme3 )
+        Dj *= 1/2
     
     return Dj
 
@@ -166,7 +172,7 @@ def DJmv_down(div_id,img,sim):
     terme1  = mft( np.conj(psi_det) * alpha * diff ,w,wphi,wphi,inverse=True,**offset)
     terme2  = mft( tb.corno * mft( psi_u ,wphi,wphi,wphi,inverse=True,**offset),wphi,wphi,wphi,**offset)
     
-    Dj = - 4 * np.imag( psi_d * terme2 * terme1 )
+    Dj = - normA * 4 * np.imag( psi_d * terme2 * terme1 )
     
     return Dj
 
@@ -192,7 +198,7 @@ def DJmv_espi(div_id,img,sim):
     terme2  = tb.corno * mft( psi_d * terme1 ,wphi,wphi,wphi,**offset)
     terme3  = mft( terme2 ,wphi,wphi,wphi,inverse=True,**offset)
     
-    Dj  = - 4 * np.imag( psi_u * terme3 )
+    Dj  = - normA * 4 * np.imag( psi_u * terme3 )
     
     return Dj
 
@@ -210,13 +216,16 @@ def estime_fluxfond(sim,imgs):
     ff_list = np.zeros((2,sim.nb_div))
     
     for ii in range(sim.nb_div):
-        h    = sim.get_img_div(ii,ff=False)
+        i_e    = sim.get_img_div(ii,ff=False)
         img  = imgs[:,:,ii]
-        hsum = np.sum(h)
-        mat  = np.array( [[ np.sum(h*h) , hsum ],[ hsum , img.size ]])/img.size
+        hsum = np.sum(i_e)
+        mat  = np.array( [[ np.sum(i_e*i_e) , hsum ],[ hsum , img.size ]])/img.size
         vect = np.array( [ np.sum(sim.get_img_div(ii,ff=False)*img),np.sum(img)])/img.size
-        ff_list[:,ii]   = np.linalg.solve(mat,vect)
-    
+        try :
+            ff_list[:,ii]   = np.linalg.solve(mat,vect)
+        except  np.linalg.LinAlgError :
+            ff_list[:,ii]   = np.array([sim.get_flux(ii),sim.get_fond(ii)])
+            print("La matrice pour trouver le flux/fond n'est pas inversible !?")
     return ff_list
 
 
@@ -232,10 +241,9 @@ def V_map_J(var,sim,imgs,hypp,varb,spup,simGif):
     
     Jmv = meanSquare(Hx,imgs) / (sim.nb_div * varb)
     
-    R   = (1/2) * hypp * regule(sim.get_phi_foc(),spup)
+    R   = np.sqrt(np.mean(sim.get_flux())) * normA * (1/2) * hypp * regule(sim.get_phi_foc(),spup)
     
     sim.info.append([Jmv, R])
-    
     return  Jmv + R
 
 
@@ -257,14 +265,18 @@ def V_grad_J(var,sim,imgs,hypp,varb,spup,simGif):
             # Calcul de Jmv pour chaque diversité
             grad_u_k = DJmv_up(div_id,imgs[:,:,div_id],sim,sim.cplx)
             grad_u   += grad_u_k
-            info_div.append(np.sum(grad_u_k**2))
+            info_div.append(np.sum(abs(grad_u_k)))
             
         # Ponderation
         grad_u *= 1 / (sim.nb_div * varb)  
         
         # Regulatrisation
-        dR = spup * hypp * Dregule(sim.get_phi_foc()) 
+        dR = - normA * sim.get_flux(div_id) * spup * hypp * Dregule(sim.get_phi_foc()) 
         grad    = tls.add_to_list(grad, grad_u + dR)
+        
+        # info de ponderation coupé par spup pour que  R et J soit sur le mm nombre de pixels non-nul
+        sim.info_gard.append([np.sum(abs(grad_u) * spup),np.sum(abs(dR))])     
+        sim.info_div.append(info_div)
             
 
     ## -- Gradient Downstream -- ##
@@ -276,11 +288,12 @@ def V_grad_J(var,sim,imgs,hypp,varb,spup,simGif):
             grad_d += DJmv_down(div_id,imgs[:,:,div_id],sim)
         
         # Ponderation
-        grad_d *= 1  
+        grad_d *= 1  / (sim.nb_div * varb)
         
         # Regulatrisation
-        dRdo    = spup * hypp * Dregule(sim.get_phi_do()) # Regulatrisation
+        dRdo    = normA * sim.get_flux(div_id) * spup * hypp * Dregule(sim.get_phi_do()) # Regulatrisation
         grad    = tls.add_to_list(grad, grad_d + dRdo)
+        
            
     ## -- gradient mode myope -- ##
     if sim.myope :
@@ -293,7 +306,7 @@ def V_grad_J(var,sim,imgs,hypp,varb,spup,simGif):
             grad_e *= 1 / (sim.nb_div * varb)
             
             # Regulatrisation
-            dRe    = spup * hypp * Dregule(sim.get_div_err(div_id)) # Regulatrisation
+            dRe    = normA * sim.get_flux(div_id) * spup * hypp * Dregule(sim.get_div_err(div_id)) # Regulatrisation
             grad   = tls.add_to_list(grad, grad_e + dRe)
         
         
@@ -301,9 +314,6 @@ def V_grad_J(var,sim,imgs,hypp,varb,spup,simGif):
     
     if simGif and not sim.phi_do_is_known() : tls.plot_sim_entries(sim,dR,np.real(grad_u),grad_d,dRdo,name="iter"+str(sim.iter),disp=False,save=True)
     elif simGif : tls.plot_sim_entries(sim,np.real(dR),np.real(grad_u),name="iter"+str(sim.iter),disp=False,save=True)              
-    
-    sim.info_gard.append([np.sum(abs(grad_u)),np.sum(abs(dR))])     
-    sim.info_div.append(info_div)
                     
     return  grad
 
@@ -320,7 +330,7 @@ def genere_L(tbed):
     
     for a in range(0,n*n):
         point[a] = 1
-        L[:,a]   = n**2 * tbed.todetector(point.reshape(n,n)).reshape(N*N,)
+        L[:,a]   = normA * tbed.todetector(point.reshape(n,n)).reshape(N*N,)
         point[a] = 0
                      
     return L
@@ -359,10 +369,9 @@ def V_map_dJ_auto(var,sim,imgs,hypp,varb,spup,simGif,L):
         
         gamma         = gamma_terme(L,sim,imgs[:,:,div_id],div_id)
         grad_u_k      = (np.dot(np.conj(np.transpose(L)),gamma)).reshape(n,n)*np.conj(sim.get_EF_div(div_id))
-        
         info_div.append(np.sum( abs( np.imag(grad_u_k / (n**2) ) ) ))
         
-        dJ_matriciel += 4*np.imag(grad_u_k)
+        dJ_matriciel += 4 * np.imag(grad_u_k)
         
         if sim.cplx : raise Exception("Not implemented yet")
         

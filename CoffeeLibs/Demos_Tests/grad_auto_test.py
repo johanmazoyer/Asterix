@@ -22,15 +22,16 @@ div_factors = [0]  # List of div factor's images diversity
 RSB         = 30000
 
 # Initalisation of objetcs
-# tbed      = custom_bench(config,'.')
-tbed      = coronagraph(config['modelconfig'],config['Coronaconfig'])
+tbed      = custom_bench(config,'.')
+# tbed      = coronagraph(config['modelconfig'],config['Coronaconfig'])
+tbed.zbiais = False
 
 sim       = data_simulator(tbed,var,div_factors)
 
 # %% Generation de données 
 
 ## -- Coeff du zernike  
-coeff = 10000/np.arange(1,6) # Coeff to generate phi_foc
+coeff = 0.1/np.arange(1,6) # Coeff to generate phi_foc
 coeff[0:3] = [0,0,0]
 
 sim.gen_zernike_phi_foc(coeff)    # On génere le phi focalisé
@@ -58,3 +59,8 @@ plt.subplot(1,3,1),plt.imshow(img_normal,cmap='jet'),plt.title("Image genere par
 plt.subplot(1,3,2),plt.imshow(img_L,cmap='jet'),plt.title("Image par L*psi"),plt.colorbar()
 plt.subplot(1,3,3),plt.imshow(img_normal-img_L,cmap='jet'),plt.title("Erreur"),plt.colorbar()
 plt.show()
+
+save_path = "save/tests/"
+name      = "4q avec zbiaz"
+if not os.path.isdir(save_path) : os.makedirs(save_path)
+plt.savefig(save_path+name,pad_inches=0.5)

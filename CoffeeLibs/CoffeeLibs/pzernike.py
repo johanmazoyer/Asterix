@@ -23,7 +23,7 @@ def zernike(Ro,Theta,j):
 
     """
     
-    if j==1 : return np.zeros(Ro.shape)
+    if j==1 : return np.ones(Ro.shape)
     [n,m] = osa2mn(j)
     
     # Radial Zernike polynomial
@@ -52,7 +52,7 @@ def osa2mn(j):
     Parameters
     ----------
     j : int
-        OSA's indice.
+        noll indice.
     
     Returns
     -------

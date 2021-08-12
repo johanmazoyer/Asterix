@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 
 from CoffeeLibs.coffee import coffee_estimator,data_simulator,custom_bench
@@ -12,66 +13,69 @@ import numpy as np
 
 config = get_ini('my_param_file.ini')
 
-# tbed    = custom_bench(config,'.')
-tbed      = coronagraph(config['modelconfig'],config['Coronaconfig'])
+tbed    = custom_bench(config,'.')
+# tbed      = coronagraph(config['modelconfig'],config['Coronaconfig'])
 
 config["Estimationconfig"]["auto"]  = True
 config["Estimationconfig"]["cplx"]  = False
 config["Estimationconfig"]["myope"] = False
 
-name = "mySim_cplx"
-
-## -- Constructor by CoffeeLibs
-estimator = coffee_estimator(**config["Estimationconfig"])
-estimator.simGif = name
-
+name = "test"
+gif  = True
 
 # %% Simulation de données
 
 ## -- Paramètres
 fu = 1
-var   = {'downstream_EF':1, 'flux':[fu,fu], 'fond':[0,0]}
-div_factors = [0,0.1]  # List of div factor's images diversity
-RSB         = None
+# Conseil : Plus flux elevé, plus on pourra être précis (explication -> cf. coffee.py )
+
+var   = {'flux':fu, 'fond':0}
+div_factors = [0,0.0000001]
+sim = data_simulator(tbed,var,div_factors) # Init la simulation
 
 ## -- Coeff du zernike  
-coeff = 0.1/np.arange(1,6) # Coeff to generate phi_foc
+coeff = 0.1/np.arange(1,7) # Coeff to generate phi_foc
 coeff[0:3] = [0,0,0]
-
-## -- Generation des images avec data_simulator
-
-sim = data_simulator(tbed,var,div_factors)
 
 # ~ Phi_up reel 
 sim.gen_zernike_phi_foc(coeff)
 
 # ~ Phi Complex
-# phi_r = sim.gen_zernike_phi(coeff)
-# phi_i =  sim.gen_zernike_phi([0,0,0.1])
-# sim.set_phi_foc(phi_r+1j*phi_i)
+if config["Estimationconfig"]["cplx"] == True :
+    phi_r = sim.gen_zernike_phi(coeff)
+    phi_i =  sim.gen_zernike_phi([0,0,0.0001])
+    sim.set_phi_foc(phi_r+1j*phi_i)
 
 # ~ Phi_do 
-# sim.gen_zernike_phi_do([0,0,0,1/4])
+# sim.gen_zernike_phi_do([0,0.2])
 
+RSB  = None
 imgs = sim.gen_div_imgs(RSB) # Compute images 
-
 
 # %% Traitement
 
-# Variables défini comme connu
-known_var = {'downstream_EF':1, 'flux':[fu,fu], 'fond':[0,0]}  
-estimator.var_phi      = 1 / np.var(sim.get_phi_foc())
+## -- Constructor by CoffeeLibs
+estimator = coffee_estimator(**config["Estimationconfig"])
+estimator.bound = None
+if gif : estimator.simGif = name
 
-e_sim = estimator.estimate(tbed,imgs,div_factors,known_var) # Estimation
+# Variables défini comme connu
+known_var = {'downstream_EF':1, 'flux':fu,'fond':0}
+estimator.var_phi      = 0 / np.var(sim.get_phi_foc())
+div_factors_knwon = np.array(div_factors) # Add error on div_factor ?
+
+e_sim = estimator.estimate(tbed,imgs,div_factors_knwon,known_var) # Estimation
 
 # %% Estimation Plots 
 
 from CoffeeLibs.tools import tempalte_plot,tempalte_plot2,tempalte_plotauto
-if isinstance(estimator,Estimator) : estimator = estimator.coffee
+saveall = True
 
-tempalte_plotauto(sim,e_sim,estimator,name=name,disp=True)  
-tempalte_plot(sim,e_sim,estimator,name=name,disp=True)     
-tempalte_plot2(sim.gen_div_imgs(),e_sim,estimator,name=name,disp=True)
+e_sim.set_phi_foc(e_sim.get_phi_foc()) # Spot a piston you need to remove ? 
+
+tempalte_plotauto(sim,e_sim,estimator,name=name,disp=True,save=saveall)  
+tempalte_plot(sim,e_sim,estimator,name=name,disp=True,save=saveall)     
+tempalte_plot2(sim.gen_div_imgs(),e_sim,estimator,name=name,disp=True,save=saveall)
 
 
 # %% Custom plots ##
@@ -80,18 +84,11 @@ import matplotlib.pyplot as plt
 plt.ion()
 
 # plt.figure("Err div")
+# for div_id in range(sim.nb_div):
+#     plt.subplot(sim.nb_div,3,1+3*div_id),plt.imshow(e_sim.get_div_est(div_id), cmap='jet'),plt.title("Estimated diversity "+str(div_id)),plt.colorbar()
+#     plt.subplot(sim.nb_div,3,2+3*div_id),plt.imshow(sim.div_map[:,:,div_id], cmap='jet'),plt.title("True divversity  "+str(div_id)),plt.colorbar()
+#     plt.subplot(sim.nb_div,3,3+3*div_id),plt.imshow(e_sim.get_div_est(div_id) - sim.div_map[:,:,div_id], cmap='jet'),plt.title("Difference"),plt.colorbar()
 
-# div_id  = 1
-# plt.subplot(1,3,1),plt.imshow(e_sim.div_err[:,:,div_id], cmap='jet'),plt.title("Err div 0"),plt.colorbar()
-# plt.subplot(1,3,2),plt.imshow(sim.div_map[:,:,div_id], cmap='jet'),plt.title("True div 0"),plt.colorbar()
-# plt.subplot(1,3,3),plt.imshow(e_sim.div_map[:,:,div_id] - e_sim.div_err[:,:,0], cmap='jet'),plt.title("Diff true div / apriori + err"),plt.colorbar()
-
-plt.figure("Imgs")
-
-plt.suptitle("Img non-corono Johan (votex charge=0)")
-plt.subplot(1,2,1),plt.imshow(imgs[:,:,0], cmap='jet'),plt.title("Img 0"),plt.colorbar()
-plt.subplot(1,2,2),plt.imshow(imgs[:,:,1], cmap='jet'),plt.title("Img 1"),plt.colorbar()
-img_normal = sim.get_img_div(0) # On cree les images
 
 # %% Introdpection ##
 
