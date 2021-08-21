@@ -613,17 +613,17 @@ class custom_bench(Optical_System):
         
         view_list.append(view_list[-1]*self.pup)
         
-        view_list.append(mft(view_list[-1],N,N,N,inverse=True,**self.offest))
+        view_list.append(N * mft(view_list[-1],N,N,N,inverse=True,**self.offest))
         
         view_list.append(self.corno*view_list[-1])
         
-        view_list.append(mft(view_list[-1],N,N,N,**self.offest))
+        view_list.append(1/N * mft(view_list[-1],N,N,N,**self.offest))
         
         if(self.zbiais): view_list.append(view_list[-1] - self.z_biais())
         
         view_list.append( EF_aberrations_LS * self.pup_d * view_list[-1] )
         
-        view_list.append(mft(view_list[-1],N,N*self.Science_sampling,N,inverse=True,**self.offest))
+        view_list.append(N*self.Science_sampling * mft(view_list[-1],N,N*self.Science_sampling,N,inverse=True,**self.offest))
                 
 
         self.view_list = view_list
