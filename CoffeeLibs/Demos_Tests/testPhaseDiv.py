@@ -29,7 +29,7 @@ gif  = True
 fu = 1
 # Conseil : Plus flux elevé, plus on pourra être précis (explication -> cf. coffee.py )
 
-var   = {'flux':fu, 'fond':0}
+var   = {'downstream_EF' : 1, 'flux':fu, 'fond':0}
 div_factors = [0,0.0000001]
 sim = data_simulator(tbed,var,div_factors) # Init la simulation
 
