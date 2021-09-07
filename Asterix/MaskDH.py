@@ -7,19 +7,22 @@ class MaskDH:
     """ --------------------------------------------------
         A very small class to do all the mask related stuff: retrieve parameters and
         combined them measure the mask and measure the string to save matrices.
-        There are so fast to measure that we do not save them but if you
+        They're fast to measure that we do not need to save them but if you
         absolutely want to you can do it here.
     -------------------------------------------------- """
 
     def __init__(self, Correctionconfig):
         """ --------------------------------------------------
-        initialize the mask object.
+        initialize the mask object
 
-        Parameters:
+        AUTHOR : Johan Mazoyer
+
+        Parameters
         ----------
-        Correctionconfig: general correction file which contains mask parameters
-
-        Author : Johan Mazoyer
+        Correctionconfig: dict
+                general correction file which contains mask parameters
+    
+    
         -------------------------------------------------- """
 
         self.DH_shape = Correctionconfig["DH_shape"].lower()
@@ -47,16 +50,21 @@ class MaskDH:
         """ --------------------------------------------------
         Create a binary mask.
 
-        Parameters:
+        AUTHOR : Johan Mazoyer
+
+        Parameters
         ----------
-        dimFP: int, size of the output FP mask
-        FP_sampling: float, resolution of focal plane pixel  per lambda / D
+        dimFP: int
+            size of the output FP mask
+        FP_sampling: float
+            resolution of focal plane pixel  per lambda / D
 
-        Return:
+        Returns
         ------
-        maskDH: 2D array, binary mask
+        maskDH: 2D array    
+            binary mask delimiting the DH
 
-        Author : Johan Mazoyer
+
         -------------------------------------------------- """
 
         maskDH = np.ones((dimFP, dimFP))
@@ -110,9 +118,13 @@ class MaskDH:
         return maskDH
 
     def tostring(self):
-        """ create a mask String to be used to save .fits files
-         Author : Johan Mazoyer
-        """
+        """ create a mask String to be used to save .fits files.
+            directly update self.stringdh
+
+            AUTHOR : Johan Mazoyer
+        
+
+        -------------------------------------------------- """
 
         if self.DH_shape == "square":
             stringdh = "MaskDH_square_" + "_".join(map(str,

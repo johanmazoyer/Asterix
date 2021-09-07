@@ -13,7 +13,7 @@ import datetime
 from random import random
 import Asterix.Optical_System_functions as OptSy
 
-def quickshow(tab):
+def _quickshow(tab):
     """
     Function to quickly show an array.
     tab: array to be shown
@@ -33,12 +33,20 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     """
         Function to quickly save a real or complex file in fits.
 
-        dir_save_fits: directory
-        name_plane : name of the plane.
+        Parameters
+        ----------
+
+        dir_save_fits: path
+            directory to save 
+        
+        name_plane : string
+            name of the plane.
             final name is
-            current_time_str + '_' + name_plane + '_RE_and_IM.fits' if complex
-            current_time_str + '_' + name_plane + '_RE.fits' if real
-        image : numpy array to save. Can be of any dimension
+            - current_time_str + '_' + name_plane + '_RE_and_IM.fits' if complex
+            - current_time_str + '_' + name_plane + '_RE.fits' if real
+        
+        image : numpy array 
+            to save. Can be of any dimension
 
     """
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
@@ -62,7 +70,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
                      overwrite=True)
 
 
-def quickfits(tab, dir='', name='tmp'):
+def _quickfits(tab, dir='', name='tmp'):
     """
     Johan's quick function
 
@@ -93,7 +101,7 @@ def quickfits(tab, dir='', name='tmp'):
     fits.writeto(os.path.join(dir, name + '.fits'), tab, overwrite=True)
 
 
-def quickpng(tab, dir='', name='tmp'):
+def _quickpng(tab, dir='', name='tmp'):
     """
     Function to quickly save in .png.
     By default, it will save on the desktop with a random name
@@ -127,15 +135,17 @@ def quickpng(tab, dir='', name='tmp'):
     plt.close()
 
 
-def progress(count, total, status=''):
+def _progress(count, total, status=''):
     """ --------------------------------------------------
     print a progress bar for a for loop
 
-    Parameters:
+    Parameters
     ----------
-    count: counter in the for loop
+    count: int 
+        counter in the for loop
 
-    total: number of iterations in the for loop
+    total: int
+        number of iterations in the for loop
 
     -------------------------------------------------- """
     bar_len = 60
@@ -151,14 +161,20 @@ def progress(count, total, status=''):
 def read_parameter_file(parameter_file):
     """ --------------------------------------------------
     check existence of the parameter file, read it and check validity
-    Parameters:
-    ----------
-    parameter_file: path to a parameter file
+    
+    AUTHOR: Johan Mazoyer
 
+    Parameters
+    ----------
+    parameter_file: path 
+        path to a .ini parameter file
 
     Returns
     ------
-    config: parameter dictionnary
+    config: dicto
+        parameter dictionnary
+
+
     -------------------------------------------------- """
 
     if not os.path.exists(parameter_file):
