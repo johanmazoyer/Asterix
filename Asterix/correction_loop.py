@@ -26,7 +26,8 @@ def CorrectionLoop(testbed: OptSy.Testbed,
                    SIMUconfig,
                    input_wavefront=0,
                    initial_DM_voltage=0.,
-                   silence=False):
+                   silence=False,
+                   **kwargs):
     """ --------------------------------------------------
     Run a full loop for several Matrix. at each iteration, we update the matrix and
     run CorrectionLoop1Matrix. 
@@ -72,12 +73,7 @@ def CorrectionLoop(testbed: OptSy.Testbed,
             using this initial DM voltages. Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
-    
-    photon_noise: boolean, default False
-                    If True, add photon noise.
-    
-    nb_photons int, optional default 1e30
-                Number of photons entering the pupil
+
     
     silence=False: Boolean, default False
                 if False, print and plot results as the loop runs
@@ -132,8 +128,7 @@ def CorrectionLoop(testbed: OptSy.Testbed,
             # the first matrix is done during initialization
             corrector.update_matrices(testbed,
                                       estimator,
-                                      initial_DM_voltage=initial_DM_voltage,
-                                      input_wavefront=1.)
+                                      initial_DM_voltage=initial_DM_voltage)
 
         Resultats_correction_loop = CorrectionLoop1Matrix(
             testbed,
@@ -149,7 +144,8 @@ def CorrectionLoop(testbed: OptSy.Testbed,
             initial_DM_voltage=initial_DM_voltage,
             photon_noise=photon_noise,
             nb_photons=nb_photons,
-            silence=silence)
+            silence=silence,
+            **kwargs)
 
         min_contrast = min(CorrectionLoopResult["MeanDHContrast"])
         min_index = CorrectionLoopResult["MeanDHContrast"].index(min_contrast)
@@ -177,9 +173,8 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                           Search_best_Mode=False,
                           input_wavefront=1.,
                           initial_DM_voltage=0.,
-                          photon_noise=False,
-                          nb_photons=1e30,
-                          silence=False):
+                          silence=False,
+                          **kwargs):
     """ --------------------------------------------------
     Run a loop for a given interraction matrix.
 
@@ -238,13 +233,6 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
             
-    
-    photon_noise: boolean, default False
-                    If True, add photon noise.
-    
-    nb_photons: int, optional default 1e30
-                Number of photons entering the pupil
-    
     silence: Boolean, default False
                 if False, print and plot results as the loop runs
 
@@ -274,14 +262,14 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     initialFP = testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                              voltage_vector=initial_DM_voltage,
                                              save_all_planes_to_fits=False,
-                                             dir_save_all_planes=None)
+                                             dir_save_all_planes=None,
+                                             **kwargs)
 
     estim_init = estimator.estimate(testbed,
                                     voltage_vector=initial_DM_voltage,
                                     entrance_EF=input_wavefront,
                                     wavelength=testbed.wavelength_0,
-                                    photon_noise=photon_noise,
-                                    nb_photons=nb_photons)
+                                    **kwargs)
 
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
@@ -331,7 +319,8 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                     Search_best_Mode=True,
                     input_wavefront=input_wavefront,
                     initial_DM_voltage=thisloop_voltages_DMs[iteration],
-                    silence=True)
+                    silence=True,
+                    **kwargs)
 
                 print("Best Mode is ", bestmode, " with contrast: ",
                       bestcontrast)
@@ -365,9 +354,8 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             voltage_vector=thisloop_voltages_DMs[-1],
             entrance_EF=input_wavefront,
             wavelength=testbed.wavelength_0,
-            photon_noise=photon_noise,
-            nb_photons=nb_photons,
-            perfect_estimation=Search_best_Mode)
+            perfect_estimation=Search_best_Mode,
+            **kwargs)
 
         solution = corrector.toDM_voltage(
             testbed,
@@ -393,7 +381,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
 
         thisloop_FP_Intensities.append(
             testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                                         voltage_vector=new_voltage))
+                                         voltage_vector=new_voltage,**kwargs))
         thisloop_EF_estim.append(resultatestimation)
         thisloop_MeanDHContrast.append(
             np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))
@@ -568,18 +556,20 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
         os.path.join(result_dir,
                      current_time_str + "_DM_Strokes" + ".pdf"))
     plt.close()
+    # TODO Now FP_Intensities are save with photon noise if it's on
+    # We need to do them without just to save in the results
 
-    if config["SIMUconfig"]["photon_noise"] == True:
-        FP_Intensities_photonnoise = np.array(FP_Intensities) * 0.
-        for i in range(nb_total_iter):
-            FP_Intensities_photonnoise[i] = np.random.poisson(
-                FP_Intensities[i] * testbed.normPupto1 *
-                config["SIMUconfig"]["nb_photons"])
+    # if config["SIMUconfig"]["photon_noise"] == True:
+    #     FP_Intensities_photonnoise = np.array(FP_Intensities) * 0.
+    #     for i in range(nb_total_iter):
+    #         FP_Intensities_photonnoise[i] = np.random.poisson(
+    #             FP_Intensities[i] * testbed.normPupto1 *
+    #             config["SIMUconfig"]["nb_photons"])
 
-        fits.writeto(result_dir + current_time_str + "_Photon_noise" + ".fits",
-                     FP_Intensities_photonnoise,
-                     header,
-                     overwrite=True)
+    #     fits.writeto(result_dir + current_time_str + "_NoPhoton_noise" + ".fits",
+    #                  FP_Intensities_photonnoise,
+    #                  header,
+    #                  overwrite=True)
 
     config.filename = result_dir + current_time_str + "_Simulation_parameters" + ".ini"
     config.write()

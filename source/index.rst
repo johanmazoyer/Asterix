@@ -16,7 +16,7 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 Setup
 --------
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
 
     install
 
@@ -26,12 +26,19 @@ Basic Usage
 ----------------
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
 
     run_asterix
     create_my_testbed
     estimation
     correction
+
+Ideas for Asterix improvements
+---------------------------------
+.. toctree::
+    :maxdepth: 3
+    
+    todo
 
 
 Annex: Asterix Functions

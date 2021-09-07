@@ -254,6 +254,8 @@ class Optical_System:
                              wavelengths=None,
                              in_contrast=True,
                              center_on_pixel=False,
+                             photon_noise=False,
+                             nb_photons=1e30,
                              save_all_planes_to_fits=False,
                              dir_save_all_planes=None,
                              **kwargs):
@@ -290,6 +292,12 @@ class Optical_System:
         dir_save_all_planes : string default None. 
                                 Directory to save all plane
                                 in fits if save_all_planes_to_fits = True
+
+        noise : boolean, optional
+                If True, add photon noise to the image
+    
+        nb_photons : int, optional
+                Number of photons entering the pupil
 
         **kwargs: 
             other kw parameters can be passed direclty to self.EF_through function
@@ -355,6 +363,12 @@ class Optical_System:
                 """)
             else:
                 focal_plane_Intensity /= self.norm_polychrom
+        
+
+        if photon_noise == True:
+            focal_plane_Intensity = np.random.poisson(
+                focal_plane_Intensity * self.normPupto1 *
+                nb_photons) / (self.normPupto1 * nb_photons)
 
         if save_all_planes_to_fits == True:
             who_called_me = self.__class__.__name__
@@ -443,7 +457,7 @@ class Optical_System:
         self.normPupto1 = self.transmission(
         ) * self.norm_polychrom / self.sum_polychrom
 
-    def generate_phase_aberr(self, SIMUconfig, Model_local_dir=None):
+    def generate_phase_aberr(self, SIMUconfig, up_or_down = 'up', Model_local_dir=None):
         """ --------------------------------------------------
         
         Generate and save  phase aberations
@@ -454,6 +468,11 @@ class Optical_System:
         ----------
         SIMUconfig : dict
                     parameter of this simualtion (describing the phase)
+        
+        up_or_down : string, default, 'up'
+                    'up' or 'do', use to access the right parameters in the parameter file for 
+                        upstream (entrance pupil) or downstream (Lyot plane) aberrations
+
 
         Model_local_dir: string, default None
                     directory to save things you can measure yourself
@@ -470,18 +489,25 @@ class Optical_System:
         if not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
-
-        set_phase_abb = SIMUconfig["set_phase_abb"]
-        set_random_phase = SIMUconfig["set_random_phase"]
-        opd_rms = SIMUconfig["opd_rms"]
-        phase_rhoc = SIMUconfig["phase_rhoc"]
-        phase_slope = SIMUconfig["phase_slope"]
-        phase_abb_filename = SIMUconfig["phase_abb_filename"]
+        if up_or_down == 'up':
+            set_phase_abb = SIMUconfig["set_UPphase_abb"]
+            set_random_phase = SIMUconfig["set_UPrandom_phase"]
+            opd_rms = SIMUconfig["UPopd_rms"]
+            phase_rhoc = SIMUconfig["UPphase_rhoc"]
+            phase_slope = SIMUconfig["UPphase_slope"]
+            phase_abb_filename = SIMUconfig["UPphase_abb_filename"]
+        else:
+            set_phase_abb = SIMUconfig["set_DOphase_abb"]
+            set_random_phase = SIMUconfig["set_DOrandom_phase"]
+            opd_rms = SIMUconfig["DOopd_rms"]
+            phase_rhoc = SIMUconfig["DOphase_rhoc"]
+            phase_slope = SIMUconfig["DOphase_slope"]
+            phase_abb_filename = SIMUconfig["DOphase_abb_filename"]
 
         ## Phase map and amplitude map for the static aberrations
         if set_phase_abb == True:
             if phase_abb_filename == '':
-                phase_abb_filename = "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                phase_abb_filename =up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                     int(opd_rms * 1e9), int(self.wavelength_0 * 1e9),
                     int(phase_slope), phase_rhoc, self.prad)
 
@@ -1006,6 +1032,7 @@ class coronagraph(Optical_System):
                    entrance_EF=1.,
                    wavelength=None,
                    noFPM=False,
+                   EF_aberrations_LS = 1.,
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
                    **kwargs):
@@ -1027,6 +1054,11 @@ class coronagraph(Optical_System):
 
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
+        
+        EF_aberrations_LS: 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+                        Can also be a float scalar in which case entrance_EF is constant
+                        default is 1.
+                        electrical field created by the downstream aberrations introduced directly in the Lyot Stop
 
         save_all_planes_to_fits: Bool, default False.
                 if True, save all planes to fits for debugging purposes to dir_save_all_planes
@@ -1214,6 +1246,10 @@ class coronagraph(Optical_System):
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       lyotplane_before_lyot)
+
+
+        # we add the downstream aberrations if we need them 
+        lyotplane_before_lyot *= EF_aberrations_LS
 
         # crop to the dim_overpad_pupil expeted size
         lyotplane_before_lyot_crop = proc.crop_or_pad_image(
@@ -2075,7 +2111,10 @@ class deformable_mirror(Optical_System):
                 basis[i] = vec
 
             start_time = time.time()
-
+            # This is a very time consuming part of the code. 
+            # from N voltage vectors with the sine and cosine value, we go N times through the
+            # voltage_to_phase functions. For this reason we save the Fourrier phases on each DMs 
+            # in a specific fits file
             if not os.path.exists(self.Model_local_dir +
                                   Name_FourrierBasis_fits + '.fits'):
                 phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil,
@@ -2222,6 +2261,10 @@ class Testbed(Optical_System):
         # noFPM so that it does not break when we run transmission and max_sum_PSFs
         # which pass this keyword by default
         known_keywords.append('noFPM')
+        known_keywords.append('photon_noise')
+        known_keywords.append('nb_photons')
+        known_keywords.append('in_contrast')
+        
 
         # we remove doubloons
         # known_keywords = list(set(known_keywords))

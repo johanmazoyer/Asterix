@@ -291,8 +291,8 @@ def SinCosBasis(sqrtNbActuators):
         else:
             i = (Coeff_SinCos - sqrtNbActuators**2 // 2) // sqrtNbActuators
             j = (Coeff_SinCos - sqrtNbActuators**2 // 2) % sqrtNbActuators
-            Coeffs[i, j] = 1 / 2
-            Coeffs[sqrtNbActuators - i - 1, sqrtNbActuators - j - 1] = 1j / 2
+            Coeffs[i, j] = 1 / (2*1j)
+            Coeffs[sqrtNbActuators - i - 1, sqrtNbActuators - j - 1] = - 1 / (2*1j)
         TFCoeffs[Coeff_SinCos] = Coeffs
 
         SinCos[Coeff_SinCos] = np.real(
