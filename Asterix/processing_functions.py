@@ -128,8 +128,8 @@ def resampling(image, new):
     dimScience = len(image)
 
     # THe old function is decentering the PSF (it is not centered between 4 pixels) !!
-    # TODO We need to talk abuot it with Raphael
     # Replacing currenly with standard pyhton function scipy.ndimage.zoom
+    # TODO Check that this is equivalent to what is done on the testbed !
 
     # fftimage_cropped = cropimage(
     #     np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dimScience / 2,
@@ -255,6 +255,8 @@ def SinCosBasis(sqrtNbActuators):
     """ --------------------------------------------------
     For a given number of actuator accross the pupil, create coefficients for the sin/cos basis
     Currently works only for a even number of actuator accross the pupil 
+
+    TODO Check that this is equivalent to what is done on the testbed !
     
     AUTHOR: Johan Mazoyer
     
@@ -291,8 +293,9 @@ def SinCosBasis(sqrtNbActuators):
         else:
             i = (Coeff_SinCos - sqrtNbActuators**2 // 2) // sqrtNbActuators
             j = (Coeff_SinCos - sqrtNbActuators**2 // 2) % sqrtNbActuators
-            Coeffs[i, j] = 1 / (2*1j)
-            Coeffs[sqrtNbActuators - i - 1, sqrtNbActuators - j - 1] = - 1 / (2*1j)
+            Coeffs[i, j] = 1 / (2 * 1j)
+            Coeffs[sqrtNbActuators - i - 1,
+                   sqrtNbActuators - j - 1] = -1 / (2 * 1j)
         TFCoeffs[Coeff_SinCos] = Coeffs
 
         SinCos[Coeff_SinCos] = np.real(
