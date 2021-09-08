@@ -306,7 +306,7 @@ class Corrector:
                                                      visu=False,
                                                      regul=self.regularization)
 
-            return - self.amplitudeEFC * wsc.solutionEFC(
+            return -self.amplitudeEFC * wsc.solutionEFC(
                 self.MaskEstim, estimate, self.invertGDH, testbed)
 
         if self.correction_algorithm == "sm":
@@ -320,7 +320,7 @@ class Corrector:
                 self.FirstIterNewMat = False
 
             if self.last_best_contrast < ActualCurrentContrast:
-                # problem: the algorithm did not actully improved contrast at the last last iteration
+                # problem: the algorithm did not actually improved contrast at the last last iteration
                 # it's ok if it's only once, but we increase the count_since_last_best counter to stop
                 # if we go several iteration wihtout improvement (a few lines below)
                 self.count_since_last_best += 1
@@ -353,7 +353,7 @@ class Corrector:
                     .format(self.expected_gain_in_contrast))
                 return "RebootTheLoop"
 
-            return - self.amplitudeEFC * solutionSM
+            return -self.amplitudeEFC * solutionSM
 
         if self.correction_algorithm == "em":
 
@@ -365,12 +365,12 @@ class Corrector:
                                                     visu=False,
                                                     regul=self.regularization)
 
-            return - self.amplitudeEFC * wsc.solutionEM(
+            return -self.amplitudeEFC * wsc.solutionEM(
                 self.MaskEstim, estimate, self.invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return - self.amplitudeEFC * wsc.solutionSteepest(
+            return -self.amplitudeEFC * wsc.solutionSteepest(
                 self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")

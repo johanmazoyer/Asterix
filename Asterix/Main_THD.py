@@ -163,18 +163,19 @@ def runthd2(parameter_file,
                                                   ampl_abb=ampl_abb_up)
 
     # aberrated WF in the testbed Lyot stop
-    EF_aberrations_LS = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_do)
+    EF_aberrations_introduced_in_LS = thd2.EF_from_phase_and_ampl(
+        phase_abb=phase_abb_do)
 
     Resultats_correction_loop = CorrectionLoop(
-                                                thd2,
-                                                estim,
-                                                correc,
-                                                MaskScience,
-                                                Loopconfig,
-                                                SIMUconfig,
-                                                input_wavefront=input_wavefront,
-                                                EF_aberrations_LS=EF_aberrations_LS,
-                                                initial_DM_voltage=0,
-                                                silence=False)
+                                    thd2,
+                                    estim,
+                                    correc,
+                                    MaskScience,
+                                    Loopconfig,
+                                    SIMUconfig,
+                                    input_wavefront=input_wavefront,
+                                    EF_aberrations_introduced_in_LS=EF_aberrations_introduced_in_LS,
+                                    initial_DM_voltage=0,
+                                    silence=False)
 
     Save_loop_results(Resultats_correction_loop, config, thd2, result_dir)

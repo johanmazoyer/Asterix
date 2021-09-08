@@ -84,7 +84,7 @@ def invertSVD(matrix_to_invert,
     if goal == "e":
         InvS_truncated[np.where(InvS_truncated > cut)] = 0
         pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated),
-                                np.transpose(U))
+                               np.transpose(U))
 
     if goal == "c":
         if regul == "truncation":
@@ -97,7 +97,7 @@ def invertSVD(matrix_to_invert,
                 plt.show()
                 plt.close()
         pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated),
-                                np.transpose(U))
+                               np.transpose(U))
 
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
@@ -195,7 +195,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
     for i, DM_name in enumerate(testbed.name_of_DMs):
 
-        DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
+        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(
@@ -223,13 +223,12 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     print("")
     print("Start Interraction Matrix")
 
-
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
 
     for DM_name in testbed.name_of_DMs:
 
-        DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
+        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(
@@ -253,7 +252,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
             pos_in_matrix += DM.basis_size
 
         else:
-            # We measure the initial Focal plane that will be removed at the end. 
+            # We measure the initial Focal plane that will be removed at the end.
             # Be careful because todetector automatically normalized to contrast with the full testbed
             # We checked that this is the same normalization as in Gvector
             G0 = proc.resampling(
@@ -302,7 +301,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
             wavefrontupstream = input_wavefront
 
             for osname in OpticSysNameBefore:
-                OpticSysbefore = vars(testbed)[osname] # type: OptSy.Optical_System
+                OpticSysbefore = vars(testbed)[
+                    osname]  # type: OptSy.Optical_System
 
                 if save_all_planes_to_fits == True:
                     # save PP plane before this subsystem
@@ -350,13 +350,13 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 wavefrontupstreaminDM, _ = prop.prop_fresnel(
                     wavefrontupstream, DM.wavelength_0, DM.z_position,
                     DM.diam_pup_in_m / 2, DM.prad)
-            
+
             if visu:
                 plt.ion()
                 plt.figure()
 
             # now we go throught the DM basis
-            init_pos_in_matrix = pos_in_matrix # where we store the next vect in the matrix
+            init_pos_in_matrix = pos_in_matrix  # where we store the next vect in the matrix
 
             for i in range(DM.basis_size):
 
@@ -406,7 +406,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 # and finally we go through the subsystems after the DMs we want to actuate
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
                 for osname in OpticSysNameAfter:
-                    OpticSysAfter = vars(testbed)[osname] # type: OptSy.Optical_System
+                    OpticSysAfter = vars(testbed)[
+                        osname]  # type: OptSy.Optical_System
                     if osname != OpticSysNameAfter[-1]:
 
                         if isinstance(OpticSysAfter, OptSy.deformable_mirror
@@ -442,10 +443,10 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                         # this is the last one ! so we propagate to FP and resample to estimation size
                         # we have to be careful with the normalization, by default this is the
                         # normalization of the last optical system (probably the coronograph)
-                        # not of the full system (because we went through each optics one by one, not 
-                        # through the whole system at once). For this reason, we do not use the defaut 
-                        # automatic normalization (in_contrast=False) but normalize "by hand" using 
-                        # normalisation_testbed_EF_contrast which is the  max value of the PSF at this 
+                        # not of the full system (because we went through each optics one by one, not
+                        # through the whole system at once). For this reason, we do not use the defaut
+                        # automatic normalization (in_contrast=False) but normalize "by hand" using
+                        # normalisation_testbed_EF_contrast which is the  max value of the PSF at this
                         # wavelength for the whole testbed. This is the same normalization as G0.
 
                         Gvector = proc.resampling(
@@ -460,8 +461,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                                                       name_plane, Gvector)
 
                 # TODO Should we remove the intial FP field G0 in all casese ? For ideal
-                # corono and flat DMs, this is 0, but it's not for non ideal coronagraph 
-                # or if we have a strong initial DM voltages. This needs 
+                # corono and flat DMs, this is 0, but it's not for non ideal coronagraph
+                # or if we have a strong initial DM voltages. This needs
                 # to be investigated, in simulation and on the testbed
                 Gvector = Gvector - G0
 
@@ -487,7 +488,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 # without changeing the matrix
 
                 pos_in_matrix += 1
-            
+
             if visu:
                 plt.close()
             # We save the interraction matrix:
@@ -499,15 +500,16 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
     # clean to save memory
     for i, DM_name in enumerate(testbed.name_of_DMs):
-        DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
+        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
         DM.phase_init = 0
-    
+
     print("")
     print("End Interraction Matrix")
     return InterMat
 
 
-def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray, mask:np.ndarray):
+def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray,
+                             mask: np.ndarray):
     """ --------------------------------------------------
     Crop the  Interraction Matrix. to the mask size
     AUTHOR : Johan Mazoyer
@@ -546,8 +548,8 @@ def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray, mask:np.ndarray
     return DHInterractionMatrix
 
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed: OptSy.Testbed):
-
+def solutionEFC(mask, Result_Estimate, inversed_jacobian,
+                testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltages to apply on the deformable mirrors in order to minimize the speckle
     intensity in the dark hole region
@@ -798,7 +800,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
 
 
 def createPWmatrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
-                    cutsvd, wavelength):
+                   cutsvd, wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
 
@@ -841,7 +843,8 @@ def createPWmatrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
     PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
 
-    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW] # type: OptSy.deformable_mirror
+    DM_probe = vars(testbed)[
+        testbed.name_DM_to_probe_in_PW]  # type: OptSy.deformable_mirror
 
     psi0 = testbed.todetector()
     k = 0
@@ -972,7 +975,7 @@ def createdifference(input_wavefront,
         indice_acum_number_act = 0
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
+            DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
 
             if DM_name == testbed.name_DM_to_probe_in_PW:
                 Voltage_probeDMprobe = np.zeros(DM.number_act)
@@ -982,16 +985,19 @@ def createdifference(input_wavefront,
 
             indice_acum_number_act += DM.number_act
 
-
-        # When we go polychromatic, lets be careful with the normalization, because 
-        # todetector_Intensity is nomrlizing to polychromatic PSF. 
+        # When we go polychromatic, lets be careful with the normalization, because
+        # todetector_Intensity is normalizing to polychromatic PSF.
         Ikmoins = testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                               voltage_vector=voltage_vector - Voltage_probe,
-                               wavelength=wavelength, **kwargs)
+                                               voltage_vector=voltage_vector -
+                                               Voltage_probe,
+                                               wavelength=wavelength,
+                                               **kwargs)
 
         Ikplus = testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                               voltage_vector=voltage_vector + Voltage_probe,
-                               wavelength=wavelength, **kwargs)
+                                              voltage_vector=voltage_vector +
+                                              Voltage_probe,
+                                              wavelength=wavelength,
+                                              **kwargs)
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 

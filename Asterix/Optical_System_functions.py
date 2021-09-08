@@ -363,7 +363,6 @@ class Optical_System:
                 """)
             else:
                 focal_plane_Intensity /= self.norm_polychrom
-        
 
         if photon_noise == True:
             focal_plane_Intensity = np.random.poisson(
@@ -457,7 +456,10 @@ class Optical_System:
         self.normPupto1 = self.transmission(
         ) * self.norm_polychrom / self.sum_polychrom
 
-    def generate_phase_aberr(self, SIMUconfig, up_or_down = 'up', Model_local_dir=None):
+    def generate_phase_aberr(self,
+                             SIMUconfig,
+                             up_or_down='up',
+                             Model_local_dir=None):
         """ --------------------------------------------------
         
         Generate and save  phase aberations
@@ -507,7 +509,7 @@ class Optical_System:
         ## Phase map and amplitude map for the static aberrations
         if set_phase_abb == True:
             if phase_abb_filename == '':
-                phase_abb_filename =up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                     int(opd_rms * 1e9), int(self.wavelength_0 * 1e9),
                     int(phase_slope), phase_rhoc, self.prad)
 
@@ -979,9 +981,9 @@ class coronagraph(Optical_System):
             self.prop_apod2lyot = 'mft'
             vortex_charge = coroconfig["vortex_charge"]
             self.string_os += '_charge' + str(int(vortex_charge))
-            self.FPmsk = self.Vortex(vortex_charge = vortex_charge)
+            self.FPmsk = self.Vortex(vortex_charge=vortex_charge)
             self.perfect_coro = True
-        
+
         else:
             raise Exception("this coronagrpah mode does not exists yet")
 
@@ -1032,7 +1034,7 @@ class coronagraph(Optical_System):
                    entrance_EF=1.,
                    wavelength=None,
                    noFPM=False,
-                   EF_aberrations_LS = 1.,
+                   EF_aberrations_introduced_in_LS=1.,
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
                    **kwargs):
@@ -1055,7 +1057,7 @@ class coronagraph(Optical_System):
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
         
-        EF_aberrations_LS: 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+        EF_aberrations_introduced_in_LS: 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
                         electrical field created by the downstream aberrations introduced directly in the Lyot Stop
@@ -1247,9 +1249,8 @@ class coronagraph(Optical_System):
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       lyotplane_before_lyot)
 
-
-        # we add the downstream aberrations if we need them 
-        lyotplane_before_lyot *= EF_aberrations_LS
+        # we add the downstream aberrations if we need them
+        lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
 
         # crop to the dim_overpad_pupil expeted size
         lyotplane_before_lyot_crop = proc.crop_or_pad_image(
@@ -1330,7 +1331,7 @@ class coronagraph(Optical_System):
 
         return fqpm
 
-    def Vortex(self, vortex_charge = 2):
+    def Vortex(self, vortex_charge=2):
         """ --------------------------------------------------
         Create a charge2 vortex.
 
@@ -1483,8 +1484,6 @@ class coronagraph(Optical_System):
                                             wavelengths=wav))
 
         return hlc_all_wl
-
-    
 
 
 ##############################################
@@ -2111,10 +2110,10 @@ class deformable_mirror(Optical_System):
                 basis[i] = vec
 
             start_time = time.time()
-            # This is a very time consuming part of the code. 
+            # This is a very time consuming part of the code.
             # from N voltage vectors with the sine and cosine value, we go N times through the
-            # voltage_to_phase functions. For this reason we save the Fourrier phases on each DMs 
-            # in a specific fits file
+            # voltage_to_phase functions. For this reason we save the Fourrier base 2D phases on each DMs
+            # in a specific .fits file
             if not os.path.exists(self.Model_local_dir +
                                   Name_FourrierBasis_fits + '.fits'):
                 phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil,
@@ -2264,7 +2263,6 @@ class Testbed(Optical_System):
         known_keywords.append('photon_noise')
         known_keywords.append('nb_photons')
         known_keywords.append('in_contrast')
-        
 
         # we remove doubloons
         # known_keywords = list(set(known_keywords))
