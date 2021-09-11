@@ -1550,22 +1550,26 @@ class deformable_mirror(Optical_System):
         # estimation and correction matrices are created.
         self.misregistration = False
 
-        # first thing we do is to open filename_grid_actu to check the number of
-        # actuator of this DM. We need the number of act to read and load pushact .fits
-
-        self.total_act = fits.getdata(model_dir +
-                                      DMconfig[self.Name_DM +
-                                               "_filename_grid_actu"]).shape[1]
-
-        if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
-            self.active_actuators = fits.getdata(
-                model_dir +
-                DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
-            self.number_act = len(self.active_actuators)
-
-        else:
+        if DMconfig[self.Name_DM + "_Generic"] == True:
+            self.total_act = DMconfig[self.Name_DM + "_Nact1D"]**2
             self.number_act = self.total_act
             self.active_actuators = np.arange(self.number_act)
+        else:
+            # first thing we do is to open filename_grid_actu to check the number of
+            # actuator of this DM. We need the number of act to read and load pushact .fits
+            self.total_act = fits.getdata(model_dir +
+                                        DMconfig[self.Name_DM +
+                                                "_filename_grid_actu"]).shape[1]
+
+            if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
+                self.active_actuators = fits.getdata(
+                    model_dir +
+                    DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
+                self.number_act = len(self.active_actuators)
+
+            else:
+                self.number_act = self.total_act
+                self.active_actuators = np.arange(self.number_act)
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
             int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
@@ -1751,21 +1755,7 @@ class deformable_mirror(Optical_System):
                 os.path.join(self.Model_local_dir,
                              Name_pushact_fits + '.fits'))
             return pushact3d
-
-        diam_pup_in_pix = 2 * self.prad
-        diam_pup_in_m = self.diam_pup_in_m
-        dim_array = self.dim_overpad_pupil
-
-        pitchDM = DMconfig[self.Name_DM + "_pitch"]
-        filename_ActuN = DMconfig[self.Name_DM + "_filename_ActuN"]
-        filename_grid_actu = DMconfig[self.Name_DM + "_filename_grid_actu"]
-        filename_actu_infl_fct = DMconfig[self.Name_DM +
-                                          "_filename_actu_infl_fct"]
-        ActuN = DMconfig[self.Name_DM + "_ActuN"]
-        y_ActuN = DMconfig[self.Name_DM + "_y_ActuN"]
-        x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
-        xy_ActuN = [x_ActuN, y_ActuN]
-
+        
         if self.misregistration:
             xerror = float(DMconfig[self.Name_DM + "_xerror"])
             yerror = float(DMconfig[self.Name_DM + "_yerror"])
@@ -1777,26 +1767,49 @@ class deformable_mirror(Optical_System):
             angerror = 0.
             gausserror = 0.
 
-        #Measured positions for each actuator in pixel
-        measured_grid = fits.getdata(model_dir + filename_grid_actu)
-        #Ratio: pupil radius in the measured position over
-        # pupil radius in the numerical simulation
-        sampling_simu_over_measured = diam_pup_in_pix / 2 / fits.getheader(
-            model_dir + filename_grid_actu)['PRAD']
-        if filename_ActuN != "":
-            im_ActuN = fits.getdata(model_dir + filename_ActuN)
-            im_ActuN_dim = proc.crop_or_pad_image(im_ActuN, dim_array)
+        diam_pup_in_pix = 2 * self.prad
+        diam_pup_in_m = self.diam_pup_in_m
+        dim_array = self.dim_overpad_pupil
 
-            xy_ActuN = np.unravel_index(
-                np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
+        pitchDM = DMconfig[self.Name_DM + "_pitch"]
 
-            # shift by (0.5,0.5) pixel because the pupil is
-            # centered between pixels
-            xy_ActuN = xy_ActuN - 0.5
 
-        #Position for each actuator in pixel for the numerical simulation
-        simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
-                                           sampling_simu_over_measured)
+        if DMconfig[self.Name_DM + "_Generic"] == False:
+            filename_ActuN = DMconfig[self.Name_DM + "_filename_ActuN"]
+            filename_grid_actu = DMconfig[self.Name_DM + "_filename_grid_actu"]
+            filename_actu_infl_fct = DMconfig[self.Name_DM +
+                                            "_filename_actu_infl_fct"]
+            ActuN = DMconfig[self.Name_DM + "_ActuN"]
+            y_ActuN = DMconfig[self.Name_DM + "_y_ActuN"]
+            x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
+            xy_ActuN = [x_ActuN, y_ActuN]
+
+            #Measured positions for each actuator in pixel
+            measured_grid = fits.getdata(model_dir + filename_grid_actu)
+            #Ratio: pupil radius in the measured position over
+            # pupil radius in the numerical simulation
+            sampling_simu_over_measured = diam_pup_in_pix / 2 / fits.getheader(
+                model_dir + filename_grid_actu)['PRAD']
+            if filename_ActuN != "":
+                im_ActuN = fits.getdata(model_dir + filename_ActuN)
+                im_ActuN_dim = proc.crop_or_pad_image(im_ActuN, dim_array)
+
+                xy_ActuN = np.unravel_index(
+                    np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
+
+                # shift by (0.5,0.5) pixel because the pupil is
+                # centered between pixels
+                xy_ActuN = xy_ActuN - 0.5
+
+            #Position for each actuator in pixel for the numerical simulation
+            simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
+                                            sampling_simu_over_measured)
+        else:
+            simu_grid = proc.generic_simu_grid(DMconfig[self.Name_DM + "_Nact1D"], pitchDM, diam_pup_in_m, diam_pup_in_pix, dim_array)
+            
+
+        
+
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
         pitch_actshape = fits.getheader(model_dir +

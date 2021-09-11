@@ -250,6 +250,89 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     simu_grid = simu_grid * sampling_simu_over_measured
     return simu_grid
 
+def generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix, dim_array):
+    """ --------------------------------------------------
+    Create a grid of position of actuators for generic  DM.
+    The DM will then be automatically defined as squared with Nact1D x Nact1D actuators
+    and the pupil centered on this DM.
+    
+
+    We need N_act1D > diam_pup_in_m / DM_pitch, so that the DM is larger than the pupil.
+
+    AUHTOR: Johan Mazoyer
+    
+    Parameters
+    ----------
+    Nact1D : int 
+            Number of actuators of the square DM in 1 direction
+    pitchDM: float
+            pitch of the DM (distance between actuators),in meter
+    diam_pup_in_m : float
+            diameter of the pupil in meter
+    diam_pup_in_pix : int 
+            diameter of the pupil in pixel
+    dim_array : int
+            total pupil array in pixel
+    
+    Returns
+    ------
+    simu_grid : 2D array 
+                Array of shape is 2 x Nb_actuator
+                x and y positions of each actuator for simulation
+    -------------------------------------------------- """
+    if  Nact1D*pitchDM < diam_pup_in_m :
+        raise Exception("""Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil""")
+    
+    pitchDM_in_pix = pitchDM*diam_pup_in_pix/diam_pup_in_m
+
+    pos_actu_in_pitch = np.zeros((2,Nact1D**2))
+    for i in range(Nact1D**2):
+        pos_actu_in_pitch[i] = (i//Nact1D, i%pos_actu_in_pitch)
+
+    # I have the relative position in pixel of the actuators
+    pos_actu_in_pix = pos_actu_in_pitch*pitchDM_in_pix
+
+    # find the center of the pupil in pixel. The pupil is normally almost centered in
+    # in the pupil plane array (to check exactly)
+    # find the center of the DM :
+    #   if Nact1D if odd, then the center of the DM is the actuator number (Nact1D**2 -1) /2
+        # 20 21 22 23 24
+        # 15 16 17 18 19
+        # 10 11 12 13 14
+        # 5  6  7  8  9
+        # 0  1  2  3  4 
+
+        # 6 7 8
+        # 3 4 5 
+        # 0 1 2
+        
+    #   if Nact1D is even, the center of the DM is in between 4 actuators
+        # (Nact1D -2) //2 * (Nact1D) +  Nact1D//2 -1    is in (-1/2 act, -1/2 act)
+        # (Nact1D -2) //2 * (Nact1D) +  Nact1D//2       is in (-1/2 act, +1/2 act)
+        
+        # Nact1D //2 * Nact1D +  Nact1D//2 - 1          is in (+1/2 act, -1/2 act)
+        # Nact1D //2 * Nact1D +  Nact1D//2              is in (+1/2 act, +1/2 act)
+        
+
+        #  30 31 32 33 34 35
+        #  24 25 26 27 28 29
+        #  18 19 20 21 22 23
+        #  12 13 14 15 16 17
+        #  6  7  8  9  10 11
+        #  0  1  2  3  4  5
+
+        # 12 13 14 15
+        # 8  9  10 11
+        # 4  5  6  7 
+        # 0  1  2  3
+
+        # 2 3
+        # 0 1
+
+    # at the end compare to the result of actuator_position in case of DM3, it 
+    # should be relatively close. If we can, we should try that actu 0 is 
+    # relatively at the same pos
+
 
 def SinCosBasis(sqrtNbActuators):
     """ --------------------------------------------------
