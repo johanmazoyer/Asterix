@@ -49,8 +49,11 @@ class Optical_System:
         #pupil in pixel
         self.prad = int(modelconfig["diam_pup_in_pix"] / 2)
 
-        # 1.25 is hard coded for now. TODO Fix that.
-        # All pupils in the code must have this dimensions, so that the blocks can be easily switch
+        # 1.25 is hard coded for now. TODO Fix that ?
+        # All pupils in the code must have this dimension, so that the OS systems can 
+        #  be easily switched.
+        # dim_overpad_pupil is set to an even numer and the pupil is centered in 
+        # between 4 pixels
         self.dim_overpad_pupil = int(self.prad * 1.25) * 2
 
         #Lambda over D in pixels in the focal plane
@@ -1805,7 +1808,9 @@ class deformable_mirror(Optical_System):
             simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
                                             sampling_simu_over_measured)
         else:
-            simu_grid = proc.generic_simu_grid(DMconfig[self.Name_DM + "_Nact1D"], pitchDM, diam_pup_in_m, diam_pup_in_pix, dim_array)
+            # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
+            Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
+            simu_grid = proc.generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix, dim_array)
             
 
         
