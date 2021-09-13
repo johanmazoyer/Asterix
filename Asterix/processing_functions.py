@@ -2,6 +2,7 @@ import numpy as np
 import scipy.optimize as opt
 import scipy.ndimage as nd
 import Asterix.propagation_functions as prop
+import Asterix.fits_functions as useful
 
 
 def twoD_Gaussian(xy,
@@ -248,6 +249,8 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
         simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(
             ActuN)] + measured_ActuN
     simu_grid = simu_grid * sampling_simu_over_measured
+
+    useful._quickfits(simu_grid)
     return simu_grid
 
 
@@ -296,7 +299,7 @@ def generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix,
 
     pos_actu_in_pitch = np.zeros((2, Nact1D**2))
     for i in range(Nact1D**2):
-        pos_actu_in_pitch[i] = (i // Nact1D, i % pos_actu_in_pitch)
+        pos_actu_in_pitch[:, i] = np.array([i // Nact1D, i % Nact1D])
 
     # relative positions in pixel of the actuators
     pos_actu_in_pix = pos_actu_in_pitch * pitchDM_in_pix
@@ -346,10 +349,10 @@ def generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix,
 
         actu_05actfromcenter = pos_actu_in_pix[:, Nact1D // 2 * Nact1D +
                                                Nact1D // 2]
-        pos_actu_in_pix = pos_actu_in_pix - actu_05actfromcenter + pupilcenter + [
-            0.5 * pitchDM_in_pix, 0.5 * pitchDM_in_pix
-        ]
-
+        for i in range(Nact1D**2):
+            pos_actu_in_pix[:, i] += pupilcenter - actu_05actfromcenter + [
+                0.5 * pitchDM_in_pix, 0.5 * pitchDM_in_pix
+            ]
     return pos_actu_in_pix
 
 

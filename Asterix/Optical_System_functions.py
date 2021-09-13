@@ -1775,13 +1775,12 @@ class deformable_mirror(Optical_System):
         dim_array = self.dim_overpad_pupil
 
         pitchDM = DMconfig[self.Name_DM + "_pitch"]
-
+        filename_actu_infl_fct = DMconfig[self.Name_DM + "_filename_actu_infl_fct"]
 
         if DMconfig[self.Name_DM + "_Generic"] == False:
             filename_ActuN = DMconfig[self.Name_DM + "_filename_ActuN"]
             filename_grid_actu = DMconfig[self.Name_DM + "_filename_grid_actu"]
-            filename_actu_infl_fct = DMconfig[self.Name_DM +
-                                            "_filename_actu_infl_fct"]
+            
             ActuN = DMconfig[self.Name_DM + "_ActuN"]
             y_ActuN = DMconfig[self.Name_DM + "_y_ActuN"]
             x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
