@@ -1576,6 +1576,9 @@ class deformable_mirror(Optical_System):
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
             int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
+        
+        if DMconfig[self.Name_DM + "_Generic"] == True:
+            self.string_os += "_Gen"
 
         if self.active == False:
             print(self.Name_DM + ' is not activated')
@@ -1618,6 +1621,7 @@ class deformable_mirror(Optical_System):
         self.DM_pushact = self.creatingpushact(DMconfig)
         print("time for DM_pushact for " + self.string_os,
               time.time() - start_time)
+        asd
 
         start_time = time.time()
         # create or load 'which actuators are in pupil'
@@ -1809,7 +1813,7 @@ class deformable_mirror(Optical_System):
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
-            simu_grid = proc.generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix, dim_array)
+            simu_grid = proc.generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix)
             
 
         

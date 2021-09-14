@@ -254,8 +254,7 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     return simu_grid
 
 
-def generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix,
-                      dim_array):
+def generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     """ --------------------------------------------------
     Create a grid of position of actuators for generic  DM.
     The DM will then be automatically defined as squared with Nact1D x Nact1D actuators
@@ -281,8 +280,6 @@ def generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix,
             diameter of the pupil in meter
     diam_pup_in_pix : int 
             diameter of the pupil in pixel
-    dim_array : int
-            total pupil array in pixel
     
     Returns
     ------
@@ -304,9 +301,6 @@ def generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix,
     # relative positions in pixel of the actuators
     pos_actu_in_pix = pos_actu_in_pitch * pitchDM_in_pix
 
-    # the pupil is centered in between 4 pixels and dim_array is always even number
-    pupilcenter = [dim_array // 2 + 1 / 2, dim_array // 2 + 1 / 2]
-
     if Nact1D % 2 == 1:
         # if Nact1D if odd, then the center of the DM is the
         # actuator number (Nact1D**2 -1) /2
@@ -320,8 +314,11 @@ def generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix,
         # 6 7 8
         # 3 4 5
         # 0 1 2
-        actu_center_pos = pos_actu_in_pix[:, (Nact1D**2 - 1) / 2]
-        pos_actu_in_pix = pos_actu_in_pix - actu_center_pos + pupilcenter
+        pos_actu_center_pos = np.copy(pos_actu_in_pix[:, (Nact1D**2 - 1) // 2])
+        center_pup = np.array([0.5,0.5])
+
+        for i in range(Nact1D**2):
+            pos_actu_in_pix[:,i] = pos_actu_in_pix[:,i] - pos_actu_center_pos + center_pup
 
     else:
 
@@ -347,12 +344,17 @@ def generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix,
         # 2 3
         # 0 1
 
-        actu_05actfromcenter = pos_actu_in_pix[:, Nact1D // 2 * Nact1D +
-                                               Nact1D // 2]
+        pos_actuhalfactfromcenter = np.copy(pos_actu_in_pix[:, Nact1D // 2 * Nact1D +
+                                               Nact1D // 2])
+        halfactfromcenter = np.array([
+                0.5 * pitchDM_in_pix, 0.5 * pitchDM_in_pix])
+        
+        center_pup = np.array([0.5,0.5])
+
         for i in range(Nact1D**2):
-            pos_actu_in_pix[:, i] += pupilcenter - actu_05actfromcenter + [
-                0.5 * pitchDM_in_pix, 0.5 * pitchDM_in_pix
-            ]
+            toto = np.copy(pos_actu_in_pix[:, i])
+            pos_actu_in_pix[:, i] = pos_actu_in_pix[:, i] - pos_actuhalfactfromcenter  + halfactfromcenter + center_pup    
+            pos_actu_in_pix[0,i] *= -1        
     return pos_actu_in_pix
 
 
