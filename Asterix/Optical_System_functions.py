@@ -1895,6 +1895,11 @@ class deformable_mirror(Optical_System):
             pushact3d[i] = Psivector
 
         pushact3d = pushact3d[self.active_actuators]
+        # TODO Comment to debug DM pushact. To remove later
+        # for i in range(len(self.active_actuators)):
+            # pushact3d[i] = pushact3d[i]*phase_ampl.roundpupil(self.dim_overpad_pupil,self.prad)
+            # pushact3d[i] = pushact3d[i] + (1-phase_ampl.roundpupil(self.dim_overpad_pupil,self.prad/diam_pup_in_m*pitchDM*2))
+
 
         if self.misregistration is False and (
                 not os.path.exists(self.Model_local_dir + Name_pushact_fits +
