@@ -1578,7 +1578,7 @@ class deformable_mirror(Optical_System):
             int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
         
         if DMconfig[self.Name_DM + "_Generic"] == True:
-            self.string_os += "_Gen"
+            self.string_os += "Gen"
 
         if self.active == False:
             print(self.Name_DM + ' is not activated')
@@ -1621,7 +1621,6 @@ class deformable_mirror(Optical_System):
         self.DM_pushact = self.creatingpushact(DMconfig)
         print("time for DM_pushact for " + self.string_os,
               time.time() - start_time)
-        asd
 
         start_time = time.time()
         # create or load 'which actuators are in pupil'
@@ -1813,10 +1812,7 @@ class deformable_mirror(Optical_System):
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
-            simu_grid = proc.generic_simu_grid(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix)
-            
-
-        
+            simu_grid = proc.generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix)
 
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
@@ -1895,9 +1891,10 @@ class deformable_mirror(Optical_System):
             pushact3d[i] = Psivector
 
         pushact3d = pushact3d[self.active_actuators]
-        # TODO Comment to debug DM pushact. To remove later
+        
+        # TODO Comments to debug DM pushact. To remove later
         # for i in range(len(self.active_actuators)):
-            # pushact3d[i] = pushact3d[i]*phase_ampl.roundpupil(self.dim_overpad_pupil,self.prad)
+        #     pushact3d[i] = pushact3d[i]*phase_ampl.roundpupil(self.dim_overpad_pupil,self.prad)
             # pushact3d[i] = pushact3d[i] + (1-phase_ampl.roundpupil(self.dim_overpad_pupil,self.prad/diam_pup_in_m*pitchDM*2))
 
 
