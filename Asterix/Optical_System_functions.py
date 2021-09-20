@@ -50,9 +50,9 @@ class Optical_System:
         self.prad = int(modelconfig["diam_pup_in_pix"] / 2)
 
         # 1.25 is hard coded for now. TODO Fix that ?
-        # All pupils in the code must have this dimension, so that the OS systems can 
+        # All pupils in the code must have this dimension, so that the OS systems can
         #  be easily switched.
-        # dim_overpad_pupil is set to an even numer and the pupil is centered in 
+        # dim_overpad_pupil is set to an even numer and the pupil is centered in
         # between 4 pixels
         self.dim_overpad_pupil = int(self.prad * 1.25) * 2
 
@@ -315,7 +315,8 @@ class Optical_System:
         -------------------------------------------------- """
 
         if 'wavelength' in kwargs:
-            raise Exception("""todetector_Intensity() function is polychromatic, 
+            raise Exception(
+                """todetector_Intensity() function is polychromatic, 
                 do not use wavelength keyword.
                 Use wavelengths keyword even for monochromatic intensity""")
 
@@ -1496,7 +1497,7 @@ class coronagraph(Optical_System):
 
 ##############################################
 ##############################################
-### Deformable mirror
+### Deformable mirrors
 class deformable_mirror(Optical_System):
     """ --------------------------------------------------
     initialize and describe the behavior of a deformable mirror
@@ -1565,14 +1566,13 @@ class deformable_mirror(Optical_System):
         else:
             # first thing we do is to open filename_grid_actu to check the number of
             # actuator of this DM. We need the number of act to read and load pushact .fits
-            self.total_act = fits.getdata(model_dir +
-                                        DMconfig[self.Name_DM +
-                                                "_filename_grid_actu"]).shape[1]
+            self.total_act = fits.getdata(
+                model_dir +
+                DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
 
             if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
-                self.active_actuators = fits.getdata(
-                    model_dir +
-                    DMconfig[self.Name_DM + "_filename_active_actu"]).astype(int)
+                self.active_actuators = fits.getdata(model_dir + DMconfig[
+                    self.Name_DM + "_filename_active_actu"]).astype(int)
                 self.number_act = len(self.active_actuators)
 
             else:
@@ -1581,7 +1581,7 @@ class deformable_mirror(Optical_System):
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
             int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
-        
+
         if DMconfig[self.Name_DM + "_Generic"] == True:
             self.string_os += "Gen"
 
@@ -1766,7 +1766,7 @@ class deformable_mirror(Optical_System):
                 os.path.join(self.Model_local_dir,
                              Name_pushact_fits + '.fits'))
             return pushact3d
-        
+
         if self.misregistration:
             xerror = float(DMconfig[self.Name_DM + "_xerror"])
             yerror = float(DMconfig[self.Name_DM + "_yerror"])
@@ -1783,12 +1783,13 @@ class deformable_mirror(Optical_System):
         dim_array = self.dim_overpad_pupil
 
         pitchDM = DMconfig[self.Name_DM + "_pitch"]
-        filename_actu_infl_fct = DMconfig[self.Name_DM + "_filename_actu_infl_fct"]
+        filename_actu_infl_fct = DMconfig[self.Name_DM +
+                                          "_filename_actu_infl_fct"]
 
         if DMconfig[self.Name_DM + "_Generic"] == False:
             filename_ActuN = DMconfig[self.Name_DM + "_filename_ActuN"]
             filename_grid_actu = DMconfig[self.Name_DM + "_filename_grid_actu"]
-            
+
             ActuN = DMconfig[self.Name_DM + "_ActuN"]
             y_ActuN = DMconfig[self.Name_DM + "_y_ActuN"]
             x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
@@ -1813,11 +1814,13 @@ class deformable_mirror(Optical_System):
 
             #Position for each actuator in pixel for the numerical simulation
             simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
-                                            sampling_simu_over_measured)
+                                               sampling_simu_over_measured)
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
-            simu_grid = proc.generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix)
+            simu_grid = proc.generic_actuator_position(Nact1D, pitchDM,
+                                                       diam_pup_in_m,
+                                                       diam_pup_in_pix)
 
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
@@ -1896,12 +1899,6 @@ class deformable_mirror(Optical_System):
             pushact3d[i] = Psivector
 
         pushact3d = pushact3d[self.active_actuators]
-        
-        # TODO Comments to debug DM pushact. To remove later
-        # for i in range(len(self.active_actuators)):
-        #     pushact3d[i] = pushact3d[i]*phase_ampl.roundpupil(self.dim_overpad_pupil,self.prad)
-            # pushact3d[i] = pushact3d[i] + (1-phase_ampl.roundpupil(self.dim_overpad_pupil,self.prad/diam_pup_in_m*pitchDM*2))
-
 
         if self.misregistration is False and (
                 not os.path.exists(self.Model_local_dir + Name_pushact_fits +
@@ -2165,9 +2162,7 @@ class deformable_mirror(Optical_System):
 
 ##############################################
 ##############################################
-### Testbed
-
-
+### Testbeds
 class Testbed(Optical_System):
     """ --------------------------------------------------
     
