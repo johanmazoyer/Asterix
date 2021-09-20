@@ -26,6 +26,26 @@ print("")
 print("")
 print("")
 
+
+start_time = time.time()
+Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+                 NewDMconfig={'DM1_active': False},
+                 NewEstimationconfig={'estimation': 'pw'},
+                 NewCorrectionconfig={
+                     'DH_side': "Right",
+                     'correction_algorithm': "efc",
+                 },
+                 NewLoopconfig={
+                     'Nbiter_corr': ["5", "5", "5"],
+                     "Nbmode_corr": ["350", "380", "400"]
+                 },
+                 NewSIMUconfig={'Name_Experiment': "My_second_experiment"})
+print('time correction 1DM perfect estim efc', time.time() - start_time)
+print("")
+print("")
+print("")
+
+
 start_time = time.time()
 Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': False},
@@ -38,12 +58,13 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      'Nbiter_corr': ["10"],
                      'Linesearch': True
                  },
-                 NewSIMUconfig={'Name_Experiment': "My_second_experiment"})
+                 NewSIMUconfig={'Name_Experiment': "My_third_experiment"})
 print('time correction 1DM perfect estim (Linesearch) efc',
       time.time() - start_time)
 print("")
 print("")
 print("")
+
 
 start_time = time.time()
 Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
@@ -58,7 +79,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      'Nbiter_corr': ["20"],
                      "Nbmode_corr": ["250"]
                  },
-                 NewSIMUconfig={'Name_Experiment': "My_third_experiment"})
+                 NewSIMUconfig={'Name_Experiment': "My_fourth_experiment"})
 print('time correction 2DM perfect estim sm', time.time() - start_time)
 print("")
 print("")
@@ -81,7 +102,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                          "900", "700", "900"
                      ]
                  },
-                 NewSIMUconfig={'Name_Experiment': "My_fourth_experiment"})
+                 NewSIMUconfig={'Name_Experiment': "My_fifth_experiment"})
 print('time correction 2DM pw efc', time.time() - start_time)
 print("")
 print("")

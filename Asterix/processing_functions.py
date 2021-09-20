@@ -2,6 +2,7 @@ import numpy as np
 import scipy.optimize as opt
 import scipy.ndimage as nd
 import Asterix.propagation_functions as prop
+import Asterix.fits_functions as useful
 
 
 def twoD_Gaussian(xy,
@@ -148,7 +149,7 @@ def resampling(image, new):
 def cropimage(img, ctr_x, ctr_y, newsizeimg):
     """ --------------------------------------------------
     Crop an image to create a 2D array with new dimensions
-    AUHTOR: Axel Potier
+    AUTHOR: Axel Potier
 
     Parameters
     ----------
@@ -219,7 +220,7 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     """ --------------------------------------------------
     Convert the measred positions of actuators to positions for numerical simulation
     
-    AUHTOR: Axel Potier
+    AUTHOR: Axel Potier
     
     Parameters
     ----------
@@ -248,62 +249,177 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
         simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(
             ActuN)] + measured_ActuN
     simu_grid = simu_grid * sampling_simu_over_measured
+
+    useful._quickfits(simu_grid)
     return simu_grid
 
 
-def SinCosBasis(sqrtNbActuators):
+def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     """ --------------------------------------------------
-    For a given number of actuator accross the pupil, create coefficients for the sin/cos basis
-    Currently works only for a even number of actuator accross the pupil 
+    Create a grid of position of actuators for generic  DM.
+    The DM will then be automatically defined as squared with Nact1D x Nact1D actuators
+    and the pupil centered on this DM.
+    
+    We need N_act1D > diam_pup_in_m / DM_pitch, so that the DM is larger than the pupil.
 
-    TODO Check that this is equivalent to what is done on the testbed !
+    at the end compare to the result of actuator_position in case of DM3, it 
+    should be relatively close. If we can, we should try that actu 0 is 
+    relatively at the same pos. Test with huge DM pitch (2 actus in the pup)
+
+
+    AUTHOR: Johan Mazoyer
+    
+    Parameters
+    ----------
+    Nact1D : int 
+            Numnber of actuators of a square DM in one of the principal direction
+    pitchDM: float
+            Pitch of the DM (distance between actuators),in meter
+    diam_pup_in_m : float
+            Diameter of the pupil in meter
+    diam_pup_in_pix : int 
+            Diameter of the pupil in pixel
+    
+    Returns
+    ------
+    simu_grid : 2D array 
+                Array of shape is 2 x Nb_actuator
+                x and y positions of each actuator for simulation
+    
+    
+    -------------------------------------------------- """
+    if Nact1D * pitchDM < diam_pup_in_m:
+        raise Exception(
+            """Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil"""
+        )
+
+    pitchDM_in_pix = pitchDM * diam_pup_in_pix / diam_pup_in_m
+
+    pos_actu_in_pitch = np.zeros((2, Nact1D**2))
+    for i in range(Nact1D**2):
+        pos_actu_in_pitch[:, i] = np.array([i // Nact1D, i % Nact1D])
+
+    # relative positions in pixel of the actuators
+    pos_actu_in_pix = pos_actu_in_pitch * pitchDM_in_pix
+
+    if Nact1D % 2 == 1:
+        # if Nact1D if odd, then the center of the DM is the
+        # actuator number (Nact1D**2 -1) /2
+        #
+        # 20 21 22 23 24
+        # 15 16 17 18 19
+        # 10 11 12 13 14
+        # 5  6  7  8  9
+        # 0  1  2  3  4
+        #
+        # 6 7 8
+        # 3 4 5
+        # 0 1 2
+        pos_actu_center_pos = np.copy(pos_actu_in_pix[:, (Nact1D**2 - 1) // 2])
+        center_pup = np.array([0.5, 0.5])
+
+        for i in range(Nact1D**2):
+            pos_actu_in_pix[:,
+                            i] = pos_actu_in_pix[:,
+                                                 i] - pos_actu_center_pos + center_pup
+
+    else:
+
+        #if Nact1D is even, the center of the DM is in between 4 actuators
+        # (Nact1D -2) //2 * (Nact1D) +  Nact1D//2 -1    is in (-1/2 act, -1/2 act)
+        # (Nact1D -2) //2 * (Nact1D) +  Nact1D//2       is in (-1/2 act, +1/2 act)
+
+        # Nact1D //2 * Nact1D +  Nact1D//2 - 1          is in (+1/2 act, -1/2 act)
+        # Nact1D //2 * Nact1D +  Nact1D//2              is in (+1/2 act, +1/2 act)
+
+        #  30 31 32 33 34 35
+        #  24 25 26 27 28 29
+        #  18 19 20 21 22 23
+        #  12 13 14 15 16 17
+        #  6  7  8  9  10 11
+        #  0  1  2  3  4  5
+
+        # 12 13 14 15
+        # 8  9  10 11
+        # 4  5  6  7
+        # 0  1  2  3
+
+        # 2 3
+        # 0 1
+
+        pos_actuhalfactfromcenter = np.copy(
+            pos_actu_in_pix[:, Nact1D // 2 * Nact1D + Nact1D // 2])
+        halfactfromcenter = np.array(
+            [0.5 * pitchDM_in_pix, 0.5 * pitchDM_in_pix])
+
+        center_pup = np.array([0.5, 0.5])
+
+        for i in range(Nact1D**2):
+            toto = np.copy(pos_actu_in_pix[:, i])
+            pos_actu_in_pix[:,
+                            i] = pos_actu_in_pix[:,
+                                                 i] - pos_actuhalfactfromcenter + halfactfromcenter + center_pup
+            pos_actu_in_pix[0, i] *= -1
+    return pos_actu_in_pix
+
+
+def SinCosBasis(Nact1D):
+    """ --------------------------------------------------
+    For a given number of actuator accross the DM, create coefficients for the sin/cos basis
+
+    TODO Check with Pierre that this is equivalent to what is done on the testbed
+    TODO Ask Pierre what he thinks: is it possible to do the basis only for the actuators in the pup
+        in which case, the important number would be the number of act in the pup ?
     
     AUTHOR: Johan Mazoyer
     
     Parameters
     ----------
-    sqrtNbActuators : float
-        Numnber of actuator accross the pupil
+    Nact1D : float
+        Numnber of actuators of a square DM in one of the principal direction
     
-
     Returns
     ------
     SinCosBasis : 3D array 
-                Coefficient to apply to DMs to obtain sinus and cosinus.
-                size :[(sqrtNbActuators)^2,sqrtNbActuators,sqrtNbActuators]
+                Coefficient to apply to DMs to obtain sine and cosine phases.
+                size :[(Nact1D)^2,Nact1D,Nact1D] if even
+                size :[(Nact1D)^2 -1 ,Nact1D,Nact1D] if odd (to remove piston)
     
-
+    
     -------------------------------------------------- """
 
-    TFCoeffs = np.zeros((sqrtNbActuators**2, sqrtNbActuators, sqrtNbActuators),
-                        dtype=complex)
-    SinCos = np.zeros((sqrtNbActuators**2, sqrtNbActuators, sqrtNbActuators))
+    TFCoeffs = np.zeros((Nact1D**2, Nact1D, Nact1D), dtype=complex)
+    SinCos = np.zeros((Nact1D**2, Nact1D, Nact1D))
 
-    for Coeff_SinCos in range(sqrtNbActuators**2):
-        Coeffs = np.zeros((sqrtNbActuators, sqrtNbActuators), dtype=complex)
+    for Coeff_SinCos in range(Nact1D**2):
+        Coeffs = np.zeros((Nact1D, Nact1D), dtype=complex)
+        #  the First half of basis are cosine and the second half are sines
 
-        # It's a cosinus
-        if Coeff_SinCos < sqrtNbActuators**2 // 2:
-            i = Coeff_SinCos // sqrtNbActuators
-            j = Coeff_SinCos % sqrtNbActuators
+        # Lets start with the cosines
+        if Coeff_SinCos < Nact1D**2 // 2:
+            i = Coeff_SinCos // Nact1D
+            j = Coeff_SinCos % Nact1D
             Coeffs[i, j] = 1 / 2
-            Coeffs[sqrtNbActuators - i - 1, sqrtNbActuators - j - 1] = 1 / 2
+            Coeffs[Nact1D - i - 1, Nact1D - j - 1] = 1 / 2
 
-        # It's a sinus
+        # # Lets do the sines
         else:
-            i = (Coeff_SinCos - sqrtNbActuators**2 // 2) // sqrtNbActuators
-            j = (Coeff_SinCos - sqrtNbActuators**2 // 2) % sqrtNbActuators
+            i = (Coeff_SinCos - Nact1D**2 // 2) // Nact1D
+            j = (Coeff_SinCos - Nact1D**2 // 2) % Nact1D
             Coeffs[i, j] = 1 / (2 * 1j)
-            Coeffs[sqrtNbActuators - i - 1,
-                   sqrtNbActuators - j - 1] = -1 / (2 * 1j)
+            Coeffs[Nact1D - i - 1, Nact1D - j - 1] = -1 / (2 * 1j)
         TFCoeffs[Coeff_SinCos] = Coeffs
 
         SinCos[Coeff_SinCos] = np.real(
             prop.mft(TFCoeffs[Coeff_SinCos],
-                     sqrtNbActuators,
-                     sqrtNbActuators,
-                     sqrtNbActuators,
+                     Nact1D,
+                     Nact1D,
+                     Nact1D,
                      X_offset_input=-0.5,
                      Y_offset_input=-0.5))
+
+    if Nact1D % 2 == 1:
+        # in the odd case the last one is a piston
+        SinCos = SinCos[0:Nact1D**2 - 1]
 
     return SinCos
