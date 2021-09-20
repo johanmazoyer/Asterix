@@ -990,13 +990,13 @@ def createdifference(input_wavefront,
         Ikmoins = testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                                voltage_vector=voltage_vector -
                                                Voltage_probe,
-                                               wavelength=wavelength,
+                                               wavelengths=wavelength,
                                                **kwargs)
 
         Ikplus = testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                               voltage_vector=voltage_vector +
                                               Voltage_probe,
-                                              wavelength=wavelength,
+                                              wavelengths=wavelength,
                                               **kwargs)
 
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)

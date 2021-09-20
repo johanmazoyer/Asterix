@@ -314,6 +314,11 @@ class Optical_System:
 
         -------------------------------------------------- """
 
+        if 'wavelength' in kwargs:
+            raise Exception("""todetector_Intensity() function is polychromatic, 
+                do not use wavelength keyword.
+                Use wavelengths keyword even for monochromatic intensity""")
+
         if wavelengths == None:
             wavelength_vec = self.wav_vec
 
