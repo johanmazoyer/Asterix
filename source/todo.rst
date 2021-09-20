@@ -2,7 +2,7 @@
 
 **To Do**: These are future improvements to Asterix currenly envisionned (not particularly by order of priority):
 
-- polychromatic correction (concatenation of matrices at multiple wavelength)
+- polychromatic correction (concatenation of matrices at multiple wavelengths)
 - polychromatic estimation for current estimator
 - COFFEE estimation (curently underway)
 - add coronagraphs (apodizations for APLC and Vortex, Roman SPC)

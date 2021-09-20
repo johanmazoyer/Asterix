@@ -285,6 +285,8 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     simu_grid : 2D array 
                 Array of shape is 2 x Nb_actuator
                 x and y positions of each actuator for simulation
+    
+    
     -------------------------------------------------- """
     if Nact1D * pitchDM < diam_pup_in_m:
         raise Exception(
@@ -382,6 +384,7 @@ def SinCosBasis(Nact1D):
                 Coefficient to apply to DMs to obtain sine and cosine phases.
                 size :[(Nact1D)^2,Nact1D,Nact1D] if even
                 size :[(Nact1D)^2 -1 ,Nact1D,Nact1D] if odd (to remove piston)
+    
     
     -------------------------------------------------- """
 
