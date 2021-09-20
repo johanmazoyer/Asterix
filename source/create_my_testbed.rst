@@ -150,7 +150,7 @@ and ``todetector_Intensity`` documention in :ref:`os-label`
 Deformable Mirror
 +++++++++++++++++++++++
 
-``Optical_System.coronagraph`` is a subclass of ``Optical_System`` which initializes and describes the behavior 
+``Optical_System.deformable_mirror`` is a subclass of ``Optical_System`` which initializes and describes the behavior 
 of a deformable mirror (DM) system. 
 
 
@@ -168,9 +168,12 @@ of a deformable mirror (DM) system.
                                     Name_DM='DM1',
                                     Model_local_dir=Model_local_dir)
 
-For the moment, Asterix does not allows you to rapidly create generic DMs, and the DMs are modelled to the 2 DMs
-currently used on the THD2 testbed. We will soon allow the definition a "generic" DM with only parameter the number 
-of actuators accross the pupil.
+You need to provide the influence function .fits file, the DM pitch ``DM_pitch`` in meters and the distance compared to the pupil plane ``DM1_z_position``
+In the case of a generic DM (``DM1_Generic = True``), we need only one more parameter to define the DM: the number of actuator ``N_act1D`` in one of its principal direction.
+We need ``N_act1D`` > ``diam_pup_in_m`` / ``DM_pitch``, so that the DM is larger than the pupil.
+The DM will then be automatically defined as squared with ``N_act1DxN_act1D`` actuators and the puil centered on this DM.
+We can also create a specific DM for a given testbed with a file with the relative position of actuators in the pupil
+and the position of one of them compared to the pupil.
 
 Function documentation can be found in Section :ref:`deformable-mirror-label`. 
 
