@@ -901,7 +901,7 @@ class coronagraph(Optical_System):
     AUTHOR : Johan Mazoyer
 
     -------------------------------------------------- """
-    def __init__(self, modelconfig, coroconfig):
+    def __init__(self, modelconfig, coroconfig, oversizelyot = False):
         """ --------------------------------------------------
         Initialize a coronograph object
 
@@ -929,6 +929,11 @@ class coronagraph(Optical_System):
             self.diam_lyot_in_m = self.diam_pup_in_m * 0.95
         else:
             raise Exception("This is not a valid Lyot option")
+        
+        if oversizelyot:
+            self.oversizelyot = True
+        else:
+            self.oversizelyot = False
 
         self.lyotrad = int(self.prad * self.diam_lyot_in_m /
                            self.diam_pup_in_m)
@@ -1046,6 +1051,7 @@ class coronagraph(Optical_System):
                    EF_aberrations_introduced_in_LS=1.,
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
+                   oversizelyot = False,
                    **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from apod plane before the apod
@@ -1236,17 +1242,36 @@ class coronagraph(Optical_System):
                                           corono_focal_plane * FPmsk)
 
             # Focal plane to Lyot plane
+            if self.oversizelyot:
+                oversizelyotfactor = 4
+                dim_lyot_plane = 8*self.prad
+            else:
+                oversizelyotfactor = 1
+                dim_lyot_plane = self.dim_overpad_pupil
+
+            
             lyotplane_before_lyot = proc.crop_or_pad_image(
                 prop.mft(corono_focal_plane * FPmsk,
                          self.dimScience,
-                         2 * self.prad,
+                         2 * self.prad * oversizelyotfactor,
                          self.dimScience / self.Science_sampling *
-                         lambda_ratio,
+                         lambda_ratio * oversizelyotfactor,
                          X_offset_input=-0.5,
                          Y_offset_input=-0.5,
                          inverse=True,
-                         norm='ortho'), self.dim_overpad_pupil)
-
+                         norm='ortho'),dim_lyot_plane)
+            
+            # toto = prop.mft(corono_focal_plane * FPmsk,
+            #              self.dimScience,
+            #              8 * self.prad,
+            #              self.dimScience / self.Science_sampling *
+            #              lambda_ratio*4,
+            #              X_offset_input=-0.5,
+            #              Y_offset_input=-0.5,
+            #              inverse=True,
+            #              norm='ortho')
+            # useful._quickfits(np.abs(toto))
+            # ssdf
         else:
             raise Exception(
                 self.prop_apod2lyot +
@@ -1258,12 +1283,13 @@ class coronagraph(Optical_System):
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       lyotplane_before_lyot)
 
+        
         # we add the downstream aberrations if we need them
         lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
 
-        # crop to the dim_overpad_pupil expeted size
+        # crop to the dim_lyot_plane expected size
         lyotplane_before_lyot_crop = proc.crop_or_pad_image(
-            lyotplane_before_lyot, self.dim_overpad_pupil)
+            lyotplane_before_lyot, dim_lyot_plane)
 
         # Field after filtering by Lyot stop
         lyotplane_after_lyot = self.lyot_pup.EF_through(
@@ -2225,6 +2251,7 @@ class Testbed(Optical_System):
 
         # we store the name of all the sub systems
         self.subsystems = list_os_names
+        print("New testbed:", list_os_names)
 
         # we concatenate the Optical Element starting by the end
         for num_optical_sys in range(len(list_os)):
@@ -2497,12 +2524,12 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
         for passed_arg in kwargs.keys():
             if passed_arg == 'DMphase':
                 raise Exception(
-                    'DMphase is an ambiguous argument if you have several DMs.'
+                    ' DMphase is an ambiguous argument if you have several DMs.'
                     + ' Please use XXphase with XX = nameDM')
             if passed_arg not in known_keywords:
                 raise Exception(
                     passed_arg +
-                    'is not a EF_through valid argument. Valid args are ' +
+                    ' is not a EF_through valid argument. Valid args are ' +
                     str(known_keywords))
 
         return testbed_EF_through(**kwargs)

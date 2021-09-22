@@ -121,17 +121,20 @@ def runthd2(parameter_file,
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
-    ## Initialize Estimation
-    estim = Estimator(Estimationconfig,
-                      thd2,
-                      matrix_dir=matrix_dir,
-                      save_for_bench=onbench,
-                      realtestbed_dir=Labview_dir)
-
     #initalize the DH masks
     mask_dh = MaskDH(Correctionconfig)
     MaskScience = mask_dh.creatingMaskDH(thd2.dimScience,
                                          thd2.Science_sampling)
+
+
+    ## Initialize Estimation
+    estim = Estimator(Estimationconfig,
+                      thd2,
+                      mask_dh,
+                      matrix_dir=matrix_dir,
+                      save_for_bench=onbench,
+                      realtestbed_dir=Labview_dir)
+
 
     #initalize the corrector
     correc = Corrector(Correctionconfig,

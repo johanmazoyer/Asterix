@@ -11,7 +11,6 @@ Asterixroot = os.path.dirname(os.path.realpath(__file__))
 start_time = time.time()
 Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': False},
-                 NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
                      'DH_side': "Right",
                      'correction_algorithm': "efc",

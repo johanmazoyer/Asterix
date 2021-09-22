@@ -1,12 +1,17 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
+from Asterix.MaskDH import MaskDH
+import copy
+from math import radians
 import os
+from astropy.utils.exceptions import AstropyDeprecationWarning
 import numpy as np
 from astropy.io import fits
 
 import Asterix.fits_functions as useful
 import Asterix.processing_functions as proc
+import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.Optical_System_functions as OptSy
 import Asterix.WSC_functions as wsc
 
@@ -42,6 +47,7 @@ class Estimator:
     def __init__(self,
                  Estimationconfig,
                  testbed : OptSy.Testbed,
+                 mask_dh : MaskDH.MaskDH,
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -197,6 +203,53 @@ class Estimator:
         elif self.technique == 'coffee':
             pass
 
+        elif self.technique == 'scc':
+            self.is_focal_plane = True
+            self.is_complex = True
+
+            self.ref_SCC_radiuspix = Estimationconfig["ref_SCC_diam"]/2/testbed.diam_pup_in_m*(testbed.prad*2)
+            self.ref_SCC_distancepix = Estimationconfig["ref_SCC_distance"]/testbed.diam_pup_in_m*(testbed.prad*2)
+            self.ref_SCC_angle = Estimationconfig["ref_SCC_angle"]
+
+            self.ref_xpos = np.around(self.ref_SCC_distancepix*np.cos(np.radians(self.ref_SCC_angle))).astype('int')
+            self.ref_ypos = np.around(self.ref_SCC_distancepix*np.sin(np.radians(self.ref_SCC_angle))).astype('int')
+
+            # newsize = 2*np.floor((1.1*(np.max([self.ref_xpos, self.ref_ypos])+self.ref_SCC_radiuspix))).astype('int')
+            newsize = 8*testbed.prad
+
+            scc_ref =  np.roll(phase_ampl.roundpupil(newsize, self.ref_SCC_radiuspix), (self.ref_xpos,self.ref_ypos ), axis=(0,1))
+            
+            # creating a copy of the testbed with everything is identical except the coronagraph Lyot
+            # Only the coronagraph is really duplicated to save mem space, the rest of the items are just the same object.
+
+            list_os = []
+            list_os_names = []
+            for osname in testbed.subsystems:
+                if isinstance(vars(testbed)[osname], OptSy.coronagraph):
+                    the_corono = copy.deepcopy(vars(testbed)[osname])
+                    the_corono.oversizelyot = True
+                    the_corono.lyot_pup.pup = proc.crop_or_pad_image(the_corono.lyot_pup.pup,newsize) + scc_ref
+                    
+                    if the_corono.perfect_coro == True:
+                        # do a propagation once with self.perfect_Lyot_pupil = 0 to
+                        # measure the Lyot pupil that will be removed after
+                        the_corono.perfect_Lyot_pupil = 0
+                        the_corono.perfect_Lyot_pupil = the_corono.EF_through(
+                                    entrance_EF=the_corono.clearpup.EF_through())
+
+                    the_corono.string_os += "SCC"
+                    
+                    list_os.append(the_corono)
+                    list_os_names.append(osname+"SCC")
+                else: 
+                    list_os.append(vars(testbed)[osname])
+                    list_os_names.append(osname)
+
+            self.testbed_sccmode = OptSy.Testbed(list_os,list_os_names)
+            
+            self.mask_dh_scc = mask_dh.creatingMaskDH(testbed.dimScience,
+                                         testbed.Science_sampling)
+
         else:
             raise Exception("This estimation algorithm is not yet implemented")
 
@@ -286,6 +339,26 @@ class Estimator:
             return wsc.FP_PWestimate(Difference, self.PWMatrix)
 
         elif self.technique == 'coffee':
+            return np.zeros((self.dimEstim, self.dimEstim))
+
+        elif self.technique == 'scc':
+            
+            toto = testbed.todetector_Intensity(
+                entrance_EF=entrance_EF,
+                wavelengths=wavelength,
+                save_all_planes_to_fits=True,
+                dir_save_all_planes='/Users/jmazoyer/Desktop/toto/',
+                **kwargs)
+
+            tata = self.testbed_sccmode.todetector_Intensity(
+                entrance_EF=entrance_EF,
+                wavelengths=wavelength,
+                save_all_planes_to_fits=True,
+                dir_save_all_planes='/Users/jmazoyer/Desktop/toto/',
+                **kwargs)
+            useful._quickfits(np.abs(np.fft.fft2(toto)))
+            useful._quickfits(np.abs(np.fft.fft2(tata)))
+            asd
             return np.zeros((self.dimEstim, self.dimEstim))
 
         else:
