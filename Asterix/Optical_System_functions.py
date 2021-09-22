@@ -2313,16 +2313,16 @@ class Testbed(Optical_System):
         known_keywords.append('photon_noise')
         known_keywords.append('nb_photons')
         known_keywords.append('in_contrast')
-
+        
         # we remove doubloons
-        # known_keywords = list(set(known_keywords))
         known_keywords = list(dict.fromkeys(known_keywords))
 
         # We remove arguments we know are wrong
         if 'DMphase' in known_keywords:
             known_keywords.remove('DMphase')
+         
+        if self.number_DMs > 0:
             # there is at least a DM, we add voltage_vector as an authorize kw
-
             known_keywords.append('voltage_vector')
             self.EF_through = _control_testbed_with_voltages(
                 self, self.EF_through)
