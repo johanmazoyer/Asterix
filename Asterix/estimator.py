@@ -7,6 +7,7 @@ from math import radians
 import os
 from astropy.utils.exceptions import AstropyDeprecationWarning
 import numpy as np
+from scipy.ndimage import gaussian_filter
 from astropy.io import fits
 
 import Asterix.fits_functions as useful
@@ -41,13 +42,14 @@ class Estimator:
         estim + correc.
 
     AUTHOR : Johan Mazoyer
+    Version with SCC Added on 22 Sept 2021
 
 
     -------------------------------------------------- """
     def __init__(self,
                  Estimationconfig,
                  testbed : OptSy.Testbed,
-                 mask_dh : MaskDH.MaskDH,
+                 mask_dh ,
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -211,13 +213,13 @@ class Estimator:
             self.ref_SCC_distancepix = Estimationconfig["ref_SCC_distance"]/testbed.diam_pup_in_m*(testbed.prad*2)
             self.ref_SCC_angle = Estimationconfig["ref_SCC_angle"]
 
-            self.ref_xpos = np.around(self.ref_SCC_distancepix*np.cos(np.radians(self.ref_SCC_angle))).astype('int')
-            self.ref_ypos = np.around(self.ref_SCC_distancepix*np.sin(np.radians(self.ref_SCC_angle))).astype('int')
+            self.ref_xpos = self.ref_SCC_distancepix*np.cos(np.radians(self.ref_SCC_angle))
+            self.ref_ypos = self.ref_SCC_distancepix*np.sin(np.radians(self.ref_SCC_angle))
 
             # newsize = 2*np.floor((1.1*(np.max([self.ref_xpos, self.ref_ypos])+self.ref_SCC_radiuspix))).astype('int')
             newsize = 8*testbed.prad
 
-            scc_ref =  np.roll(phase_ampl.roundpupil(newsize, self.ref_SCC_radiuspix), (self.ref_xpos,self.ref_ypos ), axis=(0,1))
+            scc_ref =  np.roll(phase_ampl.roundpupil(newsize, self.ref_SCC_radiuspix), (np.around(self.ref_xpos).astype('int'),np.around(self.ref_ypos).astype('int') ), axis=(0,1))
             
             # creating a copy of the testbed with everything is identical except the coronagraph Lyot
             # Only the coronagraph is really duplicated to save mem space, the rest of the items are just the same object.
@@ -229,7 +231,7 @@ class Estimator:
                     the_corono = copy.deepcopy(vars(testbed)[osname])
                     the_corono.oversizelyot = True
                     the_corono.lyot_pup.pup = proc.crop_or_pad_image(the_corono.lyot_pup.pup,newsize) + scc_ref
-                    
+                    self.lyotrad = the_corono.lyotrad
                     if the_corono.perfect_coro == True:
                         # do a propagation once with self.perfect_Lyot_pupil = 0 to
                         # measure the Lyot pupil that will be removed after
@@ -247,8 +249,9 @@ class Estimator:
 
             self.testbed_sccmode = OptSy.Testbed(list_os,list_os_names)
             
-            self.mask_dh_scc = mask_dh.creatingMaskDH(testbed.dimScience,
-                                         testbed.Science_sampling)
+            self.mask_dh_scc = gaussian_filter(mask_dh.creatingMaskDH(testbed.dimScience,
+                                         testbed.Science_sampling), 1)
+            # useful._quickfits(self.mask_dh_scc)
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
@@ -265,6 +268,8 @@ class Estimator:
         and a state of the DMs
         
         AUTHOR : Johan Mazoyer
+        Version with SCC Added on 22 Sept 2021
+
 
         Parameters
         ----------
@@ -343,23 +348,23 @@ class Estimator:
 
         elif self.technique == 'scc':
             
-            toto = testbed.todetector_Intensity(
+            fft_fp_scc = self.testbed_sccmode.todetector_Intensity(
                 entrance_EF=entrance_EF,
                 wavelengths=wavelength,
+                voltage_vector=voltage_vector,
                 save_all_planes_to_fits=True,
                 dir_save_all_planes='/Users/jmazoyer/Desktop/toto/',
                 **kwargs)
+            
+            #these can be measured in the initialization once and for all
+            posx_I_peak =  self.ref_xpos / testbed.Science_sampling * testbed.prad / self.lyotrad
+            posy_I_peak =  self.ref_ypos / testbed.Science_sampling * testbed.prad / self.lyotrad
+            ray_I_peak = np.round((self.ref_SCC_radiuspix + self.lyotrad) / testbed.Science_sampling * testbed.prad / self.lyotrad).astype("int")
 
-            tata = self.testbed_sccmode.todetector_Intensity(
-                entrance_EF=entrance_EF,
-                wavelengths=wavelength,
-                save_all_planes_to_fits=True,
-                dir_save_all_planes='/Users/jmazoyer/Desktop/toto/',
-                **kwargs)
-            useful._quickfits(np.abs(np.fft.fft2(toto)))
-            useful._quickfits(np.abs(np.fft.fft2(tata)))
-            asd
-            return np.zeros((self.dimEstim, self.dimEstim))
+            I_peak_mask = phase_ampl.roundpupil(2*ray_I_peak,ray_I_peak)
+
+            Ipeak = proc.crop_or_pad_image(np.roll(np.fft.fft2(fft_fp_scc),((testbed.dimScience/2 -np.round(posx_I_peak)).astype("int"),(testbed.dimScience/2 -np.round(posy_I_peak)).astype("int")), axis = (0,1)),2*ray_I_peak)
+            return I_peak_mask*Ipeak
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")

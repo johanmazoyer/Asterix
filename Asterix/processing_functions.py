@@ -423,3 +423,42 @@ def SinCosBasis(Nact1D):
         SinCos = SinCos[0:Nact1D**2 - 1]
 
     return SinCos
+
+
+
+def butterworth_mask(dim,order,length):
+    ''' --------------------------------------------------
+    Create a squared butterworth mask  
+    
+    Parameters:
+    ----------
+    dim: 2D-array, input image
+    order: 
+    length: 
+    
+    AUTHOR: Johan Mazoyer, adapted from Axel Potier
+    Added on 22 Sept 2021
+
+    Parameters
+    ----------
+    dim : float
+            size of the output
+    order: float
+            butterworth order
+    length : float
+            butterworth length
+    
+    
+    Returns
+    ------
+    butterworth : 2D array 
+                Array of shape dim x dim with a 
+
+
+    -------------------------------------------------- '''
+
+
+    xx, yy = np.meshgrid(np.arange(isz)-dim/2, np.arange(dim)-dim/2)
+    rr = np.hypot(yy, xx)
+    return 1/(1+(np.sqrt(2)-1)*(rr/length)**(2*order))
+
