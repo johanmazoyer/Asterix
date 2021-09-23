@@ -5,7 +5,6 @@ from Asterix.MaskDH import MaskDH
 import copy
 from math import radians
 import os
-from astropy.utils.exceptions import AstropyDeprecationWarning
 import numpy as np
 from scipy.ndimage import gaussian_filter
 from astropy.io import fits
@@ -260,7 +259,7 @@ class Estimator:
 
             self.testbed_sccmode = OptSy.Testbed(list_os, list_os_names)
 
-            # we measure and save all the quantiites we need to exctract the I- peak in the FFT of the SCC FP
+            # we measure and save all the quantities we need to exctract the I- peak in the FFT of the SCC FP
             self.posx_I_peak = self.ref_xpos / testbed.Science_sampling * testbed.prad / self.lyotrad
             self.posy_I_peak = self.ref_ypos / testbed.Science_sampling * testbed.prad / self.lyotrad
             self.ray_I_peak = np.round(
@@ -273,8 +272,6 @@ class Estimator:
             self.mask_dh_scc = gaussian_filter(
                 mask_dh.creatingMaskDH(testbed.dimScience,
                                        testbed.Science_sampling), 1)
-
-            # useful._quickfits(self.mask_dh_scc)
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
@@ -386,13 +383,13 @@ class Estimator:
                 **kwargs)
 
             Ipeak = proc.crop_or_pad_image(
-                np.roll(np.fft.fft2(fp_scc),
+                np.roll(np.fft.fft2(fp_scc * self.mask_dh_scc),
                         ((testbed.dimScience / 2 -
                           np.round(self.posx_I_peak)).astype("int"),
                          (testbed.dimScience / 2 -
                           np.round(self.posy_I_peak)).astype("int")),
                         axis=(0, 1)), 2 * self.ray_I_peak)
-                        
+
             return self.I_peak_mask * Ipeak
 
         else:
