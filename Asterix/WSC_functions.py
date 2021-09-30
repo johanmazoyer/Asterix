@@ -1,18 +1,16 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
-from functools import total_ordering
 import os
-import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
-import time
 
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 import Asterix.Optical_System_functions as OptSy
+from Asterix.estimator import Estimator
 
 #################################################################################
 ### Correction functions
@@ -103,7 +101,7 @@ def invertSVD(matrix_to_invert,
 
 
 def creatingInterractionmatrix(testbed: OptSy.Testbed,
-                               dimEstim,
+                               estimator: Estimator,
                                amplitudeEFC,
                                matrix_dir,
                                initial_DM_voltage=0.,
@@ -134,9 +132,9 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     testbed: Testbed Optical_element
         testbed structure with at least 1 DM
     
-    dimEstim: int
-        size of the output image in teh estimator
-    
+    estimator: Estimator 
+            This contains all information about the estimation
+
     amplitudeEFC: float
         amplitude of the EFC probe on the DM
     
@@ -144,7 +142,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
         save all the matrices here
     
     MatrixType: string
-            'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
+            'smallphase' (when applying modes on the DMs we, 
+                        do a small phase assumption : exp(i phi) = 1+ i.phi) 
             or 'perfect' (we keep exp(i phi)).
             in both case, if the DMs are not initially flat (non zero initial_DM_voltage), 
                     we do not make the small phase assumption for initial DM phase
@@ -177,6 +176,9 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     if isinstance(initial_DM_voltage, (int, float)):
         initial_DM_voltage = np.zeros(
             testbed.number_act) + float(initial_DM_voltage)
+
+    dimEstim = estimator.dimEstim
+    nb_pix_estim = dimEstim**2
 
     wavelength = testbed.wavelength_0
     normalisation_testbed_EF_contrast = np.sqrt(
@@ -211,6 +213,9 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
         headfile = "DirectMatrixPerf"
     elif MatrixType == 'smallphase':
         headfile = "DirectMatrixSP"
+    elif MatrixType == 'scc':
+        headfile = "DirectMatrixSCC" + estimator.string_mask
+        testbed = estimator.testbed_sccmode
     else:
         raise Exception("This Matrix type does not exist")
 
@@ -221,9 +226,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     else:
         raise Exception("This Basis type does not exist")
     print("")
-    print("Start Interraction Matrix")
 
-    InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
+    InterMat = np.zeros((2 * int(nb_pix_estim), total_number_basis_modes))
     pos_in_matrix = 0
 
     for DM_name in testbed.name_of_DMs:
@@ -253,14 +257,24 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
         else:
             # We measure the initial Focal plane that will be removed at the end.
-            # Be careful because todetector automatically normalized to contrast with the full testbed
+            # Be careful because todetector automatically normalized to 
+            # contrast with the full testbed.
             # We checked that this is the same normalization as in Gvector
-            G0 = proc.resampling(
-                testbed.todetector(
+
+            if MatrixType == 'scc':
+                G0 = estimator.estimate(
+                    testbed,
                     entrance_EF=input_wavefront,
                     voltage_vector=initial_DM_voltage,
                     save_all_planes_to_fits=save_all_planes_to_fits,
-                    dir_save_all_planes=dir_save_all_planes), dimEstim)
+                    dir_save_all_planes=dir_save_all_planes)
+            else:
+                G0 = proc.resampling(
+                    testbed.todetector(
+                        entrance_EF=input_wavefront,
+                        voltage_vector=initial_DM_voltage,
+                        save_all_planes_to_fits=save_all_planes_to_fits,
+                        dir_save_all_planes=dir_save_all_planes), dimEstim)
 
             if (initial_DM_voltage == 0.).all():
                 print("")
@@ -286,9 +300,12 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                         DM.basis[i]) * amplitudeEFC
 
             # to be applicable to all Testbed configurations and save time we separate the testbed in 3 parts:
-            # - The optics before the DM we want to actuate (these can be propagated through only once)
-            # - The DM we want to actuate (if not in PP, the first Fresnel transform can be calculated only once)
-            # - The optics after the DM we want to actuate (these have to be propagated through for each phase of the basis)
+            # - The optics before the DM we want to actuate 
+            #           (these can be propagated through only once)
+            # - The DM we want to actuate 
+            #           (if not in PP, the first Fresnel transform can be calculated only once)
+            # - The optics after the DM we want to actuate 
+            #           (these have to be propagated through for each phase of the basis)
 
             positioonDMintestbed = testbed.subsystems.index(DM_name)
             OpticSysNameBefore = testbed.subsystems[:positioonDMintestbed]
@@ -313,7 +330,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 if isinstance(
                         OpticSysbefore,
                         OptSy.deformable_mirror) and OpticSysbefore.active:
-                    # this subsystem is an active DM but not the one we actuate now (located before the one we actuate)
+                    # this subsystem is an active DM but not the one we actuate now 
+                    # (located before the one we actuate)
 
                     if OpticSysbefore.z_position == 0:
                         wavefrontupstream = wavefrontupstream * OpticSysbefore.EF_from_phase_and_ampl(
@@ -404,7 +422,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                               wavefront)
                 # and finally we go through the subsystems after the DMs we want to actuate
-                # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
+                # (other DMs, coronagraph, etc). These ones we have to go through for 
+                # each phase of the Basis
                 for osname in OpticSysNameAfter:
                     OpticSysAfter = vars(testbed)[
                         osname]  # type: OptSy.Optical_System
@@ -440,19 +459,29 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                             useful.save_plane_in_fits(dir_save_all_planes,
                                                       name_plane, wavefront)
                     else:
-                        # this is the last one ! so we propagate to FP and resample to estimation size
-                        # we have to be careful with the normalization, by default this is the
-                        # normalization of the last optical system (probably the coronograph)
-                        # not of the full system (because we went through each optics one by one, not
-                        # through the whole system at once). For this reason, we do not use the defaut
-                        # automatic normalization (in_contrast=False) but normalize "by hand" using
-                        # normalisation_testbed_EF_contrast which is the  max value of the PSF at this
-                        # wavelength for the whole testbed. This is the same normalization as G0.
+                        # this is the last one ! so we propagate to FP and resample to 
+                        # estimation size we have to be careful with the normalization, 
+                        # by default this is the normalization of the last optical system 
+                        # (probably the coronograph) not of the full system (because we 
+                        # went through each optics one by one, not through the whole system 
+                        # at once). For this reason, we do not use the defaut automatic 
+                        # normalization (in_contrast=False) but normalize "by hand" using
+                        # normalisation_testbed_EF_contrast which is the  max value of the 
+                        # PSF at this wavelength for the whole testbed. This is the same 
+                        # normalization as G0.
 
-                        Gvector = proc.resampling(
-                            OpticSysAfter.todetector(entrance_EF=wavefront,
-                                                     in_contrast=False) /
-                            normalisation_testbed_EF_contrast, dimEstim)
+                        if MatrixType == 'scc':
+                            fp_scc = np.abs(
+                                OpticSysAfter.todetector(entrance_EF=wavefront,
+                                                         in_contrast=False) /
+                                normalisation_testbed_EF_contrast)**2
+                            Gvector = extractI_peak(fp_scc, estimator)
+
+                        else:
+                            Gvector = proc.resampling(
+                                OpticSysAfter.todetector(entrance_EF=wavefront,
+                                                         in_contrast=False) /
+                                normalisation_testbed_EF_contrast, dimEstim)
 
                         if save_all_planes_to_fits == True:
                             name_plane = 'FPAfterTestbed_' + osname + '_wl{}'.format(
@@ -479,13 +508,18 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                     plt.gca().invert_yaxis()
                     plt.colorbar()
                     plt.pause(0.01)
+
+                if MatrixType == 'scc':
+                    Gvector = Gvector[np.where(
+                        estimator.I_peak_mask != 0)].flatten()
+                else:
+                    Gvector = Gvector.flatten()
+
                 # We fill the interraction matrix:
-                InterMat[:dimEstim**2,
-                         pos_in_matrix] = np.real(Gvector).flatten()
-                InterMat[dimEstim**2:,
-                         pos_in_matrix] = np.imag(Gvector).flatten()
-                # Note that we do not crop to DH. This is done after so that we can change DH more easily
-                # without changeing the matrix
+                InterMat[:nb_pix_estim, pos_in_matrix] = np.real(Gvector)
+                InterMat[nb_pix_estim:, pos_in_matrix] = np.imag(Gvector)
+                # Note that we do not crop to DH. This is done after so that 
+                # we can change DH more easily without changeing the matrix
 
                 pos_in_matrix += 1
 
@@ -1002,3 +1036,43 @@ def createdifference(input_wavefront,
         Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
 
     return Difference
+
+
+#################################################################################
+### SCC functions
+#################################################################################
+
+
+def extractI_peak(fp_scc, estimator: Estimator):
+    """ --------------------------------------------------
+    Find and extract the I- SCC peak. Fourier transform and center and crop
+
+    AUTHOR : Johan Mazoyer
+    Date : 30 Septembre 2021
+
+    Parameters
+    ----------
+    fp_scc: 2d real array
+        focal plane image of the SCC testebed
+    
+    estimator: Estimator 
+            This contains all information about the estimation
+
+    Returns
+    ------
+    Ipeak: 2D complex array
+             The lateral peak with the SCC information
+    
+    
+
+    -------------------------------------------------- """
+
+    Ipeak = proc.crop_or_pad_image(
+        np.roll(np.fft.fft2(fp_scc * estimator.mask_dh_scc),
+                ((estimator.testbed_sccmode.dimScience / 2 -
+                  np.round(estimator.posx_I_peak)).astype("int"),
+                 (estimator.testbed_sccmode.dimScience / 2 -
+                  np.round(estimator.posy_I_peak)).astype("int")),
+                axis=(0, 1)), 2 * estimator.ray_I_peak)
+
+    return Ipeak * estimator.I_peak_mask

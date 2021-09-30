@@ -1,9 +1,7 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
-from Asterix.MaskDH import MaskDH
 import copy
-from math import radians
 import os
 import numpy as np
 from scipy.ndimage import gaussian_filter
@@ -14,6 +12,7 @@ import Asterix.processing_functions as proc
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.Optical_System_functions as OptSy
 import Asterix.WSC_functions as wsc
+from Asterix.MaskDH import MaskDH
 
 
 class Estimator:
@@ -48,7 +47,7 @@ class Estimator:
     def __init__(self,
                  Estimationconfig,
                  testbed: OptSy.Testbed,
-                 mask_dh,
+                 mask_dh: MaskDH,
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -139,12 +138,14 @@ class Estimator:
                     #If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
                     if number_DMs_in_PP > 1:
                         raise Exception(
-                            "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                            """You have several DM in PP, choose one for the 
+                                    PW probes using testbed.name_DM_to_probe_in_PW"""
                         )
                     #Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
                     if number_DMs_in_PP == 0:
                         raise Exception(
-                            "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                            """You have several DMs none in PP, choose one for the 
+                                    PW probes using testbed.name_DM_to_probe_in_PW"""
                         )
 
             string_dims_PWMatrix = "actProb_" + "_".join(
@@ -221,7 +222,9 @@ class Estimator:
             self.ref_ypos = self.ref_SCC_distancepix * np.sin(
                 np.radians(self.ref_SCC_angle))
 
-            # newsize = 2*np.floor((1.1*(np.max([self.ref_xpos, self.ref_ypos])+self.ref_SCC_radiuspix))).astype('int')
+            # newsize = 2*np.floor((1.1*(np.max([self.ref_xpos, self.ref_ypos])+
+            # self.ref_SCC_radiuspix))).astype('int')
+            # TODO DO THAT A BIT BETTER. newsize must be dependent on ref dist and angle
             newsize = 8 * testbed.prad
 
             scc_ref = np.roll(phase_ampl.roundpupil(newsize,
@@ -230,8 +233,9 @@ class Estimator:
                                np.around(self.ref_ypos).astype('int')),
                               axis=(0, 1))
 
-            # creating a copy of the testbed with everything is identical except the coronagraph Lyot
-            # Only the coronagraph is really duplicated to save mem space, the rest of the items are just the same object.
+            # creating a copy of the testbed with everything is identical 
+            # except the coronagraph Lyot.Only the coronagraph is really duplicated to save 
+            # memory space, the rest of the items are just the same object.
 
             list_os = []
             list_os_names = []
@@ -259,7 +263,8 @@ class Estimator:
 
             self.testbed_sccmode = OptSy.Testbed(list_os, list_os_names)
 
-            # we measure and save all the quantities we need to exctract the I- peak in the FFT of the SCC FP
+            # we measure and save all the quantities we need
+            # to exctract the I- peak in the FFT of the SCC FP
             self.posx_I_peak = self.ref_xpos / testbed.Science_sampling * testbed.prad / self.lyotrad
             self.posy_I_peak = self.ref_ypos / testbed.Science_sampling * testbed.prad / self.lyotrad
             self.ray_I_peak = np.round(
@@ -272,6 +277,8 @@ class Estimator:
             self.mask_dh_scc = gaussian_filter(
                 mask_dh.creatingMaskDH(testbed.dimScience,
                                        testbed.Science_sampling), 1)
+
+            self.string_mask = mask_dh.string_mask
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
@@ -336,7 +343,8 @@ class Estimator:
         else:
             raise Exception(
                 """"entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
-                        2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
+                        2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) 
+                        or a 3D array of size
                         (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"""
             )
 
@@ -382,15 +390,7 @@ class Estimator:
                 voltage_vector=voltage_vector,
                 **kwargs)
 
-            Ipeak = proc.crop_or_pad_image(
-                np.roll(np.fft.fft2(fp_scc * self.mask_dh_scc),
-                        ((testbed.dimScience / 2 -
-                          np.round(self.posx_I_peak)).astype("int"),
-                         (testbed.dimScience / 2 -
-                          np.round(self.posy_I_peak)).astype("int")),
-                        axis=(0, 1)), 2 * self.ray_I_peak)
-
-            return self.I_peak_mask * Ipeak
+            return wsc.extractI_peak(fp_scc, self)
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")

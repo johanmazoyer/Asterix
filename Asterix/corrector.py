@@ -99,7 +99,11 @@ class Corrector:
 
         self.correction_algorithm = Correctionconfig[
             "correction_algorithm"].lower()
+        
         self.MatrixType = Correctionconfig["MatrixType"].lower()
+
+        if estimator.technique == 'scc':
+            self.MatrixType = 'scc'
 
         if basis_type == 'actuator':
             self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
@@ -224,7 +228,7 @@ class Corrector:
             start_time = time.time()
             interMat = wsc.creatingInterractionmatrix(
                 testbed,
-                estimator.dimEstim,
+                estimator,
                 self.amplitudeEFC,
                 self.matrix_dir,
                 initial_DM_voltage=initial_DM_voltage,
@@ -236,9 +240,10 @@ class Corrector:
             print("time for direct matrix " + testbed.string_os,
                   time.time() - start_time)
             print("")
-
-            self.Gmatrix = wsc.cropDHInterractionMatrix(
-                interMat, self.MaskEstim)
+            
+            if self.MatrixType != 'scc':
+                self.Gmatrix = wsc.cropDHInterractionMatrix(
+                    interMat, self.MaskEstim)
 
             # useful.quickfits(self.Gmatrix)
 
