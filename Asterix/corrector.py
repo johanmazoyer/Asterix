@@ -244,6 +244,8 @@ class Corrector:
             if self.MatrixType != 'scc':
                 self.Gmatrix = wsc.cropDHInterractionMatrix(
                     interMat, self.MaskEstim)
+            else:
+                self.Gmatrix = interMat
 
             # useful.quickfits(self.Gmatrix)
 

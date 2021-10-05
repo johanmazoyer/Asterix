@@ -10,7 +10,6 @@ import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 import Asterix.Optical_System_functions as OptSy
-from Asterix.estimator import Estimator
 
 #################################################################################
 ### Correction functions
@@ -63,6 +62,7 @@ def invertSVD(matrix_to_invert,
 
 
     -------------------------------------------------- """
+    print(matrix_to_invert.shape)
     U, s, V = np.linalg.svd(matrix_to_invert, full_matrices=False)
     #print(np.max(np.abs(U @ np.diag(s) @ V)))
 
@@ -101,7 +101,7 @@ def invertSVD(matrix_to_invert,
 
 
 def creatingInterractionmatrix(testbed: OptSy.Testbed,
-                               estimator: Estimator,
+                               estimator,
                                amplitudeEFC,
                                matrix_dir,
                                initial_DM_voltage=0.,
@@ -111,11 +111,14 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                                dir_save_all_planes=None,
                                visu=False):
     """ --------------------------------------------------
-    Create the jacobian matrix for Electric Field Conjugation. The Matrix is not
-    limited to the DH size but to the whole FP [dimEstim, dimEstim]. 
+    Create the jacobian matrix for Electric Field Conjugation.     
     First half is real part, second half is imag part.
+    
+    In perfect and pw mode, the Matrix is not limited to the DH size 
+    but to the whole FP [dimEstim, dimEstim]. sor nb_pix_estim = dimEstim^2
+    In SCC mode, the matrix is np.sum(estimator.I_peak_mask).
 
-    The matrix size is therefore [total(DM.basis_size), 2*dimEstim^2]
+    The matrix size is therefore [total(DM.basis_size), 2*nb_pix_estim]
 
     We save the matrix in .fits independently for each DMs, only if the initial 
     wavefront and DMs are flat.
@@ -168,7 +171,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
     Returns
     ------
-    InterMat: 2D array of size [total(DM.basis_size), 2*dimEstim^2]
+    InterMat: 2D array of size [total(DM.basis_size), 2*nb_pix_estim]
         jacobian matrix for Electric Field Conjugation.
 
 
@@ -177,8 +180,11 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
         initial_DM_voltage = np.zeros(
             testbed.number_act) + float(initial_DM_voltage)
 
-    dimEstim = estimator.dimEstim
-    nb_pix_estim = dimEstim**2
+
+    if MatrixType == 'scc':
+        nb_pix_estim = int(np.sum(estimator.I_peak_mask))
+    else:
+        nb_pix_estim = int(estimator.dimEstim**2)
 
     wavelength = testbed.wavelength_0
     normalisation_testbed_EF_contrast = np.sqrt(
@@ -274,7 +280,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                         entrance_EF=input_wavefront,
                         voltage_vector=initial_DM_voltage,
                         save_all_planes_to_fits=save_all_planes_to_fits,
-                        dir_save_all_planes=dir_save_all_planes), dimEstim)
+                        dir_save_all_planes=dir_save_all_planes), estimator.dimEstim)
 
             if (initial_DM_voltage == 0.).all():
                 print("")
@@ -381,7 +387,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 if i % 10:
                     useful._progress(i, DM.basis_size, status='')
 
-                if MatrixType == 'perfect':
+                if MatrixType in ['perfect','scc']:
                     if DM.z_position == 0:
 
                         wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(
@@ -481,7 +487,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                             Gvector = proc.resampling(
                                 OpticSysAfter.todetector(entrance_EF=wavefront,
                                                          in_contrast=False) /
-                                normalisation_testbed_EF_contrast, dimEstim)
+                                normalisation_testbed_EF_contrast, estimator.dimEstim)
 
                         if save_all_planes_to_fits == True:
                             name_plane = 'FPAfterTestbed_' + osname + '_wl{}'.format(
@@ -1043,7 +1049,7 @@ def createdifference(input_wavefront,
 #################################################################################
 
 
-def extractI_peak(fp_scc, estimator: Estimator):
+def extractI_peak(fp_scc, estimator):
     """ --------------------------------------------------
     Find and extract the I- SCC peak. Fourier transform and center and crop
 
