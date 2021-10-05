@@ -289,6 +289,8 @@ class Estimator:
                  voltage_vector=0.,
                  wavelength=None,
                  perfect_estimation=False,
+                 save_all_planes_to_fits=False,
+                 dir_save_all_planes=None,
                  **kwargs):
         """ --------------------------------------------------
         Run an estimation from a testbed, with a given input wavefront
@@ -317,6 +319,15 @@ class Estimator:
                     but even if we are using another technique, we sometimes 
                     need a perfect estimation and it avoid re-initialization of 
                     the estimation.
+        
+        save_all_planes_to_fits: Bool, default False.
+            if True, save all planes to fits for debugging purposes to dir_save_all_planes
+            This can generate a lot of fits especially if in a loop so the code force you
+            to define a repository.
+
+        dir_save_all_planes : path, default None. 
+                            directory to save all plane
+                            in fits if save_all_planes_to_fits = True
                                             
         Returns
         ------
@@ -355,7 +366,16 @@ class Estimator:
                 entrance_EF=entrance_EF,
                 voltage_vector=voltage_vector,
                 wavelength=wavelength,
+                save_all_planes_to_fits=save_all_planes_to_fits,
+                dir_save_all_planes=dir_save_all_planes,
                 **kwargs)
+            
+            if save_all_planes_to_fits == True:
+                # save PP plane before this subsystem
+                name_plane = 'Estimation_+'+self.technique + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            proc.resampling(resultatestimation, self.dimEstim))
 
             return proc.resampling(resultatestimation, self.dimEstim)
 
@@ -367,7 +387,16 @@ class Estimator:
                                               self.amplitudePW,
                                               voltage_vector=voltage_vector,
                                               wavelength=wavelength,
+                                              save_all_planes_to_fits=save_all_planes_to_fits,
+                                              dir_save_all_planes=dir_save_all_planes,
                                               **kwargs)
+            
+            if save_all_planes_to_fits == True:
+                # save PP plane before this subsystem
+                name_plane = 'Estimation_+'+self.technique + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            proc.resampling(wsc.FP_PWestimate(Difference, self.PWMatrix), self.dimEstim))
 
             return wsc.FP_PWestimate(Difference, self.PWMatrix)
 
@@ -388,7 +417,16 @@ class Estimator:
                 entrance_EF=entrance_EF,
                 wavelengths=wavelength,
                 voltage_vector=voltage_vector,
+                save_all_planes_to_fits=save_all_planes_to_fits,
+                dir_save_all_planes=dir_save_all_planes,
                 **kwargs)
+            
+            if save_all_planes_to_fits == True:
+                # save PP plane before this subsystem
+                name_plane = 'Estimation_+'+self.technique + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            wsc.extractI_peak(fp_scc, self))
 
             return wsc.extractI_peak(fp_scc, self)
 
