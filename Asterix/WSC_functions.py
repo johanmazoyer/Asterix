@@ -551,7 +551,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray,
                              mask: np.ndarray):
     """ --------------------------------------------------
-    Crop the  Interraction Matrix. to the mask size
+    Crop the Interraction Matrix to the mask size
     AUTHOR : Johan Mazoyer
 
     Parameters
@@ -588,21 +588,22 @@ def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray,
     return DHInterractionMatrix
 
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian,
+def solutionEFC(Estim_in_dh, inversed_jacobian,
                 testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltages to apply on the deformable mirrors in order to minimize the speckle
     intensity in the dark hole region
+
+    New version (JM) Oct 2021 : DH masking is now done in estimation and 
+                    this function now take 1D EF in the DH as a parameter
     
     AUTHOR : Axel Potier
 
     Parameters
     ----------
-    mask:               2D Binary mask 
-        corresponding to the dark hole region
 
-    Result_Estimate:    2D array 
-        can be complex, focal plane electric field
+    Estim_in_dh:    1D array 
+        can be complex, focal plane electric field in the DH
 
     inversed_jacobian:  2D array
         inverse of the jacobian matrix linking the
@@ -620,30 +621,30 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian,
     
     -------------------------------------------------- """
 
-    EF_vector = np.zeros(2 * int(np.sum(mask)))
-    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
-    EF_vector[0:int(np.sum(mask))] = np.real(Resultat_cropdh).flatten()
-    EF_vector[int(np.sum(mask)):] = np.imag(Resultat_cropdh).flatten()
+    EF_vector = np.zeros(2 * int(len(Estim_in_dh)))
+    EF_vector[0:int(len(Estim_in_dh))] = np.real(Estim_in_dh).flatten()
+    EF_vector[int(len(Estim_in_dh)):] = np.imag(Estim_in_dh).flatten()
     produit_mat = np.dot(inversed_jacobian, EF_vector)
 
     return testbed.basis_vector_to_act_vector(produit_mat)
 
 
-def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
+def solutionEM(Estim_in_dh, Hessian_Matrix, Jacobian,
                testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region
+
+    New version (JM) Oct 2021 : DH masking is now done in estimation and 
+                    this function now take 1D EF in the DH as a parameter
     
     AUTHOR : Axel Potier
 
     Parameters
     ----------
-    mask:               Binary mask
-             corresponding to the dark hole region
 
-    Result_Estimate:    2D array
-             can be complex, focal plane electric field
+    Estim_in_dh:    1D array 
+            can be complex, focal plane electric field in the DH
 
     Hessian_Matrix:     2D array 
             Hessian matrix of the DH energy
@@ -665,15 +666,14 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian,
     -------------------------------------------------- """
 
     # With notations from Potier PhD eq 4.74 p78:
-    Eab = Result_Estimate[np.where(mask == 1)]
     realb0 = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
-                            Eab)).flatten()
+                            Estim_in_dh)).flatten()
     produit_mat = np.dot(Hessian_Matrix, realb0)
 
     return testbed.basis_vector_to_act_vector(produit_mat)
 
 
-def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
+def solutionSM(Estim_in_dh, Jacob_trans_Jacob, Jacobian,
                DesiredContrast, last_best_alpha, testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
@@ -681,14 +681,15 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
     See Axel Potier Phd for notation and Mazoyer et al. 2018a for alpha search improvement
 
     AUTHOR : Johan Mazoyer
+    
+    New version (JM) Oct 2021 : DH masking is now done in estimation and 
+                    this function now take 1D EF in the DH as a parameter
 
     Parameters
     ----------
-    mask:               Binary mask
-             corresponding to the dark hole region
 
-    Result_Estimate:    2D array
-             can be complex, focal plane electric field
+    Estim_in_dh:    1D array 
+            can be complex, focal plane electric field in the DH
 
     Jacob_trans_Jacob:     2D array 
             Jabobian.Transpose(Jabobian) matrix
@@ -717,10 +718,10 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
 
     -------------------------------------------------- """
 
-    pixel_in_mask = np.sum(mask)
+    pixel_in_mask = len(Estim_in_dh)
 
     # With notations from Potier PhD eq 4.74 p78:
-    Eab = Result_Estimate[np.where(mask == 1)]
+    Eab = Estim_in_dh
 
     d0 = np.sum(np.abs(Eab)**2) / pixel_in_mask
     M0 = Jacob_trans_Jacob / pixel_in_mask
@@ -792,7 +793,7 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian,
     return testbed.basis_vector_to_act_vector(DMSurfaceCoeff), alpha
 
 
-def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
+def solutionSteepest(Estim_in_dh, Hessian_Matrix, Jacobian,
                      testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize
@@ -800,12 +801,15 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
 
     AUTHOR : Axel Potier
 
+    New version (JM) Oct 2021 : DH masking is now done in estimation and 
+                    this function now take 1D EF in the DH as a parameter
+
     Parameters
     ----------
-    mask: Binary mask 
-        corresponding to the dark hole region
-    Result_Estimate: 2D array 
-        can be complex, focal plane electric field
+
+    Estim_in_dh:    1D array 
+            can be complex, focal plane electric field in the DH
+    
     Hessian_Matrix: 2D array 
          Hessian matrix of the DH energy
     
@@ -824,10 +828,9 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian,
 
     -------------------------------------------------- """
 
-    Eab = np.zeros(int(np.sum(mask)))
-    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
+    Eab = np.zeros(int(len(Estim_in_dh)))
     Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)),
-                         Resultat_cropdh)).flatten()
+                         Estim_in_dh)).flatten()
     pas = 2e3
     solution = pas * 2 * Eab
 
@@ -1074,7 +1077,7 @@ def extractI_peak(fp_scc, estimator):
     -------------------------------------------------- """
 
     Ipeak = proc.crop_or_pad_image(
-        np.roll(np.fft.fft2(fp_scc * estimator.mask_dh_scc),
+        np.roll(np.fft.fft2(fp_scc * estimator.mask_dh),
                 ((estimator.testbed_sccmode.dimScience / 2 -
                   np.round(estimator.posx_I_peak)).astype("int"),
                  (estimator.testbed_sccmode.dimScience / 2 -

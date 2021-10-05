@@ -34,13 +34,15 @@ class Estimator:
                 - the wavelength
         Estimation = Estimator.estimate(entrance EF, DM voltage, WL)
 
-        It returns the estimation as a 2D array. In all generality, it can be pupil or focal plane,
+        It returns the estimation 1D array in the DH mask. 
+        In all generality, it can be pupil or focal plane,
         complex or real with keywords (Estim.is_focal_plane = True, Estim.is_complex = True)
         to explain the form of the output and potentially prevent wrongfull combination of
         estim + correc.
 
     AUTHOR : Johan Mazoyer
     Version with SCC Added on 22 Sept 2021
+    Version where the estimate is only the mask part on 05 Oct 2021
 
 
     -------------------------------------------------- """
@@ -63,6 +65,9 @@ class Estimator:
         used in self.estimate shoud not be stored
 
         AUTHOR : Johan Mazoyer
+
+        DH mask is now done in estimation on 5 Oct 2021
+
 
         Parameters
         ----------
@@ -101,10 +106,15 @@ class Estimator:
         if self.technique == "perfect":
             self.is_focal_plane = True
             self.is_complex = True
+            self.mask_dh = mask_dh.creatingMaskDH(self.dimEstim,
+                                                    self.Estim_sampling)
 
         elif self.technique in ["pairwise", "pw"]:
             self.is_focal_plane = True
             self.is_complex = True
+
+            self.mask_dh = mask_dh.creatingMaskDH(self.dimEstim,
+                                                    self.Estim_sampling)
 
             self.amplitudePW = Estimationconfig["amplitudePW"]
             self.posprobes = [int(i) for i in Estimationconfig["posprobes"]]
@@ -176,6 +186,15 @@ class Estimator:
                 if not os.path.exists(realtestbed_dir):
                     print("Creating directory " + realtestbed_dir + " ...")
                     os.makedirs(realtestbed_dir)
+                
+                fits.writeto(realtestbed_dir + "DH_mask.fits",
+                         self.mask_dh.astype(np.float32),
+                         overwrite=True)
+
+                fits.writeto(realtestbed_dir + "DH_mask_where_x_y.fits",
+                         np.array(np.where(self.mask_dh == 1)).astype(
+                             np.float32),
+                         overwrite=True)
 
                 probes = np.zeros(
                     (len(self.posprobes), testbed.DM3.number_act),
@@ -233,8 +252,8 @@ class Estimator:
                                np.around(self.ref_ypos).astype('int')),
                               axis=(0, 1))
 
-            # creating a copy of the testbed with everything is identical 
-            # except the coronagraph Lyot.Only the coronagraph is really duplicated to save 
+            # creating a copy of the testbed with everything is identical
+            # except the coronagraph Lyot.Only the coronagraph is really duplicated to save
             # memory space, the rest of the items are just the same object.
 
             list_os = []
@@ -274,9 +293,18 @@ class Estimator:
 
             self.I_peak_mask = phase_ampl.roundpupil(2 * self.ray_I_peak,
                                                      self.ray_I_peak)
-            self.mask_dh_scc = gaussian_filter(
-                mask_dh.creatingMaskDH(testbed.dimScience,
-                                       testbed.Science_sampling), 1)
+
+            if mask_dh.DH_shape == "nodh":
+                # Even in the nodh case, we add a small smooth at the edge to 
+                # avoid aliasing effects in the fft to measure the value
+                self.mask_dh = gaussian_filter(
+                    proc.crop_or_pad_image(
+                        np.ones((testbed.dimScience - 10,
+                                 testbed.dimScience - 10)), testbed.dimScience), 1)
+            else:
+                self.mask_dh = gaussian_filter(
+                    mask_dh.creatingMaskDH(testbed.dimScience,
+                                           testbed.Science_sampling), 1)
 
             self.string_mask = mask_dh.string_mask
 
@@ -297,7 +325,8 @@ class Estimator:
         and a state of the DMs
         
         AUTHOR : Johan Mazoyer
-        Version with SCC Added on 22 Sept 2021
+        SCC Added on 22 Sept 2021
+        DH mask is now done in estimation on 5 Oct 2021
 
 
         Parameters
@@ -331,9 +360,9 @@ class Estimator:
                                             
         Returns
         ------
-        estimation : 2D array 
-                array of size [self.dimEstim,self.dimEstim]
-                estimation of the Electrical field
+        Estim_in_dh:    1D array 
+                can be complex, focal plane electric field in the DH
+
 
 
 
@@ -369,36 +398,41 @@ class Estimator:
                 save_all_planes_to_fits=save_all_planes_to_fits,
                 dir_save_all_planes=dir_save_all_planes,
                 **kwargs)
-            
+
             if save_all_planes_to_fits == True:
                 # save PP plane before this subsystem
-                name_plane = 'Estimation_+'+self.technique + '_wl{}'.format(
+                name_plane = 'Estimation_+' + self.technique + '_wl{}'.format(
                     int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            proc.resampling(resultatestimation, self.dimEstim))
+                useful.save_plane_in_fits(
+                    dir_save_all_planes, name_plane,
+                    proc.resampling(resultatestimation, self.dimEstim))
 
-            return proc.resampling(resultatestimation, self.dimEstim)
+            return proc.resampling(resultatestimation, self.dimEstim)[np.where(self.mask_dh == 1)]
 
         elif self.technique in ["pairwise", "pw"]:
-            Difference = wsc.createdifference(entrance_EF,
-                                              testbed,
-                                              self.posprobes,
-                                              self.dimEstim,
-                                              self.amplitudePW,
-                                              voltage_vector=voltage_vector,
-                                              wavelength=wavelength,
-                                              save_all_planes_to_fits=save_all_planes_to_fits,
-                                              dir_save_all_planes=dir_save_all_planes,
-                                              **kwargs)
-            
+            Difference = wsc.createdifference(
+                entrance_EF,
+                testbed,
+                self.posprobes,
+                self.dimEstim,
+                self.amplitudePW,
+                voltage_vector=voltage_vector,
+                wavelength=wavelength,
+                save_all_planes_to_fits=save_all_planes_to_fits,
+                dir_save_all_planes=dir_save_all_planes,
+                **kwargs)
+
             if save_all_planes_to_fits == True:
                 # save PP plane before this subsystem
-                name_plane = 'Estimation_+'+self.technique + '_wl{}'.format(
+                name_plane = 'Estimation_+' + self.technique + '_wl{}'.format(
                     int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            proc.resampling(wsc.FP_PWestimate(Difference, self.PWMatrix), self.dimEstim))
+                useful.save_plane_in_fits(
+                    dir_save_all_planes, name_plane,
+                    proc.resampling(
+                        wsc.FP_PWestimate(Difference, self.PWMatrix),
+                        self.dimEstim))
 
-            return wsc.FP_PWestimate(Difference, self.PWMatrix)
+            return wsc.FP_PWestimate(Difference, self.PWMatrix)[np.where(self.mask_dh == 1)]
 
         elif self.technique == 'coffee':
             return np.zeros((self.dimEstim, self.dimEstim))
@@ -420,13 +454,13 @@ class Estimator:
                 save_all_planes_to_fits=save_all_planes_to_fits,
                 dir_save_all_planes=dir_save_all_planes,
                 **kwargs)
-            
+
             if save_all_planes_to_fits == True:
                 # save PP plane before this subsystem
-                name_plane = 'Estimation_+'+self.technique + '_wl{}'.format(
+                name_plane = 'Estimation_+' + self.technique + '_wl{}'.format(
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            wsc.extractI_peak(fp_scc, self))
+                                          wsc.extractI_peak(fp_scc, self))
 
             return wsc.extractI_peak(fp_scc, self)
 

@@ -115,9 +115,6 @@ class Corrector:
 
         self.regularization = Correctionconfig["regularization"]
 
-        self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
-                                               estimator.Estim_sampling)
-
         self.matrix_dir = matrix_dir
 
         self.update_matrices(testbed, estimator)
@@ -163,13 +160,6 @@ class Corrector:
             else:
                 raise Exception("No active DMs")
 
-            fits.writeto(realtestbed_dir + "DH_mask.fits",
-                         self.MaskEstim.astype(np.float32),
-                         overwrite=True)
-            fits.writeto(realtestbed_dir + "DH_mask_where_x_y.fits",
-                         np.array(np.where(self.MaskEstim == 1)).astype(
-                             np.float32),
-                         overwrite=True)
 
         # Adding error on the DM model. Now that the matrix is measured, we can
         # introduce a small movememnt on one DM or the other. By changeing DM_pushact
@@ -243,7 +233,7 @@ class Corrector:
             
             if self.MatrixType != 'scc':
                 self.Gmatrix = wsc.cropDHInterractionMatrix(
-                    interMat, self.MaskEstim)
+                    interMat, estimator.mask_dh)
             else:
                 self.Gmatrix = interMat
 
@@ -252,7 +242,7 @@ class Corrector:
             if self.correction_algorithm in ["em", "steepest", "sm"]:
 
                 self.G = np.zeros(
-                    (int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]),
+                    (int(np.sum(estimator.mask_dh)), self.Gmatrix.shape[1]),
                     dtype=complex)
                 self.G = (
                     self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
@@ -313,8 +303,7 @@ class Corrector:
                                                      visu=False,
                                                      regul=self.regularization)
 
-            return -self.amplitudeEFC * wsc.solutionEFC(
-                self.MaskEstim, estimate, self.invertGDH, testbed)
+            return -self.amplitudeEFC * wsc.solutionEFC(estimate, self.invertGDH, testbed)
 
         if self.correction_algorithm == "sm":
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
@@ -343,8 +332,7 @@ class Corrector:
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
-            solutionSM, self.last_best_alpha = wsc.solutionSM(
-                self.MaskEstim, estimate, self.M0, self.G, DesiredContrast,
+            solutionSM, self.last_best_alpha = wsc.solutionSM(estimate, self.M0, self.G, DesiredContrast,
                 self.last_best_alpha, testbed)
 
             if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (
@@ -372,12 +360,10 @@ class Corrector:
                                                     visu=False,
                                                     regul=self.regularization)
 
-            return -self.amplitudeEFC * wsc.solutionEM(
-                self.MaskEstim, estimate, self.invertM0, self.G, testbed)
+            return -self.amplitudeEFC * wsc.solutionEM(estimate, self.invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return -self.amplitudeEFC * wsc.solutionSteepest(
-                self.MaskEstim, estimate, self.M0, self.G, testbed)
+            return -self.amplitudeEFC * wsc.solutionSteepest(estimate, self.M0, self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")
