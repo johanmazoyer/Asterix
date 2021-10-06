@@ -462,7 +462,7 @@ class Estimator:
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           wsc.extractI_peak(fp_scc, self))
 
-            return wsc.extractI_peak(fp_scc, self)
+            return wsc.extractI_peak(fp_scc, self)[np.where(self.I_peak_mask == 1)]
 
         else:
             raise Exception("This estimation algorithm is not yet implemented")
