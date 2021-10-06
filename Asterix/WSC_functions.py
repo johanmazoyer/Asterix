@@ -180,7 +180,6 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
         initial_DM_voltage = np.zeros(
             testbed.number_act) + float(initial_DM_voltage)
 
-
     if MatrixType == 'scc':
         nb_pix_estim = int(np.sum(estimator.I_peak_mask))
     else:
@@ -263,24 +262,28 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
         else:
             # We measure the initial Focal plane that will be removed at the end.
-            # Be careful because todetector automatically normalized to 
+            # Be careful because todetector automatically normalized to
             # contrast with the full testbed.
             # We checked that this is the same normalization as in Gvector
 
             if MatrixType == 'scc':
-                G0 = estimator.estimate(
-                    testbed,
-                    entrance_EF=input_wavefront,
-                    voltage_vector=initial_DM_voltage,
-                    save_all_planes_to_fits=save_all_planes_to_fits,
-                    dir_save_all_planes=dir_save_all_planes)
+                fp_scc = np.abs(
+                    testbed.todetector(
+                        entrance_EF=input_wavefront,
+                        voltage_vector=initial_DM_voltage,
+                        save_all_planes_to_fits=save_all_planes_to_fits,
+                        dir_save_all_planes=dir_save_all_planes))**2
+
+                G0 = extractI_peak(fp_scc, estimator)
+
             else:
                 G0 = proc.resampling(
                     testbed.todetector(
                         entrance_EF=input_wavefront,
                         voltage_vector=initial_DM_voltage,
                         save_all_planes_to_fits=save_all_planes_to_fits,
-                        dir_save_all_planes=dir_save_all_planes), estimator.dimEstim)
+                        dir_save_all_planes=dir_save_all_planes),
+                    estimator.dimEstim)
 
             if (initial_DM_voltage == 0.).all():
                 print("")
@@ -306,11 +309,11 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                         DM.basis[i]) * amplitudeEFC
 
             # to be applicable to all Testbed configurations and save time we separate the testbed in 3 parts:
-            # - The optics before the DM we want to actuate 
+            # - The optics before the DM we want to actuate
             #           (these can be propagated through only once)
-            # - The DM we want to actuate 
+            # - The DM we want to actuate
             #           (if not in PP, the first Fresnel transform can be calculated only once)
-            # - The optics after the DM we want to actuate 
+            # - The optics after the DM we want to actuate
             #           (these have to be propagated through for each phase of the basis)
 
             positioonDMintestbed = testbed.subsystems.index(DM_name)
@@ -336,7 +339,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 if isinstance(
                         OpticSysbefore,
                         OptSy.deformable_mirror) and OpticSysbefore.active:
-                    # this subsystem is an active DM but not the one we actuate now 
+                    # this subsystem is an active DM but not the one we actuate now
                     # (located before the one we actuate)
 
                     if OpticSysbefore.z_position == 0:
@@ -387,7 +390,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 if i % 10:
                     useful._progress(i, DM.basis_size, status='')
 
-                if MatrixType in ['perfect','scc']:
+                if MatrixType in ['perfect', 'scc']:
                     if DM.z_position == 0:
 
                         wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(
@@ -428,7 +431,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                               wavefront)
                 # and finally we go through the subsystems after the DMs we want to actuate
-                # (other DMs, coronagraph, etc). These ones we have to go through for 
+                # (other DMs, coronagraph, etc). These ones we have to go through for
                 # each phase of the Basis
                 for osname in OpticSysNameAfter:
                     OpticSysAfter = vars(testbed)[
@@ -465,15 +468,15 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                             useful.save_plane_in_fits(dir_save_all_planes,
                                                       name_plane, wavefront)
                     else:
-                        # this is the last one ! so we propagate to FP and resample to 
-                        # estimation size we have to be careful with the normalization, 
-                        # by default this is the normalization of the last optical system 
-                        # (probably the coronograph) not of the full system (because we 
-                        # went through each optics one by one, not through the whole system 
-                        # at once). For this reason, we do not use the defaut automatic 
+                        # this is the last one ! so we propagate to FP and resample to
+                        # estimation size we have to be careful with the normalization,
+                        # by default this is the normalization of the last optical system
+                        # (probably the coronograph) not of the full system (because we
+                        # went through each optics one by one, not through the whole system
+                        # at once). For this reason, we do not use the defaut automatic
                         # normalization (in_contrast=False) but normalize "by hand" using
-                        # normalisation_testbed_EF_contrast which is the  max value of the 
-                        # PSF at this wavelength for the whole testbed. This is the same 
+                        # normalisation_testbed_EF_contrast which is the  max value of the
+                        # PSF at this wavelength for the whole testbed. This is the same
                         # normalization as G0.
 
                         if MatrixType == 'scc':
@@ -487,7 +490,8 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                             Gvector = proc.resampling(
                                 OpticSysAfter.todetector(entrance_EF=wavefront,
                                                          in_contrast=False) /
-                                normalisation_testbed_EF_contrast, estimator.dimEstim)
+                                normalisation_testbed_EF_contrast,
+                                estimator.dimEstim)
 
                         if save_all_planes_to_fits == True:
                             name_plane = 'FPAfterTestbed_' + osname + '_wl{}'.format(
@@ -524,7 +528,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 # We fill the interraction matrix:
                 InterMat[:nb_pix_estim, pos_in_matrix] = np.real(Gvector)
                 InterMat[nb_pix_estim:, pos_in_matrix] = np.imag(Gvector)
-                # Note that we do not crop to DH. This is done after so that 
+                # Note that we do not crop to DH. This is done after so that
                 # we can change DH more easily without changeing the matrix
 
                 pos_in_matrix += 1
@@ -588,8 +592,7 @@ def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray,
     return DHInterractionMatrix
 
 
-def solutionEFC(Estim_in_dh, inversed_jacobian,
-                testbed: OptSy.Testbed):
+def solutionEFC(Estim_in_dh, inversed_jacobian, testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltages to apply on the deformable mirrors in order to minimize the speckle
     intensity in the dark hole region
@@ -629,8 +632,7 @@ def solutionEFC(Estim_in_dh, inversed_jacobian,
     return testbed.basis_vector_to_act_vector(produit_mat)
 
 
-def solutionEM(Estim_in_dh, Hessian_Matrix, Jacobian,
-               testbed: OptSy.Testbed):
+def solutionEM(Estim_in_dh, Hessian_Matrix, Jacobian, testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region
@@ -673,8 +675,8 @@ def solutionEM(Estim_in_dh, Hessian_Matrix, Jacobian,
     return testbed.basis_vector_to_act_vector(produit_mat)
 
 
-def solutionSM(Estim_in_dh, Jacob_trans_Jacob, Jacobian,
-               DesiredContrast, last_best_alpha, testbed: OptSy.Testbed):
+def solutionSM(Estim_in_dh, Jacob_trans_Jacob, Jacobian, DesiredContrast,
+               last_best_alpha, testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region in the stroke min solution
