@@ -250,7 +250,6 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
             ActuN)] + measured_ActuN
     simu_grid = simu_grid * sampling_simu_over_measured
 
-    useful._quickfits(simu_grid)
     return simu_grid
 
 

@@ -62,7 +62,7 @@ def invertSVD(matrix_to_invert,
 
 
     -------------------------------------------------- """
-    print(matrix_to_invert.shape)
+
     U, s, V = np.linalg.svd(matrix_to_invert, full_matrices=False)
     #print(np.max(np.abs(U @ np.diag(s) @ V)))
 
