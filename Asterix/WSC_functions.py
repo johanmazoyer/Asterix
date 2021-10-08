@@ -391,17 +391,10 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                     useful._progress(i, DM.basis_size, status='')
 
                 if MatrixType in ['perfect', 'scc']:
-                    if DM.z_position == 0:
 
+                    if DM.z_position == 0:
                         wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(
                             phase_abb=phasesBasis[i] + DM.phase_init)
-
-                        if save_all_planes_to_fits == True:
-                            name_plane = 'Phase_on_' + DM_name + '_wl{}'.format(
-                                int(wavelength * 1e9))
-                            useful.save_plane_in_fits(
-                                dir_save_all_planes, name_plane,
-                                OpticSysbefore.phase_init)
 
                     else:
                         wavefront, _ = prop.prop_fresnel(
@@ -426,6 +419,11 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                             DM.diam_pup_in_m / 2, DM.prad)
 
                 if save_all_planes_to_fits == True:
+                    name_plane = 'Phase_on_' + DM_name + '_wl{}'.format(
+                        int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                              phasesBasis[i] + DM.phase_init)
+
                     name_plane = 'EF_PP_after_' + DM_name + '_wl{}'.format(
                         int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
@@ -479,25 +477,30 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                         # PSF at this wavelength for the whole testbed. This is the same
                         # normalization as G0.
 
-                        if MatrixType == 'scc':
-                            fp_scc = np.abs(
-                                OpticSysAfter.todetector(entrance_EF=wavefront,
-                                                         in_contrast=False) /
-                                normalisation_testbed_EF_contrast)**2
-                            Gvector = extractI_peak(fp_scc, estimator)
-
-                        else:
-                            Gvector = proc.resampling(
-                                OpticSysAfter.todetector(entrance_EF=wavefront,
-                                                         in_contrast=False) /
-                                normalisation_testbed_EF_contrast,
-                                estimator.dimEstim)
+                        ef_fp = OpticSysAfter.todetector(
+                            entrance_EF=wavefront, in_contrast=False
+                        ) / normalisation_testbed_EF_contrast
 
                         if save_all_planes_to_fits == True:
-                            name_plane = 'FPAfterTestbed_' + osname + '_wl{}'.format(
+                            name_plane = 'EF_FP_After_Testbed_wl{}'.format(
                                 int(wavelength * 1e9))
                             useful.save_plane_in_fits(dir_save_all_planes,
-                                                      name_plane, Gvector)
+                                                      name_plane, ef_fp)
+
+                        if MatrixType == 'scc':
+
+                            Gvector = extractI_peak(
+                                np.abs(ef_fp)**2, estimator)
+                            if save_all_planes_to_fits == True:
+                                name_plane = 'Intensity_FPAfterSCC_' + osname + '_wl{}'.format(
+                                    int(wavelength * 1e9))
+                                useful.save_plane_in_fits(
+                                    dir_save_all_planes, name_plane,
+                                    np.abs(ef_fp)**2)
+                        else:
+
+                            Gvector = proc.resampling(ef_fp,
+                                                      estimator.dimEstim)
 
                 # TODO Should we remove the intial FP field G0 in all casese ? For ideal
                 # corono and flat DMs, this is 0, but it's not for non ideal coronagraph
@@ -513,7 +516,9 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
                 if visu:
                     plt.clf()
-                    plt.imshow(np.log10(np.abs(Gvector)**2), vmin=-10, vmax=-6)
+                    plt.imshow(np.log10(np.abs(Gvector)**2),
+                               vmin=-18,
+                               vmax=-12)
                     print("Max contrast", np.log10(np.max(np.abs(Gvector)**2)))
                     plt.gca().invert_yaxis()
                     plt.colorbar()
