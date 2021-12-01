@@ -1787,34 +1787,8 @@ class deformable_mirror(Optical_System):
                                           "_filename_actu_infl_fct"]
 
         if DMconfig[self.Name_DM + "_Generic"] == False:
-            filename_ActuN = DMconfig[self.Name_DM + "_filename_ActuN"]
-            filename_grid_actu = DMconfig[self.Name_DM + "_filename_grid_actu"]
-
-            ActuN = DMconfig[self.Name_DM + "_ActuN"]
-            y_ActuN = DMconfig[self.Name_DM + "_y_ActuN"]
-            x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
-            xy_ActuN = [x_ActuN, y_ActuN]
-
-            #Measured positions for each actuator in pixel
-            measured_grid = fits.getdata(model_dir + filename_grid_actu)
-            #Ratio: pupil radius in the measured position over
-            # pupil radius in the numerical simulation
-            sampling_simu_over_measured = diam_pup_in_pix / 2 / fits.getheader(
-                model_dir + filename_grid_actu)['PRAD']
-            if filename_ActuN != "":
-                im_ActuN = fits.getdata(model_dir + filename_ActuN)
-                im_ActuN_dim = proc.crop_or_pad_image(im_ActuN, dim_array)
-
-                xy_ActuN = np.unravel_index(
-                    np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
-
-                # shift by (0.5,0.5) pixel because the pupil is
-                # centered between pixels
-                xy_ActuN = xy_ActuN - 0.5
-
-            #Position for each actuator in pixel for the numerical simulation
-            simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
-                                               sampling_simu_over_measured)
+            #Measured positions for each actuator in pixel with (0,0) = center of pupil
+            simu_grid = fits.getdata(model_dir + DMconfig[self.Name_DM + "_filename_grid_actu"])*diam_pup_in_pix
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
