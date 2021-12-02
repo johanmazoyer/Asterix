@@ -1580,7 +1580,7 @@ class deformable_mirror(Optical_System):
                 self.active_actuators = np.arange(self.number_act)
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
-            int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
+            int(self.z_position * 1000)) + "_Nact" + str(int(self.number_act))
 
         if DMconfig[self.Name_DM + "_Generic"] == True:
             self.string_os += "Gen"
