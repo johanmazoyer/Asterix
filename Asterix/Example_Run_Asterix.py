@@ -7,7 +7,7 @@ from Asterix import Main_THD
 import time
 
 Asterixroot = os.path.dirname(os.path.realpath(__file__))
-
+#test comit
 start_time = time.time()
 Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': False},
