@@ -1,5 +1,6 @@
 import numpy as np
-
+import processing_functions as proc
+import Asterix.fits_functions as useful
 
 def mft(image,
         real_dim_input,
@@ -302,3 +303,58 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     if sign == -1:
         result = result / fac**2
     return result, dxout
+    
+    
+def prop_fresnel_johan(pup, lam, z, rad, prad, gamma):
+    """ --------------------------------------------------
+    Fresnel propagation of electric field along a distance z
+    in a collimated beam and in Free space
+
+    AUTHOR : Johan Mazoyer
+
+    REVISION HISTORY :
+    - Revision 1.0  2022-02-15 Johan Mazoyer Initial revision
+
+    Parameters
+    ----------
+    pup : 2D array (complex or real)
+            electric field at z=0
+            CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
+            where dimpup is the pup array dimension
+
+    lam : float
+         wavelength in meter
+
+    z : float
+         distance of propagation
+
+    rad : float
+        entrance beam radius in meter
+        
+    prad : float
+        entrance beam radius in pixel
+    
+    gamma : int >=1
+        factor of oversizing in the fourrier plane (2*gamma*prad is the output dim)
+
+    Returns
+    ------
+
+    pup_z : 2D array (complex) of size [2*gamma*prad,2*gamma*prad]
+            electric field after propagating in free space along
+            a distance z
+
+    -------------------------------------------------- """
+
+    Dpupil = 2*rad 
+    nPup=2*prad
+
+    Nfourier=gamma*nPup
+    cycles=nPup
+
+    four = np.fft.fft2(proc.crop_or_pad_image(pup,Nfourier))
+    u, v = np.meshgrid(np.arange(Nfourier) - Nfourier / 2, np.arange(Nfourier) - Nfourier / 2)
+    rho = np.hypot(v, u)*(cycles/Dpupil) /Nfourier
+    angular = np.exp(-1j * np.pi * z * lam * (rho**2))
+
+    return np.fft.ifft2(angular*four)
