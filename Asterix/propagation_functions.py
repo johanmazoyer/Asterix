@@ -354,7 +354,8 @@ def prop_fresnel_johan(pup, lam, z, rad, prad, gamma):
 
     four = np.fft.fft2(proc.crop_or_pad_image(pup,Nfourier))
     u, v = np.meshgrid(np.arange(Nfourier) - Nfourier / 2, np.arange(Nfourier) - Nfourier / 2)
-    rho = np.hypot(v, u)*(cycles/Dpupil) /Nfourier
+    rho = np.fft.fftshift(np.hypot(v, u))*(cycles/Dpupil) /Nfourier
+    
     angular = np.exp(-1j * np.pi * z * lam * (rho**2))
 
     return np.fft.ifft2(angular*four)
