@@ -305,10 +305,10 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     return result, dxout
     
     
-def prop_fresnel_johan(pup, lam, z, rad, prad, gamma):
+def prop_angular_spectrum(pup, lam, z, rad, prad, gamma):
     """ --------------------------------------------------
-    Fresnel propagation of electric field along a distance z
-    in a collimated beam and in Free space
+    Angular spectrum propagation of electric field along a distance z
+    in a collimated beam and in Free space in close field (small z)
 
     AUTHOR : Johan Mazoyer
 
