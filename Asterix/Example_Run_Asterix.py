@@ -47,26 +47,6 @@ print("")
 
 start_time = time.time()
 Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
-                 NewDMconfig={'DM1_active': False},
-                 NewEstimationconfig={'estimation': 'perfect'},
-                 NewCorrectionconfig={
-                     'DH_side': "Right",
-                     'correction_algorithm': "efc",
-                 },
-                 NewLoopconfig={
-                     'Nbiter_corr': ["10"],
-                     'Linesearch': True
-                 },
-                 NewSIMUconfig={'Name_Experiment': "My_third_experiment"})
-print('time correction 1DM perfect estim (Linesearch) efc',
-      time.time() - start_time)
-print("")
-print("")
-print("")
-
-
-start_time = time.time()
-Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': True},
                  NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
