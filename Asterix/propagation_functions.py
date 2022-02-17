@@ -305,7 +305,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     return result, dxout
     
     
-def prop_angular_spectrum(pup, lam, z, rad, prad, gamma):
+def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     """ --------------------------------------------------
     Angular spectrum propagation of electric field along a distance z
     in a collimated beam and in Free space in close field (small z).
@@ -334,9 +334,10 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma):
     prad : float
         entrance beam radius in pixel
     
-    gamma : int >=1
+    gamma : int >=2
         factor of oversizing in the fourrier plane in diameter of the pupil 
         (gamma*2*prad is the output dim)
+        optionnal: default = 2
 
     Returns
     ------
