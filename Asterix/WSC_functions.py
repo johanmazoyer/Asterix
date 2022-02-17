@@ -284,6 +284,12 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                 for i in range(DM.basis_size):
                     phasesBasis[i] = DM.voltage_to_phase(
                         DM.basis[i]) * amplitudeEFC
+                    
+            if save_all_planes_to_fits == True:
+                # save the basis phase to check what is happening
+                name_plane = DM_name +'_'+ DM.basis_type + '_basis_Phase'
+                useful.save_plane_in_fits(phasesBasis, name_plane,
+                                        wavefrontupstream) 
 
             # to be applicable to all Testbed configurations and save time we separate the testbed in 3 parts:
             # - The optics before the DM we want to actuate (these can be propagated through only once)
