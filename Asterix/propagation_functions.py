@@ -308,7 +308,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
 def prop_angular_spectrum(pup, lam, z, rad, prad, gamma):
     """ --------------------------------------------------
     Angular spectrum propagation of electric field along a distance z
-    in a collimated beam and in Free space in close field (small z)
+    in a collimated beam and in Free space in close field (small z).
 
     AUTHOR : Johan Mazoyer
 
@@ -352,10 +352,9 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma):
     Nfourier=gamma*nPup
     cycles=nPup
 
-    four = np.fft.fft2(proc.crop_or_pad_image(pup,Nfourier))
+    four = np.fft.fft2(proc.crop_or_pad_image(pup,Nfourier),norm = 'ortho')
     u, v = np.meshgrid(np.arange(Nfourier) - Nfourier / 2, np.arange(Nfourier) - Nfourier / 2)
-    rho = np.fft.fftshift(np.hypot(v, u))*(cycles/Dpupil) /Nfourier
+    rho2D = np.fft.fftshift(np.hypot(v, u))*(cycles/Dpupil) /Nfourier
     
-    angular = np.exp(-1j * np.pi * z * lam * (rho**2))
-
-    return np.fft.ifft2(angular*four)
+    angular = np.exp(-1j * np.pi * z * lam * (rho2D**2))
+    return np.fft.ifft2(angular*four,norm = 'ortho')
