@@ -1879,6 +1879,7 @@ class deformable_mirror(Optical_System):
 
             pushact3d[i] = Psivector
 
+        # we exclude the actuators non active
         pushact3d = pushact3d[self.active_actuators]
 
         if self.misregistration is False and (
@@ -2106,20 +2107,14 @@ class deformable_mirror(Optical_System):
         -------------------------------------------------- """
 
         if basis_type == 'actuator':
-            active_and_in_pup = [
-                value for value in self.active_actuators
-                if value in self.WhichInPupil
-            ]
-            active_and_in_pup.sort()
-
-            basis_size = len(active_and_in_pup)
+            basis_size = len(self.WhichInPupil)
             basis = np.zeros((basis_size, self.number_act))
             for i in range(basis_size):
-                basis[i][active_and_in_pup[i]] = 1
+                basis[i][self.WhichInPupil[i]] = 1
 
         elif basis_type == 'fourier':
             start_time = time.time()
-            activeact = [value for value in self.active_actuators]
+            # activeact = [value for value in self.active_actuators]
 
             sqrtnbract = int(np.sqrt(self.total_act))
             Name_FourrierBasis_fits = "Fourier_basis_" + self.Name_DM + '_prad' + str(
@@ -2131,7 +2126,7 @@ class deformable_mirror(Optical_System):
             basis = np.zeros((basis_size, self.number_act))
 
             for i in range(basis_size):
-                vec = cossinbasis[i].flatten()[activeact]
+                vec = cossinbasis[i].flatten()[self.active_actuators]
                 basis[i] = vec
 
             start_time = time.time()

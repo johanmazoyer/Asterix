@@ -347,7 +347,7 @@ class Corrector:
                 self.count_since_last_best = 0
                 self.last_best_contrast = ActualCurrentContrast
 
-            if self.times_we_lowered_gain == 5:
+            if self.times_we_lowered_gain == 3:
                 #it's been too long we have not increased
                 # or we're so far off linearity that SM is actually heavily degrading contrast
                 # It's time to stop !
