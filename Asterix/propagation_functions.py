@@ -326,7 +326,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma):
          wavelength in meter
 
     z : float
-         distance of propagation
+         distance of propagation in meter
 
     rad : float
         entrance beam radius in meter
@@ -335,7 +335,8 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma):
         entrance beam radius in pixel
     
     gamma : int >=1
-        factor of oversizing in the fourrier plane (2*gamma*prad is the output dim)
+        factor of oversizing in the fourrier plane in diameter of the pupil 
+        (gamma*2*prad is the output dim)
 
     Returns
     ------
@@ -346,15 +347,15 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma):
 
     -------------------------------------------------- """
 
-    Dpupil = 2*rad 
-    nPup=2*prad
+    diam_pup_in_m = 2*rad 
+    diam_pup_in_pix=2*prad
 
-    Nfourier=gamma*nPup
-    cycles=nPup
+    Nfourier=gamma*diam_pup_in_pix
+    cycles=diam_pup_in_pix
 
     four = np.fft.fft2(proc.crop_or_pad_image(pup,Nfourier),norm = 'ortho')
     u, v = np.meshgrid(np.arange(Nfourier) - Nfourier / 2, np.arange(Nfourier) - Nfourier / 2)
-    rho2D = np.fft.fftshift(np.hypot(v, u))*(cycles/Dpupil) /Nfourier
+    rho2D = np.fft.fftshift(np.hypot(v, u))*(cycles/diam_pup_in_m) /Nfourier
     
     angular = np.exp(-1j * np.pi * z * lam * (rho2D**2))
     return np.fft.ifft2(angular*four,norm = 'ortho')
