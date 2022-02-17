@@ -306,8 +306,27 @@ class Corrector:
                                                      visu=False,
                                                      regul=self.regularization)
 
-            return -self.amplitudeEFC * wsc.solutionEFC(
+            solutionefc = wsc.solutionEFC(
                 self.MaskEstim, estimate, self.invertGDH, testbed)
+            
+            # # gain_individual_DM = [1.,1.]
+            # # gain_individual_DM = [0.5,1.]
+            # gain_individual_DM = [1.,0.9]
+
+            # indice_acum_number_act = 0
+            # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
+
+            #     # we access each DM object individually
+            #     DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+
+            #     # we multpily each DM by a specific DM gain
+            #     solutionefc[
+            #         indice_acum_number_act:indice_acum_number_act +
+            #         DM.number_act] *= gain_individual_DM[num_DM]
+                
+            #     indice_acum_number_act += DM.number_act
+            
+            return -self.amplitudeEFC * solutionefc
 
         if self.correction_algorithm == "sm":
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
@@ -352,6 +371,23 @@ class Corrector:
                     "we do not improve contrast anymore, we go back to last best and change the gain to {:f}"
                     .format(self.expected_gain_in_contrast))
                 return "RebootTheLoop"
+            
+            # # gain_individual_DM = [1.,1.]
+            # # gain_individual_DM = [0.5,1.]
+            # gain_individual_DM = [1.,0.9]
+
+            # indice_acum_number_act = 0
+            # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
+
+            #     # we access each DM object individually
+            #     DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+
+            #     # we multpily each DM by a specific DM gain
+            #     solutionSM[
+            #         indice_acum_number_act:indice_acum_number_act +
+            #         DM.number_act] *= gain_individual_DM[num_DM]
+                
+            #     indice_acum_number_act += DM.number_act
 
             return -self.amplitudeEFC * solutionSM
 
