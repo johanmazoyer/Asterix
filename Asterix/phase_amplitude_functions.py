@@ -117,7 +117,7 @@ def scale_amplitude_abb(filename, prad, dim_image):
 
     # create a circular pupil of the same radius of the given pupil
     # this will be the pupil over which phase rms = phaserms
-    pupil = roundpupil(dim_image, prad)
+    pupil = roundpupil(prad, dim_image)
 
     #File with amplitude aberrations in amplitude (not intensity)
     # centered on the pixel dim/2+1, dim/2 +1 with dim = 2*[dim/2]
