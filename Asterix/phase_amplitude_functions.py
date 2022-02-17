@@ -92,59 +92,59 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     return ramp
 
 
-def scale_amplitude_abb(filename, prad, dim_image):
-    """ --------------------------------------------------
-    Scale the map of a saved amplitude map
+# def scale_amplitude_abb(filename, prad, dim_image):
+#     """ --------------------------------------------------
+#     Scale the map of a saved amplitude map
 
-    AUTHOR : Raphael Galicher
+#     AUTHOR : Raphael Galicher
 
-    Parameters
-    ----------
-    filename : str
-            filename of the amplitude map in the pupil plane
+#     Parameters
+#     ----------
+#     filename : str
+#             filename of the amplitude map in the pupil plane
 
-    prad : float
-            radius of the pupil in pixel
+#     prad : float
+#             radius of the pupil in pixel
 
 
-    Returns
-    ------
-    ampfinal : 2D array (float)
-            amplitude aberrations (in amplitude, not intensity)
+#     Returns
+#     ------
+#     ampfinal : 2D array (float)
+#             amplitude aberrations (in amplitude, not intensity)
 
     
-    -------------------------------------------------- """
+#     -------------------------------------------------- """
 
-    # create a circular pupil of the same radius of the given pupil
-    # this will be the pupil over which phase rms = phaserms
-    pupil = roundpupil(dim_image, prad)
+#     # create a circular pupil of the same radius of the given pupil
+#     # this will be the pupil over which phase rms = phaserms
+#     pupil = roundpupil(dim_image, prad)
 
-    #File with amplitude aberrations in amplitude (not intensity)
-    # centered on the pixel dim/2+1, dim/2 +1 with dim = 2*[dim/2]
-    # diameter of the pupil is 148 pixels in this image
-    amp = np.fft.fftshift(fits.getdata(filename))
+#     #File with amplitude aberrations in amplitude (not intensity)
+#     # centered on the pixel dim/2+1, dim/2 +1 with dim = 2*[dim/2]
+#     # diameter of the pupil is 148 pixels in this image
+#     amp = np.fft.fftshift(fits.getdata(filename))
 
-    #Rescale to the pupil size
-    amp1 = skimage.transform.rescale(amp,
-                                     2 * prad / 148 * 1.03,
-                                     preserve_range=True,
-                                     anti_aliasing=True,
-                                     multichannel=False)
-    # Shift to center between 4 pixels
-    #bidouille entre le grandissement 1.03 à la ligne au-dessus et le -1,-1 au lieu
-    #de -.5,-.5 C'est pour éviter un écran d'amplitude juste plus petit que la pupille
-    tmp_phase_ramp = np.fft.fftshift(shift_phase_ramp(amp1.shape[0], -1., -1.))
-    amp1 = np.real(
-        np.fft.fftshift(np.fft.fft2(np.fft.ifft2(amp1) * tmp_phase_ramp)))
+#     #Rescale to the pupil size
+#     amp1 = skimage.transform.rescale(amp,
+#                                      2 * prad / 148 * 1.03,
+#                                      preserve_range=True,
+#                                      anti_aliasing=True,
+#                                      multichannel=False)
+#     # Shift to center between 4 pixels
+#     #bidouille entre le grandissement 1.03 à la ligne au-dessus et le -1,-1 au lieu
+#     #de -.5,-.5 C'est pour éviter un écran d'amplitude juste plus petit que la pupille
+#     tmp_phase_ramp = np.fft.fftshift(shift_phase_ramp(amp1.shape[0], -1., -1.))
+#     amp1 = np.real(
+#         np.fft.fftshift(np.fft.fft2(np.fft.ifft2(amp1) * tmp_phase_ramp)))
 
-    # Create the array with same size as the pupil
+#     # Create the array with same size as the pupil
 
-    ampfinal = proc.crop_or_pad_image(amp1, pupil.shape[1])
+#     ampfinal = proc.crop_or_pad_image(amp1, pupil.shape[1])
 
-    #Set the average to 0 inside entrancepupil
-    ampfinal = (ampfinal / np.mean(ampfinal[np.where(pupil != 0)]) - np.ones(
-        (pupil.shape[1], pupil.shape[1]))) * pupil
-    return ampfinal
+#     #Set the average to 0 inside entrancepupil
+#     ampfinal = (ampfinal / np.mean(ampfinal[np.where(pupil != 0)]) - np.ones(
+#         (pupil.shape[1], pupil.shape[1]))) * pupil
+#     return ampfinal
 
 
 def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):

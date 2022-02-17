@@ -306,8 +306,28 @@ class Corrector:
                                                      visu=False,
                                                      regul=self.regularization)
 
-            return -self.amplitudeEFC * wsc.solutionEFC(
+            voltage_solution = -self.amplitudeEFC * wsc.solutionEFC(
                 self.MaskEstim, estimate, self.invertGDH, testbed)
+            
+            gain_individual_DM = [1.,1.]
+            # gain_individual_DM = [0.5,1.]
+            # gain_individual_DM = [1.,0.5]
+
+            indice_acum_number_act = 0
+            for num_DM, DM_name in enumerate(testbed.name_of_DMs):
+
+                # we access each DM object individually
+                DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+
+                # we multpily each DM by a specific DM gain
+                voltage_solution[
+                    indice_acum_number_act:indice_acum_number_act +
+                    DM.number_act] *= gain_individual_DM[num_DM]
+                
+                indice_acum_number_act += DM.number_act
+            
+            
+            return voltage_solution
 
         if self.correction_algorithm == "sm":
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
@@ -328,7 +348,7 @@ class Corrector:
                 self.count_since_last_best = 0
                 self.last_best_contrast = ActualCurrentContrast
 
-            if self.times_we_lowered_gain == 5:
+            if self.times_we_lowered_gain == 2:
                 #it's been too long we have not increased
                 # or we're so far off linearity that SM is actually heavily degrading contrast
                 # It's time to stop !
@@ -352,6 +372,24 @@ class Corrector:
                     "we do not improve contrast anymore, we go back to last best and change the gain to {:f}"
                     .format(self.expected_gain_in_contrast))
                 return "RebootTheLoop"
+            
+            # gain_individual_DM = [1.,1.]
+            # gain_individual_DM = [0.5,1.]
+            gain_individual_DM = [1.,0.9]
+
+            indice_acum_number_act = 0
+            for num_DM, DM_name in enumerate(testbed.name_of_DMs):
+
+                # we access each DM object individually
+                DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+
+                # we multpily each DM by a specific DM gain
+                solutionSM[
+                    indice_acum_number_act:indice_acum_number_act +
+                    DM.number_act] *= gain_individual_DM[num_DM]
+                
+                indice_acum_number_act += DM.number_act
+            
 
             return -self.amplitudeEFC * solutionSM
 
