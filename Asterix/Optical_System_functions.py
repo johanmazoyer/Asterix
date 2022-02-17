@@ -577,13 +577,19 @@ class Optical_System:
         ampl_slope = SIMUconfig["ampl_slope"]
 
         if set_amplitude_abb == True:
-            if ampl_abb_filename != '' and os.path.isfile(
-                    Model_local_dir + ampl_abb_filename +
-                    ".fits") == True and set_random_ampl is False:
-
-                return_ampl = phase_ampl.scale_amplitude_abb(
-                    model_dir + ampl_abb_filename + ".fits", self.prad,
-                    self.dim_overpad_pupil)
+            if ampl_abb_filename == 'Amplitudebanc_200pix_center4pixels' and set_random_ampl is False:
+                
+                testbedampl_fits = fits.getdata(model_dir + ampl_abb_filename + ".fits")
+                testbedampl_fits_right_size = skimage.transform.rescale(
+                                testbedampl_fits,
+                                2 * self.prad / testbedampl_fits.shape[0],
+                                preserve_range=True,
+                                anti_aliasing=True,
+                                multichannel=False)
+                
+                return_ampl = proc.crop_or_pad_image(testbedampl_fits_right_size,
+                                              self.dim_overpad_pupil)
+            
             else:
                 ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                     int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
