@@ -106,13 +106,11 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
 #     prad : float
 #             radius of the pupil in pixel
 
-
 #     Returns
 #     ------
 #     ampfinal : 2D array (float)
 #             amplitude aberrations (in amplitude, not intensity)
 
-    
 #     -------------------------------------------------- """
 
 #     # create a circular pupil of the same radius of the given pupil

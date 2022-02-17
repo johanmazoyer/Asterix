@@ -2,6 +2,7 @@ import numpy as np
 import processing_functions as proc
 import Asterix.fits_functions as useful
 
+
 def mft(image,
         real_dim_input,
         dim_output,
@@ -303,8 +304,8 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     if sign == -1:
         result = result / fac**2
     return result, dxout
-    
-    
+
+
 def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     """ --------------------------------------------------
     Angular spectrum propagation of electric field along a distance z
@@ -348,15 +349,18 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
 
     -------------------------------------------------- """
 
-    diam_pup_in_m = 2*rad 
-    diam_pup_in_pix=2*prad
+    diam_pup_in_m = 2 * rad
+    diam_pup_in_pix = 2 * prad
 
-    Nfourier=gamma*diam_pup_in_pix
-    cycles=diam_pup_in_pix
+    Nfourier = gamma * diam_pup_in_pix
+    cycles = diam_pup_in_pix
 
-    four = np.fft.fft2(proc.crop_or_pad_image(pup,Nfourier),norm = 'ortho')
-    u, v = np.meshgrid(np.arange(Nfourier) - Nfourier / 2, np.arange(Nfourier) - Nfourier / 2)
-    rho2D = np.fft.fftshift(np.hypot(v, u))*(cycles/diam_pup_in_m) /Nfourier
-    
+    four = np.fft.fft2(proc.crop_or_pad_image(pup, Nfourier), norm='ortho')
+    u, v = np.meshgrid(
+        np.arange(Nfourier) - Nfourier / 2,
+        np.arange(Nfourier) - Nfourier / 2)
+    rho2D = np.fft.fftshift(np.hypot(v,
+                                     u)) * (cycles / diam_pup_in_m) / Nfourier
+
     angular = np.exp(-1j * np.pi * z * lam * (rho2D**2))
-    return np.fft.ifft2(angular*four,norm = 'ortho')
+    return np.fft.ifft2(angular * four, norm='ortho')
