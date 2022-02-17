@@ -347,9 +347,16 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
             #
             # if the DM is not in pupil plane, we can measure the first Fresnel transf only once
             if DM.z_position != 0:
-                wavefrontupstreaminDM, _ = prop.prop_fresnel(
-                    wavefrontupstream, DM.wavelength_0, DM.z_position,
-                    DM.diam_pup_in_m / 2, DM.prad)
+                
+                # wavefrontupstreaminDM, _ = prop.prop_fresnel(
+                #     wavefrontupstream, DM.wavelength_0, DM.z_position,
+                #     DM.diam_pup_in_m / 2, DM.prad)
+
+                wavefrontupstreaminDM = proc.crop_or_pad_image(
+                    prop.prop_angular_spectrum(wavefrontupstream,
+                                               DM.wavelength_0, DM.z_position,
+                                               DM.diam_pup_in_m / 2, DM.prad),
+                    DM.dim_overpad_pupil)
 
             if visu:
                 plt.ion()
@@ -377,11 +384,17 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                                 OpticSysbefore.phase_init)
 
                     else:
-                        wavefront, _ = prop.prop_fresnel(
-                            wavefrontupstreaminDM * DM.EF_from_phase_and_ampl(
-                                phase_abb=phasesBasis[i] + DM.phase_init),
-                            DM.wavelength_0, -DM.z_position,
-                            DM.diam_pup_in_m / 2, DM.prad)
+                        # wavefront, _ = prop.prop_fresnel(
+                        #     wavefrontupstreaminDM * DM.EF_from_phase_and_ampl(
+                        #         phase_abb=phasesBasis[i] + DM.phase_init),
+                        #     DM.wavelength_0, -DM.z_position,
+                        #     DM.diam_pup_in_m / 2, DM.prad)
+                        wavefront = proc.crop_or_pad_image(
+                            prop.prop_angular_spectrum(wavefrontupstreaminDM * DM.EF_from_phase_and_ampl(
+                                 phase_abb=phasesBasis[i] + DM.phase_init),
+                             DM.wavelength_0, -DM.z_position,
+                             DM.diam_pup_in_m / 2, DM.prad),
+                            DM.dim_overpad_pupil)
 
                 if MatrixType == 'smallphase':
                     # TODO we added a 1+ which was initially in Axel's code and that was
@@ -392,12 +405,20 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                         ) * wavefrontupstream * DM.EF_from_phase_and_ampl(
                             phase_abb=DM.phase_init)
                     else:
-                        wavefront, _ = prop.prop_fresnel(
+                        # wavefront, _ = prop.prop_fresnel(
+                        #     wavefrontupstreaminDM * (1 + 1j * phasesBasis[i]) *
+                        #     DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init),
+                        #     DM.wavelength_0, -DM.z_position,
+                        #     DM.diam_pup_in_m / 2, DM.prad)
+                        
+                        wavefront = proc.crop_or_pad_image(
+                            prop.prop_angular_spectrum(
                             wavefrontupstreaminDM * (1 + 1j * phasesBasis[i]) *
                             DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init),
                             DM.wavelength_0, -DM.z_position,
-                            DM.diam_pup_in_m / 2, DM.prad)
-
+                            DM.diam_pup_in_m / 2, DM.prad),
+                            DM.dim_overpad_pupil)
+                        
                 if save_all_planes_to_fits == True:
                     name_plane = 'EF_PP_after_' + DM_name + '_wl{}'.format(
                         int(wavelength * 1e9))

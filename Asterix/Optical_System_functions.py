@@ -1596,27 +1596,27 @@ class deformable_mirror(Optical_System):
         # this is a clear pupil of the same size
         self.clearpup = pupil(modelconfig, prad=self.prad)
 
-        #define self.pradDM and check that the pupil is large enough
-        # for out of pupil propagation
-        if self.z_position != 0:
-            dx, dxout = prop.prop_fresnel(self.dim_overpad_pupil,
-                                          self.wavelength_0,
-                                          self.z_position,
-                                          self.diam_pup_in_m / 2,
-                                          self.prad,
-                                          retscale=1)
-            #radius of the pupil in pixel in the DM plane
-            self.pradDM = self.prad * dx / dxout
+        # #define self.pradDM and check that the pupil is large enough
+        # # for out of pupil propagation
+        # if self.z_position != 0:
+        #     dx, dxout = prop.prop_fresnel(self.dim_overpad_pupil,
+        #                                   self.wavelength_0,
+        #                                   self.z_position,
+        #                                   self.diam_pup_in_m / 2,
+        #                                   self.prad,
+        #                                   retscale=1)
+        #     #radius of the pupil in pixel in the DM plane
+        #     self.pradDM = self.prad * dx / dxout
 
-            if dx > 2 * dxout:
-                print(dx, dxout)
-                raise Exception(
-                    "Need to enhance the pupil size in pixel for Fresnel propagation"
-                )
-        else:
-            # radius of the pupil in pixel in the DM plane.
-            # by default the size of the pupil
-            self.pradDM = self.prad
+        #     if dx > 2 * dxout:
+        #         print(dx, dxout)
+        #         raise Exception(
+        #             "Need to enhance the pupil size in pixel for Fresnel propagation"
+        #         )
+        # else:
+        #     # radius of the pupil in pixel in the DM plane.
+        #     # by default the size of the pupil
+        #     self.pradDM = self.prad
 
         # create, save or load the DM_pushact functions
         # from the influence function
@@ -1788,7 +1788,8 @@ class deformable_mirror(Optical_System):
 
         if DMconfig[self.Name_DM + "_Generic"] == False:
             #Measured positions for each actuator in pixel with (0,0) = center of pupil
-            simu_grid = fits.getdata(model_dir + DMconfig[self.Name_DM + "_filename_grid_actu"])*diam_pup_in_pix
+            simu_grid = fits.getdata(model_dir + DMconfig[
+                self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
@@ -1912,11 +1913,17 @@ class deformable_mirror(Optical_System):
 
         if self.z_position != 0:
             # Propagation in DM plane out of pupil
-            Pup_inDMplane, _ = prop.prop_fresnel(self.clearpup.pup,
-                                                 self.wavelength_0,
-                                                 self.z_position,
-                                                 self.diam_pup_in_m / 2,
-                                                 self.prad)
+            # Pup_inDMplane, _ = prop.prop_fresnel(self.clearpup.pup,
+            #                                      self.wavelength_0,
+            #                                      self.z_position,
+            #                                      self.diam_pup_in_m / 2,
+            #                                      self.prad)
+
+            Pup_inDMplane = proc.crop_or_pad_image(
+                prop.prop_angular_spectrum(self.clearpup.pup,
+                                           self.wavelength_0, self.z_position,
+                                           self.diam_pup_in_m / 2, self.prad),
+                self.dim_overpad_pupil)
         else:
             Pup_inDMplane = self.clearpup.pup
 
@@ -1985,9 +1992,14 @@ class deformable_mirror(Optical_System):
         -------------------------------------------------- """
 
         # Propagation in DM plane out of pupil
-        EF_inDMplane, _ = prop.prop_fresnel(entrance_EF, wavelength,
-                                            self.z_position,
-                                            self.diam_pup_in_m / 2., self.prad)
+        # EF_inDMplane, _ = prop.prop_fresnel(entrance_EF, wavelength,
+        #                                     self.z_position,
+        #                                     self.diam_pup_in_m / 2., self.prad)
+        EF_inDMplane = proc.crop_or_pad_image(
+            prop.prop_angular_spectrum(entrance_EF, wavelength,
+                                       self.z_position,
+                                       self.diam_pup_in_m / 2., self.prad),
+            self.dim_overpad_pupil)
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
@@ -2004,12 +2016,20 @@ class deformable_mirror(Optical_System):
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       EF_inDMplane)
+
         # and propagate to next pupil plane
-        EF_back_in_pup_plane, _ = prop.prop_fresnel(EF_inDMplane_after_DM,
-                                                    wavelength,
-                                                    -self.z_position,
-                                                    self.diam_pup_in_m / 2.,
-                                                    self.prad)
+
+        # EF_back_in_pup_plane, _ = prop.prop_fresnel(EF_inDMplane_after_DM,
+        #                                             wavelength,
+        #                                             -self.z_position,
+        #                                             self.diam_pup_in_m / 2.,
+        #                                             self.prad)
+
+        EF_back_in_pup_plane = proc.crop_or_pad_image(
+            prop.prop_angular_spectrum(EF_inDMplane_after_DM, wavelength,
+                                       -self.z_position,
+                                       self.diam_pup_in_m / 2., self.prad),
+            self.dim_overpad_pupil)
 
         return EF_back_in_pup_plane
 
