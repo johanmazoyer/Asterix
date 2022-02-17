@@ -359,6 +359,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     u, v = np.meshgrid(
         np.arange(Nfourier) - Nfourier / 2,
         np.arange(Nfourier) - Nfourier / 2)
+        
     rho2D = np.fft.fftshift(np.hypot(v,
                                      u)) * (cycles / diam_pup_in_m) / Nfourier
 

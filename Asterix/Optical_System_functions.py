@@ -2106,8 +2106,9 @@ class deformable_mirror(Optical_System):
 
 
         -------------------------------------------------- """
-
         if basis_type == 'actuator':
+            # no need to remove the inactive actuators, 
+            # they are already removed in pushact
             basis_size = len(self.WhichInPupil)
             basis = np.zeros((basis_size, self.number_act))
             for i in range(basis_size):

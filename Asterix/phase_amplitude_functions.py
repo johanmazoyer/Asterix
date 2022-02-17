@@ -98,6 +98,10 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
 
 #     AUTHOR : Raphael Galicher
 
+#     On Feb 2022 : commented the whole thing. I used it once to save the
+#                    the testbec amplitude centered on a good resolution 
+#                    and now we only rescale this. Keeping it commented just in case
+
 #     Parameters
 #     ----------
 #     filename : str
