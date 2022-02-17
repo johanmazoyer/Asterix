@@ -121,6 +121,12 @@ def runthd2(parameter_file,
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
+    # The following line can be used to change the DM to make the PW probe,
+    # including with a DM out of the pupil plane. 
+    # This is an unsual option so not in the param file and not well documented.
+
+    # thd2.name_DM_to_probe_in_PW = "DM1"
+    
     ## Initialize Estimation
     estim = Estimator(Estimationconfig,
                       thd2,
