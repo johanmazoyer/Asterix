@@ -114,6 +114,9 @@ Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plan
 You can finally defined your own pupils from a .fits using the keyword ``filename``. In this case, you have to 
 manually set up the pupil prad, by definition, it will assume the same size as entrance pupil in the parameter file.
 
+The pupil in the .fits file are automatically rescaled at prad using skimage.transform.rescale. This rescale was prefered 
+because of the option "preserve_range=True" which keep the rescaled pupil in [0,1].
+
 Function documentation can be found in Section :ref:`pupil-label`. 
 
 
