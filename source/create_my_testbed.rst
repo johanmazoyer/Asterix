@@ -178,6 +178,9 @@ The DM will then be automatically defined as squared with ``N_act1DxN_act1D`` ac
 We can also create a specific DM for a given testbed with a file with the relative position of actuators in the pupil
 and the position of one of them compared to the pupil.
 
+Out of the pupil plane DMs are simulated by taking a Angular-Spectrum transform, multiply by the DM phase, and then coming back to a pupil plane. 
+Because we are only in close range, this is more accurate than Fresnel propogation.
+
 Function documentation can be found in Section :ref:`deformable-mirror-label`. 
 
 
