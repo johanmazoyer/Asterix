@@ -66,7 +66,7 @@ class Optical_System:
         self.diam_pup_in_m = modelconfig["diam_pup_in_m"]
 
         # Exit pupil radius
-        self.exitpup_rad = self.prad
+        # self.exitpup_rad = self.prad
         # this is the exit pupil radius, that is used to define the L/D
         # in self.todetector function.
         # by default this is the entrance pupil rad. of course, this can be changed
@@ -230,7 +230,7 @@ class Optical_System:
             **kwargs)
 
         focal_plane_EF = prop.mft(exit_EF,
-                                  self.exitpup_rad * 2,
+                                  self.prad * 2,
                                   self.dimScience,
                                   self.dimScience / self.Science_sampling *
                                   lambda_ratio,
@@ -738,7 +738,7 @@ class pupil(Optical_System):
         if prad == 0:
             prad = self.prad
 
-        self.exitpup_rad = prad
+        # self.exitpup_rad = prad
 
         self.pup = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
                            1.)
@@ -940,7 +940,7 @@ class coronagraph(Optical_System):
         self.lyotrad = int(self.prad * self.diam_lyot_in_m /
                            self.diam_pup_in_m)
 
-        self.exitpup_rad = self.lyotrad
+        # self.exitpup_rad = self.lyotrad
 
         #coronagraph
         self.corona_type = coroconfig["corona_type"].lower()
@@ -1554,7 +1554,7 @@ class deformable_mirror(Optical_System):
 
         self.Model_local_dir = Model_local_dir
 
-        self.exitpup_rad = self.prad
+        # self.exitpup_rad = self.prad
 
         self.Name_DM = Name_DM
         self.z_position = DMconfig[self.Name_DM + "_z_position"]
@@ -2209,7 +2209,7 @@ class Testbed(Optical_System):
 
         # The exitpuprad parameter which will be used to plot the PSF in todetector functions
         # is the exitpuprad of the last one.
-        self.exitpup_rad = list_os[-1].exitpup_rad
+        # self.exitpup_rad = list_os[-1].exitpup_rad
 
         self.number_DMs = 0
         self.number_act = 0
