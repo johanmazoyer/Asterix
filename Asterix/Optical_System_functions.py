@@ -750,7 +750,7 @@ class pupil(Optical_System):
 
         # ClearPlane (in case we want to define an empty pupil plane)
         elif PupType == "ClearPlane":
-            self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
+            self.pup = np.ones((self.dim_overpad_pupil,self.dim_overpad_pupil))
 
         elif PupType == "RomanPup":
             self.string_os += '_' + PupType
@@ -807,7 +807,7 @@ class pupil(Optical_System):
                 #Rescale to the pupil size
                 pup_fits_right_size = skimage.transform.rescale(
                     pup_fits,
-                    2 * prad / pup_fits.shape[0],
+                    2 * self.prad / pup_fits.shape[0],
                     preserve_range=True,
                     anti_aliasing=True,
                     multichannel=False)
@@ -815,7 +815,7 @@ class pupil(Optical_System):
             self.pup = proc.crop_or_pad_image(pup_fits_right_size,
                                               self.dim_overpad_pupil)
 
-        else:  # no filename and no known. In this case, we can have a few
+        else:  # no filename and no known pupil, raise error
             raise Exception(
                 "this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup', 'RomanLyot'"
             )
@@ -928,21 +928,21 @@ class coronagraph(Optical_System):
         super().__init__(modelconfig)
 
         #pupil and Lyot stop in m
-        if coroconfig["filename_instr_lyot"] in ["RoundPup", "ClearPlane"]:
-            self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
-        elif coroconfig["filename_instr_lyot"] == "RomanLyot":
-            self.diam_lyot_in_m = self.diam_pup_in_m * 0.800
-        elif coroconfig["filename_instr_lyot"] == "VLTLyot":
-            self.diam_lyot_in_m = self.diam_pup_in_m * 0.95
-        else:
-            raise Exception("This is not a valid Lyot option")
+        # if coroconfig["filename_instr_lyot"] in ["RoundPup", "ClearPlane"]:
+        #     self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
+        # elif coroconfig["filename_instr_lyot"] == "RomanLyot":
+        #     self.diam_lyot_in_m = self.diam_pup_in_m * 0.800
+        # elif coroconfig["filename_instr_lyot"] == "VLTLyot":
+        #     self.diam_lyot_in_m = self.diam_pup_in_m * 0.95
+        # else:
+        #     raise Exception("This is not a valid Lyot option")
 
-        self.lyotrad = int(self.prad * self.diam_lyot_in_m /
-                           self.diam_pup_in_m)
-
+        # self.lyotrad = int(self.prad * self.diam_lyot_in_m /
+        #                    self.diam_pup_in_m)
+    
         # self.exitpup_rad = self.lyotrad
-
-        #coronagraph
+    
+        #coronagraph type
         self.corona_type = coroconfig["corona_type"].lower()
 
         self.string_os += '_' + self.corona_type
@@ -1022,19 +1022,25 @@ class coronagraph(Optical_System):
                                   prad=self.prad,
                                   filename=coroconfig["filename_instr_apod"])
 
-        if coroconfig["filename_instr_lyot"] in [
-                "ClearPlane", "RoundPup", "RomanPup", "RomanLyot"
-        ]:
+        
+        if coroconfig["filename_instr_lyot"] is "RoundPup":
+            self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
+
+            self.lyotrad = int(self.prad * self.diam_lyot_in_m /
+                            self.diam_pup_in_m)
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
+                                  PupType=coroconfig["filename_instr_lyot"])
+            self.string_os += '_lrad' + str(int(self.lyotrad))
+        
+        if coroconfig["filename_instr_lyot"] in ["ClearPlane", "RomanLyot" ]:
+            self.lyot_pup = pupil(modelconfig,
                                   PupType=coroconfig["filename_instr_lyot"])
         else:
             self.string_os += coroconfig["filename_instr_lyot"]
             self.lyot_pup = pupil(modelconfig,
-                                  prad=self.lyotrad,
                                   filename=coroconfig["filename_instr_lyot"])
 
-        self.string_os += '_lrad' + str(int(self.lyotrad))
 
         if self.perfect_coro == True:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
