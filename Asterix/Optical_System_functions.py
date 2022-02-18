@@ -891,7 +891,7 @@ class pupil(Optical_System):
             name_plane = 'EF_PP_after_pupil' + '_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      entrance_EF)
+                                      exit_EF)
 
         return exit_EF
 
