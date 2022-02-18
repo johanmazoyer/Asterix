@@ -1023,7 +1023,7 @@ class coronagraph(Optical_System):
                                   filename=coroconfig["filename_instr_apod"])
 
         
-        if coroconfig["filename_instr_lyot"] is "RoundPup":
+        if coroconfig["filename_instr_lyot"] == "RoundPup":
             self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
 
             self.lyotrad = int(self.prad * self.diam_lyot_in_m /
