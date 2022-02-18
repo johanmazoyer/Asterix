@@ -101,7 +101,10 @@ def runthd2(parameter_file,
 
     # Initialize thd:
     pup_round = OptSy.pupil(modelconfig,
-                            PupType=modelconfig['filename_instr_pup'])
+                            PupType=modelconfig['filename_instr_pup'], 
+                            angle_rotation=modelconfig['entrance_pup_rotation'],
+                            Model_local_dir=Model_local_dir)
+                            
     DM1 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
                                   Name_DM='DM1',
@@ -112,7 +115,8 @@ def runthd2(parameter_file,
                                   Name_DM='DM3',
                                   Model_local_dir=Model_local_dir)
 
-    corono = OptSy.coronagraph(modelconfig, Coronaconfig)
+    corono = OptSy.coronagraph(modelconfig, Coronaconfig,
+                            Model_local_dir=Model_local_dir)
     # and then just concatenate
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
