@@ -112,10 +112,6 @@ def runthd2(parameter_file,
                                   Name_DM='DM3',
                                   Model_local_dir=Model_local_dir)
 
-    # we also need to "clear" the apod plane because the THD2 is like that
-    Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
-    # this can also be a parameter in Coronaconfig.
-
     corono = OptSy.coronagraph(modelconfig, Coronaconfig)
     # and then just concatenate
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
@@ -124,7 +120,6 @@ def runthd2(parameter_file,
     # The following line can be used to change the DM to make the PW probe,
     # including with a DM out of the pupil plane. 
     # This is an unsual option so not in the param file and not well documented.
-
     # thd2.name_DM_to_probe_in_PW = "DM1"
     
     ## Initialize Estimation
