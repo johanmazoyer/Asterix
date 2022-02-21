@@ -262,7 +262,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     initialFP = testbed.todetector_Intensity(entrance_EF=input_wavefront,
                                              voltage_vector=initial_DM_voltage,
                                              save_all_planes_to_fits=False,
-                                             dir_save_all_planes=None,
+                                             dir_save_all_planes='/Users/jmazoyer/Desktop/test/',
                                              **kwargs)
 
     estim_init = estimator.estimate(testbed,
