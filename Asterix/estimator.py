@@ -140,7 +140,7 @@ class Estimator:
                             "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
                         )
 
-            string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" +"_".join(
+            string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(
                 map(str, self.posprobes)) + "_PWampl" + str(
                     int(self.amplitudePW)) + "_cut" + str(int(
                         cutsvdPW // 1000)) + "k_dimEstim" + str(

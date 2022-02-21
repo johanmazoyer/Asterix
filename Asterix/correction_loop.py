@@ -259,11 +259,12 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             for i in np.arange(len(Nbiter_corr)):
                 modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
-    initialFP = testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                                             voltage_vector=initial_DM_voltage,
-                                             save_all_planes_to_fits=False,
-                                             dir_save_all_planes='/Users/jmazoyer/Desktop/test/',
-                                             **kwargs)
+    initialFP = testbed.todetector_Intensity(
+        entrance_EF=input_wavefront,
+        voltage_vector=initial_DM_voltage,
+        save_all_planes_to_fits=False,
+        dir_save_all_planes='/Users/jmazoyer/Desktop/test/',
+        **kwargs)
 
     estim_init = estimator.estimate(testbed,
                                     voltage_vector=initial_DM_voltage,
@@ -381,11 +382,12 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             new_voltage = thisloop_voltages_DMs[-1] + gain * solution
 
         thisloop_FP_Intensities.append(
-            testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                                         voltage_vector=new_voltage,
-                                         save_all_planes_to_fits=False,
-                                         dir_save_all_planes='/Users/jmazoyer/Desktop/test_roundpup/',
-                                         **kwargs))
+            testbed.todetector_Intensity(
+                entrance_EF=input_wavefront,
+                voltage_vector=new_voltage,
+                save_all_planes_to_fits=False,
+                dir_save_all_planes='/Users/jmazoyer/Desktop/test_roundpup/',
+                **kwargs))
         thisloop_EF_estim.append(resultatestimation)
         thisloop_MeanDHContrast.append(
             np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))
