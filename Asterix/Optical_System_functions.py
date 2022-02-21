@@ -833,9 +833,11 @@ class pupil(Optical_System):
                                                     preserve_range=True)
                 self.string_os += 'Rot' + str(int(angle_rotation))
 
-                fits.writeto(
-                    os.path.join(
-                        Model_local_dir, PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),self.pup)
+                fits.writeto(os.path.join(
+                    Model_local_dir,
+                    PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),
+                             self.pup,
+                             overwrite=True)
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
