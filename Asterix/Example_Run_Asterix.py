@@ -51,8 +51,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
                      'DH_side': "Full",
-                     'correction_algorithm': "sm",
-                     "MatrixType": "Perfect"
+                     'correction_algorithm': "sm"
                  },
                  NewLoopconfig={
                      'Nbiter_corr': ["20"],
@@ -70,8 +69,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewEstimationconfig={'estimation': 'pw'},
                  NewCorrectionconfig={
                      'DH_side': "Full",
-                     'correction_algorithm': "efc",
-                     "MatrixType": "Perfect"
+                     'correction_algorithm': "efc"
                  },
                  NewLoopconfig={
                      'Nbiter_corr':
