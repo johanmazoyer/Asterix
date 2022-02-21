@@ -92,7 +92,7 @@ class Optical_System:
             self.wav_vec = np.array([self.wavelength_0])
             self.nb_wav = 1
 
-        self.string_os = '_prad' + str(int(self.prad)) + '_wl' + str(
+        self.string_os = '_dimPup' + str(int(self.prad)) + '_dimPP' + str(int(self.dim_overpad_pupil)) + '_wl' + str(
             int(self.wavelength_0 * 1e9)) + "_resFP" + str(
                 round(self.Science_sampling, 2)) + "_dimFP" + str(
                     int(self.dimScience))
@@ -1046,19 +1046,19 @@ class coronagraph(Optical_System):
         elif coroconfig["filename_instr_lyot"] == "RomanLyot":
             self.string_os += '_' + coroconfig[
                 "filename_instr_lyot"] + 'Rot' + str(
-                    int(modelconfig['lyot_pup_rotation']))
+                    int(coroconfig['lyot_pup_rotation']))
             self.lyot_pup = pupil(
                 modelconfig,
                 PupType=coroconfig["filename_instr_lyot"],
-                angle_rotation=modelconfig['lyot_pup_rotation'],
+                angle_rotation=coroconfig['lyot_pup_rotation'],
                 Model_local_dir=Model_local_dir)
         else:
             self.string_os += '_FitsLyotRot' + str(
-                int(modelconfig['lyot_pup_rotation']))
+                int(coroconfig['lyot_pup_rotation']))
             self.lyot_pup = pupil(
                 modelconfig,
                 filename=coroconfig["filename_instr_lyot"],
-                angle_rotation=modelconfig['lyot_pup_rotation'],
+                angle_rotation=coroconfig['lyot_pup_rotation'],
                 Model_local_dir=Model_local_dir)
 
         if self.perfect_coro == True:
