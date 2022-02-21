@@ -205,7 +205,7 @@ DM1 = OptSy.deformable_mirror(modelconfig,
                               Model_local_dir=Model_local_dir)
 # we also need to "clear" the apod plane because  there
 # is no apod plane on the thd2 bench
-Coronaconfig.update({'filename_instr_apod': "ClearPlane"})
+Coronaconfig.update({'filename_instr_apod': "Clear"})
 corono_thd = OptSy.coronagraph(modelconfig, Coronaconfig)
 
 # and then just concatenate
