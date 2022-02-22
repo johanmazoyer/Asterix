@@ -234,7 +234,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(
             DM.basis_size)
 
-        fileDirectMatrix = headfile + basis_str + string_testbed_without_DMS
+        fileDirectMatrix = headfile + basis_str + '_dimEstim' + str(dimEstim) + string_testbed_without_DMS
 
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch

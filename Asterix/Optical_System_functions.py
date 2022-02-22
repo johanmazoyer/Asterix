@@ -66,12 +66,6 @@ class Optical_System:
         #pupil in meters
         self.diam_pup_in_m = modelconfig["diam_pup_in_m"]
 
-        # Exit pupil radius
-        # self.exitpup_rad = self.prad
-        # this is the exit pupil radius, that is used to define the L/D
-        # in self.todetector function.
-        # by default this is the entrance pupil rad. of course, this can be changed
-
         self.modelconfig = copy.copy(modelconfig)
 
         # wavelength
@@ -209,8 +203,8 @@ class Optical_System:
         ------
         ef_focal_plane : 2D array of size [self.dimScience, self.dimScience]
                 Electric field in the focal plane.
-                the lambda / D is defined such as
-                self.wavelength_0 /  (2*self.exitpup_rad) = self.Science_sampling pixels
+                the lambda / D is defined with the entrance pupil diameter, such as:
+                self.wavelength_0 /  (2*self.prad) = self.Science_sampling pixels
 
 
         -------------------------------------------------- """
@@ -310,8 +304,9 @@ class Optical_System:
         Returns
         ------
         focal_plane_Intensity : 2D array of size [self.dimScience, self.dimScience]
-                    Intensity in the focal plane. The lambda / D is defined such as
-                    self.wavelength_0 /  (2*self.exitpup_rad) = self.Science_sampling pixels
+                    Intensity in the focal plane. the lambda / D is defined with 
+                    the entrance pupil diameter, such as:
+                    self.wavelength_0 /  (2*self.prad) = self.Science_sampling pixels
 
 
         -------------------------------------------------- """
@@ -759,8 +754,6 @@ class pupil(Optical_System):
 
         if prad == 0:
             prad = self.prad
-
-        # self.exitpup_rad = prad
 
         # known case, with known response
         # default case: round pupil
@@ -1577,8 +1570,6 @@ class deformable_mirror(Optical_System):
 
         self.Model_local_dir = Model_local_dir
 
-        # self.exitpup_rad = self.prad
-
         self.Name_DM = Name_DM
         self.z_position = DMconfig[self.Name_DM + "_z_position"]
         self.active = DMconfig[self.Name_DM + "_active"]
@@ -2189,10 +2180,6 @@ class Testbed(Optical_System):
 
         # Initialize the EF_through_function
         self.EF_through = super().EF_through
-
-        # The exitpuprad parameter which will be used to plot the PSF in todetector functions
-        # is the exitpuprad of the last one.
-        # self.exitpup_rad = list_os[-1].exitpup_rad
 
         self.number_DMs = 0
         self.number_act = 0
