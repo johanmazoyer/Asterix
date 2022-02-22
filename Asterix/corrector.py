@@ -118,7 +118,7 @@ class Corrector:
 
         self.update_matrices(testbed, estimator)
 
-        if self.correction_algorithm == "efc" and save_for_bench == True:
+        if save_for_bench == True:
             if not os.path.exists(realtestbed_dir):
                 print("Creating directory " + realtestbed_dir + " ...")
                 os.makedirs(realtestbed_dir)
