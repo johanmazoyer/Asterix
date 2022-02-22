@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import datetime
 
-from random import random
+import random
 import Asterix.Optical_System_functions as OptSy
 
 def _quickshow(tab):
@@ -129,7 +129,7 @@ def _quickpng(tab, dir='', name='tmp'):
     plt.axis('off')
     plt.imshow(tmp, origin='lower', cmap='gray')
     if name == 'toto':
-        name = name + str(int(random() * 100))
+        name = name + str(int(random.random() * 100))
     plt.tight_layout()
     plt.savefig(dir + name + '.png', dpi=300)
     plt.close()
@@ -171,7 +171,7 @@ def read_parameter_file(parameter_file):
 
     Returns
     ------
-    config: dicto
+    config: dict
         parameter dictionnary
 
 

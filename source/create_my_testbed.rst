@@ -112,7 +112,11 @@ Some specific aperture types are defined that you can access using the keyword `
 Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plane), "RomanPup", "RomanLyot".
 
 You can finally defined your own pupils from a .fits using the keyword ``filename``. In this case, you have to 
-manually set up the pupil prad, by definition, it will assume the same size as entrance pupil in the parameter file.
+manually set up the pupil prad, by definition, it will assume the same size as entrance pupil in the parameter file. 
+The keyword "diam_lyot_in_m" is only used in the case of a round Lyot Stop ("RoundPup") and is not use to scale the .fits files aperture
+
+The pupil in the .fits file are automatically rescaled at prad using skimage.transform.rescale. This rescale was prefered 
+because of the option "preserve_range=True" which keep the rescaled pupil in [0,1].
 
 Function documentation can be found in Section :ref:`pupil-label`. 
 
@@ -174,6 +178,9 @@ We need ``N_act1D`` > ``diam_pup_in_m`` / ``DM_pitch``, so that the DM is larger
 The DM will then be automatically defined as squared with ``N_act1DxN_act1D`` actuators and the puil centered on this DM.
 We can also create a specific DM for a given testbed with a file with the relative position of actuators in the pupil
 and the position of one of them compared to the pupil.
+
+Out of the pupil plane DMs are simulated by taking a Angular-Spectrum transform, multiply by the DM phase, and then coming back to a pupil plane. 
+Because we are only in close range, this is more accurate than Fresnel propogation.
 
 Function documentation can be found in Section :ref:`deformable-mirror-label`. 
 

@@ -1,4 +1,6 @@
 import numpy as np
+import processing_functions as proc
+import Asterix.fits_functions as useful
 
 
 def mft(image,
@@ -302,3 +304,64 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     if sign == -1:
         result = result / fac**2
     return result, dxout
+
+
+def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
+    """ --------------------------------------------------
+    Angular spectrum propagation of electric field along a distance z
+    in a collimated beam and in Free space in close field (small z).
+
+    AUTHOR : Johan Mazoyer
+
+    REVISION HISTORY :
+    - Revision 1.0  2022-02-15 Johan Mazoyer Initial revision
+
+    Parameters
+    ----------
+    pup : 2D array (complex or real)
+            electric field at z=0
+            CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
+            where dimpup is the pup array dimension
+
+    lam : float
+         wavelength in meter
+
+    z : float
+         distance of propagation in meter
+
+    rad : float
+        entrance beam radius in meter
+        
+    prad : float
+        entrance beam radius in pixel
+    
+    gamma : int >=2
+        factor of oversizing in the fourrier plane in diameter of the pupil 
+        (gamma*2*prad is the output dim)
+        optionnal: default = 2
+
+    Returns
+    ------
+
+    pup_z : 2D array (complex) of size [2*gamma*prad,2*gamma*prad]
+            electric field after propagating in free space along
+            a distance z
+
+    -------------------------------------------------- """
+
+    diam_pup_in_m = 2 * rad
+    diam_pup_in_pix = 2 * prad
+
+    Nfourier = gamma * diam_pup_in_pix
+    cycles = diam_pup_in_pix
+
+    four = np.fft.fft2(proc.crop_or_pad_image(pup, Nfourier), norm='ortho')
+    u, v = np.meshgrid(
+        np.arange(Nfourier) - Nfourier / 2,
+        np.arange(Nfourier) - Nfourier / 2)
+        
+    rho2D = np.fft.fftshift(np.hypot(v,
+                                     u)) * (cycles / diam_pup_in_m) / Nfourier
+
+    angular = np.exp(-1j * np.pi * z * lam * (rho2D**2))
+    return np.fft.ifft2(angular * four, norm='ortho')

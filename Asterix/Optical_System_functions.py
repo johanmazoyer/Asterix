@@ -66,7 +66,7 @@ class Optical_System:
         self.diam_pup_in_m = modelconfig["diam_pup_in_m"]
 
         # Exit pupil radius
-        self.exitpup_rad = self.prad
+        # self.exitpup_rad = self.prad
         # this is the exit pupil radius, that is used to define the L/D
         # in self.todetector function.
         # by default this is the entrance pupil rad. of course, this can be changed
@@ -230,7 +230,7 @@ class Optical_System:
             **kwargs)
 
         focal_plane_EF = prop.mft(exit_EF,
-                                  self.exitpup_rad * 2,
+                                  self.prad * 2,
                                   self.dimScience,
                                   self.dimScience / self.Science_sampling *
                                   lambda_ratio,
@@ -577,13 +577,20 @@ class Optical_System:
         ampl_slope = SIMUconfig["ampl_slope"]
 
         if set_amplitude_abb == True:
-            if ampl_abb_filename != '' and os.path.isfile(
-                    Model_local_dir + ampl_abb_filename +
-                    ".fits") == True and set_random_ampl is False:
+            if ampl_abb_filename == 'Amplitudebanc_200pix_center4pixels' and set_random_ampl is False:
 
-                return_ampl = phase_ampl.scale_amplitude_abb(
-                    model_dir + ampl_abb_filename + ".fits", self.prad,
-                    self.dim_overpad_pupil)
+                testbedampl_fits = fits.getdata(model_dir + ampl_abb_filename +
+                                                ".fits")
+                testbedampl_fits_right_size = skimage.transform.rescale(
+                    testbedampl_fits,
+                    2 * self.prad / testbedampl_fits.shape[0],
+                    preserve_range=True,
+                    anti_aliasing=True,
+                    multichannel=False)
+
+                return_ampl = proc.crop_or_pad_image(
+                    testbedampl_fits_right_size, self.dim_overpad_pupil)
+
             else:
                 ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
                     int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
@@ -731,7 +738,7 @@ class pupil(Optical_System):
         if prad == 0:
             prad = self.prad
 
-        self.exitpup_rad = prad
+        # self.exitpup_rad = prad
 
         self.pup = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
                            1.)
@@ -743,7 +750,7 @@ class pupil(Optical_System):
 
         # ClearPlane (in case we want to define an empty pupil plane)
         elif PupType == "ClearPlane":
-            self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
+            self.pup = np.ones((self.dim_overpad_pupil,self.dim_overpad_pupil))
 
         elif PupType == "RomanPup":
             self.string_os += '_' + PupType
@@ -800,7 +807,7 @@ class pupil(Optical_System):
                 #Rescale to the pupil size
                 pup_fits_right_size = skimage.transform.rescale(
                     pup_fits,
-                    2 * prad / pup_fits.shape[0],
+                    2 * self.prad / pup_fits.shape[0],
                     preserve_range=True,
                     anti_aliasing=True,
                     multichannel=False)
@@ -808,7 +815,7 @@ class pupil(Optical_System):
             self.pup = proc.crop_or_pad_image(pup_fits_right_size,
                                               self.dim_overpad_pupil)
 
-        else:  # no filename and no known. In this case, we can have a few
+        else:  # no filename and no known pupil, raise error
             raise Exception(
                 "this is not a known 'PupType': 'RoundPup', 'ClearPlane', 'RomanPup', 'RomanLyot'"
             )
@@ -921,21 +928,21 @@ class coronagraph(Optical_System):
         super().__init__(modelconfig)
 
         #pupil and Lyot stop in m
-        if coroconfig["filename_instr_lyot"] in ["RoundPup", "ClearPlane"]:
-            self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
-        elif coroconfig["filename_instr_lyot"] == "RomanLyot":
-            self.diam_lyot_in_m = self.diam_pup_in_m * 0.800
-        elif coroconfig["filename_instr_lyot"] == "VLTLyot":
-            self.diam_lyot_in_m = self.diam_pup_in_m * 0.95
-        else:
-            raise Exception("This is not a valid Lyot option")
+        # if coroconfig["filename_instr_lyot"] in ["RoundPup", "ClearPlane"]:
+        #     self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
+        # elif coroconfig["filename_instr_lyot"] == "RomanLyot":
+        #     self.diam_lyot_in_m = self.diam_pup_in_m * 0.800
+        # elif coroconfig["filename_instr_lyot"] == "VLTLyot":
+        #     self.diam_lyot_in_m = self.diam_pup_in_m * 0.95
+        # else:
+        #     raise Exception("This is not a valid Lyot option")
 
-        self.lyotrad = int(self.prad * self.diam_lyot_in_m /
-                           self.diam_pup_in_m)
-
-        self.exitpup_rad = self.lyotrad
-
-        #coronagraph
+        # self.lyotrad = int(self.prad * self.diam_lyot_in_m /
+        #                    self.diam_pup_in_m)
+    
+        # self.exitpup_rad = self.lyotrad
+    
+        #coronagraph type
         self.corona_type = coroconfig["corona_type"].lower()
 
         self.string_os += '_' + self.corona_type
@@ -1015,19 +1022,25 @@ class coronagraph(Optical_System):
                                   prad=self.prad,
                                   filename=coroconfig["filename_instr_apod"])
 
-        if coroconfig["filename_instr_lyot"] in [
-                "ClearPlane", "RoundPup", "RomanPup", "RomanLyot"
-        ]:
+        
+        if coroconfig["filename_instr_lyot"] == "RoundPup":
+            self.diam_lyot_in_m = coroconfig["diam_lyot_in_m"]
+
+            self.lyotrad = int(self.prad * self.diam_lyot_in_m /
+                            self.diam_pup_in_m)
             self.lyot_pup = pupil(modelconfig,
                                   prad=self.lyotrad,
+                                  PupType=coroconfig["filename_instr_lyot"])
+            self.string_os += '_lrad' + str(int(self.lyotrad))
+        
+        if coroconfig["filename_instr_lyot"] in ["ClearPlane", "RomanLyot" ]:
+            self.lyot_pup = pupil(modelconfig,
                                   PupType=coroconfig["filename_instr_lyot"])
         else:
             self.string_os += coroconfig["filename_instr_lyot"]
             self.lyot_pup = pupil(modelconfig,
-                                  prad=self.lyotrad,
                                   filename=coroconfig["filename_instr_lyot"])
 
-        self.string_os += '_lrad' + str(int(self.lyotrad))
 
         if self.perfect_coro == True:
             # do a propagation once with self.perfect_Lyot_pupil = 0 to
@@ -1547,7 +1560,7 @@ class deformable_mirror(Optical_System):
 
         self.Model_local_dir = Model_local_dir
 
-        self.exitpup_rad = self.prad
+        # self.exitpup_rad = self.prad
 
         self.Name_DM = Name_DM
         self.z_position = DMconfig[self.Name_DM + "_z_position"]
@@ -1580,7 +1593,7 @@ class deformable_mirror(Optical_System):
                 self.active_actuators = np.arange(self.number_act)
 
         self.string_os += '_' + self.Name_DM + "_z" + str(
-            int(self.z_position * 100)) + "_Nact" + str(int(self.number_act))
+            int(self.z_position * 1000)) + "_Nact" + str(int(self.number_act))
 
         if DMconfig[self.Name_DM + "_Generic"] == True:
             self.string_os += "Gen"
@@ -1596,27 +1609,27 @@ class deformable_mirror(Optical_System):
         # this is a clear pupil of the same size
         self.clearpup = pupil(modelconfig, prad=self.prad)
 
-        #define self.pradDM and check that the pupil is large enough
-        # for out of pupil propagation
-        if self.z_position != 0:
-            dx, dxout = prop.prop_fresnel(self.dim_overpad_pupil,
-                                          self.wavelength_0,
-                                          self.z_position,
-                                          self.diam_pup_in_m / 2,
-                                          self.prad,
-                                          retscale=1)
-            #radius of the pupil in pixel in the DM plane
-            self.pradDM = self.prad * dx / dxout
+        # #define self.pradDM and check that the pupil is large enough
+        # # for out of pupil propagation
+        # if self.z_position != 0:
+        #     dx, dxout = prop.prop_fresnel(self.dim_overpad_pupil,
+        #                                   self.wavelength_0,
+        #                                   self.z_position,
+        #                                   self.diam_pup_in_m / 2,
+        #                                   self.prad,
+        #                                   retscale=1)
+        #     #radius of the pupil in pixel in the DM plane
+        #     self.pradDM = self.prad * dx / dxout
 
-            if dx > 2 * dxout:
-                print(dx, dxout)
-                raise Exception(
-                    "Need to enhance the pupil size in pixel for Fresnel propagation"
-                )
-        else:
-            # radius of the pupil in pixel in the DM plane.
-            # by default the size of the pupil
-            self.pradDM = self.prad
+        #     if dx > 2 * dxout:
+        #         print(dx, dxout)
+        #         raise Exception(
+        #             "Need to enhance the pupil size in pixel for Fresnel propagation"
+        #         )
+        # else:
+        #     # radius of the pupil in pixel in the DM plane.
+        #     # by default the size of the pupil
+        #     self.pradDM = self.prad
 
         # create, save or load the DM_pushact functions
         # from the influence function
@@ -1787,34 +1800,9 @@ class deformable_mirror(Optical_System):
                                           "_filename_actu_infl_fct"]
 
         if DMconfig[self.Name_DM + "_Generic"] == False:
-            filename_ActuN = DMconfig[self.Name_DM + "_filename_ActuN"]
-            filename_grid_actu = DMconfig[self.Name_DM + "_filename_grid_actu"]
-
-            ActuN = DMconfig[self.Name_DM + "_ActuN"]
-            y_ActuN = DMconfig[self.Name_DM + "_y_ActuN"]
-            x_ActuN = DMconfig[self.Name_DM + "_x_ActuN"]
-            xy_ActuN = [x_ActuN, y_ActuN]
-
-            #Measured positions for each actuator in pixel
-            measured_grid = fits.getdata(model_dir + filename_grid_actu)
-            #Ratio: pupil radius in the measured position over
-            # pupil radius in the numerical simulation
-            sampling_simu_over_measured = diam_pup_in_pix / 2 / fits.getheader(
-                model_dir + filename_grid_actu)['PRAD']
-            if filename_ActuN != "":
-                im_ActuN = fits.getdata(model_dir + filename_ActuN)
-                im_ActuN_dim = proc.crop_or_pad_image(im_ActuN, dim_array)
-
-                xy_ActuN = np.unravel_index(
-                    np.abs(im_ActuN_dim).argmax(), im_ActuN_dim.shape)
-
-                # shift by (0.5,0.5) pixel because the pupil is
-                # centered between pixels
-                xy_ActuN = xy_ActuN - 0.5
-
-            #Position for each actuator in pixel for the numerical simulation
-            simu_grid = proc.actuator_position(measured_grid, xy_ActuN, ActuN,
-                                               sampling_simu_over_measured)
+            #Measured positions for each actuator in pixel with (0,0) = center of pupil
+            simu_grid = fits.getdata(model_dir + DMconfig[
+                self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
@@ -1898,6 +1886,7 @@ class deformable_mirror(Optical_System):
 
             pushact3d[i] = Psivector
 
+        # we exclude the actuators non active
         pushact3d = pushact3d[self.active_actuators]
 
         if self.misregistration is False and (
@@ -1938,11 +1927,17 @@ class deformable_mirror(Optical_System):
 
         if self.z_position != 0:
             # Propagation in DM plane out of pupil
-            Pup_inDMplane, _ = prop.prop_fresnel(self.clearpup.pup,
-                                                 self.wavelength_0,
-                                                 self.z_position,
-                                                 self.diam_pup_in_m / 2,
-                                                 self.prad)
+            # Pup_inDMplane, _ = prop.prop_fresnel(self.clearpup.pup,
+            #                                      self.wavelength_0,
+            #                                      self.z_position,
+            #                                      self.diam_pup_in_m / 2,
+            #                                      self.prad)
+
+            Pup_inDMplane = proc.crop_or_pad_image(
+                prop.prop_angular_spectrum(self.clearpup.pup,
+                                           self.wavelength_0, self.z_position,
+                                           self.diam_pup_in_m / 2, self.prad),
+                self.dim_overpad_pupil)
         else:
             Pup_inDMplane = self.clearpup.pup
 
@@ -2011,9 +2006,14 @@ class deformable_mirror(Optical_System):
         -------------------------------------------------- """
 
         # Propagation in DM plane out of pupil
-        EF_inDMplane, _ = prop.prop_fresnel(entrance_EF, wavelength,
-                                            self.z_position,
-                                            self.diam_pup_in_m / 2., self.prad)
+        # EF_inDMplane, _ = prop.prop_fresnel(entrance_EF, wavelength,
+        #                                     self.z_position,
+        #                                     self.diam_pup_in_m / 2., self.prad)
+        EF_inDMplane = proc.crop_or_pad_image(
+            prop.prop_angular_spectrum(entrance_EF, wavelength,
+                                       self.z_position,
+                                       self.diam_pup_in_m / 2., self.prad),
+            self.dim_overpad_pupil)
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
@@ -2030,12 +2030,20 @@ class deformable_mirror(Optical_System):
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       EF_inDMplane)
+
         # and propagate to next pupil plane
-        EF_back_in_pup_plane, _ = prop.prop_fresnel(EF_inDMplane_after_DM,
-                                                    wavelength,
-                                                    -self.z_position,
-                                                    self.diam_pup_in_m / 2.,
-                                                    self.prad)
+
+        # EF_back_in_pup_plane, _ = prop.prop_fresnel(EF_inDMplane_after_DM,
+        #                                             wavelength,
+        #                                             -self.z_position,
+        #                                             self.diam_pup_in_m / 2.,
+        #                                             self.prad)
+
+        EF_back_in_pup_plane = proc.crop_or_pad_image(
+            prop.prop_angular_spectrum(EF_inDMplane_after_DM, wavelength,
+                                       -self.z_position,
+                                       self.diam_pup_in_m / 2., self.prad),
+            self.dim_overpad_pupil)
 
         return EF_back_in_pup_plane
 
@@ -2104,22 +2112,17 @@ class deformable_mirror(Optical_System):
 
 
         -------------------------------------------------- """
-
         if basis_type == 'actuator':
-            active_and_in_pup = [
-                value for value in self.active_actuators
-                if value in self.WhichInPupil
-            ]
-            active_and_in_pup.sort()
-
-            basis_size = len(active_and_in_pup)
+            # no need to remove the inactive actuators, 
+            # they are already removed in pushact
+            basis_size = len(self.WhichInPupil)
             basis = np.zeros((basis_size, self.number_act))
             for i in range(basis_size):
-                basis[i][active_and_in_pup[i]] = 1
+                basis[i][self.WhichInPupil[i]] = 1
 
         elif basis_type == 'fourier':
             start_time = time.time()
-            activeact = [value for value in self.active_actuators]
+            # activeact = [value for value in self.active_actuators]
 
             sqrtnbract = int(np.sqrt(self.total_act))
             Name_FourrierBasis_fits = "Fourier_basis_" + self.Name_DM + '_prad' + str(
@@ -2131,7 +2134,7 @@ class deformable_mirror(Optical_System):
             basis = np.zeros((basis_size, self.number_act))
 
             for i in range(basis_size):
-                vec = cossinbasis[i].flatten()[activeact]
+                vec = cossinbasis[i].flatten()[self.active_actuators]
                 basis[i] = vec
 
             start_time = time.time()
@@ -2212,7 +2215,7 @@ class Testbed(Optical_System):
 
         # The exitpuprad parameter which will be used to plot the PSF in todetector functions
         # is the exitpuprad of the last one.
-        self.exitpup_rad = list_os[-1].exitpup_rad
+        # self.exitpup_rad = list_os[-1].exitpup_rad
 
         self.number_DMs = 0
         self.number_act = 0
@@ -2294,8 +2297,8 @@ class Testbed(Optical_System):
         # We remove arguments we know are wrong
         if 'DMphase' in known_keywords:
             known_keywords.remove('DMphase')
+        if self.number_DMs > 0:
             # there is at least a DM, we add voltage_vector as an authorize kw
-
             known_keywords.append('voltage_vector')
             self.EF_through = _control_testbed_with_voltages(
                 self, self.EF_through)
