@@ -56,7 +56,8 @@ Finally, for all optical system, you can use generic functions like to creaet an
     phase_abb_up = generic_os.generate_phase_aberr(SIMUconfig)
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up)
 
-    PSF = generic_os.todetector_Intensity(entrance_EF = input_wavefront) #  Intensity for this aberrations
+    # Focal plane intensity for this aberrations
+    PSF = generic_os.todetector_Intensity(entrance_EF = input_wavefront) 
 
 
 
