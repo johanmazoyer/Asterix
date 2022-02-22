@@ -1754,7 +1754,14 @@ class deformable_mirror(Optical_System):
         
         -------------------------------------------------- """
 
-        Name_pushact_fits = "PushAct" + self.string_os
+        Name_pushact_fits = "PushAct_" + self.Name_DM 
+        
+        if DMconfig[self.Name_DM + "_Generic"] == True:
+            Name_pushact_fits += "Gen"
+
+        Name_pushact_fits += "_Nact" + str(
+            int(self.number_act)) + '_dimPP' + str(int(
+                self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
         if (self.misregistration is
                 False) and (os.path.exists(self.Model_local_dir +
@@ -1900,8 +1907,15 @@ class deformable_mirror(Optical_System):
 
         
         -------------------------------------------------- """
+        
+        Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM 
+        
+        if self.DMconfig[self.Name_DM + "_Generic"] == True:
+            Name_WhichInPup_fits += "Gen"
 
-        Name_WhichInPup_fits = "WhichInPup" + self.string_os + "_thres" + str(
+        Name_WhichInPup_fits += "_Nact" + str(
+            int(self.number_act)) + '_dimPP' + str(int(
+                self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(
             self.WhichInPup_threshold)
 
         if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits +
