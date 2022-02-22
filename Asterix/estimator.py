@@ -41,7 +41,7 @@ class Estimator:
     -------------------------------------------------- """
     def __init__(self,
                  Estimationconfig,
-                 testbed : OptSy.Testbed,
+                 testbed: OptSy.Testbed,
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -140,15 +140,14 @@ class Estimator:
                             "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
                         )
 
-            string_dims_PWMatrix = "actProb_" + "_".join(
-                map(str, self.posprobes)
-            ) + "with" + testbed.name_DM_to_probe_in_PW + "_PWampl" + str(
-                int(self.amplitudePW)) + "_cut" + str(int(
-                    cutsvdPW // 1000)) + "k_dimEstim" + str(
-                        self.dimEstim) + testbed.string_os
+            string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(
+                map(str, self.posprobes)) + "_PWampl" + str(
+                    int(self.amplitudePW)) + "_cut" + str(int(
+                        cutsvdPW // 1000)) + "k_dimEstim" + str(
+                            self.dimEstim) + testbed.string_os
 
             ####Calculating and Saving PW matrix
-            filePW = "MatrixPW_" + string_dims_PWMatrix
+            filePW = "MatPW_" + string_dims_PWMatrix
             if os.path.exists(matrix_dir + filePW + ".fits") == True:
                 print("The matrix " + filePW + " already exists")
                 self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
@@ -159,7 +158,7 @@ class Estimator:
                     cutsvdPW, testbed.wavelength_0)
                 fits.writeto(matrix_dir + filePW + ".fits",
                              np.array(self.PWMatrix))
-                visuPWMap = "EigenValPW_" + string_dims_PWMatrix
+                visuPWMap = "EigenPW_" + string_dims_PWMatrix
                 fits.writeto(matrix_dir + visuPWMap + ".fits",
                              np.array(showSVD[1]))
 
@@ -201,7 +200,7 @@ class Estimator:
             raise Exception("This estimation algorithm is not yet implemented")
 
     def estimate(self,
-                 testbed : OptSy.Testbed,
+                 testbed: OptSy.Testbed,
                  entrance_EF=1.,
                  voltage_vector=0.,
                  wavelength=None,

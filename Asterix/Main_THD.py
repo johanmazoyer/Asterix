@@ -100,8 +100,12 @@ def runthd2(parameter_file,
     Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
     # Initialize thd:
-    pup_round = OptSy.pupil(modelconfig,
-                            PupType=modelconfig['filename_instr_pup'])
+    pup_round = OptSy.pupil(
+        modelconfig,
+        PupType=modelconfig['filename_instr_pup'],
+        angle_rotation=modelconfig['entrance_pup_rotation'],
+        Model_local_dir=Model_local_dir)
+
     DM1 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
                                   Name_DM='DM1',
@@ -112,16 +116,18 @@ def runthd2(parameter_file,
                                   Name_DM='DM3',
                                   Model_local_dir=Model_local_dir)
 
-    corono = OptSy.coronagraph(modelconfig, Coronaconfig)
+    corono = OptSy.coronagraph(modelconfig,
+                               Coronaconfig,
+                               Model_local_dir=Model_local_dir)
     # and then just concatenate
     thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
     # The following line can be used to change the DM to make the PW probe,
-    # including with a DM out of the pupil plane. 
+    # including with a DM out of the pupil plane.
     # This is an unsual option so not in the param file and not well documented.
     # thd2.name_DM_to_probe_in_PW = "DM1"
-    
+
     ## Initialize Estimation
     estim = Estimator(Estimationconfig,
                       thd2,
@@ -168,15 +174,15 @@ def runthd2(parameter_file,
         phase_abb=phase_abb_do)
 
     Resultats_correction_loop = CorrectionLoop(
-                                    thd2,
-                                    estim,
-                                    correc,
-                                    MaskScience,
-                                    Loopconfig,
-                                    SIMUconfig,
-                                    input_wavefront=input_wavefront,
-                                    EF_aberrations_introduced_in_LS=EF_aberrations_introduced_in_LS,
-                                    initial_DM_voltage=0,
-                                    silence=False)
+        thd2,
+        estim,
+        correc,
+        MaskScience,
+        Loopconfig,
+        SIMUconfig,
+        input_wavefront=input_wavefront,
+        EF_aberrations_introduced_in_LS=EF_aberrations_introduced_in_LS,
+        initial_DM_voltage=0,
+        silence=False)
 
     Save_loop_results(Resultats_correction_loop, config, thd2, result_dir)

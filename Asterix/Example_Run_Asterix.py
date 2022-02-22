@@ -17,8 +17,8 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      'correction_algorithm': "efc",
                  },
                  NewLoopconfig={
-                     'Nbiter_corr': ["5", "5", "5"],
-                     "Nbmode_corr": ["350", "380", "400"]
+                     'Nbiter_corr': ["5", "10"],
+                     "Nbmode_corr": ["320", "340"]
                  },
                  NewSIMUconfig={'Name_Experiment': "My_first_experiment"})
 print('time correction 1DM perfect estim efc', time.time() - start_time)
@@ -35,8 +35,8 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      'correction_algorithm': "efc",
                  },
                  NewLoopconfig={
-                     'Nbiter_corr': ["5", "5", "5"],
-                     "Nbmode_corr": ["350", "380", "400"]
+                     'Nbiter_corr': ["5", "10"],
+                     "Nbmode_corr": ["320", "340"]
                  },
                  NewSIMUconfig={'Name_Experiment': "My_second_experiment"})
 print('time correction 1DM perfect estim efc', time.time() - start_time)
@@ -51,8 +51,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
                      'DH_side': "Full",
-                     'correction_algorithm': "sm",
-                     "MatrixType": "Perfect"
+                     'correction_algorithm': "sm"
                  },
                  NewLoopconfig={
                      'Nbiter_corr': ["20"],
@@ -70,8 +69,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewEstimationconfig={'estimation': 'pw'},
                  NewCorrectionconfig={
                      'DH_side': "Full",
-                     'correction_algorithm': "efc",
-                     "MatrixType": "Perfect"
+                     'correction_algorithm': "efc"
                  },
                  NewLoopconfig={
                      'Nbiter_corr':

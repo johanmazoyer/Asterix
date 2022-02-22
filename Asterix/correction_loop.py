@@ -95,7 +95,6 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     CorrectionLoopResult["MeanDHContrast"] = list()
     CorrectionLoopResult["SVDmodes"] = list()
 
-
     # reading the simulation parameter files
     photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
@@ -111,16 +110,17 @@ def CorrectionLoop(testbed: OptSy.Testbed,
         if Linesearch == False:
             Nbmode_corr = [int(i) for i in Loopconfig["Nbmode_corr"]]
             if len(Nbiter_corr) != len(Nbmode_corr):
-                raise Exception("""In this correction mode and if Linesearch = False, 
-                the length of Nbmode_corr must match the length of Nbiter_corr""")
-            
+                raise Exception(
+                    """In this correction mode and if Linesearch = False, 
+                the length of Nbmode_corr must match the length of Nbiter_corr"""
+                )
+
     else:
         Linesearch = None
         gain = 1.
 
     if corrector.correction_algorithm == 'sm':
         Linesearch = False
-
 
     for i in range(Number_matrix):
 
@@ -259,11 +259,12 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             for i in np.arange(len(Nbiter_corr)):
                 modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
-    initialFP = testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                                             voltage_vector=initial_DM_voltage,
-                                             save_all_planes_to_fits=False,
-                                             dir_save_all_planes=None,
-                                             **kwargs)
+    initialFP = testbed.todetector_Intensity(
+        entrance_EF=input_wavefront,
+        voltage_vector=initial_DM_voltage,
+        save_all_planes_to_fits=False,
+        dir_save_all_planes='/Users/jmazoyer/Desktop/test/',
+        **kwargs)
 
     estim_init = estimator.estimate(testbed,
                                     voltage_vector=initial_DM_voltage,
@@ -336,17 +337,18 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                     print("We skip this iteration")
                 continue
 
-
         else:
             mode = 1
 
         if not silence:
             if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
-                print("Iteration number "+ corrector.correction_algorithm +": ", iteration + 1,
-                    " SVD truncation: ",
-                      mode)
+                print(
+                    "Iteration number " + corrector.correction_algorithm +
+                    ": ", iteration + 1, " SVD truncation: ", mode)
             else:
-                print("Iteration number "+ corrector.correction_algorithm +": ", iteration + 1)
+                print(
+                    "Iteration number " + corrector.correction_algorithm +
+                    ": ", iteration + 1)
 
         # for now monochromatic estimation
         resultatestimation = estimator.estimate(
@@ -380,8 +382,12 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             new_voltage = thisloop_voltages_DMs[-1] + gain * solution
 
         thisloop_FP_Intensities.append(
-            testbed.todetector_Intensity(entrance_EF=input_wavefront,
-                                         voltage_vector=new_voltage,**kwargs))
+            testbed.todetector_Intensity(
+                entrance_EF=input_wavefront,
+                voltage_vector=new_voltage,
+                save_all_planes_to_fits=False,
+                dir_save_all_planes='/Users/jmazoyer/Desktop/test_roundpup/',
+                **kwargs))
         thisloop_EF_estim.append(resultatestimation)
         thisloop_MeanDHContrast.append(
             np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))
@@ -401,7 +407,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             plt.gca().invert_yaxis()
             plt.colorbar()
             plt.pause(0.01)
-        
+
         thisloop_actual_modes.append(mode)
 
     if Search_best_Mode:
@@ -435,7 +441,8 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
         return CorrectionLoopResult
 
 
-def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, result_dir):
+def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed,
+                      result_dir):
     """ --------------------------------------------------
     Save the result from a correction loop in result_dir
     
@@ -506,7 +513,6 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
 
     for i in range(len(voltage_DMs)):
         allDMphases = testbed.voltage_to_phases(voltage_DMs[i])
-        
 
         if isinstance(voltage_DMs[i], (int, float)):
             voltage_DMs_nparray[i, :] += float(voltage_DMs[i])
@@ -516,7 +522,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
         for j, DM_name in enumerate(testbed.name_of_DMs):
             DM_phases[j, i, :, :] = allDMphases[j]
 
-    DMstrokes = DM_phases*testbed.wavelength_0 / (2 * np.pi * 1e-9) / 2
+    DMstrokes = DM_phases * testbed.wavelength_0 / (2 * np.pi * 1e-9) / 2
 
     indice_acum_number_act = 0
     plt.figure()
@@ -534,7 +540,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
                      header,
                      overwrite=True)
 
-        DM = vars(testbed)[DM_name] # type: OptSy.deformable_mirror
+        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
         voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:
                                                  indice_acum_number_act +
                                                  DM.number_act]
@@ -546,15 +552,16 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, resu
                      header,
                      overwrite=True)
 
-        plt.plot(np.std(DMstrokes[j],axis = (1,2)), label = DM_name + " RMS")
-        plt.plot(np.max(DMstrokes[j],axis = (1,2)) - np.min(DMstrokes[j],axis = (1,2)), label = DM_name + " PV")
+        plt.plot(np.std(DMstrokes[j], axis=(1, 2)), label=DM_name + " RMS")
+        plt.plot(np.max(DMstrokes[j], axis=(1, 2)) -
+                 np.min(DMstrokes[j], axis=(1, 2)),
+                 label=DM_name + " PV")
 
     plt.xlabel("Number of iterations")
     plt.ylabel("DM Strokes (nm)")
     plt.legend()
     plt.savefig(
-        os.path.join(result_dir,
-                     current_time_str + "_DM_Strokes" + ".pdf"))
+        os.path.join(result_dir, current_time_str + "_DM_Strokes" + ".pdf"))
     plt.close()
     # TODO Now FP_Intensities are save with photon noise if it's on
     # We need to do them without just to save in the results

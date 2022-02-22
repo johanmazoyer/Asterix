@@ -306,9 +306,9 @@ class Corrector:
                                                      visu=False,
                                                      regul=self.regularization)
 
-            solutionefc = wsc.solutionEFC(
-                self.MaskEstim, estimate, self.invertGDH, testbed)
-            
+            solutionefc = wsc.solutionEFC(self.MaskEstim, estimate,
+                                          self.invertGDH, testbed)
+
             # # gain_individual_DM = [1.,1.]
             # # gain_individual_DM = [0.5,1.]
             # gain_individual_DM = [1.,0.9]
@@ -323,9 +323,9 @@ class Corrector:
             #     solutionefc[
             #         indice_acum_number_act:indice_acum_number_act +
             #         DM.number_act] *= gain_individual_DM[num_DM]
-                
+
             #     indice_acum_number_act += DM.number_act
-            
+
             return -self.amplitudeEFC * solutionefc
 
         if self.correction_algorithm == "sm":
@@ -371,7 +371,7 @@ class Corrector:
                     "we do not improve contrast anymore, we go back to last best and change the gain to {:f}"
                     .format(self.expected_gain_in_contrast))
                 return "RebootTheLoop"
-            
+
             # # gain_individual_DM = [1.,1.]
             # # gain_individual_DM = [0.5,1.]
             # gain_individual_DM = [1.,0.9]
@@ -386,7 +386,7 @@ class Corrector:
             #     solutionSM[
             #         indice_acum_number_act:indice_acum_number_act +
             #         DM.number_act] *= gain_individual_DM[num_DM]
-                
+
             #     indice_acum_number_act += DM.number_act
 
             return -self.amplitudeEFC * solutionSM
