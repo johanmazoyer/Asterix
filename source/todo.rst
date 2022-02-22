@@ -18,6 +18,7 @@ If you want to participate please contact us !
 
 **To Check**: These are part of the code that need to be particularly checked and tested :
 
+- need to estimate Science_sampling in lambda / D_pupil. Currently set at 7.6 (it use to be 7.8 in lambda/Dlyot 7.8*8.1/8.3)
 - the vortex coronagraph
 - the way I do Fourrier Basis currently vs on the testbed (elegant MFT way + Saving it because it's too long + Using the number of actu in the DM direction and not in the pupil, which is smaller and decentered + is it the same way it is done on the testbed)
 
