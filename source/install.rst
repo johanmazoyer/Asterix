@@ -66,6 +66,7 @@ installed in the setup.
 
 * numpy
 * scipy
+* scikit-image
 * astropy
 * matplotlib
 * configobj

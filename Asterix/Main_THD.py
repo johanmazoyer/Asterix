@@ -149,7 +149,7 @@ def runthd2(parameter_file,
                                              up_or_down='up',
                                              Model_local_dir=Model_local_dir)
 
-    # phase up stream of the coronagraph (Lyot stop)
+    # phase down stream of the coronagraph (Lyot stop)
     phase_abb_do = thd2.generate_phase_aberr(SIMUconfig,
                                              up_or_down='do',
                                              Model_local_dir=Model_local_dir)
