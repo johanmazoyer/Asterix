@@ -1,7 +1,7 @@
 import numpy as np
 import skimage.transform
 from astropy.io import fits
-import Asterix.processing_functions as proc
+import Asterix.propagation_functions as prop
 import Asterix.fits_functions as useful
 
 
@@ -92,63 +92,6 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     return ramp
 
 
-# def scale_amplitude_abb(filename, prad, dim_image):
-#     """ --------------------------------------------------
-#     Scale the map of a saved amplitude map
-
-#     AUTHOR : Raphael Galicher
-
-#     On Feb 2022 : commented the whole thing. I used it once to save the
-#                    the testbec amplitude centered on a good resolution
-#                    and now we only rescale this. Keeping it commented just in case
-
-#     Parameters
-#     ----------
-#     filename : str
-#             filename of the amplitude map in the pupil plane
-
-#     prad : float
-#             radius of the pupil in pixel
-
-#     Returns
-#     ------
-#     ampfinal : 2D array (float)
-#             amplitude aberrations (in amplitude, not intensity)
-
-#     -------------------------------------------------- """
-
-#     # create a circular pupil of the same radius of the given pupil
-#     # this will be the pupil over which phase rms = phaserms
-#     pupil = roundpupil(dim_image, prad)
-
-#     #File with amplitude aberrations in amplitude (not intensity)
-#     # centered on the pixel dim/2+1, dim/2 +1 with dim = 2*[dim/2]
-#     # diameter of the pupil is 148 pixels in this image
-#     amp = np.fft.fftshift(fits.getdata(filename))
-
-#     #Rescale to the pupil size
-#     amp1 = skimage.transform.rescale(amp,
-#                                      2 * prad / 148 * 1.03,
-#                                      preserve_range=True,
-#                                      anti_aliasing=True,
-#                                      multichannel=False)
-#     # Shift to center between 4 pixels
-#     #bidouille entre le grandissement 1.03 à la ligne au-dessus et le -1,-1 au lieu
-#     #de -.5,-.5 C'est pour éviter un écran d'amplitude juste plus petit que la pupille
-#     tmp_phase_ramp = np.fft.fftshift(shift_phase_ramp(amp1.shape[0], -1., -1.))
-#     amp1 = np.real(
-#         np.fft.fftshift(np.fft.fft2(np.fft.ifft2(amp1) * tmp_phase_ramp)))
-
-#     # Create the array with same size as the pupil
-
-#     ampfinal = proc.crop_or_pad_image(amp1, pupil.shape[1])
-
-#     #Set the average to 0 inside entrancepupil
-#     ampfinal = (ampfinal / np.mean(ampfinal[np.where(pupil != 0)]) - np.ones(
-#         (pupil.shape[1], pupil.shape[1]))) * pupil
-#     return ampfinal
-
-
 def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     """ --------------------------------------------------
     Create a random phase map, whose PSD decrease in f^(-slope)
@@ -199,3 +142,66 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     phase = phase - np.mean(phase[np.where(pup == 1.)])
     phase = phase / np.std(phase[np.where(pup == 1.)]) * phaserms
     return phase
+
+
+
+def SinCosBasis(Nact1D):
+    """ --------------------------------------------------
+    For a given number of actuator accross the DM, create coefficients for the sin/cos basis
+
+    TODO Check with Pierre that this is equivalent to what is done on the testbed
+    TODO Ask Pierre what he thinks: is it possible to do the basis only for the actuators in the pup
+        in which case, the important number would be the number of act in the pup ?
+    
+    AUTHOR: Johan Mazoyer
+    
+    Parameters
+    ----------
+    Nact1D : float
+        Numnber of actuators of a square DM in one of the principal direction
+    
+    Returns
+    ------
+    SinCosBasis : 3D array 
+                Coefficient to apply to DMs to obtain sine and cosine phases.
+                size :[(Nact1D)^2,Nact1D,Nact1D] if even
+                size :[(Nact1D)^2 -1 ,Nact1D,Nact1D] if odd (to remove piston)
+    
+    
+    -------------------------------------------------- """
+
+    TFCoeffs = np.zeros((Nact1D**2, Nact1D, Nact1D), dtype=complex)
+    SinCos = np.zeros((Nact1D**2, Nact1D, Nact1D))
+
+    for Coeff_SinCos in range(Nact1D**2):
+        Coeffs = np.zeros((Nact1D, Nact1D), dtype=complex)
+        #  the First half of basis are cosine and the second half are sines
+
+        # Lets start with the cosines
+        if Coeff_SinCos < Nact1D**2 // 2:
+            i = Coeff_SinCos // Nact1D
+            j = Coeff_SinCos % Nact1D
+            Coeffs[i, j] = 1 / 2
+            Coeffs[Nact1D - i - 1, Nact1D - j - 1] = 1 / 2
+
+        # # Lets do the sines
+        else:
+            i = (Coeff_SinCos - Nact1D**2 // 2) // Nact1D
+            j = (Coeff_SinCos - Nact1D**2 // 2) % Nact1D
+            Coeffs[i, j] = 1 / (2 * 1j)
+            Coeffs[Nact1D - i - 1, Nact1D - j - 1] = -1 / (2 * 1j)
+        TFCoeffs[Coeff_SinCos] = Coeffs
+
+        SinCos[Coeff_SinCos] = np.real(
+            prop.mft(TFCoeffs[Coeff_SinCos],
+                     Nact1D,
+                     Nact1D,
+                     Nact1D,
+                     X_offset_input=-0.5,
+                     Y_offset_input=-0.5))
+
+    if Nact1D % 2 == 1:
+        # in the odd case the last one is a piston
+        SinCos = SinCos[0:Nact1D**2 - 1]
+
+    return SinCos

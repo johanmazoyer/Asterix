@@ -1,6 +1,5 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
-
 import os
 import inspect
 import copy
@@ -10,8 +9,8 @@ import scipy.ndimage as nd
 from astropy.io import fits
 import skimage.transform
 
-import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
+import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.fits_functions as useful
 
@@ -2096,7 +2095,7 @@ class deformable_mirror(Optical_System):
             Name_FourrierBasis_fits = "Fourier_basis_" + self.Name_DM + '_prad' + str(
                 self.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
 
-            cossinbasis = proc.SinCosBasis(sqrtnbract)
+            cossinbasis = phase_ampl.SinCosBasis(sqrtnbract)
 
             basis_size = cossinbasis.shape[0]
             basis = np.zeros((basis_size, self.number_act))

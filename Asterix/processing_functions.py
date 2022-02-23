@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.optimize as opt
 import scipy.ndimage as nd
-import Asterix.propagation_functions as prop
 import Asterix.fits_functions as useful
 
 
@@ -361,65 +360,3 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
                                                  i] - pos_actuhalfactfromcenter + halfactfromcenter + center_pup
             pos_actu_in_pix[0, i] *= -1
     return pos_actu_in_pix
-
-
-def SinCosBasis(Nact1D):
-    """ --------------------------------------------------
-    For a given number of actuator accross the DM, create coefficients for the sin/cos basis
-
-    TODO Check with Pierre that this is equivalent to what is done on the testbed
-    TODO Ask Pierre what he thinks: is it possible to do the basis only for the actuators in the pup
-        in which case, the important number would be the number of act in the pup ?
-    
-    AUTHOR: Johan Mazoyer
-    
-    Parameters
-    ----------
-    Nact1D : float
-        Numnber of actuators of a square DM in one of the principal direction
-    
-    Returns
-    ------
-    SinCosBasis : 3D array 
-                Coefficient to apply to DMs to obtain sine and cosine phases.
-                size :[(Nact1D)^2,Nact1D,Nact1D] if even
-                size :[(Nact1D)^2 -1 ,Nact1D,Nact1D] if odd (to remove piston)
-    
-    
-    -------------------------------------------------- """
-
-    TFCoeffs = np.zeros((Nact1D**2, Nact1D, Nact1D), dtype=complex)
-    SinCos = np.zeros((Nact1D**2, Nact1D, Nact1D))
-
-    for Coeff_SinCos in range(Nact1D**2):
-        Coeffs = np.zeros((Nact1D, Nact1D), dtype=complex)
-        #  the First half of basis are cosine and the second half are sines
-
-        # Lets start with the cosines
-        if Coeff_SinCos < Nact1D**2 // 2:
-            i = Coeff_SinCos // Nact1D
-            j = Coeff_SinCos % Nact1D
-            Coeffs[i, j] = 1 / 2
-            Coeffs[Nact1D - i - 1, Nact1D - j - 1] = 1 / 2
-
-        # # Lets do the sines
-        else:
-            i = (Coeff_SinCos - Nact1D**2 // 2) // Nact1D
-            j = (Coeff_SinCos - Nact1D**2 // 2) % Nact1D
-            Coeffs[i, j] = 1 / (2 * 1j)
-            Coeffs[Nact1D - i - 1, Nact1D - j - 1] = -1 / (2 * 1j)
-        TFCoeffs[Coeff_SinCos] = Coeffs
-
-        SinCos[Coeff_SinCos] = np.real(
-            prop.mft(TFCoeffs[Coeff_SinCos],
-                     Nact1D,
-                     Nact1D,
-                     Nact1D,
-                     X_offset_input=-0.5,
-                     Y_offset_input=-0.5))
-
-    if Nact1D % 2 == 1:
-        # in the odd case the last one is a piston
-        SinCos = SinCos[0:Nact1D**2 - 1]
-
-    return SinCos
