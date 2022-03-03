@@ -17,7 +17,7 @@ If you want to participate please contact us !
 **To Check**: These are part of the code that need to be particularly checked and tested :
 
 - check if the Lyot based coronagprah propagation is doing ok. The simulations seems to gives extremely false results.
-- check how rescale of influence function is done. Maybe change that ?
+- check how rescale and subpix shift of influence functions are done. Maybe change that ?
 - need to estimate Science_sampling in lambda / D_pupil. Currently set at 7.6 (it use to be 7.8 in lambda/Dlyot 7.8*8.1/8.3)
 - tools to rotate pupil / apod / Lyot have not been properly checked
 - the vortex coronagraph

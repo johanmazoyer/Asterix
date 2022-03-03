@@ -1800,6 +1800,8 @@ class deformable_mirror(Optical_System):
 
         # Scaling the influence function to the desired dimension
         # for numerical simulation
+        # can be replace by nd.zoom
+        # or by a fft rescale (have to be coded by ourselves probably)
         resizeactshape = skimage.transform.rescale(
             actshape,
             diam_pup_in_pix / diam_pup_in_m * pitchDM / pitch_actshape,
@@ -1809,10 +1811,16 @@ class deformable_mirror(Optical_System):
             multichannel=False)
 
         # Gauss2Dfit for centering the rescaled influence function
+        # not sure why is this useful. We should be able to know where is the center
+        # after shifting ?
         Gaussian_fit_param = proc.gauss2Dfit(resizeactshape)
         dx = Gaussian_fit_param[3]
         dy = Gaussian_fit_param[4]
         xycent = len(resizeactshape) / 2
+
+        # can be replaced by Fourrier shift 
+        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.fourier_shift.html
+        # To test
         resizeactshape = nd.interpolation.shift(resizeactshape,
                                                 (xycent - dx, xycent - dy))
 
