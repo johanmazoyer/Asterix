@@ -1619,17 +1619,12 @@ class deformable_mirror(Optical_System):
         # TODO maybe we can use the entrance pupil actually
         self.clearpup = pupil(modelconfig, prad=self.prad)
 
+        # create the DM_pushact, surface of the DM for each individual act
         # DM_pushact is always in the DM plane
-        start_time = time.time()
         self.DM_pushact = self.creatingpushact(DMconfig)
-        print("time for DM_pushact for " + self.string_os,
-              time.time() - start_time)
 
-        start_time = time.time()
         # create or load 'which actuators are in pupil'
         self.WhichInPupil = self.creatingWhichinPupil()
-        print("time for WhichInPupil for " + self.string_os,
-              time.time() - start_time)
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
         # now if we relaunch self.DM_pushact, and if misregistration = True
@@ -1754,8 +1749,15 @@ class deformable_mirror(Optical_System):
 
         
         -------------------------------------------------- """
+        start_time = time.time()
+        Name_pushact_fits = "PushAct_" + self.Name_DM 
+        
+        if DMconfig[self.Name_DM + "_Generic"] == True:
+            Name_pushact_fits += "Gen"
 
-        Name_pushact_fits = "PushAct" + self.string_os
+        Name_pushact_fits += "_Nact" + str(
+            int(self.number_act)) + '_dimPP' + str(int(
+                self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
         if (self.misregistration is
                 False) and (os.path.exists(self.Model_local_dir +
@@ -1763,6 +1765,7 @@ class deformable_mirror(Optical_System):
             pushact3d = fits.getdata(
                 os.path.join(self.Model_local_dir,
                              Name_pushact_fits + '.fits'))
+            print("Load " + Name_pushact_fits)
             return pushact3d
 
         if self.misregistration:
@@ -1887,6 +1890,8 @@ class deformable_mirror(Optical_System):
                                    '.fits')):
             fits.writeto(self.Model_local_dir + Name_pushact_fits + '.fits',
                          pushact3d)
+            print("time for " + Name_pushact_fits +" (s):",
+              round(time.time() - start_time))
 
         return pushact3d
 
@@ -1909,12 +1914,20 @@ class deformable_mirror(Optical_System):
 
         
         -------------------------------------------------- """
+        start_time = time.time()
+        Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM 
+        
+        if self.DMconfig[self.Name_DM + "_Generic"] == True:
+            Name_WhichInPup_fits += "Gen"
 
-        Name_WhichInPup_fits = "WhichInPup" + self.string_os + "_thres" + str(
+        Name_WhichInPup_fits += "_Nact" + str(
+            int(self.number_act)) + '_dimPP' + str(int(
+                self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(
             self.WhichInPup_threshold)
 
         if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits +
                           '.fits'):
+            print("Load " + Name_WhichInPup_fits)
             return fits.getdata(self.Model_local_dir + Name_WhichInPup_fits +
                                 '.fits')
 
@@ -1946,6 +1959,9 @@ class deformable_mirror(Optical_System):
         fits.writeto(self.Model_local_dir + Name_WhichInPup_fits + '.fits',
                      WhichInPupil,
                      overwrite=True)
+        print("time for " + Name_WhichInPup_fits +" (s):",
+              round(time.time() - start_time))
+
         return WhichInPupil
 
     def prop_pup_to_DM_and_back(self,

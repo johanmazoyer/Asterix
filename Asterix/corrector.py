@@ -233,8 +233,8 @@ class Corrector:
                 save_all_planes_to_fits=False,
                 dir_save_all_planes="/Users/jmazoyer/Desktop/g0_all/")
 
-            print("time for direct matrix " + testbed.string_os,
-                  time.time() - start_time)
+            print("time for direct matrix " + testbed.string_os  +" (s):",
+                  round(time.time() - start_time))
             print("")
 
             self.Gmatrix = wsc.cropDHInterractionMatrix(
