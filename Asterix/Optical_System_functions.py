@@ -1390,7 +1390,7 @@ class coronagraph(Optical_System):
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
 
-        phase_vortex = self.vortex_charge * np.angle(xx + 1j * yy)
+        phase_vortex = vortex_charge * np.angle(xx + 1j * yy)
 
         vortex = list()
         for i, wav in enumerate(self.wav_vec):
