@@ -948,17 +948,19 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        if coroconfig["filename_instr_apod"] in ["Clear", "RoundPup"]:
+        if coroconfig["filename_instr_apod"] in ["Clear", "RoundPup", "RomanPup"]:
             self.apod_pup = pupil(modelconfig,
                                   prad=self.prad,
-                                  PupType=coroconfig["filename_instr_apod"])
+                                  PupType=coroconfig["filename_instr_apod"],
+                                  angle_rotation=coroconfig['apod_pup_rotation'],
+                                  Model_local_dir=Model_local_dir)
 
         else:
             self.apod_pup = pupil(
                 modelconfig,
                 prad=self.prad,
                 filename=coroconfig["filename_instr_apod"],
-                angle_rotation=modelconfig['apod_pup_rotation'],
+                angle_rotation=coroconfig['apod_pup_rotation'],
                 Model_local_dir=Model_local_dir)
 
         self.string_os += '_Apod' + self.apod_pup.string_os
