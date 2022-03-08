@@ -157,11 +157,13 @@ def mft(image,
     Y1 = Y_offset_output
 
     # image0 = dcomplex(image)
-    xx0 = ((np.arange(dim_input_x) - X0 + 1/2) / dim_input_x)  #Entrance image
-    xx1 = ((np.arange(dim_input_y) - Y0 + 1/2) / dim_input_y)  #Entrance image
-    uu0 = ((np.arange(dim_output_x) - X1) / dim_output_x -
+    xx0 = (
+        (np.arange(dim_input_x) - X0 + 1 / 2) / dim_input_x)  #Entrance image
+    xx1 = (
+        (np.arange(dim_input_y) - Y0 + 1 / 2) / dim_input_y)  #Entrance image
+    uu0 = ((np.arange(dim_output_x) - X1 + 1 / 2) / dim_output_x -
            1 / 2) * nbresx  #Fourier plane
-    uu1 = ((np.arange(dim_output_y) - Y1) / dim_output_y -
+    uu1 = ((np.arange(dim_output_y) - Y1 + 1 / 2) / dim_output_y -
            1 / 2) * nbresy  #Fourier plane
 
     norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
