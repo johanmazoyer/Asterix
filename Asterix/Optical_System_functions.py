@@ -47,12 +47,9 @@ class Optical_System:
 
         #pupil in pixel
         self.prad = round(int(modelconfig["diam_pup_in_pix"]) / 2)
-        print(self.prad)
-        print(int(modelconfig["diam_pup_in_pix"] / 2))
-        asd
-        # 1.25 is hard coded for now. TODO Fix that ?
+  
         # All pupils in the code must have this dimension, so that the OS systems can
-        #  be easily switched.
+        # be easily switched.
         # dim_overpad_pupil is set to an even numer and the pupil is centered in
         # between 4 pixels
         self.dim_overpad_pupil = round(
