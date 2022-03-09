@@ -29,6 +29,8 @@ def mft(image,
         -Revision 3.0  2020-03-10 J. Mazoyer (to python). Replace the MFT with no input offset option
         -Revision 4.0  2020-04-20 J. Mazoyer. change the normalization. Change dim_pup name to be more
                                         coherent. Made better parameter format check
+        -Revision 5.0  2022-03-09 J. Mazoyer. 1/2 pixel error in xx0, xx1, uu0 and uu1. Now MFT of clear 
+                                            pup if fully real. 
 
     Parameters
     ----------
@@ -83,8 +85,8 @@ def mft(image,
     ------
         result : complex 2D array
             Output is a complex array dimft x dimft with the position of the
-            0-frequency on the (dim_output_x/2+x1,dim_output_y/2+y1) pixel
-
+            0-frequency in between the 4 pixel (dim_output_x/2+x1,dim_output_y/2+y1) and (dim_output_x/2+x1 +1,dim_output_y/2+y1+1)
+            if x1 and y1 are integer
     """
 
     # check dimensions and type of real_dim_input

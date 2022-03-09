@@ -47,13 +47,13 @@ class Optical_System:
 
         #pupil in pixel
         self.prad = round(int(modelconfig["diam_pup_in_pix"]) / 2)
-  
+
         # All pupils in the code must have this dimension, so that the OS systems can
         # be easily switched.
         # dim_overpad_pupil is set to an even numer and the pupil is centered in
         # between 4 pixels
-        self.dim_overpad_pupil = round(
-            self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2
+        self.dim_overpad_pupil = round(self.prad * float(
+            modelconfig["overpadding_pupilplane_factor"])) * 2
 
         #Lambda over D in pixels in the focal plane
         # at the reference wavelength
@@ -947,12 +947,15 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        if coroconfig["filename_instr_apod"] in ["Clear", "RoundPup", "RomanPup"]:
-            self.apod_pup = pupil(modelconfig,
-                                  prad=self.prad,
-                                  PupType=coroconfig["filename_instr_apod"],
-                                  angle_rotation=coroconfig['apod_pup_rotation'],
-                                  Model_local_dir=Model_local_dir)
+        if coroconfig["filename_instr_apod"] in [
+                "Clear", "RoundPup", "RomanPup"
+        ]:
+            self.apod_pup = pupil(
+                modelconfig,
+                prad=self.prad,
+                PupType=coroconfig["filename_instr_apod"],
+                angle_rotation=coroconfig['apod_pup_rotation'],
+                Model_local_dir=Model_local_dir)
 
         else:
             self.apod_pup = pupil(
@@ -996,10 +999,10 @@ class coronagraph(Optical_System):
             # we oversample the center in babinet's mode because we can
             # hard coded for now, this is very internal cooking
 
-            self.Lyot_fpm_sampling = 20. #self.Science_sampling  
+            self.Lyot_fpm_sampling = 20.  #self.Science_sampling
             rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
             self.dim_fpm = 2 * int(2.2 * rad_LyotFP_pix / 2)
-            
+
             self.string_os += '_' + "iwa" + str(round(self.rad_lyot_fpm, 2))
             self.perfect_coro = False
             if self.corona_type == "classiclyot":
@@ -1081,6 +1084,8 @@ class coronagraph(Optical_System):
         pupil to Lyot plane after Lyot pupil
 
         AUTHOR : Johan Mazoyer
+
+        03/22 : Correction in the babinet propagation
 
         Parameters
         ----------
@@ -1225,13 +1230,13 @@ class coronagraph(Optical_System):
 
             # Focal plane to Lyot plane
             # Babinet's trick:
-            lyotplane_before_lyot_central_part = proc.crop_or_pad_image(prop.mft(
-                corono_focal_plane * (1 - FPmsk),
-                self.dim_fpm,
-                2 * self.prad,
-                self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                inverse=True,
-                norm='ortho'), self.dim_overpad_pupil)
+            lyotplane_before_lyot_central_part = proc.crop_or_pad_image(
+                prop.mft(corono_focal_plane * (1 - FPmsk),
+                         self.dim_fpm,
+                         2 * self.prad,
+                         self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
+                         inverse=True,
+                         norm='ortho'), self.dim_overpad_pupil)
 
             # Babinet's trick
             lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
@@ -1474,7 +1479,6 @@ class coronagraph(Optical_System):
         -------------------------------------------------- """
 
         rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
-
 
         ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm,
                                                       rad_LyotFP_pix)
@@ -1751,13 +1755,13 @@ class deformable_mirror(Optical_System):
         
         -------------------------------------------------- """
         start_time = time.time()
-        Name_pushact_fits = "PushAct_" + self.Name_DM 
-        
+        Name_pushact_fits = "PushAct_" + self.Name_DM
+
         if DMconfig[self.Name_DM + "_Generic"] == True:
             Name_pushact_fits += "Gen"
 
-        Name_pushact_fits += "_Nact" + str(
-            int(self.number_act)) + '_dimPP' + str(int(
+        Name_pushact_fits += "_Nact" + str(int(
+            self.number_act)) + '_dimPP' + str(int(
                 self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
         if (self.misregistration is
@@ -1824,7 +1828,7 @@ class deformable_mirror(Optical_System):
         dy = Gaussian_fit_param[4]
         xycent = len(resizeactshape) / 2
 
-        # can be replaced by Fourrier shift 
+        # can be replaced by Fourrier shift
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.fourier_shift.html
         # To test
         resizeactshape = nd.interpolation.shift(resizeactshape,
@@ -1891,8 +1895,8 @@ class deformable_mirror(Optical_System):
                                    '.fits')):
             fits.writeto(self.Model_local_dir + Name_pushact_fits + '.fits',
                          pushact3d)
-            print("time for " + Name_pushact_fits +" (s):",
-              round(time.time() - start_time))
+            print("time for " + Name_pushact_fits + " (s):",
+                  round(time.time() - start_time))
 
         return pushact3d
 
@@ -1916,15 +1920,15 @@ class deformable_mirror(Optical_System):
         
         -------------------------------------------------- """
         start_time = time.time()
-        Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM 
-        
+        Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
+
         if self.DMconfig[self.Name_DM + "_Generic"] == True:
             Name_WhichInPup_fits += "Gen"
 
-        Name_WhichInPup_fits += "_Nact" + str(
-            int(self.number_act)) + '_dimPP' + str(int(
-                self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(
-            self.WhichInPup_threshold)
+        Name_WhichInPup_fits += "_Nact" + str(int(
+            self.number_act)) + '_dimPP' + str(int(
+                self.dim_overpad_pupil)) + '_prad' + str(int(
+                    self.prad)) + "_thres" + str(self.WhichInPup_threshold)
 
         if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits +
                           '.fits'):
@@ -1960,7 +1964,7 @@ class deformable_mirror(Optical_System):
         fits.writeto(self.Model_local_dir + Name_WhichInPup_fits + '.fits',
                      WhichInPupil,
                      overwrite=True)
-        print("time for " + Name_WhichInPup_fits +" (s):",
+        print("time for " + Name_WhichInPup_fits + " (s):",
               round(time.time() - start_time))
 
         return WhichInPupil
