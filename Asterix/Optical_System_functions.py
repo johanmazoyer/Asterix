@@ -1060,7 +1060,7 @@ class coronagraph(Optical_System):
         if self.perfect_coro == True:
 
             # We need a round pupil only to measure the response
-            # of the coronograph to a clear pupil to remove it
+            # of the coronograph to a round pupil to remove it
             # THIS IS NOT THE ENTRANCE PUPIL,
             # this is a round pupil of the same size
             roundpup = pupil(modelconfig, prad=self.prad)
@@ -1629,7 +1629,7 @@ class deformable_mirror(Optical_System):
 
         # We need a pupil in creatingpushact_inpup() and for
         # which in pup. THIS IS NOT THE ENTRANCE PUPIL,
-        # this is a clear pupil of the same size
+        # this is a round pupil of the same size
         self.clearpup = pupil(modelconfig, PupType="RoundPup", prad=self.prad)
 
         # create the DM_pushact, surface of the DM for each individual act
