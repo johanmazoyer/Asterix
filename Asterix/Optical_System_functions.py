@@ -715,7 +715,7 @@ class pupil(Optical_System):
                     general configuration parameters (sizes and dimensions)
                         to initialize Optical_System class
 
-        prad : int
+        prad : float
             Default is the pupil radius in the parameter file (self.prad)
             radius in pixels of the round pupil.
 
@@ -758,7 +758,10 @@ class pupil(Optical_System):
         if (PupType == "") or (PupType == "RoundPup"):
             self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
             angle_rotation = 0
-            self.string_os += '_RoundPup' + str(int(prad))
+            if isinstance(prad, int) or prad.is_integer():
+                self.string_os += '_RoundPup' + str(int(prad))
+            else:
+                self.string_os += '_RoundPup' + str(round(prad,1))
 
         # Clear (in case we want to define an empty pupil plane)
         elif PupType == "Clear":
@@ -1039,8 +1042,8 @@ class coronagraph(Optical_System):
         ]:
             self.lyot_pup = pupil(
                 modelconfig,
-                prad=int(self.prad * coroconfig["diam_lyot_in_m"] /
-                         self.diam_pup_in_m),
+                prad=self.prad * coroconfig["diam_lyot_in_m"] /
+                self.diam_pup_in_m,
                 PupType=coroconfig["filename_instr_lyot"],
                 angle_rotation=coroconfig['lyot_pup_rotation'],
                 Model_local_dir=Model_local_dir)
@@ -1621,8 +1624,7 @@ class deformable_mirror(Optical_System):
         # We need a pupil in creatingpushact_inpup() and for
         # which in pup. THIS IS NOT THE ENTRANCE PUPIL,
         # this is a clear pupil of the same size
-        # TODO maybe we can use the entrance pupil actually
-        self.clearpup = pupil(modelconfig, prad=self.prad)
+        self.clearpup = pupil(modelconfig, PupType="RoundPup", prad=self.prad)
 
         # create the DM_pushact, surface of the DM for each individual act
         # DM_pushact is always in the DM plane
