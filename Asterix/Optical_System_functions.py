@@ -992,8 +992,14 @@ class coronagraph(Optical_System):
 
         elif self.corona_type == "classiclyot" or self.corona_type == "hlc":
             self.prop_apod2lyot = 'mft-babinet'
-            self.Lyot_fpm_sampling = 30.  # hard coded for now, this is very internal cooking
             self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
+            # we oversample the center in babinet's mode because we can
+            # hard coded for now, this is very internal cooking
+
+            self.Lyot_fpm_sampling = 20. #self.Science_sampling  
+            rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
+            self.dim_fpm = 2 * int(2.2 * rad_LyotFP_pix / 2)
+            
             self.string_os += '_' + "iwa" + str(round(self.rad_lyot_fpm, 2))
             self.perfect_coro = False
             if self.corona_type == "classiclyot":
@@ -1191,7 +1197,7 @@ class coronagraph(Optical_System):
 
             corono_focal_plane = prop.mft(
                 input_wavefront_after_apod,
-                self.dim_overpad_pupil,
+                2 * self.prad,
                 self.dim_fpm,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                 inverse=False,
@@ -1219,13 +1225,13 @@ class coronagraph(Optical_System):
 
             # Focal plane to Lyot plane
             # Babinet's trick:
-            lyotplane_before_lyot_central_part = prop.mft(
+            lyotplane_before_lyot_central_part = proc.crop_or_pad_image(prop.mft(
                 corono_focal_plane * (1 - FPmsk),
                 self.dim_fpm,
-                self.dim_overpad_pupil,
+                2 * self.prad,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                 inverse=True,
-                norm='ortho')
+                norm='ortho'), self.dim_overpad_pupil)
 
             # Babinet's trick
             lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
@@ -1469,7 +1475,7 @@ class coronagraph(Optical_System):
 
         rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
 
-        self.dim_fpm = 2 * int(2.2 * rad_LyotFP_pix / 2)
+
         ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm,
                                                       rad_LyotFP_pix)
 
