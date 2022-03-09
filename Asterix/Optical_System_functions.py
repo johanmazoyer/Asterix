@@ -1191,10 +1191,18 @@ class coronagraph(Optical_System):
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane)
+                if not noFPM:
+                    name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            FPmsk)
 
-                name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          FPmsk)
+                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            np.angle(FPmsk))
+                    
+                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
@@ -1222,10 +1230,18 @@ class coronagraph(Optical_System):
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           corono_focal_plane)
-
-                name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          FPmsk)
+                if not noFPM:
+                    name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            FPmsk)
+                    
+                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            np.angle(FPmsk))
+                    
+                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
@@ -1270,6 +1286,14 @@ class coronagraph(Optical_System):
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                               FPmsk)
+                    
+                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            np.angle(FPmsk))
+                    
+                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                            np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
