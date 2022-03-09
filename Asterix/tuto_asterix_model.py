@@ -99,19 +99,19 @@ modelconfig.update({'Delta_wav': 0})
 # Now lets initialize a coronagraph
 # a coronagraph is a system composed of 3 planes. A apodization plane (PP), a FPM (FP) and a Lyot stop (PP)
 # The coronagraph currently int he parameter file does not have an apodization pupil
-# because there is no such plane on the THD2 bench, but we can put one, that is why I put an apod.
+# because there is no such plane on the THD2 bench, but we can put one, that is why I put an RoundPup.
+
+Coronaconfig.update({'filename_instr_apod': "RoundPup"})
 
 # modelconfig.update({'diam_pup_in_pix': 128})
 # modelconfig.update({'overpadding_pupilplane_factor': 2.0})
-
 # modelconfig.update({'dimScience': 192})
 # modelconfig.update({'Science_sampling': 8.})
 
-# Coronaconfig.update({'filename_instr_apod': "RoundPup"})
 # Coronaconfig.update({'corona_type': "classicLyot"})
 # Coronaconfig.update({'rad_lyot_fpm': 5.})
 # Coronaconfig.update({'filename_instr_lyot': "RoundPup"})
-# Coronaconfig.update({'diam_lyot_in_m': modelconfig["diam_pup_in_m"]*1})
+# Coronaconfig.update({'diam_lyot_in_m': modelconfig["diam_pup_in_m"]*0.97})
 
 corono = OptSy.coronagraph(modelconfig, Coronaconfig)
 
