@@ -761,7 +761,7 @@ class pupil(Optical_System):
             if isinstance(prad, int) or prad.is_integer():
                 self.string_os += '_RoundPup' + str(int(prad))
             else:
-                self.string_os += '_RoundPup' + str(round(prad,1))
+                self.string_os += '_RoundPup' + str(round(prad, 1))
 
         # Clear (in case we want to define an empty pupil plane)
         elif PupType == "Clear":
@@ -1157,17 +1157,29 @@ class coronagraph(Optical_System):
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                       input_wavefront_after_apod)
 
+        # we take the convention that for all propation methods, the PSF must be
+        # "in between 4 pixels" in the focal plane.
+
         if self.prop_apod2lyot == "fft":
             dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(
                 wavelength)]
             input_wavefront_after_apod_pad = proc.crop_or_pad_image(
                 input_wavefront_after_apod, dim_fp_fft_here)
+            
             # Phase ramp to center focal plane between 4 pixels
-
+            # TODO This could be done in the FQPM function and save in the self to save time
             maskshifthalfpix = phase_ampl.shift_phase_ramp(
                 dim_fp_fft_here, 0.5, 0.5)
             maskshifthalfpix_invert = phase_ampl.shift_phase_ramp(
                 dim_fp_fft_here, -0.5, -0.5)
+
+            # Because our convention is also "in between 4 pixels" in the final fp (after the corono)
+            # one might think "why do we need to 'unshift' when going back to the Lyot stop?"
+            # The reason is that this half-pixel shift depend on the resolution and therefore the method
+            # of propagation (fft is not exactly science resolution because
+            # of rounding issues and mft-babinet use its own resolution, etc) so it's easier to have all
+            # back to original place. All pupil plane must be such than if you apply an MFT without any shift,
+            # you are "in between pixels"
 
             #Apod plane to focal plane
             corono_focal_plane = np.fft.fft2(np.fft.fftshift(
@@ -1193,12 +1205,6 @@ class coronagraph(Optical_System):
             lyotplane_before_lyot = np.fft.fftshift(
                 np.fft.ifft2(corono_focal_plane * FPmsk,
                              norm='ortho')) * maskshifthalfpix_invert
-            # we take the convention that when we are in pupil plane the field must be
-            # "non-shifted". Because the shift in pupil plane is resolution dependent
-            # which depend on the method (fft is not exactly science resolution because
-            # of rounding issues, mft-babinet does not use the science resolution, etc).
-            # these shift in both direction should be included in apod and pup multiplication
-            # to save time
 
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
