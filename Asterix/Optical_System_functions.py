@@ -1404,8 +1404,8 @@ class coronagraph(Optical_System):
             maxdimension_array_fpm = self.dimScience
 
         xx, yy = np.meshgrid(
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1/2,
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1/2)
 
         phase_vortex = vortex_charge * np.angle(xx + 1j * yy)
 
