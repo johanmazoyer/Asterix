@@ -207,9 +207,9 @@ class Optical_System:
 
         -------------------------------------------------- """
         if center_on_pixel == True:
-            Psf_offset = (0, 0)
+            Psf_offset = (0.5, 0.5)
         else:
-            Psf_offset = (-0.5, -0.5)
+            Psf_offset = (0, 0)
 
         if wavelength is None:
             wavelength = self.wavelength_0
@@ -1134,6 +1134,10 @@ class coronagraph(Optical_System):
             entrance_EF=entrance_EF, wavelength=wavelength)
 
         if save_all_planes_to_fits == True:
+            name_plane = 'apod' + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                      self.apod_pup.pup)
+
             name_plane = 'EF_PP_after_apod' + '_wl{}'.format(
                 int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane,
@@ -1190,8 +1194,6 @@ class coronagraph(Optical_System):
                 self.dim_overpad_pupil,
                 self.dim_fpm,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                X_offset_output=-0.5,
-                Y_offset_output=-0.5,
                 inverse=False,
                 norm='ortho')
 
@@ -1222,8 +1224,6 @@ class coronagraph(Optical_System):
                 self.dim_fpm,
                 self.dim_overpad_pupil,
                 self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                X_offset_input=-0.5,
-                Y_offset_input=-0.5,
                 inverse=True,
                 norm='ortho')
 
@@ -1238,8 +1238,6 @@ class coronagraph(Optical_System):
                                           self.dimScience,
                                           self.dimScience /
                                           self.Science_sampling * lambda_ratio,
-                                          X_offset_output=-0.5,
-                                          Y_offset_output=-0.5,
                                           inverse=False,
                                           norm='ortho')
 
@@ -1265,8 +1263,6 @@ class coronagraph(Optical_System):
                          2 * self.prad,
                          self.dimScience / self.Science_sampling *
                          lambda_ratio,
-                         X_offset_input=-0.5,
-                         Y_offset_input=-0.5,
                          inverse=True,
                          norm='ortho'), self.dim_overpad_pupil)
 
