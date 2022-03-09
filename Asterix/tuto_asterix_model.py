@@ -57,7 +57,7 @@ pup_round_100 = OptSy.pupil(modelconfig, prad=100)
 # # Careful, pup_roman is not an array, it is an Optical System object.
 # if you want to access the pupil itself as an array, you can with
 numpy_array_pup = pup_roman.pup
-useful.quickfits(numpy_array_pup, dir=result_dir, name="numpy_array_pup")
+useful._quickfits(numpy_array_pup, dir=result_dir, name="numpy_array_pup")
 
 # One you defined an Optical System object, so we can easily access sereval feature
 
@@ -70,7 +70,7 @@ EF_though_roman = pup_roman.EF_through(entrance_EF=1.)
 
 #  On the associated PSF. Default is polychromatic.
 psf_roman = pup_roman.todetector_Intensity()
-useful.quickfits(psf_roman, dir=result_dir, name="psf_roman")
+useful._quickfits(psf_roman, dir=result_dir, name="psf_roman")
 
 #chromaticity of the source is define in all Opitcla System, with three parameter:
 print("central wavelength: ", pup_roman.wavelength_0)
@@ -100,7 +100,19 @@ modelconfig.update({'Delta_wav': 0})
 # a coronagraph is a system composed of 3 planes. A apodization plane (PP), a FPM (FP) and a Lyot stop (PP)
 # The coronagraph currently int he parameter file does not have an apodization pupil
 # because there is no such plane on the THD2 bench, but we can put one, that is why I put an apod.
-Coronaconfig.update({'filename_instr_apod': "RoundPup"})
+
+# modelconfig.update({'diam_pup_in_pix': 128})
+# modelconfig.update({'overpadding_pupilplane_factor': 2.0})
+
+# modelconfig.update({'dimScience': 192})
+# modelconfig.update({'Science_sampling': 8.})
+
+# Coronaconfig.update({'filename_instr_apod': "RoundPup"})
+# Coronaconfig.update({'corona_type': "classicLyot"})
+# Coronaconfig.update({'rad_lyot_fpm': 5.})
+# Coronaconfig.update({'filename_instr_lyot': "RoundPup"})
+# Coronaconfig.update({'diam_lyot_in_m': modelconfig["diam_pup_in_m"]*1})
+
 corono = OptSy.coronagraph(modelconfig, Coronaconfig)
 
 # For the coronagraph, we can measure 2 types of PSF: with or without mask
@@ -121,7 +133,7 @@ coronagraphic_PSF = corono.todetector_Intensity(entrance_EF=aberrated_EF)
 
 #which we can now normalize:
 normalized_coronagraphic_PSF = coronagraphic_PSF / Max_No_mask_PSF
-useful.quickfits(normalized_coronagraphic_PSF,
+useful._quickfits(normalized_coronagraphic_PSF,
                  dir=result_dir,
                  name="Normalized_coronagraphic_PSF")
 
