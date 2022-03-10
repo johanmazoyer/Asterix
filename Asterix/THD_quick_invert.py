@@ -133,18 +133,20 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory,
 
 if __name__ == '__main__':
 
-    name_active_DM = 13  # 1, 3 or 13 depending on the DM you want to access
+    
     matrix_directory = '/Users/jmazoyer/GitProjects/my_projects/Asterix/Labview/'
     regularization = 'tikhonov'  # 'truncation' or 'tikhonov'
 
     if len(sys.argv) == 1:
         # we run this code without any argument
         Nbmodes = 330
+        name_active_DM = 13  # 1, 3 or 13 depending on the DM you want to access
     
     else:
         # We run this code with argument. Example
-        # python THD_quick_invert.py 330 
+        # python THD_quick_invert.py 330 13
         Nbmodes = int(sys.argv[1]) # number of mode in the inversion
+        name_active_DM = int(sys.argv[2])  # 1, 3 or 13 depending on the DM you want to access
 
     start_time = time.time()
     THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization)
