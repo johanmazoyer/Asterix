@@ -13,18 +13,14 @@
 
 If you want to participate please contact us ! 
 
-
 **To Check**: These are part of the code that need to be particularly checked and tested :
 
-- check if the Lyot based coronagprah propagation is doing ok. The simulations seems to gives extremely false results.
 - check how rescale and subpix shift of influence functions are done. Maybe change that ?
 - need to estimate Science_sampling in lambda / D_pupil. Currently set at 7.6 (it use to be 7.8 in lambda/Dlyot 7.8*8.1/8.3)
 - tools to rotate pupil / apod / Lyot have not been properly checked
-- the vortex coronagraph
 - the way I do Fourrier Basis currently vs on the testbed (elegant MFT way + Saving it because it's too long + Using the number of actu in the DM direction and not in the pupil, which is smaller and decentered + is it the same way it is done on the testbed)
 
 **To Discuss**: These are part of the code that should be discussed between the authors:
 
 - Should we remove the intial FP field G0 in all cases when we measure the interaction matrices ?
-- discuss thisloop_expected_iteration_number.
 
