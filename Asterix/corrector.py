@@ -11,6 +11,7 @@ import Asterix.fits_functions as useful
 import Asterix.Optical_System_functions as OptSy
 from Asterix.estimator import Estimator
 import Asterix.WSC_functions as wsc
+from THD_quick_invert import THD_quick_invert
 
 
 class Corrector:
@@ -123,41 +124,38 @@ class Corrector:
                 print("Creating directory " + realtestbed_dir + " ...")
                 os.makedirs(realtestbed_dir)
 
-            Nbmodes = Correctionconfig["Nbmodes_OnTestbed"]
-            _, _, invertGDH = wsc.invertSVD(self.Gmatrix,
-                                            Nbmodes,
-                                            goal="c",
-                                            regul=self.regularization,
-                                            visu=True,
-                                            filename_visu=realtestbed_dir +
-                                            "SVD_Modes" + str(Nbmodes) +
-                                            ".png")
-
-            if testbed.DM1.active:
-                invertGDH_DM1 = invertGDH[:testbed.DM1.basis_size]
-
-                EFCmatrix_DM1 = np.transpose(
-                    np.dot(np.transpose(testbed.DM1.basis), invertGDH_DM1))
-                fits.writeto(realtestbed_dir + "Matrix_control_EFC_DM1.fits",
-                             EFCmatrix_DM1.astype(np.float32),
+            if testbed.DM1.active & testbed.DM3.active:
+                fits.writeto(os.path.join(realtestbed_dir , "Direct_Matrix_2DM.fits"),
+                             self.Gmatrix,
                              overwrite=True)
-                if testbed.DM3.active:
-                    invertGDH_DM3 = invertGDH[testbed.DM1.basis_size:]
-                    EFCmatrix_DM3 = np.transpose(
-                        np.dot(np.transpose(testbed.DM3.basis), invertGDH_DM3))
-                    fits.writeto(realtestbed_dir +
-                                 "Matrix_control_EFC_DM3.fits",
-                                 EFCmatrix_DM3.astype(np.float32),
-                                 overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir , "Base_Matrix_DM1.fits"),
+                             testbed.DM1.basis,
+                             overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir , "Base_Matrix_DM3.fits"),
+                             testbed.DM3.basis,
+                             overwrite=True)
+                number_Active_testbeds = 13
+
+            elif testbed.DM1.active:
+                fits.writeto(os.path.join(realtestbed_dir , "Direct_Matrix_DM1only.fits"),
+                             self.Gmatrix,
+                             overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir , "Base_Matrix_DM1.fits"),
+                             testbed.DM1.basis,
+                             overwrite=True)
+                number_Active_testbeds = 1
             elif testbed.DM3.active:
-                invertGDH_DM3 = invertGDH
-                EFCmatrix_DM3 = np.transpose(
-                    np.dot(np.transpose(testbed.DM3.basis), invertGDH_DM3))
-                fits.writeto(realtestbed_dir + "Matrix_control_EFC_DM3.fits",
-                             EFCmatrix_DM3.astype(np.float32),
+                fits.writeto(os.path.join(realtestbed_dir , "Direct_Matrix_DM3only.fits"),
+                             self.Gmatrix,
                              overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir , "Base_Matrix_DM3.fits"),
+                             testbed.DM3.basis,
+                             overwrite=True)
+                number_Active_testbeds = 3
             else:
                 raise Exception("No active DMs")
+            
+            THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],number_Active_testbeds,realtestbed_dir,self.regularization)
 
             fits.writeto(realtestbed_dir + "DH_mask.fits",
                          self.MaskEstim.astype(np.float32),
