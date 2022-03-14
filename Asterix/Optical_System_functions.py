@@ -697,8 +697,7 @@ class pupil(Optical_System):
     def __init__(self,
                  modelconfig,
                  prad=0.,
-                 PupType="",
-                 filename="",
+                 PupType=None,
                  angle_rotation=0,
                  Model_local_dir=None):
         """ --------------------------------------------------
@@ -719,14 +718,14 @@ class pupil(Optical_System):
             Default is the pupil radius in the parameter file (self.prad)
             radius in pixels of the round pupil.
 
-        PupType : string (default "RoundPup") 
-                Currently "RoundPup", "CleanPlane", "RomanPup", "RomanLyot")
+        PupType : string (default None) 
+            Currently known possiibilities are "RoundPup", "ClearPlane", "RomanPup", "RomanLyot"
 
-        filename : string (default "")
-            name and directory of the .fits file
+            if not one of those , it will try a full path to a fits file given by the user:
+
             The pupil .fits files should be 2D and square with an even number of pix.
             with even number of pix and centered between 4 pixels.
-            The array size will be assumed to coorespond to the size of the entrance pupil 
+            The array size will be assumed to correspond to the size of the entrance pupil 
             and will be rescaled self.prad and then padded to self.dim_overpad_pupil
 
             This is a bit dangerous because your .fits file might must be defined
@@ -753,9 +752,9 @@ class pupil(Optical_System):
         if prad == 0:
             prad = self.prad
 
-        # known case, with known response
+        # known cases, with known responses
         # default case: round pupil
-        if (PupType == "") or (PupType == "RoundPup"):
+        if (PupType is None) or (PupType == "RoundPup"):
             self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
             angle_rotation = 0
             if isinstance(prad, int) or prad.is_integer():
@@ -771,7 +770,8 @@ class pupil(Optical_System):
             self.string_os += '_ClearPlane'
 
         else:
-
+            # In those cases, we are using a fits to create the pupil
+            # in these first cases, we use a known .fits with hardcoded file name
             if PupType == "RomanPup":
                 pup_fits = fits.getdata(
                     os.path.join(model_dir,
@@ -784,29 +784,38 @@ class pupil(Optical_System):
                                  "roman_lyot_500pix_center4pixels.fits"))
                 self.string_os += '_RomanLyot'
 
-            elif filename != "":
-                PupType == filename
+            # finally in this last case, we use an unknown .fits defined by user
+            else:
+                if not os.path.exists(PupType):
+                    
+                    print("""
+                            filename_instr_XXX parameters must either be a known keyword 
+                            'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' 
+                            or an exisiting full path .fits name. This is not the case here,
+                            the name  '{0}' is not a known keyword and is not an existing filename
+                            """.format(PupType))
+                    print("")
+                    print("")
+                    raise
+                
+                # this is an existing fits file
                 # we start by a bunch of tests to check
                 # that pupil has a certain acceptable form.
                 # print("we load the pupil: " + filename)
                 # print("we assume it is centered in its array")
-                pup_fits = fits.getdata(filename)
+                pup_fits = fits.getdata(PupType)
 
                 if len(pup_fits.shape) != 2:
-                    raise Exception("file " + filename +
+                    raise Exception("file " + PupType +
                                     " should be a 2D array")
 
                 if pup_fits.shape[0] != pup_fits.shape[1]:
-                    raise Exception("file " + filename +
+                    raise Exception("file " + PupType +
                                     " appears to be not square")
 
                 self.string_os += '_Fits'
 
-            else:  # no filename and no known pupil, raise error
-                raise Exception(
-                    "this is not a known 'PupType', 'RoundPup', 'Clear', 'RomanPup', 'RomanLyot'"
-                )
-
+            # we have the fits, we now rescale to good size
             if pup_fits.shape[0] == self.prad:
                 pup_fits_right_size = pup_fits
             else:
@@ -950,23 +959,13 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        if coroconfig["filename_instr_apod"] in [
-                "Clear", "RoundPup", "RomanPup"
-        ]:
-            self.apod_pup = pupil(
-                modelconfig,
-                prad=self.prad,
-                PupType=coroconfig["filename_instr_apod"],
-                angle_rotation=coroconfig['apod_pup_rotation'],
-                Model_local_dir=Model_local_dir)
+        self.apod_pup = pupil(
+            modelconfig,
+            prad=self.prad,
+            PupType=coroconfig["filename_instr_apod"],
+            angle_rotation=coroconfig['apod_pup_rotation'],
+            Model_local_dir=Model_local_dir)
 
-        else:
-            self.apod_pup = pupil(
-                modelconfig,
-                prad=self.prad,
-                filename=coroconfig["filename_instr_apod"],
-                angle_rotation=coroconfig['apod_pup_rotation'],
-                Model_local_dir=Model_local_dir)
 
         self.string_os += '_Apod' + self.apod_pup.string_os
 
@@ -1037,23 +1036,14 @@ class coronagraph(Optical_System):
         else:
             raise Exception("this coronagrpah mode does not exists yet")
 
-        if coroconfig["filename_instr_lyot"] in [
-                "Clear", "RoundPup", "RomanLyot"
-        ]:
-            self.lyot_pup = pupil(
-                modelconfig,
-                prad=self.prad * coroconfig["diam_lyot_in_m"] /
-                self.diam_pup_in_m,
-                PupType=coroconfig["filename_instr_lyot"],
-                angle_rotation=coroconfig['lyot_pup_rotation'],
-                Model_local_dir=Model_local_dir)
 
-        else:
-            self.lyot_pup = pupil(
-                modelconfig,
-                filename=coroconfig["filename_instr_lyot"],
-                angle_rotation=coroconfig['lyot_pup_rotation'],
-                Model_local_dir=Model_local_dir)
+        self.lyot_pup = pupil(
+            modelconfig,
+            prad=self.prad * coroconfig["diam_lyot_in_m"] /
+            self.diam_pup_in_m,
+            PupType=coroconfig["filename_instr_lyot"],
+            angle_rotation=coroconfig['lyot_pup_rotation'],
+            Model_local_dir=Model_local_dir)
 
         self.string_os += '_LS' + self.lyot_pup.string_os
 
