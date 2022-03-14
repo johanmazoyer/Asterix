@@ -100,11 +100,11 @@ def runthd2(parameter_file,
     Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
     # Initialize thd:
-    pup_round = OptSy.pupil(
-        modelconfig,
-        PupType=modelconfig['filename_instr_pup'],
-        angle_rotation=modelconfig['entrance_pup_rotation'],
-        Model_local_dir=Model_local_dir)
+    entrance_pupil = OptSy.pupil(
+                modelconfig,
+                PupType=modelconfig['filename_instr_pup'],
+                angle_rotation=modelconfig['entrance_pup_rotation'],
+                Model_local_dir=Model_local_dir)
 
     DM1 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
@@ -120,7 +120,7 @@ def runthd2(parameter_file,
                                Coronaconfig,
                                Model_local_dir=Model_local_dir)
     # and then just concatenate
-    thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
+    thd2 = OptSy.Testbed([entrance_pupil, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
     # The following line can be used to change the DM to make the PW probe,
