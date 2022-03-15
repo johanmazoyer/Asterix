@@ -787,7 +787,7 @@ class pupil(Optical_System):
             # finally in this last case, we use an unknown .fits defined by user
             else:
                 if not os.path.exists(PupType):
-                    
+
                     print("""
                             filename_instr_XXX parameters must either be a known keyword 
                             'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' 
@@ -797,7 +797,7 @@ class pupil(Optical_System):
                     print("")
                     print("")
                     raise
-                
+
                 # this is an existing fits file
                 # we start by a bunch of tests to check
                 # that pupil has a certain acceptable form.
@@ -959,13 +959,11 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        self.apod_pup = pupil(
-            modelconfig,
-            prad=self.prad,
-            PupType=coroconfig["filename_instr_apod"],
-            angle_rotation=coroconfig['apod_pup_rotation'],
-            Model_local_dir=Model_local_dir)
-
+        self.apod_pup = pupil(modelconfig,
+                              prad=self.prad,
+                              PupType=coroconfig["filename_instr_apod"],
+                              angle_rotation=coroconfig['apod_pup_rotation'],
+                              Model_local_dir=Model_local_dir)
 
         self.string_os += '_Apod' + self.apod_pup.string_os
 
@@ -1036,14 +1034,12 @@ class coronagraph(Optical_System):
         else:
             raise Exception("this coronagrpah mode does not exists yet")
 
-
-        self.lyot_pup = pupil(
-            modelconfig,
-            prad=self.prad * coroconfig["diam_lyot_in_m"] /
-            self.diam_pup_in_m,
-            PupType=coroconfig["filename_instr_lyot"],
-            angle_rotation=coroconfig['lyot_pup_rotation'],
-            Model_local_dir=Model_local_dir)
+        self.lyot_pup = pupil(modelconfig,
+                              prad=self.prad * coroconfig["diam_lyot_in_m"] /
+                              self.diam_pup_in_m,
+                              PupType=coroconfig["filename_instr_lyot"],
+                              angle_rotation=coroconfig['lyot_pup_rotation'],
+                              Model_local_dir=Model_local_dir)
 
         self.string_os += '_LS' + self.lyot_pup.string_os
 
@@ -1155,7 +1151,7 @@ class coronagraph(Optical_System):
                 wavelength)]
             input_wavefront_after_apod_pad = proc.crop_or_pad_image(
                 input_wavefront_after_apod, dim_fp_fft_here)
-            
+
             # Phase ramp to center focal plane between 4 pixels
             # TODO This could be done in the FQPM function and save in the self to save time
             maskshifthalfpix = phase_ampl.shift_phase_ramp(
@@ -1184,15 +1180,17 @@ class coronagraph(Optical_System):
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            FPmsk)
+                                              FPmsk)
 
-                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPMphase' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.angle(FPmsk))
-                    
-                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                                              np.angle(FPmsk))
+
+                    name_plane = 'FPMmod' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.abs(FPmsk))
+                                              np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
@@ -1223,15 +1221,17 @@ class coronagraph(Optical_System):
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            FPmsk)
-                    
-                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                                              FPmsk)
+
+                    name_plane = 'FPMphase' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.angle(FPmsk))
-                    
-                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                                              np.angle(FPmsk))
+
+                    name_plane = 'FPMmod' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.abs(FPmsk))
+                                              np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
@@ -1276,14 +1276,16 @@ class coronagraph(Optical_System):
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                               FPmsk)
-                    
-                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+
+                    name_plane = 'FPMphase' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.angle(FPmsk))
-                    
-                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                                              np.angle(FPmsk))
+
+                    name_plane = 'FPMmod' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.abs(FPmsk))
+                                              np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
@@ -1418,8 +1420,10 @@ class coronagraph(Optical_System):
             maxdimension_array_fpm = self.dimScience
 
         xx, yy = np.meshgrid(
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1/2,
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1/2)
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 +
+            1 / 2,
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 +
+            1 / 2)
 
         phase_vortex = vortex_charge * np.angle(xx + 1j * yy)
 
@@ -1430,7 +1434,9 @@ class coronagraph(Optical_System):
             else:
                 dim_fp = self.dimScience
 
-            phasevortex_cut = proc.crop_or_pad_image(phase_vortex, dim_fp)
+            phasevortex_cut = proc.crop_or_pad_image(
+                phase_vortex,
+                dim_fp)  #*phase_ampl.roundpupil(dim_fp, dim_fp/2)
             vortex.append(np.exp(1j * phasevortex_cut))
 
         return vortex
