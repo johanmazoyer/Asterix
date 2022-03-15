@@ -572,38 +572,91 @@ class Optical_System:
         ampl_slope = SIMUconfig["ampl_slope"]
 
         if set_amplitude_abb == True:
-            if ampl_abb_filename == 'Amplitudebanc_200pix_center4pixels' and set_random_ampl is False:
+            if set_random_ampl is False:
+                
+                if ampl_abb_filename == '':
+                    # in this case, the user does not want a random amplitude map but did not specified a name
+                    # we will create an amplitude map (if it does not exist) for these parameters, save it as .fits 
+                    # and always use the same one in the future
 
-                testbedampl_fits = fits.getdata(model_dir + ampl_abb_filename +
-                                                ".fits")
-                testbedampl_fits_right_size = skimage.transform.rescale(
-                    testbedampl_fits,
-                    2 * self.prad / testbedampl_fits.shape[0],
-                    preserve_range=True,
-                    anti_aliasing=True,
-                    multichannel=False)
-
-                return_ampl = proc.crop_or_pad_image(
-                    testbedampl_fits_right_size, self.dim_overpad_pupil)
-
-            else:
-                ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                    ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
                     int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
 
-                if set_random_ampl is False and os.path.isfile(
-                        Model_local_dir + ampl_abb_filename + ".fits") == True:
-                    return_ampl = fits.getdata(Model_local_dir +
-                                               ampl_abb_filename + ".fits")
-                else:
-                    return_ampl = phase_ampl.random_phase_map(
-                        self.prad, self.dim_overpad_pupil, ampl_rms / 100,
-                        ampl_rhoc, ampl_slope)
-
-                    fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
+                    if os.path.isfile(Model_local_dir + ampl_abb_filename) == True:
+                        return fits.getdata(Model_local_dir +
+                                                ampl_abb_filename)
+                    
+                    else:
+                        return_ampl = phase_ampl.random_phase_map(
+                            self.prad, self.dim_overpad_pupil, ampl_rms / 100,
+                            ampl_rhoc, ampl_slope)
+                        
+                        fits.writeto(Model_local_dir + ampl_abb_filename,
                                  return_ampl,
                                  overwrite=True)
+                        
+                        return return_ampl 
 
-            return return_ampl
+                else:
+                    # in this case, the user wants the THD2 amplitude aberration
+                    if ampl_abb_filename == 'Amplitude_THD2':
+                        testbedampl = fits.getdata(model_dir + ampl_abb_filename + '.fits')
+                        testbedampl_header = fits.getheader(model_dir + ampl_abb_filename + '.fits')
+                    
+                        
+                    else:
+                        # in this case, the user wants his own amplitude aberrations
+                        # the fits must be squared, with an even number of pixel and 
+                        #  have centerX, centerY and RESPUP keyword in header.
+
+                        if not os.path.exists(ampl_abb_filename):
+                            # check existence
+                            print("Specified amplitude file {0} does not exist.".format(ampl_abb_filename))
+                            print("")
+                            print("")
+                            raise
+                        else: 
+                            print("Opening {0} file for testbed aberrations.".format(ampl_abb_filename))
+                            print("This file should have centerX, centerY and RESPUP keyword in header")
+
+                        testbedampl = fits.getdata( ampl_abb_filename )
+                        testbedampl_header = fits.getheader(ampl_abb_filename)
+                        centerX = testbedampl_header["CENTERX"]
+                        centerY = testbedampl_header["CENTERX"]
+
+                        # recenter
+                        if centerX !=  size_ampl//2 - 1/2 or centerY !=  size_ampl//2 - 1/2 :
+                            testbedampl = nd.shift(testbedampl, (size_ampl//2 - 1/2 - centerX, size_ampl//2 - 1/2 - centerY))
+                    
+                    # reshape at the good size
+                    size_ampl = testbedampl.shape[0]
+                    res_pup = testbedampl_header["RESPUP"]
+
+                    print(res_pup / (self.diam_pup_in_m/(2*self.prad)))
+
+
+                    toto = proc.crop_or_pad_image(
+                        skimage.transform.rescale(
+                        testbedampl,
+                        res_pup / (self.diam_pup_in_m/(2*self.prad)),
+                        preserve_range=True,
+                        anti_aliasing=True,
+                        multichannel=False), self.dim_overpad_pupil)
+                    
+            else:
+                ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
+                    int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
+                
+                return_ampl = phase_ampl.random_phase_map(
+                            self.prad, self.dim_overpad_pupil, ampl_rms / 100,
+                            ampl_rhoc, ampl_slope)
+                        
+                fits.writeto(Model_local_dir + ampl_abb_filename,
+                            return_ampl,
+                            overwrite=True)
+                
+                return return_ampl 
+                    
         else:
             return 0.
 
