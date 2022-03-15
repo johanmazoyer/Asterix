@@ -10,7 +10,6 @@ import Asterix.WSC_functions as wsc
 
 def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory,
                      regularization):
-    
     """ --------------------------------------------------
         This code invert the matrix just in the case of THD testbed
         The goal is to be able to invert the matrix directly on the RTC to be 
@@ -133,7 +132,6 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory,
 
 if __name__ == '__main__':
 
-    
     matrix_directory = '/Users/jmazoyer/GitProjects/my_projects/Asterix/Labview/'
     regularization = 'tikhonov'  # 'truncation' or 'tikhonov'
 
@@ -141,16 +139,14 @@ if __name__ == '__main__':
         # we run this code without any argument
         Nbmodes = 330
         name_active_DM = 13  # 1, 3 or 13 depending on the DM you want to access
-    
+
     else:
         # We run this code with argument. Example
         # python THD_quick_invert.py 330 13
-        Nbmodes = int(sys.argv[1]) # number of mode in the inversion
-        name_active_DM = int(sys.argv[2])  # 1, 3 or 13 depending on the DM you want to access
+        Nbmodes = int(sys.argv[1])  # number of mode in the inversion
+        name_active_DM = int(
+            sys.argv[2])  # 1, 3 or 13 depending on the DM you want to access
 
     start_time = time.time()
     THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization)
-    print("time to invert matrix " ,round(time.time() - start_time,2))
-
-
-
+    print("time to invert matrix ", round(time.time() - start_time, 2))

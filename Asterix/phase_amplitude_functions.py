@@ -144,7 +144,6 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     return phase
 
 
-
 def SinCosBasis(Nact1D):
     """ --------------------------------------------------
     For a given number of actuator accross the DM, create coefficients for the sin/cos basis

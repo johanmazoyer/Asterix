@@ -125,37 +125,46 @@ class Corrector:
                 os.makedirs(realtestbed_dir)
 
             if testbed.DM1.active & testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir , "Direct_Matrix_2DM.fits"),
+                fits.writeto(os.path.join(realtestbed_dir,
+                                          "Direct_Matrix_2DM.fits"),
                              self.Gmatrix,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir , "Base_Matrix_DM1.fits"),
+                fits.writeto(os.path.join(realtestbed_dir,
+                                          "Base_Matrix_DM1.fits"),
                              testbed.DM1.basis,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir , "Base_Matrix_DM3.fits"),
+                fits.writeto(os.path.join(realtestbed_dir,
+                                          "Base_Matrix_DM3.fits"),
                              testbed.DM3.basis,
                              overwrite=True)
                 number_Active_testbeds = 13
 
             elif testbed.DM1.active:
-                fits.writeto(os.path.join(realtestbed_dir , "Direct_Matrix_DM1only.fits"),
+                fits.writeto(os.path.join(realtestbed_dir,
+                                          "Direct_Matrix_DM1only.fits"),
                              self.Gmatrix,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir , "Base_Matrix_DM1.fits"),
+                fits.writeto(os.path.join(realtestbed_dir,
+                                          "Base_Matrix_DM1.fits"),
                              testbed.DM1.basis,
                              overwrite=True)
                 number_Active_testbeds = 1
             elif testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir , "Direct_Matrix_DM3only.fits"),
+                fits.writeto(os.path.join(realtestbed_dir,
+                                          "Direct_Matrix_DM3only.fits"),
                              self.Gmatrix,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir , "Base_Matrix_DM3.fits"),
+                fits.writeto(os.path.join(realtestbed_dir,
+                                          "Base_Matrix_DM3.fits"),
                              testbed.DM3.basis,
                              overwrite=True)
                 number_Active_testbeds = 3
             else:
                 raise Exception("No active DMs")
-            
-            THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],number_Active_testbeds,realtestbed_dir,self.regularization)
+
+            THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],
+                             number_Active_testbeds, realtestbed_dir,
+                             self.regularization)
 
             fits.writeto(realtestbed_dir + "DH_mask.fits",
                          self.MaskEstim.astype(np.float32),
@@ -231,7 +240,7 @@ class Corrector:
                 save_all_planes_to_fits=False,
                 dir_save_all_planes="/Users/jmazoyer/Desktop/g0_all/")
 
-            print("time for direct matrix " + testbed.string_os  +" (s):",
+            print("time for direct matrix " + testbed.string_os + " (s):",
                   round(time.time() - start_time))
             print("")
 

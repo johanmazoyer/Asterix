@@ -1899,7 +1899,6 @@ class deformable_mirror(Optical_System):
         diam_pup_in_m = self.diam_pup_in_m
         dim_array = self.dim_overpad_pupil
 
-        
         filename_actu_infl_fct = DMconfig[self.Name_DM +
                                           "_filename_actu_infl_fct"]
 
@@ -1909,9 +1908,9 @@ class deformable_mirror(Optical_System):
                 self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix
             # the DM pitchs are read in the header
             pitchDMX = fits.getheader(model_dir + DMconfig[
-                self.Name_DM + "_filename_grid_actu"])["PitchV"]*1e-6
+                self.Name_DM + "_filename_grid_actu"])["PitchV"] * 1e-6
             pitchDMY = fits.getheader(model_dir + DMconfig[
-                self.Name_DM + "_filename_grid_actu"])["PitchH"]*1e-6
+                self.Name_DM + "_filename_grid_actu"])["PitchH"] * 1e-6
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             # the pitch is read in the parameter file
@@ -1933,22 +1932,25 @@ class deformable_mirror(Optical_System):
         # or by a fft rescale (have to be coded by ourselves probably)
         resizeactshape = skimage.transform.rescale(
             actshape,
-            (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape, diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape),
+            (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape,
+             diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape),
             order=1,
             preserve_range=True,
             anti_aliasing=True,
             multichannel=False)
 
-
         if DMconfig[self.Name_DM + "_Generic"] == False:
-            # In this case we might have a different number of pixels in x and y direction, 
+            # In this case we might have a different number of pixels in x and y direction,
             # so we "square" the reshape act
             maxdimresizeactshape = np.max(resizeactshape.shape)
             im_out = np.zeros((maxdimresizeactshape, maxdimresizeactshape))
-            im_out[int((maxdimresizeactshape - resizeactshape.shape[0]) /
-                    2):int((maxdimresizeactshape + resizeactshape.shape[0]) / 2),
+            im_out[
+                int((maxdimresizeactshape - resizeactshape.shape[0]) /
+                    2):int((maxdimresizeactshape + resizeactshape.shape[0]) /
+                           2),
                 int((maxdimresizeactshape - resizeactshape.shape[1]) /
-                    2):int((maxdimresizeactshape + resizeactshape.shape[1]) / 2)] = resizeactshape
+                    2):int((maxdimresizeactshape + resizeactshape.shape[1]) /
+                           2)] = resizeactshape
             resizeactshape = im_out
 
         # Gauss2Dfit for centering the rescaled influence function

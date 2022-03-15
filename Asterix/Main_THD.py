@@ -101,10 +101,10 @@ def runthd2(parameter_file,
 
     # Initialize thd:
     entrance_pupil = OptSy.pupil(
-                modelconfig,
-                PupType=modelconfig['filename_instr_pup'],
-                angle_rotation=modelconfig['entrance_pup_rotation'],
-                Model_local_dir=Model_local_dir)
+        modelconfig,
+        PupType=modelconfig['filename_instr_pup'],
+        angle_rotation=modelconfig['entrance_pup_rotation'],
+        Model_local_dir=Model_local_dir)
 
     DM1 = OptSy.deformable_mirror(modelconfig,
                                   DMconfig,
