@@ -110,7 +110,7 @@ Some specific aperture types are defined that you can access using the keyword `
 
     pup_roman = OptSy.pupil(modelconfig, PupType = "RomanPup")
 
-Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plane), "RomanPup", "RomanLyot".
+Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plane), "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2".
 
 You can finally defined your own pupils from a .fits using the same keyword if you put a full path. In this case, it will assume the same size as 
 entrance pupil define in the parameter file. 

@@ -719,7 +719,8 @@ class pupil(Optical_System):
             radius in pixels of the round pupil.
 
         PupType : string (default None) 
-            Currently known possiibilities are "RoundPup", "ClearPlane", "RomanPup", "RomanLyot"
+            Currently known possiibilities are 
+            "RoundPup", "ClearPlane", "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2"
 
             if not one of those , it will try a full path to a fits file given by the user:
 
@@ -778,19 +779,31 @@ class pupil(Optical_System):
                                  "roman_pup_500pix_center4pixels.fits"))
                 self.string_os += '_RomanPup' + str(int(prad))
 
+            elif PupType == "RomanPupTHD2":
+                pup_fits = fits.getdata(
+                    os.path.join(model_dir,
+                                 "roman_pup_thd2_500pix_center4pixels.fits"))
+                self.string_os += '_RomanPupTHD2' + str(int(prad))
+
             elif PupType == "RomanLyot":
                 pup_fits = fits.getdata(
                     os.path.join(model_dir,
                                  "roman_lyot_500pix_center4pixels.fits"))
                 self.string_os += '_RomanLyot'
 
+            elif PupType == "RomanLyotTHD2":
+                pup_fits = fits.getdata(
+                    os.path.join(model_dir,
+                                 "roman_lyot_thd2_500pix_center4pixels.fits"))
+                self.string_os += '_RomanLyotTHD2'
+                
             # finally in this last case, we use an unknown .fits defined by user
             else:
                 if not os.path.exists(PupType):
 
                     print("""
                             filename_instr_XXX parameters must either be a known keyword 
-                            'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' 
+                            'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' , 'RomanPupTHD2', 'THD2',
                             or an exisiting full path .fits name. This is not the case here,
                             the name  '{0}' is not a known keyword and is not an existing filename
                             """.format(PupType))

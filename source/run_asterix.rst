@@ -91,6 +91,8 @@ This also defines the also the entrance pupil plane of the testbed.
                                 - "Clear" for no pupil at all (clear plane)
                                 - "RoundPup" for a round pupil of radius diam_pup_in_m
                                 - "RomanPup" for HLC Roman Pupil on THD
+                                - "RomanPupTHD2" for HLC Roman Pupil on THD (rotated by -0.9 degrees))
+
     or you can use this parameter to put an existing full path .fits name that will be used to define the pupil (e.g. filename_instr_pup = "/myfullpath/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file are assumed to be at the dimesion of the pupil (no overpadding) and will automatically be rescaled at prad.
     
     - entrance_pup_rotation : if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory. 
@@ -143,6 +145,7 @@ The [Coronaconfig] section contains the coronagraph parameter.
                                 - "Clear" for no apodizer at all (clear plane): this is the case in THD2
                                 - "RoundPup" for a round pupil of radius diam_pup_in_m
                                 - "RomanPup" for HLC Roman Pupil on THD
+                                - "RomanPupTHD2" for HLC Roman Pupil on THD (rotated by -0.9 degrees))
     or you can use this parameter to put an existing full path .fits name that will be used to define the pupil (e.g. filename_instr_pup = "/myfullpath/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file are assumed to be at the dimesion of the pupil (no overpadding) and will automatically be rescaled at prad. If you want this pupil to be smaller than the entrance pupil you have to overpad your .fits file.
     
     - apod_pup_rotation : float, if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory. 
@@ -151,13 +154,13 @@ The [Coronaconfig] section contains the coronagraph parameter.
     - filename_instr_lyot : string, Lyot pupil definition (pupil after the DMS at the entrance of the coronagraph in Roman). Several keywords are already defined :
                                 - "Clear" for no Lyot pupil at all (clear plane)
                                 - "RoundPup" for a round pupil of radius diam_pup_in_m
-                                - "RomanLyot" for HLC Roman Pupil on THD
+                                - "RomanLyot" for HLC Roman Pupil
+                                - "RomanLyotTHD2" for HLC Roman Lyot on THD (rescaled because of the lyot plane dezoom and rotated by -0.9 degrees)
     or you can use this parameter to put an existing full path .fits name that will be used to define the pupil (e.g. filename_instr_pup = "/myfullpath/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file are assumed to be at the dimesion of the pupil (no overpadding) and will automatically be rescaled at the pupil radius. If you want this pupil to be smaller than the entrance pupil you have to overpad your .fits file.
     
     - lyot_pup_rotation : float, if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory. 
 
-    - diam_lyot_in_m : flaot, lyot diameter (in meters). Only use in the case of a RoundPup Lyot stop (filename_instr_lyot = "RoundPup")
-
+    - diam_lyot_in_m : flaot, lyot diameter (in meters). Only use in the case of a RoundPup Lyot stop (filename_instr_lyot = "RoundPup"). Value for THD2 clear Lyot is 8.035mm = 8.1*0.097 (rayon Lyot * de-zoom entrance pupil plane / Lyopt plane)
 
     - corona_type: Can be fqpm or knife, vortex, lassiclyot or HLC
 
