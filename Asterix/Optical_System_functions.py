@@ -573,92 +573,107 @@ class Optical_System:
 
         if set_amplitude_abb == True:
             if set_random_ampl is False:
-                
+
                 if ampl_abb_filename == '':
                     # in this case, the user does not want a random amplitude map but did not specified a name
-                    # we will create an amplitude map (if it does not exist) for these parameters, save it as .fits 
+                    # we will create an amplitude map (if it does not exist) for these parameters, save it as .fits
                     # and always use the same one in the future
 
                     ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
-                    int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
+                        int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
 
-                    if os.path.isfile(Model_local_dir + ampl_abb_filename) == True:
+                    if os.path.isfile(Model_local_dir +
+                                      ampl_abb_filename) == True:
                         return fits.getdata(Model_local_dir +
-                                                ampl_abb_filename)
-                    
+                                            ampl_abb_filename)
+
                     else:
                         return_ampl = phase_ampl.random_phase_map(
                             self.prad, self.dim_overpad_pupil, ampl_rms / 100,
                             ampl_rhoc, ampl_slope)
-                        
+
                         fits.writeto(Model_local_dir + ampl_abb_filename,
-                                 return_ampl,
-                                 overwrite=True)
-                        
-                        return return_ampl 
+                                     return_ampl,
+                                     overwrite=True)
+
+                        return return_ampl
 
                 else:
                     # in this case, the user wants the THD2 amplitude aberration
                     if ampl_abb_filename == 'Amplitude_THD2':
-                        testbedampl = fits.getdata(model_dir + ampl_abb_filename + '.fits')
-                        testbedampl_header = fits.getheader(model_dir + ampl_abb_filename + '.fits')
+                        testbedampl = fits.getdata(model_dir +
+                                                   ampl_abb_filename + '.fits')
+                        testbedampl_header = fits.getheader(model_dir +
+                                                            ampl_abb_filename +
+                                                            '.fits')
                         # in this case we know it's already well centered
 
                     else:
                         # in this case, the user wants his own amplitude aberrations
-                        # the fits must be squared, with an even number of pixel and 
+                        # the fits must be squared, with an even number of pixel and
                         #  have centerX, centerY and RESPUP keyword in header.
 
                         if not os.path.exists(ampl_abb_filename):
                             # check existence
-                            print("Specified amplitude file {0} does not exist.".format(ampl_abb_filename))
+                            print(
+                                "Specified amplitude file {0} does not exist.".
+                                format(ampl_abb_filename))
                             print("")
                             print("")
                             raise
-                        else: 
-                            print("Opening {0} file for testbed aberrations.".format(ampl_abb_filename))
-                            print("This file should have centerX, centerY and RESPUP keyword in header")
+                        else:
+                            print("Opening {0} file for testbed aberrations.".
+                                  format(ampl_abb_filename))
+                            print(
+                                "This file should have centerX, centerY and RESPUP keyword in header"
+                            )
 
-                        testbedampl = fits.getdata( ampl_abb_filename )
+                        testbedampl = fits.getdata(ampl_abb_filename)
                         testbedampl_header = fits.getheader(ampl_abb_filename)
                         centerX = testbedampl_header["CENTERX"]
                         centerY = testbedampl_header["CENTERX"]
                         size_ampl = testbedampl.shape[0]
 
                         # recenter
-                        if centerX !=  size_ampl//2 - 1/2 or centerY !=  size_ampl//2 - 1/2 :
-                            testbedampl = nd.shift(testbedampl, (size_ampl//2 - 1/2 - centerX, size_ampl//2 - 1/2 - centerY))
-                    
+                        if centerX != size_ampl // 2 - 1 / 2 or centerY != size_ampl // 2 - 1 / 2:
+                            testbedampl = nd.shift(
+                                testbedampl,
+                                (size_ampl // 2 - 1 / 2 - centerX,
+                                 size_ampl // 2 - 1 / 2 - centerY))
+
                     # reshape at the good size
                     res_pup = testbedampl_header["RESPUP"]
                     testbedampl = proc.crop_or_pad_image(
                         skimage.transform.rescale(
-                        testbedampl,
-                        res_pup / (self.diam_pup_in_m/(2*self.prad)),
-                        preserve_range=True,
-                        anti_aliasing=True,
-                        multichannel=False), self.dim_overpad_pupil)
-                    
+                            testbedampl,
+                            res_pup / (self.diam_pup_in_m / (2 * self.prad)),
+                            preserve_range=True,
+                            anti_aliasing=True,
+                            multichannel=False), self.dim_overpad_pupil)
+
                     #Set the average to 0 inside entrancepupil
-                    pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil,self.prad)                    
-                    testbedampl = (testbedampl - np.mean(testbedampl[np.where(pup_here != 0)]) ) * pup_here
-                    testbedampl = testbedampl / np.std(testbedampl[np.where(pup_here == 1.)]) * 0.1
+                    pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil,
+                                                     self.prad)
+                    testbedampl = (testbedampl - np.mean(
+                        testbedampl[np.where(pup_here != 0)])) * pup_here
+                    testbedampl = testbedampl / np.std(
+                        testbedampl[np.where(pup_here == 1.)]) * 0.1
                     return testbedampl
-                    
+
             else:
                 ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
                     int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
-                
+
                 return_ampl = phase_ampl.random_phase_map(
-                            self.prad, self.dim_overpad_pupil, ampl_rms / 100,
-                            ampl_rhoc, ampl_slope)
-                        
+                    self.prad, self.dim_overpad_pupil, ampl_rms / 100,
+                    ampl_rhoc, ampl_slope)
+
                 fits.writeto(Model_local_dir + ampl_abb_filename,
-                            return_ampl,
-                            overwrite=True)
-                
-                return return_ampl 
-                    
+                             return_ampl,
+                             overwrite=True)
+
+                return return_ampl
+
         else:
             return 0.
 
@@ -851,7 +866,7 @@ class pupil(Optical_System):
                     os.path.join(model_dir,
                                  "roman_lyot_thd2_500pix_center4pixels.fits"))
                 self.string_os += '_RomanLyotTHD2'
-                
+
             # finally in this last case, we use an unknown .fits defined by user
             else:
                 if not os.path.exists(PupType):
@@ -1884,7 +1899,7 @@ class deformable_mirror(Optical_System):
         diam_pup_in_m = self.diam_pup_in_m
         dim_array = self.dim_overpad_pupil
 
-        pitchDM = DMconfig[self.Name_DM + "_pitch"]
+        
         filename_actu_infl_fct = DMconfig[self.Name_DM +
                                           "_filename_actu_infl_fct"]
 
@@ -1892,12 +1907,20 @@ class deformable_mirror(Optical_System):
             #Measured positions for each actuator in pixel with (0,0) = center of pupil
             simu_grid = fits.getdata(model_dir + DMconfig[
                 self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix
+            # the DM pitchs are read in the header
+            pitchDMX = fits.getheader(model_dir + DMconfig[
+                self.Name_DM + "_filename_grid_actu"])["PitchV"]*1e-6
+            pitchDMY = fits.getheader(model_dir + DMconfig[
+                self.Name_DM + "_filename_grid_actu"])["PitchH"]*1e-6
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
+            # the pitch is read in the parameter file
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
+            pitchDM = DMconfig[self.Name_DM + "_pitch"]
             simu_grid = proc.generic_actuator_position(Nact1D, pitchDM,
                                                        diam_pup_in_m,
                                                        diam_pup_in_pix)
+            pitchDMX = pitchDMY = pitchDM
 
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
@@ -1910,11 +1933,23 @@ class deformable_mirror(Optical_System):
         # or by a fft rescale (have to be coded by ourselves probably)
         resizeactshape = skimage.transform.rescale(
             actshape,
-            diam_pup_in_pix / diam_pup_in_m * pitchDM / pitch_actshape,
+            (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape, diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape),
             order=1,
             preserve_range=True,
             anti_aliasing=True,
             multichannel=False)
+
+
+        if DMconfig[self.Name_DM + "_Generic"] == False:
+            # In this case we might have a different number of pixels in x and y direction, 
+            # so we "square" the reshape act
+            maxdimresizeactshape = np.max(resizeactshape.shape)
+            im_out = np.zeros((maxdimresizeactshape, maxdimresizeactshape))
+            im_out[int((maxdimresizeactshape - resizeactshape.shape[0]) /
+                    2):int((maxdimresizeactshape + resizeactshape.shape[0]) / 2),
+                int((maxdimresizeactshape - resizeactshape.shape[1]) /
+                    2):int((maxdimresizeactshape + resizeactshape.shape[1]) / 2)] = resizeactshape
+            resizeactshape = im_out
 
         # Gauss2Dfit for centering the rescaled influence function
         # not sure why is this useful. We should be able to know where is the center
@@ -1930,7 +1965,7 @@ class deformable_mirror(Optical_System):
         resizeactshape = nd.interpolation.shift(resizeactshape,
                                                 (xycent - dx, xycent - dy))
 
-        # Put the centered influence function inside an array (2*prad x 2*prad)
+        # Put the centered influence function inside an array (self.dim_overpad_pupil x self.dim_overpad_pupil)
         actshapeinpupil = np.zeros((dim_array, dim_array))
         if len(resizeactshape) < dim_array:
             actshapeinpupil[0:len(resizeactshape),

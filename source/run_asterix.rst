@@ -107,8 +107,6 @@ The [DMconfig] section define the parameter for DMs
 Parameters that have to be define for each DMs:
     - DM#_active : bool, Switch on/off DM#
 
-    - DM#_pitch: float, in meter, pitch of the DM (distance between actuators)
-
     - DM#_z_position : float, in meter, distance from the pupil in a collimated beam
 
     - DM#_filename_actu_infl_fct: string, filename of the actuator influence function (inside Model directory)
@@ -117,11 +115,14 @@ Parameters that have to be define for each DMs:
 
 If DM#_Generic = True :
 
+    - DM#_pitch: float, in meter, pitch of the DM (distance between actuators)
+
     - DM#_Nact1D : int, number of actuator in one of its principal direction.
 
 If DM#_Generic = False  :
 
-    - DM#_filename_grid_actu : string, filename of the grid of actuator positions in unit of pupil diameter with (0,0)=center of the pupil
+    - DM#_filename_grid_actu : string, filename of the grid of actuator positions in unit of pupil diameter with (0,0)=center of the pupil.     # This fits must have PITCHV and PITCHH param in the header
+
     - DM#_filename_active_actu : string, filename to put if not all actuators are active as in the case of circular DM on THD2
 
 Misregistration parameters:   
@@ -271,7 +272,7 @@ Upstream phase aberrations:
 
     - set_UPphase_abb : bool if true, add phase aberrations in the entrance pupil plane
     - set_UPrandom_phase : Bool. If true we generate a new phase map each time. Else, we load the one in UPphase_abb_filename
-    - UPphase_abb_filename : string, Load a phase map with this fits name. If set_random_ampl = False and ampl_abb_filename = '', we take the last generated map of amplitude aberration
+    - UPphase_abb_filename : string, Load a phase map with this fits name. If ampl_abb_filename = 'Amplitude_THD2' we load the THD2 amplitude map. If set_random_ampl = False and ampl_abb_filename = '', we take the last generated map of amplitude aberrations.
     
 
 if set_UPrandom_phase = True:
