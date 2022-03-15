@@ -631,14 +631,19 @@ class Optical_System:
                     
                     # reshape at the good size
                     res_pup = testbedampl_header["RESPUP"]
-
-                    return proc.crop_or_pad_image(
+                    testbedampl = proc.crop_or_pad_image(
                         skimage.transform.rescale(
                         testbedampl,
                         res_pup / (self.diam_pup_in_m/(2*self.prad)),
                         preserve_range=True,
                         anti_aliasing=True,
                         multichannel=False), self.dim_overpad_pupil)
+                    
+                    #Set the average to 0 inside entrancepupil
+                    pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil,self.prad)                    
+                    testbedampl = (testbedampl - np.mean(testbedampl[np.where(pup_here != 0)]) ) * pup_here
+                    testbedampl = testbedampl / np.std(testbedampl[np.where(pup_here == 1.)]) * 0.1
+                    return testbedampl
                     
             else:
                 ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
