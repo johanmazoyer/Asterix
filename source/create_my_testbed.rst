@@ -8,12 +8,12 @@ Optical System
 
 Asterix have been thought from the beginning to be able to easily adapt to new configurations of the testbed 
 wihtout major changes. This modularity is based on the ``Asterix.Optical_System_functions.Optical_System`` class.
-An Optical_System is a part of the testbed which stars and ends in a pupil plane, which allows them to be easily 
+An Optical_System is a part of the testbed which starts and ends in a pupil plane, which allows them to be easily 
 concatenated. To be able to be well concatenated, they must all be using the same general parameters (physical 
 and numerical parameters). These parameters are stored in the first part of the parameter file, common to 
 all ``Optical_System``: [modelconfig]. 
 Among those parameters, you have the size in pixels of all pupils. This is the size of the entrance pupil, which
-will set up all other dimensions. The pupil planes is slightly overpadded compared to this radius because 
+will set up all other dimensions. The pupil planes are overpadded compared to this pupil size because 
 some ``Optical_System`` require it. By convention, all pupil planes are centered bewteen the 4 central pixels. 
 
 
@@ -112,8 +112,8 @@ Some specific aperture types are defined that you can access using the keyword `
 
 Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plane), "RomanPup", "RomanLyot".
 
-You can finally defined your own pupils from a .fits using the keyword ``filename``. In this case, you have to 
-manually set up the pupil prad, by definition, it will assume the same size as entrance pupil in the parameter file. 
+You can finally defined your own pupils from a .fits using the same keyword if you put a full path. In this case, it will assume the same size as 
+entrance pupil define in the parameter file. 
 The keyword "diam_lyot_in_m" is only used in the case of a round Lyot Stop ("RoundPup") and is not use to scale the .fits files aperture
 
 The pupil in the .fits file are automatically rescaled at prad using skimage.transform.rescale. This rescale was prefered 
