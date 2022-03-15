@@ -602,8 +602,8 @@ class Optical_System:
                     if ampl_abb_filename == 'Amplitude_THD2':
                         testbedampl = fits.getdata(model_dir + ampl_abb_filename + '.fits')
                         testbedampl_header = fits.getheader(model_dir + ampl_abb_filename + '.fits')
-                    
-                        
+                        # in this case we know it's already well centered
+
                     else:
                         # in this case, the user wants his own amplitude aberrations
                         # the fits must be squared, with an even number of pixel and 
@@ -623,19 +623,16 @@ class Optical_System:
                         testbedampl_header = fits.getheader(ampl_abb_filename)
                         centerX = testbedampl_header["CENTERX"]
                         centerY = testbedampl_header["CENTERX"]
+                        size_ampl = testbedampl.shape[0]
 
                         # recenter
                         if centerX !=  size_ampl//2 - 1/2 or centerY !=  size_ampl//2 - 1/2 :
                             testbedampl = nd.shift(testbedampl, (size_ampl//2 - 1/2 - centerX, size_ampl//2 - 1/2 - centerY))
                     
                     # reshape at the good size
-                    size_ampl = testbedampl.shape[0]
                     res_pup = testbedampl_header["RESPUP"]
 
-                    print(res_pup / (self.diam_pup_in_m/(2*self.prad)))
-
-
-                    toto = proc.crop_or_pad_image(
+                    return proc.crop_or_pad_image(
                         skimage.transform.rescale(
                         testbedampl,
                         res_pup / (self.diam_pup_in_m/(2*self.prad)),
