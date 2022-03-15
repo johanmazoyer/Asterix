@@ -173,12 +173,12 @@ of a deformable mirror (DM) system.
                                     Name_DM='DM1',
                                     Model_local_dir=Model_local_dir)
 
-You need to provide the influence function .fits file, the DM pitch ``DM_pitch`` in meters and the distance compared to the pupil plane ``DM1_z_position``
-In the case of a generic DM (``DM1_Generic = True``), we need only one more parameter to define the DM: the number of actuator ``N_act1D`` in one of its principal direction.
-We need ``N_act1D`` > ``diam_pup_in_m`` / ``DM_pitch``, so that the DM is larger than the pupil.
+You need to provide the influence function .fits file and the distance compared to the pupil plane ``DM1_z_position``
+In the case of a generic DM (``DM1_Generic = True``), we need only two more parameter to define the DM: the DM pitch ``DM_pitch`` in meters and the number of actuator ``N_act1D`` in one of its principal direction.
+We need ``N_act1D`` > ``diam_pup_in_m`` / ``DM_pitch``, so that the DM is larger than the pupil. For now we assume that DM_pitch is the same in both direction.
 The DM will then be automatically defined as squared with ``N_act1DxN_act1D`` actuators and the puil centered on this DM.
 We can also create a specific DM for a given testbed with a file with the relative position of actuators in the pupil
-and the position of one of them compared to the pupil.
+and the position of one of them compared to the pupil. This file must have vertical and horizonthal pitch ("PitchV","PitchH") in the header to define the pitch.
 
 Out of the pupil plane DMs are simulated by taking a Angular-Spectrum transform, multiply by the DM phase, and then coming back to a pupil plane. 
 Because we are only in close range, this is more accurate than Fresnel propogation.

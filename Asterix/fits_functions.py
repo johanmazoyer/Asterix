@@ -13,6 +13,7 @@ import datetime
 import random
 import Asterix.Optical_System_functions as OptSy
 
+
 def _quickshow(tab):
     """
     Function to quickly show an array.
@@ -54,7 +55,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
 
     # sometime the image can be a single float (0 for phase or 1 for EF).
     if isinstance(image, (int, float, np.float)):
-        print(name_plane +" is a constant, not save in fits")
+        print(name_plane + " is a constant, not save in fits")
         return
 
     if np.iscomplexobj(image):
@@ -85,7 +86,8 @@ def _quickfits(tab, dir='', name='tmp'):
     """
 
     if dir == '':
-        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+        desktop = os.path.join(os.path.join(os.path.expanduser('~')),
+                               'Desktop')
         bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
         if os.path.exists(desktop):
             dir = desktop
@@ -93,7 +95,9 @@ def _quickfits(tab, dir='', name='tmp'):
             # of you are french are you ?
             dir = bureau
         else:
-            raise Exception("I cannot find your desktop, please give me a dir to save the .fits")
+            raise Exception(
+                "I cannot find your desktop, please give me a dir to save the .fits"
+            )
 
     if name == 'tmp':
         current_time_str = datetime.datetime.today().strftime(
@@ -114,7 +118,8 @@ def _quickpng(tab, dir='', name='tmp'):
     Johan's quick function
     """
     if dir == '':
-        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
+        desktop = os.path.join(os.path.join(os.path.expanduser('~')),
+                               'Desktop')
         bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
         if os.path.exists(desktop):
             dir = desktop
@@ -122,7 +127,9 @@ def _quickpng(tab, dir='', name='tmp'):
             # of you are french are you ?
             dir = bureau
         else:
-            raise Exception("I cannot find your desktop, please give me a dir to save the .png")
+            raise Exception(
+                "I cannot find your desktop, please give me a dir to save the .png"
+            )
 
     plt.figure(figsize=(10, 10))
     tmp = tab
@@ -196,6 +203,3 @@ def read_parameter_file(parameter_file):
     # copy=True for copying the comments
 
     return config
-
-
-

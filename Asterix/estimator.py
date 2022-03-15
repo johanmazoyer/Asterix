@@ -90,14 +90,14 @@ class Estimator:
 
         #image size after binning. This is the size of the estimation !
         # we round and make it so we're always even size
-        self.dimEstim = int(round(self.Estim_sampling / testbed.Science_sampling *
-                            testbed.dimScience / 2) * 2)
+        self.dimEstim = int(
+            round(self.Estim_sampling / testbed.Science_sampling *
+                  testbed.dimScience / 2) * 2)
 
         # now that we have fixed dimEstim, to a even integer value,
-        # we modify Estim_sampling so that we have exactly 
+        # we modify Estim_sampling so that we have exactly
         # dimEstim / Estim_sampling = dimScience / Science_sampling
         self.Estim_sampling = testbed.Science_sampling / testbed.dimScience * self.dimEstim
-        
 
         if self.technique == "perfect":
             self.is_focal_plane = True

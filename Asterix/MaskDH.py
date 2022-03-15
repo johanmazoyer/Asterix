@@ -9,7 +9,6 @@ class MaskDH:
         combined them measure the mask and measure the string to save matrices.
         They're fast to measure so we do not need to save except in 'onbench' case
     -------------------------------------------------- """
-
     def __init__(self, Correctionconfig):
         """ --------------------------------------------------
         initialize the mask object
@@ -111,9 +110,9 @@ class MaskDH:
                 maskDH[yy < np.abs(self.circ_offset) * FP_sampling] = 0
                 if self.circ_angle != 0:
                     maskDH[yy -
-                        xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
+                           xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
                     maskDH[yy +
-                        xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
+                           xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
         return maskDH
 
     def tostring(self):
@@ -126,8 +125,7 @@ class MaskDH:
         -------------------------------------------------- """
 
         if self.DH_shape == "square":
-            stringdh = "MaskDH_square_" + "_".join(map(str,
-                                                        self.corner_pos))
+            stringdh = "MaskDH_square_" + "_".join(map(str, self.corner_pos))
         if self.DH_shape == "circle":
             stringdh = "_circle_rad" + "_".join(map(
                 str, self.Sep_Min_Max)) + "_" + str(self.DH_side)
@@ -138,6 +136,5 @@ class MaskDH:
 
         if self.DH_shape == "nodh":
             stringdh = "FullDH"
-
 
         return stringdh
