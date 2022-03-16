@@ -960,21 +960,24 @@ def createdifference(input_wavefront,
     input_wavefront : 2D-array (complex)
         Input wavefront in pupil plane
     
-    posprobes : 1D-array
-        Index of the actuators to push and pull for pair-wise probing
-    
-    pushact : 3D-array
-        OPD created by the pokes of all actuators in the DM
-        Unit = phase with the amplitude of the wished probe
-    
     testbed: Testbed Optical_element
             a testbed with one or more DM
     
+    posprobes : 1D-array
+        Index of the actuators to push and pull for pair-wise probing
+    
     dimimages : int
         Size of the output image after resampling in pixels
+
+    amplitudePW: float
+        PW probes amplitude in nm
     
-    perfect_coro : bool, optional
-        Set if you want sqrtimage to be 0 when input_wavefront==perfect_entrance_pupil
+    voltage_vector : 1D float array, default 0
+            vector of voltages vectors for each DMs arounf which we do the difference
+
+    wavelength  :  float default None,
+            wavelength of the estimation in m
+         
     
     Returns
     ------
