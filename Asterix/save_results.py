@@ -19,11 +19,11 @@ def plot_contrast_curves(reduced_data,
                          path='',
                          filename=''):
     """  -------------------------------------------------- 
-    Plot and save in pdf contrast curves from a image or a cube of image using concentring rings
-    
-    You can chooose the center size of the rings, the type of contrast (mean or std)
-    The DH is set my putting a binary mask in the parameter
-    The abciss unit can be in pixel mas or in l/D.
+    Plot and save in pdf contrast curves from a image or a cube of images (assumed to be 
+    several iterations of a loop) using concentric rings.
+    You can chooose the center, the size of the rings, the type of contrast (mean or std)
+    The DH is set using a binary mask (1s where the DH is, 0 elsewhere)
+    The abciss unit can be in pixel mas or in λ/D.
 
     AUTHOR: J. Mazoyer
     16/03/2022
@@ -51,14 +51,15 @@ def plot_contrast_curves(reduced_data,
                     'stddev_5sig' : 5 sigma standard deviation on the rings
     
         numberofpix_per_loD: float, defaut None
-            resolution of the focal plane in # of pixel per lambda / D (useful for testbed)
+            resolution of the focal plane in # of pixel per λ / D (useful for testbed)
             If set the absciss unit will be in λ/D 
 
         numberofmas_per_pix: float, defaut None
-            resolution of the focal plane in # of mas per lambda / D  (useful for real instruments)
+            resolution of the focal plane in # of mas per pixel  (useful for real instruments)
             If set the absciss unit will be in mas
-            If none of these are set, the absciss unit will be in pixels
-            If both are set, it will rais an error
+            
+            If none of these keywords are set, the absciss unit will be in pixels
+            If both are set, it will raise an error
         
         mask_DH : 2d binary Array  default is all focal plane
             mask delimiting the DH
@@ -166,10 +167,10 @@ def contrast_curves(reduced_data,
                     type_of_contrast='mean',
                     mask_DH=None):
     """  -------------------------------------------------- 
-    create a contrast curve map from a image using concentring rings
-    You can chooose the center size of the rings, the type of contrast (mean or std)
-    The DH is set my putting a binary mask in the parameter
-    
+    create a contrast curve from a image using concentric rings
+    You can chooose the center, the size of the rings, the type of contrast (mean or std)
+    The DH is set using a binary mask (1s where the DH is, 0 elsewhere)
+
     AUTHOR: J. Mazoyer
     16/03/2022
     
