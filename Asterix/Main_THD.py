@@ -9,7 +9,8 @@ import Asterix.Optical_System_functions as OptSy
 from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
-from Asterix.correction_loop import CorrectionLoop, Save_loop_results
+from Asterix.correction_loop import CorrectionLoop
+from Asterix.save_results import Save_loop_results
 
 #######################################################
 #######################################################
@@ -185,4 +186,4 @@ def runthd2(parameter_file,
         initial_DM_voltage=0,
         silence=False)
 
-    Save_loop_results(Resultats_correction_loop, config, thd2, result_dir)
+    Save_loop_results(Resultats_correction_loop, config, thd2, MaskScience, result_dir)
