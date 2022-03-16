@@ -1,4 +1,3 @@
-
 import os
 import datetime
 from astropy.io import fits
@@ -19,7 +18,6 @@ def plot_contrast_curves(reduced_data,
                          mask_DH=None,
                          path='',
                          filename=''):
-
     """  -------------------------------------------------- 
     Plot and save in pdf contrast curves from a image or a cube of image using concentring rings
     
@@ -35,7 +33,7 @@ def plot_contrast_curves(reduced_data,
         
         reduced_data: array [dim, dim] or [nb_iter, dim, dim]
             array containing the reduced data. Assume to be already in contrast unit (divided by max of PSF)
-            if the array is of dimension 3, the first dimension is assumed to be the dimensions and a 
+            if the array is of dimension 3, the first dimension is assumed to be the number of iter and a 
             contrast curve will be plotted for each
         
         xcen: float, default None (reduced_data.shape[0]/2 -1/2) 
@@ -78,28 +76,29 @@ def plot_contrast_curves(reduced_data,
 
      -------------------------------------------------- """
 
-    filename = filename +'_ContrastCurve_DH'
+    filename = filename + '_ContrastCurve_DH'
 
     if numberofpix_per_loD is not None and numberofmas_per_pix is None:
         # absice is in lambda over D
-        absicemultiplicationfactor = delta_raddii/numberofpix_per_loD
+        absicemultiplicationfactor = delta_raddii / numberofpix_per_loD
         abscise_String_unit = '(λ/D)'
         filename += '_unitlod'
 
-    elif numberofpix_per_loD  is None and numberofmas_per_pix is not None:
+    elif numberofpix_per_loD is None and numberofmas_per_pix is not None:
         # absice is in mas
         absicemultiplicationfactor = delta_raddii * numberofmas_per_pix
         abscise_String_unit = '(mas)'
         filename += '_unitmas'
 
-    elif numberofpix_per_loD is None and numberofmas_per_pix  is None:
+    elif numberofpix_per_loD is None and numberofmas_per_pix is None:
         # absice is in pixel
         absicemultiplicationfactor = delta_raddii
         abscise_String_unit = '(pix)'
         filename += '_unitpix'
     else:
-        raise Exception("either numberofpix_per_loD or numberofmas_per_pix need to be filled, not both")
-    
+        raise Exception(
+            "either numberofpix_per_loD or numberofmas_per_pix need to be filled, not both"
+        )
 
     plt.figure()
 
@@ -110,8 +109,10 @@ def plot_contrast_curves(reduced_data,
                                           ycen=ycen,
                                           delta_raddii=delta_raddii,
                                           type_of_contrast=type_of_contrast,
-                                          mask_DH = mask_DH)
-        absice = np.arange(len(contrast1dcurve))*absicemultiplicationfactor
+                                          mask_DH=mask_DH)
+        absice = np.arange(len(contrast1dcurve)) * absicemultiplicationfactor
+        iwa = np.nanmin(absice[~np.isnan(contrast1dcurve)])
+        owa = np.nanmax(absice[~np.isnan(contrast1dcurve)])
 
         plt.plot(absice, contrast1dcurve)
     else:
@@ -123,13 +124,18 @@ def plot_contrast_curves(reduced_data,
                 ycen=ycen,
                 delta_raddii=delta_raddii,
                 type_of_contrast=type_of_contrast,
-                mask_DH= mask_DH)
-            if i == 0: 
-                absice = np.arange(len(contrast1dcurve))*absicemultiplicationfactor
-            
-            plt.plot(absice, contrast1dcurve, label = "iter #{}".format(i))
-        
-        plt.legend()
+                mask_DH=mask_DH)
+            if i == 0:
+                absice = np.arange(
+                    len(contrast1dcurve)) * absicemultiplicationfactor
+                iwa = np.nanmin(absice[~np.isnan(contrast1dcurve)])
+                owa = np.nanmax(absice[~np.isnan(contrast1dcurve)])
+
+            plt.plot(absice, contrast1dcurve, label="iter #{}".format(i))
+
+        plt.legend(fontsize=6, loc='upper right')
+
+    plt.xlim(0, 1.2 * owa)
 
     plt.xlabel("Separation " + abscise_String_unit)
 
@@ -197,10 +203,10 @@ def contrast_curves(reduced_data,
 
      -------------------------------------------------- """
     if xcen is None:
-        xcen = reduced_data.shape[0] / 2 - 1/2
+        xcen = reduced_data.shape[0] / 2 - 1 / 2
 
     if ycen is None:
-        ycen = reduced_data.shape[0] / 2 - 1/2
+        ycen = reduced_data.shape[0] / 2 - 1 / 2
 
     dim = reduced_data.shape[1]
 
@@ -221,7 +227,7 @@ def contrast_curves(reduced_data,
          np.floor(ycen / delta_raddii),
          np.floor((reduced_data.shape[1] - ycen) / delta_raddii)))
 
-    for i_ring in range(0, int(maximum_number_of_points) -1 ):
+    for i_ring in range(0, int(maximum_number_of_points) - 1):
 
         wh_rings = np.where((rho2d >= i_ring * delta_raddii)
                             & (rho2d < (i_ring + 1) * delta_raddii))
@@ -242,8 +248,7 @@ def contrast_curves(reduced_data,
 
 
 def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed,
-                    MaskScience,
-                      result_dir):
+                      MaskScience, result_dir):
     """ --------------------------------------------------
     Save the result from a correction loop in result_dir
     
@@ -394,13 +399,14 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed,
                      current_time_str + "_Mean_Contrast_DH" + ".pdf"))
     plt.close()
 
-    plot_contrast_curves(FP_Intensities,
-                         delta_raddii=3,
-                         numberofpix_per_loD=config["modelconfig"]["Science_sampling"],
-                         type_of_contrast='mean',
-                         mask_DH=MaskScience,
-                         path=result_dir,
-                         filename=current_time_str)
+    plot_contrast_curves(
+        FP_Intensities,
+        delta_raddii=3,
+        numberofpix_per_loD=config["modelconfig"]["Science_sampling"],
+        type_of_contrast='mean',
+        mask_DH=MaskScience,
+        path=result_dir,
+        filename=current_time_str)
 
 
 def from_param_to_header(config):
