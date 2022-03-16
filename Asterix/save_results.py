@@ -130,8 +130,10 @@ def plot_contrast_curves(reduced_data,
                     len(contrast1dcurve)) * absicemultiplicationfactor
                 iwa = np.nanmin(absice[~np.isnan(contrast1dcurve)])
                 owa = np.nanmax(absice[~np.isnan(contrast1dcurve)])
-
-            plt.plot(absice, contrast1dcurve, label="iter #{}".format(i))
+                plt.plot(absice, contrast1dcurve, label="Initial")
+            else:
+                plt.plot(absice, contrast1dcurve, label="iter #{}".format(i))
+            
 
         plt.legend(fontsize=6, loc='upper right')
 
