@@ -37,11 +37,11 @@ Several shape are possible for the DH using the parameter ``DH_shape``:
 - "noDH" DH. In this mode, the mask is just 1 everywhere. 
 
 
-Interraction Matrix
+Interaction Matrix
 +++++++++++++++++++++++++++++++
 
-Most correction algorithms requires the measurement of an Interraction Matrix. 
-The specific function doing this is located in WSC_functions.py : creatingInterractionmatrix
+Most correction algorithms requires the measurement of an Interaction Matrix.
+The specific function doing this is located in WSC_functions.py : creatingInteractionmatrix
 
 We  save the matrix in .fits independently for each DMs so that you do not have to recalculate if you go 
 from 1 to 2 DMs (provided that this is the only change in the testbed of course).
