@@ -48,12 +48,20 @@ def runthd2(parameter_file,
         NewEstimationconfig: dict
         NewCorrectionconfig: dict
         NewSIMUconfig: dict
-
+            Can be used to directly change a parameter if needed, outside of the param file    
         
         -------------------------------------------------- """
 
     ### CONFIGURATION FILE
-    config = useful.read_parameter_file(parameter_file)
+    config = useful.read_parameter_file(
+        parameter_file,
+        NewMODELconfig=NewMODELconfig,
+        NewDMconfig=NewDMconfig,
+        NewCoronaconfig=NewCoronaconfig,
+        NewEstimationconfig=NewEstimationconfig,
+        NewCorrectionconfig=NewCorrectionconfig,
+        NewLoopconfig=NewLoopconfig,
+        NewSIMUconfig=NewSIMUconfig)
 
     ### CONFIG
     Data_dir = config["Data_dir"]
@@ -62,32 +70,24 @@ def runthd2(parameter_file,
 
     ### MODEL CONFIG
     modelconfig = config["modelconfig"]
-    modelconfig.update(NewMODELconfig)
 
     ### DM CONFIG
     DMconfig = config["DMconfig"]
-    DMconfig.update(NewDMconfig)
 
     ### coronagraph CONFIG
     Coronaconfig = config["Coronaconfig"]
-    Coronaconfig.update(NewCoronaconfig)
 
     ### Estimation CONFIG
     Estimationconfig = config["Estimationconfig"]
-    Estimationconfig.update(NewEstimationconfig)
 
     ### Correction CONFIG
     Correctionconfig = config["Correctionconfig"]
-    Correctionconfig.update(NewCorrectionconfig)
 
     ### Loop CONFIG
     Loopconfig = config["Loopconfig"]
-    Loopconfig.update(NewLoopconfig)
 
     ###SIMU CONFIG
     SIMUconfig = config["SIMUconfig"]
-    SIMUconfig.update(NewSIMUconfig)
-
     Name_Experiment = SIMUconfig["Name_Experiment"]
 
     ##############################################################################
@@ -186,4 +186,5 @@ def runthd2(parameter_file,
         initial_DM_voltage=0,
         silence=False)
 
-    Save_loop_results(Resultats_correction_loop, config, thd2, MaskScience, result_dir)
+    Save_loop_results(Resultats_correction_loop, config, thd2, MaskScience,
+                      result_dir)
