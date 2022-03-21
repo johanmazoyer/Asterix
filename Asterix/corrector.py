@@ -190,7 +190,7 @@ class Corrector:
                         initial_DM_voltage=0.,
                         input_wavefront=1.):
         """ --------------------------------------------------
-        Measure the interraction matrices needed for the correction
+        Measure the interaction matrices needed for the correction
         Is launch once in the Correction initialization and then once each time we update the matrix
 
         AUTHOR : Johan Mazoyer
@@ -222,7 +222,7 @@ class Corrector:
             self.FirstIterNewMat = True
 
             start_time = time.time()
-            interMat = wsc.creatingInterractionmatrix(
+            interMat = wsc.creatingInteractionmatrix(
                 testbed,
                 estimator.dimEstim,
                 self.amplitudeEFC,
@@ -237,7 +237,7 @@ class Corrector:
                   round(time.time() - start_time))
             print("")
 
-            self.Gmatrix = wsc.cropDHInterractionMatrix(
+            self.Gmatrix = wsc.cropDHInteractionMatrix(
                 interMat, self.MaskEstim)
 
             # useful.quickfits(self.Gmatrix)

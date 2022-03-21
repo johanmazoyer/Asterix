@@ -102,16 +102,16 @@ def invertSVD(matrix_to_invert,
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def creatingInterractionmatrix(testbed: OptSy.Testbed,
-                               dimEstim,
-                               amplitudeEFC,
-                               matrix_dir,
-                               initial_DM_voltage=0.,
-                               input_wavefront=1.,
-                               MatrixType='',
-                               save_all_planes_to_fits=False,
-                               dir_save_all_planes=None,
-                               visu=False):
+def creatingInteractionmatrix(testbed: OptSy.Testbed,
+                              dimEstim,
+                              amplitudeEFC,
+                              matrix_dir,
+                              initial_DM_voltage=0.,
+                              input_wavefront=1.,
+                              MatrixType='',
+                              save_all_planes_to_fits=False,
+                              dir_save_all_planes=None,
+                              visu=False):
     """ --------------------------------------------------
     Create the jacobian matrix for Electric Field Conjugation. The Matrix is not
     limited to the DH size but to the whole FP [dimEstim, dimEstim]. 
@@ -221,7 +221,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
     else:
         raise Exception("This Basis type does not exist")
     print("")
-    print("Start Interraction Matrix")
+    print("Start Interaction Matrix")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
@@ -496,7 +496,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
                     plt.gca().invert_yaxis()
                     plt.colorbar()
                     plt.pause(0.01)
-                # We fill the interraction matrix:
+                # We fill the interaction matrix:
                 InterMat[:dimEstim**2,
                          pos_in_matrix] = np.real(Gvector).flatten()
                 InterMat[dimEstim**2:,
@@ -508,7 +508,7 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
 
             if visu:
                 plt.close()
-            # We save the interraction matrix:
+            # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
                 fits.writeto(
                     matrix_dir + fileDirectMatrix + ".fits",
@@ -521,48 +521,48 @@ def creatingInterractionmatrix(testbed: OptSy.Testbed,
         DM.phase_init = 0
 
     print("")
-    print("End Interraction Matrix")
+    print("End Interaction Matrix")
     return InterMat
 
 
-def cropDHInterractionMatrix(FullInterractionMatrix: np.ndarray,
+def cropDHInteractionMatrix(FullInteractionMatrix: np.ndarray,
                              mask: np.ndarray):
     """ --------------------------------------------------
-    Crop the  Interraction Matrix. to the mask size
+    Crop the  Interaction Matrix. to the mask size
     AUTHOR : Johan Mazoyer
 
     Parameters
     ----------
-    FullInterractionMatrix: Interraction matrix over the full focal plane
+    FullInteractionMatrix: Interaction matrix over the full focal plane
 
     mask : a binary mask to delimitate the DH
 
     Returns 
     ------
-    DHInterractionMatrix: 2D numpy array
+    DHInteractionMatrix: 2D numpy array
         matrix only inside the DH. first half is real part, second half is imag part
 
 
     
     
     -------------------------------------------------- """
-    size_full_matrix = FullInterractionMatrix.shape[0]
+    size_full_matrix = FullInteractionMatrix.shape[0]
 
     size_DH_matrix = 2 * int(np.sum(mask))
     where_mask_flatten = np.where(mask.flatten() == 1.)
-    DHInterractionMatrix = np.zeros(
-        (size_DH_matrix, FullInterractionMatrix.shape[1]), dtype=float)
+    DHInteractionMatrix = np.zeros(
+        (size_DH_matrix, FullInteractionMatrix.shape[1]), dtype=float)
 
-    for i in range(FullInterractionMatrix.shape[1]):
-        DHInterractionMatrix[:int(size_DH_matrix / 2),
-                             i] = FullInterractionMatrix[:int(
+    for i in range(FullInteractionMatrix.shape[1]):
+        DHInteractionMatrix[:int(size_DH_matrix / 2),
+                             i] = FullInteractionMatrix[:int(
                                  size_full_matrix / 2), i][where_mask_flatten]
-        DHInterractionMatrix[int(size_DH_matrix / 2):,
-                             i] = FullInterractionMatrix[int(size_full_matrix /
+        DHInteractionMatrix[int(size_DH_matrix / 2):,
+                             i] = FullInteractionMatrix[int(size_full_matrix /
                                                              2):,
                                                          i][where_mask_flatten]
 
-    return DHInterractionMatrix
+    return DHInteractionMatrix
 
 
 def solutionEFC(mask, Result_Estimate, inversed_jacobian,

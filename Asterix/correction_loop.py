@@ -176,7 +176,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
                           silence=False,
                           **kwargs):
     """ --------------------------------------------------
-    Run a loop for a given interraction matrix.
+    Run a loop for a given interaction matrix.
 
     AUTHOR : Johan Mazoyer
 
