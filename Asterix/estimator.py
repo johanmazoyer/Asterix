@@ -108,7 +108,7 @@ class Estimator:
             self.is_complex = True
 
             self.amplitudePW = Estimationconfig["amplitudePW"]
-            self.posprobes = [int(i) for i in Estimationconfig["posprobes"]]
+            self.posprobes = [i for i in Estimationconfig["posprobes"]]
             cutsvdPW = Estimationconfig["cut"]
 
             if hasattr(testbed, 'name_DM_to_probe_in_PW'):
