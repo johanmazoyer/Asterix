@@ -1767,7 +1767,7 @@ class deformable_mirror(Optical_System):
         in .fits to save times if the parameter have not changed
 
         In case of "misregistration = True" we measure it once for
-        creating the interraction matrix and then once again, between
+        creating the interaction matrix and then once again, between
         the matrix measrueemnt and the correction with a small mismatch
         to simulate its effect.
 

@@ -18,9 +18,10 @@ Model_local/
 Interaction_Matrices/
 Results/
 
-#ignore those for mac / vscode users
+#ignore those for mac / vscode / PyCharm users
 .DS_Store
 .vscode/
+.idea/
 
 #ignore auxiliary directories if built
 Asterix.egg-info/
