@@ -51,9 +51,9 @@ If you are using a specific environement for Asterix (see previous section), now
 
 Run the setup file:
 
-    $ python setup.py develop
+    $ pip install -e '.'
 
-If you use multiple versions/environements of python, you will need to run ``setup.py`` with each version of python
+If you use multiple versions/environements of python, you will need to do htis with each version of python
 (this should not apply to most people).
 
 
