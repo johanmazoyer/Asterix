@@ -85,8 +85,8 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     if (shift_x == 0) & (shift_y == 0):
         ramp = 1
     else:
-        maskx = np.linspace(-np.pi * shift_x, np.pi * shift_x, dim_pp)
-        masky = np.linspace(-np.pi * shift_y, np.pi * shift_y, dim_pp)
+        maskx = np.linspace(-np.pi * shift_x, np.pi * shift_x, dim_pp, endpoint = False)
+        masky = np.linspace(-np.pi * shift_y, np.pi * shift_y, dim_pp, endpoint = False)
         xx, yy = np.meshgrid(maskx, masky)
         ramp = np.exp(-1j * xx) * np.exp(-1j * yy)
     return ramp
