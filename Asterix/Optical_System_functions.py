@@ -1056,10 +1056,11 @@ class coronagraph(Optical_System):
         self.string_os += '_' + self.corona_type
 
         # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
+        self.corono_fpm_sampling = self.Science_sampling
         self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
         for i, wav in enumerate(self.wav_vec):
             self.dim_fp_fft[i] = int(
-                np.ceil(self.prad * self.Science_sampling * self.wavelength_0 /
+                np.ceil(self.prad * self.corono_fpm_sampling * self.wavelength_0 /
                         wav)) * 2
             # we take the ceil to be sure that we measure at least the good resolution
             # We do not need to be exact, the mft in science_focal_plane will be
@@ -1259,7 +1260,12 @@ class coronagraph(Optical_System):
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane)
+                                          np.fft.fftshift(corono_focal_plane))
+                
+                name_plane = 'PSF EF_FP_before_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          np.fft.fftshift(np.abs(corono_focal_plane)**2))
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
@@ -1278,7 +1284,7 @@ class coronagraph(Optical_System):
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane * FPmsk)
+                                          np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = np.fft.fftshift(

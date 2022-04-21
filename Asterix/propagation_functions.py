@@ -1,5 +1,5 @@
 import numpy as np
-import processing_functions as proc
+import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
 
