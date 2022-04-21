@@ -11,7 +11,7 @@ import Asterix.fits_functions as useful
 import Asterix.Optical_System_functions as OptSy
 from Asterix.estimator import Estimator
 import Asterix.WSC_functions as wsc
-from THD_quick_invert import THD_quick_invert
+from Asterix.THD_quick_invert import THD_quick_invert
 
 
 class Corrector:
