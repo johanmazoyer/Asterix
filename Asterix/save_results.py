@@ -103,7 +103,7 @@ def plot_contrast_curves(reduced_data,
 
     plt.figure()
 
-    if len(reduced_data) == 2:
+    if len(reduced_data.shape) == 2:
         # this is a single image
         contrast1dcurve = contrast_curves(reduced_data,
                                           xcen=xcen,
@@ -222,6 +222,8 @@ def contrast_curves(reduced_data,
 
     if mask_DH is None:
         mask_DH = np.ones((reduced_data.shape))
+    
+    mask_DH[np.where(mask_DH == 0)] = np.nan
 
     # chech the maximum number of ring we can fit in the image, which depends on the position of the center
     maximum_number_of_points = np.min(
