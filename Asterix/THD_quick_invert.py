@@ -132,12 +132,13 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory,
 
 if __name__ == '__main__':
 
-    matrix_directory = '/Users/jmazoyer/GitProjects/my_projects/Asterix/Labview/'
+    # matrix_directory = '/Users/jmazoyer/GitProjects/my_projects/Asterix/Labview/'
+    matrix_directory = r'C:\Users\LESIA-BAT\Desktop\Labview_IDL_routines\Labview_routines\ITHD_v40\DATA\EFC'
     regularization = 'tikhonov'  # 'truncation' or 'tikhonov'
 
     if len(sys.argv) == 1:
         # we run this code without any argument
-        Nbmodes = 330
+        Nbmodes = 610
         name_active_DM = 13  # 1, 3 or 13 depending on the DM you want to access
 
     else:
