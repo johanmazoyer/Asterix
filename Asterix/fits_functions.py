@@ -166,7 +166,14 @@ def _progress(count, total, status=''):
     sys.stdout.flush()
 
 
-def read_parameter_file(parameter_file):
+def read_parameter_file(parameter_file,
+                        NewMODELconfig={},
+                        NewDMconfig={},
+                        NewCoronaconfig={},
+                        NewEstimationconfig={},
+                        NewCorrectionconfig={},
+                        NewLoopconfig={},
+                        NewSIMUconfig={}):
     """ --------------------------------------------------
     check existence of the parameter file, read it and check validity
     
@@ -176,6 +183,16 @@ def read_parameter_file(parameter_file):
     ----------
     parameter_file: path 
         path to a .ini parameter file
+    
+    NewMODELconfig: dict
+    NewDMconfig: dict
+    NewCoronaconfig: dict
+    NewEstimationconfig: dict
+    NewCorrectionconfig: dict
+    NewSIMUconfig: dict
+        Can be used to directly change a parameter if needed, outside of the param file    
+
+
 
     Returns
     ------
@@ -199,7 +216,25 @@ def read_parameter_file(parameter_file):
     config = ConfigObj(parameter_file,
                        configspec=configspec_file,
                        default_encoding="utf8")
-    _ = config.validate(Validator(), copy=True)
-    # copy=True for copying the comments
+
+    config["modelconfig"].update(NewMODELconfig)
+    config["DMconfig"].update(NewDMconfig)
+    config["Coronaconfig"].update(NewCoronaconfig)
+    config["Estimationconfig"].update(NewEstimationconfig)
+    config["Correctionconfig"].update(NewCorrectionconfig)
+    config["Loopconfig"].update(NewLoopconfig)
+    config["SIMUconfig"].update(NewSIMUconfig)
+
+    test_validity_params = config.validate(Validator(), copy=True)
+
+    if test_validity_params is not True:
+        for name, section in test_validity_params.items():
+            if section is True:
+                continue
+            for key, value in section.items():
+                if value is False:
+                    raise Exception(
+                        'In section [{}], parameter "{}" is not properly defined'
+                        .format(name, key))
 
     return config
