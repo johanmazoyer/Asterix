@@ -195,9 +195,7 @@ def SinCosBasis(Nact1D):
             prop.mft(TFCoeffs[Coeff_SinCos],
                      Nact1D,
                      Nact1D,
-                     Nact1D,
-                     X_offset_input=-0.5,
-                     Y_offset_input=-0.5))
+                     Nact1D))
 
     if Nact1D % 2 == 1:
         # in the odd case the last one is a piston
