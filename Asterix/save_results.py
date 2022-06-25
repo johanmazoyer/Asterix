@@ -16,6 +16,11 @@ def plot_contrast_curves(reduced_data,
                          numberofmas_per_pix=None,
                          type_of_contrast='mean',
                          mask_DH=None,
+                         xtitle =None,
+                         ytitle=None,
+                         title =None,
+                         xrange=None,
+                         yrange=None,
                          path='',
                          filename=''):
     """  -------------------------------------------------- 
@@ -138,23 +143,40 @@ def plot_contrast_curves(reduced_data,
 
         plt.legend(fontsize=6, loc='upper right')
 
-    plt.xlim(0, 1.2 * owa)
+    if xrange is None:
+        xrange = [0, 1.2 * owa]
+    
+    plt.xlim(xrange[0],xrange[1])
 
-    plt.xlabel("Separation " + abscise_String_unit)
+    if yrange is not None:
+        plt.ylim(yrange[0],yrange[1])
 
-    plt.title("Dark hole contrast")
+    font_size = 14
 
-    if type_of_contrast == 'mean':
-        plt.ylabel("Mean contrast in Dark Hole")
-        filename += '_mean'
-    if type_of_contrast == 'stddev_1sig':
-        plt.ylabel("1σ std contrast in Dark Hole")
-        filename += '_1sigstd'
-    if type_of_contrast == 'stddev_5sig':
-        plt.ylabel("5σ std contrast in Dark Hole")
-        filename += '_5sigstd'
+    if title is None:
+        title = "Separation " + abscise_String_unit
+    plt.title(title, fontsize=font_size)
 
+    if xtitle is None:
+        xtitle = "Separation " + abscise_String_unit
+    plt.xlabel(xtitle, fontsize=font_size)
+
+    if ytitle is None:
+        if type_of_contrast == 'mean':
+            ytitle = "Mean contrast in Dark Hole"
+            filename += '_mean'
+        if type_of_contrast == 'stddev_1sig':
+            ytitle = "1σ std contrast in Dark Hole"
+            filename += '_1sigstd'
+        if type_of_contrast == 'stddev_5sig':
+            ytitle = "5σ std contrast in Dark Hole"
+            filename += '_5sigstd'
+    plt.ylabel(ytitle, fontsize=font_size)
     plt.yscale("log")
+    
+    tick_size = 12
+    plt.yticks(fontsize=tick_size)
+    plt.xticks(fontsize=tick_size)
 
     plt.savefig(os.path.join(path, filename + ".pdf"))
     plt.close()
