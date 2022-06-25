@@ -1127,19 +1127,34 @@ class coronagraph(Optical_System):
 
         self.string_os += '_LS' + self.lyot_pup.string_os
 
+        if "bool_overwrite_perfect_coro" in coroconfig:
+            if coroconfig["bool_overwrite_perfect_coro"] is True:
+                self.perfect_coro = True
+            if coroconfig["bool_overwrite_perfect_coro"] is False:
+                self.perfect_coro = False
+
         if self.perfect_coro == True:
 
-            # We need a round pupil only to measure the response
-            # of the coronograph to a round pupil to remove it
-            # THIS IS NOT THE ENTRANCE PUPIL,
-            # this is a round pupil of the same size
-            roundpup = pupil(modelconfig, prad=self.prad)
-
-            # do a propagation once with self.perfect_Lyot_pupil = 0 to
-            # measure the Lyot pupil that will be removed after
-            self.perfect_Lyot_pupil = 0
-            self.perfect_Lyot_pupil = self.EF_through(
-                entrance_EF=roundpup.EF_through())
+            if coroconfig["filename_instr_lyot"] == "Clear" : 
+                # We need a round pupil only to measure the response
+                # of the coronograph to a round pupil to remove it
+                # THIS IS NOT THE ENTRANCE PUPIL,
+                # this is a round pupil of the same size
+                pup_for_perfect_coro = pupil(modelconfig, prad=self.prad)
+                
+                # do a propagation once with self.perfect_Lyot_pupil = 0 to
+                # measure the Lyot pupil that will be removed after
+                self.perfect_Lyot_pupil = [0]*self.nb_wav
+                for i, wave_here in enumerate(self.wav_vec):
+                    self.perfect_Lyot_pupil[i] = self.EF_through(
+                        entrance_EF=pup_for_perfect_coro.EF_through(wavelength=wave_here), wavelength=wave_here)
+            else:
+                # In this case we have an coronagrpah entrance pupil
+                # do a propagation once with self.perfect_Lyot_pupil = 0 to
+                # measure the Lyot pupil that will be removed after
+                self.perfect_Lyot_pupil = [0]*self.nb_wav
+                for i, wave_here in enumerate(self.wav_vec):
+                    self.perfect_Lyot_pupil[i] = self.EF_through(wavelength=wave_here)
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
@@ -1414,7 +1429,7 @@ class coronagraph(Optical_System):
             entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
 
         if (self.perfect_coro == True) & (noFPM == False):
-            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
+            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(wavelength)]
 
         if save_all_planes_to_fits == True:
             name_plane = 'LS' + '_wl{}'.format(int(wavelength * 1e9))
