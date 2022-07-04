@@ -2,7 +2,7 @@ import numpy as np
 import scipy.optimize as opt
 import scipy.ndimage as nd
 import Asterix.fits_functions as useful
-
+from astropy.io import fits
 
 def twoD_Gaussian(xy,
                   amplitude,
@@ -109,13 +109,15 @@ def resampling(image, new):
     - v1.0 2020 A. Potier
     - v2.0 19/03/21 J Mazoyer clean names + if image is real, result is real.
     - v3.0 05/2021 J Mazoyer Replacing currenly with standard pyhton function scipy.ndimage.zoom
+    - v4.0 06/2022 J Mazoyer Replacing with the rebin and crop function following discussion with L. Mugnier
+
 
     Parameters
     ----------
     image: 2D array
         input image
     new: int
-        Size of the output image after resampling in pixels
+        Size of the output image after resampling, in pixels
 
     Returns
     ------
@@ -141,6 +143,7 @@ def resampling(image, new):
     #     resized_image = np.real(resized_image)
 
     resized_image = nd.zoom(image, new / dimScience)
+    # resized_image = resize_crop_bin(image, new)
 
     return resized_image
 
@@ -213,6 +216,117 @@ def crop_or_pad_image(image, dimout):
         im_out = image
     return im_out
 
+
+def rebin(image, factor = 4, center_on_pixel = False):
+
+    """ --------------------------------------------------
+    bin the image by a factor. The dimension dim MUST be divisible by factor
+    or it will raise an error. It this is not the case, use function resize_crop_bin
+
+    we add a center_on_pixel option . If false we shift the image to put 0 freq in the corner 
+    before binning and then shift back.
+    The goal is if you have a PSF center in between 4 pixel this property is conserved.
+    If center_on_pixel= True there is no way to conserve this property unless we 
+    are binning by odd number
+
+
+    AUTHOR: Johan Mazoyer
+
+    Parameters
+    ----------
+    image : 2D array (float, double or complex)
+            dim1 x dim2 array with dim1 and dim2 are divisible by factor
+
+    factor : int
+         factor of bin 
+
+    
+    center_on_pixe :bool (optional, default: False). 
+                If False the PSf is shifhted before bining
+
+    Returns
+    ------
+    im_out : 2D array (float)
+        resized image of size dim1 // 4 x dim2//4
+
+    -------------------------------------------------- """
+
+    dim1, dim2 = image.shape
+
+    if (dim1 % factor != 0) or (dim2 % factor != 0):
+            raise Exception(
+                "Image in Bin function must be divisible by factor of bin")
+
+    shape = (dim1//factor, factor,
+             dim2//factor, factor)
+    
+    if center_on_pixel is False:
+        return np.fft.fftshift(np.fft.fftshift(image*factor**2).reshape(shape).mean(-1).mean(1))
+    else:
+        return factor**2*image.reshape(shape).mean(-1).mean(1)
+
+
+    # im_bin = np.cumsum(np.fft.fftshift(image), axis = 0)
+    # im_bin = np.diff(im_bin[::factor, :], axis = 0)/factor
+
+    # im_bin = np.cumsum(im_bin, axis = 1)
+    # im_bin = np.diff(im_bin[:,::factor], axis = 1)/factor
+    # fits.writeto("/Users/jmazoyer/Desktop/psf_rebin_shifted.fits", im_bin, overwrite=True)
+
+    # return np.fft.fftshift(im_bin)
+
+
+def resize_crop_bin(image, new_dim, center_on_pixel = False):
+
+    """ --------------------------------------------------
+    resize the imge by : 
+        - cropping entrance image to nearest multiplicative number of new_dim
+        - bin the image to new_dim size
+
+    we add a center_on_pixel option . If false we shift the image to put 0 freq in the corner 
+    before binning and then shift back.
+    The goal is if you have a PSF center in between 4 pixel this property is conserved.
+    If center_on_pixel= True there is no way to conserve this property unless we 
+    are binning by odd number
+
+    AUTHOR: Johan Mazoyer
+
+    Parameters
+    ----------
+    image : 2D array (float, double or complex)
+            dim1 x dim2 array with dim1 and dim2 are divisible by factor
+
+    new_dim : int
+         dimenstion of output image. new_dim must be samller than dim of the entrance image
+
+    center_on_pixe :bool (optional, default: False). 
+                If False the PSf is shifhted before bining
+
+    Returns
+    ------
+    im_out : 2D array (float)
+        resized image of size new_dim x new_dim
+
+    -------------------------------------------------- """
+
+    dim1, dim2 = image.shape
+
+    if (dim1 < new_dim) or (dim2 < new_dim):
+            raise Exception(
+                "new_dim must be samller than dimensions of the entrance image")
+
+    
+    # check closest multiplicative factor
+    dim_smaller = min(dim1,dim2)
+    factor = dim_smaller//new_dim
+
+    # crop at the right size. Careful with the centering @TODO check
+    return_image = cropimage(image,dim1//2, dim2//2, factor*new_dim)
+
+    # Bin at the right size
+    return_image = rebin(return_image, factor, center_on_pixel = center_on_pixel)
+
+    return return_image
 
 def actuator_position(measured_grid, measured_ActuN, ActuN,
                       sampling_simu_over_measured):
