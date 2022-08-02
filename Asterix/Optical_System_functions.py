@@ -899,7 +899,7 @@ class pupil(Optical_System):
                 self.string_os += '_Fits'
 
             # we have the fits, we now rescale to good size
-            if pup_fits.shape[0] == self.prad:
+            if pup_fits.shape[0] == 2 * self.prad:
                 pup_fits_right_size = pup_fits
             else:
                 #Rescale to the pupil size
