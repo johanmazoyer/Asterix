@@ -19,6 +19,7 @@ def plot_contrast_curves(reduced_data,
                          xtitle =None,
                          ytitle=None,
                          title =None,
+                         legend_labels = [None],
                          xrange=None,
                          yrange=None,
                          path='',
@@ -74,6 +75,13 @@ def plot_contrast_curves(reduced_data,
         
         filename: string, default ''
             base of the file name to save the pdf plot file
+        
+        legend_labels: string array of the same number of images in the first cube  default None 
+            Name of the legend labels,
+            If none and if the array is of dimension 2, no legend
+            If none and if the array is of dimension 3, we assume these are iterations
+
+
 
     Returns
     ------
@@ -123,6 +131,16 @@ def plot_contrast_curves(reduced_data,
         plt.plot(absice, contrast1dcurve)
     else:
         # this ia cube
+        if legend_labels[0] is None :
+            legend_labels[0] = "Initial"
+            for i in range(1,reduced_data.shape[0]):
+                legend_labels.append("iter #{}".format(i))
+        else:
+            if len(legend_labels) != reduced_data.shape[0]:
+                raise Exception("legend_labels must be a string list of size as reduced_data.shape[0]")
+
+
+
         for i, frame in enumerate(reduced_data):
             contrast1dcurve = contrast_curves(
                 frame,
@@ -136,11 +154,9 @@ def plot_contrast_curves(reduced_data,
                     len(contrast1dcurve)) * absicemultiplicationfactor
                 iwa = np.nanmin(absice[~np.isnan(contrast1dcurve)])
                 owa = np.nanmax(absice[~np.isnan(contrast1dcurve)])
-                plt.plot(absice, contrast1dcurve, label="Initial")
-            else:
-                plt.plot(absice, contrast1dcurve, label="iter #{}".format(i))
+                
+            plt.plot(absice, contrast1dcurve, label=legend_labels[i])
             
-
         plt.legend(fontsize=6, loc='upper right')
 
     if xrange is None:
