@@ -11,10 +11,11 @@ Asterixroot = os.path.dirname(os.path.realpath(__file__))
 start_time = time.time()
 Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': False},
-                 NewEstimationconfig={'estimation': 'perfect'},
+                 NewEstimationconfig={'estimation': 'pw'},
                  NewCorrectionconfig={
                      'DH_side': "Right",
                      'correction_algorithm': "efc",
+                     'Nbmodes_OnTestbed': 330
                  },
                  NewLoopconfig={
                      'Nbiter_corr': [5, 10],
@@ -29,10 +30,11 @@ print("")
 start_time = time.time()
 Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': False},
-                 NewEstimationconfig={'estimation': 'pw'},
+                 NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
                      'DH_side': "Right",
                      'correction_algorithm': "efc",
+                     'Nbmodes_OnTestbed': 330
                  },
                  NewLoopconfig={
                      'Nbiter_corr': [5, 10],
@@ -50,7 +52,8 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
                      'DH_side': "Full",
-                     'correction_algorithm': "sm"
+                     'correction_algorithm': "sm",
+                     'Nbmodes_OnTestbed': 600
                  },
                  NewLoopconfig={
                      'Nbiter_corr': [20],
@@ -68,7 +71,8 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewEstimationconfig={'estimation': 'pw'},
                  NewCorrectionconfig={
                      'DH_side': "Full",
-                     'correction_algorithm': "efc"
+                     'correction_algorithm': "efc",
+                     'Nbmodes_OnTestbed': 600
                  },
                  NewLoopconfig={
                      'Nbiter_corr': [5, 1, 1, 1, 3, 2, 1, 2, 4, 3],
