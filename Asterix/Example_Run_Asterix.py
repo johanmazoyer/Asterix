@@ -22,48 +22,51 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                      "Nbmode_corr": [320, 340]
                  },
                  NewSIMUconfig={'Name_Experiment': "My_first_experiment"})
+                 
 print('time correction 1DM perfect estim efc', time.time() - start_time)
 print("")
 print("")
 print("")
 
-start_time = time.time()
-Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
-                 NewDMconfig={'DM1_active': False},
-                 NewEstimationconfig={'estimation': 'perfect'},
-                 NewCorrectionconfig={
-                     'DH_side': "Right",
-                     'correction_algorithm': "efc",
-                     'Nbmodes_OnTestbed': 330
-                 },
-                 NewLoopconfig={
-                     'Nbiter_corr': [5, 10],
-                     "Nbmode_corr": [320, 340]
-                 },
-                 NewSIMUconfig={'Name_Experiment': "My_second_experiment"})
-print('time correction 1DM perfect estim efc', time.time() - start_time)
-print("")
-print("")
-print("")
+# asdf
 
-start_time = time.time()
-Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
-                 NewDMconfig={'DM1_active': True},
-                 NewEstimationconfig={'estimation': 'perfect'},
-                 NewCorrectionconfig={
-                     'DH_side': "Full",
-                     'correction_algorithm': "sm",
-                     'Nbmodes_OnTestbed': 600
-                 },
-                 NewLoopconfig={
-                     'Nbiter_corr': [20],
-                     "Nbmode_corr": [250]
-                 },
-                 NewSIMUconfig={'Name_Experiment': "My_fourth_experiment"})
-print('time correction 2DM perfect estim sm', time.time() - start_time)
-print("")
-print("")
-print("")
+# start_time = time.time()
+# Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+#                  NewDMconfig={'DM1_active': False},
+#                  NewEstimationconfig={'estimation': 'perfect'},
+#                  NewCorrectionconfig={
+#                      'DH_side': "Right",
+#                      'correction_algorithm': "efc",
+#                      'Nbmodes_OnTestbed': 330
+#                  },
+#                  NewLoopconfig={
+#                      'Nbiter_corr': [5, 10],
+#                      "Nbmode_corr": [320, 340]
+#                  },
+#                  NewSIMUconfig={'Name_Experiment': "My_second_experiment"})
+# print('time correction 1DM perfect estim efc', time.time() - start_time)
+# print("")
+# print("")
+# print("")
+
+# start_time = time.time()
+# Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+#                  NewDMconfig={'DM1_active': True},
+#                  NewEstimationconfig={'estimation': 'perfect'},
+#                  NewCorrectionconfig={
+#                      'DH_side': "Full",
+#                      'correction_algorithm': "sm",
+#                      'Nbmodes_OnTestbed': 600
+#                  },
+#                  NewLoopconfig={
+#                      'Nbiter_corr': [20],
+#                      "Nbmode_corr": [250]
+#                  },
+#                  NewSIMUconfig={'Name_Experiment': "My_fourth_experiment"})
+# print('time correction 2DM perfect estim sm', time.time() - start_time)
+# print("")
+# print("")
+# print("")
 
 start_time = time.time()
 Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
@@ -71,7 +74,7 @@ Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
                  NewEstimationconfig={'estimation': 'pw'},
                  NewCorrectionconfig={
                      'DH_side': "Full",
-                     'correction_algorithm': "efc",
+                     'correction_algorithm': "sm",
                      'Nbmodes_OnTestbed': 600
                  },
                  NewLoopconfig={

@@ -102,7 +102,7 @@ def gauss2Dfit(data):
     return popt
 
 
-def resampling(image, new):
+def resizing(image, new):
     """ --------------------------------------------------
     Resample the focal plane image to create a 2D array with new dimensions
 
@@ -110,6 +110,7 @@ def resampling(image, new):
     - v2.0 19/03/21 J Mazoyer clean names + if image is real, result is real.
     - v3.0 05/2021 J Mazoyer Replacing currenly with standard pyhton function scipy.ndimage.zoom
     - v4.0 06/2022 J Mazoyer Replacing with the rebin and crop function following discussion with L. Mugnier
+    - v5.0 08/2022 J Mazoyer Rename to resizing
 
 
     Parameters
@@ -117,7 +118,7 @@ def resampling(image, new):
     image: 2D array
         input image
     new: int
-        Size of the output image after resampling, in pixels
+        Size of the output image after resizing, in pixels
 
     Returns
     ------
@@ -128,22 +129,19 @@ def resampling(image, new):
     -------------------------------------------------- """
 
     dimScience = len(image)
+    dimEstim = new
 
-    # THe old function is decentering the PSF (it is not centered between 4 pixels) !!
-    # Replacing currenly with standard pyhton function scipy.ndimage.zoom
-    # TODO Check that this is equivalent to what is done on the testbed !
+    Estim_bin_factor = int(np.round(dimScience/dimEstim))
 
-    # fftimage_cropped = cropimage(
-    #     np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(image))), dimScience / 2,
-    #     dimScience / 2, new)
-    # resized_image = np.fft.fftshift(
-    #     np.fft.fft2(np.fft.ifftshift(fftimage_cropped)))
+    # if the image was not orinigally a factor of Estim_bin_factor we crop a few raws
+    slightly_crop_image = crop_or_pad_image(image,dimEstim*Estim_bin_factor)
 
-    # if np.isrealobj(image):
-    #     resized_image = np.real(resized_image)
+    resized_image = resize_crop_bin(slightly_crop_image, dimEstim)
 
-    resized_image = nd.zoom(image, new / dimScience)
-    # resized_image = resize_crop_bin(image, new)
+    # resized_image = nd.zoom(image, new / dimScience)
+    # useful._quickfits(np.abs(resized_image))
+    # asd
+
 
     return resized_image
 
@@ -261,9 +259,9 @@ def rebin(image, factor = 4, center_on_pixel = False):
              dim2//factor, factor)
     
     if center_on_pixel is False:
-        return np.fft.fftshift(np.fft.fftshift(image*factor**2).reshape(shape).mean(-1).mean(1))
+        return np.fft.fftshift(np.fft.fftshift(image).reshape(shape).mean(-1).mean(1))
     else:
-        return factor**2*image.reshape(shape).mean(-1).mean(1)
+        return image.reshape(shape).mean(-1).mean(1)
 
 
     # im_bin = np.cumsum(np.fft.fftshift(image), axis = 0)

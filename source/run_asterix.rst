@@ -191,7 +191,7 @@ The [Estimationconfig] section contains the estimator parameters. An estimator i
 
     - estimation: string, FP WF sensing : 'Perfect' or 'pw'
 
-    - Estim_sampling : float, Sampling in estimation images used for PW / perfect estim. This is the number of pixel in lambda / D(entrance pupil) in the estiamtor this will be used to measure the size of the estimator in pixel (even integer) and then we modify Estim_sampling so that we have exactly Estim_sampling * dimEstim = Science_sampling * dimScience
+    - Estim_bin_factor : int, We bin the estimation images used for PW / perfect estim by this factor. this way dimEstim = dimScience / Estim_bin_factor and  Estim_sampling = Science_sampling / Estim_bin_factor. Be careful, this raise an error if Estim_sampling < 3
 
 If estimation = 'PW':
     - amplitudePW : float, Amplitude of PW probes (in nm)

@@ -255,7 +255,7 @@ def creatingInteractionmatrix(testbed: OptSy.Testbed,
             # We measure the initial Focal plane that will be removed at the end.
             # Be careful because todetector automatically normalized to contrast with the full testbed
             # We checked that this is the same normalization as in Gvector
-            G0 = proc.resampling(
+            G0 = proc.resizing(
                 testbed.todetector(
                     entrance_EF=input_wavefront,
                     voltage_vector=initial_DM_voltage,
@@ -466,7 +466,7 @@ def creatingInteractionmatrix(testbed: OptSy.Testbed,
                         # normalisation_testbed_EF_contrast which is the  max value of the PSF at this
                         # wavelength for the whole testbed. This is the same normalization as G0.
 
-                        Gvector = proc.resampling(
+                        Gvector = proc.resizing(
                             OpticSysAfter.todetector(entrance_EF=wavefront,
                                                      in_contrast=False) /
                             normalisation_testbed_EF_contrast, dimEstim)
@@ -832,7 +832,7 @@ def createPWmatrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
     posprobes:  1D-array
             index of the actuators to push and pull for pair-wise probing
     dimEstim:  int
-            size of the output image after resampling in pixels
+            size of the output image after resizing in pixels
     cutsvd:     float
             value not to exceed for the inverse eigeinvalues at each pixels
     wavelength: float
@@ -877,7 +877,7 @@ def createPWmatrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim,
         # I tried to remove "1+"". It breaks the code
         # (coronagraph does not "remove the 1 exactly")
 
-        deltapsik[k] = proc.resampling(
+        deltapsik[k] = proc.resizing(
             testbed.todetector(entrance_EF=1 + 1j * probephase[k]) - psi0,
             dimEstim)
         k = k + 1
@@ -967,7 +967,7 @@ def createdifference(input_wavefront,
         Index of the actuators to push and pull for pair-wise probing
     
     dimimages : int
-        Size of the output image after resampling in pixels
+        Size of the output image after resizing in pixels
 
     amplitudePW: float
         PW probes amplitude in nm
@@ -1019,6 +1019,6 @@ def createdifference(input_wavefront,
                                               wavelengths=wavelength,
                                               **kwargs)
 
-        Difference[count] = proc.resampling(Ikplus - Ikmoins, dimimages)
+        Difference[count] = proc.resizing(Ikplus - Ikmoins, dimimages)
 
     return Difference
