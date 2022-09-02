@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='Asterix',
-    version='2.2',
+    version='2.3',
     description='Asterix: A simulation tool for high-contrast sensing and control algorithms',
     long_description=long_description,
     long_description_content_type="text/markdown",
