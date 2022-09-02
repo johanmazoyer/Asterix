@@ -1,4 +1,5 @@
 import os
+import warnings
 import datetime
 from astropy.io import fits
 import numpy as np
@@ -7,6 +8,7 @@ import matplotlib.pyplot as plt
 import Asterix.Optical_System_functions as OptSy
 from Asterix.fits_functions import _quickfits
 
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 def plot_contrast_curves(reduced_data,
                          xcen=None,
