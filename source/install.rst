@@ -53,7 +53,7 @@ Run the setup file:
 
     $ pip install -e '.'
 
-If you use multiple versions/environements of python, you will need to do htis with each version of python
+If you use multiple versions/environements of python, you will need to do this with each version of python
 (this should not apply to most people).
 
 
@@ -71,7 +71,7 @@ installed in the setup.
 * matplotlib
 * configobj
 
-We recommend yuo use a version of Python > 3.5 to use Asterix. As Asterix can be computationally expensive, we recommend a 
+We recommend you use a version of Python > 3.10 to use Asterix. As Asterix can be computationally expensive, we recommend a 
 powerful computer to optimize the correction. This will depend on specific test you want to perform (number of deformable mirrors, 
 monochromatic or polychromatic correctin, etc.).
 

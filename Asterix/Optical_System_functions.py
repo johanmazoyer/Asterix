@@ -649,7 +649,7 @@ class Optical_System:
                             res_pup / (self.diam_pup_in_m / (2 * self.prad)),
                             preserve_range=True,
                             anti_aliasing=True,
-                            multichannel=False), self.dim_overpad_pupil)
+                            channel_axis=None), self.dim_overpad_pupil)
 
                     #Set the average to 0 inside entrancepupil
                     pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil,
@@ -908,7 +908,7 @@ class pupil(Optical_System):
                     2 * self.prad / pup_fits.shape[0],
                     preserve_range=True,
                     anti_aliasing=True,
-                    multichannel=False)
+                    channel_axis=None)
 
             self.pup = proc.crop_or_pad_image(pup_fits_right_size,
                                               self.dim_overpad_pupil)
@@ -1957,7 +1957,7 @@ class deformable_mirror(Optical_System):
             order=1,
             preserve_range=True,
             anti_aliasing=True,
-            multichannel=False)
+            channel_axis=None)
 
         if DMconfig[self.Name_DM + "_Generic"] == False:
             # In this case we might have a different number of pixels in x and y direction,

@@ -54,7 +54,7 @@ def roundpupil(dim_pp, prad, no_pixel=False):
                                       dim_pp_small / dim_pp,
                                       preserve_range=True,
                                       anti_aliasing=True,
-                                      multichannel=False))
+                                      channel_axis=None))
 
     return pupilnormal
 
