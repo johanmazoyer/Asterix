@@ -25,7 +25,8 @@ author = 'Johan Mazoyer, Axel Potier, Raphaël Galicher'
 # The full version, including alpha/beta/rc tags
 # release = 'v2.0'
 # release = 'v2.1' # change version 22/02/22
-release = 'v2.2' # change version 15/03/22
+# release = 'v2.2' # change version 15/03/22
+release = 'v2.3' # change version 02/09/22
 
 # -- General configuration ---------------------------------------------------
 
