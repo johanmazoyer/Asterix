@@ -93,8 +93,8 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory,
                                     goal="c",
                                     regul=regularization,
                                     visu=True,
-                                    filename_visu=matrix_directory +
-                                    "SVD_Modes" + str(Nbmodes) + ".png")
+                                    filename_visu=os.path.join(matrix_directory,
+                                    "SVD_Modes" + str(Nbmodes) + ".png"))
 
     if name_active_DM == 13 or name_active_DM == 31:
         DM1_basis_size = DM1_basis.shape[0]
