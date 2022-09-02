@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.optimize as opt
-import scipy.ndimage as nd
 import Asterix.fits_functions as useful
 from astropy.io import fits
 
@@ -138,11 +137,6 @@ def resizing(image, new):
 
     resized_image = resize_crop_bin(slightly_crop_image, dimEstim)
 
-    # resized_image = nd.zoom(image, new / dimScience)
-    # useful._quickfits(np.abs(resized_image))
-    # asd
-
-
     return resized_image
 
 
@@ -227,7 +221,6 @@ def rebin(image, factor = 4, center_on_pixel = False):
     If center_on_pixel= True there is no way to conserve this property unless we 
     are binning by odd number
 
-
     AUTHOR: Johan Mazoyer
 
     Parameters
@@ -262,17 +255,6 @@ def rebin(image, factor = 4, center_on_pixel = False):
         return np.fft.fftshift(np.fft.fftshift(image).reshape(shape).mean(-1).mean(1))
     else:
         return image.reshape(shape).mean(-1).mean(1)
-
-
-    # im_bin = np.cumsum(np.fft.fftshift(image), axis = 0)
-    # im_bin = np.diff(im_bin[::factor, :], axis = 0)/factor
-
-    # im_bin = np.cumsum(im_bin, axis = 1)
-    # im_bin = np.diff(im_bin[:,::factor], axis = 1)/factor
-    # fits.writeto("/Users/jmazoyer/Desktop/psf_rebin_shifted.fits", im_bin, overwrite=True)
-
-    # return np.fft.fftshift(im_bin)
-
 
 def resize_crop_bin(image, new_dim, center_on_pixel = False):
 

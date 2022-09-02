@@ -1949,7 +1949,6 @@ class deformable_mirror(Optical_System):
 
         # Scaling the influence function to the desired dimension
         # for numerical simulation
-        # can be replace by nd.zoom
         # or by a fft rescale (have to be coded by ourselves probably)
         resizeactshape = skimage.transform.rescale(
             actshape,
