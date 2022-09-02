@@ -441,9 +441,8 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed,
         os.path.join(result_dir,
                      current_time_str + "_Mean_Contrast_DH" + ".pdf"))
     plt.close()
-
     plot_contrast_curves(
-        FP_Intensities,
+        np.asarray(FP_Intensities),
         delta_raddii=3,
         numberofpix_per_loD=config["modelconfig"]["Science_sampling"],
         type_of_contrast='mean',
