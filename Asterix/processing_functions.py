@@ -454,3 +454,54 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
                                                  i] - pos_actuhalfactfromcenter + halfactfromcenter + center_pup
             pos_actu_in_pix[0, i] *= -1
     return pos_actu_in_pix
+
+
+
+
+def ft_subpixel_shift(image, xshift, yshift, fourier=False):
+    """
+    ft_subpixel_shift :
+    This function returns an image shifted by a non-integer amount via a
+    Fourier domain computation.
+
+    The IMAGE must be square and of even width.
+
+    (Based on subpixel_shift.pro from ONERA's IDL library by Laurent Mugnier)
+    Renamed into ft_subpixel_shift to be clear on its purpose by Johan Mazoyer
+
+    AUTHORS: L.Mugnier, M.Kourdourli
+
+    image (2D array) : (input) amount of desired shift in X direction.
+
+    xshift (float) : (input) amount of desired shift in X direction.
+
+    yshift (float) : (input) amount of desired shift in Y direction.
+
+    fourier (bool) : (optional input) if this keyword is "True", then the input
+               IMAGE is assumed to be already Fourier transformed, i.e. the input is FFT^-1(image).
+
+    return (2D array) : (output) shifted array with respect to the xshift and yshift used as input.
+    """
+    sz = np.shape(image)
+    NP = sz[0]
+    NL = sz[1]
+    if (NL != NP) or (NP % 2 != 0):
+        raise Exception("This routine require square input array of even width")
+    if fourier == True:
+        ft_image = image
+    else:
+        ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(image)))
+
+    x_ramp = np.outer(np.ones(NP), np.arange(NP) - NP / 2)
+    y_ramp = np.outer(np.arange(NP) - NP / 2, np.ones(NP))
+
+    # tilt describes the phase term in exp(i*phi) we will use to shift the image
+    # by multiplying in the Fourier space and convolving in the direct space
+
+    tilt = (-2 * np.pi / NP) * (xshift * x_ramp + yshift * y_ramp)
+    # shift -> exp(i*phi)
+    shift = np.cos(tilt) + 1j * np.sin(tilt)
+    # inverse FFT to go back to the real space
+    shifted_image = np.real(np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift))))
+
+    return shifted_image

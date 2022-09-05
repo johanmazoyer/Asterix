@@ -2001,28 +2001,27 @@ class deformable_mirror(Optical_System):
 
         # Fill an array with the influence functions of all actuators
         pushact3d = np.zeros((simu_grid.shape[1], dim_array, dim_array))
-        for i in np.arange(pushact3d.shape[0]):
-            if gausserror == 0:
-                Psivector = nd.interpolation.shift(
-                    actshapeinpupil,
-                    (simu_grid[1, i] + dim_array / 2 - xycenttmp +
-                     yerror * pitch_actshape, simu_grid[0, i] + dim_array / 2 -
-                     xycenttmp + xerror * pitch_actshape))
 
-                # Add an error on the orientation of the grid
-                if angerror != 0:
-                    Psivector = nd.rotate(Psivector,
-                                          angerror,
-                                          order=5,
-                                          cval=0,
-                                          reshape=False)[0:dim_array,
-                                                         0:dim_array]
-            else:
+        ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil)))
+
+        for i in np.arange(pushact3d.shape[0]):
+
+            Psivector = proc.ft_subpixel_shift(
+                ft_actu,
+                xshift= simu_grid[0, i] + dim_array / 2 - xycenttmp + xerror * pitch_actshape, 
+                yshift=simu_grid[1, i] + dim_array / 2 - xycenttmp + yerror * pitch_actshape, 
+                fourier=True)
+
+            # Add an error on the orientation of the grid
+            if angerror != 0:
+                Psivector = nd.rotate(Psivector,
+                                        angerror,
+                                        order=5,
+                                        cval=0,
+                                        reshape=False)[0:dim_array,
+                                                        0:dim_array]
+            if gausserror != 0:
                 # Add an error on the sizes of the influence functions
-                Psivector = nd.interpolation.shift(
-                    actshapeinpupil,
-                    (simu_grid[1, i] + dim_array / 2 - xycenttmp,
-                     simu_grid[0, i] + dim_array / 2 - xycenttmp))
 
                 xy0 = np.unravel_index(Psivector.argmax(), Psivector.shape)
                 x, y = np.mgrid[0:dim_array, 0:dim_array]
