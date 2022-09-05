@@ -107,7 +107,7 @@ def resizing(image, new):
 
     - v1.0 2020 A. Potier
     - v2.0 19/03/21 J Mazoyer clean names + if image is real, result is real.
-    - v3.0 05/2021 J Mazoyer Replacing currenly with standard pyhton function scipy.ndimage.zoom
+    - v3.0 05/2021 J Mazoyer Replacing currenly with standard scipy function zoom
     - v4.0 06/2022 J Mazoyer Replacing with the rebin and crop function following discussion with L. Mugnier
     - v5.0 08/2022 J Mazoyer Rename to resizing
 

@@ -5,7 +5,6 @@ import inspect
 import copy
 import time
 import numpy as np
-import scipy.ndimage as nd
 from astropy.io import fits
 import skimage.transform
 
@@ -1923,7 +1922,7 @@ class deformable_mirror(Optical_System):
         if DMconfig[self.Name_DM + "_Generic"] == False:
             #Measured positions for each actuator in pixel with (0,0) = center of pupil
             simu_grid = fits.getdata(model_dir + DMconfig[
-                self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix
+                self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix  + dim_array / 2
             # the DM pitchs are read in the header
             pitchDMX = fits.getheader(model_dir + DMconfig[
                 self.Name_DM + "_filename_grid_actu"])["PitchV"] * 1e-6
@@ -1936,7 +1935,7 @@ class deformable_mirror(Optical_System):
             pitchDM = DMconfig[self.Name_DM + "_pitch"]
             simu_grid = proc.generic_actuator_position(Nact1D, pitchDM,
                                                        diam_pup_in_m,
-                                                       diam_pup_in_pix)
+                                                       diam_pup_in_pix)  + dim_array / 2
             pitchDMX = pitchDMY = pitchDM
 
         # Influence function and the pitch in pixels
@@ -1976,20 +1975,18 @@ class deformable_mirror(Optical_System):
 
         for i in np.arange(pushact3d.shape[0]):
 
-            Psivector = proc.ft_subpixel_shift(
-                ft_actu,
-                xshift= simu_grid[1, i] + dim_array / 2 - xycenttmp + xerror * pitch_actshape, 
-                yshift=simu_grid[0, i] + dim_array / 2 - xycenttmp + yerror * pitch_actshape, 
-                fourier=True)
-
             # Add an error on the orientation of the grid
             if angerror != 0:
-                Psivector = nd.rotate(Psivector,
-                                        angerror,
-                                        order=5,
-                                        cval=0,
-                                        reshape=False)[0:dim_array,
-                                                        0:dim_array]
+                simu_grid[1, i] = simu_grid[1, i]*np.cos(np.radians(angerror)) - simu_grid[0, i]*np.sin(np.radians(angerror))
+                simu_grid[0, i] = simu_grid[1, i]*np.sin(np.radians(angerror)) + simu_grid[0, i]*np.cos(np.radians(angerror))
+                                  
+            Psivector = proc.ft_subpixel_shift(
+                ft_actu,
+                xshift= simu_grid[1, i] - xycenttmp + xerror * pitch_actshape, 
+                yshift=simu_grid[0, i] - xycenttmp + yerror * pitch_actshape, 
+                fourier=True)
+
+
             if gausserror != 0:
                 # Add an error on the sizes of the influence functions
 
