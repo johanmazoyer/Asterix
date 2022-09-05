@@ -54,7 +54,7 @@ def roundpupil(dim_pp, prad, no_pixel=False):
                                       dim_pp_small / dim_pp,
                                       preserve_range=True,
                                       anti_aliasing=True,
-                                      multichannel=False))
+                                      channel_axis=None))
 
     return pupilnormal
 
@@ -144,7 +144,6 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     return phase
 
 
-
 def SinCosBasis(Nact1D):
     """ --------------------------------------------------
     For a given number of actuator accross the DM, create coefficients for the sin/cos basis
@@ -196,9 +195,7 @@ def SinCosBasis(Nact1D):
             prop.mft(TFCoeffs[Coeff_SinCos],
                      Nact1D,
                      Nact1D,
-                     Nact1D,
-                     X_offset_input=-0.5,
-                     Y_offset_input=-0.5))
+                     Nact1D))
 
     if Nact1D % 2 == 1:
         # in the odd case the last one is a piston

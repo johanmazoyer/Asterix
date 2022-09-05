@@ -572,38 +572,108 @@ class Optical_System:
         ampl_slope = SIMUconfig["ampl_slope"]
 
         if set_amplitude_abb == True:
-            if ampl_abb_filename == 'Amplitudebanc_200pix_center4pixels' and set_random_ampl is False:
+            if set_random_ampl is False:
 
-                testbedampl_fits = fits.getdata(model_dir + ampl_abb_filename +
-                                                ".fits")
-                testbedampl_fits_right_size = skimage.transform.rescale(
-                    testbedampl_fits,
-                    2 * self.prad / testbedampl_fits.shape[0],
-                    preserve_range=True,
-                    anti_aliasing=True,
-                    multichannel=False)
+                if ampl_abb_filename == '':
+                    # in this case, the user does not want a random amplitude map but did not specified a name
+                    # we will create an amplitude map (if it does not exist) for these parameters, save it as .fits
+                    # and always use the same one in the future
 
-                return_ampl = proc.crop_or_pad_image(
-                    testbedampl_fits_right_size, self.dim_overpad_pupil)
+                    ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
+                        int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
+
+                    if os.path.isfile(Model_local_dir +
+                                      ampl_abb_filename) == True:
+                        return fits.getdata(Model_local_dir +
+                                            ampl_abb_filename)
+
+                    else:
+                        return_ampl = phase_ampl.random_phase_map(
+                            self.prad, self.dim_overpad_pupil, ampl_rms / 100,
+                            ampl_rhoc, ampl_slope)
+
+                        fits.writeto(Model_local_dir + ampl_abb_filename,
+                                     return_ampl,
+                                     overwrite=True)
+
+                        return return_ampl
+
+                else:
+                    # in this case, the user wants the THD2 amplitude aberration
+                    if ampl_abb_filename == 'Amplitude_THD2':
+                        testbedampl = fits.getdata(model_dir +
+                                                   ampl_abb_filename + '.fits')
+                        testbedampl_header = fits.getheader(model_dir +
+                                                            ampl_abb_filename +
+                                                            '.fits')
+                        # in this case we know it's already well centered
+
+                    else:
+                        # in this case, the user wants his own amplitude aberrations
+                        # the fits must be squared, with an even number of pixel and
+                        #  have centerX, centerY and RESPUP keyword in header.
+
+                        if not os.path.exists(ampl_abb_filename):
+                            # check existence
+                            print(
+                                "Specified amplitude file {0} does not exist.".
+                                format(ampl_abb_filename))
+                            print("")
+                            print("")
+                            raise
+                        else:
+                            print("Opening {0} file for testbed aberrations.".
+                                  format(ampl_abb_filename))
+                            print(
+                                "This file should have centerX, centerY and RESPUP keyword in header"
+                            )
+
+                        testbedampl = fits.getdata(ampl_abb_filename)
+                        testbedampl_header = fits.getheader(ampl_abb_filename)
+                        centerX = testbedampl_header["CENTERX"]
+                        centerY = testbedampl_header["CENTERX"]
+                        size_ampl = testbedampl.shape[0]
+
+                        # recenter
+                        if centerX != size_ampl // 2 - 1 / 2 or centerY != size_ampl // 2 - 1 / 2:
+                            testbedampl = nd.shift(
+                                testbedampl,
+                                (size_ampl // 2 - 1 / 2 - centerX,
+                                 size_ampl // 2 - 1 / 2 - centerY))
+
+                    # reshape at the good size
+                    res_pup = testbedampl_header["RESPUP"]
+                    testbedampl = proc.crop_or_pad_image(
+                        skimage.transform.rescale(
+                            testbedampl,
+                            res_pup / (self.diam_pup_in_m / (2 * self.prad)),
+                            preserve_range=True,
+                            anti_aliasing=True,
+                            channel_axis=None), self.dim_overpad_pupil)
+
+                    #Set the average to 0 inside entrancepupil
+                    pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil,
+                                                     self.prad)
+                    testbedampl = (testbedampl - np.mean(
+                        testbedampl[np.where(pup_here != 0)])) * pup_here
+                    testbedampl = testbedampl / np.std(
+                        testbedampl[np.where(pup_here == 1.)]) * 0.1
+                    return testbedampl
 
             else:
-                ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
                     int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
 
-                if set_random_ampl is False and os.path.isfile(
-                        Model_local_dir + ampl_abb_filename + ".fits") == True:
-                    return_ampl = fits.getdata(Model_local_dir +
-                                               ampl_abb_filename + ".fits")
-                else:
-                    return_ampl = phase_ampl.random_phase_map(
-                        self.prad, self.dim_overpad_pupil, ampl_rms / 100,
-                        ampl_rhoc, ampl_slope)
+                return_ampl = phase_ampl.random_phase_map(
+                    self.prad, self.dim_overpad_pupil, ampl_rms / 100,
+                    ampl_rhoc, ampl_slope)
 
-                    fits.writeto(Model_local_dir + ampl_abb_filename + ".fits",
-                                 return_ampl,
-                                 overwrite=True)
+                fits.writeto(Model_local_dir + ampl_abb_filename,
+                             return_ampl,
+                             overwrite=True)
 
-            return return_ampl
+                return return_ampl
+
         else:
             return 0.
 
@@ -697,8 +767,7 @@ class pupil(Optical_System):
     def __init__(self,
                  modelconfig,
                  prad=0.,
-                 PupType="",
-                 filename="",
+                 PupType=None,
                  angle_rotation=0,
                  Model_local_dir=None):
         """ --------------------------------------------------
@@ -719,14 +788,15 @@ class pupil(Optical_System):
             Default is the pupil radius in the parameter file (self.prad)
             radius in pixels of the round pupil.
 
-        PupType : string (default "RoundPup") 
-                Currently "RoundPup", "CleanPlane", "RomanPup", "RomanLyot")
+        PupType : string (default None) 
+            Currently known possiibilities are 
+            "RoundPup", "ClearPlane", "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2"
 
-        filename : string (default "")
-            name and directory of the .fits file
+            if not one of those , it will try a full path to a fits file given by the user:
+
             The pupil .fits files should be 2D and square with an even number of pix.
             with even number of pix and centered between 4 pixels.
-            The array size will be assumed to coorespond to the size of the entrance pupil 
+            The array size will be assumed to correspond to the size of the entrance pupil 
             and will be rescaled self.prad and then padded to self.dim_overpad_pupil
 
             This is a bit dangerous because your .fits file might must be defined
@@ -753,9 +823,9 @@ class pupil(Optical_System):
         if prad == 0:
             prad = self.prad
 
-        # known case, with known response
+        # known cases, with known responses
         # default case: round pupil
-        if (PupType == "") or (PupType == "RoundPup"):
+        if (PupType is None) or (PupType == "RoundPup"):
             self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
             angle_rotation = 0
             if isinstance(prad, int) or prad.is_integer():
@@ -771,12 +841,19 @@ class pupil(Optical_System):
             self.string_os += '_ClearPlane'
 
         else:
-
+            # In those cases, we are using a fits to create the pupil
+            # in these first cases, we use a known .fits with hardcoded file name
             if PupType == "RomanPup":
                 pup_fits = fits.getdata(
                     os.path.join(model_dir,
                                  "roman_pup_500pix_center4pixels.fits"))
                 self.string_os += '_RomanPup' + str(int(prad))
+
+            elif PupType == "RomanPupTHD2":
+                pup_fits = fits.getdata(
+                    os.path.join(model_dir,
+                                 "roman_pup_thd2_500pix_center4pixels.fits"))
+                self.string_os += '_RomanPupTHD2' + str(int(prad))
 
             elif PupType == "RomanLyot":
                 pup_fits = fits.getdata(
@@ -784,30 +861,45 @@ class pupil(Optical_System):
                                  "roman_lyot_500pix_center4pixels.fits"))
                 self.string_os += '_RomanLyot'
 
-            elif filename != "":
-                PupType == filename
+            elif PupType == "RomanLyotTHD2":
+                pup_fits = fits.getdata(
+                    os.path.join(model_dir,
+                                 "roman_lyot_thd2_500pix_center4pixels.fits"))
+                self.string_os += '_RomanLyotTHD2'
+
+            # finally in this last case, we use an unknown .fits defined by user
+            else:
+                if not os.path.exists(PupType):
+
+                    print("""
+                            filename_instr_XXX parameters must either be a known keyword 
+                            'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' , 'RomanPupTHD2', 'THD2',
+                            or an exisiting full path .fits name. This is not the case here,
+                            the name  '{0}' is not a known keyword and is not an existing filename
+                            """.format(PupType))
+                    print("")
+                    print("")
+                    raise
+
+                # this is an existing fits file
                 # we start by a bunch of tests to check
                 # that pupil has a certain acceptable form.
                 # print("we load the pupil: " + filename)
                 # print("we assume it is centered in its array")
-                pup_fits = fits.getdata(filename)
+                pup_fits = fits.getdata(PupType)
 
                 if len(pup_fits.shape) != 2:
-                    raise Exception("file " + filename +
+                    raise Exception("file " + PupType +
                                     " should be a 2D array")
 
                 if pup_fits.shape[0] != pup_fits.shape[1]:
-                    raise Exception("file " + filename +
+                    raise Exception("file " + PupType +
                                     " appears to be not square")
 
                 self.string_os += '_Fits'
 
-            else:  # no filename and no known pupil, raise error
-                raise Exception(
-                    "this is not a known 'PupType', 'RoundPup', 'Clear', 'RomanPup', 'RomanLyot'"
-                )
-
-            if pup_fits.shape[0] == self.prad:
+            # we have the fits, we now rescale to good size
+            if pup_fits.shape[0] == 2 * self.prad:
                 pup_fits_right_size = pup_fits
             else:
                 #Rescale to the pupil size
@@ -816,7 +908,7 @@ class pupil(Optical_System):
                     2 * self.prad / pup_fits.shape[0],
                     preserve_range=True,
                     anti_aliasing=True,
-                    multichannel=False)
+                    channel_axis=None)
 
             self.pup = proc.crop_or_pad_image(pup_fits_right_size,
                                               self.dim_overpad_pupil)
@@ -950,23 +1042,11 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        if coroconfig["filename_instr_apod"] in [
-                "Clear", "RoundPup", "RomanPup"
-        ]:
-            self.apod_pup = pupil(
-                modelconfig,
-                prad=self.prad,
-                PupType=coroconfig["filename_instr_apod"],
-                angle_rotation=coroconfig['apod_pup_rotation'],
-                Model_local_dir=Model_local_dir)
-
-        else:
-            self.apod_pup = pupil(
-                modelconfig,
-                prad=self.prad,
-                filename=coroconfig["filename_instr_apod"],
-                angle_rotation=coroconfig['apod_pup_rotation'],
-                Model_local_dir=Model_local_dir)
+        self.apod_pup = pupil(modelconfig,
+                              prad=self.prad,
+                              PupType=coroconfig["filename_instr_apod"],
+                              angle_rotation=coroconfig['apod_pup_rotation'],
+                              Model_local_dir=Model_local_dir)
 
         self.string_os += '_Apod' + self.apod_pup.string_os
 
@@ -976,10 +1056,11 @@ class coronagraph(Optical_System):
         self.string_os += '_' + self.corona_type
 
         # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
+        self.corono_fpm_sampling = self.Science_sampling
         self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
         for i, wav in enumerate(self.wav_vec):
             self.dim_fp_fft[i] = int(
-                np.ceil(self.prad * self.Science_sampling * self.wavelength_0 /
+                np.ceil(self.prad * self.corono_fpm_sampling * self.wavelength_0 /
                         wav)) * 2
             # we take the ceil to be sure that we measure at least the good resolution
             # We do not need to be exact, the mft in science_focal_plane will be
@@ -1037,39 +1118,43 @@ class coronagraph(Optical_System):
         else:
             raise Exception("this coronagrpah mode does not exists yet")
 
-        if coroconfig["filename_instr_lyot"] in [
-                "Clear", "RoundPup", "RomanLyot"
-        ]:
-            self.lyot_pup = pupil(
-                modelconfig,
-                prad=self.prad * coroconfig["diam_lyot_in_m"] /
-                self.diam_pup_in_m,
-                PupType=coroconfig["filename_instr_lyot"],
-                angle_rotation=coroconfig['lyot_pup_rotation'],
-                Model_local_dir=Model_local_dir)
-
-        else:
-            self.lyot_pup = pupil(
-                modelconfig,
-                filename=coroconfig["filename_instr_lyot"],
-                angle_rotation=coroconfig['lyot_pup_rotation'],
-                Model_local_dir=Model_local_dir)
+        self.lyot_pup = pupil(modelconfig,
+                              prad=self.prad * coroconfig["diam_lyot_in_m"] /
+                              self.diam_pup_in_m,
+                              PupType=coroconfig["filename_instr_lyot"],
+                              angle_rotation=coroconfig['lyot_pup_rotation'],
+                              Model_local_dir=Model_local_dir)
 
         self.string_os += '_LS' + self.lyot_pup.string_os
 
+        if "bool_overwrite_perfect_coro" in coroconfig:
+            if coroconfig["bool_overwrite_perfect_coro"] is True:
+                self.perfect_coro = True
+            if coroconfig["bool_overwrite_perfect_coro"] is False:
+                self.perfect_coro = False
+
         if self.perfect_coro == True:
 
-            # We need a round pupil only to measure the response
-            # of the coronograph to a round pupil to remove it
-            # THIS IS NOT THE ENTRANCE PUPIL,
-            # this is a round pupil of the same size
-            roundpup = pupil(modelconfig, prad=self.prad)
-
-            # do a propagation once with self.perfect_Lyot_pupil = 0 to
-            # measure the Lyot pupil that will be removed after
-            self.perfect_Lyot_pupil = 0
-            self.perfect_Lyot_pupil = self.EF_through(
-                entrance_EF=roundpup.EF_through())
+            if coroconfig["filename_instr_lyot"] == "Clear" : 
+                # We need a round pupil only to measure the response
+                # of the coronograph to a round pupil to remove it
+                # THIS IS NOT THE ENTRANCE PUPIL,
+                # this is a round pupil of the same size
+                pup_for_perfect_coro = pupil(modelconfig, prad=self.prad)
+                
+                # do a propagation once with self.perfect_Lyot_pupil = 0 to
+                # measure the Lyot pupil that will be removed after
+                self.perfect_Lyot_pupil = [0]*self.nb_wav
+                for i, wave_here in enumerate(self.wav_vec):
+                    self.perfect_Lyot_pupil[i] = self.EF_through(
+                        entrance_EF=pup_for_perfect_coro.EF_through(wavelength=wave_here), wavelength=wave_here)
+            else:
+                # In this case we have an coronagrpah entrance pupil
+                # do a propagation once with self.perfect_Lyot_pupil = 0 to
+                # measure the Lyot pupil that will be removed after
+                self.perfect_Lyot_pupil = [0]*self.nb_wav
+                for i, wave_here in enumerate(self.wav_vec):
+                    self.perfect_Lyot_pupil[i] = self.EF_through(wavelength=wave_here)
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
@@ -1165,7 +1250,7 @@ class coronagraph(Optical_System):
                 wavelength)]
             input_wavefront_after_apod_pad = proc.crop_or_pad_image(
                 input_wavefront_after_apod, dim_fp_fft_here)
-            
+
             # Phase ramp to center focal plane between 4 pixels
             # TODO This could be done in the FQPM function and save in the self to save time
             maskshifthalfpix = phase_ampl.shift_phase_ramp(
@@ -1190,24 +1275,31 @@ class coronagraph(Optical_System):
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane)
+                                          np.fft.fftshift(corono_focal_plane))
+                
+                name_plane = 'PSF EF_FP_before_FPM' + '_wl{}'.format(
+                    int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                          np.fft.fftshift(np.abs(corono_focal_plane)**2))
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            FPmsk)
+                                              FPmsk)
 
-                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPMphase' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.angle(FPmsk))
-                    
-                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                                              np.angle(FPmsk))
+
+                    name_plane = 'FPMmod' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.abs(FPmsk))
+                                              np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane * FPmsk)
+                                          np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = np.fft.fftshift(
@@ -1233,15 +1325,17 @@ class coronagraph(Optical_System):
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            FPmsk)
-                    
-                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                                              FPmsk)
+
+                    name_plane = 'FPMphase' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.angle(FPmsk))
-                    
-                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                                              np.angle(FPmsk))
+
+                    name_plane = 'FPMmod' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.abs(FPmsk))
+                                              np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
@@ -1286,14 +1380,16 @@ class coronagraph(Optical_System):
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                               FPmsk)
-                    
-                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+
+                    name_plane = 'FPMphase' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.angle(FPmsk))
-                    
-                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                                              np.angle(FPmsk))
+
+                    name_plane = 'FPMmod' + '_wl{}'.format(
+                        int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                            np.abs(FPmsk))
+                                              np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
                     int(wavelength * 1e9))
@@ -1333,7 +1429,7 @@ class coronagraph(Optical_System):
             entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
 
         if (self.perfect_coro == True) & (noFPM == False):
-            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil
+            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(wavelength)]
 
         if save_all_planes_to_fits == True:
             name_plane = 'LS' + '_wl{}'.format(int(wavelength * 1e9))
@@ -1428,8 +1524,10 @@ class coronagraph(Optical_System):
             maxdimension_array_fpm = self.dimScience
 
         xx, yy = np.meshgrid(
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1/2,
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1/2)
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 +
+            1 / 2,
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 +
+            1 / 2)
 
         phase_vortex = vortex_charge * np.angle(xx + 1j * yy)
 
@@ -1440,7 +1538,9 @@ class coronagraph(Optical_System):
             else:
                 dim_fp = self.dimScience
 
-            phasevortex_cut = proc.crop_or_pad_image(phase_vortex, dim_fp)
+            phasevortex_cut = proc.crop_or_pad_image(
+                phase_vortex,
+                dim_fp)  #*phase_ampl.roundpupil(dim_fp, dim_fp/2)
             vortex.append(np.exp(1j * phasevortex_cut))
 
         return vortex
@@ -1820,7 +1920,6 @@ class deformable_mirror(Optical_System):
         diam_pup_in_m = self.diam_pup_in_m
         dim_array = self.dim_overpad_pupil
 
-        pitchDM = DMconfig[self.Name_DM + "_pitch"]
         filename_actu_infl_fct = DMconfig[self.Name_DM +
                                           "_filename_actu_infl_fct"]
 
@@ -1828,12 +1927,20 @@ class deformable_mirror(Optical_System):
             #Measured positions for each actuator in pixel with (0,0) = center of pupil
             simu_grid = fits.getdata(model_dir + DMconfig[
                 self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix
+            # the DM pitchs are read in the header
+            pitchDMX = fits.getheader(model_dir + DMconfig[
+                self.Name_DM + "_filename_grid_actu"])["PitchV"] * 1e-6
+            pitchDMY = fits.getheader(model_dir + DMconfig[
+                self.Name_DM + "_filename_grid_actu"])["PitchH"] * 1e-6
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
+            # the pitch is read in the parameter file
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
+            pitchDM = DMconfig[self.Name_DM + "_pitch"]
             simu_grid = proc.generic_actuator_position(Nact1D, pitchDM,
                                                        diam_pup_in_m,
                                                        diam_pup_in_pix)
+            pitchDMX = pitchDMY = pitchDM
 
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
@@ -1842,15 +1949,29 @@ class deformable_mirror(Optical_System):
 
         # Scaling the influence function to the desired dimension
         # for numerical simulation
-        # can be replace by nd.zoom
         # or by a fft rescale (have to be coded by ourselves probably)
         resizeactshape = skimage.transform.rescale(
             actshape,
-            diam_pup_in_pix / diam_pup_in_m * pitchDM / pitch_actshape,
+            (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape,
+             diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape),
             order=1,
             preserve_range=True,
             anti_aliasing=True,
-            multichannel=False)
+            channel_axis=None)
+
+        if DMconfig[self.Name_DM + "_Generic"] == False:
+            # In this case we might have a different number of pixels in x and y direction,
+            # so we "square" the reshape act
+            maxdimresizeactshape = np.max(resizeactshape.shape)
+            im_out = np.zeros((maxdimresizeactshape, maxdimresizeactshape))
+            im_out[
+                int((maxdimresizeactshape - resizeactshape.shape[0]) /
+                    2):int((maxdimresizeactshape + resizeactshape.shape[0]) /
+                           2),
+                int((maxdimresizeactshape - resizeactshape.shape[1]) /
+                    2):int((maxdimresizeactshape + resizeactshape.shape[1]) /
+                           2)] = resizeactshape
+            resizeactshape = im_out
 
         # Gauss2Dfit for centering the rescaled influence function
         # not sure why is this useful. We should be able to know where is the center
@@ -1866,7 +1987,7 @@ class deformable_mirror(Optical_System):
         resizeactshape = nd.interpolation.shift(resizeactshape,
                                                 (xycent - dx, xycent - dy))
 
-        # Put the centered influence function inside an array (2*prad x 2*prad)
+        # Put the centered influence function inside an array (self.dim_overpad_pupil x self.dim_overpad_pupil)
         actshapeinpupil = np.zeros((dim_array, dim_array))
         if len(resizeactshape) < dim_array:
             actshapeinpupil[0:len(resizeactshape),

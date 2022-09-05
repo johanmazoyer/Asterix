@@ -9,7 +9,8 @@ import Asterix.Optical_System_functions as OptSy
 from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
-from Asterix.correction_loop import CorrectionLoop, Save_loop_results
+from Asterix.correction_loop import CorrectionLoop
+from Asterix.save_results import Save_loop_results
 
 #######################################################
 #######################################################
@@ -47,12 +48,20 @@ def runthd2(parameter_file,
         NewEstimationconfig: dict
         NewCorrectionconfig: dict
         NewSIMUconfig: dict
-
+            Can be used to directly change a parameter if needed, outside of the param file    
         
         -------------------------------------------------- """
 
     ### CONFIGURATION FILE
-    config = useful.read_parameter_file(parameter_file)
+    config = useful.read_parameter_file(
+        parameter_file,
+        NewMODELconfig=NewMODELconfig,
+        NewDMconfig=NewDMconfig,
+        NewCoronaconfig=NewCoronaconfig,
+        NewEstimationconfig=NewEstimationconfig,
+        NewCorrectionconfig=NewCorrectionconfig,
+        NewLoopconfig=NewLoopconfig,
+        NewSIMUconfig=NewSIMUconfig)
 
     ### CONFIG
     Data_dir = config["Data_dir"]
@@ -61,32 +70,24 @@ def runthd2(parameter_file,
 
     ### MODEL CONFIG
     modelconfig = config["modelconfig"]
-    modelconfig.update(NewMODELconfig)
 
     ### DM CONFIG
     DMconfig = config["DMconfig"]
-    DMconfig.update(NewDMconfig)
 
     ### coronagraph CONFIG
     Coronaconfig = config["Coronaconfig"]
-    Coronaconfig.update(NewCoronaconfig)
 
     ### Estimation CONFIG
     Estimationconfig = config["Estimationconfig"]
-    Estimationconfig.update(NewEstimationconfig)
 
     ### Correction CONFIG
     Correctionconfig = config["Correctionconfig"]
-    Correctionconfig.update(NewCorrectionconfig)
 
     ### Loop CONFIG
     Loopconfig = config["Loopconfig"]
-    Loopconfig.update(NewLoopconfig)
 
     ###SIMU CONFIG
     SIMUconfig = config["SIMUconfig"]
-    SIMUconfig.update(NewSIMUconfig)
-
     Name_Experiment = SIMUconfig["Name_Experiment"]
 
     ##############################################################################
@@ -100,7 +101,7 @@ def runthd2(parameter_file,
     Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
     # Initialize thd:
-    pup_round = OptSy.pupil(
+    entrance_pupil = OptSy.pupil(
         modelconfig,
         PupType=modelconfig['filename_instr_pup'],
         angle_rotation=modelconfig['entrance_pup_rotation'],
@@ -120,7 +121,7 @@ def runthd2(parameter_file,
                                Coronaconfig,
                                Model_local_dir=Model_local_dir)
     # and then just concatenate
-    thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono],
+    thd2 = OptSy.Testbed([entrance_pupil, DM1, DM3, corono],
                          ["entrancepupil", "DM1", "DM3", "corono"])
 
     # The following line can be used to change the DM to make the PW probe,
@@ -185,4 +186,5 @@ def runthd2(parameter_file,
         initial_DM_voltage=0,
         silence=False)
 
-    Save_loop_results(Resultats_correction_loop, config, thd2, result_dir)
+    Save_loop_results(Resultats_correction_loop, config, thd2, MaskScience,
+                      result_dir)

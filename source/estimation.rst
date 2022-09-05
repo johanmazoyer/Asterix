@@ -15,8 +15,7 @@ It contains 2 functions at least:
         - DM voltages
 
 It returns the estimation as a 2D complex array. The size in pixel of the output is 
-set by the ``Estim_sampling`` parameter and therefore depends on the parameters ``dimScience`` 
-and ``Science_sampling``.
+set by the ``Estim_bin_factor`` parameter and is ``dimScience`` / ``Estim_bin_factor``.
 
 .. code-block:: python
 
@@ -74,19 +73,19 @@ this estimation can be also done wihtout initialization or if another estimation
     # re-initializing the estimator
 
 The perfect estimation is exactly equivalent to propagate the light throught the testbed and then
-rescale to the ``Estim_sampling``: 
+resized to the ``Estim_sampling``: 
 
 .. code-block:: python
 
     import Asterix.processing_functions as proc
     # testbed is previously defined
 
-    resultatestimation = proc.resampling(testbed.todetector(voltage_vector=init_voltage,
+    resultatestimation = proc.resizing(testbed.todetector(voltage_vector=init_voltage,
                                     entrance_EF=input_wavefront),myestim.dimEstim) 
 
 
 All estimators are done this way (first obtains images in the focal plane at the ``Science_sampling`` and 
-then resampling) to ensure that the behavior is equivalent to waht would be done on a real testbed
+then resizing) to ensure that the behavior is equivalent to waht would be done on a real testbed
 
 Pair Wise Estimation
 +++++++++++++++++++++++

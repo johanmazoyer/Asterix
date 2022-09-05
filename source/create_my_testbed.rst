@@ -8,12 +8,12 @@ Optical System
 
 Asterix have been thought from the beginning to be able to easily adapt to new configurations of the testbed 
 wihtout major changes. This modularity is based on the ``Asterix.Optical_System_functions.Optical_System`` class.
-An Optical_System is a part of the testbed which stars and ends in a pupil plane, which allows them to be easily 
+An Optical_System is a part of the testbed which starts and ends in a pupil plane, which allows them to be easily 
 concatenated. To be able to be well concatenated, they must all be using the same general parameters (physical 
 and numerical parameters). These parameters are stored in the first part of the parameter file, common to 
 all ``Optical_System``: [modelconfig]. 
 Among those parameters, you have the size in pixels of all pupils. This is the size of the entrance pupil, which
-will set up all other dimensions. The pupil planes is slightly overpadded compared to this radius because 
+will set up all other dimensions. The pupil planes are overpadded compared to this pupil size because 
 some ``Optical_System`` require it. By convention, all pupil planes are centered bewteen the 4 central pixels. 
 
 
@@ -110,10 +110,10 @@ Some specific aperture types are defined that you can access using the keyword `
 
     pup_roman = OptSy.pupil(modelconfig, PupType = "RomanPup")
 
-Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plane), "RomanPup", "RomanLyot".
+Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plane), "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2".
 
-You can finally defined your own pupils from a .fits using the keyword ``filename``. In this case, you have to 
-manually set up the pupil prad, by definition, it will assume the same size as entrance pupil in the parameter file. 
+You can finally defined your own pupils from a .fits using the same keyword if you put a full path. In this case, it will assume the same size as 
+entrance pupil define in the parameter file. 
 The keyword "diam_lyot_in_m" is only used in the case of a round Lyot Stop ("RoundPup") and is not use to scale the .fits files aperture
 
 The pupil in the .fits file are automatically rescaled at prad using skimage.transform.rescale. This rescale was prefered 
@@ -173,12 +173,12 @@ of a deformable mirror (DM) system.
                                     Name_DM='DM1',
                                     Model_local_dir=Model_local_dir)
 
-You need to provide the influence function .fits file, the DM pitch ``DM_pitch`` in meters and the distance compared to the pupil plane ``DM1_z_position``
-In the case of a generic DM (``DM1_Generic = True``), we need only one more parameter to define the DM: the number of actuator ``N_act1D`` in one of its principal direction.
-We need ``N_act1D`` > ``diam_pup_in_m`` / ``DM_pitch``, so that the DM is larger than the pupil.
+You need to provide the influence function .fits file and the distance compared to the pupil plane ``DM1_z_position``
+In the case of a generic DM (``DM1_Generic = True``), we need only two more parameter to define the DM: the DM pitch ``DM_pitch`` in meters and the number of actuator ``N_act1D`` in one of its principal direction.
+We need ``N_act1D`` > ``diam_pup_in_m`` / ``DM_pitch``, so that the DM is larger than the pupil. For now we assume that DM_pitch is the same in both direction.
 The DM will then be automatically defined as squared with ``N_act1DxN_act1D`` actuators and the puil centered on this DM.
 We can also create a specific DM for a given testbed with a file with the relative position of actuators in the pupil
-and the position of one of them compared to the pupil.
+and the position of one of them compared to the pupil. This file must have vertical and horizonthal pitch ("PitchV","PitchH") in the header to define the pitch.
 
 Out of the pupil plane DMs are simulated by taking a Angular-Spectrum transform, multiply by the DM phase, and then coming back to a pupil plane. 
 Because we are only in close range, this is more accurate than Fresnel propogation.

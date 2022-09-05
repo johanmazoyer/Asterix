@@ -86,18 +86,15 @@ class Estimator:
 
         self.technique = Estimationconfig["estimation"].lower()
 
-        self.Estim_sampling = Estimationconfig["Estim_sampling"]
+        self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
+
+        if self.Estim_sampling < 3:
+            raise Exception("Estim_sampling must be > 3, please decrease Estim_bin_factor parameter") 
 
         #image size after binning. This is the size of the estimation !
-        # we round and make it so we're always even size
-        self.dimEstim = int(round(self.Estim_sampling / testbed.Science_sampling *
-                            testbed.dimScience / 2) * 2)
-
-        # now that we have fixed dimEstim, to a even integer value,
-        # we modify Estim_sampling so that we have exactly 
-        # dimEstim / Estim_sampling = dimScience / Science_sampling
-        self.Estim_sampling = testbed.Science_sampling / testbed.dimScience * self.dimEstim
-        
+        # we round and make it so we're always even size and slightly smaller than the ideal size
+        self.dimEstim = int(np.floor(self.Estim_sampling / testbed.Science_sampling *
+                  testbed.dimScience / 2) * 2)
 
         if self.technique == "perfect":
             self.is_focal_plane = True
@@ -108,7 +105,7 @@ class Estimator:
             self.is_complex = True
 
             self.amplitudePW = Estimationconfig["amplitudePW"]
-            self.posprobes = [int(i) for i in Estimationconfig["posprobes"]]
+            self.posprobes = [i for i in Estimationconfig["posprobes"]]
             cutsvdPW = Estimationconfig["cut"]
 
             if hasattr(testbed, 'name_DM_to_probe_in_PW'):
@@ -277,7 +274,7 @@ class Estimator:
                 wavelength=wavelength,
                 **kwargs)
 
-            return proc.resampling(resultatestimation, self.dimEstim)
+            return proc.resizing(resultatestimation, self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
             Difference = wsc.createdifference(entrance_EF,
