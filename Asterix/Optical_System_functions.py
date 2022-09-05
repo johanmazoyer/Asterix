@@ -1984,8 +1984,7 @@ class deformable_mirror(Optical_System):
         # can be replaced by Fourrier shift
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.fourier_shift.html
         # To test
-        resizeactshape = nd.interpolation.shift(resizeactshape,
-                                                (xycent - dx, xycent - dy))
+        resizeactshape = proc.ft_subpixel_shift(resizeactshape, xshift =xycent - dy , yshift=xycent - dx)
 
         # Put the centered influence function inside an array (self.dim_overpad_pupil x self.dim_overpad_pupil)
         actshapeinpupil = np.zeros((dim_array, dim_array))
