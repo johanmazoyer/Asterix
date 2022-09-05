@@ -1946,15 +1946,10 @@ class deformable_mirror(Optical_System):
 
         # Scaling the influence function to the desired dimension
         # for numerical simulation
-        # or by a fft rescale (have to be coded by ourselves probably)
-        resizeactshape = skimage.transform.rescale(
-            actshape,
-            (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape,
-             diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape),
-            order=1,
-            preserve_range=True,
-            anti_aliasing=True,
-            channel_axis=None)
+        resizeactshape = proc.ft_zoom_out(actshape,(diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape,
+             diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape))
+
+
 
         # make sure the actuator shape is in a squarre array of enven dimension (useful for the fft shift). 
         # We do not care exactly about the centering since we recenter the actuator just after

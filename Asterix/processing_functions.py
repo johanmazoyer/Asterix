@@ -474,7 +474,7 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image = Fals
     05/09/2022 : Introduction in asterix. Kourdourli version
     05/09/2022 : add complex_array param Mazoyer
 
-    image (2D array) : (input) amount of desired shift in X direction.
+    image (2D array) : (input) intial image. must be square and of even width.
 
     xshift (float) : (input) amount of desired shift in X direction.
 
@@ -516,3 +516,121 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image = Fals
         shifted_image = np.real(shifted_image)
 
     return shifted_image
+
+def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_size):
+    """
+    This function returns the best sizes (best_size_large, best_size_small) so that
+    best_size_small / init_size_large are closest to factor_zoomout with 
+    best_size_small and init_size_large even integers
+
+    AUTHORS: J Mazoyer
+
+    05/09/2022 : Introduction in asterix
+
+    init_size_large : inital size
+
+    factor_dezoom (float) : (input) amount of desired to be zoomed out factor_dezoom<1
+
+    max_allowed_fft_size (float) : (optional input) : the maximum size
+
+    return two int number
+        best_size_large, best_size_small
+    """
+    best_size_large = init_size_large
+    best_size_small = int(np.round(factor_zoomout*best_size_large))
+    close_to_integer = np.abs(factor_zoomout*best_size_large - best_size_small)
+
+    # we try to find the best size to padd our array so that new_size*factor_zoomout is a integer
+    # we want at least 2 times the size of the initial array
+    # we want the initial and final size to be even 
+    for i in range(max_allowed_fft_size//2 - init_size_large//2):
+            size_here = factor_zoomout*(init_size_large + 2*i)
+            
+            if np.abs(size_here - np.round(size_here)) == 0 and int(size_here) % 2 == 0:
+                # we have a perfect size !
+                best_size_large = int(init_size_large + 2*i)
+                best_size_small = int(factor_zoomout*best_size_large)
+                break
+
+            if np.abs(size_here - np.round(size_here)) < close_to_integer and int(size_here) % 2 == 0 :
+                # new best size
+                close_to_integer = np.abs(size_here - np.round(size_here))
+                best_size_large = int(init_size_large + 2*i)
+                best_size_small = int(factor_zoomout*best_size_large)
+    
+    return best_size_large, best_size_small
+
+def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_size = 2000):
+    """
+    This function returns an image zoom out images Fourier domain computation. The array is padded
+    until max_allowed_fft_size and takes the best size so that factor_zoomout*size_padded is the closest 
+    to an integer
+
+    AUTHORS: J Mazoyer
+
+    05/09/2022 : Introduction in asterix
+
+    image (2D array) : (input) intial image. Must be square 
+
+    factor_dezoom (float) : (input) amount of desired to be zoomed out factor_dezoom<1
+    
+    complex_image (bool) : (optional input) if this keyword is "False", then the output array will be
+                            assumed to be real. If you want to shift an complex array, use complex_image = True
+
+    max_allowed_fft_size (float) : (optional input) : the maximum size of the first fft. If you increase, you might find 
+                                                        a better match but it might take longer
+
+    return (2D array) : (output) zoomed out array
+    """
+    sz = np.shape(image)
+    NP = sz[0]
+    NL = sz[1]
+    
+    if NL == NP and isinstance(factor_zoomout, (float, int)):
+        # in that case we have the exact same size before and after in both directions
+        best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout, max_allowed_fft_size)
+        best_size_largey = best_size_largex
+        best_size_smally = best_size_smallx
+        factor_zoomoutx = factor_zoomouty = factor_zoomout
+    else:
+        if isinstance(factor_zoomout, (float, int)):
+            # differnt size initially but same factor
+            best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout, max_allowed_fft_size)
+            best_size_largey, best_size_smally = find_sizes_closest2factor(2*NL, factor_zoomout, max_allowed_fft_size)
+            factor_zoomoutx = factor_zoomouty = factor_zoomout
+        else:
+            # different factor
+            best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout[0], max_allowed_fft_size)
+            best_size_largey, best_size_smally = find_sizes_closest2factor(2*NL, factor_zoomout[1], max_allowed_fft_size)
+            factor_zoomoutx = factor_zoomout[0]
+            factor_zoomouty = factor_zoomout[1]
+    
+        # print(2*NP,factor_zoomoutx, best_size_largex, best_size_smallx, (best_size_smallx - factor_zoomoutx*best_size_largex)/best_size_smallx*100 )   
+        # print(2*NL,factor_zoomouty, best_size_largey, best_size_smally, (best_size_smally - factor_zoomouty*best_size_largey)/best_size_smally*100 ) 
+
+    new_image = np.zeros((best_size_largex, best_size_largey), dtype=image.dtype)
+    new_image[int((best_size_largex - image.shape[0]) /
+                2):int((best_size_largex + image.shape[0]) / 2),
+            int((best_size_largey - image.shape[1]) /
+                2):int((best_size_largey + image.shape[1]) / 2)] = image
+
+    ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(new_image)))
+    
+    ft_image_cropped = ft_image[int((ft_image.shape[0] - best_size_smallx) /
+                           2):int((ft_image.shape[0] + best_size_smallx) / 2),
+                       int((ft_image.shape[1] - best_size_smally) /
+                           2):int((ft_image.shape[1] + best_size_smally) / 2)]
+
+
+    smaller_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image_cropped)))
+
+    smaller_image_cropped = smaller_image[int((smaller_image.shape[0] - int(np.ceil(factor_zoomoutx*NP))) /
+                           2):int((smaller_image.shape[0] + int(np.ceil(factor_zoomoutx*NP))) / 2),
+                       int((smaller_image.shape[1] - int(np.ceil(factor_zoomouty*NL))) /
+                           2):int((smaller_image.shape[1] + int(np.ceil(factor_zoomouty*NL))) / 2)]
+
+    # if the initial data is real, we take the real part
+    if complex_image is False:
+        smaller_image_cropped = np.real(smaller_image_cropped)
+
+    return smaller_image_cropped
