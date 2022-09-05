@@ -636,10 +636,7 @@ class Optical_System:
 
                         # recenter
                         if centerX != size_ampl // 2 - 1 / 2 or centerY != size_ampl // 2 - 1 / 2:
-                            testbedampl = nd.shift(
-                                testbedampl,
-                                (size_ampl // 2 - 1 / 2 - centerX,
-                                 size_ampl // 2 - 1 / 2 - centerY))
+                            testbedampl = proc.ft_subpixel_shift(testbedampl, xshift=size_ampl // 2 - 1 / 2 - centerX, yshift = size_ampl // 2 - 1 / 2 - centerY)
 
                     # reshape at the good size
                     res_pup = testbedampl_header["RESPUP"]
