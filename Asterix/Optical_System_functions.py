@@ -1950,7 +1950,6 @@ class deformable_mirror(Optical_System):
              diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape))
 
 
-
         # make sure the actuator shape is in a squarre array of enven dimension (useful for the fft shift). 
         # We do not care exactly about the centering since we recenter the actuator just after
         dim_even = int(np.ceil(np.max(resizeactshape.shape)/2  + 1))*2
@@ -1958,8 +1957,8 @@ class deformable_mirror(Optical_System):
 
         # Gauss2Dfit for centering the rescaled influence function
         Gaussian_fit_param = proc.gauss2Dfit(resizeactshape)
-        dy = Gaussian_fit_param[3]
-        dx = Gaussian_fit_param[4]
+        dx = Gaussian_fit_param[3]
+        dy = Gaussian_fit_param[4]
         xycent = len(resizeactshape) / 2
 
         # Center the actuator shape on a pixel and normalize 
@@ -1979,8 +1978,8 @@ class deformable_mirror(Optical_System):
 
             Psivector = proc.ft_subpixel_shift(
                 ft_actu,
-                xshift= simu_grid[0, i] + dim_array / 2 - xycenttmp + xerror * pitch_actshape, 
-                yshift=simu_grid[1, i] + dim_array / 2 - xycenttmp + yerror * pitch_actshape, 
+                xshift= simu_grid[1, i] + dim_array / 2 - xycenttmp + xerror * pitch_actshape, 
+                yshift=simu_grid[0, i] + dim_array / 2 - xycenttmp + yerror * pitch_actshape, 
                 fourier=True)
 
             # Add an error on the orientation of the grid

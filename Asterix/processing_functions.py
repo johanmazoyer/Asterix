@@ -473,6 +473,7 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image = Fals
 
     05/09/2022 : Introduction in asterix. Kourdourli version
     05/09/2022 : add complex_array param Mazoyer
+    05/09/2022 : we invert xshift and yshift to be in agreement with np.roll (integer shift in numpy) Mazoyer
 
     image (2D array) : (input) intial image. must be square and of even width.
 
@@ -499,8 +500,8 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image = Fals
     else:
         ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(image)))
 
-    x_ramp = np.outer(np.ones(NP), np.arange(NP) - NP / 2)
-    y_ramp = np.outer(np.arange(NP) - NP / 2, np.ones(NP))
+    x_ramp = np.outer(np.arange(NP) - NP / 2, np.ones(NP))
+    y_ramp = np.outer(np.ones(NP), np.arange(NP) - NP / 2)
 
     # tilt describes the phase term in exp(i*phi) we will use to shift the image
     # by multiplying in the Fourier space and convolving in the direct space
