@@ -458,7 +458,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
 
 
 
-def ft_subpixel_shift(image, xshift, yshift, fourier=False):
+def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image = False):
     """
     ft_subpixel_shift :
     This function returns an image shifted by a non-integer amount via a
@@ -471,6 +471,9 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False):
 
     AUTHORS: L.Mugnier, M.Kourdourli
 
+    05/09/2022 : Introduction in asterix. Kourdourli version
+    05/09/2022 : add complex_array param Mazoyer
+
     image (2D array) : (input) amount of desired shift in X direction.
 
     xshift (float) : (input) amount of desired shift in X direction.
@@ -479,6 +482,10 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False):
 
     fourier (bool) : (optional input) if this keyword is "True", then the input
                IMAGE is assumed to be already Fourier transformed, i.e. the input is FFT^-1(image).
+    
+    complex_image (bool) : (optional input) if this keyword is "False", then the output array will be
+                            assumed to be real. If you want to shift an complex array, use complex_image = True
+               
 
     return (2D array) : (output) shifted array with respect to the xshift and yshift used as input.
     """
@@ -501,7 +508,11 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False):
     tilt = (-2 * np.pi / NP) * (xshift * x_ramp + yshift * y_ramp)
     # shift -> exp(i*phi)
     shift = np.cos(tilt) + 1j * np.sin(tilt)
-    # inverse FFT to go back to the real space
-    shifted_image = np.real(np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift))))
+    # inverse FFT to go back to the initial space
+    shifted_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift)))
+
+    # if the initial data is real, we take the real part
+    if complex_image is False:
+        shifted_image = np.real(shifted_image)
 
     return shifted_image
