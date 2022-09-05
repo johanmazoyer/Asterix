@@ -1959,48 +1959,28 @@ class deformable_mirror(Optical_System):
             anti_aliasing=True,
             channel_axis=None)
 
-        if DMconfig[self.Name_DM + "_Generic"] == False:
-            # In this case we might have a different number of pixels in x and y direction,
-            # so we "square" the reshape act
-            maxdimresizeactshape = np.max(resizeactshape.shape)
-            im_out = np.zeros((maxdimresizeactshape, maxdimresizeactshape))
-            im_out[
-                int((maxdimresizeactshape - resizeactshape.shape[0]) /
-                    2):int((maxdimresizeactshape + resizeactshape.shape[0]) /
-                           2),
-                int((maxdimresizeactshape - resizeactshape.shape[1]) /
-                    2):int((maxdimresizeactshape + resizeactshape.shape[1]) /
-                           2)] = resizeactshape
-            resizeactshape = im_out
+        # make sure the actuator shape is in a squarre array of enven dimension (useful for the fft shift). 
+        # We do not care exactly about the centering since we recenter the actuator just after
+        dim_even = int(np.ceil(np.max(resizeactshape.shape)/2  + 1))*2
+        resizeactshape = proc.crop_or_pad_image(resizeactshape, dim_even)
 
         # Gauss2Dfit for centering the rescaled influence function
-        # not sure why is this useful. We should be able to know where is the center
-        # after shifting ?
         Gaussian_fit_param = proc.gauss2Dfit(resizeactshape)
-        dx = Gaussian_fit_param[3]
-        dy = Gaussian_fit_param[4]
+        dy = Gaussian_fit_param[3]
+        dx = Gaussian_fit_param[4]
         xycent = len(resizeactshape) / 2
 
-        # can be replaced by Fourrier shift
-        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.fourier_shift.html
-        # To test
-        resizeactshape = proc.ft_subpixel_shift(resizeactshape, xshift =xycent - dy , yshift=xycent - dx)
+        # Center the actuator shape on a pixel and normalize 
+        resizeactshape = proc.ft_subpixel_shift(resizeactshape, xshift =xycent - dx , yshift=xycent - dy) / np.amax(resizeactshape)
 
-        # Put the centered influence function inside an array (self.dim_overpad_pupil x self.dim_overpad_pupil)
-        actshapeinpupil = np.zeros((dim_array, dim_array))
-        if len(resizeactshape) < dim_array:
-            actshapeinpupil[0:len(resizeactshape),
-                            0:len(resizeactshape
-                                  )] = resizeactshape / np.amax(resizeactshape)
-            xycenttmp = len(resizeactshape) / 2
-        else:
-            actshapeinpupil = resizeactshape[
-                0:dim_array, 0:dim_array] / np.amax(resizeactshape)
-            xycenttmp = dim_array / 2
+        # Put the centered influence function inside an array (self.dim_overpad_pupil x self.dim_overpad_pupil)        
+        actshapeinpupil = proc.crop_or_pad_image(resizeactshape, dim_array)
+        xycenttmp = len(actshapeinpupil) / 2
 
         # Fill an array with the influence functions of all actuators
         pushact3d = np.zeros((simu_grid.shape[1], dim_array, dim_array))
 
+        # do the first FT only once
         ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil)))
 
         for i in np.arange(pushact3d.shape[0]):
