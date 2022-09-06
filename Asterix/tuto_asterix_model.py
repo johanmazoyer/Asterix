@@ -88,8 +88,7 @@ print("transmission pup roman = ", transmission_roman_pup)
 
 modelconfig.update({'Delta_wav': 50e-9})
 # but then files have to be reinitialize:
-pup_roman_poly = OptSy.pupil(modelconfig,
-                             filename="roman_pup_1002pix_center4pixels.fits")
+pup_roman_poly = OptSy.pupil(modelconfig,PupType = "RomanPup")
 
 # Be careful when you change modelconfig because Optical Systems are designed to work together
 # but that only works if they are defined with the same base config
@@ -199,7 +198,7 @@ print("name of the DMs: ", testbed_1DM_romanpup.name_of_DMs)
 # We need to increase the number of pixel in the pupil if we add another DM.
 # I'll put it at the minimum to go faster
 # because of numerical sampling for the Fresnel propagation
-modelconfig.update({'diam_pup_in_pix': 400})
+modelconfig.update({'diam_pup_in_pix': 200})
 
 # Once we change modelconfig, all the previously defined systems are of the wrong dimensions so they cannot
 # be concatenated adn must be reclacultated
