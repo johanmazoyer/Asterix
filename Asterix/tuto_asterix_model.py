@@ -6,6 +6,7 @@ from validate import Validator
 
 import Asterix.Optical_System_functions as OptSy
 import Asterix.fits_functions as useful
+import Asterix.processing_functions as proc
 
 ### CONFIGURATION FILE
 parameter_file = OptSy.Asterix_root + os.path.sep + "Example_param_file.ini"

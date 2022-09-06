@@ -5,7 +5,6 @@ import inspect
 import copy
 import time
 import numpy as np
-import scipy.ndimage as nd
 from astropy.io import fits
 import skimage.transform
 
@@ -33,6 +32,7 @@ class Optical_System:
     AUTHOR : Johan Mazoyer
 
         -------------------------------------------------- """
+
     def __init__(self, modelconfig):
         """ --------------------------------------------------
         Initialize Optical_System objects
@@ -52,8 +52,7 @@ class Optical_System:
         # be easily switched.
         # dim_overpad_pupil is set to an even numer and the pupil is centered in
         # between 4 pixels
-        self.dim_overpad_pupil = round(self.prad * float(
-            modelconfig["overpadding_pupilplane_factor"])) * 2
+        self.dim_overpad_pupil = round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2
 
         #Lambda over D in pixels in the focal plane
         # at the reference wavelength
@@ -73,8 +72,7 @@ class Optical_System:
 
         if self.Delta_wav != 0:
             if (self.nb_wav % 2 == 0) or self.nb_wav < 2:
-                raise Exception(
-                    "please set nb_wav parameter to an odd number > 1")
+                raise Exception("please set nb_wav parameter to an odd number > 1")
 
             self.wav_vec = np.linspace(self.wavelength_0 - self.Delta_wav / 2,
                                        self.wavelength_0 + self.Delta_wav / 2,
@@ -84,20 +82,14 @@ class Optical_System:
             self.wav_vec = np.array([self.wavelength_0])
             self.nb_wav = 1
 
-        self.string_os = '_dimPP' + str(
-            int(self.dim_overpad_pupil)) + '_wl' + str(
-                int(self.wavelength_0 * 1e9)) + "_resFP" + str(
-                    round(self.Science_sampling, 2)) + "_dimFP" + str(
-                        int(self.dimScience))
+        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + '_wl' + str(
+            int(self.wavelength_0 * 1e9)) + "_resFP" + str(round(self.Science_sampling, 2)) + "_dimFP" + str(
+                int(self.dimScience))
 
     #We define functions that all Optical_System object can use.
     # These can be overwritten for a subclass if need be
 
-    def EF_through(self,
-                   entrance_EF=1.,
-                   save_all_planes_to_fits=False,
-                   dir_save_all_planes=None,
-                   **kwargs):
+    def EF_through(self, entrance_EF=1., save_all_planes_to_fits=False, dir_save_all_planes=None, **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from entrance pupil to exit pupil
 
@@ -139,15 +131,11 @@ class Optical_System:
 
         if isinstance(entrance_EF, (float, np.float, np.ndarray)) == False:
             print(entrance_EF)
-            raise Exception(
-                "entrance_EF should be a float of a numpy array of floats")
+            raise Exception("entrance_EF should be a float of a numpy array of floats")
 
         if save_all_planes_to_fits == True and dir_save_all_planes == None:
-            raise Exception(
-                "save_all_planes_to_fits = True can generate a lot of .fits files"
-                +
-                "please define a clear directory using dir_save_all_planes kw argument"
-            )
+            raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +
+                            "please define a clear directory using dir_save_all_planes kw argument")
 
         exit_EF = entrance_EF
         return exit_EF
@@ -216,33 +204,28 @@ class Optical_System:
 
         lambda_ratio = wavelength / self.wavelength_0
 
-        exit_EF = self.EF_through(
-            entrance_EF=entrance_EF,
-            wavelength=wavelength,
-            save_all_planes_to_fits=save_all_planes_to_fits,
-            dir_save_all_planes=dir_save_all_planes,
-            **kwargs)
+        exit_EF = self.EF_through(entrance_EF=entrance_EF,
+                                  wavelength=wavelength,
+                                  save_all_planes_to_fits=save_all_planes_to_fits,
+                                  dir_save_all_planes=dir_save_all_planes,
+                                  **kwargs)
 
         focal_plane_EF = prop.mft(exit_EF,
                                   self.prad * 2,
                                   self.dimScience,
-                                  self.dimScience / self.Science_sampling *
-                                  lambda_ratio,
+                                  self.dimScience / self.Science_sampling * lambda_ratio,
                                   X_offset_output=Psf_offset[0],
                                   Y_offset_output=Psf_offset[1],
                                   inverse=False,
                                   norm='ortho')
 
         if in_contrast == True:
-            focal_plane_EF /= np.sqrt(
-                self.norm_monochrom[self.wav_vec.tolist().index(wavelength)])
+            focal_plane_EF /= np.sqrt(self.norm_monochrom[self.wav_vec.tolist().index(wavelength)])
 
         if save_all_planes_to_fits == True:
             who_called_me = self.__class__.__name__
-            name_plane = 'EF_FP_after_' + who_called_me + '_obj' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      focal_plane_EF)
+            name_plane = 'EF_FP_after_' + who_called_me + '_obj' + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_EF)
 
         return focal_plane_EF
 
@@ -310,8 +293,7 @@ class Optical_System:
         -------------------------------------------------- """
 
         if 'wavelength' in kwargs:
-            raise Exception(
-                """todetector_Intensity() function is polychromatic, 
+            raise Exception("""todetector_Intensity() function is polychromatic, 
                 do not use wavelength keyword.
                 Use wavelengths keyword even for monochromatic intensity""")
 
@@ -327,38 +309,30 @@ class Optical_System:
             entrance_EF = np.repeat(entrance_EF, self.nb_wav)
         elif entrance_EF.shape == self.wav_vec.shape:
             pass
-        elif entrance_EF.shape == (self.dim_overpad_pupil,
-                                   self.dim_overpad_pupil):
-            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...],
-                                    self.nb_wav,
-                                    axis=0)
-        elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil,
-                                   self.dim_overpad_pupil):
+        elif entrance_EF.shape == (self.dim_overpad_pupil, self.dim_overpad_pupil):
+            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...], self.nb_wav, axis=0)
+        elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil):
             pass
         else:
-            raise Exception(
-                """"entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
+            raise Exception(""""entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
                         2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
-                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"""
-            )
+                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)""")
 
         focal_plane_Intensity = np.zeros((self.dimScience, self.dimScience))
 
         for i, wav in enumerate(wavelength_vec):
             focal_plane_Intensity += np.abs(
-                self.todetector(
-                    entrance_EF=entrance_EF[i],
-                    wavelength=wav,
-                    in_contrast=False,
-                    center_on_pixel=center_on_pixel,
-                    save_all_planes_to_fits=save_all_planes_to_fits,
-                    dir_save_all_planes=dir_save_all_planes,
-                    **kwargs))**2
+                self.todetector(entrance_EF=entrance_EF[i],
+                                wavelength=wav,
+                                in_contrast=False,
+                                center_on_pixel=center_on_pixel,
+                                save_all_planes_to_fits=save_all_planes_to_fits,
+                                dir_save_all_planes=dir_save_all_planes,
+                                **kwargs))**2
 
         if in_contrast == True:
             if (wavelength_vec != self.wav_vec).all():
-                raise Exception(
-                    """carefull: contrast normalization in todetector_Intensity assumes
+                raise Exception("""carefull: contrast normalization in todetector_Intensity assumes
                      it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1
                      and you want only one BW with the good contrast normalization, use
                      np.abs(to_detector(wavelength = wavelength))**2... If you want a specific
@@ -370,14 +344,12 @@ class Optical_System:
 
         if photon_noise == True:
             focal_plane_Intensity = np.random.poisson(
-                focal_plane_Intensity * self.normPupto1 *
-                nb_photons) / (self.normPupto1 * nb_photons)
+                focal_plane_Intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
 
         if save_all_planes_to_fits == True:
             who_called_me = self.__class__.__name__
             name_plane = 'Int_FP_after_' + who_called_me + '_obj'
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      focal_plane_Intensity)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_Intensity)
 
         return focal_plane_Intensity
 
@@ -406,15 +378,13 @@ class Optical_System:
 
 
         -------------------------------------------------- """
-        clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil,
-                                                     self.prad)
+        clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
 
         # all parameter can be passed here, but in the case there is a coronagraph,
         # we pass noFPM = True and noentrance Field by default
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
-        throughput = np.sum(np.abs(exit_EF)**2) / np.sum(
-            np.abs(clear_entrance_pupil)**2)
+        throughput = np.sum(np.abs(exit_EF)**2) / np.sum(np.abs(clear_entrance_pupil)**2)
 
         return throughput
 
@@ -446,10 +416,7 @@ class Optical_System:
 
         for i, wav in enumerate(self.wav_vec):
             PSF_wl = np.abs(
-                self.todetector(wavelength=wav,
-                                noFPM=True,
-                                center_on_pixel=True,
-                                in_contrast=False))**2
+                self.todetector(wavelength=wav, noFPM=True, center_on_pixel=True, in_contrast=False))**2
 
             self.norm_monochrom[i] = np.max(PSF_wl)
             PSF_bw += PSF_wl
@@ -457,13 +424,9 @@ class Optical_System:
         self.norm_polychrom = np.max(PSF_bw)
         self.sum_polychrom = np.sum(PSF_bw)
 
-        self.normPupto1 = self.transmission(
-        ) * self.norm_polychrom / self.sum_polychrom
+        self.normPupto1 = self.transmission() * self.norm_polychrom / self.sum_polychrom
 
-    def generate_phase_aberr(self,
-                             SIMUconfig,
-                             up_or_down='up',
-                             Model_local_dir=None):
+    def generate_phase_aberr(self, SIMUconfig, up_or_down='up', Model_local_dir=None):
         """ --------------------------------------------------
         
         Generate and save  phase aberations
@@ -514,25 +477,20 @@ class Optical_System:
         if set_phase_abb == True:
             if phase_abb_filename == '':
                 phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
-                    int(opd_rms * 1e9), int(self.wavelength_0 * 1e9),
-                    int(phase_slope), phase_rhoc, self.prad)
+                    int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc, self.prad)
 
-            if set_random_phase is False and os.path.isfile(
-                    Model_local_dir + phase_abb_filename + ".fits") == True:
-                return_phase = fits.getdata(Model_local_dir +
-                                            phase_abb_filename + ".fits")
+            if set_random_phase is False and os.path.isfile(Model_local_dir + phase_abb_filename +
+                                                            ".fits") == True:
+                return_phase = fits.getdata(Model_local_dir + phase_abb_filename + ".fits")
 
             else:
                 # TODO see with raphael these opd / phase issues
                 phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
 
-                return_phase = phase_ampl.random_phase_map(
-                    self.prad, self.dim_overpad_pupil, phase_rms, phase_rhoc,
-                    phase_slope)
+                return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms,
+                                                           phase_rhoc, phase_slope)
 
-                fits.writeto(Model_local_dir + phase_abb_filename + ".fits",
-                             return_phase,
-                             overwrite=True)
+                fits.writeto(Model_local_dir + phase_abb_filename + ".fits", return_phase, overwrite=True)
             return return_phase
         else:
             return 0.
@@ -582,30 +540,22 @@ class Optical_System:
                     ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
                         int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
 
-                    if os.path.isfile(Model_local_dir +
-                                      ampl_abb_filename) == True:
-                        return fits.getdata(Model_local_dir +
-                                            ampl_abb_filename)
+                    if os.path.isfile(Model_local_dir + ampl_abb_filename) == True:
+                        return fits.getdata(Model_local_dir + ampl_abb_filename)
 
                     else:
-                        return_ampl = phase_ampl.random_phase_map(
-                            self.prad, self.dim_overpad_pupil, ampl_rms / 100,
-                            ampl_rhoc, ampl_slope)
+                        return_ampl = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil,
+                                                                  ampl_rms / 100, ampl_rhoc, ampl_slope)
 
-                        fits.writeto(Model_local_dir + ampl_abb_filename,
-                                     return_ampl,
-                                     overwrite=True)
+                        fits.writeto(Model_local_dir + ampl_abb_filename, return_ampl, overwrite=True)
 
                         return return_ampl
 
                 else:
                     # in this case, the user wants the THD2 amplitude aberration
                     if ampl_abb_filename == 'Amplitude_THD2':
-                        testbedampl = fits.getdata(model_dir +
-                                                   ampl_abb_filename + '.fits')
-                        testbedampl_header = fits.getheader(model_dir +
-                                                            ampl_abb_filename +
-                                                            '.fits')
+                        testbedampl = fits.getdata(model_dir + ampl_abb_filename + '.fits')
+                        testbedampl_header = fits.getheader(model_dir + ampl_abb_filename + '.fits')
                         # in this case we know it's already well centered
 
                     else:
@@ -615,18 +565,13 @@ class Optical_System:
 
                         if not os.path.exists(ampl_abb_filename):
                             # check existence
-                            print(
-                                "Specified amplitude file {0} does not exist.".
-                                format(ampl_abb_filename))
+                            print("Specified amplitude file {0} does not exist.".format(ampl_abb_filename))
                             print("")
                             print("")
                             raise
                         else:
-                            print("Opening {0} file for testbed aberrations.".
-                                  format(ampl_abb_filename))
-                            print(
-                                "This file should have centerX, centerY and RESPUP keyword in header"
-                            )
+                            print("Opening {0} file for testbed aberrations.".format(ampl_abb_filename))
+                            print("This file should have centerX, centerY and RESPUP keyword in header")
 
                         testbedampl = fits.getdata(ampl_abb_filename)
                         testbedampl_header = fits.getheader(ampl_abb_filename)
@@ -636,51 +581,40 @@ class Optical_System:
 
                         # recenter
                         if centerX != size_ampl // 2 - 1 / 2 or centerY != size_ampl // 2 - 1 / 2:
-                            testbedampl = nd.shift(
-                                testbedampl,
-                                (size_ampl // 2 - 1 / 2 - centerX,
-                                 size_ampl // 2 - 1 / 2 - centerY))
+                            testbedampl = proc.ft_subpixel_shift(testbedampl,
+                                                                 xshift=size_ampl // 2 - 1 / 2 - centerX,
+                                                                 yshift=size_ampl // 2 - 1 / 2 - centerY)
 
                     # reshape at the good size
                     res_pup = testbedampl_header["RESPUP"]
                     testbedampl = proc.crop_or_pad_image(
-                        skimage.transform.rescale(
-                            testbedampl,
-                            res_pup / (self.diam_pup_in_m / (2 * self.prad)),
-                            preserve_range=True,
-                            anti_aliasing=True,
-                            channel_axis=None), self.dim_overpad_pupil)
+                        skimage.transform.rescale(testbedampl,
+                                                  res_pup / (self.diam_pup_in_m / (2 * self.prad)),
+                                                  preserve_range=True,
+                                                  anti_aliasing=True,
+                                                  channel_axis=None), self.dim_overpad_pupil)
 
                     #Set the average to 0 inside entrancepupil
-                    pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil,
-                                                     self.prad)
-                    testbedampl = (testbedampl - np.mean(
-                        testbedampl[np.where(pup_here != 0)])) * pup_here
-                    testbedampl = testbedampl / np.std(
-                        testbedampl[np.where(pup_here == 1.)]) * 0.1
+                    pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
+                    testbedampl = (testbedampl - np.mean(testbedampl[np.where(pup_here != 0)])) * pup_here
+                    testbedampl = testbedampl / np.std(testbedampl[np.where(pup_here == 1.)]) * 0.1
                     return testbedampl
 
             else:
                 ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
                     int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
 
-                return_ampl = phase_ampl.random_phase_map(
-                    self.prad, self.dim_overpad_pupil, ampl_rms / 100,
-                    ampl_rhoc, ampl_slope)
+                return_ampl = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, ampl_rms / 100,
+                                                          ampl_rhoc, ampl_slope)
 
-                fits.writeto(Model_local_dir + ampl_abb_filename,
-                             return_ampl,
-                             overwrite=True)
+                fits.writeto(Model_local_dir + ampl_abb_filename, return_ampl, overwrite=True)
 
                 return return_ampl
 
         else:
             return 0.
 
-    def EF_from_phase_and_ampl(self,
-                               phase_abb=0.,
-                               ampl_abb=0.,
-                               wavelengths=-1.):
+    def EF_from_phase_and_ampl(self, phase_abb=0., ampl_abb=0., wavelengths=-1.):
         """ --------------------------------------------------
         Create an electrical field from an phase and amplitude aberrations as follows:
 
@@ -715,13 +649,10 @@ class Optical_System:
         -------------------------------------------------- """
 
         if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
-            raise Exception(
-                "phase_abb and ampl_abb must be real arrays or float, not complex"
-            )
+            raise Exception("phase_abb and ampl_abb must be real arrays or float, not complex")
 
-        if (isinstance(phase_abb,
-                       (float, int))) and (phase_abb == 0.) and (isinstance(
-                           ampl_abb, (float, int))) and (ampl_abb == 0.):
+        if (isinstance(phase_abb, (float, int))) and (phase_abb == 0.) and (isinstance(
+                ampl_abb, (float, int))) and (ampl_abb == 0.):
             return 1.
 
         elif isinstance(wavelengths, (float, int)):
@@ -734,9 +665,7 @@ class Optical_System:
 
         entrance_EF = list()
         for wavelength in wavelength_vec:
-            entrance_EF.append(
-                (1 + ampl_abb) *
-                np.exp(1j * phase_abb * self.wavelength_0 / wavelength))
+            entrance_EF.append((1 + ampl_abb) * np.exp(1j * phase_abb * self.wavelength_0 / wavelength))
         entrance_EF = np.array(entrance_EF)
 
         if len(wavelength_vec) == 1:
@@ -764,12 +693,8 @@ class pupil(Optical_System):
 
     
     -------------------------------------------------- """
-    def __init__(self,
-                 modelconfig,
-                 prad=0.,
-                 PupType=None,
-                 angle_rotation=0,
-                 Model_local_dir=None):
+
+    def __init__(self, modelconfig, prad=0., PupType=None, angle_rotation=0, Model_local_dir=None):
         """ --------------------------------------------------
         Initialize a pupil object.           
         TODO: include an SCC Lyot pupil function here !
@@ -815,8 +740,7 @@ class pupil(Optical_System):
         # Initialize the Optical_System class and inherit properties
         super().__init__(modelconfig)
 
-        if (Model_local_dir
-                is not None) and not os.path.exists(Model_local_dir):
+        if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
 
@@ -835,8 +759,7 @@ class pupil(Optical_System):
 
         # Clear (in case we want to define an empty pupil plane)
         elif PupType == "Clear":
-            self.pup = np.ones(
-                (self.dim_overpad_pupil, self.dim_overpad_pupil))
+            self.pup = np.ones((self.dim_overpad_pupil, self.dim_overpad_pupil))
             angle_rotation = 0
             self.string_os += '_ClearPlane'
 
@@ -844,27 +767,19 @@ class pupil(Optical_System):
             # In those cases, we are using a fits to create the pupil
             # in these first cases, we use a known .fits with hardcoded file name
             if PupType == "RomanPup":
-                pup_fits = fits.getdata(
-                    os.path.join(model_dir,
-                                 "roman_pup_500pix_center4pixels.fits"))
+                pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_500pix_center4pixels.fits"))
                 self.string_os += '_RomanPup' + str(int(prad))
 
             elif PupType == "RomanPupTHD2":
-                pup_fits = fits.getdata(
-                    os.path.join(model_dir,
-                                 "roman_pup_thd2_500pix_center4pixels.fits"))
+                pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_thd2_500pix_center4pixels.fits"))
                 self.string_os += '_RomanPupTHD2' + str(int(prad))
 
             elif PupType == "RomanLyot":
-                pup_fits = fits.getdata(
-                    os.path.join(model_dir,
-                                 "roman_lyot_500pix_center4pixels.fits"))
+                pup_fits = fits.getdata(os.path.join(model_dir, "roman_lyot_500pix_center4pixels.fits"))
                 self.string_os += '_RomanLyot'
 
             elif PupType == "RomanLyotTHD2":
-                pup_fits = fits.getdata(
-                    os.path.join(model_dir,
-                                 "roman_lyot_thd2_500pix_center4pixels.fits"))
+                pup_fits = fits.getdata(os.path.join(model_dir, "roman_lyot_thd2_500pix_center4pixels.fits"))
                 self.string_os += '_RomanLyotTHD2'
 
             # finally in this last case, we use an unknown .fits defined by user
@@ -889,12 +804,10 @@ class pupil(Optical_System):
                 pup_fits = fits.getdata(PupType)
 
                 if len(pup_fits.shape) != 2:
-                    raise Exception("file " + PupType +
-                                    " should be a 2D array")
+                    raise Exception("file " + PupType + " should be a 2D array")
 
                 if pup_fits.shape[0] != pup_fits.shape[1]:
-                    raise Exception("file " + PupType +
-                                    " appears to be not square")
+                    raise Exception("file " + PupType + " appears to be not square")
 
                 self.string_os += '_Fits'
 
@@ -903,25 +816,20 @@ class pupil(Optical_System):
                 pup_fits_right_size = pup_fits
             else:
                 #Rescale to the pupil size
-                pup_fits_right_size = skimage.transform.rescale(
-                    pup_fits,
-                    2 * self.prad / pup_fits.shape[0],
-                    preserve_range=True,
-                    anti_aliasing=True,
-                    channel_axis=None)
+                pup_fits_right_size = skimage.transform.rescale(pup_fits,
+                                                                2 * self.prad / pup_fits.shape[0],
+                                                                preserve_range=True,
+                                                                anti_aliasing=True,
+                                                                channel_axis=None)
 
-            self.pup = proc.crop_or_pad_image(pup_fits_right_size,
-                                              self.dim_overpad_pupil)
+            self.pup = proc.crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 
             if angle_rotation != 0:
-                self.pup = skimage.transform.rotate(self.pup,
-                                                    angle_rotation,
-                                                    preserve_range=True)
+                self.pup = skimage.transform.rotate(self.pup, angle_rotation, preserve_range=True)
                 self.string_os += 'Rot' + str(int(angle_rotation))
 
-                fits.writeto(os.path.join(
-                    Model_local_dir,
-                    PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),
+                fits.writeto(os.path.join(Model_local_dir,
+                                          PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),
                              self.pup,
                              overwrite=True)
 
@@ -971,31 +879,24 @@ class pupil(Optical_System):
             wavelength = self.wavelength_0
 
         if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_before_pupil' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      entrance_EF)
+            name_plane = 'EF_PP_before_pupil' + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         if len(self.pup.shape) == 2:
             exit_EF = entrance_EF * self.pup
 
         elif len(self.pup.shape) == 3:
             if self.pup.shape != self.nb_wav:
-                raise Exception(
-                    "I'm confused, your pupil seem to be polychromatic" +
-                    "(pup.shape=3) but the # of WL (pup.shape[0]={}) ".format(
-                        self.pup.shape[0]) +
-                    "is different from the system # of WL (nb_wav={})".format(
-                        self.nb_wav))
+                raise Exception("I'm confused, your pupil seem to be polychromatic" +
+                                "(pup.shape=3) but the # of WL (pup.shape[0]={}) ".format(self.pup.shape[0]) +
+                                "is different from the system # of WL (nb_wav={})".format(self.nb_wav))
             else:
-                exit_EF = entrance_EF * self.pup[self.wav_vec.tolist().index(
-                    wavelength)]
+                exit_EF = entrance_EF * self.pup[self.wav_vec.tolist().index(wavelength)]
         else:
             raise Exception("pupil dimension are not acceptable")
 
         if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_after_pupil' + '_wl{}'.format(
-                int(wavelength * 1e9))
+            name_plane = 'EF_PP_after_pupil' + '_wl{}'.format(int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane, exit_EF)
 
         return exit_EF
@@ -1012,6 +913,7 @@ class coronagraph(Optical_System):
     AUTHOR : Johan Mazoyer
 
     -------------------------------------------------- """
+
     def __init__(self, modelconfig, coroconfig, Model_local_dir=None):
         """ --------------------------------------------------
         Initialize a coronograph object
@@ -1035,8 +937,7 @@ class coronagraph(Optical_System):
         # Initialize the Optical_System class and inherit properties
         super().__init__(modelconfig)
 
-        if (Model_local_dir
-                is not None) and not os.path.exists(Model_local_dir):
+        if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
 
@@ -1059,9 +960,8 @@ class coronagraph(Optical_System):
         self.corono_fpm_sampling = self.Science_sampling
         self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
         for i, wav in enumerate(self.wav_vec):
-            self.dim_fp_fft[i] = int(
-                np.ceil(self.prad * self.corono_fpm_sampling * self.wavelength_0 /
-                        wav)) * 2
+            self.dim_fp_fft[i] = int(np.ceil(
+                self.prad * self.corono_fpm_sampling * self.wavelength_0 / wav)) * 2
             # we take the ceil to be sure that we measure at least the good resolution
             # We do not need to be exact, the mft in science_focal_plane will be
 
@@ -1094,9 +994,8 @@ class coronagraph(Optical_System):
             else:
                 self.transmission_fpm = coroconfig["transmission_fpm"]
                 self.phase_fpm = coroconfig["phase_fpm"]
-                self.string_os += '_' + "trans{:.1e}".format(
-                    self.transmission_fpm) + "_pha{0}".format(
-                        round(self.phase_fpm, 2))
+                self.string_os += '_' + "trans{:.1e}".format(self.transmission_fpm) + "_pha{0}".format(
+                    round(self.phase_fpm, 2))
                 self.FPmsk = self.HLC()
 
         elif self.corona_type == "knife":
@@ -1104,8 +1003,7 @@ class coronagraph(Optical_System):
             self.coro_position = coroconfig["knife_coro_position"].lower()
             self.knife_coro_offset = coroconfig["knife_coro_offset"]
             self.FPmsk = self.KnifeEdgeCoro()
-            self.string_os += '_' + self.coro_position + "_iwa" + str(
-                round(self.knife_coro_offset, 2))
+            self.string_os += '_' + self.coro_position + "_iwa" + str(round(self.knife_coro_offset, 2))
             self.perfect_coro = False
 
         elif self.corona_type == "vortex":
@@ -1119,8 +1017,7 @@ class coronagraph(Optical_System):
             raise Exception("this coronagrpah mode does not exists yet")
 
         self.lyot_pup = pupil(modelconfig,
-                              prad=self.prad * coroconfig["diam_lyot_in_m"] /
-                              self.diam_pup_in_m,
+                              prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
                               PupType=coroconfig["filename_instr_lyot"],
                               angle_rotation=coroconfig['lyot_pup_rotation'],
                               Model_local_dir=Model_local_dir)
@@ -1135,24 +1032,25 @@ class coronagraph(Optical_System):
 
         if self.perfect_coro == True:
 
-            if coroconfig["filename_instr_lyot"] == "Clear" : 
+            if coroconfig["filename_instr_lyot"] == "Clear":
                 # We need a round pupil only to measure the response
                 # of the coronograph to a round pupil to remove it
                 # THIS IS NOT THE ENTRANCE PUPIL,
                 # this is a round pupil of the same size
                 pup_for_perfect_coro = pupil(modelconfig, prad=self.prad)
-                
+
                 # do a propagation once with self.perfect_Lyot_pupil = 0 to
                 # measure the Lyot pupil that will be removed after
-                self.perfect_Lyot_pupil = [0]*self.nb_wav
+                self.perfect_Lyot_pupil = [0] * self.nb_wav
                 for i, wave_here in enumerate(self.wav_vec):
                     self.perfect_Lyot_pupil[i] = self.EF_through(
-                        entrance_EF=pup_for_perfect_coro.EF_through(wavelength=wave_here), wavelength=wave_here)
+                        entrance_EF=pup_for_perfect_coro.EF_through(wavelength=wave_here),
+                        wavelength=wave_here)
             else:
                 # In this case we have an coronagrpah entrance pupil
                 # do a propagation once with self.perfect_Lyot_pupil = 0 to
                 # measure the Lyot pupil that will be removed after
-                self.perfect_Lyot_pupil = [0]*self.nb_wav
+                self.perfect_Lyot_pupil = [0] * self.nb_wav
                 for i, wave_here in enumerate(self.wav_vec):
                     self.perfect_Lyot_pupil[i] = self.EF_through(wavelength=wave_here)
 
@@ -1214,10 +1112,8 @@ class coronagraph(Optical_System):
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
         if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_before_apod' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      entrance_EF)
+            name_plane = 'EF_PP_before_apod' + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         if wavelength is None:
             wavelength = self.wavelength_0
@@ -1229,34 +1125,27 @@ class coronagraph(Optical_System):
 
         lambda_ratio = wavelength / self.wavelength_0
 
-        input_wavefront_after_apod = self.apod_pup.EF_through(
-            entrance_EF=entrance_EF, wavelength=wavelength)
+        input_wavefront_after_apod = self.apod_pup.EF_through(entrance_EF=entrance_EF, wavelength=wavelength)
 
         if save_all_planes_to_fits == True:
             name_plane = 'apod' + '_wl{}'.format(int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      self.apod_pup.pup)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, self.apod_pup.pup)
 
-            name_plane = 'EF_PP_after_apod' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      input_wavefront_after_apod)
+            name_plane = 'EF_PP_after_apod' + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, input_wavefront_after_apod)
 
         # we take the convention that for all propation methods, the PSF must be
         # "in between 4 pixels" in the focal plane.
 
         if self.prop_apod2lyot == "fft":
-            dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(
-                wavelength)]
-            input_wavefront_after_apod_pad = proc.crop_or_pad_image(
-                input_wavefront_after_apod, dim_fp_fft_here)
+            dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(wavelength)]
+            input_wavefront_after_apod_pad = proc.crop_or_pad_image(input_wavefront_after_apod,
+                                                                    dim_fp_fft_here)
 
             # Phase ramp to center focal plane between 4 pixels
             # TODO This could be done in the FQPM function and save in the self to save time
-            maskshifthalfpix = phase_ampl.shift_phase_ramp(
-                dim_fp_fft_here, 0.5, 0.5)
-            maskshifthalfpix_invert = phase_ampl.shift_phase_ramp(
-                dim_fp_fft_here, -0.5, -0.5)
+            maskshifthalfpix = phase_ampl.shift_phase_ramp(dim_fp_fft_here, 0.5, 0.5)
+            maskshifthalfpix_invert = phase_ampl.shift_phase_ramp(dim_fp_fft_here, -0.5, -0.5)
 
             # Because our convention is also "in between 4 pixels" in the final fp (after the corono)
             # one might think "why do we need to 'unshift' when going back to the Lyot stop?"
@@ -1267,85 +1156,64 @@ class coronagraph(Optical_System):
             # you are "in between pixels"
 
             #Apod plane to focal plane
-            corono_focal_plane = np.fft.fft2(np.fft.fftshift(
-                input_wavefront_after_apod_pad * maskshifthalfpix),
+            corono_focal_plane = np.fft.fft2(np.fft.fftshift(input_wavefront_after_apod_pad *
+                                                             maskshifthalfpix),
                                              norm='ortho')
 
             if save_all_planes_to_fits == True:
-                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
+                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           np.fft.fftshift(corono_focal_plane))
-                
-                name_plane = 'PSF EF_FP_before_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
+
+                name_plane = 'PSF EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           np.fft.fftshift(np.abs(corono_focal_plane)**2))
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                              FPmsk)
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
 
-                    name_plane = 'FPMphase' + '_wl{}'.format(
-                        int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                              np.angle(FPmsk))
+                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
 
-                    name_plane = 'FPMmod' + '_wl{}'.format(
-                        int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                              np.abs(FPmsk))
+                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
-                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
+                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 useful.save_plane_in_fits(dir_save_all_planes, name_plane,
                                           np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
-            lyotplane_before_lyot = np.fft.fftshift(
-                np.fft.ifft2(corono_focal_plane * FPmsk,
-                             norm='ortho')) * maskshifthalfpix_invert
+            lyotplane_before_lyot = np.fft.fftshift(np.fft.ifft2(corono_focal_plane * FPmsk,
+                                                                 norm='ortho')) * maskshifthalfpix_invert
 
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
 
-            corono_focal_plane = prop.mft(
-                input_wavefront_after_apod,
-                2 * self.prad,
-                self.dim_fpm,
-                self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                inverse=False,
-                norm='ortho')
+            corono_focal_plane = prop.mft(input_wavefront_after_apod,
+                                          2 * self.prad,
+                                          self.dim_fpm,
+                                          self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
+                                          inverse=False,
+                                          norm='ortho')
 
             if save_all_planes_to_fits == True:
-                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane)
+                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                              FPmsk)
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
 
-                    name_plane = 'FPMphase' + '_wl{}'.format(
-                        int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                              np.angle(FPmsk))
+                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
 
-                    name_plane = 'FPMmod' + '_wl{}'.format(
-                        int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                              np.abs(FPmsk))
+                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
-                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane * FPmsk)
+                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
 
-                name_plane = 'EF_FP_after_1minusFPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane * (1 - FPmsk))
+                name_plane = 'EF_FP_after_1minusFPM' + '_wl{}'.format(int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * (1 - FPmsk))
 
             # Focal plane to Lyot plane
             # Babinet's trick:
@@ -1366,80 +1234,62 @@ class coronagraph(Optical_System):
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
                                           2 * self.prad,
                                           self.dimScience,
-                                          self.dimScience /
-                                          self.Science_sampling * lambda_ratio,
+                                          self.dimScience / self.Science_sampling * lambda_ratio,
                                           inverse=False,
                                           norm='ortho')
 
             if save_all_planes_to_fits == True:
-                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane)
+                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                              FPmsk)
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
 
-                    name_plane = 'FPMphase' + '_wl{}'.format(
-                        int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                              np.angle(FPmsk))
+                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
 
-                    name_plane = 'FPMmod' + '_wl{}'.format(
-                        int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                              np.abs(FPmsk))
+                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
-                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(
-                    int(wavelength * 1e9))
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          corono_focal_plane * FPmsk)
+                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                useful.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = proc.crop_or_pad_image(
                 prop.mft(corono_focal_plane * FPmsk,
                          self.dimScience,
                          2 * self.prad,
-                         self.dimScience / self.Science_sampling *
-                         lambda_ratio,
+                         self.dimScience / self.Science_sampling * lambda_ratio,
                          inverse=True,
                          norm='ortho'), self.dim_overpad_pupil)
 
         else:
-            raise Exception(
-                self.prop_apod2lyot +
-                " is not a known prop_apod2lyot propagation mehtod")
+            raise Exception(self.prop_apod2lyot + " is not a known prop_apod2lyot propagation mehtod")
 
         if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_before_LS' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      lyotplane_before_lyot)
+            name_plane = 'EF_PP_before_LS' + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, lyotplane_before_lyot)
 
         # we add the downstream aberrations if we need them
         lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
 
         # crop to the dim_overpad_pupil expeted size
-        lyotplane_before_lyot_crop = proc.crop_or_pad_image(
-            lyotplane_before_lyot, self.dim_overpad_pupil)
+        lyotplane_before_lyot_crop = proc.crop_or_pad_image(lyotplane_before_lyot, self.dim_overpad_pupil)
 
         # Field after filtering by Lyot stop
-        lyotplane_after_lyot = self.lyot_pup.EF_through(
-            entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
+        lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot_crop,
+                                                        wavelength=wavelength)
 
         if (self.perfect_coro == True) & (noFPM == False):
-            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(wavelength)]
+            lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(
+                wavelength)]
 
         if save_all_planes_to_fits == True:
             name_plane = 'LS' + '_wl{}'.format(int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      self.lyot_pup.pup)
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, self.lyot_pup.pup)
 
-            name_plane = 'EF_PP_after_LS' + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      lyotplane_after_lyot)
+            name_plane = 'EF_PP_after_LS' + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, lyotplane_after_lyot)
 
         return lyotplane_after_lyot
 
@@ -1467,11 +1317,9 @@ class coronagraph(Optical_System):
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
             np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
 
-        fqpm_thick_vert = np.zeros(
-            (maxdimension_array_fpm, maxdimension_array_fpm))
+        fqpm_thick_vert = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
         fqpm_thick_vert[np.where(xx < 0)] = 1
-        fqpm_thick_hor = np.zeros(
-            (maxdimension_array_fpm, maxdimension_array_fpm))
+        fqpm_thick_hor = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
         fqpm_thick_hor[np.where(yy >= 0)] = 1
         fqpm_thick = fqpm_thick_vert - fqpm_thick_hor
 
@@ -1493,9 +1341,7 @@ class coronagraph(Optical_System):
             else:
                 # in the general case, we use the EF_from_phase_and_ampl which handle the phase
                 # chromaticity.
-                fqpm.append(
-                    self.EF_from_phase_and_ampl(phase_abb=phase4q,
-                                                wavelengths=wav))
+                fqpm.append(self.EF_from_phase_and_ampl(phase_abb=phase4q, wavelengths=wav))
 
         return fqpm
 
@@ -1524,10 +1370,8 @@ class coronagraph(Optical_System):
             maxdimension_array_fpm = self.dimScience
 
         xx, yy = np.meshgrid(
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 +
-            1 / 2,
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 +
-            1 / 2)
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1 / 2,
+            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1 / 2)
 
         phase_vortex = vortex_charge * np.angle(xx + 1j * yy)
 
@@ -1538,9 +1382,8 @@ class coronagraph(Optical_System):
             else:
                 dim_fp = self.dimScience
 
-            phasevortex_cut = proc.crop_or_pad_image(
-                phase_vortex,
-                dim_fp)  #*phase_ampl.roundpupil(dim_fp, dim_fp/2)
+            phasevortex_cut = proc.crop_or_pad_image(phase_vortex,
+                                                     dim_fp)  #*phase_ampl.roundpupil(dim_fp, dim_fp/2)
             vortex.append(np.exp(1j * phasevortex_cut))
 
         return vortex
@@ -1561,8 +1404,7 @@ class coronagraph(Optical_System):
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
             if len(self.wav_vec) > 1:
-                raise Exception(
-                    "knife currently not coded in polychromatic fft")
+                raise Exception("knife currently not coded in polychromatic fft")
         else:
             maxdimension_array_fpm = self.dimScience
 
@@ -1571,26 +1413,21 @@ class coronagraph(Optical_System):
 
         #  Number of pixels per resolution element at central wavelength
 
-        xx, yy = np.meshgrid(np.arange(maxdimension_array_fpm),
-                             np.arange(maxdimension_array_fpm))
+        xx, yy = np.meshgrid(np.arange(maxdimension_array_fpm), np.arange(maxdimension_array_fpm))
 
         Knife = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
         if self.coro_position == "right":
             Knife[np.where(
-                xx > (maxdimension_array_fpm / 2 +
-                      self.knife_coro_offset * self.Science_sampling))] = 1
+                xx > (maxdimension_array_fpm / 2 + self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "left":
             Knife[np.where(
-                xx < (maxdimension_array_fpm / 2 -
-                      self.knife_coro_offset * self.Science_sampling))] = 1
+                xx < (maxdimension_array_fpm / 2 - self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "bottom":
             Knife[np.where(
-                yy > (maxdimension_array_fpm / 2 +
-                      self.knife_coro_offset * self.Science_sampling))] = 1
+                yy > (maxdimension_array_fpm / 2 + self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "top":
             Knife[np.where(
-                yy < (maxdimension_array_fpm / 2 -
-                      self.knife_coro_offset * self.Science_sampling))] = 1
+                yy < (maxdimension_array_fpm / 2 - self.knife_coro_offset * self.Science_sampling))] = 1
 
         knife_allwl = list()
         for i in range(len(self.wav_vec)):
@@ -1613,8 +1450,7 @@ class coronagraph(Optical_System):
 
         rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
 
-        ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm,
-                                                      rad_LyotFP_pix)
+        ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm, rad_LyotFP_pix)
 
         ClassicalLyotFPM_allwl = list()
         for wav in self.wav_vec:
@@ -1650,9 +1486,7 @@ class coronagraph(Optical_System):
         hlc_all_wl = list()
         for wav in self.wav_vec:
             hlc_all_wl.append(
-                self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc,
-                                            phase_abb=phase_hlc,
-                                            wavelengths=wav))
+                self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
 
         return hlc_all_wl
 
@@ -1671,11 +1505,8 @@ class deformable_mirror(Optical_System):
 
 
     -------------------------------------------------- """
-    def __init__(self,
-                 modelconfig,
-                 DMconfig,
-                 Name_DM='DM3',
-                 Model_local_dir=None):
+
+    def __init__(self, modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=None):
         """ --------------------------------------------------
         Initialize a deformable mirror object
 
@@ -1726,21 +1557,20 @@ class deformable_mirror(Optical_System):
         else:
             # first thing we do is to open filename_grid_actu to check the number of
             # actuator of this DM. We need the number of act to read and load pushact .fits
-            self.total_act = fits.getdata(
-                model_dir +
-                DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
+            self.total_act = fits.getdata(model_dir + DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
 
             if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
-                self.active_actuators = fits.getdata(model_dir + DMconfig[
-                    self.Name_DM + "_filename_active_actu"]).astype(int)
+                self.active_actuators = fits.getdata(model_dir +
+                                                     DMconfig[self.Name_DM +
+                                                              "_filename_active_actu"]).astype(int)
                 self.number_act = len(self.active_actuators)
 
             else:
                 self.number_act = self.total_act
                 self.active_actuators = np.arange(self.number_act)
 
-        self.string_os += '_' + self.Name_DM + "_z" + str(
-            int(self.z_position * 1000)) + "_Nact" + str(int(self.number_act))
+        self.string_os += '_' + self.Name_DM + "_z" + str(int(self.z_position * 1000)) + "_Nact" + str(
+            int(self.number_act))
 
         if DMconfig[self.Name_DM + "_Generic"] == True:
             self.string_os += "Gen"
@@ -1821,16 +1651,12 @@ class deformable_mirror(Optical_System):
             wavelength = self.wavelength_0
 
         if isinstance(DMphase, (int, float, np.float)):
-            DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil),
-                              np.float(DMphase))
+            DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil), np.float(DMphase))
 
         if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_before_' + self.Name_DM + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      entrance_EF)
-            name_plane = 'phase_' + self.Name_DM + '_wl{}'.format(
-                int(wavelength * 1e9))
+            name_plane = 'EF_PP_before_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            name_plane = 'phase_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane, DMphase)
 
         # if the DM is not active or if the surface is 0
@@ -1839,22 +1665,18 @@ class deformable_mirror(Optical_System):
             return entrance_EF
 
         if self.z_position == 0:
-            EF_after_DM = entrance_EF * self.EF_from_phase_and_ampl(
-                phase_abb=DMphase, wavelengths=wavelength)
+            EF_after_DM = entrance_EF * self.EF_from_phase_and_ampl(phase_abb=DMphase, wavelengths=wavelength)
 
         else:
-            EF_after_DM = self.prop_pup_to_DM_and_back(
-                entrance_EF,
-                DMphase,
-                wavelength,
-                save_all_planes_to_fits=save_all_planes_to_fits,
-                dir_save_all_planes=dir_save_all_planes)
+            EF_after_DM = self.prop_pup_to_DM_and_back(entrance_EF,
+                                                       DMphase,
+                                                       wavelength,
+                                                       save_all_planes_to_fits=save_all_planes_to_fits,
+                                                       dir_save_all_planes=dir_save_all_planes)
 
         if save_all_planes_to_fits == True:
-            name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      EF_after_DM)
+            name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_after_DM)
 
         return EF_after_DM
 
@@ -1892,16 +1714,12 @@ class deformable_mirror(Optical_System):
         if DMconfig[self.Name_DM + "_Generic"] == True:
             Name_pushact_fits += "Gen"
 
-        Name_pushact_fits += "_Nact" + str(int(
-            self.number_act)) + '_dimPP' + str(int(
-                self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
+        Name_pushact_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
+            self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
-        if (self.misregistration is
-                False) and (os.path.exists(self.Model_local_dir +
-                                           Name_pushact_fits + '.fits')):
-            pushact3d = fits.getdata(
-                os.path.join(self.Model_local_dir,
-                             Name_pushact_fits + '.fits'))
+        if (self.misregistration is False) and (os.path.exists(self.Model_local_dir + Name_pushact_fits +
+                                                               '.fits')):
+            pushact3d = fits.getdata(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
             print("Load " + Name_pushact_fits)
             return pushact3d
 
@@ -1920,109 +1738,77 @@ class deformable_mirror(Optical_System):
         diam_pup_in_m = self.diam_pup_in_m
         dim_array = self.dim_overpad_pupil
 
-        filename_actu_infl_fct = DMconfig[self.Name_DM +
-                                          "_filename_actu_infl_fct"]
+        filename_actu_infl_fct = DMconfig[self.Name_DM + "_filename_actu_infl_fct"]
 
         if DMconfig[self.Name_DM + "_Generic"] == False:
             #Measured positions for each actuator in pixel with (0,0) = center of pupil
-            simu_grid = fits.getdata(model_dir + DMconfig[
-                self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix
+            simu_grid = fits.getdata(
+                model_dir + DMconfig[self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix + dim_array / 2
             # the DM pitchs are read in the header
-            pitchDMX = fits.getheader(model_dir + DMconfig[
-                self.Name_DM + "_filename_grid_actu"])["PitchV"] * 1e-6
-            pitchDMY = fits.getheader(model_dir + DMconfig[
-                self.Name_DM + "_filename_grid_actu"])["PitchH"] * 1e-6
+            pitchDMX = fits.getheader(model_dir +
+                                      DMconfig[self.Name_DM + "_filename_grid_actu"])["PitchV"] * 1e-6
+            pitchDMY = fits.getheader(model_dir +
+                                      DMconfig[self.Name_DM + "_filename_grid_actu"])["PitchH"] * 1e-6
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             # the pitch is read in the parameter file
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
             pitchDM = DMconfig[self.Name_DM + "_pitch"]
-            simu_grid = proc.generic_actuator_position(Nact1D, pitchDM,
-                                                       diam_pup_in_m,
-                                                       diam_pup_in_pix)
+            simu_grid = proc.generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m,
+                                                       diam_pup_in_pix) + dim_array / 2
             pitchDMX = pitchDMY = pitchDM
 
         # Influence function and the pitch in pixels
         actshape = fits.getdata(model_dir + filename_actu_infl_fct)
-        pitch_actshape = fits.getheader(model_dir +
-                                        filename_actu_infl_fct)['PITCH']
+        pitch_actshape = fits.getheader(model_dir + filename_actu_infl_fct)['PITCH']
 
         # Scaling the influence function to the desired dimension
         # for numerical simulation
-        # or by a fft rescale (have to be coded by ourselves probably)
-        resizeactshape = skimage.transform.rescale(
-            actshape,
-            (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape,
-             diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape),
-            order=1,
-            preserve_range=True,
-            anti_aliasing=True,
-            channel_axis=None)
+        resizeactshape = proc.ft_zoom_out(actshape,
+                                          (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape,
+                                           diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape))
 
-        if DMconfig[self.Name_DM + "_Generic"] == False:
-            # In this case we might have a different number of pixels in x and y direction,
-            # so we "square" the reshape act
-            maxdimresizeactshape = np.max(resizeactshape.shape)
-            im_out = np.zeros((maxdimresizeactshape, maxdimresizeactshape))
-            im_out[
-                int((maxdimresizeactshape - resizeactshape.shape[0]) /
-                    2):int((maxdimresizeactshape + resizeactshape.shape[0]) /
-                           2),
-                int((maxdimresizeactshape - resizeactshape.shape[1]) /
-                    2):int((maxdimresizeactshape + resizeactshape.shape[1]) /
-                           2)] = resizeactshape
-            resizeactshape = im_out
+        # make sure the actuator shape is in a squarre array of enven dimension (useful for the fft shift).
+        # We do not care exactly about the centering since we recenter the actuator just after
+        dim_even = int(np.ceil(np.max(resizeactshape.shape) / 2 + 1)) * 2
+        resizeactshape = proc.crop_or_pad_image(resizeactshape, dim_even)
 
         # Gauss2Dfit for centering the rescaled influence function
-        # not sure why is this useful. We should be able to know where is the center
-        # after shifting ?
         Gaussian_fit_param = proc.gauss2Dfit(resizeactshape)
         dx = Gaussian_fit_param[3]
         dy = Gaussian_fit_param[4]
         xycent = len(resizeactshape) / 2
 
-        # can be replaced by Fourrier shift
-        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.fourier_shift.html
-        # To test
-        resizeactshape = nd.interpolation.shift(resizeactshape,
-                                                (xycent - dx, xycent - dy))
+        # Center the actuator shape on a pixel and normalize
+        resizeactshape = proc.ft_subpixel_shift(resizeactshape, xshift=xycent - dx,
+                                                yshift=xycent - dy) / np.amax(resizeactshape)
 
         # Put the centered influence function inside an array (self.dim_overpad_pupil x self.dim_overpad_pupil)
-        actshapeinpupil = np.zeros((dim_array, dim_array))
-        if len(resizeactshape) < dim_array:
-            actshapeinpupil[0:len(resizeactshape),
-                            0:len(resizeactshape
-                                  )] = resizeactshape / np.amax(resizeactshape)
-            xycenttmp = len(resizeactshape) / 2
-        else:
-            actshapeinpupil = resizeactshape[
-                0:dim_array, 0:dim_array] / np.amax(resizeactshape)
-            xycenttmp = dim_array / 2
+        actshapeinpupil = proc.crop_or_pad_image(resizeactshape, dim_array)
+        xycenttmp = len(actshapeinpupil) / 2
 
         # Fill an array with the influence functions of all actuators
         pushact3d = np.zeros((simu_grid.shape[1], dim_array, dim_array))
-        for i in np.arange(pushact3d.shape[0]):
-            if gausserror == 0:
-                Psivector = nd.interpolation.shift(
-                    actshapeinpupil,
-                    (simu_grid[1, i] + dim_array / 2 - xycenttmp +
-                     yerror * pitch_actshape, simu_grid[0, i] + dim_array / 2 -
-                     xycenttmp + xerror * pitch_actshape))
 
-                # Add an error on the orientation of the grid
-                if angerror != 0:
-                    Psivector = nd.rotate(Psivector,
-                                          angerror,
-                                          order=5,
-                                          cval=0,
-                                          reshape=False)[0:dim_array,
-                                                         0:dim_array]
-            else:
+        # do the first FT only once
+        ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil), norm="ortho"))
+
+        for i in np.arange(pushact3d.shape[0]):
+
+            # Add an error on the orientation of the grid
+            if angerror != 0:
+                simu_grid[1, i] = simu_grid[1, i] * np.cos(np.radians(angerror)) - simu_grid[0, i] * np.sin(
+                    np.radians(angerror))
+                simu_grid[0, i] = simu_grid[1, i] * np.sin(np.radians(angerror)) + simu_grid[0, i] * np.cos(
+                    np.radians(angerror))
+
+            Psivector = proc.ft_subpixel_shift(ft_actu,
+                                               xshift=simu_grid[1, i] - xycenttmp + xerror * pitch_actshape,
+                                               yshift=simu_grid[0, i] - xycenttmp + yerror * pitch_actshape,
+                                               fourier=True)
+
+            if gausserror != 0:
                 # Add an error on the sizes of the influence functions
-                Psivector = nd.interpolation.shift(
-                    actshapeinpupil,
-                    (simu_grid[1, i] + dim_array / 2 - xycenttmp,
-                     simu_grid[0, i] + dim_array / 2 - xycenttmp))
 
                 xy0 = np.unravel_index(Psivector.argmax(), Psivector.shape)
                 x, y = np.mgrid[0:dim_array, 0:dim_array]
@@ -2044,12 +1830,9 @@ class deformable_mirror(Optical_System):
         pushact3d = pushact3d[self.active_actuators]
 
         if self.misregistration is False and (
-                not os.path.exists(self.Model_local_dir + Name_pushact_fits +
-                                   '.fits')):
-            fits.writeto(self.Model_local_dir + Name_pushact_fits + '.fits',
-                         pushact3d)
-            print("time for " + Name_pushact_fits + " (s):",
-                  round(time.time() - start_time))
+                not os.path.exists(self.Model_local_dir + Name_pushact_fits + '.fits')):
+            fits.writeto(self.Model_local_dir + Name_pushact_fits + '.fits', pushact3d)
+            print("time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
 
         return pushact3d
 
@@ -2078,24 +1861,19 @@ class deformable_mirror(Optical_System):
         if self.DMconfig[self.Name_DM + "_Generic"] == True:
             Name_WhichInPup_fits += "Gen"
 
-        Name_WhichInPup_fits += "_Nact" + str(int(
-            self.number_act)) + '_dimPP' + str(int(
-                self.dim_overpad_pupil)) + '_prad' + str(int(
-                    self.prad)) + "_thres" + str(self.WhichInPup_threshold)
+        Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(
+            int(self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(
+                self.WhichInPup_threshold)
 
-        if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits +
-                          '.fits'):
+        if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits + '.fits'):
             print("Load " + Name_WhichInPup_fits)
-            return fits.getdata(self.Model_local_dir + Name_WhichInPup_fits +
-                                '.fits')
+            return fits.getdata(self.Model_local_dir + Name_WhichInPup_fits + '.fits')
 
         if self.z_position != 0:
 
             Pup_inDMplane = proc.crop_or_pad_image(
-                prop.prop_angular_spectrum(self.clearpup.pup,
-                                           self.wavelength_0, self.z_position,
-                                           self.diam_pup_in_m / 2, self.prad),
-                self.dim_overpad_pupil)
+                prop.prop_angular_spectrum(self.clearpup.pup, self.wavelength_0, self.z_position,
+                                           self.diam_pup_in_m / 2, self.prad), self.dim_overpad_pupil)
         else:
             Pup_inDMplane = self.clearpup.pup
 
@@ -2103,22 +1881,17 @@ class deformable_mirror(Optical_System):
         Sum_actu_with_pup = np.zeros(self.number_act)
 
         for num_actu in np.arange(self.number_act):
-            Sum_actu_with_pup[num_actu] = np.sum(
-                np.abs(self.DM_pushact[num_actu] * Pup_inDMplane))
+            Sum_actu_with_pup[num_actu] = np.sum(np.abs(self.DM_pushact[num_actu] * Pup_inDMplane))
 
         Max_val = np.max(Sum_actu_with_pup)
         for num_actu in np.arange(self.number_act):
-            if Sum_actu_with_pup[
-                    num_actu] > Max_val * self.WhichInPup_threshold:
+            if Sum_actu_with_pup[num_actu] > Max_val * self.WhichInPup_threshold:
                 WhichInPupil.append(num_actu)
 
         WhichInPupil = np.array(WhichInPupil)
 
-        fits.writeto(self.Model_local_dir + Name_WhichInPup_fits + '.fits',
-                     WhichInPupil,
-                     overwrite=True)
-        print("time for " + Name_WhichInPup_fits + " (s):",
-              round(time.time() - start_time))
+        fits.writeto(self.Model_local_dir + Name_WhichInPup_fits + '.fits', WhichInPupil, overwrite=True)
+        print("time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time))
 
         return WhichInPupil
 
@@ -2167,34 +1940,26 @@ class deformable_mirror(Optical_System):
         -------------------------------------------------- """
 
         EF_inDMplane = proc.crop_or_pad_image(
-            prop.prop_angular_spectrum(entrance_EF, wavelength,
-                                       self.z_position,
-                                       self.diam_pup_in_m / 2., self.prad),
-            self.dim_overpad_pupil)
+            prop.prop_angular_spectrum(entrance_EF, wavelength, self.z_position, self.diam_pup_in_m / 2.,
+                                       self.prad), self.dim_overpad_pupil)
 
         if save_all_planes_to_fits == True:
-            name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      EF_inDMplane)
+            name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # Add DM phase at the right WL
-        EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(
-            phase_abb=phase_DM, wavelengths=wavelength)
+        EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(phase_abb=phase_DM,
+                                                                           wavelengths=wavelength)
 
         if save_all_planes_to_fits == True:
-            name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(
-                int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
-                                      EF_inDMplane)
+            name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
+            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # and propagate to next pupil plane
 
         EF_back_in_pup_plane = proc.crop_or_pad_image(
-            prop.prop_angular_spectrum(EF_inDMplane_after_DM, wavelength,
-                                       -self.z_position,
-                                       self.diam_pup_in_m / 2., self.prad),
-            self.dim_overpad_pupil)
+            prop.prop_angular_spectrum(EF_inDMplane_after_DM, wavelength, -self.z_position,
+                                       self.diam_pup_in_m / 2., self.prad), self.dim_overpad_pupil)
 
         return EF_back_in_pup_plane
 
@@ -2232,15 +1997,12 @@ class deformable_mirror(Optical_System):
         opd_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
 
         if einstein_sum == True or len(where_non_zero_voltage[0]) < 3:
-            phase_on_DM = np.einsum(
-                'i,ijk->jk', actu_vect[where_non_zero_voltage],
-                self.DM_pushact[where_non_zero_voltage]) * opd_to_phase
+            phase_on_DM = np.einsum('i,ijk->jk', actu_vect[where_non_zero_voltage],
+                                    self.DM_pushact[where_non_zero_voltage]) * opd_to_phase
         else:
-            phase_on_DM = np.zeros(
-                (self.dim_overpad_pupil, self.dim_overpad_pupil))
+            phase_on_DM = np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil))
             for i in where_non_zero_voltage[0]:
-                phase_on_DM += self.DM_pushact[
-                    i, :, :] * actu_vect[i] * opd_to_phase
+                phase_on_DM += self.DM_pushact[i, :, :] * actu_vect[i] * opd_to_phase
 
         return phase_on_DM
 
@@ -2293,20 +2055,15 @@ class deformable_mirror(Optical_System):
             # from N voltage vectors with the sine and cosine value, we go N times through the
             # voltage_to_phase functions. For this reason we save the Fourrier base 2D phases on each DMs
             # in a specific .fits file
-            if not os.path.exists(self.Model_local_dir +
-                                  Name_FourrierBasis_fits + '.fits'):
-                phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil,
-                                           self.dim_overpad_pupil))
+            if not os.path.exists(self.Model_local_dir + Name_FourrierBasis_fits + '.fits'):
+                phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil, self.dim_overpad_pupil))
                 print("Start " + Name_FourrierBasis_fits)
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
                         useful._progress(i, basis_size, status='')
-                fits.writeto(
-                    self.Model_local_dir + Name_FourrierBasis_fits + '.fits',
-                    phasesFourrier)
-            print("time for " + Name_FourrierBasis_fits,
-                  time.time() - start_time)
+                fits.writeto(self.Model_local_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
+            print("time for " + Name_FourrierBasis_fits, time.time() - start_time)
 
         else:
             raise Exception(basis_type + " is is not a valid basis_type")
@@ -2329,6 +2086,7 @@ class Testbed(Optical_System):
     AUTHOR : Johan Mazoyer
 
     -------------------------------------------------- """
+
     def __init__(self, list_os, list_os_names):
         """ --------------------------------------------------
         This function allow you to concatenates Optical_System obsjects to create a testbed:
@@ -2352,9 +2110,7 @@ class Testbed(Optical_System):
         -------------------------------------------------- """
         if len(list_os) != len(list_os_names):
             print("")
-            raise Exception(
-                "list of systems and list of names need to be of the same size"
-            )
+            raise Exception("list of systems and list of names need to be of the same size")
 
         # Initialize the Optical_System class and inherit properties
         super().__init__(list_os[0].modelconfig)
@@ -2382,20 +2138,16 @@ class Testbed(Optical_System):
             # we first check that all variables in the list are optical systems
             # defined the same way.
             if not isinstance(list_os[num_optical_sys], Optical_System):
-                raise Exception("list_os[" + str(num_optical_sys) +
-                                "] is not an optical system")
+                raise Exception("list_os[" + str(num_optical_sys) + "] is not an optical system")
 
             if list_os[num_optical_sys].modelconfig != self.modelconfig:
                 print("")
-                raise Exception(
-                    "All optical systems need to be defined with the same initial modelconfig!"
-                )
+                raise Exception("All optical systems need to be defined with the same initial modelconfig!")
 
             # if the os is a DM we increase the number of DM counter and
             # store the number of act and its name
 
-            for params in inspect.signature(
-                    list_os[num_optical_sys].EF_through).parameters:
+            for params in inspect.signature(list_os[num_optical_sys].EF_through).parameters:
                 known_keywords.append(params)
 
             if isinstance(list_os[num_optical_sys], deformable_mirror):
@@ -2403,15 +2155,13 @@ class Testbed(Optical_System):
                 #this function is to replace the DMphase variable by a XXphase variable
                 # where XX is the name of the DM
                 list_os[num_optical_sys].EF_through = _swap_DMphase_name(
-                    list_os[num_optical_sys].EF_through,
-                    list_os_names[num_optical_sys] + "phase")
+                    list_os[num_optical_sys].EF_through, list_os_names[num_optical_sys] + "phase")
                 known_keywords.append(list_os_names[num_optical_sys] + "phase")
 
                 if list_os[num_optical_sys].active == False:
                     # if the Dm is not active, we just add it to the testbed model
                     # but not to the EF_through function
-                    vars(self)[list_os_names[num_optical_sys]] = list_os[
-                        num_optical_sys]
+                    vars(self)[list_os_names[num_optical_sys]] = list_os[num_optical_sys]
                     continue
 
                 self.number_DMs += 1
@@ -2419,15 +2169,12 @@ class Testbed(Optical_System):
                 self.name_of_DMs.append(list_os_names[num_optical_sys])
 
             # concatenation of the EF_through functions
-            self.EF_through = _concat_fun(list_os[num_optical_sys].EF_through,
-                                          self.EF_through)
+            self.EF_through = _concat_fun(list_os[num_optical_sys].EF_through, self.EF_through)
 
             # we add all systems to the Optical System so that they can be accessed
-            vars(self)[
-                list_os_names[num_optical_sys]] = list_os[num_optical_sys]
+            vars(self)[list_os_names[num_optical_sys]] = list_os[num_optical_sys]
 
-            self.string_os += list_os[num_optical_sys].string_os.replace(
-                init_string, '')
+            self.string_os += list_os[num_optical_sys].string_os.replace(init_string, '')
 
         # in case there is no coronagraph in the system, we still add
         # noFPM so that it does not break when we run transmission and max_sum_PSFs
@@ -2447,8 +2194,7 @@ class Testbed(Optical_System):
         if self.number_DMs > 0:
             # there is at least a DM, we add voltage_vector as an authorize kw
             known_keywords.append('voltage_vector')
-            self.EF_through = _control_testbed_with_voltages(
-                self, self.EF_through)
+            self.EF_through = _control_testbed_with_voltages(self, self.EF_through)
 
         # to avoid mis-use we only use specific keywords.
         known_keywords.remove('kwargs')
@@ -2480,25 +2226,21 @@ class Testbed(Optical_System):
 
         AUTHOR : Johan Mazoyer
         -------------------------------------------------- """
-        DMphases = np.zeros(
-            (self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
+        DMphases = np.zeros((self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
         indice_acum_number_act = 0
 
         if isinstance(actu_vect, (int, float)):
             return np.zeros(self.number_DMs) + float(actu_vect)
 
         if len(actu_vect) != self.number_act:
-            raise Exception(
-                "voltage vector must be 0 or array of dimension testbed.number_act,"
-                + "sum of all DM.number_act")
+            raise Exception("voltage vector must be 0 or array of dimension testbed.number_act," +
+                            "sum of all DM.number_act")
 
         for i, DM_name in enumerate(self.name_of_DMs):
 
             DM = vars(self)[DM_name]  # type: deformable_mirror
-            actu_vect_DM = actu_vect[
-                indice_acum_number_act:indice_acum_number_act + DM.number_act]
-            DMphases[i] = DM.voltage_to_phase(actu_vect_DM,
-                                              einstein_sum=einstein_sum)
+            actu_vect_DM = actu_vect[indice_acum_number_act:indice_acum_number_act + DM.number_act]
+            DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
 
             indice_acum_number_act += DM.number_act
         # useful.quickfits(DMphases, dir="/Users/jmazoyer/Desktop/DM_phase/")
@@ -2536,17 +2278,15 @@ class Testbed(Optical_System):
 
             # we extract the voltages for this one
             # this voltages are in the DM basis
-            vector_basis_voltage_for_DM = vector_basis_voltage[
-                indice_acum_basis_size:indice_acum_basis_size + DM.basis_size]
+            vector_basis_voltage_for_DM = vector_basis_voltage[indice_acum_basis_size:indice_acum_basis_size +
+                                                               DM.basis_size]
 
             # we change to actuator basis
-            vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis),
-                                                vector_basis_voltage_for_DM)
+            vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis), vector_basis_voltage_for_DM)
 
             # we recreate a voltages vector, but for each actuator
-            vector_actuator_voltage[
-                indice_acum_number_act:indice_acum_number_act +
-                DM.number_act] = vector_actu_voltage_for_DM
+            vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
+                                    DM.number_act] = vector_actu_voltage_for_DM
 
             indice_acum_basis_size += DM.basis_size
             indice_acum_number_act += DM.number_act
@@ -2580,6 +2320,7 @@ def _swap_DMphase_name(DM_EF_through_function, name_var):
 
     
     -------------------------------------------------- """
+
     def wrapper(**kwargs):
 
         if name_var not in kwargs.keys():
@@ -2613,13 +2354,13 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
 
 
     -------------------------------------------------- """
+
     def new_EF_through_fun(**kwargs):
 
         new_kwargs_outer = copy.copy(kwargs)
         del new_kwargs_outer['entrance_EF']
 
-        return outer_EF_through_fun(entrance_EF=inner_EF_through_fun(**kwargs),
-                                    **new_kwargs_outer)
+        return outer_EF_through_fun(entrance_EF=inner_EF_through_fun(**kwargs), **new_kwargs_outer)
 
     return new_EF_through_fun
 
@@ -2643,17 +2384,15 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
         
 
     -------------------------------------------------- """
+
     def wrapper(**kwargs):
         for passed_arg in kwargs.keys():
             if passed_arg == 'DMphase':
-                raise Exception(
-                    'DMphase is an ambiguous argument if you have several DMs.'
-                    + ' Please use XXphase with XX = nameDM')
+                raise Exception('DMphase is an ambiguous argument if you have several DMs.' +
+                                ' Please use XXphase with XX = nameDM')
             if passed_arg not in known_keywords:
-                raise Exception(
-                    passed_arg +
-                    'is not a EF_through valid argument. Valid args are ' +
-                    str(known_keywords))
+                raise Exception(passed_arg + 'is not a EF_through valid argument. Valid args are ' +
+                                str(known_keywords))
 
         return testbed_EF_through(**kwargs)
 
@@ -2688,6 +2427,7 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
 
 
     -------------------------------------------------- """
+
     def wrapper(**kwargs):
         if 'voltage_vector' in kwargs:
             voltage_vector = kwargs['voltage_vector']
