@@ -3,15 +3,8 @@ import scipy.optimize as opt
 import Asterix.fits_functions as useful
 from astropy.io import fits
 
-def twoD_Gaussian(xy,
-                  amplitude,
-                  sigma_x,
-                  sigma_y,
-                  xo,
-                  yo,
-                  theta,
-                  h,
-                  flatten=True):
+
+def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=True):
     """ --------------------------------------------------
     Create a gaussian in 2D.
 
@@ -53,14 +46,10 @@ def twoD_Gaussian(xy,
     y = xy[1]
     xo = float(xo)
     yo = float(yo)
-    a = (np.cos(theta)**2) / (2 * sigma_x**2) + (np.sin(theta)**
-                                                 2) / (2 * sigma_y**2)
-    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(
-        2 * theta)) / (4 * sigma_y**2)
-    c = (np.sin(theta)**2) / (2 * sigma_x**2) + (np.cos(theta)**
-                                                 2) / (2 * sigma_y**2)
-    g = (amplitude * np.exp(-(a * ((x - xo)**2) + 2 * b * (x - xo) *
-                              (y - yo) + c * ((y - yo)**2))) + h)
+    a = (np.cos(theta)**2) / (2 * sigma_x**2) + (np.sin(theta)**2) / (2 * sigma_y**2)
+    b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(2 * theta)) / (4 * sigma_y**2)
+    c = (np.sin(theta)**2) / (2 * sigma_x**2) + (np.cos(theta)**2) / (2 * sigma_y**2)
+    g = (amplitude * np.exp(-(a * ((x - xo)**2) + 2 * b * (x - xo) * (y - yo) + c * ((y - yo)**2))) + h)
     if flatten == True:
         g = g.flatten()
     return g
@@ -91,10 +80,7 @@ def gauss2Dfit(data):
     initial_guess = (np.amax(data), 1, 1, len(data) / 2, len(data) / 2, 0, 0)
 
     try:
-        popt, pcov = opt.curve_fit(twoD_Gaussian,
-                                   xy,
-                                   data.flatten(),
-                                   p0=initial_guess)
+        popt, pcov = opt.curve_fit(twoD_Gaussian, xy, data.flatten(), p0=initial_guess)
     except RuntimeError:
         print("Error - curve_fit failed")
 
@@ -130,10 +116,10 @@ def resizing(image, new):
     dimScience = len(image)
     dimEstim = new
 
-    Estim_bin_factor = int(np.round(dimScience/dimEstim))
+    Estim_bin_factor = int(np.round(dimScience / dimEstim))
 
     # if the image was not orinigally a factor of Estim_bin_factor we crop a few raws
-    slightly_crop_image = crop_or_pad_image(image,dimEstim*Estim_bin_factor)
+    slightly_crop_image = crop_or_pad_image(image, dimEstim * Estim_bin_factor)
 
     resized_image = resize_crop_bin(slightly_crop_image, dimEstim)
 
@@ -165,8 +151,7 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
 
     -------------------------------------------------- """
     newimgs2 = newsizeimg / 2
-    return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2),
-               int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]
+    return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2), int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]
 
 
 def crop_or_pad_image(image, dimout):
@@ -194,23 +179,18 @@ def crop_or_pad_image(image, dimout):
     -------------------------------------------------- """
     if float(dimout) < image.shape[0]:
         im_out = np.zeros((image.shape[0], image.shape[1]), dtype=image.dtype)
-        im_out = image[int((image.shape[0] - dimout) /
-                           2):int((image.shape[0] + dimout) / 2),
-                       int((image.shape[1] - dimout) /
-                           2):int((image.shape[1] + dimout) / 2)]
+        im_out = image[int((image.shape[0] - dimout) / 2):int((image.shape[0] + dimout) / 2),
+                       int((image.shape[1] - dimout) / 2):int((image.shape[1] + dimout) / 2)]
     elif dimout > image.shape[0]:
         im_out = np.zeros((dimout, dimout), dtype=image.dtype)
-        im_out[int((dimout - image.shape[0]) /
-                   2):int((dimout + image.shape[0]) / 2),
-               int((dimout - image.shape[1]) /
-                   2):int((dimout + image.shape[1]) / 2)] = image
+        im_out[int((dimout - image.shape[0]) / 2):int((dimout + image.shape[0]) / 2),
+               int((dimout - image.shape[1]) / 2):int((dimout + image.shape[1]) / 2)] = image
     else:
         im_out = image
     return im_out
 
 
-def rebin(image, factor = 4, center_on_pixel = False):
-
+def rebin(image, factor=4, center_on_pixel=False):
     """ --------------------------------------------------
     bin the image by a factor. The dimension dim MUST be divisible by factor
     or it will raise an error. It this is not the case, use function resize_crop_bin
@@ -245,19 +225,17 @@ def rebin(image, factor = 4, center_on_pixel = False):
     dim1, dim2 = image.shape
 
     if (dim1 % factor != 0) or (dim2 % factor != 0):
-            raise Exception(
-                "Image in Bin function must be divisible by factor of bin")
+        raise Exception("Image in Bin function must be divisible by factor of bin")
 
-    shape = (dim1//factor, factor,
-             dim2//factor, factor)
-    
+    shape = (dim1 // factor, factor, dim2 // factor, factor)
+
     if center_on_pixel is False:
         return np.fft.fftshift(np.fft.fftshift(image).reshape(shape).mean(-1).mean(1))
     else:
         return image.reshape(shape).mean(-1).mean(1)
 
-def resize_crop_bin(image, new_dim, center_on_pixel = False):
 
+def resize_crop_bin(image, new_dim, center_on_pixel=False):
     """ --------------------------------------------------
     resize the imge by : 
         - cropping entrance image to nearest multiplicative number of new_dim
@@ -292,24 +270,22 @@ def resize_crop_bin(image, new_dim, center_on_pixel = False):
     dim1, dim2 = image.shape
 
     if (dim1 < new_dim) or (dim2 < new_dim):
-            raise Exception(
-                "new_dim must be samller than dimensions of the entrance image")
+        raise Exception("new_dim must be samller than dimensions of the entrance image")
 
-    
     # check closest multiplicative factor
-    dim_smaller = min(dim1,dim2)
-    factor = dim_smaller//new_dim
+    dim_smaller = min(dim1, dim2)
+    factor = dim_smaller // new_dim
 
     # crop at the right size. Careful with the centering @TODO check
-    return_image = cropimage(image,dim1//2, dim2//2, factor*new_dim)
+    return_image = cropimage(image, dim1 // 2, dim2 // 2, factor * new_dim)
 
     # Bin at the right size
-    return_image = rebin(return_image, factor, center_on_pixel = center_on_pixel)
+    return_image = rebin(return_image, factor, center_on_pixel=center_on_pixel)
 
     return return_image
 
-def actuator_position(measured_grid, measured_ActuN, ActuN,
-                      sampling_simu_over_measured):
+
+def actuator_position(measured_grid, measured_ActuN, ActuN, sampling_simu_over_measured):
     """ --------------------------------------------------
     Convert the measred positions of actuators to positions for numerical simulation
     
@@ -339,8 +315,7 @@ def actuator_position(measured_grid, measured_ActuN, ActuN,
     -------------------------------------------------- """
     simu_grid = measured_grid * 0
     for i in np.arange(measured_grid.shape[1]):
-        simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(
-            ActuN)] + measured_ActuN
+        simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(ActuN)] + measured_ActuN
     simu_grid = simu_grid * sampling_simu_over_measured
 
     useful._quickfits(simu_grid)
@@ -382,9 +357,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     
     -------------------------------------------------- """
     if Nact1D * pitchDM < diam_pup_in_m:
-        raise Exception(
-            """Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil"""
-        )
+        raise Exception("""Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil""")
 
     pitchDM_in_pix = pitchDM * diam_pup_in_pix / diam_pup_in_m
 
@@ -412,9 +385,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
         center_pup = np.array([0.5, 0.5])
 
         for i in range(Nact1D**2):
-            pos_actu_in_pix[:,
-                            i] = pos_actu_in_pix[:,
-                                                 i] - pos_actu_center_pos + center_pup
+            pos_actu_in_pix[:, i] = pos_actu_in_pix[:, i] - pos_actu_center_pos + center_pup
 
     else:
 
@@ -440,10 +411,8 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
         # 2 3
         # 0 1
 
-        pos_actuhalfactfromcenter = np.copy(
-            pos_actu_in_pix[:, Nact1D // 2 * Nact1D + Nact1D // 2])
-        halfactfromcenter = np.array(
-            [0.5 * pitchDM_in_pix, 0.5 * pitchDM_in_pix])
+        pos_actuhalfactfromcenter = np.copy(pos_actu_in_pix[:, Nact1D // 2 * Nact1D + Nact1D // 2])
+        halfactfromcenter = np.array([0.5 * pitchDM_in_pix, 0.5 * pitchDM_in_pix])
 
         center_pup = np.array([0.5, 0.5])
 
@@ -456,9 +425,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     return pos_actu_in_pix
 
 
-
-
-def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image = False):
+def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False):
     """
     ft_subpixel_shift :
     This function returns an image shifted by a non-integer amount via a
@@ -498,9 +465,9 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image = Fals
     sz = np.shape(image)
     NP = sz[0]
     NL = sz[1]
-    
+
     if fourier is False and float(xshift).is_integer() and float(yshift).is_integer():
-            return np.roll(image, (xshift,yshift), axis=(0,1))
+        return np.roll(image, (xshift, yshift), axis=(0, 1))
 
     if fourier == True:
         ft_image = image
@@ -509,28 +476,29 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image = Fals
 
     xshift_odd = 0
     if NP % 2 == 1:
-        xshift_odd = 1/2
+        xshift_odd = 1 / 2
     yshift_odd = 0
     if NL % 2 == 1:
-        yshift_odd = 1/2
+        yshift_odd = 1 / 2
 
     x_ramp = np.outer(np.arange(NP) - NP / 2 + xshift_odd, np.ones(NL))
-    y_ramp = np.outer(np.ones(NP), np.arange(NL) - NL / 2 + yshift_odd )
+    y_ramp = np.outer(np.ones(NP), np.arange(NL) - NL / 2 + yshift_odd)
 
     # tilt describes the phase term in exp(i*phi) we will use to shift the image
     # by multiplying in the Fourier space and convolving in the direct space
 
-    tilt = (-2 * np.pi / NP) * xshift * x_ramp + (-2 * np.pi / NL) *yshift * y_ramp
+    tilt = (-2 * np.pi / NP) * xshift * x_ramp + (-2 * np.pi / NL) * yshift * y_ramp
     # shift -> exp(i*phi)
     shift = np.cos(tilt) + 1j * np.sin(tilt)
     # inverse FFT to go back to the initial space
-    shifted_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift),norm="ortho"))
+    shifted_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift), norm="ortho"))
 
     # if the initial data is real, we take the real part
     if complex_image is False:
         shifted_image = np.real(shifted_image)
 
     return shifted_image
+
 
 def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_size):
     """
@@ -559,30 +527,31 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
         best_size_large, best_size_small
     """
     best_size_large = init_size_large
-    best_size_small = int(np.round(factor_zoomout*best_size_large))
-    close_to_integer = np.abs(factor_zoomout*best_size_large - best_size_small)
+    best_size_small = int(np.round(factor_zoomout * best_size_large))
+    close_to_integer = np.abs(factor_zoomout * best_size_large - best_size_small)
 
     # we try to find the best size to padd our array so that new_size*factor_zoomout is a integer
     # we want at least 2 times the size of the initial array
-    # we want the initial and final size to be even 
-    for i in range(max_allowed_fft_size//2 - init_size_large//2):
-            size_here = factor_zoomout*(init_size_large + 2*i)
-            
-            if np.abs(size_here - np.round(size_here)) == 0 and int(size_here) % 2 == 0:
-                # we have a perfect size !
-                best_size_large = int(init_size_large + 2*i)
-                best_size_small = int(factor_zoomout*best_size_large)
-                break
+    # we want the initial and final size to be even
+    for i in range(max_allowed_fft_size // 2 - init_size_large // 2):
+        size_here = factor_zoomout * (init_size_large + 2 * i)
 
-            if np.abs(size_here - np.round(size_here)) < close_to_integer and int(size_here) % 2 == 0 :
-                # new best size
-                close_to_integer = np.abs(size_here - np.round(size_here))
-                best_size_large = int(init_size_large + 2*i)
-                best_size_small = int(factor_zoomout*best_size_large)
-    
+        if np.abs(size_here - np.round(size_here)) == 0 and int(size_here) % 2 == 0:
+            # we have a perfect size !
+            best_size_large = int(init_size_large + 2 * i)
+            best_size_small = int(factor_zoomout * best_size_large)
+            break
+
+        if np.abs(size_here - np.round(size_here)) < close_to_integer and int(size_here) % 2 == 0:
+            # new best size
+            close_to_integer = np.abs(size_here - np.round(size_here))
+            best_size_large = int(init_size_large + 2 * i)
+            best_size_small = int(factor_zoomout * best_size_large)
+
     return best_size_large, best_size_small
 
-def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_size = 2000):
+
+def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size=2000):
     """
     This function returns an image zoom out with Fourier domain computation. The array is padded
     until max_allowed_fft_size and takes the best size so that factor_zoomout*size_padded is the closest 
@@ -620,12 +589,13 @@ def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_si
     sz = np.shape(image)
     NP = sz[0]
     NL = sz[1]
-    
+
     if NL == NP and isinstance(factor_zoomout, (float, int)):
         if factor_zoomout > 1:
             raise Exception("factor_zoomout must be <=1")
         # in that case we have the exact same size before and after in both directions
-        best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout, max_allowed_fft_size)
+        best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout,
+                                                                       max_allowed_fft_size)
         best_size_largey = best_size_largex
         best_size_smally = best_size_smallx
         factor_zoomoutx = factor_zoomouty = factor_zoomout
@@ -634,8 +604,10 @@ def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_si
             if factor_zoomout > 1:
                 raise Exception("factor_zoomout must be <=1")
             # differnt size initially but same factor
-            best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout, max_allowed_fft_size)
-            best_size_largey, best_size_smally = find_sizes_closest2factor(2*NL, factor_zoomout, max_allowed_fft_size)
+            best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout,
+                                                                           max_allowed_fft_size)
+            best_size_largey, best_size_smally = find_sizes_closest2factor(2 * NL, factor_zoomout,
+                                                                           max_allowed_fft_size)
             factor_zoomoutx = factor_zoomouty = factor_zoomout
         else:
             # different factors
@@ -643,32 +615,33 @@ def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_si
             factor_zoomouty = factor_zoomout[1]
             if factor_zoomoutx > 1 or factor_zoomouty > 1:
                 raise Exception("factor_zoomout must be <=1")
-            
-            best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout[0], max_allowed_fft_size)
-            best_size_largey, best_size_smally = find_sizes_closest2factor(2*NL, factor_zoomout[1], max_allowed_fft_size)
-    # print(2*NP,factor_zoomoutx, best_size_largex, best_size_smallx, (best_size_smallx - factor_zoomoutx*best_size_largex)/best_size_smallx*100 )   
-    # print(2*NL,factor_zoomouty, best_size_largey, best_size_smally, (best_size_smally - factor_zoomouty*best_size_largey)/best_size_smally*100 ) 
+
+            best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout[0],
+                                                                           max_allowed_fft_size)
+            best_size_largey, best_size_smally = find_sizes_closest2factor(2 * NL, factor_zoomout[1],
+                                                                           max_allowed_fft_size)
+    # print(2*NP,factor_zoomoutx, best_size_largex, best_size_smallx, (best_size_smallx - factor_zoomoutx*best_size_largex)/best_size_smallx*100 )
+    # print(2*NL,factor_zoomouty, best_size_largey, best_size_smally, (best_size_smally - factor_zoomouty*best_size_largey)/best_size_smally*100 )
 
     new_image = np.zeros((best_size_largex, best_size_largey), dtype=image.dtype)
-    new_image[int((best_size_largex - image.shape[0]) /
-                2):int((best_size_largex + image.shape[0]) / 2),
-            int((best_size_largey - image.shape[1]) /
-                2):int((best_size_largey + image.shape[1]) / 2)] = image
+    new_image[int((best_size_largex - image.shape[0]) / 2):int((best_size_largex + image.shape[0]) / 2),
+              int((best_size_largey - image.shape[1]) / 2):int((best_size_largey + image.shape[1]) /
+                                                               2)] = image
 
     ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(new_image)))
-    
-    ft_image_cropped = ft_image[int((ft_image.shape[0] - best_size_smallx) /
-                           2):int((ft_image.shape[0] + best_size_smallx) / 2),
-                       int((ft_image.shape[1] - best_size_smally) /
-                           2):int((ft_image.shape[1] + best_size_smally) / 2)]
 
+    ft_image_cropped = ft_image[int((ft_image.shape[0] - best_size_smallx) /
+                                    2):int((ft_image.shape[0] + best_size_smallx) / 2),
+                                int((ft_image.shape[1] - best_size_smally) /
+                                    2):int((ft_image.shape[1] + best_size_smally) / 2)]
 
     smaller_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image_cropped)))
 
-    smaller_image_cropped = smaller_image[int((smaller_image.shape[0] - int(np.ceil(factor_zoomoutx*NP))) /
-                           2):int((smaller_image.shape[0] + int(np.ceil(factor_zoomoutx*NP))) / 2),
-                       int((smaller_image.shape[1] - int(np.ceil(factor_zoomouty*NL))) /
-                           2):int((smaller_image.shape[1] + int(np.ceil(factor_zoomouty*NL))) / 2)]
+    smaller_image_cropped = smaller_image[
+        int((smaller_image.shape[0] - int(np.ceil(factor_zoomoutx * NP))) /
+            2):int((smaller_image.shape[0] + int(np.ceil(factor_zoomoutx * NP))) / 2),
+        int((smaller_image.shape[1] - int(np.ceil(factor_zoomouty * NL))) /
+            2):int((smaller_image.shape[1] + int(np.ceil(factor_zoomouty * NL))) / 2)]
 
     # if the initial data is real, we take the real part
     if complex_image is False:

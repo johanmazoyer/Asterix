@@ -6,6 +6,7 @@ from validate import Validator
 
 import Asterix.Optical_System_functions as OptSy
 import Asterix.fits_functions as useful
+import Asterix.processing_functions as proc
 
 ### CONFIGURATION FILE
 parameter_file = OptSy.Asterix_root + os.path.sep + "Example_param_file.ini"
@@ -44,6 +45,13 @@ modelconfig.update({'diam_pup_in_pix': 80})
 # we start the tutorial initializing a pupil
 # Clear pupil of radius prad as define in the parameter file (diameter of the telescope)
 pup_round = OptSy.pupil(modelconfig)
+
+fin = 140
+print(pup_round.pup[:,39:fin].shape)
+useful._quickfits(pup_round.pup[:,39:fin])
+useful._quickfits(proc.ft_subpixel_shift(pup_round.pup[:,39:fin], xshift = 10.1, yshift=10))
+useful._quickfits(np.roll(pup_round.pup[:,39:fin], (10,10), axis = (0,1)))
+afsdf
 
 # If you have a file, you can initialize complex pupil at the right size
 # Roman pupil of radius prad as define in the parameter file.
