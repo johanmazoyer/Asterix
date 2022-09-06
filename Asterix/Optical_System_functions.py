@@ -1013,6 +1013,12 @@ class coronagraph(Optical_System):
             self.FPmsk = self.Vortex(vortex_charge=vortex_charge)
             self.perfect_coro = True
 
+        elif self.corona_type == "wrapped_vortex":
+            self.prop_apod2lyot = 'mft'
+            self.string_os += '2020'
+            self.FPmsk = proc.crop_or_pad_image(fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]),self.dimScience)
+            self.perfect_coro = True
+
         else:
             raise Exception("this coronagrpah mode does not exists yet")
 
