@@ -563,7 +563,7 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
 
 def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_size = 2000):
     """
-    This function returns an image zoom out images Fourier domain computation. The array is padded
+    This function returns an image zoom out with Fourier domain computation. The array is padded
     until max_allowed_fft_size and takes the best size so that factor_zoomout*size_padded is the closest 
     to an integer
 
@@ -573,7 +573,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_si
 
     image (2D array) : (input) intial image. Must be square 
 
-    factor_dezoom (float) : (input) amount of desired to be zoomed out factor_dezoom<1
+    factor_zoomout (float) : (input) amount of desired to be zoomed out factor_zoomout<1
     
     complex_image (bool) : (optional input) if this keyword is "False", then the output array will be
                             assumed to be real. If you want to shift an complex array, use complex_image = True
@@ -588,6 +588,8 @@ def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_si
     NL = sz[1]
     
     if NL == NP and isinstance(factor_zoomout, (float, int)):
+        if factor_zoomout > 1:
+            raise Exception("factor_zoomout must be <=1")
         # in that case we have the exact same size before and after in both directions
         best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout, max_allowed_fft_size)
         best_size_largey = best_size_largex
@@ -595,19 +597,23 @@ def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_si
         factor_zoomoutx = factor_zoomouty = factor_zoomout
     else:
         if isinstance(factor_zoomout, (float, int)):
+            if factor_zoomout > 1:
+                raise Exception("factor_zoomout must be <=1")
             # differnt size initially but same factor
             best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout, max_allowed_fft_size)
             best_size_largey, best_size_smally = find_sizes_closest2factor(2*NL, factor_zoomout, max_allowed_fft_size)
             factor_zoomoutx = factor_zoomouty = factor_zoomout
         else:
-            # different factor
-            best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout[0], max_allowed_fft_size)
-            best_size_largey, best_size_smally = find_sizes_closest2factor(2*NL, factor_zoomout[1], max_allowed_fft_size)
+            # different factors
             factor_zoomoutx = factor_zoomout[0]
             factor_zoomouty = factor_zoomout[1]
-    
-        # print(2*NP,factor_zoomoutx, best_size_largex, best_size_smallx, (best_size_smallx - factor_zoomoutx*best_size_largex)/best_size_smallx*100 )   
-        # print(2*NL,factor_zoomouty, best_size_largey, best_size_smally, (best_size_smally - factor_zoomouty*best_size_largey)/best_size_smally*100 ) 
+            if factor_zoomoutx > 1 or factor_zoomouty > 1:
+                raise Exception("factor_zoomout must be <=1")
+            
+            best_size_largex, best_size_smallx = find_sizes_closest2factor(2*NP, factor_zoomout[0], max_allowed_fft_size)
+            best_size_largey, best_size_smally = find_sizes_closest2factor(2*NL, factor_zoomout[1], max_allowed_fft_size)
+    # print(2*NP,factor_zoomoutx, best_size_largex, best_size_smallx, (best_size_smallx - factor_zoomoutx*best_size_largex)/best_size_smallx*100 )   
+    # print(2*NL,factor_zoomouty, best_size_largey, best_size_smally, (best_size_smally - factor_zoomouty*best_size_largey)/best_size_smally*100 ) 
 
     new_image = np.zeros((best_size_largex, best_size_largey), dtype=image.dtype)
     new_image[int((best_size_largex - image.shape[0]) /
