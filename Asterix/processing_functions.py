@@ -427,12 +427,11 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
 
 def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False):
     """
-    ft_subpixel_shift :
     This function returns an image shifted by a non-integer amount via a
     Fourier domain computation.
 
     (Based on subpixel_shift.pro from ONERA's IDL library by Laurent Mugnier)
-    Renamed into ft_subpixel_shift to be clear on its purpose by Johan Mazoyer
+    Renamed into ft_subpixel_shift to be clear on its purpose
 
     AUTHORS: L.Mugnier, M.Kourdourli, J. Mazoyer
 
