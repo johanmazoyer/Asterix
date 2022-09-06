@@ -1971,7 +1971,7 @@ class deformable_mirror(Optical_System):
         pushact3d = np.zeros((simu_grid.shape[1], dim_array, dim_array))
 
         # do the first FT only once
-        ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil)))
+        ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil), norm="ortho"))
 
         for i in np.arange(pushact3d.shape[0]):
 

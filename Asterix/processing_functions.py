@@ -279,7 +279,7 @@ def resize_crop_bin(image, new_dim, center_on_pixel = False):
     new_dim : int
          dimenstion of output image. new_dim must be samller than dim of the entrance image
 
-    center_on_pixe :bool (optional, default: False). 
+    center_on_pixel :bool (optional, default: False). 
                 If False the PSf is shifhted before bining
 
     Returns
@@ -464,53 +464,67 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image = Fals
     This function returns an image shifted by a non-integer amount via a
     Fourier domain computation.
 
-    The IMAGE must be square and of even width.
-
     (Based on subpixel_shift.pro from ONERA's IDL library by Laurent Mugnier)
     Renamed into ft_subpixel_shift to be clear on its purpose by Johan Mazoyer
 
-    AUTHORS: L.Mugnier, M.Kourdourli
+    AUTHORS: L.Mugnier, M.Kourdourli, J. Mazoyer
 
     05/09/2022 : Introduction in asterix. Kourdourli version
     05/09/2022 : add complex_array param Mazoyer
     05/09/2022 : we invert xshift and yshift to be in agreement with np.roll (integer shift in numpy) Mazoyer
+    06/09/2022 : added integer shift if we can Mazoyer
+    06/09/2022 : works for non square array / non even dimensions array Mazoyer
 
-    image (2D array) : (input) intial image. must be square and of even width.
-
-    xshift (float) : (input) amount of desired shift in X direction.
-
-    yshift (float) : (input) amount of desired shift in Y direction.
-
-    fourier (bool) : (optional input) if this keyword is "True", then the input
-               IMAGE is assumed to be already Fourier transformed, i.e. the input is FFT^-1(image).
-    
-    complex_image (bool) : (optional input) if this keyword is "False", then the output array will be
-                            assumed to be real. If you want to shift an complex array, use complex_image = True
+    Parameters
+    ----------
+    image : 2D numpy array 
+            intial image to be shifted
+    xshift : float
+            amount of desired shift in X direction.
+    yshift : float
+            amount of desired shift in Y direction.
+    fourier : bool (optional, , default False) 
+            if "True", then the input image is assumed to be already Fourier 
+            transformed, i.e. the input is FFT^-1(image).
+    complex_image : bool (optional, , default False)  
+            if "False", then the output array will be
+            assumed to be real. If you want to shift an complex array, use complex_image = True
                
-
-    return (2D array) : (output) shifted array with respect to the xshift and yshift used as input.
+    Returns
+    ------
+    shifted_image : 2D numpy array
+            shifted array with respect to the xshift and yshift used as input.
     """
     sz = np.shape(image)
     NP = sz[0]
     NL = sz[1]
-    if (NL != NP) or (NP % 2 != 0):
-        raise Exception("This routine require square input array of even width")
+    
+    if fourier is False and float(xshift).is_integer() and float(yshift).is_integer():
+            return np.roll(image, (xshift,yshift), axis=(0,1))
+
     if fourier == True:
         ft_image = image
     else:
-        ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(image)))
+        ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(image), norm="ortho"))
 
-    x_ramp = np.outer(np.arange(NP) - NP / 2, np.ones(NP))
-    y_ramp = np.outer(np.ones(NP), np.arange(NP) - NP / 2)
+    xshift_odd = 0
+    if NP % 2 == 1:
+        xshift_odd = 1/2
+    yshift_odd = 0
+    if NL % 2 == 1:
+        yshift_odd = 1/2
+
+    x_ramp = np.outer(np.arange(NP) - NP / 2 + xshift_odd, np.ones(NL))
+    y_ramp = np.outer(np.ones(NP), np.arange(NL) - NL / 2 + yshift_odd )
 
     # tilt describes the phase term in exp(i*phi) we will use to shift the image
     # by multiplying in the Fourier space and convolving in the direct space
 
-    tilt = (-2 * np.pi / NP) * (xshift * x_ramp + yshift * y_ramp)
+    tilt = (-2 * np.pi / NP) * xshift * x_ramp + (-2 * np.pi / NL) *yshift * y_ramp
     # shift -> exp(i*phi)
     shift = np.cos(tilt) + 1j * np.sin(tilt)
     # inverse FFT to go back to the initial space
-    shifted_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift)))
+    shifted_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift),norm="ortho"))
 
     # if the initial data is real, we take the real part
     if complex_image is False:
@@ -526,15 +540,22 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
 
     AUTHORS: J Mazoyer
 
-    05/09/2022 : Introduction in asterix
+    05/09/2022 : Introduction in Asterix
+    
+    Parameters
+    ----------
+    init_size_large : int
+        inital size
 
-    init_size_large : inital size
+    factor_dezoom : float
+        factor to be zoomed out. factor_dezoom<1
 
-    factor_dezoom (float) : (input) amount of desired to be zoomed out factor_dezoom<1
-
-    max_allowed_fft_size (float) : (optional input) : the maximum size
-
-    return two int number
+    max_allowed_fft_size : int 
+        the maximum size to check
+    
+    Returns
+    ------
+    dimensions : tupple of float of len 2
         best_size_large, best_size_small
     """
     best_size_large = init_size_large
@@ -565,23 +586,36 @@ def ft_zoom_out(image, factor_zoomout, complex_image = False, max_allowed_fft_si
     """
     This function returns an image zoom out with Fourier domain computation. The array is padded
     until max_allowed_fft_size and takes the best size so that factor_zoomout*size_padded is the closest 
-    to an integer
+    to an integer. 
+
+    BE CAREFUL WITH THE CENTERING, IT IS HARD TO FIND A GOOD RULE FOR ALL CASES (ODD OR EVEN DIMENSION IN OUTPUT AND INPUT)
+    SO IT IS WHAT IT IS AND USERS ARE ENCOURAGED TO CHECK IF THIS IS WHAT THEY WANT
 
     AUTHORS: J Mazoyer
 
     05/09/2022 : Introduction in asterix
 
-    image (2D array) : (input) intial image. Must be square 
+    Parameters
+    ----------
+    image : 2D numpy array
+        inital array. Must be square 
 
-    factor_zoomout (float) : (input) amount of desired to be zoomed out factor_zoomout<1
-    
-    complex_image (bool) : (optional input) if this keyword is "False", then the output array will be
-                            assumed to be real. If you want to shift an complex array, use complex_image = True
+    factor_dezoom : float
+        factor to be zoomed out. factor_dezoom<1
 
-    max_allowed_fft_size (float) : (optional input) : the maximum size of the first fft. If you increase, you might find 
-                                                        a better match but it might take longer
+    complex_image : bool(optional input, default False) 
+            if this keyword is "False", then the output array will be
+            assumed to be real. If you want to shift an complex array, use complex_image = True
 
-    return (2D array) : (output) zoomed out array
+    max_allowed_fft_size : int (optional input, default 2000)
+        the maximum size of the first fft. If you increase, you might find a better match but it might take longer
+
+        
+    Returns
+    ------
+    zoomed_out_array : 2D numpy array
+        zoomed out array
+
     """
     sz = np.shape(image)
     NP = sz[0]
