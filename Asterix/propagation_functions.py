@@ -370,7 +370,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     return np.fft.ifft2(angular * four, norm='ortho')
 
 
-def fftshift(input,inverse=False,centrage='ee',norm='backward'):
+def fft_choosecenter(input,inverse=False,centrage='ee',norm='backward'):
 
     """
     FFT Computation. IDL "FFT" routine uses coordinates origin at pixel [0,0].
