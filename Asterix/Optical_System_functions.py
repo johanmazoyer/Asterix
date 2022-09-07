@@ -1013,6 +1013,12 @@ class coronagraph(Optical_System):
             self.FPmsk = self.Vortex(vortex_charge=vortex_charge)
             self.perfect_coro = True
 
+        elif self.corona_type == "wrapped_vortex":
+            self.prop_apod2lyot = 'mft'
+            self.string_os += '2020'
+            self.FPmsk = list([self.EF_from_phase_and_ampl(phase_abb= proc.crop_or_pad_image(fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]),self.dimScience))])
+            self.perfect_coro = True
+
         else:
             raise Exception("this coronagrpah mode does not exists yet")
 
@@ -1032,7 +1038,7 @@ class coronagraph(Optical_System):
 
         if self.perfect_coro == True:
 
-            if coroconfig["filename_instr_lyot"] == "Clear":
+            if coroconfig["filename_instr_apod"] == "Clear":
                 # We need a round pupil only to measure the response
                 # of the coronograph to a round pupil to remove it
                 # THIS IS NOT THE ENTRANCE PUPIL,
@@ -1111,12 +1117,12 @@ class coronagraph(Optical_System):
         # call the Optical_System super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
+        if wavelength is None:
+            wavelength = self.wavelength_0
+
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_apod' + '_wl{}'.format(int(wavelength * 1e9))
             useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
-
-        if wavelength is None:
-            wavelength = self.wavelength_0
 
         if noFPM:
             FPmsk = 1.
