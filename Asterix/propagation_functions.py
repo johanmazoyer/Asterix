@@ -370,14 +370,14 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     return np.fft.ifft2(angular * four, norm='ortho')
 
 
-def fft_choosecenter(input,inverse=False,centrage='ee',norm='backward'):
+def fft_choosecenter(input,inverse=False,center_pos='bb',norm='backward'):
 
     """
     FFT Computation. IDL "FFT" routine uses coordinates origin at pixel [0,0].
              This routine FFTSHIFT2 uses a coordinate origin at any pixel [k,l],
              thanks to multiplication by adequate array before using numpy routine "FFT".
-             Keywords allow convenient origins eithr at central pixel, either between
-             the 4 central pixels
+             Keywords allow convenient origins either at central pixel ('p') or between
+             the 4 central pixels ('b')
 
     AUTHORS: L.Mugnier, M.Kourdourli, J. Mazoyer
 
@@ -395,15 +395,15 @@ def fft_choosecenter(input,inverse=False,centrage='ee',norm='backward'):
             inverse == False for direct FFT,
             inverse == True for inverse FFT.
 
-    centrage : string (optinal defaut 'ee')
+    center_pos : string (optinal defaut 'bb')
                       option for the origin. Shorthand for specifying
                       the origin center in direct and fourier spaces when
                       manipulating centered arrays.
                        Direct space             Fourier space
-               CC     Central pix              Central pix 
-               CE     Central pix              Between 4 central pix
-               EC     Between 4 central pix    Central pix
-               EE     Between 4 central pix    Between 4 central pix
+               pp     Central pix              Central pix 
+               pb     Central pix              Between 4 central pix
+               bp     Between 4 central pix    Central pix
+               bb     Between 4 central pix    Between 4 central pix
                if dim_i (i = x or y) is even or odd : 
                     Central pix = dim_i // 2
                     Between 4 central pix: between dim_i // 2 - 1 and dim_i // 2
@@ -432,15 +432,15 @@ def fft_choosecenter(input,inverse=False,centrage='ee',norm='backward'):
     else:
         sens = -1
 
-    if not centrage.lower() in ['cc', 'ce', 'ec', 'ee']:
-        raise Exception("centrage parameter must be 'cc', 'ce', 'ec', or 'ee' only")
+    if not center_pos.lower() in ['pp', 'pb', 'bp', 'bb']:
+        raise Exception("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
 
-    if centrage.lower()[0] == 'c':
+    if center_pos.lower()[0] == 'p':
         direct = np.array([Nx//2 , Ny//2 ])
     else:
         direct = np.array([Nx//2 -1/2., Ny//2 -1/2. ])
 
-    if centrage.lower()[1] == 'c':
+    if center_pos.lower()[1] == 'p':
         fourier = np.array([Nx//2 , Ny//2 ])
     else:
         fourier = np.array([Nx//2 -1/2., Ny//2 -1/2.])

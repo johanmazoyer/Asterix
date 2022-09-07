@@ -1,21 +1,16 @@
 import numpy as np
-import skimage.transform
-from astropy.io import fits
 import Asterix.propagation_functions as prop
+import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
 
-##############################################
-##############################################
-### Pupil
-def roundpupil(dim_pp, prad, no_pixel=False):
+def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     """ --------------------------------------------------
-    Create a circular pupil. The center of the pupil is located between 4 pixels.
-    no_pixel mode is a way to create very ovsersampled pupil that are then rescale.
-    no_pixel is currently not well tested. 
+    Create a circular pupil. 
+    no_pixel mode is a way to create very ovsersampled pupil that are then rescaled using rebin. 
 
-    AUTHOR : Axel Pottier.
-    Modified by J Mazoyer to remove the pixel crenellation
+    AUTHORS : Axel Pottier, Johan Mazoyer
+    7/9/22 Modified by J Mazoyer to remove the pixel crenellation with rebin and add a better center option
 
     Parameters
     ----------
@@ -25,38 +20,44 @@ def roundpupil(dim_pp, prad, no_pixel=False):
         Size of the pupil radius (in pixels)
     no_pixel : boolean (defaut false).
                 If true, the pupil is first defined at a very large
-                scale (dim_pp = 6000) and then rescale to the given parameter dim_pp.
+                scale (prad = 10*prad) and then rescale to the given parameter prad.
                 This limits the pixel crenellation in pupil for small pupils
+
+    center_pos : string (optinal defaut 'b')
+                      option for the center. 
+                      'p' center on pixel dim_pp//2
+                      'b' center in between pixels dim_pp//2 -1 and dim_pp//2
+                      for dim_pp odd or even
 
     Returns
     ------
     pupilnormal : 2D array
         Output circular pupil
-    
-    
+
     -------------------------------------------------- """
 
     if no_pixel == True:
-        dim_pp_small = np.copy(dim_pp)
-        dim_pp = 6000
-        prad = prad / dim_pp_small * 6000
+        factor_bin = 10
+        pup_large = roundpupil(2*factor_bin*prad,factor_bin*prad, no_pixel = False)
+        return proc.crop_or_pad_image(proc.rebin(pup_large, factor = factor_bin, center_on_pixel=False),dim_pp)
+    
+    else:
+        xx, yy = np.meshgrid(
+            np.arange(dim_pp) - (dim_pp) // 2,
+            np.arange(dim_pp) - (dim_pp) // 2)
+        
+        if center_pos.lower()=='b':
+            offset = 1/2
+        elif center_pos.lower()=='p':
+            offset = 0
+        else:
+            raise Exception("center_pos can only be 'p' or 'b'")
 
-    xx, yy = np.meshgrid(
-        np.arange(dim_pp) - (dim_pp) / 2,
-        np.arange(dim_pp) - (dim_pp) / 2)
-    rr = np.hypot(yy + 1 / 2, xx + 1 / 2)
-    pupilnormal = np.zeros((dim_pp, dim_pp))
-    pupilnormal[rr <= prad] = 1.0
+        rr = np.hypot(yy+offset, xx+offset)
+        pupilnormal = np.zeros((dim_pp, dim_pp))
+        pupilnormal[rr <= prad] = 1.0
 
-    if no_pixel == True:
-        pupilnormal = np.array(
-            skimage.transform.rescale(pupilnormal,
-                                      dim_pp_small / dim_pp,
-                                      preserve_range=True,
-                                      anti_aliasing=True,
-                                      channel_axis=None))
-
-    return pupilnormal
+        return pupilnormal
 
 
 def shift_phase_ramp(dim_pp, shift_x, shift_y):

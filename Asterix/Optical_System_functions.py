@@ -1148,7 +1148,7 @@ class coronagraph(Optical_System):
             input_wavefront_after_apod_pad = proc.crop_or_pad_image(input_wavefront_after_apod,
                                                                     dim_fp_fft_here)
 
-            corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad, inverse = False, centrage = 'ee', norm='ortho')
+            corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad, inverse = False, center_pos = 'bb', norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
@@ -1173,7 +1173,7 @@ class coronagraph(Optical_System):
                                           np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
-            lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk, inverse = True, centrage = 'ee', norm='ortho')
+            lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk, inverse = True, center_pos = 'bb', norm='ortho')
 
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
