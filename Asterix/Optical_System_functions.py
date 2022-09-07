@@ -1016,7 +1016,7 @@ class coronagraph(Optical_System):
         elif self.corona_type == "wrapped_vortex":
             self.prop_apod2lyot = 'mft'
             self.string_os += '2020'
-            self.FPmsk = proc.crop_or_pad_image(fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]),self.dimScience)
+            self.FPmsk = list([self.EF_from_phase_and_ampl(phase_abb= proc.crop_or_pad_image(fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]),self.dimScience))])
             self.perfect_coro = True
 
         else:
