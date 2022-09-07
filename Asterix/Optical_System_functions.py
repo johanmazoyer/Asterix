@@ -1148,23 +1148,6 @@ class coronagraph(Optical_System):
             input_wavefront_after_apod_pad = proc.crop_or_pad_image(input_wavefront_after_apod,
                                                                     dim_fp_fft_here)
 
-            # Phase ramp to center focal plane between 4 pixels
-            # TODO This could be done in the FQPM function and save in the self to save time
-            # maskshifthalfpix = phase_ampl.shift_phase_ramp(dim_fp_fft_here, 0.5, 0.5)
-            # maskshifthalfpix_invert = phase_ampl.shift_phase_ramp(dim_fp_fft_here, -0.5, -0.5)
-
-            # Because our convention is also "in between 4 pixels" in the final fp (after the corono)
-            # one might think "why do we need to 'unshift' when going back to the Lyot stop?"
-            # The reason is that this half-pixel shift depend on the resolution and therefore the method
-            # of propagation (fft is not exactly science resolution because
-            # of rounding issues and mft-babinet use its own resolution, etc) so it's easier to have all
-            # back to original place. All pupil plane must be such than if you apply an MFT without any shift,
-            # you are "in between pixels"
-
-            #Apod plane to focal plane
-            # corono_focal_plane = np.fft.fft2(np.fft.fftshift(input_wavefront_after_apod_pad *
-            #                                                  maskshifthalfpix),
-            #                                  norm='ortho')
             corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad, inverse = False, centrage = 'ee', norm='ortho')
 
             if save_all_planes_to_fits == True:
@@ -1191,9 +1174,6 @@ class coronagraph(Optical_System):
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk, inverse = True, centrage = 'ee', norm='ortho')
-
-            # lyotplane_before_lyot = np.fft.fftshift(np.fft.ifft2(corono_focal_plane * FPmsk,
-            #                                                      norm='ortho')) * maskshifthalfpix_invert
 
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
