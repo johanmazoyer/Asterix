@@ -1150,8 +1150,8 @@ class coronagraph(Optical_System):
 
             # Phase ramp to center focal plane between 4 pixels
             # TODO This could be done in the FQPM function and save in the self to save time
-            maskshifthalfpix = phase_ampl.shift_phase_ramp(dim_fp_fft_here, 0.5, 0.5)
-            maskshifthalfpix_invert = phase_ampl.shift_phase_ramp(dim_fp_fft_here, -0.5, -0.5)
+            # maskshifthalfpix = phase_ampl.shift_phase_ramp(dim_fp_fft_here, 0.5, 0.5)
+            # maskshifthalfpix_invert = phase_ampl.shift_phase_ramp(dim_fp_fft_here, -0.5, -0.5)
 
             # Because our convention is also "in between 4 pixels" in the final fp (after the corono)
             # one might think "why do we need to 'unshift' when going back to the Lyot stop?"
@@ -1162,9 +1162,10 @@ class coronagraph(Optical_System):
             # you are "in between pixels"
 
             #Apod plane to focal plane
-            corono_focal_plane = np.fft.fft2(np.fft.fftshift(input_wavefront_after_apod_pad *
-                                                             maskshifthalfpix),
-                                             norm='ortho')
+            # corono_focal_plane = np.fft.fft2(np.fft.fftshift(input_wavefront_after_apod_pad *
+            #                                                  maskshifthalfpix),
+            #                                  norm='ortho')
+            corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad, inverse = False, centrage = 'ee', norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
@@ -1189,8 +1190,10 @@ class coronagraph(Optical_System):
                                           np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
-            lyotplane_before_lyot = np.fft.fftshift(np.fft.ifft2(corono_focal_plane * FPmsk,
-                                                                 norm='ortho')) * maskshifthalfpix_invert
+            lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk, inverse = True, centrage = 'ee', norm='ortho')
+
+            # lyotplane_before_lyot = np.fft.fftshift(np.fft.ifft2(corono_focal_plane * FPmsk,
+            #                                                      norm='ortho')) * maskshifthalfpix_invert
 
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
@@ -1799,6 +1802,8 @@ class deformable_mirror(Optical_System):
         # do the first FT only once
         ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil), norm="ortho"))
 
+        # ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil), norm="ortho"))
+
         for i in np.arange(pushact3d.shape[0]):
 
             # Add an error on the orientation of the grid
@@ -1811,7 +1816,7 @@ class deformable_mirror(Optical_System):
             Psivector = proc.ft_subpixel_shift(ft_actu,
                                                xshift=simu_grid[1, i] - xycenttmp + xerror * pitch_actshape,
                                                yshift=simu_grid[0, i] - xycenttmp + yerror * pitch_actshape,
-                                               fourier=True)
+                                               fourier=True, norm="ortho")
 
             if gausserror != 0:
                 # Add an error on the sizes of the influence functions
