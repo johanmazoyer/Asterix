@@ -37,8 +37,8 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     -------------------------------------------------- """
 
     if no_pixel == True:
-        factor_bin = 10
-        pup_large = roundpupil(2*factor_bin*prad,factor_bin*prad, no_pixel = False)
+        factor_bin = int(10)
+        pup_large = roundpupil(int(2*prad)*factor_bin,factor_bin*prad, no_pixel = False)
         return proc.crop_or_pad_image(proc.rebin(pup_large, factor = factor_bin, center_on_pixel=False),dim_pp)
     
     else:
@@ -102,7 +102,7 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
     Parameters
     ----------
-    pupil_rad: int
+    pupil_rad: float
         radius of the pupil on which the phaserms will be measured
 
     dim_image: int

@@ -46,13 +46,13 @@ class Optical_System:
         -------------------------------------------------- """
 
         #pupil in pixel
-        self.prad = round(int(modelconfig["diam_pup_in_pix"]) / 2)
+        self.prad = modelconfig["diam_pup_in_pix"] / 2
 
         # All pupils in the code must have this dimension, so that the OS systems can
         # be easily switched.
         # dim_overpad_pupil is set to an even numer and the pupil is centered in
         # between 4 pixels
-        self.dim_overpad_pupil = round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2
+        self.dim_overpad_pupil = int(round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2)
 
         #Lambda over D in pixels in the focal plane
         # at the reference wavelength
@@ -211,7 +211,7 @@ class Optical_System:
                                   **kwargs)
 
         focal_plane_EF = prop.mft(exit_EF,
-                                  self.prad * 2,
+                                  int(self.prad * 2),
                                   self.dimScience,
                                   self.dimScience / self.Science_sampling * lambda_ratio,
                                   X_offset_output=Psf_offset[0],
@@ -476,7 +476,7 @@ class Optical_System:
         ## Phase map and amplitude map for the static aberrations
         if set_phase_abb == True:
             if phase_abb_filename == '':
-                phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:.1f}".format(
                     int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc, self.prad)
 
             if set_random_phase is False and os.path.isfile(Model_local_dir + phase_abb_filename +
@@ -1183,7 +1183,7 @@ class coronagraph(Optical_System):
             #Apod plane to focal plane
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          2 * self.prad,
+                                          int(2 * self.prad),
                                           self.dim_fpm,
                                           self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                                           inverse=False,
@@ -1213,7 +1213,7 @@ class coronagraph(Optical_System):
             lyotplane_before_lyot_central_part = proc.crop_or_pad_image(
                 prop.mft(corono_focal_plane * (1 - FPmsk),
                          self.dim_fpm,
-                         2 * self.prad,
+                         int(2 * self.prad),
                          self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                          inverse=True,
                          norm='ortho'), self.dim_overpad_pupil)
@@ -1225,7 +1225,7 @@ class coronagraph(Optical_System):
             # Apod plane to focal plane
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          2 * self.prad,
+                                          int(2 * self.prad),
                                           self.dimScience,
                                           self.dimScience / self.Science_sampling * lambda_ratio,
                                           inverse=False,
@@ -1251,7 +1251,7 @@ class coronagraph(Optical_System):
             lyotplane_before_lyot = proc.crop_or_pad_image(
                 prop.mft(corono_focal_plane * FPmsk,
                          self.dimScience,
-                         2 * self.prad,
+                         int(2 * self.prad),
                          self.dimScience / self.Science_sampling * lambda_ratio,
                          inverse=True,
                          norm='ortho'), self.dim_overpad_pupil)
@@ -1727,7 +1727,7 @@ class deformable_mirror(Optical_System):
             angerror = 0.
             gausserror = 0.
 
-        diam_pup_in_pix = 2 * self.prad
+        diam_pup_in_pix = int(2 * self.prad)
         diam_pup_in_m = self.diam_pup_in_m
         dim_array = self.dim_overpad_pupil
 
