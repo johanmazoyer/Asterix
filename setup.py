@@ -13,7 +13,7 @@ setup(
     author='Asterix Developers',
     author_email='johan.mazoyer@obspm.fr',
     license='BSD',
-    include_package_data = True,
+    include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
     classifiers=[
@@ -27,7 +27,6 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3.10',
-        ],
+    ],
     keywords='Exoplanets imaging high-contrast coronagraphy',
-    install_requires=['numpy', 'scipy', 'astropy', 'matplotlib', 'configobj', 'scikit-image']
-    )
+    install_requires=['numpy', 'scipy', 'astropy', 'matplotlib', 'configobj', 'scikit-image'])

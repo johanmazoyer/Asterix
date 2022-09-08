@@ -10,6 +10,7 @@ from Asterix.fits_functions import _quickfits
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
+
 def plot_contrast_curves(reduced_data,
                          xcen=None,
                          ycen=None,
@@ -18,10 +19,10 @@ def plot_contrast_curves(reduced_data,
                          numberofmas_per_pix=None,
                          type_of_contrast='mean',
                          mask_DH=None,
-                         xtitle =None,
+                         xtitle=None,
                          ytitle=None,
-                         title =None,
-                         legend_labels = [None],
+                         title=None,
+                         legend_labels=[None],
                          xrange=None,
                          yrange=None,
                          path='',
@@ -112,9 +113,7 @@ def plot_contrast_curves(reduced_data,
         abscise_String_unit = '(pix)'
         filename += '_unitpix'
     else:
-        raise Exception(
-            "either numberofpix_per_loD or numberofmas_per_pix need to be filled, not both"
-        )
+        raise Exception("either numberofpix_per_loD or numberofmas_per_pix need to be filled, not both")
 
     plt.figure()
 
@@ -133,41 +132,37 @@ def plot_contrast_curves(reduced_data,
         plt.plot(absice, contrast1dcurve)
     else:
         # this ia cube
-        if legend_labels[0] is None :
+        if legend_labels[0] is None:
             legend_labels[0] = "Initial"
-            for i in range(1,reduced_data.shape[0]):
+            for i in range(1, reduced_data.shape[0]):
                 legend_labels.append("iter #{}".format(i))
         else:
             if len(legend_labels) != reduced_data.shape[0]:
                 raise Exception("legend_labels must be a string list of size as reduced_data.shape[0]")
 
-
-
         for i, frame in enumerate(reduced_data):
-            contrast1dcurve = contrast_curves(
-                frame,
-                xcen=xcen,
-                ycen=ycen,
-                delta_raddii=delta_raddii,
-                type_of_contrast=type_of_contrast,
-                mask_DH=mask_DH)
+            contrast1dcurve = contrast_curves(frame,
+                                              xcen=xcen,
+                                              ycen=ycen,
+                                              delta_raddii=delta_raddii,
+                                              type_of_contrast=type_of_contrast,
+                                              mask_DH=mask_DH)
             if i == 0:
-                absice = np.arange(
-                    len(contrast1dcurve)) * absicemultiplicationfactor
+                absice = np.arange(len(contrast1dcurve)) * absicemultiplicationfactor
                 iwa = np.nanmin(absice[~np.isnan(contrast1dcurve)])
                 owa = np.nanmax(absice[~np.isnan(contrast1dcurve)])
-                
+
             plt.plot(absice, contrast1dcurve, label=legend_labels[i])
-            
+
         plt.legend(fontsize=6, loc='upper right')
 
     if xrange is None:
         xrange = [0, 1.2 * owa]
-    
-    plt.xlim(xrange[0],xrange[1])
+
+    plt.xlim(xrange[0], xrange[1])
 
     if yrange is not None:
-        plt.ylim(yrange[0],yrange[1])
+        plt.ylim(yrange[0], yrange[1])
 
     font_size = 14
 
@@ -191,7 +186,7 @@ def plot_contrast_curves(reduced_data,
             filename += '_5sigstd'
     plt.ylabel(ytitle, fontsize=font_size)
     plt.yscale("log")
-    
+
     tick_size = 12
     plt.yticks(fontsize=tick_size)
     plt.xticks(fontsize=tick_size)
@@ -262,20 +257,17 @@ def contrast_curves(reduced_data,
 
     if mask_DH is None:
         mask_DH = np.ones((reduced_data.shape))
-    
+
     mask_DH[np.where(mask_DH == 0)] = np.nan
 
     # chech the maximum number of ring we can fit in the image, which depends on the position of the center
     maximum_number_of_points = np.min(
-        (np.floor(xcen / delta_raddii),
-         np.floor((reduced_data.shape[0] - xcen) / delta_raddii),
-         np.floor(ycen / delta_raddii),
-         np.floor((reduced_data.shape[1] - ycen) / delta_raddii)))
+        (np.floor(xcen / delta_raddii), np.floor((reduced_data.shape[0] - xcen) / delta_raddii),
+         np.floor(ycen / delta_raddii), np.floor((reduced_data.shape[1] - ycen) / delta_raddii)))
 
     for i_ring in range(0, int(maximum_number_of_points) - 1):
 
-        wh_rings = np.where((rho2d >= i_ring * delta_raddii)
-                            & (rho2d < (i_ring + 1) * delta_raddii))
+        wh_rings = np.where((rho2d >= i_ring * delta_raddii) & (rho2d < (i_ring + 1) * delta_raddii))
 
         masked_data = reduced_data * mask_DH
         if type_of_contrast == 'mean':
@@ -285,15 +277,13 @@ def contrast_curves(reduced_data,
         elif type_of_contrast == 'stddev_5sig':
             contrast_curve.append(5 * np.nanstd(masked_data[wh_rings]))
         else:
-            raise Exception("This type of contrast curve does not exists: ",
-                            type_of_contrast)
+            raise Exception("This type of contrast curve does not exists: ", type_of_contrast)
     contrast_curve = np.asarray(contrast_curve)
     contrast_curve[np.where(contrast_curve == 0)] = np.nan
     return contrast_curve
 
 
-def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed,
-                      MaskScience, result_dir):
+def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, MaskScience, result_dir):
     """ --------------------------------------------------
     Save the result from a correction loop in result_dir
     
@@ -337,8 +327,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed,
     header = from_param_to_header(config)
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
-    fits.writeto(result_dir + current_time_str + "_FocalPlane_Intensities" +
-                 ".fits",
+    fits.writeto(result_dir + current_time_str + "_FocalPlane_Intensities" + ".fits",
                  np.array(FP_Intensities),
                  header,
                  overwrite=True)
@@ -361,8 +350,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed,
     voltage_DMs_nparray = np.zeros((nb_total_iter, testbed.number_act))
 
     DM_phases = np.zeros(
-        (len(testbed.name_of_DMs), nb_total_iter, testbed.dim_overpad_pupil,
-         testbed.dim_overpad_pupil))
+        (len(testbed.name_of_DMs), nb_total_iter, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
 
     for i in range(len(voltage_DMs)):
         allDMphases = testbed.voltage_to_phases(voltage_DMs[i])
@@ -381,40 +369,33 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed,
     plt.figure()
 
     for j, DM_name in enumerate(testbed.name_of_DMs):
-        fits.writeto(result_dir + current_time_str + '_' + DM_name +
-                     "_phases" + ".fits",
+        fits.writeto(result_dir + current_time_str + '_' + DM_name + "_phases" + ".fits",
                      DM_phases[j],
                      header,
                      overwrite=True)
 
-        fits.writeto(result_dir + current_time_str + '_' + DM_name +
-                     "_strokes" + ".fits",
+        fits.writeto(result_dir + current_time_str + '_' + DM_name + "_strokes" + ".fits",
                      DMstrokes[j],
                      header,
                      overwrite=True)
 
         DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
-        voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:
-                                                 indice_acum_number_act +
+        voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:indice_acum_number_act +
                                                  DM.number_act]
         indice_acum_number_act += DM.number_act
 
-        fits.writeto(result_dir + current_time_str + '_' + DM_name +
-                     "_voltages" + ".fits",
+        fits.writeto(result_dir + current_time_str + '_' + DM_name + "_voltages" + ".fits",
                      voltage_DMs_tosave,
                      header,
                      overwrite=True)
 
         plt.plot(np.std(DMstrokes[j], axis=(1, 2)), label=DM_name + " RMS")
-        plt.plot(np.max(DMstrokes[j], axis=(1, 2)) -
-                 np.min(DMstrokes[j], axis=(1, 2)),
-                 label=DM_name + " PV")
+        plt.plot(np.max(DMstrokes[j], axis=(1, 2)) - np.min(DMstrokes[j], axis=(1, 2)), label=DM_name + " PV")
 
     plt.xlabel("Number of iterations")
     plt.ylabel("DM Strokes (nm)")
     plt.legend()
-    plt.savefig(
-        os.path.join(result_dir, current_time_str + "_DM_Strokes" + ".pdf"))
+    plt.savefig(os.path.join(result_dir, current_time_str + "_DM_Strokes" + ".pdf"))
     plt.close()
     # TODO Now FP_Intensities are save with photon noise if it's on
     # We need to do them without just to save in the results
@@ -439,18 +420,15 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed,
     plt.yscale("log")
     plt.xlabel("Number of iterations")
     plt.ylabel("Mean contrast in Dark Hole")
-    plt.savefig(
-        os.path.join(result_dir,
-                     current_time_str + "_Mean_Contrast_DH" + ".pdf"))
+    plt.savefig(os.path.join(result_dir, current_time_str + "_Mean_Contrast_DH" + ".pdf"))
     plt.close()
-    plot_contrast_curves(
-        np.asarray(FP_Intensities),
-        delta_raddii=3,
-        numberofpix_per_loD=config["modelconfig"]["Science_sampling"],
-        type_of_contrast='mean',
-        mask_DH=MaskScience,
-        path=result_dir,
-        filename=current_time_str)
+    plot_contrast_curves(np.asarray(FP_Intensities),
+                         delta_raddii=3,
+                         numberofpix_per_loD=config["modelconfig"]["Science_sampling"],
+                         type_of_contrast='mean',
+                         mask_DH=MaskScience,
+                         path=result_dir,
+                         filename=current_time_str)
 
 
 def from_param_to_header(config):

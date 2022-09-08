@@ -52,7 +52,8 @@ class Optical_System:
         # be easily switched.
         # dim_overpad_pupil is set to an even numer and the pupil is centered in
         # between 4 pixels
-        self.dim_overpad_pupil = int(round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2)
+        self.dim_overpad_pupil = int(
+            round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2)
 
         #Lambda over D in pixels in the focal plane
         # at the reference wavelength
@@ -586,12 +587,12 @@ class Optical_System:
                                                                  yshift=size_ampl // 2 - 1 / 2 - centerY)
 
                     # reshape at the good size
-                    # TODO we may have to check the centering is ok 
-                    res_pup = testbedampl_header["RESPUP"] #Pup resolution meter/pixel
-                    testbedampl = proc.crop_or_pad_image(proc.ft_zoom_out(testbedampl, 
-                                                         res_pup / (self.diam_pup_in_m / (2 * self.prad))), 
-                                                         self.dim_overpad_pupil)
-                    
+                    # TODO we may have to check the centering is ok
+                    res_pup = testbedampl_header["RESPUP"]  #Pup resolution meter/pixel
+                    testbedampl = proc.crop_or_pad_image(
+                        proc.ft_zoom_out(testbedampl, res_pup / (self.diam_pup_in_m / (2 * self.prad))),
+                        self.dim_overpad_pupil)
+
                     #Set the average to 0 inside entrancepupil
                     pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
                     testbedampl = (testbedampl - np.mean(testbedampl[np.where(pup_here != 0)])) * pup_here
@@ -824,14 +825,18 @@ class pupil(Optical_System):
             else:
                 #Rescale to the pupil size
                 find_divisors = list()
-                for i in range(60,pup_fits.shape[0] +1):
+                for i in range(60, pup_fits.shape[0] + 1):
                     if pup_fits.shape[0] % i == 0:
                         find_divisors.append(i)
-                
+
                 if not int(2 * self.prad) in find_divisors:
-                    raise Exception("Choose a divisor of the .fits file size ({0}) for diam_pup_in_pix parameter: {1}".format(pup_fits.shape[0], find_divisors))
+                    raise Exception(
+                        "Choose a divisor of the .fits file size ({0}) for diam_pup_in_pix parameter: {1}".
+                        format(pup_fits.shape[0], find_divisors))
                 else:
-                    pup_fits_right_size = proc.rebin(pup_fits,int(pup_fits.shape[0] / (2 * self.prad)), center_on_pixel=False)
+                    pup_fits_right_size = proc.rebin(pup_fits,
+                                                     int(pup_fits.shape[0] / (2 * self.prad)),
+                                                     center_on_pixel=False)
 
             self.pup = proc.crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 
@@ -1018,7 +1023,10 @@ class coronagraph(Optical_System):
         elif self.corona_type == "wrapped_vortex":
             self.prop_apod2lyot = 'mft'
             self.string_os += '2020'
-            self.FPmsk = list([self.EF_from_phase_and_ampl(phase_abb= proc.crop_or_pad_image(fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]),self.dimScience))])
+            self.FPmsk = list([
+                self.EF_from_phase_and_ampl(phase_abb=proc.crop_or_pad_image(
+                    fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]), self.dimScience))
+            ])
             self.perfect_coro = True
 
         else:
@@ -1150,7 +1158,10 @@ class coronagraph(Optical_System):
             input_wavefront_after_apod_pad = proc.crop_or_pad_image(input_wavefront_after_apod,
                                                                     dim_fp_fft_here)
 
-            corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad, inverse = False, center_pos = 'bb', norm='ortho')
+            corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad,
+                                                       inverse=False,
+                                                       center_pos='bb',
+                                                       norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
@@ -1175,7 +1186,10 @@ class coronagraph(Optical_System):
                                           np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
-            lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk, inverse = True, center_pos = 'bb', norm='ortho')
+            lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk,
+                                                          inverse=True,
+                                                          center_pos='bb',
+                                                          norm='ortho')
 
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
@@ -1798,7 +1812,8 @@ class deformable_mirror(Optical_System):
             Psivector = proc.ft_subpixel_shift(ft_actu,
                                                xshift=simu_grid[1, i] - xycenttmp + xerror * pitch_actshape,
                                                yshift=simu_grid[0, i] - xycenttmp + yerror * pitch_actshape,
-                                               fourier=True, norm="ortho")
+                                               fourier=True,
+                                               norm="ortho")
 
             if gausserror != 0:
                 # Add an error on the sizes of the influence functions

@@ -2,6 +2,7 @@ import numpy as np
 import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
+
 def mft(image,
         real_dim_input,
         dim_output,
@@ -98,8 +99,7 @@ def mft(image,
         else:
             raise Exception(error_string_real_dim_input)
     elif isinstance(real_dim_input, tuple):
-        if all(isinstance(dims, int)
-               for dims in real_dim_input) & (len(real_dim_input) == 2):
+        if all(isinstance(dims, int) for dims in real_dim_input) & (len(real_dim_input) == 2):
             real_dim_input_x = real_dim_input[0]
             real_dim_input_y = real_dim_input[1]
         else:
@@ -117,8 +117,7 @@ def mft(image,
         else:
             raise Exception(error_string_dim_output)
     elif isinstance(dim_output, tuple):
-        if all(isinstance(dims, int)
-               for dims in dim_output) & (len(dim_output) == 2):
+        if all(isinstance(dims, int) for dims in dim_output) & (len(dim_output) == 2):
             dim_output_x = dim_output[0]
             dim_output_y = dim_output[1]
         else:
@@ -136,8 +135,7 @@ def mft(image,
         else:
             raise Exception(error_string_nbr)
     elif isinstance(nbres, tuple):
-        if all(isinstance(nbresi, (float, int))
-               for nbresi in nbres) & (len(nbres) == 2):
+        if all(isinstance(nbresi, (float, int)) for nbresi in nbres) & (len(nbres) == 2):
             nbresx = float(nbres[0])
             nbresy = float(nbres[1])
         else:
@@ -158,25 +156,19 @@ def mft(image,
     Y1 = Y_offset_output
 
     # image0 = dcomplex(image)
-    xx0 = (
-        (np.arange(dim_input_x) - X0 + 1 / 2) / dim_input_x)  #Entrance image
-    xx1 = (
-        (np.arange(dim_input_y) - Y0 + 1 / 2) / dim_input_y)  #Entrance image
-    uu0 = ((np.arange(dim_output_x) - X1 + 1 / 2) / dim_output_x -
-           1 / 2) * nbresx  #Fourier plane
-    uu1 = ((np.arange(dim_output_y) - Y1 + 1 / 2) / dim_output_y -
-           1 / 2) * nbresy  #Fourier plane
+    xx0 = ((np.arange(dim_input_x) - X0 + 1 / 2) / dim_input_x)  #Entrance image
+    xx1 = ((np.arange(dim_input_y) - Y0 + 1 / 2) / dim_input_y)  #Entrance image
+    uu0 = ((np.arange(dim_output_x) - X1 + 1 / 2) / dim_output_x - 1 / 2) * nbresx  #Fourier plane
+    uu1 = ((np.arange(dim_output_y) - Y1 + 1 / 2) / dim_output_y - 1 / 2) * nbresy  #Fourier plane
 
-    norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
-                    dim_output_x / dim_output_y)
+    norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
     if inverse == False:
         if norm == 'backward':
             norm0 = 1.
         elif norm == 'forward':
             norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
         elif norm == 'ortho':
-            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
-                            dim_output_x / dim_output_y)
+            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
         sign_exponential = -1
 
     elif inverse == True:
@@ -185,8 +177,7 @@ def mft(image,
         elif norm == 'forward':
             norm0 = 1.
         elif norm == 'ortho':
-            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
-                            dim_output_x / dim_output_y)
+            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
         sign_exponential = 1
 
     AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0))
@@ -359,19 +350,15 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     cycles = diam_pup_in_pix
 
     four = np.fft.fft2(proc.crop_or_pad_image(pup, Nfourier), norm='ortho')
-    u, v = np.meshgrid(
-        np.arange(Nfourier) - Nfourier / 2,
-        np.arange(Nfourier) - Nfourier / 2)
+    u, v = np.meshgrid(np.arange(Nfourier) - Nfourier / 2, np.arange(Nfourier) - Nfourier / 2)
 
-    rho2D = np.fft.fftshift(np.hypot(v,
-                                     u)) * (cycles / diam_pup_in_m) / Nfourier
+    rho2D = np.fft.fftshift(np.hypot(v, u)) * (cycles / diam_pup_in_m) / Nfourier
 
     angular = np.exp(-1j * np.pi * z * lam * (rho2D**2))
     return np.fft.ifft2(angular * four, norm='ortho')
 
 
-def fft_choosecenter(input,inverse=False,center_pos='bb',norm='backward'):
-
+def fft_choosecenter(input, inverse=False, center_pos='bb', norm='backward'):
     """
     FFT Computation. IDL "FFT" routine uses coordinates origin at pixel [0,0].
              This routine FFTSHIFT2 uses a coordinate origin at any pixel [k,l],
@@ -436,28 +423,31 @@ def fft_choosecenter(input,inverse=False,center_pos='bb',norm='backward'):
         raise Exception("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
 
     if center_pos.lower()[0] == 'p':
-        direct = np.array([Nx//2 , Ny//2 ])
+        direct = np.array([Nx // 2, Ny // 2])
     else:
-        direct = np.array([Nx//2 -1/2., Ny//2 -1/2. ])
+        direct = np.array([Nx // 2 - 1 / 2., Ny // 2 - 1 / 2.])
 
     if center_pos.lower()[1] == 'p':
-        fourier = np.array([Nx//2 , Ny//2 ])
+        fourier = np.array([Nx // 2, Ny // 2])
     else:
-        fourier = np.array([Nx//2 -1/2., Ny//2 -1/2.])
-       
-    X, Y = np.meshgrid( np.linspace(0, Ny, Ny, endpoint = False),  np.linspace(0, Nx, Nx, endpoint = False))
+        fourier = np.array([Nx // 2 - 1 / 2., Ny // 2 - 1 / 2.])
+
+    X, Y = np.meshgrid(np.linspace(0, Ny, Ny, endpoint=False), np.linspace(0, Nx, Nx, endpoint=False))
 
     # shift in Fourier space, i.e. multiplication in direct space, and computation of FFT
     if inverse == False:
-        farray = np.fft.fft2(input*np.exp((-sens)*2.*np.pi*1j*(fourier[0]*X/Nx+fourier[1]*Y/Ny)), norm=norm)
+        farray = np.fft.fft2(input * np.exp(
+            (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
+                             norm=norm)
     if inverse == True:
-        farray = np.fft.ifft2(input*np.exp((-sens)*2.*np.pi*1j*(fourier[0]*X/Nx+fourier[1]*Y/Ny)), norm=norm)
+        farray = np.fft.ifft2(input * np.exp(
+            (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
+                              norm=norm)
 
     # shift in direct space, i.e. multiplication in fourier space, and computation of FFT
-    farray *= np.exp((-sens)*2.*np.pi*1j*(direct[0]*X/Nx+direct[1]*Y/Ny))
+    farray *= np.exp((-sens) * 2. * np.pi * 1j * (direct[0] * X / Nx + direct[1] * Y / Ny))
 
     # normalisation
-    farray *= np.exp(sens*(2.*1j*np.pi/np.sqrt(Nx*Ny))*np.sum(direct*fourier))
-
+    farray *= np.exp(sens * (2. * 1j * np.pi / np.sqrt(Nx * Ny)) * np.sum(direct * fourier))
 
     return farray

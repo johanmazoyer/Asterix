@@ -11,9 +11,7 @@ import Asterix.processing_functions as proc
 ### CONFIGURATION FILE
 parameter_file = OptSy.Asterix_root + os.path.sep + "Example_param_file.ini"
 configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
-config = ConfigObj(parameter_file,
-                   configspec=configspec_file,
-                   default_encoding="utf8")
+config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
 vtor = Validator()
 checks = config.validate(vtor, copy=True)
 
@@ -88,7 +86,7 @@ print("transmission pup roman = ", transmission_roman_pup)
 
 modelconfig.update({'Delta_wav': 50e-9})
 # but then files have to be reinitialize:
-pup_roman_poly = OptSy.pupil(modelconfig,PupType = "RomanPup")
+pup_roman_poly = OptSy.pupil(modelconfig, PupType="RomanPup")
 
 # Be careful when you change modelconfig because Optical Systems are designed to work together
 # but that only works if they are defined with the same base config
@@ -121,8 +119,7 @@ No_mask_PSF = corono.todetector_Intensity(center_on_pixel=True, noFPM=True)
 Max_No_mask_PSF = np.max(No_mask_PSF)
 
 # set initial phase and amplitude and wavefront
-phase = corono.generate_phase_aberr(SIMUconfig,
-                                    Model_local_dir=Model_local_dir)
+phase = corono.generate_phase_aberr(SIMUconfig, Model_local_dir=Model_local_dir)
 
 # # from this phase we create a electrical field. This is a general
 # aberrated field before any pupil multiplication.
@@ -133,9 +130,7 @@ coronagraphic_PSF = corono.todetector_Intensity(entrance_EF=aberrated_EF)
 
 #which we can now normalize:
 normalized_coronagraphic_PSF = coronagraphic_PSF / Max_No_mask_PSF
-useful._quickfits(normalized_coronagraphic_PSF,
-                 dir=result_dir,
-                 name="Normalized_coronagraphic_PSF")
+useful._quickfits(normalized_coronagraphic_PSF, dir=result_dir, name="Normalized_coronagraphic_PSF")
 
 # If you want to debug something, you can plot all planes in the propagation
 
@@ -144,17 +139,13 @@ if not os.path.exists(plot_all_fits_dir):
     os.makedirs(plot_all_fits_dir)
 
 # This is nuclear option, it can produce tens of fits, especially in a correction loop:
-FP_after_corono_in_contrast = corono.todetector_Intensity(
-    entrance_EF=aberrated_EF,
-    save_all_planes_to_fits=True,
-    dir_save_all_planes=plot_all_fits_dir) / No_mask_PSF
+FP_after_corono_in_contrast = corono.todetector_Intensity(entrance_EF=aberrated_EF,
+                                                          save_all_planes_to_fits=True,
+                                                          dir_save_all_planes=plot_all_fits_dir) / No_mask_PSF
 
 # Finally we can initialize DMs. DMs can be in pupil or off pupil.
 # in the default parameter file, this one is in pupil
-DM3 = OptSy.deformable_mirror(modelconfig,
-                              DMconfig,
-                              Name_DM='DM3',
-                              Model_local_dir=Model_local_dir)
+DM3 = OptSy.deformable_mirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
 
 # DMs are also optical systems but have another parameter to control them, DMphase
 # measure the EF throught the DM
@@ -170,26 +161,22 @@ EF_though_DM = DM3.EF_through(entrance_EF=aberrated_EF, DMphase=phase)
 #                               - A list of the same size of the name of those system so that you can access it
 # The list order is from the first optics system to the last in the
 # path of the light (so usually from entrance pupil to Lyot pupil)
-testbed_1DM = OptSy.Testbed([pup_round, DM3, corono],
-                            ["entrancepupil", "DM3", "corono"])
+testbed_1DM = OptSy.Testbed([pup_round, DM3, corono], ["entrancepupil", "DM3", "corono"])
 
 # each of the subsystem can now be access individually with the name you gave it:
 # testbed_1DM.entrancepupil, testbed.DM3, etc
 
 # to avoid any confustion in case of multiple DM, the command to access DMs is now XXXphase, where XXX is nameDM
-PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF,
-                                                     DM3phase=phase)
+PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF, DM3phase=phase)
 
 # and the confusing DM3phase is removed so this will send an error:
 # PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF, DMphase = phase)
 
 # we can now play with all the things we define up to now. for example:
-testbed_1DM_romanpup = OptSy.Testbed([pup_roman, DM3, corono],
-                                     ["entrancepupil", "DM3", "corono"])
+testbed_1DM_romanpup = OptSy.Testbed([pup_roman, DM3, corono], ["entrancepupil", "DM3", "corono"])
 
 # if you have DMs in your system, these are saved in the structure so that you can access it:
-print("number of DMs in testbed_1DM_romanpup:",
-      testbed_1DM_romanpup.number_DMs)
+print("number of DMs in testbed_1DM_romanpup:", testbed_1DM_romanpup.number_DMs)
 print("name of the DMs: ", testbed_1DM_romanpup.name_of_DMs)
 
 # if we want to define exactly the thd2, we need to add a second DM off pupil plane.
@@ -205,24 +192,17 @@ modelconfig.update({'diam_pup_in_pix': 200})
 del pup_round, DM3, corono
 pup_round = OptSy.pupil(modelconfig)
 
-DM3 = OptSy.deformable_mirror(modelconfig,
-                              DMconfig,
-                              Name_DM='DM3',
-                              Model_local_dir=Model_local_dir)
+DM3 = OptSy.deformable_mirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
 
 DMconfig.update({'DM1_active': True})
-DM1 = OptSy.deformable_mirror(modelconfig,
-                              DMconfig,
-                              Name_DM='DM1',
-                              Model_local_dir=Model_local_dir)
+DM1 = OptSy.deformable_mirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
 # we also need to "clear" the apod plane because  there
 # is no apod plane on the thd2 bench
 Coronaconfig.update({'filename_instr_apod': "Clear"})
 corono_thd = OptSy.coronagraph(modelconfig, Coronaconfig)
 
 # and then just concatenate
-thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono_thd],
-                     ["entrancepupil", "DM1", "DM3", "corono"])
+thd2 = OptSy.Testbed([pup_round, DM1, DM3, corono_thd], ["entrancepupil", "DM1", "DM3", "corono"])
 
 # if you have DMs in your system, these are saved in the structure so that you can access it:
 print("number of DMs in thd2:", thd2.number_DMs)
@@ -232,10 +212,7 @@ print("name of the DMs: ", thd2.name_of_DMs)
 # let's define a third DM, similar to DM1, but off pupil in the other dimension
 DMconfig.update({'DM1_z_position': -15e-2})  # meter
 DMconfig.update({'DM1_active': True})
-DMnew = OptSy.deformable_mirror(modelconfig,
-                                DMconfig,
-                                Name_DM='DM1',
-                                Model_local_dir=Model_local_dir)
+DMnew = OptSy.deformable_mirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
 # the Name_DM in this function is to be understand as the type of DM you want to use (DM3 is a BMC32x32 type DM
 # and DM1 is a BMC34x34) but hte real name in the system is to be defined in the concatenation
 
@@ -247,9 +224,8 @@ pupil_inbetween_DM = OptSy.pupil(modelconfig)
 pup_roman = OptSy.pupil(modelconfig, PupType="RomanPup")
 
 #lets concatenate everything !
-testbed_3DM = OptSy.Testbed(
-    [pup_roman, DM1, DM3, pupil_inbetween_DM, DMnew, corono_thd],
-    ["entrancepupil", "DM1", "DM3", "pupil_inbetween_DM", "DMnew", "corono"])
+testbed_3DM = OptSy.Testbed([pup_roman, DM1, DM3, pupil_inbetween_DM, DMnew, corono_thd],
+                            ["entrancepupil", "DM1", "DM3", "pupil_inbetween_DM", "DMnew", "corono"])
 
 print("number of DMs in testbed_3DM:", testbed_3DM.number_DMs)
 print("name of the DMs: ", testbed_3DM.name_of_DMs)

@@ -38,22 +38,20 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
 
     if no_pixel == True:
         factor_bin = int(10)
-        pup_large = roundpupil(int(2*prad)*factor_bin,factor_bin*prad, no_pixel = False)
-        return proc.crop_or_pad_image(proc.rebin(pup_large, factor = factor_bin, center_on_pixel=False),dim_pp)
-    
+        pup_large = roundpupil(int(2 * prad) * factor_bin, factor_bin * prad, no_pixel=False)
+        return proc.crop_or_pad_image(proc.rebin(pup_large, factor=factor_bin, center_on_pixel=False), dim_pp)
+
     else:
-        xx, yy = np.meshgrid(
-            np.arange(dim_pp) - (dim_pp) // 2,
-            np.arange(dim_pp) - (dim_pp) // 2)
-        
-        if center_pos.lower()=='b':
-            offset = 1/2
-        elif center_pos.lower()=='p':
+        xx, yy = np.meshgrid(np.arange(dim_pp) - (dim_pp) // 2, np.arange(dim_pp) - (dim_pp) // 2)
+
+        if center_pos.lower() == 'b':
+            offset = 1 / 2
+        elif center_pos.lower() == 'p':
             offset = 0
         else:
             raise Exception("center_pos can only be 'p' or 'b'")
 
-        rr = np.hypot(yy+offset, xx+offset)
+        rr = np.hypot(yy + offset, xx + offset)
         pupilnormal = np.zeros((dim_pp, dim_pp))
         pupilnormal[rr <= prad] = 1.0
 
@@ -86,8 +84,8 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     if (shift_x == 0) & (shift_y == 0):
         ramp = 1
     else:
-        maskx = np.linspace(-np.pi * shift_x, np.pi * shift_x, dim_pp, endpoint = False)
-        masky = np.linspace(-np.pi * shift_y, np.pi * shift_y, dim_pp, endpoint = False)
+        maskx = np.linspace(-np.pi * shift_x, np.pi * shift_x, dim_pp, endpoint=False)
+        masky = np.linspace(-np.pi * shift_y, np.pi * shift_y, dim_pp, endpoint=False)
         xx, yy = np.meshgrid(maskx, masky)
         ramp = np.exp(-1j * xx) * np.exp(-1j * yy)
     return ramp
@@ -129,16 +127,13 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     # this will be the pupil over which phase rms = phaserms
     pup = roundpupil(dim_image, pupil_rad)
 
-    xx, yy = np.meshgrid(
-        np.arange(dim_image) - dim_image / 2,
-        np.arange(dim_image) - dim_image / 2)
+    xx, yy = np.meshgrid(np.arange(dim_image) - dim_image / 2, np.arange(dim_image) - dim_image / 2)
     rho = np.hypot(yy, xx)
     PSD0 = 1
     PSD = PSD0 / (1 + (rho / rhoc)**slope)
     sqrtPSD = np.sqrt(2 * PSD)
 
-    randomphase = np.random.randn(
-        dim_image, dim_image) + 1j * np.random.randn(dim_image, dim_image)
+    randomphase = np.random.randn(dim_image, dim_image) + 1j * np.random.randn(dim_image, dim_image)
     phase = np.real(np.fft.ifft2(np.fft.fftshift(sqrtPSD * randomphase)))
     phase = phase - np.mean(phase[np.where(pup == 1.)])
     phase = phase / np.std(phase[np.where(pup == 1.)]) * phaserms
@@ -192,11 +187,7 @@ def SinCosBasis(Nact1D):
             Coeffs[Nact1D - i - 1, Nact1D - j - 1] = -1 / (2 * 1j)
         TFCoeffs[Coeff_SinCos] = Coeffs
 
-        SinCos[Coeff_SinCos] = np.real(
-            prop.mft(TFCoeffs[Coeff_SinCos],
-                     Nact1D,
-                     Nact1D,
-                     Nact1D))
+        SinCos[Coeff_SinCos] = np.real(prop.mft(TFCoeffs[Coeff_SinCos], Nact1D, Nact1D, Nact1D))
 
     if Nact1D % 2 == 1:
         # in the odd case the last one is a piston
