@@ -209,9 +209,8 @@ def rebin(image, factor=4, center_on_pixel=False):
             dim1 x dim2 array with dim1 and dim2 are divisible by factor
 
     factor : int
-         factor of bin 
+         factor of bin init_image size / final_image size
 
-    
     center_on_pixe :bool (optional, default: False). 
                 If False the PSf is shifhted before bining
 
@@ -524,7 +523,7 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
         inital size
 
     factor_dezoom : float
-        factor to be zoomed out. factor_dezoom<1
+        factor to be zoomed out (final_image size / init_image size). factor_dezoom<1
 
     max_allowed_fft_size : int 
         the maximum size to check
@@ -578,7 +577,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
         inital array. Must be square 
 
     factor_dezoom : float
-        factor to be zoomed out. factor_dezoom<1
+        factor to be zoomed out (final_image size / init_image size). factor_dezoom<1
 
     complex_image : bool(optional input, default False) 
             if this keyword is "False", then the output array will be

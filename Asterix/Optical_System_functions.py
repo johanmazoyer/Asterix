@@ -586,14 +586,12 @@ class Optical_System:
                                                                  yshift=size_ampl // 2 - 1 / 2 - centerY)
 
                     # reshape at the good size
+                    # TODO we may have to check the centering is ok 
                     res_pup = testbedampl_header["RESPUP"] #Pup resolution meter/pixel
-                    testbedampl = proc.crop_or_pad_image(
-                        skimage.transform.rescale(testbedampl,
-                                                  res_pup / (self.diam_pup_in_m / (2 * self.prad)),
-                                                  preserve_range=True,
-                                                  anti_aliasing=True,
-                                                  channel_axis=None), self.dim_overpad_pupil)
-
+                    testbedampl = proc.crop_or_pad_image(proc.ft_zoom_out(testbedampl, 
+                                                         res_pup / (self.diam_pup_in_m / (2 * self.prad))), 
+                                                         self.dim_overpad_pupil)
+                    
                     #Set the average to 0 inside entrancepupil
                     pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
                     testbedampl = (testbedampl - np.mean(testbedampl[np.where(pup_here != 0)])) * pup_here
