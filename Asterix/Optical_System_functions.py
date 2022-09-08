@@ -816,11 +816,15 @@ class pupil(Optical_System):
                 pup_fits_right_size = pup_fits
             else:
                 #Rescale to the pupil size
-                pup_fits_right_size = skimage.transform.rescale(pup_fits,
-                                                                2 * self.prad / pup_fits.shape[0],
-                                                                preserve_range=True,
-                                                                anti_aliasing=True,
-                                                                channel_axis=None)
+                find_divisors = list()
+                for i in range(80,pup_fits.shape[0] +1):
+                    if pup_fits.shape[0] % i == 0:
+                        find_divisors.append(I)
+                
+                if not int(2 * self.prad) in find_divisors:
+                    raise Exception("Choose a divisor of the fits size ({0}) for diam_pup_in_pix:{1}".format(pup_fits.shape[0], find_divisors))
+                else:
+                    pup_fits_right_size = proc.rebin(pup_fits,int(pup_fits.shape[0] / (2 * self.prad)), center_on_pixel=False)
 
             self.pup = proc.crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 
