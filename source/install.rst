@@ -12,7 +12,7 @@ Conda is an open source package management system and environment management sys
 installs, runs and updates packages and their dependencies on your local computer and allows 
 switches between environments.
 
-By creating clean python environments for each you projects (especially packages in continuous 
+By creating clean python environments for each of your projects (especially packages in continuous 
 development by non developers like Asterix), you minimize the risk of of creating conflicts which 
 will hinder the use of Asterx and/or on your other projects.
 
@@ -21,7 +21,7 @@ https://docs.conda.io/en/latest/miniconda.html
 
 You can now create an environement for installing Asterix:
 
-    $ conda create --name asterix-env python=3.8 numpy scipy astropy matplotlib configobj
+    $ conda create --name asterix-env python=3.10 numpy scipy astropy matplotlib configobj scikit-image
 
 This will automatically create a python environement with only the required python packages for Asterix, at their
 latest stable version. Before installing Asterix and everytime you want to use it you need to activate this environement:
