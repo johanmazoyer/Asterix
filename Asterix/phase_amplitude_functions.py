@@ -127,7 +127,7 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
     # create a circular pupil of the same radius of the given pupil
     # this will be the pupil over which phase rms = phaserms
-    pup = roundpupil(pupil_rad, dim_image)
+    pup = roundpupil(dim_image, pupil_rad)
 
     xx, yy = np.meshgrid(
         np.arange(dim_image) - dim_image / 2,
