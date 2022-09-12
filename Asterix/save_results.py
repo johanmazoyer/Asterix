@@ -21,7 +21,7 @@ def plot_contrast_curves(reduced_data,
                          xtitle =None,
                          ytitle=None,
                          title =None,
-                         legend_labels = [None],
+                         legend_labels=None,
                          xrange=None,
                          yrange=None,
                          path='',
@@ -119,7 +119,7 @@ def plot_contrast_curves(reduced_data,
     plt.figure()
 
     if len(reduced_data.shape) == 2:
-        # this is a single image
+        # reduced_data is a single image
         contrast1dcurve = contrast_curves(reduced_data,
                                           xcen=xcen,
                                           ycen=ycen,
@@ -132,16 +132,15 @@ def plot_contrast_curves(reduced_data,
 
         plt.plot(absice, contrast1dcurve)
     else:
-        # this ia cube
-        if legend_labels[0] is None :
+        # reduced_data is a cube
+        if legend_labels is None:
+            legend_labels = np.empty(reduced_data.shape[0], dtype=str)
             legend_labels[0] = "Initial"
-            for i in range(1,reduced_data.shape[0]):
-                legend_labels.append("iter #{}".format(i))
+            for i in range(1, reduced_data.shape[0]):
+                legend_labels[i] = f"iter #{i}"
         else:
             if len(legend_labels) != reduced_data.shape[0]:
                 raise Exception("legend_labels must be a string list of size as reduced_data.shape[0]")
-
-
 
         for i, frame in enumerate(reduced_data):
             contrast1dcurve = contrast_curves(
