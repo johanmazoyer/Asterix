@@ -6,9 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import Asterix.Optical_System_functions as OptSy
-from Asterix.fits_functions import _quickfits
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 
 def plot_contrast_curves(reduced_data,
                          xcen=None,
@@ -26,7 +26,7 @@ def plot_contrast_curves(reduced_data,
                          yrange=None,
                          path='',
                          filename=''):
-    """  -------------------------------------------------- 
+    """
     Plot and save in pdf contrast curves from a image or a cube of images (assumed to be 
     several iterations of a loop) using concentric rings.
     You can chooose the center, the size of the rings, the type of contrast (mean or std)
@@ -38,16 +38,15 @@ def plot_contrast_curves(reduced_data,
     
     Parameters
     ----------
-        
         reduced_data: array [dim, dim] or [nb_iter, dim, dim]
             array containing the reduced data. Assume to be already in contrast unit (divided by max of PSF)
             if the array is of dimension 3, the first dimension is assumed to be the number of iter and a 
             contrast curve will be plotted for each
         
-        xcen: float, default None (reduced_data.shape[0]/2 -1/2) 
+        xcen: float, default None (reduced_data.shape[0]/2 - 1/2)
             pixel, position x of the star
         
-        ycen: float, default None (reduced_data.shape[1]/2 -1/2) 
+        ycen: float, default None (reduced_data.shape[1]/2 - 1/2)
             pixel, position y of the star
         
         delta_raddii: default 3
@@ -78,19 +77,15 @@ def plot_contrast_curves(reduced_data,
         filename: string, default ''
             base of the file name to save the pdf plot file
         
-        legend_labels: string array of the same number of images in the first cube  default None 
+        legend_labels: string array of the same number of images in the first cube, default None
             Name of the legend labels,
-            If none and if the array is of dimension 2, no legend
-            If none and if the array is of dimension 3, we assume these are iterations
-
-
+            If None and if the array is of dimension 2, no legend
+            If None and if the array is of dimension 3, we assume these are iterations
 
     Returns
     ------
-
         No return
-
-     -------------------------------------------------- """
+    """
 
     filename = filename + '_ContrastCurve_DH'
 
