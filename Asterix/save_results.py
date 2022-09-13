@@ -6,9 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import Asterix.Optical_System_functions as OptSy
-from Asterix.fits_functions import _quickfits
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 
 def plot_contrast_curves(reduced_data,
                          xcen=None,
@@ -21,12 +21,12 @@ def plot_contrast_curves(reduced_data,
                          xtitle =None,
                          ytitle=None,
                          title =None,
-                         legend_labels = [None],
+                         legend_labels=None,
                          xrange=None,
                          yrange=None,
                          path='',
                          filename=''):
-    """  -------------------------------------------------- 
+    """
     Plot and save in pdf contrast curves from a image or a cube of images (assumed to be 
     several iterations of a loop) using concentric rings.
     You can chooose the center, the size of the rings, the type of contrast (mean or std)
@@ -38,16 +38,15 @@ def plot_contrast_curves(reduced_data,
     
     Parameters
     ----------
-        
         reduced_data: array [dim, dim] or [nb_iter, dim, dim]
             array containing the reduced data. Assume to be already in contrast unit (divided by max of PSF)
             if the array is of dimension 3, the first dimension is assumed to be the number of iter and a 
             contrast curve will be plotted for each
         
-        xcen: float, default None (reduced_data.shape[0]/2 -1/2) 
+        xcen: float, default None (reduced_data.shape[0]/2 - 1/2)
             pixel, position x of the star
         
-        ycen: float, default None (reduced_data.shape[1]/2 -1/2) 
+        ycen: float, default None (reduced_data.shape[1]/2 - 1/2)
             pixel, position y of the star
         
         delta_raddii: default 3
@@ -78,19 +77,15 @@ def plot_contrast_curves(reduced_data,
         filename: string, default ''
             base of the file name to save the pdf plot file
         
-        legend_labels: string array of the same number of images in the first cube  default None 
+        legend_labels: string array of the same number of images in the first cube, default None
             Name of the legend labels,
-            If none and if the array is of dimension 2, no legend
-            If none and if the array is of dimension 3, we assume these are iterations
-
-
+            If None and if the array is of dimension 2, no legend
+            If None and if the array is of dimension 3, we assume these are iterations
 
     Returns
     ------
-
         No return
-
-     -------------------------------------------------- """
+    """
 
     filename = filename + '_ContrastCurve_DH'
 
@@ -119,7 +114,7 @@ def plot_contrast_curves(reduced_data,
     plt.figure()
 
     if len(reduced_data.shape) == 2:
-        # this is a single image
+        # reduced_data is a single image
         contrast1dcurve = contrast_curves(reduced_data,
                                           xcen=xcen,
                                           ycen=ycen,
@@ -132,16 +127,15 @@ def plot_contrast_curves(reduced_data,
 
         plt.plot(absice, contrast1dcurve)
     else:
-        # this ia cube
-        if legend_labels[0] is None :
+        # reduced_data is a cube
+        if legend_labels is None:
+            legend_labels = np.empty(reduced_data.shape[0], dtype=str)
             legend_labels[0] = "Initial"
-            for i in range(1,reduced_data.shape[0]):
-                legend_labels.append("iter #{}".format(i))
+            for i in range(1, reduced_data.shape[0]):
+                legend_labels[i] = f"iter #{i}"
         else:
             if len(legend_labels) != reduced_data.shape[0]:
                 raise Exception("legend_labels must be a string list of size as reduced_data.shape[0]")
-
-
 
         for i, frame in enumerate(reduced_data):
             contrast1dcurve = contrast_curves(
