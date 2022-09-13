@@ -3,6 +3,8 @@ import warnings
 import datetime
 from astropy.io import fits
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 import Asterix.Optical_System_functions as OptSy
@@ -110,7 +112,6 @@ def plot_contrast_curves(reduced_data,
         raise Exception(
             "either numberofpix_per_loD or numberofmas_per_pix need to be filled, not both"
         )
-
     plt.figure()
 
     if len(reduced_data.shape) == 2:
