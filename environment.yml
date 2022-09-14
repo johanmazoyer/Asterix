@@ -5,6 +5,7 @@ dependencies:
   - jupyter
   - matplotlib
   - numpy
+  - pytest
   - python=>3.8
   - scikit-image
   - scipy
