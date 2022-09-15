@@ -1,0 +1,32 @@
+import os
+import numpy as np
+from configobj import ConfigObj
+from validate import Validator
+
+import Asterix.Optical_System_functions as OptSy
+
+
+def test_default_coronagraph():
+    # Load the example parameter file
+    parameter_file_ex = OptSy.Asterix_root + os.path.sep + "Example_param_file.ini"
+    # Load the template parameter file
+    configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
+    # Load configuration - all three of the below lines are necessary
+    config = ConfigObj(parameter_file_ex, configspec=configspec_file, default_encoding="utf8")
+    vtor = Validator()
+    checks = config.validate(vtor, copy=True)
+
+    # Reassign the parameter groups to variables
+    modelconfig = config["modelconfig"]
+    Coronaconfig = config["Coronaconfig"]
+
+    # Update the pixels across the pupil
+    modelconfig.update({'diam_pup_in_pix': 80})
+    # Define a round pupil in the apodization plane
+    Coronaconfig.update({'filename_instr_apod': "RoundPup"})
+
+    # Create the coronagraph
+    corono = OptSy.coronagraph(modelconfig, Coronaconfig)
+    coro_psf = corono.todetector_Intensity(center_on_pixel=True)
+
+    assert np.max(coro_psf) == 0.0, "A perfect coronagraph should return an empty array."
