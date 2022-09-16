@@ -129,10 +129,10 @@ def plot_contrast_curves(reduced_data,
     else:
         # reduced_data is a cube
         if legend_labels is None:
-            legend_labels = np.empty(reduced_data.shape[0], dtype=str)
-            legend_labels[0] = "Initial"
+            legend_labels = list()
+            legend_labels.append("Initial")
             for i in range(1, reduced_data.shape[0]):
-                legend_labels[i] = f"iter #{i}"
+                legend_labels.append(f"iter #{i}")
         else:
             if len(legend_labels) != reduced_data.shape[0]:
                 raise Exception("legend_labels must be a string list of size as reduced_data.shape[0]")
