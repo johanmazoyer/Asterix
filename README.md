@@ -4,7 +4,7 @@ Asterix is a package to simulate high-contrast imaging correction algorithms wit
 
 Please find the latest documentation (pdf file) here : https://www.dropbox.com/s/wjiwci2r6yzudvj/asterix.pdf?dl=1
 
-Due to the continually developing nature of this package, we recommend you use the current version of the code on GitHub and keep it updated.
+Due to the continually developing nature of this package, we recommend you use the current version of the code on GitHub and keep it updated frequently.
 
 ## Installation
 
@@ -19,8 +19,8 @@ $ cd Asterix
 $ conda env create --file environment.yml
 ```
 
-Install Asterix into this conda environment:
+Then install Asterix into this conda environment:
 ```bash
 $ conda activate asterix
-$ python setup.py develop
+$ pip install -e '.'
 ```
