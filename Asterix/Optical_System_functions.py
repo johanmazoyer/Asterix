@@ -446,6 +446,7 @@ class Optical_System:
         Model_local_dir: string, default None
                     directory to save things you can measure yourself
                     and can save to save time
+                    In this case the phase aberrations is saved if Model_local_dir is not None
 
 
         Returns
@@ -455,9 +456,12 @@ class Optical_System:
 
 
         -------------------------------------------------- """
-        if not os.path.exists(Model_local_dir):
+        if Model_local_dir is None:
+            pass
+        elif not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
+
         if up_or_down == 'up':
             set_phase_abb = SIMUconfig["set_UPphase_abb"]
             set_random_phase = SIMUconfig["set_UPrandom_phase"]
@@ -474,26 +478,26 @@ class Optical_System:
             phase_abb_filename = SIMUconfig["DOphase_abb_filename"]
 
         ## Phase map and amplitude map for the static aberrations
-        if set_phase_abb == True:
-            if phase_abb_filename == '':
-                phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
-                    int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc, self.prad)
-
-            if set_random_phase is False and os.path.isfile(Model_local_dir + phase_abb_filename +
-                                                            ".fits") == True:
-                return_phase = fits.getdata(Model_local_dir + phase_abb_filename + ".fits")
-
-            else:
-                # TODO see with raphael these opd / phase issues
-                phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
-
-                return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms,
-                                                           phase_rhoc, phase_slope)
-
-                fits.writeto(Model_local_dir + phase_abb_filename + ".fits", return_phase, overwrite=True)
-            return return_phase
-        else:
+        if set_phase_abb is False:
             return 0.
+
+        if phase_abb_filename == '':
+            phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
+                int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc, self.prad)
+
+        if set_random_phase is False and Model_local_dir is not None and os.path.isfile(Model_local_dir +
+                                                                                        phase_abb_filename +
+                                                                                        ".fits") == True:
+            return_phase = fits.getdata(Model_local_dir + phase_abb_filename + ".fits")
+
+        else:
+            phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
+
+            return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms,
+                                                       phase_rhoc, phase_slope)
+            if Model_local_dir is not None:
+                fits.writeto(Model_local_dir + phase_abb_filename + ".fits", return_phase, overwrite=True)
+        return return_phase
 
     def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None):
         """ --------------------------------------------------
@@ -1016,7 +1020,10 @@ class coronagraph(Optical_System):
         elif self.corona_type == "wrapped_vortex":
             self.prop_apod2lyot = 'mft'
             self.string_os += '2020'
-            self.FPmsk = list([self.EF_from_phase_and_ampl(phase_abb= proc.crop_or_pad_image(fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]),self.dimScience))])
+            self.FPmsk = list([
+                self.EF_from_phase_and_ampl(phase_abb=proc.crop_or_pad_image(
+                    fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]), self.dimScience))
+            ])
             self.perfect_coro = True
 
         else:
