@@ -1803,8 +1803,6 @@ class deformable_mirror(Optical_System):
         # do the first FT only once
         ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil), norm="ortho"))
 
-        # ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil), norm="ortho"))
-
         for i in np.arange(pushact3d.shape[0]):
 
             # Add an error on the orientation of the grid
