@@ -8,7 +8,7 @@ Optical System
 
 Asterix have been thought from the beginning to be able to easily adapt to new configurations of the testbed 
 wihtout major changes. This modularity is based on the ``Asterix.Optical_System_functions.OpticalSystem`` class.
-An Optical_ystem is a part of the testbed which starts and ends in a pupil plane, which allows them to be easily
+An OpticalSystem is a part of the testbed which starts and ends in a pupil plane, which allows them to be easily
 concatenated. To be able to be well concatenated, they must all be using the same general parameters (physical 
 and numerical parameters). These parameters are stored in the first part of the parameter file, common to 
 all ``OpticalSystem``: [modelconfig].
