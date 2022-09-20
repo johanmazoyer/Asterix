@@ -87,7 +87,7 @@ class Corrector:
             os.makedirs(matrix_dir)
 
         if isinstance(testbed, OptSy.OpticalSystem) == False:
-            raise Exception("testbed must be an Optical_System objet")
+            raise Exception("testbed must be an OpticalSystem object")
 
         basis_type = Correctionconfig["DM_basis"].lower()
         self.total_number_modes = 0

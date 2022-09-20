@@ -19,11 +19,11 @@ model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
 
 class OpticalSystem:
     """ --------------------------------------------------
-    Super class Optical_System allows to pass parameters to all sub class.
-    We can then creat blocks inside this super class. An Optical_System start and
+    Super class OpticalSystem allows passing parameters to all subclasses.
+    We can then creat blocks inside this super class. An OpticalSystem start and
     end in the pupil plane.
     The entrance and exit pupil plane must always of the same size (dim_overpad_pupil)
-    With these convention, they can be easily assemble to create complex optical systems.
+    With these conventions, they can be easily assemble to create complex optical systems.
 
 
     AUTHOR : Johan Mazoyer
@@ -2085,9 +2085,9 @@ class Testbed(OpticalSystem):
 
     def __init__(self, list_os, list_os_names):
         """ --------------------------------------------------
-        This function allow you to concatenates Optical_System obsjects to create a testbed:
+        This function allows you to concatenate OpticalSystem objects to create a testbed:
         parameter:
-            list_os:        list of Optical_System
+            list_os:        list of OpticalSystem instances
                             all the systems must have been defined with
                             the same modelconfig or it will send an error.
                             The list order is form the first optics system to the last in the

@@ -83,7 +83,7 @@ class Estimator:
             os.makedirs(matrix_dir)
 
         if isinstance(testbed, OptSy.OpticalSystem) == False:
-            raise Exception("testbed must be an Optical_System objet")
+            raise Exception("testbed must be an OpticalSystem object")
 
         self.technique = Estimationconfig["estimation"].lower()
 
