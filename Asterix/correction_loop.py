@@ -4,6 +4,9 @@
 ## Correction loop
 
 import numpy as np
+
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 import Asterix.Optical_System_functions as OptSy
@@ -278,7 +281,12 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     if not silence:
         print("Initial contrast in DH: ", initialFP_contrast)
         plt.ion()
-        plt.figure()
+        fig = plt.figure()
+        ax = plt.subplot(1,1,1)
+        im = ax.imshow(np.log10(initialFP), vmin=-8, vmax=-5)
+        plt.gca().invert_yaxis()
+        ax.figure.colorbar(im)
+        plt.pause(0.0001)
 
     # we start at 1 because we count the initial state as an iteration of the loop
     iteration_number = 1
@@ -382,11 +390,8 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
             print("Mean contrast in DH: ", thisloop_MeanDHContrast[-1])
             print("--------------------------------------------------")
             print("")
-            plt.clf()
-            plt.imshow(np.log10(thisloop_FP_Intensities[-1]), vmin=-8, vmax=-5)
-            plt.gca().invert_yaxis()
-            plt.colorbar()
-            plt.pause(0.01)
+            im.set_data(np.log10(thisloop_FP_Intensities[-1]))
+            fig.canvas.flush_events()
 
         thisloop_actual_modes.append(mode)
 
@@ -409,6 +414,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
 
         if not silence:
             plt.close()
+            plt.ioff()
 
         if Linesearch:
             print("Linesearch Mode. In this loop, we found the following modes to dig the contrast best:")

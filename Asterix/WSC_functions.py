@@ -1,13 +1,13 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
-from functools import total_ordering
 import os
 import copy
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from astropy.io import fits
-import time
 
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
@@ -68,7 +68,6 @@ def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, f
     InvS_truncated = np.linalg.inv(S)
     # print(InvS)
     if visu == True:
-        plt.ion()
         plt.figure()
         plt.clf
         plt.plot(np.diag(InvS), "r.")
@@ -86,10 +85,13 @@ def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, f
         if regul == "tikhonov":
             InvS_truncated = np.diag(s / (s**2 + s[cut]**2))
             if visu == True:
+                plt.ion()
                 plt.plot(np.diag(InvS_truncated), "b.")
                 plt.yscale("log")
                 plt.show()
+                plt.pause(2)
                 plt.close()
+                plt.ioff()
         pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated), np.transpose(U))
 
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
@@ -448,6 +450,7 @@ def creatingInteractionmatrix(testbed: OptSy.Testbed,
 
             if visu:
                 plt.close()
+                plt.ioff()
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
                 fits.writeto(matrix_dir + fileDirectMatrix + ".fits",
