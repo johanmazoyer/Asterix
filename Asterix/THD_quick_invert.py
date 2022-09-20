@@ -8,8 +8,7 @@ from astropy.io import fits
 import Asterix.WSC_functions as wsc
 
 
-def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory,
-                     regularization):
+def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
     """ --------------------------------------------------
         This code invert the matrix just in the case of THD testbed
         The goal is to be able to invert the matrix directly on the RTC to be 
@@ -66,24 +65,17 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory,
         -------------------------------------------------- """
 
     if name_active_DM == 13 or name_active_DM == 31:
-        Gmatrix = fits.getdata(
-            os.path.join(matrix_directory, "Direct_Matrix_2DM.fits"))
-        DM1_basis = fits.getdata(
-            os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
-        DM3_basis = fits.getdata(
-            os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
+        Gmatrix = fits.getdata(os.path.join(matrix_directory, "Direct_Matrix_2DM.fits"))
+        DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
+        DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     elif name_active_DM == 1:
-        Gmatrix = fits.getdata(
-            os.path.join(matrix_directory, "Direct_Matrix_DM1only.fits"))
-        DM1_basis = fits.getdata(
-            os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
+        Gmatrix = fits.getdata(os.path.join(matrix_directory, "Direct_Matrix_DM1only.fits"))
+        DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
 
     elif name_active_DM == 3:
-        Gmatrix = fits.getdata(
-            os.path.join(matrix_directory, "Direct_Matrix_DM3only.fits"))
-        DM3_basis = fits.getdata(
-            os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
+        Gmatrix = fits.getdata(os.path.join(matrix_directory, "Direct_Matrix_DM3only.fits"))
+        DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     else:
         raise Exception("No active DMs")
@@ -94,35 +86,31 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory,
                                     regul=regularization,
                                     visu=True,
                                     filename_visu=os.path.join(matrix_directory,
-                                    "SVD_Modes" + str(Nbmodes) + ".png"))
+                                                               "SVD_Modes" + str(Nbmodes) + ".png"))
 
     if name_active_DM == 13 or name_active_DM == 31:
         DM1_basis_size = DM1_basis.shape[0]
 
         invertGDH_DM1 = invertGDH[:DM1_basis_size]
-        EFCmatrix_DM1 = np.transpose(
-            np.dot(np.transpose(DM1_basis), invertGDH_DM1))
+        EFCmatrix_DM1 = np.transpose(np.dot(np.transpose(DM1_basis), invertGDH_DM1))
         fits.writeto(os.path.join(matrix_directory, "Matrix_control_EFC_DM1.fits"),
                      EFCmatrix_DM1.astype(np.float32),
                      overwrite=True)
 
         invertGDH_DM3 = invertGDH[DM1_basis_size:]
-        EFCmatrix_DM3 = np.transpose(
-            np.dot(np.transpose(DM3_basis), invertGDH_DM3))
+        EFCmatrix_DM3 = np.transpose(np.dot(np.transpose(DM3_basis), invertGDH_DM3))
         fits.writeto(os.path.join(matrix_directory, "Matrix_control_EFC_DM3.fits"),
                      EFCmatrix_DM3.astype(np.float32),
                      overwrite=True)
     elif name_active_DM == 1:
         invertGDH_DM1 = invertGDH
-        EFCmatrix_DM1 = np.transpose(
-            np.dot(np.transpose(DM1_basis), invertGDH_DM1))
+        EFCmatrix_DM1 = np.transpose(np.dot(np.transpose(DM1_basis), invertGDH_DM1))
         fits.writeto(os.path.join(matrix_directory, "Matrix_control_EFC_DM1.fits"),
                      EFCmatrix_DM1.astype(np.float32),
                      overwrite=True)
     elif name_active_DM == 3:
         invertGDH_DM3 = invertGDH
-        EFCmatrix_DM3 = np.transpose(
-            np.dot(np.transpose(DM3_basis), invertGDH_DM3))
+        EFCmatrix_DM3 = np.transpose(np.dot(np.transpose(DM3_basis), invertGDH_DM3))
         fits.writeto(os.path.join(matrix_directory, "Matrix_control_EFC_DM3.fits"),
                      EFCmatrix_DM3.astype(np.float32),
                      overwrite=True)
@@ -145,8 +133,7 @@ if __name__ == '__main__':
         # We run this code with argument. Example
         # python THD_quick_invert.py 650 13
         Nbmodes = int(sys.argv[1])  # number of mode in the inversion
-        name_active_DM = int(
-            sys.argv[2])  # 1, 3 or 13 depending on the DM you want to access
+        name_active_DM = int(sys.argv[2])  # 1, 3 or 13 depending on the DM you want to access
 
     start_time = time.time()
     THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization)

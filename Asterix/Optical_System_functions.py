@@ -46,13 +46,14 @@ class Optical_System:
         -------------------------------------------------- """
 
         #pupil in pixel
-        self.prad = round(int(modelconfig["diam_pup_in_pix"]) / 2)
+        self.prad = modelconfig["diam_pup_in_pix"] / 2
 
         # All pupils in the code must have this dimension, so that the OS systems can
         # be easily switched.
         # dim_overpad_pupil is set to an even numer and the pupil is centered in
         # between 4 pixels
-        self.dim_overpad_pupil = round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2
+        self.dim_overpad_pupil = int(
+            round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2)
 
         #Lambda over D in pixels in the focal plane
         # at the reference wavelength
@@ -211,7 +212,7 @@ class Optical_System:
                                   **kwargs)
 
         focal_plane_EF = prop.mft(exit_EF,
-                                  self.prad * 2,
+                                  int(self.prad * 2),
                                   self.dimScience,
                                   self.dimScience / self.Science_sampling * lambda_ratio,
                                   X_offset_output=Psf_offset[0],
@@ -446,6 +447,7 @@ class Optical_System:
         Model_local_dir: string, default None
                     directory to save things you can measure yourself
                     and can save to save time
+                    In this case the phase aberrations is saved if Model_local_dir is not None
 
 
         Returns
@@ -455,9 +457,12 @@ class Optical_System:
 
 
         -------------------------------------------------- """
-        if not os.path.exists(Model_local_dir):
+        if Model_local_dir is None:
+            pass
+        elif not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
+
         if up_or_down == 'up':
             set_phase_abb = SIMUconfig["set_UPphase_abb"]
             set_random_phase = SIMUconfig["set_UPrandom_phase"]
@@ -474,26 +479,27 @@ class Optical_System:
             phase_abb_filename = SIMUconfig["DOphase_abb_filename"]
 
         ## Phase map and amplitude map for the static aberrations
-        if set_phase_abb == True:
-            if phase_abb_filename == '':
-                phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:d}".format(
-                    int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc, self.prad)
 
-            if set_random_phase is False and os.path.isfile(Model_local_dir + phase_abb_filename +
-                                                            ".fits") == True:
-                return_phase = fits.getdata(Model_local_dir + phase_abb_filename + ".fits")
-
-            else:
-                # TODO see with raphael these opd / phase issues
-                phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
-
-                return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms,
-                                                           phase_rhoc, phase_slope)
-
-                fits.writeto(Model_local_dir + phase_abb_filename + ".fits", return_phase, overwrite=True)
-            return return_phase
-        else:
+        if set_phase_abb is False:
             return 0.
+
+        if phase_abb_filename == '':
+            phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:.1f}".format(
+                int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc, self.prad)
+
+        if set_random_phase is False and Model_local_dir is not None and os.path.isfile(Model_local_dir +
+                                                                                        phase_abb_filename +
+                                                                                        ".fits") == True:
+            return_phase = fits.getdata(Model_local_dir + phase_abb_filename + ".fits")
+
+        else:
+            phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
+
+            return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms,
+                                                       phase_rhoc, phase_slope)
+            if Model_local_dir is not None:
+                fits.writeto(Model_local_dir + phase_abb_filename + ".fits", return_phase, overwrite=True)
+        return return_phase
 
     def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None):
         """ --------------------------------------------------
@@ -586,13 +592,11 @@ class Optical_System:
                                                                  yshift=size_ampl // 2 - 1 / 2 - centerY)
 
                     # reshape at the good size
-                    res_pup = testbedampl_header["RESPUP"]
+                    # TODO we may have to check the centering is ok
+                    res_pup = testbedampl_header["RESPUP"]  #Pup resolution meter/pixel
                     testbedampl = proc.crop_or_pad_image(
-                        skimage.transform.rescale(testbedampl,
-                                                  res_pup / (self.diam_pup_in_m / (2 * self.prad)),
-                                                  preserve_range=True,
-                                                  anti_aliasing=True,
-                                                  channel_axis=None), self.dim_overpad_pupil)
+                        proc.ft_zoom_out(testbedampl, res_pup / (self.diam_pup_in_m / (2 * self.prad))),
+                        self.dim_overpad_pupil)
 
                     #Set the average to 0 inside entrancepupil
                     pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
@@ -811,27 +815,35 @@ class pupil(Optical_System):
 
                 self.string_os += '_Fits'
 
+            if angle_rotation != 0:
+                pup_fits = skimage.transform.rotate(pup_fits, angle_rotation, preserve_range=True)
+                self.string_os += 'Rot' + str(int(angle_rotation))
+
+                fits.writeto(os.path.join(Model_local_dir,
+                                          PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),
+                             pup_fits,
+                             overwrite=True)
+
             # we have the fits, we now rescale to good size
             if pup_fits.shape[0] == 2 * self.prad:
                 pup_fits_right_size = pup_fits
             else:
                 #Rescale to the pupil size
-                pup_fits_right_size = skimage.transform.rescale(pup_fits,
-                                                                2 * self.prad / pup_fits.shape[0],
-                                                                preserve_range=True,
-                                                                anti_aliasing=True,
-                                                                channel_axis=None)
+                find_divisors = list()
+                for i in range(60, pup_fits.shape[0] + 1):
+                    if pup_fits.shape[0] % i == 0:
+                        find_divisors.append(i)
+
+                if not int(2 * self.prad) in find_divisors:
+                    raise Exception(
+                        "Choose a divisor of the .fits file size ({0}) for diam_pup_in_pix parameter: {1}".
+                        format(pup_fits.shape[0], find_divisors))
+                else:
+                    pup_fits_right_size = proc.rebin(pup_fits,
+                                                     int(pup_fits.shape[0] / (2 * self.prad)),
+                                                     center_on_pixel=False)
 
             self.pup = proc.crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
-
-            if angle_rotation != 0:
-                self.pup = skimage.transform.rotate(self.pup, angle_rotation, preserve_range=True)
-                self.string_os += 'Rot' + str(int(angle_rotation))
-
-                fits.writeto(os.path.join(Model_local_dir,
-                                          PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),
-                             self.pup,
-                             overwrite=True)
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
@@ -1016,7 +1028,10 @@ class coronagraph(Optical_System):
         elif self.corona_type == "wrapped_vortex":
             self.prop_apod2lyot = 'mft'
             self.string_os += '2020'
-            self.FPmsk = list([self.EF_from_phase_and_ampl(phase_abb= proc.crop_or_pad_image(fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]),self.dimScience))])
+            self.FPmsk = list([
+                self.EF_from_phase_and_ampl(phase_abb=proc.crop_or_pad_image(
+                    fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]), self.dimScience))
+            ])
             self.perfect_coro = True
 
         else:
@@ -1148,23 +1163,10 @@ class coronagraph(Optical_System):
             input_wavefront_after_apod_pad = proc.crop_or_pad_image(input_wavefront_after_apod,
                                                                     dim_fp_fft_here)
 
-            # Phase ramp to center focal plane between 4 pixels
-            # TODO This could be done in the FQPM function and save in the self to save time
-            maskshifthalfpix = phase_ampl.shift_phase_ramp(dim_fp_fft_here, 0.5, 0.5)
-            maskshifthalfpix_invert = phase_ampl.shift_phase_ramp(dim_fp_fft_here, -0.5, -0.5)
-
-            # Because our convention is also "in between 4 pixels" in the final fp (after the corono)
-            # one might think "why do we need to 'unshift' when going back to the Lyot stop?"
-            # The reason is that this half-pixel shift depend on the resolution and therefore the method
-            # of propagation (fft is not exactly science resolution because
-            # of rounding issues and mft-babinet use its own resolution, etc) so it's easier to have all
-            # back to original place. All pupil plane must be such than if you apply an MFT without any shift,
-            # you are "in between pixels"
-
-            #Apod plane to focal plane
-            corono_focal_plane = np.fft.fft2(np.fft.fftshift(input_wavefront_after_apod_pad *
-                                                             maskshifthalfpix),
-                                             norm='ortho')
+            corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad,
+                                                       inverse=False,
+                                                       center_pos='bb',
+                                                       norm='ortho')
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
@@ -1189,14 +1191,16 @@ class coronagraph(Optical_System):
                                           np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
-            lyotplane_before_lyot = np.fft.fftshift(np.fft.ifft2(corono_focal_plane * FPmsk,
-                                                                 norm='ortho')) * maskshifthalfpix_invert
+            lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk,
+                                                          inverse=True,
+                                                          center_pos='bb',
+                                                          norm='ortho')
 
         elif self.prop_apod2lyot == "mft-babinet":
             #Apod plane to focal plane
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          2 * self.prad,
+                                          int(2 * self.prad),
                                           self.dim_fpm,
                                           self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                                           inverse=False,
@@ -1226,7 +1230,7 @@ class coronagraph(Optical_System):
             lyotplane_before_lyot_central_part = proc.crop_or_pad_image(
                 prop.mft(corono_focal_plane * (1 - FPmsk),
                          self.dim_fpm,
-                         2 * self.prad,
+                         int(2 * self.prad),
                          self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
                          inverse=True,
                          norm='ortho'), self.dim_overpad_pupil)
@@ -1238,7 +1242,7 @@ class coronagraph(Optical_System):
             # Apod plane to focal plane
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          2 * self.prad,
+                                          int(2 * self.prad),
                                           self.dimScience,
                                           self.dimScience / self.Science_sampling * lambda_ratio,
                                           inverse=False,
@@ -1264,7 +1268,7 @@ class coronagraph(Optical_System):
             lyotplane_before_lyot = proc.crop_or_pad_image(
                 prop.mft(corono_focal_plane * FPmsk,
                          self.dimScience,
-                         2 * self.prad,
+                         int(2 * self.prad),
                          self.dimScience / self.Science_sampling * lambda_ratio,
                          inverse=True,
                          norm='ortho'), self.dim_overpad_pupil)
@@ -1740,7 +1744,7 @@ class deformable_mirror(Optical_System):
             angerror = 0.
             gausserror = 0.
 
-        diam_pup_in_pix = 2 * self.prad
+        diam_pup_in_pix = int(2 * self.prad)
         diam_pup_in_m = self.diam_pup_in_m
         dim_array = self.dim_overpad_pupil
 
@@ -1811,7 +1815,8 @@ class deformable_mirror(Optical_System):
             Psivector = proc.ft_subpixel_shift(ft_actu,
                                                xshift=simu_grid[1, i] - xycenttmp + xerror * pitch_actshape,
                                                yshift=simu_grid[0, i] - xycenttmp + yerror * pitch_actshape,
-                                               fourier=True)
+                                               fourier=True,
+                                               norm="ortho")
 
             if gausserror != 0:
                 # Add an error on the sizes of the influence functions

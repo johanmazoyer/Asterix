@@ -37,6 +37,7 @@ class Corrector:
     AUTHOR : Johan Mazoyer
 
     -------------------------------------------------- """
+
     def __init__(self,
                  Correctionconfig,
                  testbed: OptSy.Testbed,
@@ -98,8 +99,7 @@ class Corrector:
             self.total_number_modes += DM.basis_size
             DM.basis_type = basis_type
 
-        self.correction_algorithm = Correctionconfig[
-            "correction_algorithm"].lower()
+        self.correction_algorithm = Correctionconfig["correction_algorithm"].lower()
         self.MatrixType = Correctionconfig["MatrixType"].lower()
 
         if basis_type == 'actuator':
@@ -112,8 +112,7 @@ class Corrector:
 
         self.regularization = Correctionconfig["regularization"]
 
-        self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim,
-                                               estimator.Estim_sampling)
+        self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim, estimator.Estim_sampling)
 
         self.matrix_dir = matrix_dir
 
@@ -125,60 +124,53 @@ class Corrector:
                 os.makedirs(realtestbed_dir)
 
             if testbed.DM1.active & testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir,
-                                          "Direct_Matrix_2DM.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, "Direct_Matrix_2DM.fits"),
                              self.Gmatrix,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir,
-                                          "Base_Matrix_DM1.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
                              testbed.DM1.basis,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir,
-                                          "Base_Matrix_DM3.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
                              testbed.DM3.basis,
                              overwrite=True)
                 number_Active_testbeds = 13
 
             elif testbed.DM1.active:
-                fits.writeto(os.path.join(realtestbed_dir,
-                                          "Direct_Matrix_DM1only.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, "Direct_Matrix_DM1only.fits"),
                              self.Gmatrix,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir,
-                                          "Base_Matrix_DM1.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
                              testbed.DM1.basis,
                              overwrite=True)
                 number_Active_testbeds = 1
             elif testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir,
-                                          "Direct_Matrix_DM3only.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, "Direct_Matrix_DM3only.fits"),
                              self.Gmatrix,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir,
-                                          "Base_Matrix_DM3.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
                              testbed.DM3.basis,
                              overwrite=True)
                 number_Active_testbeds = 3
             else:
                 raise Exception("No active DMs")
- 
+
             if testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] < 500:
-                    raise Exception("Nbmodes_OnTestbed ({0}) in inversion for THD is probably too low for 2DM".format(Correctionconfig["Nbmodes_OnTestbed"]))
+                    raise Exception(
+                        "Nbmodes_OnTestbed ({0}) in inversion for THD is probably too low for 2DM".format(
+                            Correctionconfig["Nbmodes_OnTestbed"]))
             if not testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] > 500:
-                    raise Exception("Nbmodes_OnTestbed ({0}) in inversion for THD is probably too high for 1DM".format(Correctionconfig["Nbmodes_OnTestbed"]))
+                    raise Exception(
+                        "Nbmodes_OnTestbed ({0}) in inversion for THD is probably too high for 1DM".format(
+                            Correctionconfig["Nbmodes_OnTestbed"]))
 
-            THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],
-                             number_Active_testbeds, realtestbed_dir,
+            THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"], number_Active_testbeds, realtestbed_dir,
                              self.regularization)
 
-            fits.writeto(realtestbed_dir + "DH_mask.fits",
-                         self.MaskEstim.astype(np.float32),
-                         overwrite=True)
+            fits.writeto(realtestbed_dir + "DH_mask.fits", self.MaskEstim.astype(np.float32), overwrite=True)
             fits.writeto(realtestbed_dir + "DH_mask_where_x_y.fits",
-                         np.array(np.where(self.MaskEstim == 1)).astype(
-                             np.float32),
+                         np.array(np.where(self.MaskEstim == 1)).astype(np.float32),
                          overwrite=True)
 
         # Adding error on the DM model. Now that the matrix is measured, we can
@@ -236,46 +228,35 @@ class Corrector:
             self.FirstIterNewMat = True
 
             start_time = time.time()
-            interMat = wsc.creatingInteractionmatrix(
-                testbed,
-                estimator.dimEstim,
-                self.amplitudeEFC,
-                self.matrix_dir,
-                initial_DM_voltage=initial_DM_voltage,
-                input_wavefront=input_wavefront,
-                MatrixType=self.MatrixType,
-                save_all_planes_to_fits=False,
-                dir_save_all_planes="/Users/jmazoyer/Desktop/g0_all/")
+            interMat = wsc.creatingInteractionmatrix(testbed,
+                                                     estimator.dimEstim,
+                                                     self.amplitudeEFC,
+                                                     self.matrix_dir,
+                                                     initial_DM_voltage=initial_DM_voltage,
+                                                     input_wavefront=input_wavefront,
+                                                     MatrixType=self.MatrixType,
+                                                     save_all_planes_to_fits=False,
+                                                     dir_save_all_planes="/Users/jmazoyer/Desktop/g0_all/")
 
-            print("time for direct matrix " + testbed.string_os + " (s):",
-                  round(time.time() - start_time))
+            print("time for direct matrix " + testbed.string_os + " (s):", round(time.time() - start_time))
             print("")
 
-            self.Gmatrix = wsc.cropDHInteractionMatrix(
-                interMat, self.MaskEstim)
+            self.Gmatrix = wsc.cropDHInteractionMatrix(interMat, self.MaskEstim)
 
             # useful.quickfits(self.Gmatrix)
 
             if self.correction_algorithm in ["em", "steepest", "sm"]:
 
-                self.G = np.zeros(
-                    (int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]),
-                    dtype=complex)
-                self.G = (
-                    self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
-                    1j * self.Gmatrix[int(self.Gmatrix.shape[0] / 2):, :])
+                self.G = np.zeros((int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]), dtype=complex)
+                self.G = (self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
+                          1j * self.Gmatrix[int(self.Gmatrix.shape[0] / 2):, :])
                 transposecomplexG = np.transpose(np.conjugate(self.G))
                 self.M0 = np.real(np.dot(transposecomplexG, self.G))
                 self.Gmatrix = 0.
         else:
             raise Exception("This correction algorithm is not yet implemented")
 
-    def toDM_voltage(self,
-                     testbed: OptSy.Testbed,
-                     estimate,
-                     mode=1,
-                     ActualCurrentContrast=1.,
-                     **kwargs):
+    def toDM_voltage(self, testbed: OptSy.Testbed, estimate, mode=1, ActualCurrentContrast=1., **kwargs):
         """ --------------------------------------------------
         Run a correction from a estimate, and return the DM voltage compatible with the testbed
 
@@ -320,8 +301,7 @@ class Corrector:
                                                      visu=False,
                                                      regul=self.regularization)
 
-            solutionefc = wsc.solutionEFC(self.MaskEstim, estimate,
-                                          self.invertGDH, testbed)
+            solutionefc = wsc.solutionEFC(self.MaskEstim, estimate, self.invertGDH, testbed)
 
             # # gain_individual_DM = [1.,1.]
             # # gain_individual_DM = [0.5,1.]
@@ -369,21 +349,18 @@ class Corrector:
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
-            solutionSM, self.last_best_alpha = wsc.solutionSM(
-                self.MaskEstim, estimate, self.M0, self.G, DesiredContrast,
-                self.last_best_alpha, testbed)
+            solutionSM, self.last_best_alpha = wsc.solutionSM(self.MaskEstim, estimate, self.M0, self.G,
+                                                              DesiredContrast, self.last_best_alpha, testbed)
 
             if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (
-                    isinstance(solutionSM, str)
-                    and solutionSM == "SMFailedTooManyTime"):
+                    isinstance(solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
                 self.times_we_lowered_gain += 1
-                self.expected_gain_in_contrast = 1 - (
-                    1 - self.expected_gain_in_contrast) / 3
+                self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast) / 3
                 self.count_since_last_best = 0
                 self.last_best_alpha *= 20
                 print(
-                    "we do not improve contrast anymore, we go back to last best and change the gain to {:f}"
-                    .format(self.expected_gain_in_contrast))
+                    "we do not improve contrast anymore, we go back to last best and change the gain to {:f}".
+                    format(self.expected_gain_in_contrast))
                 return "RebootTheLoop"
 
             # # gain_individual_DM = [1.,1.]
@@ -415,12 +392,12 @@ class Corrector:
                                                     visu=False,
                                                     regul=self.regularization)
 
-            return -self.amplitudeEFC * wsc.solutionEM(
-                self.MaskEstim, estimate, self.invertM0, self.G, testbed)
+            return -self.amplitudeEFC * wsc.solutionEM(self.MaskEstim, estimate, self.invertM0, self.G,
+                                                       testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return -self.amplitudeEFC * wsc.solutionSteepest(
-                self.MaskEstim, estimate, self.M0, self.G, testbed)
+            return -self.amplitudeEFC * wsc.solutionSteepest(self.MaskEstim, estimate, self.M0, self.G,
+                                                             testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")

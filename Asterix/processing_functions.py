@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.optimize as opt
 import Asterix.fits_functions as useful
-from astropy.io import fits
 
 
 def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=True):
@@ -209,9 +208,8 @@ def rebin(image, factor=4, center_on_pixel=False):
             dim1 x dim2 array with dim1 and dim2 are divisible by factor
 
     factor : int
-         factor of bin 
+         factor of bin init_image size / final_image size
 
-    
     center_on_pixe :bool (optional, default: False). 
                 If False the PSf is shifhted before bining
 
@@ -425,7 +423,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     return pos_actu_in_pix
 
 
-def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False):
+def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False, norm="backward"):
     """
     This function returns an image shifted by a non-integer amount via a
     Fourier domain computation.
@@ -455,6 +453,15 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False)
     complex_image : bool (optional, , default False)  
             if "False", then the output array will be
             assumed to be real. If you want to shift an complex array, use complex_image = True
+    
+    norm : string default 'backward'
+            'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
+            https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
+            if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse = True)
+            if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse = True)
+            if 'ortho' 1/sqrt(N) normalisation is done in both directions.
+            Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
+            The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
                
     Returns
     ------
@@ -471,7 +478,7 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False)
     if fourier == True:
         ft_image = image
     else:
-        ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(image), norm="ortho"))
+        ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(image), norm=norm))
 
     xshift_odd = 0
     if NP % 2 == 1:
@@ -490,7 +497,7 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False)
     # shift -> exp(i*phi)
     shift = np.cos(tilt) + 1j * np.sin(tilt)
     # inverse FFT to go back to the initial space
-    shifted_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift), norm="ortho"))
+    shifted_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift), norm=norm))
 
     # if the initial data is real, we take the real part
     if complex_image is False:
@@ -515,7 +522,7 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
         inital size
 
     factor_dezoom : float
-        factor to be zoomed out. factor_dezoom<1
+        factor to be zoomed out (final_image size / init_image size). factor_dezoom<1
 
     max_allowed_fft_size : int 
         the maximum size to check
@@ -569,7 +576,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
         inital array. Must be square 
 
     factor_dezoom : float
-        factor to be zoomed out. factor_dezoom<1
+        factor to be zoomed out (final_image size / init_image size). factor_dezoom<1
 
     complex_image : bool(optional input, default False) 
             if this keyword is "False", then the output array will be

@@ -12,27 +12,16 @@ Conda is an open source package management system and environment management sys
 installs, runs and updates packages and their dependencies on your local computer and allows 
 switches between environments.
 
-By creating clean python environments for each you projects (especially packages in continuous 
+By creating clean python environments for each of your projects (especially packages in continuous 
 development by non developers like Asterix), you minimize the risk of of creating conflicts which 
 will hinder the use of Asterx and/or on your other projects.
 
 First download and install miniconda3:
 https://docs.conda.io/en/latest/miniconda.html
 
-You can now create an environement for installing Asterix:
-
-    $ conda create --name asterix-env python=3.8 numpy scipy astropy matplotlib configobj
-
-This will automatically create a python environement with only the required python packages for Asterix, at their
-latest stable version. Before installing Asterix and everytime you want to use it you need to activate this environement:
-
-    $ conda activate asterix-env
-
-
 You can use the very useful `Conda Cheat Sheet <https://docs.conda.io/projects/conda/en/4.6.0/_downloads/52a95608c49671267e40c689e0bc00ca/conda-cheatsheet.pdf>`_
 which lists the most common conda command lines you can use.
  
-
 Install Asterix
 -----------------
 
@@ -44,19 +33,19 @@ developer version, clone the Asterix repository :
 
     $ git clone https://github.com/johanmazoyer/Asterix.git
 
-This clones the repository using HTTPS authentication. Once the repository is cloned onto your computer, ``cd Asterix`` into it.
-If you are using a specific environement for Asterix (see previous section), now is the time to Activate it:
-    
-    $ conda activate asterix-env
+This clones the repository using HTTPS authentication. Once the repository is cloned onto your computer, ``cd Asterix`` into it. 
+Then type:
 
-Run the setup file:
+    $ conda env create --file environment.yml
+
+This will automatically create a python environement named ``asterix`` with only the required python packages for Asterix, at their
+latest stable version. Before installing Asterix and everytime you want to use it, you need to activate this environement:
+
+    $ conda activate asterix
+
+Run the setup file to install Asterix:
 
     $ pip install -e '.'
-
-If you use multiple versions/environements of python, you will need to do this with each version of python
-(this should not apply to most people).
-
-
 
 
 Dependencies

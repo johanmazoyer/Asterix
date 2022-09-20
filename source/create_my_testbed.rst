@@ -112,12 +112,12 @@ Some specific aperture types are defined that you can access using the keyword `
 
 Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plane), "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2".
 
-You can finally defined your own pupils from a .fits using the same keyword if you put a full path. In this case, it will assume the same size as 
-entrance pupil define in the parameter file. 
+You can finally defined your own pupils from a .fits using the same keyword if you put a full path. In this case, it will assume the same 
+physical diam_pup_in_msize as the entrance pupil defined in the parameter file. 
 The keyword "diam_lyot_in_m" is only used in the case of a round Lyot Stop ("RoundPup") and is not use to scale the .fits files aperture
 
-The pupil in the .fits file are automatically rescaled at prad using skimage.transform.rescale. This rescale was prefered 
-because of the option "preserve_range=True" which keep the rescaled pupil in [0,1].
+The pupil in the .fits file are automatically rescaled at 2*prad using binning. Therefore the code requires that the parameter 
+diam_pup_in_pix is a divisor of the .fits file dimension
 
 Function documentation can be found in Section :ref:`pupil-label`. 
 

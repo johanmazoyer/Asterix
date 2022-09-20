@@ -3,8 +3,6 @@ import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
 
-
-
 def mft(image,
         real_dim_input,
         dim_output,
@@ -101,8 +99,7 @@ def mft(image,
         else:
             raise Exception(error_string_real_dim_input)
     elif isinstance(real_dim_input, tuple):
-        if all(isinstance(dims, int)
-               for dims in real_dim_input) & (len(real_dim_input) == 2):
+        if all(isinstance(dims, int) for dims in real_dim_input) & (len(real_dim_input) == 2):
             real_dim_input_x = real_dim_input[0]
             real_dim_input_y = real_dim_input[1]
         else:
@@ -120,8 +117,7 @@ def mft(image,
         else:
             raise Exception(error_string_dim_output)
     elif isinstance(dim_output, tuple):
-        if all(isinstance(dims, int)
-               for dims in dim_output) & (len(dim_output) == 2):
+        if all(isinstance(dims, int) for dims in dim_output) & (len(dim_output) == 2):
             dim_output_x = dim_output[0]
             dim_output_y = dim_output[1]
         else:
@@ -139,8 +135,7 @@ def mft(image,
         else:
             raise Exception(error_string_nbr)
     elif isinstance(nbres, tuple):
-        if all(isinstance(nbresi, (float, int))
-               for nbresi in nbres) & (len(nbres) == 2):
+        if all(isinstance(nbresi, (float, int)) for nbresi in nbres) & (len(nbres) == 2):
             nbresx = float(nbres[0])
             nbresy = float(nbres[1])
         else:
@@ -161,25 +156,19 @@ def mft(image,
     Y1 = Y_offset_output
 
     # image0 = dcomplex(image)
-    xx0 = (
-        (np.arange(dim_input_x) - X0 + 1 / 2) / dim_input_x)  #Entrance image
-    xx1 = (
-        (np.arange(dim_input_y) - Y0 + 1 / 2) / dim_input_y)  #Entrance image
-    uu0 = ((np.arange(dim_output_x) - X1 + 1 / 2) / dim_output_x -
-           1 / 2) * nbresx  #Fourier plane
-    uu1 = ((np.arange(dim_output_y) - Y1 + 1 / 2) / dim_output_y -
-           1 / 2) * nbresy  #Fourier plane
+    xx0 = ((np.arange(dim_input_x) - X0 + 1 / 2) / dim_input_x)  #Entrance image
+    xx1 = ((np.arange(dim_input_y) - Y0 + 1 / 2) / dim_input_y)  #Entrance image
+    uu0 = ((np.arange(dim_output_x) - X1 + 1 / 2) / dim_output_x - 1 / 2) * nbresx  #Fourier plane
+    uu1 = ((np.arange(dim_output_y) - Y1 + 1 / 2) / dim_output_y - 1 / 2) * nbresy  #Fourier plane
 
-    norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
-                    dim_output_x / dim_output_y)
+    norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
     if inverse == False:
         if norm == 'backward':
             norm0 = 1.
         elif norm == 'forward':
             norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
         elif norm == 'ortho':
-            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
-                            dim_output_x / dim_output_y)
+            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
         sign_exponential = -1
 
     elif inverse == True:
@@ -188,8 +177,7 @@ def mft(image,
         elif norm == 'forward':
             norm0 = 1.
         elif norm == 'ortho':
-            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y /
-                            dim_output_x / dim_output_y)
+            norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
         sign_exponential = 1
 
     AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0))
@@ -362,102 +350,104 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     cycles = diam_pup_in_pix
 
     four = np.fft.fft2(proc.crop_or_pad_image(pup, Nfourier), norm='ortho')
-    u, v = np.meshgrid(
-        np.arange(Nfourier) - Nfourier / 2,
-        np.arange(Nfourier) - Nfourier / 2)
+    u, v = np.meshgrid(np.arange(Nfourier) - Nfourier / 2, np.arange(Nfourier) - Nfourier / 2)
 
-    rho2D = np.fft.fftshift(np.hypot(v,
-                                     u)) * (cycles / diam_pup_in_m) / Nfourier
+    rho2D = np.fft.fftshift(np.hypot(v, u)) * (cycles / diam_pup_in_m) / Nfourier
 
     angular = np.exp(-1j * np.pi * z * lam * (rho2D**2))
     return np.fft.ifft2(angular * four, norm='ortho')
 
 
+def fft_choosecenter(input, inverse=False, center_pos='bb', norm='backward'):
+    """
+    FFT Computation. IDL "FFT" routine uses coordinates origin at pixel [0,0].
+             This routine FFTSHIFT2 uses a coordinate origin at any pixel [k,l],
+             thanks to multiplication by adequate array before using numpy routine "FFT".
+             Keywords allow convenient origins either at central pixel ('p') or between
+             the 4 central pixels ('b')
 
-##### This function was coded by Mehdi to do FFT centered on pixels or not
-##### This could be useful at some point to replace fft to be more accurate in what we do. 
-##### However, right now it only do squere arrays of even width, not sure why.
-##### Need to be updated before used
+    AUTHORS: L.Mugnier, M.Kourdourli, J. Mazoyer
 
-# def fftshift2(input,inverse=False,centrage='cc',norm='backward'):
+    07/09/2022 : Introduction in asterix (Kourdourli's version. Based on fftshift2.pro from ONERA's 
+                IDL library by Laurent Mugnier
+    07/09/2022 : works for non square array / non even dimensions array Mazoyer
 
-#     """
-#     fftshift2 :
-#     FFT Computation. IDL "FFT" routine uses coordinates origin at pixel [0,0].
-#              This routine FFTSHIFT2 uses a coordinate origin at any pixel [k,l],
-#              thanks to multiplication by adequate array before using IDL routine "FFT".
-#              Keywords allow convenient origins eithr at central pixel, either between
-#              the 4 central pixels
+    Parameters
+    ----------
+    image : 2D numpy array
+            inital array.
 
-#     The IMAGE must be square and of even width.
+    inverse : bool (optional, default False)
+            direction of the FFT,
+            inverse == False for direct FFT,
+            inverse == True for inverse FFT.
 
-#     (Based on fftshift2.pro from ONERA's IDL library by Laurent Mugnier)
+    center_pos : string (optinal defaut 'bb')
+                      option for the origin. Shorthand for specifying
+                      the origin center in direct and fourier spaces when
+                      manipulating centered arrays.
+                       Direct space             Fourier space
+               pp     Central pix              Central pix 
+               pb     Central pix              Between 4 central pix
+               bp     Between 4 central pix    Central pix
+               bb     Between 4 central pix    Between 4 central pix
+               if dim_i (i = x or y) is even or odd : 
+                    Central pix = dim_i // 2
+                    Between 4 central pix: between dim_i // 2 - 1 and dim_i // 2
+                with // the euclidian division. 
 
-#     AUTHORS: L.Mugnier, M.Kourdourli
+    norm : string default 'backward'
+                'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
+                https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
+                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse = True)
+                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse = True)
+                if 'ortho' 1/sqrt(N) normalisation is done in both directions.
+                Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
+                The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
+        
+    Returns
+    ------
+    FFT_array : 2D numpy array
+        FFT of input array with respect to the input centering parameters.
 
-#     input (2D array) : (input) array in direct space.
+    """
 
-#     inverse (bool) : (input) direction of the FFT,
-#                      inverse == False for direct FFT,
-#                      inverse == True for inverse FFT.
+    Nx = np.shape(input)[0]
+    Ny = np.shape(input)[1]
+    if inverse == True:
+        sens = 1
+    else:
+        sens = -1
 
-#     centrage (string) : (input), defaut 'cc'
-#                       option for the origin. Shorthand for specifying
-#                       the origin center in direct and fourier spaces when
-#                       manipulating centered arrays.
+    if not center_pos.lower() in ['pp', 'pb', 'bp', 'bb']:
+        raise Exception("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
 
-#                        Direct space             Fourier space
+    if center_pos.lower()[0] == 'p':
+        direct = np.array([Nx // 2, Ny // 2])
+    else:
+        direct = np.array([Nx // 2 - 1 / 2., Ny // 2 - 1 / 2.])
 
-#                CC     Central pix              central pix
-#                CE     Central pix              between 4 central pix
-#                EC     bEtween 4 central pix    central pix
-#                EE     bEtween 4 central pix    between 4 central pix
+    if center_pos.lower()[1] == 'p':
+        fourier = np.array([Nx // 2, Ny // 2])
+    else:
+        fourier = np.array([Nx // 2 - 1 / 2., Ny // 2 - 1 / 2.])
 
-#     norm (string) : (input) default 'backward'
-#                 'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
-#                 https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
-#                 if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse = True)
-#                 if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse = True)
-#                 if 'ortho' 1/sqrt(N) normalisation is done in both directions.
-#                 Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
-#                 The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
+    X, Y = np.meshgrid(np.linspace(0, Ny, Ny, endpoint=False), np.linspace(0, Nx, Nx, endpoint=False))
 
-#     return (2D array) : (output) FFT of input array with respect to the input centering parameters.
-#     """
+    # shift in Fourier space, i.e. multiplication in direct space, and computation of FFT
+    if inverse == False:
+        farray = np.fft.fft2(input * np.exp(
+            (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
+                             norm=norm)
+    if inverse == True:
+        farray = np.fft.ifft2(input * np.exp(
+            (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
+                              norm=norm)
 
-#     N = np.shape(input)[0]
-#     if inverse == True:
-#         sens = 1
-#     else:
-#         sens = -1
+    # shift in direct space, i.e. multiplication in fourier space, and computation of FFT
+    farray *= np.exp((-sens) * 2. * np.pi * 1j * (direct[0] * X / Nx + direct[1] * Y / Ny))
 
-#     if centrage == 'cc':
-#         direct = np.array([N/2., N/2.])
-#         fourier = np.array([N/2., N/2.])
-#     if centrage == 'ce':
-#         direct = np.array([N/2., N/2.])
-#         fourier = np.array([(N-1)/2., (N-1)/2.])
-#     if centrage == 'ec':
-#         direct = np.array([(N-1)/2., (N-1)/2.])
-#         fourier = np.array([N/2., N/2.])
-#     if centrage == 'ee':
-#         direct = np.array([(N-1)/2., (N-1)/2.])
-#         fourier = np.array([(N-1)/2., (N-1)/2.])
+    # normalisation
+    farray *= np.exp(sens * (2. * 1j * np.pi / np.sqrt(Nx * Ny)) * np.sum(direct * fourier))
 
-#     # coordinate arrays
-#     X = np.reshape(np.arange(N*N),(N,N)) % N
-#     Y = np.transpose(X)
-
-#     # shift in Fourier space, i.e. multiplication in direct space, and computation of FFT
-#     if inverse == False:
-#         farray = np.fft.fft2(input*np.exp((-sens)*2.*np.pi*1j*(fourier[0]*X+fourier[1]*Y)/N), norm=norm)
-#     if inverse == True:
-#         farray = np.fft.ifft2(input*np.exp((-sens)*2.*np.pi*1j*(fourier[0]*X+fourier[1]*Y)/N), norm=norm)
-
-#     # shift in direct space, i.e. multiplication in fourier space, and computation of FFT
-#     farray *= np.exp((-sens)*2.*np.pi*1j*(direct[0]*X+direct[1]*Y)/N)
-
-#     # normalisation
-#     farray *= np.exp(sens*(2.*1j*np.pi/N)*np.sum(direct*fourier))
-
-#     return farray
+    return farray

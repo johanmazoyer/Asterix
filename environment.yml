@@ -1,0 +1,11 @@
+name: asterix
+dependencies:
+  - astropy
+  - configobj
+  - jupyter
+  - matplotlib
+  - numpy
+  - pytest
+  - python=>3.8
+  - scikit-image
+  - scipy
