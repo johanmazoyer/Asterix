@@ -17,9 +17,6 @@ Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
 
 
-##############################################
-##############################################
-### Optical_System
 class OpticalSystem:
     """ --------------------------------------------------
     Super class Optical_System allows to pass parameters to all sub class.
@@ -678,9 +675,6 @@ class OpticalSystem:
         return entrance_EF
 
 
-##############################################
-##############################################
-### PUPIL
 class Pupil(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of single pupil
@@ -914,9 +908,6 @@ class Pupil(OpticalSystem):
         return exit_EF
 
 
-##############################################
-##############################################
-### CORONAGRAPHS
 class Coronagraph(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
@@ -1501,9 +1492,6 @@ class Coronagraph(OpticalSystem):
         return hlc_all_wl
 
 
-##############################################
-##############################################
-### Deformable mirrors
 class DeformableMirror(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of a deformable mirror
@@ -2082,9 +2070,6 @@ class DeformableMirror(OpticalSystem):
         return basis
 
 
-##############################################
-##############################################
-### Testbeds
 class Testbed(OpticalSystem):
     """ --------------------------------------------------
     
@@ -2305,12 +2290,7 @@ class Testbed(OpticalSystem):
         return vector_actuator_voltage
 
 
-##############################################
-##############################################
-### internal functions to properly concatenate the EF_through functions
-### probably not needed outside of this file
-
-
+# Some internal functions to properly concatenate the EF_through functions
 def _swap_DMphase_name(DM_EF_through_function, name_var):
     """ --------------------------------------------------
    A function to rename the DMphase parameter to another name (usually DMXXphase)
