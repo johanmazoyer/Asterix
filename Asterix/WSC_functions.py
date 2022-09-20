@@ -189,7 +189,7 @@ def creatingInteractionmatrix(testbed: OptSy.Testbed,
 
     for i, DM_name in enumerate(testbed.name_of_DMs):
 
-        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
@@ -221,7 +221,7 @@ def creatingInteractionmatrix(testbed: OptSy.Testbed,
 
     for DM_name in testbed.name_of_DMs:
 
-        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(DM.basis_size)
@@ -291,13 +291,13 @@ def creatingInteractionmatrix(testbed: OptSy.Testbed,
             wavefrontupstream = input_wavefront
 
             for osname in OpticSysNameBefore:
-                OpticSysbefore = vars(testbed)[osname]  # type: OptSy.Optical_System
+                OpticSysbefore = vars(testbed)[osname]  # type: OptSy.OpticalSystem
 
                 if save_all_planes_to_fits == True:
                     # save PP plane before this subsystem
                     name_plane = 'EF_PP_before_' + osname + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
-                if isinstance(OpticSysbefore, OptSy.deformable_mirror) and OpticSysbefore.active:
+                if isinstance(OpticSysbefore, OptSy.DeformableMirror) and OpticSysbefore.active:
                     # this subsystem is an active DM but not the one we actuate now (located before the one we actuate)
 
                     if OpticSysbefore.z_position == 0:
@@ -381,10 +381,10 @@ def creatingInteractionmatrix(testbed: OptSy.Testbed,
                 # and finally we go through the subsystems after the DMs we want to actuate
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
                 for osname in OpticSysNameAfter:
-                    OpticSysAfter = vars(testbed)[osname]  # type: OptSy.Optical_System
+                    OpticSysAfter = vars(testbed)[osname]  # type: OptSy.OpticalSystem
                     if osname != OpticSysNameAfter[-1]:
 
-                        if isinstance(OpticSysAfter, OptSy.deformable_mirror) and OpticSysAfter.active:
+                        if isinstance(OpticSysAfter, OptSy.DeformableMirror) and OpticSysAfter.active:
 
                             # this subsystem is an active DM but not the one we actuate now (located after the one we actuate)
                             if OpticSysAfter.z_position == 0:
@@ -458,7 +458,7 @@ def creatingInteractionmatrix(testbed: OptSy.Testbed,
 
     # clean to save memory
     for i, DM_name in enumerate(testbed.name_of_DMs):
-        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
         DM.phase_init = 0
 
     print("")
@@ -782,7 +782,7 @@ def createPWmatrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim, cutsv
     PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
 
-    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]  # type: OptSy.deformable_mirror
+    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]  # type: OptSy.DeformableMirror
 
     psi0 = testbed.todetector()
     k = 0
@@ -914,7 +914,7 @@ def createdifference(input_wavefront,
         indice_acum_number_act = 0
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+            DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
 
             if DM_name == testbed.name_DM_to_probe_in_PW:
                 Voltage_probeDMprobe = np.zeros(DM.number_act)

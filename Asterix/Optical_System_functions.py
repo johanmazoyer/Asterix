@@ -20,7 +20,7 @@ model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
 ##############################################
 ##############################################
 ### Optical_System
-class Optical_System:
+class OpticalSystem:
     """ --------------------------------------------------
     Super class Optical_System allows to pass parameters to all sub class.
     We can then creat blocks inside this super class. An Optical_System start and
@@ -681,7 +681,7 @@ class Optical_System:
 ##############################################
 ##############################################
 ### PUPIL
-class pupil(Optical_System):
+class Pupil(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of single pupil
     pupil is a sub class of Optical_System.
@@ -917,7 +917,7 @@ class pupil(Optical_System):
 ##############################################
 ##############################################
 ### CORONAGRAPHS
-class coronagraph(Optical_System):
+class Coronagraph(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
     coronagraph is a sub class of Optical_System.
@@ -955,7 +955,7 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        self.apod_pup = pupil(modelconfig,
+        self.apod_pup = Pupil(modelconfig,
                               prad=self.prad,
                               PupType=coroconfig["filename_instr_apod"],
                               angle_rotation=coroconfig['apod_pup_rotation'],
@@ -1037,7 +1037,7 @@ class coronagraph(Optical_System):
         else:
             raise Exception(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
 
-        self.lyot_pup = pupil(modelconfig,
+        self.lyot_pup = Pupil(modelconfig,
                               prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
                               PupType=coroconfig["filename_instr_lyot"],
                               angle_rotation=coroconfig['lyot_pup_rotation'],
@@ -1058,7 +1058,7 @@ class coronagraph(Optical_System):
                 # of the coronograph to a round pupil to remove it
                 # THIS IS NOT THE ENTRANCE PUPIL,
                 # this is a round pupil of the same size
-                pup_for_perfect_coro = pupil(modelconfig, prad=self.prad)
+                pup_for_perfect_coro = Pupil(modelconfig, prad=self.prad)
 
                 # do a propagation once with self.perfect_Lyot_pupil = 0 to
                 # measure the Lyot pupil that will be removed after
@@ -1504,7 +1504,7 @@ class coronagraph(Optical_System):
 ##############################################
 ##############################################
 ### Deformable mirrors
-class deformable_mirror(Optical_System):
+class DeformableMirror(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of a deformable mirror
     (in pupil plane or out of pupil plane)
@@ -1594,7 +1594,7 @@ class deformable_mirror(Optical_System):
         # We need a pupil in creatingpushact_inpup() and for
         # which in pup. THIS IS NOT THE ENTRANCE PUPIL,
         # this is a round pupil of the same size
-        self.clearpup = pupil(modelconfig, PupType="RoundPup", prad=self.prad)
+        self.clearpup = Pupil(modelconfig, PupType="RoundPup", prad=self.prad)
 
         # create the DM_pushact, surface of the DM for each individual act
         # DM_pushact is always in the DM plane
@@ -2085,7 +2085,7 @@ class deformable_mirror(Optical_System):
 ##############################################
 ##############################################
 ### Testbeds
-class Testbed(Optical_System):
+class Testbed(OpticalSystem):
     """ --------------------------------------------------
     
     Initialize and describe the behavior of a testbed.
@@ -2148,7 +2148,7 @@ class Testbed(Optical_System):
 
             # we first check that all variables in the list are optical systems
             # defined the same way.
-            if not isinstance(list_os[num_optical_sys], Optical_System):
+            if not isinstance(list_os[num_optical_sys], OpticalSystem):
                 raise Exception("list_os[" + str(num_optical_sys) + "] is not an optical system")
 
             if list_os[num_optical_sys].modelconfig != self.modelconfig:
@@ -2161,7 +2161,7 @@ class Testbed(Optical_System):
             for params in inspect.signature(list_os[num_optical_sys].EF_through).parameters:
                 known_keywords.append(params)
 
-            if isinstance(list_os[num_optical_sys], deformable_mirror):
+            if isinstance(list_os[num_optical_sys], DeformableMirror):
 
                 #this function is to replace the DMphase variable by a XXphase variable
                 # where XX is the name of the DM
@@ -2249,7 +2249,7 @@ class Testbed(Optical_System):
 
         for i, DM_name in enumerate(self.name_of_DMs):
 
-            DM = vars(self)[DM_name]  # type: deformable_mirror
+            DM = vars(self)[DM_name]  # type: DeformableMirror
             actu_vect_DM = actu_vect[indice_acum_number_act:indice_acum_number_act + DM.number_act]
             DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
 
@@ -2285,7 +2285,7 @@ class Testbed(Optical_System):
         for DM_name in self.name_of_DMs:
 
             # we access each DM object individually
-            DM = vars(self)[DM_name]  # type: deformable_mirror
+            DM = vars(self)[DM_name]  # type: DeformableMirror
 
             # we extract the voltages for this one
             # this voltages are in the DM basis

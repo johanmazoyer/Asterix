@@ -377,7 +377,7 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, Mask
                      header,
                      overwrite=True)
 
-        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
         voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:indice_acum_number_act +
                                                  DM.number_act]
         indice_acum_number_act += DM.number_act

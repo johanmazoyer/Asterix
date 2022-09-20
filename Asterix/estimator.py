@@ -82,7 +82,7 @@ class Estimator:
             print("Creating directory " + matrix_dir + " ...")
             os.makedirs(matrix_dir)
 
-        if isinstance(testbed, OptSy.Optical_System) == False:
+        if isinstance(testbed, OptSy.OpticalSystem) == False:
             raise Exception("testbed must be an Optical_System objet")
 
         self.technique = Estimationconfig["estimation"].lower()
@@ -126,7 +126,7 @@ class Estimator:
                     #If several DMs we check if there is at least one in PP
                     number_DMs_in_PP = 0
                     for DM_name in testbed.name_of_DMs:
-                        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+                        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
                         if DM.z_position == 0.:
                             number_DMs_in_PP += 1
                             testbed.name_DM_to_probe_in_PW = DM_name

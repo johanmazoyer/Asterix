@@ -99,16 +99,16 @@ def runthd2(parameter_file,
     Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
     # Initialize thd:
-    entrance_pupil = OptSy.pupil(modelconfig,
+    entrance_pupil = OptSy.Pupil(modelconfig,
                                  PupType=modelconfig['filename_instr_pup'],
                                  angle_rotation=modelconfig['entrance_pup_rotation'],
                                  Model_local_dir=Model_local_dir)
 
-    DM1 = OptSy.deformable_mirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
+    DM1 = OptSy.DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
 
-    DM3 = OptSy.deformable_mirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
+    DM3 = OptSy.DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
 
-    corono = OptSy.coronagraph(modelconfig, Coronaconfig, Model_local_dir=Model_local_dir)
+    corono = OptSy.Coronagraph(modelconfig, Coronaconfig, Model_local_dir=Model_local_dir)
     # and then just concatenate
     thd2 = OptSy.Testbed([entrance_pupil, DM1, DM3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
 
