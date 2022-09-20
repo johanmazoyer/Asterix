@@ -37,7 +37,7 @@ def CorrectionLoop(testbed: OptSy.Testbed,
     Parameters
     ----------
         
-    testbed: Optical_System.Testbed
+    testbed: OpticalSystem.Testbed
             object which describes your testbed
     
     estimator: Estimator 
@@ -177,7 +177,7 @@ def CorrectionLoop1Matrix(testbed: OptSy.Testbed,
     Parameters
     ----------
         
-    testbed: Optical_System.Testbed
+    testbed: OpticalSystem.Testbed
             object which describes your testbed
     
     estimator: Estimator 

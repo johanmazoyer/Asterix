@@ -62,7 +62,7 @@ class Corrector:
         Correctionconfig : dict
                 general correction parameters
 
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         MaskDH: 2d numpy array
@@ -204,7 +204,7 @@ class Corrector:
         Parameters
         ----------
        
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         estimator: Estimator
@@ -264,7 +264,7 @@ class Corrector:
 
         Parameters
         ----------
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         estimate: 2D complex array 
@@ -311,7 +311,7 @@ class Corrector:
             # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
 
             #     # we access each DM object individually
-            #     DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+            #     DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
 
             #     # we multpily each DM by a specific DM gain
             #     solutionefc[
@@ -371,7 +371,7 @@ class Corrector:
             # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
 
             #     # we access each DM object individually
-            #     DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+            #     DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
 
             #     # we multpily each DM by a specific DM gain
             #     solutionSM[

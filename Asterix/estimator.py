@@ -64,7 +64,7 @@ class Estimator:
         Estimationconfig : dict
                 general estimation parameters
 
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         matrix_dir: path. 
@@ -202,7 +202,7 @@ class Estimator:
 
         Parameters
         ----------
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         entrance_EF :    complex float or 2D array, default 1.

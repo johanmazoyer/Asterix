@@ -32,7 +32,7 @@ class OpticalSystem:
 
     def __init__(self, modelconfig):
         """ --------------------------------------------------
-        Initialize Optical_System objects
+        Initialize OpticalSystem objects
         AUTHOR : Johan Mazoyer
 
         Parameters
@@ -84,14 +84,14 @@ class OpticalSystem:
             int(self.wavelength_0 * 1e9)) + "_resFP" + str(round(self.Science_sampling, 2)) + "_dimFP" + str(
                 int(self.dimScience))
 
-    #We define functions that all Optical_System object can use.
+    #We define functions that all OpticalSystem object can use.
     # These can be overwritten for a subclass if need be
 
     def EF_through(self, entrance_EF=1., save_all_planes_to_fits=False, dir_save_all_planes=None, **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from entrance pupil to exit pupil
 
-        NEED TO BE DEFINED FOR ALL Optical_System
+        NEED TO BE DEFINED FOR ALL OpticalSystem subclasses
 
         AUTHOR : Johan Mazoyer
 
@@ -111,7 +111,7 @@ class OpticalSystem:
                             directory to save all plane in fits
                                 if save_all_planes_to_fits = True
         **kwargs: 
-            other parameters can be passed for Optical_System objects EF_trough functions
+            other parameters can be passed for OpticalSystem objects EF_trough functions
 
         Returns
         ------
@@ -678,13 +678,13 @@ class OpticalSystem:
 class Pupil(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of single pupil
-    pupil is a sub class of Optical_System.
+    pupil is a sub class of OpticalSystem.
 
     Obviously you can define your pupil
     without that with 2d arrray multiplication (this is a fairly simple object).
 
-    The main advantage of defining them using Optical_System is that you can
-    use default Optical_System functions to obtain PSF, transmission, etc...
+    The main advantage of defining them using OpticalSystem is that you can
+    use default OpticalSystem functions to obtain PSF, transmission, etc...
     and concatenate them with other elements
 
     AUTHOR : Johan Mazoyer
@@ -705,7 +705,7 @@ class Pupil(OpticalSystem):
         ----------
         modelconfig : dict
                     general configuration parameters (sizes and dimensions)
-                        to initialize Optical_System class
+                        to initialize OpticalSystem class
 
         prad : float
             Default is the pupil radius in the parameter file (self.prad)
@@ -735,7 +735,7 @@ class Pupil(OpticalSystem):
                     and can save to save time
 
         -------------------------------------------------- """
-        # Initialize the Optical_System class and inherit properties
+        # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
         if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
@@ -879,7 +879,7 @@ class Pupil(OpticalSystem):
 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variable entrance_EF
+        # call the OpticalSystem super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
         if wavelength is None:
             wavelength = self.wavelength_0
@@ -911,7 +911,7 @@ class Pupil(OpticalSystem):
 class Coronagraph(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
-    coronagraph is a sub class of Optical_System.
+    coronagraph is a sub class of OpticalSystem.
 
     AUTHOR : Johan Mazoyer
 
@@ -937,7 +937,7 @@ class Coronagraph(OpticalSystem):
 
         -------------------------------------------------- """
 
-        # Initialize the Optical_System class and inherit properties
+        # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
         if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
@@ -1120,7 +1120,7 @@ class Coronagraph(OpticalSystem):
 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variable entrance_EF
+        # call the OpticalSystem super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
         if wavelength is None:
@@ -1496,7 +1496,7 @@ class DeformableMirror(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of a deformable mirror
     (in pupil plane or out of pupil plane)
-    coronagraph is a sub class of Optical_System.
+    coronagraph is a sub class of OpticalSystem.
 
 
     AUTHOR : Johan Mazoyer
@@ -1529,7 +1529,7 @@ class DeformableMirror(OpticalSystem):
         
         -------------------------------------------------- """
 
-        # Initialize the Optical_System class and inherit properties
+        # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
         if not os.path.exists(Model_local_dir):
@@ -1641,7 +1641,7 @@ class DeformableMirror(OpticalSystem):
 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check
+        # call the OpticalSystem super function to check
         # and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
@@ -2108,7 +2108,7 @@ class Testbed(OpticalSystem):
             print("")
             raise Exception("list of systems and list of names need to be of the same size")
 
-        # Initialize the Optical_System class and inherit properties
+        # Initialize the OpticalSystem class and inherit properties
         super().__init__(list_os[0].modelconfig)
 
         init_string = self.string_os

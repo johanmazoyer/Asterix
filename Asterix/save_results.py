@@ -299,8 +299,8 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, Mask
     config: dict
         complete parameter dictionnary
 
-    testbed: Optical_System
-        an Optical_System object which describes your testbed
+    testbed: OpticalSystem
+        an OpticalSystem object which describes your testbed
     
     mask_dh: 2d numpy array
         binary array of size [dimScience, dimScience] : dark hole mask
