@@ -1,21 +1,16 @@
 import numpy as np
-import skimage.transform
-from astropy.io import fits
 import Asterix.propagation_functions as prop
+import Asterix.processing_functions as proc
 import Asterix.fits_functions as useful
 
 
-##############################################
-##############################################
-### Pupil
-def roundpupil(dim_pp, prad, no_pixel=False):
+def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     """ --------------------------------------------------
-    Create a circular pupil. The center of the pupil is located between 4 pixels.
-    no_pixel mode is a way to create very ovsersampled pupil that are then rescale.
-    no_pixel is currently not well tested. 
+    Create a circular pupil. 
+    no_pixel mode is a way to create very ovsersampled pupil that are then rescaled using rebin. 
 
-    AUTHOR : Axel Pottier.
-    Modified by J Mazoyer to remove the pixel crenellation
+    AUTHORS : Axel Pottier, Johan Mazoyer
+    7/9/22 Modified by J Mazoyer to remove the pixel crenellation with rebin and add a better center option
 
     Parameters
     ----------
@@ -25,38 +20,42 @@ def roundpupil(dim_pp, prad, no_pixel=False):
         Size of the pupil radius (in pixels)
     no_pixel : boolean (defaut false).
                 If true, the pupil is first defined at a very large
-                scale (dim_pp = 6000) and then rescale to the given parameter dim_pp.
+                scale (prad = 10*prad) and then rescale to the given parameter prad.
                 This limits the pixel crenellation in pupil for small pupils
+
+    center_pos : string (optinal defaut 'b')
+                      option for the center. 
+                      'p' center on pixel dim_pp//2
+                      'b' center in between pixels dim_pp//2 -1 and dim_pp//2
+                      for dim_pp odd or even
 
     Returns
     ------
     pupilnormal : 2D array
         Output circular pupil
-    
-    
+
     -------------------------------------------------- """
 
     if no_pixel == True:
-        dim_pp_small = np.copy(dim_pp)
-        dim_pp = 6000
-        prad = prad / dim_pp_small * 6000
+        factor_bin = int(10)
+        pup_large = roundpupil(int(2 * prad) * factor_bin, factor_bin * prad, no_pixel=False)
+        return proc.crop_or_pad_image(proc.rebin(pup_large, factor=factor_bin, center_on_pixel=False), dim_pp)
 
-    xx, yy = np.meshgrid(
-        np.arange(dim_pp) - (dim_pp) / 2,
-        np.arange(dim_pp) - (dim_pp) / 2)
-    rr = np.hypot(yy + 1 / 2, xx + 1 / 2)
-    pupilnormal = np.zeros((dim_pp, dim_pp))
-    pupilnormal[rr <= prad] = 1.0
+    else:
+        xx, yy = np.meshgrid(np.arange(dim_pp) - (dim_pp) // 2, np.arange(dim_pp) - (dim_pp) // 2)
 
-    if no_pixel == True:
-        pupilnormal = np.array(
-            skimage.transform.rescale(pupilnormal,
-                                      dim_pp_small / dim_pp,
-                                      preserve_range=True,
-                                      anti_aliasing=True,
-                                      channel_axis=None))
+        if center_pos.lower() == 'b':
+            offset = 1 / 2
+        elif center_pos.lower() == 'p':
+            offset = 0
+        else:
+            raise Exception("center_pos can only be 'p' or 'b'")
 
-    return pupilnormal
+        rr = np.hypot(yy + offset, xx + offset)
+        pupilnormal = np.zeros((dim_pp, dim_pp))
+        pupilnormal[rr <= prad] = 1.0
+
+        return pupilnormal
 
 
 def shift_phase_ramp(dim_pp, shift_x, shift_y):
@@ -85,8 +84,8 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     if (shift_x == 0) & (shift_y == 0):
         ramp = 1
     else:
-        maskx = np.linspace(-np.pi * shift_x, np.pi * shift_x, dim_pp, endpoint = False)
-        masky = np.linspace(-np.pi * shift_y, np.pi * shift_y, dim_pp, endpoint = False)
+        maskx = np.linspace(-np.pi * shift_x, np.pi * shift_x, dim_pp, endpoint=False)
+        masky = np.linspace(-np.pi * shift_y, np.pi * shift_y, dim_pp, endpoint=False)
         xx, yy = np.meshgrid(maskx, masky)
         ramp = np.exp(-1j * xx) * np.exp(-1j * yy)
     return ramp
@@ -101,7 +100,7 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
     Parameters
     ----------
-    pupil_rad: int
+    pupil_rad: float
         radius of the pupil on which the phaserms will be measured
 
     dim_image: int
@@ -126,18 +125,15 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
     # create a circular pupil of the same radius of the given pupil
     # this will be the pupil over which phase rms = phaserms
-    pup = roundpupil(pupil_rad, dim_image)
+    pup = roundpupil(dim_image, pupil_rad)
 
-    xx, yy = np.meshgrid(
-        np.arange(dim_image) - dim_image / 2,
-        np.arange(dim_image) - dim_image / 2)
+    xx, yy = np.meshgrid(np.arange(dim_image) - dim_image / 2, np.arange(dim_image) - dim_image / 2)
     rho = np.hypot(yy, xx)
     PSD0 = 1
     PSD = PSD0 / (1 + (rho / rhoc)**slope)
     sqrtPSD = np.sqrt(2 * PSD)
 
-    randomphase = np.random.randn(
-        dim_image, dim_image) + 1j * np.random.randn(dim_image, dim_image)
+    randomphase = np.random.randn(dim_image, dim_image) + 1j * np.random.randn(dim_image, dim_image)
     phase = np.real(np.fft.ifft2(np.fft.fftshift(sqrtPSD * randomphase)))
     phase = phase - np.mean(phase[np.where(pup == 1.)])
     phase = phase / np.std(phase[np.where(pup == 1.)]) * phaserms
@@ -191,11 +187,7 @@ def SinCosBasis(Nact1D):
             Coeffs[Nact1D - i - 1, Nact1D - j - 1] = -1 / (2 * 1j)
         TFCoeffs[Coeff_SinCos] = Coeffs
 
-        SinCos[Coeff_SinCos] = np.real(
-            prop.mft(TFCoeffs[Coeff_SinCos],
-                     Nact1D,
-                     Nact1D,
-                     Nact1D))
+        SinCos[Coeff_SinCos] = np.real(prop.mft(TFCoeffs[Coeff_SinCos], Nact1D, Nact1D, Nact1D))
 
     if Nact1D % 2 == 1:
         # in the odd case the last one is a piston

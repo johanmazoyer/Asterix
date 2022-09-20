@@ -13,9 +13,7 @@ parameter_file = OptSy.Asterix_root + os.path.sep + "Example_param_file.ini"
 
 # Check the picked configuration file against a template of the configuraiton file and load it
 configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
-config = ConfigObj(parameter_file,
-                   configspec=configspec_file,
-                   default_encoding="utf8")
+config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
 vtor = Validator()
 checks = config.validate(vtor, copy=True)   #TODO: what is this supposed to do?
 
@@ -206,12 +204,10 @@ modelconfig.update({'diam_pup_in_pix': 200})
 del pup_round, DM3, corono
 pup_round = OptSy.pupil(modelconfig)
 
-DM3 = OptSy.deformable_mirror(modelconfig,
-                              DMconfig,
-                              Name_DM='DM3',
-                              Model_local_dir=Model_local_dir)
+DM3 = OptSy.deformable_mirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
 
 DMconfig.update({'DM1_active': True})
+
 DM1 = OptSy.deformable_mirror(modelconfig,
                               DMconfig,
                               Name_DM='DM1',
@@ -233,6 +229,7 @@ print("Name of the DMs: ", thd2.name_of_DMs)
 # Let's define a third DM, similar to DM1, but outside the pupil in the other dimension.
 DMconfig.update({'DM1_z_position': -15e-2})  # meter
 DMconfig.update({'DM1_active': True})
+
 DMnew = OptSy.deformable_mirror(modelconfig,
                                 DMconfig,
                                 Name_DM='DM1',
@@ -247,7 +244,9 @@ pupil_inbetween_DM = OptSy.pupil(modelconfig)
 # And a roman entrance pupil
 pup_roman = OptSy.pupil(modelconfig, PupType="RomanPup")
 
+
 # Let's concatenate everything!
+
 testbed_3DM = OptSy.Testbed([pup_roman, DM1, DM3, pupil_inbetween_DM, DMnew, corono_thd],
                             ["entrancepupil", "DM1", "DM3", "pupil_inbetween_DM", "DMnew", "corono"])
 

@@ -62,14 +62,9 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
         tofits_array = np.zeros((2, ) + image.shape)
         tofits_array[0] = np.real(image)
         tofits_array[1] = np.imag(image)
-        fits.writeto(os.path.join(dir_save_fits,
-                                  name_fits + '_RE_and_IM.fits'),
-                     tofits_array,
-                     overwrite=True)
+        fits.writeto(os.path.join(dir_save_fits, name_fits + '_RE_and_IM.fits'), tofits_array, overwrite=True)
     else:
-        fits.writeto(os.path.join(dir_save_fits, name_fits + '_RE.fits'),
-                     image,
-                     overwrite=True)
+        fits.writeto(os.path.join(dir_save_fits, name_fits + '_RE.fits'), image, overwrite=True)
 
 
 def _quickfits(tab, dir='', name='tmp'):
@@ -86,8 +81,7 @@ def _quickfits(tab, dir='', name='tmp'):
     """
 
     if dir == '':
-        desktop = os.path.join(os.path.join(os.path.expanduser('~')),
-                               'Desktop')
+        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
         bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
         if os.path.exists(desktop):
             dir = desktop
@@ -95,13 +89,10 @@ def _quickfits(tab, dir='', name='tmp'):
             # of you are french are you ?
             dir = bureau
         else:
-            raise Exception(
-                "I cannot find your desktop, please give me a dir to save the .fits"
-            )
+            raise Exception("I cannot find your desktop, please give me a dir to save the .fits")
 
     if name == 'tmp':
-        current_time_str = datetime.datetime.today().strftime(
-            '_%H_%M_%S_%f')[:-3]
+        current_time_str = datetime.datetime.today().strftime('_%H_%M_%S_%f')[:-3]
         name = name + current_time_str
     fits.writeto(os.path.join(dir, name + '.fits'), tab, overwrite=True)
 
@@ -118,8 +109,7 @@ def _quickpng(tab, dir='', name='tmp'):
     Johan's quick function
     """
     if dir == '':
-        desktop = os.path.join(os.path.join(os.path.expanduser('~')),
-                               'Desktop')
+        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
         bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
         if os.path.exists(desktop):
             dir = desktop
@@ -127,9 +117,7 @@ def _quickpng(tab, dir='', name='tmp'):
             # of you are french are you ?
             dir = bureau
         else:
-            raise Exception(
-                "I cannot find your desktop, please give me a dir to save the .png"
-            )
+            raise Exception("I cannot find your desktop, please give me a dir to save the .png")
 
     plt.figure(figsize=(10, 10))
     tmp = tab
@@ -203,19 +191,15 @@ def read_parameter_file(parameter_file,
     -------------------------------------------------- """
 
     if not os.path.exists(parameter_file):
-        raise Exception("The parameter file " + parameter_file +
-                        " cannot be found")
+        raise Exception("The parameter file " + parameter_file + " cannot be found")
 
     configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
 
     if not os.path.exists(configspec_file):
-        raise Exception("The parameter config file " + configspec_file +
-                        " cannot be found")
+        raise Exception("The parameter config file " + configspec_file + " cannot be found")
 
     ### CONFIGURATION FILE
-    config = ConfigObj(parameter_file,
-                       configspec=configspec_file,
-                       default_encoding="utf8")
+    config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
 
     config["modelconfig"].update(NewMODELconfig)
     config["DMconfig"].update(NewDMconfig)
@@ -233,8 +217,7 @@ def read_parameter_file(parameter_file,
                 continue
             for key, value in section.items():
                 if value is False:
-                    raise Exception(
-                        'In section [{}], parameter "{}" is not properly defined'
-                        .format(name, key))
+                    raise Exception('In section [{}], parameter "{}" is not properly defined'.format(
+                        name, key))
 
     return config

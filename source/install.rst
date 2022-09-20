@@ -12,7 +12,7 @@ Conda is an open source package management system and environment management sys
 installs, runs and updates packages and their dependencies on your local computer and allows 
 switches between environments.
 
-By creating clean python environments for each you projects (especially packages in continuous 
+By creating clean python environments for each of your projects (especially packages in continuous 
 development by non developers like Asterix), you minimize the risk of of creating conflicts which 
 will hinder the use of Asterx and/or on your other projects.
 
