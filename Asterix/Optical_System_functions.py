@@ -1035,7 +1035,7 @@ class coronagraph(Optical_System):
             self.perfect_coro = True
 
         else:
-            raise Exception("this coronagrpah mode does not exists yet")
+            raise Exception(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
 
         self.lyot_pup = pupil(modelconfig,
                               prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
@@ -1051,7 +1051,7 @@ class coronagraph(Optical_System):
             if coroconfig["bool_overwrite_perfect_coro"] is False:
                 self.perfect_coro = False
 
-        if self.perfect_coro == True:
+        if self.perfect_coro is True:
 
             if coroconfig["filename_instr_apod"] == "Clear":
                 # We need a round pupil only to measure the response
@@ -1068,14 +1068,14 @@ class coronagraph(Optical_System):
                         entrance_EF=pup_for_perfect_coro.EF_through(wavelength=wave_here),
                         wavelength=wave_here)
             else:
-                # In this case we have an coronagrpah entrance pupil
-                # do a propagation once with self.perfect_Lyot_pupil = 0 to
-                # measure the Lyot pupil that will be removed after
+                # In this case we have a coronagraph entrance pupil.
+                # Do a propagation once with self.perfect_Lyot_pupil = 0 to
+                # measure the Lyot pupil that will be removed after.
                 self.perfect_Lyot_pupil = [0] * self.nb_wav
                 for i, wave_here in enumerate(self.wav_vec):
                     self.perfect_Lyot_pupil[i] = self.EF_through(wavelength=wave_here)
 
-        #initialize the max and sum of PSFs for the normalization to contrast
+        # Initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
 
     def EF_through(self,
