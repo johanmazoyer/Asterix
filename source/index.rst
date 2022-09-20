@@ -70,46 +70,46 @@ correction_loop.py
 Optical_System_functions.py
 -----------------
 
-Optical_System: main class
+OpticalSystem: main class
 ++++++++++++++++++++++++++
 .. _os-label:
-.. autoclass:: Asterix.Optical_System_functions.Optical_System
+.. autoclass:: Asterix.Optical_System_functions.OpticalSystem
     :members:
     :show-inheritance:
 
 
-Optical_System: pupil subclass
+OpticalSystem: pupil subclass
 ++++++++++++++++++++++++++
 .. _pupil-label:
-.. autoclass:: Asterix.Optical_System_functions.pupil
+.. autoclass:: Asterix.Optical_System_functions.Pupil
     :members:
     :show-inheritance:
 
-Optical_System: coronagraph subclass
+OpticalSystem: coronagraph subclass
 ++++++++++++++++++++++++++
 .. _coronagraph-label:
-.. autoclass:: Asterix.Optical_System_functions.coronagraph
+.. autoclass:: Asterix.Optical_System_functions.Coronagraph
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.Optical_System_functions.coronagraph.__init__
+.. callgraph:: Asterix.Optical_System_functions.Coronagraph.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-Optical_System: deformable_mirror subclass
+OpticalSystem: DeformableMirror subclass
 ++++++++++++++++++++++++++
 .. _deformable-mirror-label:
-.. autoclass:: Asterix.Optical_System_functions.deformable_mirror
+.. autoclass:: Asterix.Optical_System_functions.DeformableMirror
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.Optical_System_functions.deformable_mirror.__init__
+.. callgraph:: Asterix.Optical_System_functions.DeformableMirror.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-Optical_System: Testbed subclass
+OpticalSystem: Testbed subclass
 ++++++++++++++++++++++++++
 .. _testbed-label:
 .. autoclass:: Asterix.Optical_System_functions.Testbed
