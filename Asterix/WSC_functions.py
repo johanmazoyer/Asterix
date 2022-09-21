@@ -925,13 +925,13 @@ def simulate_pw_difference(input_wavefront,
             indice_acum_number_act += DM.number_act
 
         # When we go polychromatic, lets be careful with the normalization, because
-        # todetector_Intensity is normalizing to polychromatic PSF.
-        Ikmoins = testbed.todetector_Intensity(entrance_EF=input_wavefront,
+        # todetector_intensity is normalizing to polychromatic PSF.
+        Ikmoins = testbed.todetector_intensity(entrance_EF=input_wavefront,
                                                voltage_vector=voltage_vector - Voltage_probe,
                                                wavelengths=wavelength,
                                                **kwargs)
 
-        Ikplus = testbed.todetector_Intensity(entrance_EF=input_wavefront,
+        Ikplus = testbed.todetector_intensity(entrance_EF=input_wavefront,
                                               voltage_vector=voltage_vector + Voltage_probe,
                                               wavelengths=wavelength,
                                               **kwargs)

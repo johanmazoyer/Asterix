@@ -253,7 +253,7 @@ def correction_loop_1matrix(testbed: OptSy.Testbed,
             for i in np.arange(len(Nbiter_corr)):
                 modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
-    initialFP = testbed.todetector_Intensity(entrance_EF=input_wavefront,
+    initialFP = testbed.todetector_intensity(entrance_EF=input_wavefront,
                                              voltage_vector=initial_DM_voltage,
                                              save_all_planes_to_fits=False,
                                              dir_save_all_planes='/Users/jmazoyer/Desktop/test/',
@@ -371,7 +371,7 @@ def correction_loop_1matrix(testbed: OptSy.Testbed,
             new_voltage = thisloop_voltages_DMs[-1] + gain * solution
 
         thisloop_FP_Intensities.append(
-            testbed.todetector_Intensity(entrance_EF=input_wavefront,
+            testbed.todetector_intensity(entrance_EF=input_wavefront,
                                          voltage_vector=new_voltage,
                                          save_all_planes_to_fits=False,
                                          dir_save_all_planes='/Users/jmazoyer/Desktop/test_roundpup/',

@@ -36,7 +36,7 @@ For the moment, this ``generic_os`` does not do anything, it's like an empty pup
 Each ``OpticalSystem`` has an attribute function ``EF_through`` which describes the effect this optical system has
 on the electrical field when going through it. Once this function is defined, all OpticalSystem instances have access to
 a library of functions, common to all ``OpticalSystem`` : ``todetector`` (electrical field in the next focal plane),
-``todetector_Intensity`` (Intensity in the next focal plane), ``transmission`` (measure ratio of photons lost 
+``todetector_intensity`` (Intensity in the next focal plane), ``transmission`` (measure ratio of photons lost
 when crossing the system), etc.
 
 .. code-block:: python
@@ -44,7 +44,7 @@ when crossing the system), etc.
     exit_EF = generic_os.EF_through() # electrical field after the system 
                                     # (by default, entrance field is 1.)
     EF_FP = generic_os.todetector() # electrical field in the next focal plane
-    PSF = generic_os.todetector_Intensity() #  Intensity in the next focal plane
+    PSF = generic_os.todetector_intensity() #  Intensity in the next focal plane
 
 
 Finally, for all optical system, you can use generic functions like to creaet and manipulate phase and amplitude screens
@@ -57,7 +57,7 @@ Finally, for all optical system, you can use generic functions like to creaet an
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up)
 
     # Focal plane intensity for this aberrations
-    PSF = generic_os.todetector_Intensity(entrance_EF = input_wavefront) 
+    PSF = generic_os.todetector_intensity(entrance_EF = input_wavefront)
 
 
 
@@ -95,7 +95,7 @@ and concatenate them with other elements.
     exit_EF = pup_round.EF_through() # electrical field after the system 
                                     #(by default, entrance field is 1.)
     EF_FP = pup_round.todetector() # electrical field in the next focal plane
-    PSF = pup_round.todetector_Intensity() #  Intensity in the next focal plane
+    PSF = pup_round.todetector_intensity() #  Intensity in the next focal plane
 
 
 You can define a different radius than the pupil one in the parameter file
@@ -144,12 +144,12 @@ documentation can be found in Section :ref:`coronagraph-label`.
     exit_EF = corono.EF_through() # electrical field after the system 
                                     #(by default, entrance field is 1.)
     EF_FP = corono.todetector() # electrical field in the next focal plane
-    PSF = corono.todetector_Intensity() #  Intensity in the next focal plane
+    PSF = corono.todetector_intensity() #  Intensity in the next focal plane
 
 Type of coronagraph can be changed with ``corona_type`` parameter.  Currently supported ``corona_type`` 
 are 'fqpm' or 'knife', 'classiclyot' or 'HLC'. Focal plane functions are automatically normalized in contrast
 by default. For details about the way to normalize in polychromatic light, see ``measure_normalization`` 
-and ``todetector_Intensity`` documentation in :ref:`os-label`
+and ``todetector_intensity`` documentation in :ref:`os-label`
 
 
 Deformable Mirror
