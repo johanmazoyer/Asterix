@@ -1589,7 +1589,7 @@ class DeformableMirror(OpticalSystem):
         self.DM_pushact = self.creatingpushact(DMconfig)
 
         # create or load 'which actuators are in pupil'
-        self.WhichInPupil = self.creatingWhichinPupil()
+        self.WhichInPupil = self.id_in_pupil_actuators()
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
         # now if we relaunch self.DM_pushact, and if misregistration = True
@@ -1835,7 +1835,7 @@ class DeformableMirror(OpticalSystem):
 
         return pushact3d
 
-    def creatingWhichinPupil(self):
+    def id_in_pupil_actuators(self):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
         
@@ -2040,7 +2040,7 @@ class DeformableMirror(OpticalSystem):
             Name_FourrierBasis_fits = "Fourier_basis_" + self.Name_DM + '_prad' + str(
                 self.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
 
-            cossinbasis = phase_ampl.SinCosBasis(sqrtnbract)
+            cossinbasis = phase_ampl.sine_cosine_basis(sqrtnbract)
 
             basis_size = cossinbasis.shape[0]
             basis = np.zeros((basis_size, self.number_act))
