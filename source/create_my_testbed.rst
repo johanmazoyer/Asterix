@@ -33,7 +33,7 @@ Parameter file can be read using ``Asterix.fits_functions.read_parameter_file`` 
 
 For the moment, this ``generic_os`` does not do anything, it's like an empty pupil plane. 
 
-Each ``OpticalSystem`` has an attribute function ``EF_through`` which describes the effect this Optical System has
+Each ``OpticalSystem`` has an attribute function ``EF_through`` which describes the effect this optical system has
 on the electrical field when going through it. Once this function is defined, all OpticalSystem instances have access to
 a library of functions, common to all ``OpticalSystem`` : ``todetector`` (electrical field in the next focal plane),
 ``todetector_Intensity`` (Intensity in the next focal plane), ``transmission`` (measure ratio of photons lost 
