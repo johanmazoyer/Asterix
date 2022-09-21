@@ -45,12 +45,12 @@ Annex: Asterix Functions
 ==================
 
 
-Main_THD.py
+main_THD.py
 -----------------
-.. automodule:: Asterix.Main_THD
+.. automodule:: Asterix.main_THD
     :members:
 
-.. callgraph:: Asterix.Main_THD.runthd2
+.. callgraph:: Asterix.main_THD.runthd2
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -67,13 +67,13 @@ correction_loop.py
     :direction: horizontal
 
 
-Optical_System_functions.py
+optical_systems.py
 -----------------
 
 OpticalSystem: main class
 ++++++++++++++++++++++++++
 .. _os-label:
-.. autoclass:: Asterix.Optical_System_functions.OpticalSystem
+.. autoclass:: Asterix.optical_systems.OpticalSystem
     :members:
     :show-inheritance:
 
@@ -81,18 +81,18 @@ OpticalSystem: main class
 OpticalSystem: pupil subclass
 ++++++++++++++++++++++++++
 .. _pupil-label:
-.. autoclass:: Asterix.Optical_System_functions.Pupil
+.. autoclass:: Asterix.optical_systems.Pupil
     :members:
     :show-inheritance:
 
 OpticalSystem: coronagraph subclass
 ++++++++++++++++++++++++++
 .. _coronagraph-label:
-.. autoclass:: Asterix.Optical_System_functions.Coronagraph
+.. autoclass:: Asterix.optical_systems.Coronagraph
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.Optical_System_functions.Coronagraph.__init__
+.. callgraph:: Asterix.optical_systems.Coronagraph.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -100,11 +100,11 @@ OpticalSystem: coronagraph subclass
 OpticalSystem: DeformableMirror subclass
 ++++++++++++++++++++++++++
 .. _deformable-mirror-label:
-.. autoclass:: Asterix.Optical_System_functions.DeformableMirror
+.. autoclass:: Asterix.optical_systems.DeformableMirror
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.Optical_System_functions.DeformableMirror.__init__
+.. callgraph:: Asterix.optical_systems.DeformableMirror.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -112,7 +112,7 @@ OpticalSystem: DeformableMirror subclass
 OpticalSystem: Testbed subclass
 ++++++++++++++++++++++++++
 .. _testbed-label:
-.. autoclass:: Asterix.Optical_System_functions.Testbed
+.. autoclass:: Asterix.optical_systems.Testbed
     :members:
     :show-inheritance:
 
@@ -178,9 +178,9 @@ processing_functions.py
     :members:
 
 
-fits_functions.py
+save_and_read.py
 -----------------
-.. automodule:: Asterix.fits_functions
+.. automodule:: Asterix.save_and_read
     :members:
 
 

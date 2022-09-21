@@ -11,8 +11,8 @@ from astropy.io import fits
 
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
-import Asterix.fits_functions as useful
-import Asterix.Optical_System_functions as OptSy
+import Asterix.save_and_read as useful
+import Asterix.optical_systems as OptSy
 
 #################################################################################
 ### Correction functions

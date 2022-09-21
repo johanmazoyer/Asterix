@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-import Asterix.Optical_System_functions as OptSy
+import Asterix.optical_systems as OptSy
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 

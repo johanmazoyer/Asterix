@@ -3,8 +3,8 @@ __author__ = 'Raphael Galicher, Johan Mazoyer, and Axel Potier'
 
 import os
 
-import Asterix.fits_functions as useful
-import Asterix.Optical_System_functions as OptSy
+import Asterix.save_and_read as useful
+import Asterix.optical_systems as OptSy
 
 from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator

@@ -9,13 +9,13 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-import Asterix.Optical_System_functions as OptSy
+import Asterix.optical_systems as OptSy
 
 from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
 
-import Asterix.fits_functions as useful
+import Asterix.save_and_read as useful
 
 
 def CorrectionLoop(testbed: OptSy.Testbed,

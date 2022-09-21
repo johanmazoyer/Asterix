@@ -3,7 +3,7 @@ import numpy as np
 from configobj import ConfigObj
 from validate import Validator
 
-import Asterix.Optical_System_functions as OptSy
+import Asterix.optical_systems as OptSy
 
 
 def test_default_coronagraph():

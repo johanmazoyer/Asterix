@@ -7,8 +7,8 @@ import time
 import numpy as np
 from astropy.io import fits
 
-import Asterix.fits_functions as useful
-import Asterix.Optical_System_functions as OptSy
+import Asterix.save_and_read as useful
+import Asterix.optical_systems as OptSy
 from Asterix.estimator import Estimator
 import Asterix.WSC_functions as wsc
 from Asterix.THD_quick_invert import THD_quick_invert

@@ -5,9 +5,9 @@ import os
 import numpy as np
 from astropy.io import fits
 
-import Asterix.fits_functions as useful
+import Asterix.save_and_read as useful
 import Asterix.processing_functions as proc
-import Asterix.Optical_System_functions as OptSy
+import Asterix.optical_systems as OptSy
 import Asterix.WSC_functions as wsc
 
 

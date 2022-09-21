@@ -4,8 +4,8 @@ import numpy as np
 from configobj import ConfigObj
 from validate import Validator
 
-import Asterix.Optical_System_functions as OptSy
-import Asterix.fits_functions as useful
+import Asterix.optical_systems as OptSy
+import Asterix.save_and_read as useful
 
 
 # Set the path to your configuration file of choice

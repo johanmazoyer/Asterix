@@ -5,7 +5,7 @@ Basic Asterix Tutorial with THD2 model
 
 This sections is if you want to use the code as it currently set up, in the THD2 configuration.
 To run Asterix you first need a parameter .ini file describing all the testbed configuration and a python file to call the main. 
-An example of these files are provided in the packages : Example_param_file.ini and Example_Run_Asterix.py
+An example of these files are provided in the packages : Example_param_file.ini and example_run_asterix.py
 
 Run Asterix in THD2 mode
 +++++++++++++++++++++++
@@ -16,27 +16,27 @@ with the THD2 testbed, just run:
 .. code-block:: python
 
     import os
-    from Asterix import Main_THD
+    from Asterix import main_THD
     Asterixroot = os.path.dirname(os.path.realpath(__file__))
-    Main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini')
+    main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini')
 
 Please avoid running Asterix directly in the Asterix install directory to avoid saving .fits files everywhere.
 The first parameter of the parameter file is ``Data_dir``. By default it is set to '.' which means it will save the files
 in the directory you currently are when you run this code. A good practice is therefore to create your own parameter file by
-copying Example_param_file.ini in another directory and create you own calling python file which call Main_THD.runthd2.
+copying Example_param_file.ini in another directory and create you own calling python file which call ``main_THD.runthd2()``.
 
 .. code-block:: python
 
-    from Asterix import Main_THD
-    Main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini')
+    from Asterix import main_THD
+    main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini')
 
 To run several simulation with slightly different parameters, you can override one of the parameters directly from the main. 
 For example:
 
 .. code-block:: python
 
-    from Asterix import Main_THD
-    Main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini'
+    from Asterix import main_THD
+    main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini'
         NewCoronaconfig={"corona_type" : 'fqpm'})
 
 will overide the current corona_type parameter and replace it with "fqpm", leaving all other parameters unchanged.

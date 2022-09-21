@@ -11,7 +11,7 @@ from astropy.io import fits
 import datetime
 
 import random
-import Asterix.Optical_System_functions as OptSy
+import Asterix.optical_systems as OptSy
 
 
 def _quickshow(tab):

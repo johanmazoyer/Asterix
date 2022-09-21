@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.optimize as opt
-import Asterix.fits_functions as useful
+import Asterix.save_and_read as useful
 
 
 def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=True):

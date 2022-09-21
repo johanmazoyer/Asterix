@@ -11,7 +11,7 @@ import skimage.transform
 import Asterix.processing_functions as proc
 import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
-import Asterix.fits_functions as useful
+import Asterix.save_and_read as useful
 
 Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 model_dir = os.path.join(Asterix_root, "Model") + os.path.sep

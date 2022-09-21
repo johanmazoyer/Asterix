@@ -7,7 +7,7 @@ Optical System
 +++++++++++++++++++++++
 
 Asterix have been thought from the beginning to be able to easily adapt to new configurations of the testbed 
-wihtout major changes. This modularity is based on the ``Asterix.Optical_System_functions.OpticalSystem`` class.
+wihtout major changes. This modularity is based on the ``Asterix.optical_systems.OpticalSystem`` class.
 An OpticalSystem is a part of the testbed which starts and ends in a pupil plane, which allows them to be easily
 concatenated. To be able to be well concatenated, they must all be using the same general parameters (physical 
 and numerical parameters). These parameters are stored in the first part of the parameter file, common to 
@@ -17,13 +17,13 @@ will set up all other dimensions. The pupil planes are overpadded compared to th
 some ``OpticalSystem`` require it. By convention, all pupil planes are centered bewteen the 4 central pixels.
 
 
-Parameter file can be read using ``Asterix.fits_functions.read_parameter_file`` function. We can create a generic
+Parameter file can be read using ``Asterix.save_and_read.read_parameter_file`` function. We can create a generic
 ``OpticalSystem`` like this.
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -82,8 +82,8 @@ and concatenate them with other elements.
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -132,8 +132,8 @@ documentation can be found in Section :ref:`coronagraph-label`.
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -161,8 +161,8 @@ of a deformable mirror (DM) system.
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -195,8 +195,8 @@ It can only be initialized by giving a list of Optical Systems and it will creat
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
