@@ -277,7 +277,7 @@ class DeformableMirror(OpticalSystem):
             # the pitch is read in the parameter file
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
             pitchDM = DMconfig[self.Name_DM + "_pitch"]
-            simu_grid = proc.generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m,
+            simu_grid = generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m,
                                                        diam_pup_in_pix) + dim_array / 2
             pitchDMX = pitchDMY = pitchDM
 
@@ -593,3 +593,142 @@ class DeformableMirror(OpticalSystem):
             raise Exception(basis_type + " is is not a valid basis_type")
 
         return basis
+
+def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
+    """ --------------------------------------------------
+    Create a grid of position of actuators for generic  DM.
+    The DM will then be automatically defined as squared with Nact1D x Nact1D actuators
+    and the pupil centered on this DM.
+    
+    We need N_act1D > diam_pup_in_m / DM_pitch, so that the DM is larger than the pupil.
+
+    at the end compare to the result of actuator_position in case of DM3, it 
+    should be relatively close. If we can, we should try that actu 0 is 
+    relatively at the same pos. Test with huge DM pitch (2 actus in the pup)
+
+
+    AUTHOR: Johan Mazoyer
+    
+    Parameters
+    ----------
+    Nact1D : int 
+            Numnber of actuators of a square DM in one of the principal direction
+    pitchDM: float
+            Pitch of the DM (distance between actuators),in meter
+    diam_pup_in_m : float
+            Diameter of the pupil in meter
+    diam_pup_in_pix : int 
+            Diameter of the pupil in pixel
+    
+    Returns
+    ------
+    simu_grid : 2D array 
+                Array of shape is 2 x Nb_actuator
+                x and y positions of each actuator for simulation
+    
+    
+    -------------------------------------------------- """
+    if Nact1D * pitchDM < diam_pup_in_m:
+        raise Exception("""Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil""")
+
+    pitchDM_in_pix = pitchDM * diam_pup_in_pix / diam_pup_in_m
+
+    pos_actu_in_pitch = np.zeros((2, Nact1D**2))
+    for i in range(Nact1D**2):
+        pos_actu_in_pitch[:, i] = np.array([i // Nact1D, i % Nact1D])
+
+    # relative positions in pixel of the actuators
+    pos_actu_in_pix = pos_actu_in_pitch * pitchDM_in_pix
+
+    if Nact1D % 2 == 1:
+        # if Nact1D if odd, then the center of the DM is the
+        # actuator number (Nact1D**2 -1) /2
+        #
+        # 20 21 22 23 24
+        # 15 16 17 18 19
+        # 10 11 12 13 14
+        # 5  6  7  8  9
+        # 0  1  2  3  4
+        #
+        # 6 7 8
+        # 3 4 5
+        # 0 1 2
+        pos_actu_center_pos = np.copy(pos_actu_in_pix[:, (Nact1D**2 - 1) // 2])
+        center_pup = np.array([0.5, 0.5])
+
+        for i in range(Nact1D**2):
+            pos_actu_in_pix[:, i] = pos_actu_in_pix[:, i] - pos_actu_center_pos + center_pup
+
+    else:
+
+        #if Nact1D is even, the center of the DM is in between 4 actuators
+        # (Nact1D -2) //2 * (Nact1D) +  Nact1D//2 -1    is in (-1/2 act, -1/2 act)
+        # (Nact1D -2) //2 * (Nact1D) +  Nact1D//2       is in (-1/2 act, +1/2 act)
+
+        # Nact1D //2 * Nact1D +  Nact1D//2 - 1          is in (+1/2 act, -1/2 act)
+        # Nact1D //2 * Nact1D +  Nact1D//2              is in (+1/2 act, +1/2 act)
+
+        #  30 31 32 33 34 35
+        #  24 25 26 27 28 29
+        #  18 19 20 21 22 23
+        #  12 13 14 15 16 17
+        #  6  7  8  9  10 11
+        #  0  1  2  3  4  5
+
+        # 12 13 14 15
+        # 8  9  10 11
+        # 4  5  6  7
+        # 0  1  2  3
+
+        # 2 3
+        # 0 1
+
+        pos_actuhalfactfromcenter = np.copy(pos_actu_in_pix[:, Nact1D // 2 * Nact1D + Nact1D // 2])
+        halfactfromcenter = np.array([0.5 * pitchDM_in_pix, 0.5 * pitchDM_in_pix])
+
+        center_pup = np.array([0.5, 0.5])
+
+        for i in range(Nact1D**2):
+            pos_actu_in_pix[:,
+                            i] = pos_actu_in_pix[:,
+                                                 i] - pos_actuhalfactfromcenter + halfactfromcenter + center_pup
+            pos_actu_in_pix[0, i] *= -1
+    return pos_actu_in_pix
+
+
+## Currently unused
+# def actuator_position(measured_grid, measured_ActuN, ActuN, sampling_simu_over_measured):
+#     """ --------------------------------------------------
+#     Convert the measured positions of actuators to positions for numerical simulation
+    
+#     AUTHOR: Axel Potier
+    
+#     Parameters
+#     ----------
+#     measured_grid : 2D array (float) 
+#                     array of shape 2 x Nb_actuator
+#                     x and y measured positions for each actuator (unit = pixel)
+#     measured_ActuN: 1D array (float) 
+#                     arrayof shape 2. x and y positions of actuator ActuN same unit as measured_grid
+#     ActuN:          int
+#                     Index of the actuator ActuN (corresponding to measured_ActuN)
+#     sampling_simu_over_measured : float
+#                     Ratio of sampling in simulation grid over sampling in measured grid
+    
+    
+#     Returns
+#     ------
+#     simu_grid : 2D array 
+#                 Array of shape is 2 x Nb_actuator
+#                 x and y positions of each actuator for simulation
+#                 same unit as measured_ActuN
+
+
+#     -------------------------------------------------- """
+#     simu_grid = measured_grid * 0
+#     for i in np.arange(measured_grid.shape[1]):
+#         simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(ActuN)] + measured_ActuN
+#     simu_grid = simu_grid * sampling_simu_over_measured
+
+#     saveread._quickfits(simu_grid)
+#     return simu_grid
