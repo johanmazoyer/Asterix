@@ -9,8 +9,8 @@ from astropy.io import fits
 
 from .estimator import Estimator
 
-from thd_quick_invert import THD_quick_invert
-from wf_control_functions import *
+from .thd_quick_invert import THD_quick_invert
+from .wf_control_functions import *
 
 from Asterix.optical_systems import OpticalSystem, DeformableMirror, Testbed
 
