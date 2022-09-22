@@ -45,12 +45,12 @@ Annex: Asterix Functions
 ==================
 
 
-Main_THD.py
+main_THD.py
 -----------------
-.. automodule:: Asterix.Main_THD
+.. automodule:: Asterix.main_THD
     :members:
 
-.. callgraph:: Asterix.Main_THD.runthd2
+.. callgraph:: Asterix.main_THD.runthd2
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -61,58 +61,58 @@ correction_loop.py
 .. automodule:: Asterix.correction_loop
     :members:
 
-.. callgraph:: Asterix.correction_loop.CorrectionLoop
+.. callgraph:: Asterix.correction_loop.correction_loop
     :toctree: api
     :zoomable:
     :direction: horizontal
 
 
-Optical_System_functions.py
+optical_systems.py
 -----------------
 
-Optical_System: main class
+OpticalSystem: main class
 ++++++++++++++++++++++++++
 .. _os-label:
-.. autoclass:: Asterix.Optical_System_functions.Optical_System
+.. autoclass:: Asterix.optical_systems.OpticalSystem
     :members:
     :show-inheritance:
 
 
-Optical_System: pupil subclass
+OpticalSystem: pupil subclass
 ++++++++++++++++++++++++++
 .. _pupil-label:
-.. autoclass:: Asterix.Optical_System_functions.pupil
+.. autoclass:: Asterix.optical_systems.Pupil
     :members:
     :show-inheritance:
 
-Optical_System: coronagraph subclass
+OpticalSystem: coronagraph subclass
 ++++++++++++++++++++++++++
 .. _coronagraph-label:
-.. autoclass:: Asterix.Optical_System_functions.coronagraph
+.. autoclass:: Asterix.optical_systems.Coronagraph
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.Optical_System_functions.coronagraph.__init__
+.. callgraph:: Asterix.optical_systems.Coronagraph.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-Optical_System: deformable_mirror subclass
+OpticalSystem: DeformableMirror subclass
 ++++++++++++++++++++++++++
 .. _deformable-mirror-label:
-.. autoclass:: Asterix.Optical_System_functions.deformable_mirror
+.. autoclass:: Asterix.optical_systems.DeformableMirror
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.Optical_System_functions.deformable_mirror.__init__
+.. callgraph:: Asterix.optical_systems.DeformableMirror.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-Optical_System: Testbed subclass
+OpticalSystem: Testbed subclass
 ++++++++++++++++++++++++++
 .. _testbed-label:
-.. autoclass:: Asterix.Optical_System_functions.Testbed
+.. autoclass:: Asterix.optical_systems.Testbed
     :members:
     :show-inheritance:
 
@@ -178,9 +178,9 @@ processing_functions.py
     :members:
 
 
-fits_functions.py
+save_and_read.py
 -----------------
-.. automodule:: Asterix.fits_functions
+.. automodule:: Asterix.save_and_read
     :members:
 
 

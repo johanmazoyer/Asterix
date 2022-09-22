@@ -5,9 +5,9 @@ import os
 import numpy as np
 from astropy.io import fits
 
-import Asterix.fits_functions as useful
+import Asterix.save_and_read as useful
 import Asterix.processing_functions as proc
-import Asterix.Optical_System_functions as OptSy
+import Asterix.optical_systems as OptSy
 import Asterix.WSC_functions as wsc
 
 
@@ -64,7 +64,7 @@ class Estimator:
         Estimationconfig : dict
                 general estimation parameters
 
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         matrix_dir: path. 
@@ -82,8 +82,8 @@ class Estimator:
             print("Creating directory " + matrix_dir + " ...")
             os.makedirs(matrix_dir)
 
-        if isinstance(testbed, OptSy.Optical_System) == False:
-            raise Exception("testbed must be an Optical_System objet")
+        if isinstance(testbed, OptSy.OpticalSystem) == False:
+            raise Exception("testbed must be an OpticalSystem object")
 
         self.technique = Estimationconfig["estimation"].lower()
 
@@ -126,7 +126,7 @@ class Estimator:
                     #If several DMs we check if there is at least one in PP
                     number_DMs_in_PP = 0
                     for DM_name in testbed.name_of_DMs:
-                        DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+                        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
                         if DM.z_position == 0.:
                             number_DMs_in_PP += 1
                             testbed.name_DM_to_probe_in_PW = DM_name
@@ -153,8 +153,8 @@ class Estimator:
                 self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
             else:
                 print("Saving " + filePW + " ...")
-                self.PWMatrix, showSVD = wsc.createPWmatrix(testbed, self.amplitudePW, self.posprobes,
-                                                            self.dimEstim, cutsvdPW, testbed.wavelength_0)
+                self.PWMatrix, showSVD = wsc.create_pw_matrix(testbed, self.amplitudePW, self.posprobes,
+                                                              self.dimEstim, cutsvdPW, testbed.wavelength_0)
                 fits.writeto(matrix_dir + filePW + ".fits", np.array(self.PWMatrix))
                 visuPWMap = "EigenPW_" + string_dims_PWMatrix
                 fits.writeto(matrix_dir + visuPWMap + ".fits", np.array(showSVD[1]))
@@ -202,7 +202,7 @@ class Estimator:
 
         Parameters
         ----------
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         entrance_EF :    complex float or 2D array, default 1.
@@ -254,16 +254,16 @@ class Estimator:
             return proc.resizing(resultatestimation, self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
-            Difference = wsc.createdifference(entrance_EF,
-                                              testbed,
-                                              self.posprobes,
-                                              self.dimEstim,
-                                              self.amplitudePW,
-                                              voltage_vector=voltage_vector,
-                                              wavelength=wavelength,
-                                              **kwargs)
+            Difference = wsc.simulate_pw_difference(entrance_EF,
+                                                    testbed,
+                                                    self.posprobes,
+                                                    self.dimEstim,
+                                                    self.amplitudePW,
+                                                    voltage_vector=voltage_vector,
+                                                    wavelength=wavelength,
+                                                    **kwargs)
 
-            return wsc.FP_PWestimate(Difference, self.PWMatrix)
+            return wsc.calculate_pw_estimate(Difference, self.PWMatrix)
 
         elif self.technique == 'coffee':
             return np.zeros((self.dimEstim, self.dimEstim))

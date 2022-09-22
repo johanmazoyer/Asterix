@@ -3,7 +3,7 @@ import numpy as np
 from configobj import ConfigObj
 from validate import Validator
 
-import Asterix.Optical_System_functions as OptSy
+import Asterix.optical_systems as OptSy
 
 
 def test_default_coronagraph():
@@ -26,7 +26,7 @@ def test_default_coronagraph():
     Coronaconfig.update({'filename_instr_apod': "RoundPup"})
 
     # Create the coronagraph
-    corono = OptSy.coronagraph(modelconfig, Coronaconfig)
-    coro_psf = corono.todetector_Intensity(center_on_pixel=True)
+    corono = OptSy.Coronagraph(modelconfig, Coronaconfig)
+    coro_psf = corono.todetector_intensity(center_on_pixel=True)
 
     assert np.max(coro_psf) == 0.0, "A perfect coronagraph should return an empty array."

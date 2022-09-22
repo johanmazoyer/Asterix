@@ -3,14 +3,14 @@ __author__ = 'Raphael Galicher, Johan Mazoyer, and Axel Potier'
 
 import os
 
-import Asterix.fits_functions as useful
-import Asterix.Optical_System_functions as OptSy
+import Asterix.save_and_read as useful
+import Asterix.optical_systems as OptSy
 
 from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
-from Asterix.correction_loop import CorrectionLoop
-from Asterix.save_results import Save_loop_results
+from Asterix.correction_loop import correction_loop
+from Asterix.save_results import save_loop_results
 
 #######################################################
 #######################################################
@@ -99,16 +99,16 @@ def runthd2(parameter_file,
     Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
     # Initialize thd:
-    entrance_pupil = OptSy.pupil(modelconfig,
+    entrance_pupil = OptSy.Pupil(modelconfig,
                                  PupType=modelconfig['filename_instr_pup'],
                                  angle_rotation=modelconfig['entrance_pup_rotation'],
                                  Model_local_dir=Model_local_dir)
 
-    DM1 = OptSy.deformable_mirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
+    DM1 = OptSy.DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
 
-    DM3 = OptSy.deformable_mirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
+    DM3 = OptSy.DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
 
-    corono = OptSy.coronagraph(modelconfig, Coronaconfig, Model_local_dir=Model_local_dir)
+    corono = OptSy.Coronagraph(modelconfig, Coronaconfig, Model_local_dir=Model_local_dir)
     # and then just concatenate
     thd2 = OptSy.Testbed([entrance_pupil, DM1, DM3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
 
@@ -154,16 +154,15 @@ def runthd2(parameter_file,
     # aberrated WF in the testbed Lyot stop
     EF_aberrations_introduced_in_LS = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_do)
 
-    Resultats_correction_loop = CorrectionLoop(
-        thd2,
-        estim,
-        correc,
-        MaskScience,
-        Loopconfig,
-        SIMUconfig,
-        input_wavefront=input_wavefront,
-        EF_aberrations_introduced_in_LS=EF_aberrations_introduced_in_LS,
-        initial_DM_voltage=0,
-        silence=False)
+    Resultats_correction_loop = correction_loop(thd2,
+                                                estim,
+                                                correc,
+                                                MaskScience,
+                                                Loopconfig,
+                                                SIMUconfig,
+                                                input_wavefront=input_wavefront,
+                                                EF_aberrations_introduced_in_LS=EF_aberrations_introduced_in_LS,
+                                                initial_DM_voltage=0,
+                                                silence=False)
 
-    Save_loop_results(Resultats_correction_loop, config, thd2, MaskScience, result_dir)
+    save_loop_results(Resultats_correction_loop, config, thd2, MaskScience, result_dir)

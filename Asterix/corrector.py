@@ -7,8 +7,8 @@ import time
 import numpy as np
 from astropy.io import fits
 
-import Asterix.fits_functions as useful
-import Asterix.Optical_System_functions as OptSy
+import Asterix.save_and_read as useful
+import Asterix.optical_systems as OptSy
 from Asterix.estimator import Estimator
 import Asterix.WSC_functions as wsc
 from Asterix.THD_quick_invert import THD_quick_invert
@@ -62,7 +62,7 @@ class Corrector:
         Correctionconfig : dict
                 general correction parameters
 
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         MaskDH: 2d numpy array
@@ -86,14 +86,14 @@ class Corrector:
             print("Creating directory " + matrix_dir + " ...")
             os.makedirs(matrix_dir)
 
-        if isinstance(testbed, OptSy.Optical_System) == False:
-            raise Exception("testbed must be an Optical_System objet")
+        if isinstance(testbed, OptSy.OpticalSystem) == False:
+            raise Exception("testbed must be an OpticalSystem object")
 
         basis_type = Correctionconfig["DM_basis"].lower()
         self.total_number_modes = 0
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+            DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
             self.total_number_modes += DM.basis_size
@@ -179,7 +179,7 @@ class Corrector:
         # DM for a given voltage when using DM.voltage_to_phase
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+            DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
             if DM.misregistration:
                 print(DM_name + " Misregistration!")
                 DM.DM_pushact = DM.creatingpushact(DM.DMconfig)
@@ -204,7 +204,7 @@ class Corrector:
         Parameters
         ----------
        
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         estimator: Estimator
@@ -228,7 +228,7 @@ class Corrector:
             self.FirstIterNewMat = True
 
             start_time = time.time()
-            interMat = wsc.creatingInteractionmatrix(testbed,
+            interMat = wsc.create_interaction_matrix(testbed,
                                                      estimator.dimEstim,
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
@@ -241,7 +241,7 @@ class Corrector:
             print("time for direct matrix " + testbed.string_os + " (s):", round(time.time() - start_time))
             print("")
 
-            self.Gmatrix = wsc.cropDHInteractionMatrix(interMat, self.MaskEstim)
+            self.Gmatrix = wsc.crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
 
             # useful.quickfits(self.Gmatrix)
 
@@ -264,7 +264,7 @@ class Corrector:
 
         Parameters
         ----------
-        testbed :  Optical_System.Testbed 
+        testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
         estimate: 2D complex array 
@@ -295,11 +295,11 @@ class Corrector:
             if mode != self.previousmode:
                 self.previousmode = mode
                 # we only re-invert the matrix if it is different from last time
-                _, _, self.invertGDH = wsc.invertSVD(self.Gmatrix,
-                                                     mode,
-                                                     goal="c",
-                                                     visu=False,
-                                                     regul=self.regularization)
+                _, _, self.invertGDH = wsc.invert_svd(self.Gmatrix,
+                                                      mode,
+                                                      goal="c",
+                                                      visu=False,
+                                                      regul=self.regularization)
 
             solutionefc = wsc.solutionEFC(self.MaskEstim, estimate, self.invertGDH, testbed)
 
@@ -311,7 +311,7 @@ class Corrector:
             # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
 
             #     # we access each DM object individually
-            #     DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+            #     DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
 
             #     # we multpily each DM by a specific DM gain
             #     solutionefc[
@@ -349,8 +349,8 @@ class Corrector:
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
-            solutionSM, self.last_best_alpha = wsc.solutionSM(self.MaskEstim, estimate, self.M0, self.G,
-                                                              DesiredContrast, self.last_best_alpha, testbed)
+            solutionSM, self.last_best_alpha = wsc.calc_strokemin_solution(self.MaskEstim, estimate, self.M0, self.G,
+                                                                           DesiredContrast, self.last_best_alpha, testbed)
 
             if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (
                     isinstance(solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
@@ -371,7 +371,7 @@ class Corrector:
             # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
 
             #     # we access each DM object individually
-            #     DM = vars(testbed)[DM_name]  # type: OptSy.deformable_mirror
+            #     DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
 
             #     # we multpily each DM by a specific DM gain
             #     solutionSM[
@@ -386,18 +386,18 @@ class Corrector:
 
             if mode != self.previousmode:
                 self.previousmode = mode
-                _, _, self.invertM0 = wsc.invertSVD(self.M0,
-                                                    mode,
-                                                    goal="c",
-                                                    visu=False,
-                                                    regul=self.regularization)
+                _, _, self.invertM0 = wsc.invert_svd(self.M0,
+                                                     mode,
+                                                     goal="c",
+                                                     visu=False,
+                                                     regul=self.regularization)
 
             return -self.amplitudeEFC * wsc.solutionEM(self.MaskEstim, estimate, self.invertM0, self.G,
                                                        testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return -self.amplitudeEFC * wsc.solutionSteepest(self.MaskEstim, estimate, self.M0, self.G,
-                                                             testbed)
+            return -self.amplitudeEFC * wsc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G,
+                                                                   testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")

@@ -11,22 +11,19 @@ import skimage.transform
 import Asterix.processing_functions as proc
 import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
-import Asterix.fits_functions as useful
+import Asterix.save_and_read as useful
 
 Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
 
 
-##############################################
-##############################################
-### Optical_System
-class Optical_System:
+class OpticalSystem:
     """ --------------------------------------------------
-    Super class Optical_System allows to pass parameters to all sub class.
-    We can then creat blocks inside this super class. An Optical_System start and
+    Super class OpticalSystem allows passing parameters to all subclasses.
+    We can then creat blocks inside this super class. An OpticalSystem start and
     end in the pupil plane.
     The entrance and exit pupil plane must always of the same size (dim_overpad_pupil)
-    With these convention, they can be easily assemble to create complex optical systems.
+    With these conventions, they can be easily assemble to create complex optical systems.
 
 
     AUTHOR : Johan Mazoyer
@@ -35,7 +32,7 @@ class Optical_System:
 
     def __init__(self, modelconfig):
         """ --------------------------------------------------
-        Initialize Optical_System objects
+        Initialize OpticalSystem objects
         AUTHOR : Johan Mazoyer
 
         Parameters
@@ -87,14 +84,14 @@ class Optical_System:
             int(self.wavelength_0 * 1e9)) + "_resFP" + str(round(self.Science_sampling, 2)) + "_dimFP" + str(
                 int(self.dimScience))
 
-    #We define functions that all Optical_System object can use.
+    #We define functions that all OpticalSystem object can use.
     # These can be overwritten for a subclass if need be
 
     def EF_through(self, entrance_EF=1., save_all_planes_to_fits=False, dir_save_all_planes=None, **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from entrance pupil to exit pupil
 
-        NEED TO BE DEFINED FOR ALL Optical_System
+        NEED TO BE DEFINED FOR ALL OpticalSystem subclasses
 
         AUTHOR : Johan Mazoyer
 
@@ -114,7 +111,7 @@ class Optical_System:
                             directory to save all plane in fits
                                 if save_all_planes_to_fits = True
         **kwargs: 
-            other parameters can be passed for Optical_System objects EF_trough functions
+            other parameters can be passed for OpticalSystem objects EF_trough functions
 
         Returns
         ------
@@ -230,7 +227,7 @@ class Optical_System:
 
         return focal_plane_EF
 
-    def todetector_Intensity(self,
+    def todetector_intensity(self,
                              entrance_EF=1.,
                              wavelengths=None,
                              in_contrast=True,
@@ -294,7 +291,7 @@ class Optical_System:
         -------------------------------------------------- """
 
         if 'wavelength' in kwargs:
-            raise Exception("""todetector_Intensity() function is polychromatic, 
+            raise Exception("""todetector_intensity() function is polychromatic, 
                 do not use wavelength keyword.
                 Use wavelengths keyword even for monochromatic intensity""")
 
@@ -333,11 +330,11 @@ class Optical_System:
 
         if in_contrast == True:
             if (wavelength_vec != self.wav_vec).all():
-                raise Exception("""carefull: contrast normalization in todetector_Intensity assumes
+                raise Exception("""Careful: contrast normalization in todetector_intensity assumes
                      it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1
                      and you want only one BW with the good contrast normalization, use
                      np.abs(to_detector(wavelength = wavelength))**2... If you want a specific
-                     normalization for a subset of  wavelengths, use in_contrast = False and
+                     normalization for a subset of  wavelengths, use in_contrast=False and
                      measure the PSF to normalize.
                 """)
             else:
@@ -678,19 +675,16 @@ class Optical_System:
         return entrance_EF
 
 
-##############################################
-##############################################
-### PUPIL
-class pupil(Optical_System):
+class Pupil(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of single pupil
-    pupil is a sub class of Optical_System.
+    pupil is a sub class of OpticalSystem.
 
     Obviously you can define your pupil
     without that with 2d arrray multiplication (this is a fairly simple object).
 
-    The main advantage of defining them using Optical_System is that you can
-    use default Optical_System functions to obtain PSF, transmission, etc...
+    The main advantage of defining them using OpticalSystem is that you can
+    use default OpticalSystem functions to obtain PSF, transmission, etc...
     and concatenate them with other elements
 
     AUTHOR : Johan Mazoyer
@@ -711,7 +705,7 @@ class pupil(Optical_System):
         ----------
         modelconfig : dict
                     general configuration parameters (sizes and dimensions)
-                        to initialize Optical_System class
+                        to initialize OpticalSystem class
 
         prad : float
             Default is the pupil radius in the parameter file (self.prad)
@@ -741,7 +735,7 @@ class pupil(Optical_System):
                     and can save to save time
 
         -------------------------------------------------- """
-        # Initialize the Optical_System class and inherit properties
+        # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
         if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
@@ -885,7 +879,7 @@ class pupil(Optical_System):
 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variable entrance_EF
+        # call the OpticalSystem super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
         if wavelength is None:
             wavelength = self.wavelength_0
@@ -914,13 +908,10 @@ class pupil(Optical_System):
         return exit_EF
 
 
-##############################################
-##############################################
-### CORONAGRAPHS
-class coronagraph(Optical_System):
+class Coronagraph(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
-    coronagraph is a sub class of Optical_System.
+    coronagraph is a sub class of OpticalSystem.
 
     AUTHOR : Johan Mazoyer
 
@@ -946,7 +937,7 @@ class coronagraph(Optical_System):
 
         -------------------------------------------------- """
 
-        # Initialize the Optical_System class and inherit properties
+        # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
         if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
@@ -955,7 +946,7 @@ class coronagraph(Optical_System):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        self.apod_pup = pupil(modelconfig,
+        self.apod_pup = Pupil(modelconfig,
                               prad=self.prad,
                               PupType=coroconfig["filename_instr_apod"],
                               angle_rotation=coroconfig['apod_pup_rotation'],
@@ -1035,9 +1026,9 @@ class coronagraph(Optical_System):
             self.perfect_coro = True
 
         else:
-            raise Exception("this coronagrpah mode does not exists yet")
+            raise Exception(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
 
-        self.lyot_pup = pupil(modelconfig,
+        self.lyot_pup = Pupil(modelconfig,
                               prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
                               PupType=coroconfig["filename_instr_lyot"],
                               angle_rotation=coroconfig['lyot_pup_rotation'],
@@ -1051,14 +1042,14 @@ class coronagraph(Optical_System):
             if coroconfig["bool_overwrite_perfect_coro"] is False:
                 self.perfect_coro = False
 
-        if self.perfect_coro == True:
+        if self.perfect_coro is True:
 
             if coroconfig["filename_instr_apod"] == "Clear":
                 # We need a round pupil only to measure the response
                 # of the coronograph to a round pupil to remove it
                 # THIS IS NOT THE ENTRANCE PUPIL,
                 # this is a round pupil of the same size
-                pup_for_perfect_coro = pupil(modelconfig, prad=self.prad)
+                pup_for_perfect_coro = Pupil(modelconfig, prad=self.prad)
 
                 # do a propagation once with self.perfect_Lyot_pupil = 0 to
                 # measure the Lyot pupil that will be removed after
@@ -1068,14 +1059,14 @@ class coronagraph(Optical_System):
                         entrance_EF=pup_for_perfect_coro.EF_through(wavelength=wave_here),
                         wavelength=wave_here)
             else:
-                # In this case we have an coronagrpah entrance pupil
-                # do a propagation once with self.perfect_Lyot_pupil = 0 to
-                # measure the Lyot pupil that will be removed after
+                # In this case we have a coronagraph entrance pupil.
+                # Do a propagation once with self.perfect_Lyot_pupil = 0 to
+                # measure the Lyot pupil that will be removed after.
                 self.perfect_Lyot_pupil = [0] * self.nb_wav
                 for i, wave_here in enumerate(self.wav_vec):
                     self.perfect_Lyot_pupil[i] = self.EF_through(wavelength=wave_here)
 
-        #initialize the max and sum of PSFs for the normalization to contrast
+        # Initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
 
     def EF_through(self,
@@ -1129,7 +1120,7 @@ class coronagraph(Optical_System):
 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check and format the variable entrance_EF
+        # call the OpticalSystem super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
         if wavelength is None:
@@ -1501,14 +1492,11 @@ class coronagraph(Optical_System):
         return hlc_all_wl
 
 
-##############################################
-##############################################
-### Deformable mirrors
-class deformable_mirror(Optical_System):
+class DeformableMirror(OpticalSystem):
     """ --------------------------------------------------
     initialize and describe the behavior of a deformable mirror
     (in pupil plane or out of pupil plane)
-    coronagraph is a sub class of Optical_System.
+    coronagraph is a sub class of OpticalSystem.
 
 
     AUTHOR : Johan Mazoyer
@@ -1541,7 +1529,7 @@ class deformable_mirror(Optical_System):
         
         -------------------------------------------------- """
 
-        # Initialize the Optical_System class and inherit properties
+        # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
         if not os.path.exists(Model_local_dir):
@@ -1594,14 +1582,14 @@ class deformable_mirror(Optical_System):
         # We need a pupil in creatingpushact_inpup() and for
         # which in pup. THIS IS NOT THE ENTRANCE PUPIL,
         # this is a round pupil of the same size
-        self.clearpup = pupil(modelconfig, PupType="RoundPup", prad=self.prad)
+        self.clearpup = Pupil(modelconfig, PupType="RoundPup", prad=self.prad)
 
         # create the DM_pushact, surface of the DM for each individual act
         # DM_pushact is always in the DM plane
         self.DM_pushact = self.creatingpushact(DMconfig)
 
         # create or load 'which actuators are in pupil'
-        self.WhichInPupil = self.creatingWhichinPupil()
+        self.WhichInPupil = self.id_in_pupil_actuators()
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
         # now if we relaunch self.DM_pushact, and if misregistration = True
@@ -1653,7 +1641,7 @@ class deformable_mirror(Optical_System):
 
         -------------------------------------------------- """
 
-        # call the Optical_System super function to check
+        # call the OpticalSystem super function to check
         # and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
 
@@ -1847,7 +1835,7 @@ class deformable_mirror(Optical_System):
 
         return pushact3d
 
-    def creatingWhichinPupil(self):
+    def id_in_pupil_actuators(self):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
         
@@ -2052,7 +2040,7 @@ class deformable_mirror(Optical_System):
             Name_FourrierBasis_fits = "Fourier_basis_" + self.Name_DM + '_prad' + str(
                 self.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
 
-            cossinbasis = phase_ampl.SinCosBasis(sqrtnbract)
+            cossinbasis = phase_ampl.sine_cosine_basis(sqrtnbract)
 
             basis_size = cossinbasis.shape[0]
             basis = np.zeros((basis_size, self.number_act))
@@ -2082,10 +2070,7 @@ class deformable_mirror(Optical_System):
         return basis
 
 
-##############################################
-##############################################
-### Testbeds
-class Testbed(Optical_System):
+class Testbed(OpticalSystem):
     """ --------------------------------------------------
     
     Initialize and describe the behavior of a testbed.
@@ -2100,9 +2085,9 @@ class Testbed(Optical_System):
 
     def __init__(self, list_os, list_os_names):
         """ --------------------------------------------------
-        This function allow you to concatenates Optical_System obsjects to create a testbed:
+        This function allows you to concatenate OpticalSystem objects to create a testbed:
         parameter:
-            list_os:        list of Optical_System
+            list_os:        list of OpticalSystem instances
                             all the systems must have been defined with
                             the same modelconfig or it will send an error.
                             The list order is form the first optics system to the last in the
@@ -2123,7 +2108,7 @@ class Testbed(Optical_System):
             print("")
             raise Exception("list of systems and list of names need to be of the same size")
 
-        # Initialize the Optical_System class and inherit properties
+        # Initialize the OpticalSystem class and inherit properties
         super().__init__(list_os[0].modelconfig)
 
         init_string = self.string_os
@@ -2148,7 +2133,7 @@ class Testbed(Optical_System):
 
             # we first check that all variables in the list are optical systems
             # defined the same way.
-            if not isinstance(list_os[num_optical_sys], Optical_System):
+            if not isinstance(list_os[num_optical_sys], OpticalSystem):
                 raise Exception("list_os[" + str(num_optical_sys) + "] is not an optical system")
 
             if list_os[num_optical_sys].modelconfig != self.modelconfig:
@@ -2161,7 +2146,7 @@ class Testbed(Optical_System):
             for params in inspect.signature(list_os[num_optical_sys].EF_through).parameters:
                 known_keywords.append(params)
 
-            if isinstance(list_os[num_optical_sys], deformable_mirror):
+            if isinstance(list_os[num_optical_sys], DeformableMirror):
 
                 #this function is to replace the DMphase variable by a XXphase variable
                 # where XX is the name of the DM
@@ -2249,7 +2234,7 @@ class Testbed(Optical_System):
 
         for i, DM_name in enumerate(self.name_of_DMs):
 
-            DM = vars(self)[DM_name]  # type: deformable_mirror
+            DM = vars(self)[DM_name]  # type: DeformableMirror
             actu_vect_DM = actu_vect[indice_acum_number_act:indice_acum_number_act + DM.number_act]
             DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
 
@@ -2285,7 +2270,7 @@ class Testbed(Optical_System):
         for DM_name in self.name_of_DMs:
 
             # we access each DM object individually
-            DM = vars(self)[DM_name]  # type: deformable_mirror
+            DM = vars(self)[DM_name]  # type: DeformableMirror
 
             # we extract the voltages for this one
             # this voltages are in the DM basis
@@ -2305,12 +2290,7 @@ class Testbed(Optical_System):
         return vector_actuator_voltage
 
 
-##############################################
-##############################################
-### internal functions to properly concatenate the EF_through functions
-### probably not needed outside of this file
-
-
+# Some internal functions to properly concatenate the EF_through functions
 def _swap_DMphase_name(DM_EF_through_function, name_var):
     """ --------------------------------------------------
    A function to rename the DMphase parameter to another name (usually DMXXphase)

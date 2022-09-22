@@ -1,7 +1,7 @@
 import numpy as np
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
-import Asterix.fits_functions as useful
+import Asterix.save_and_read as useful
 
 
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
@@ -140,7 +140,7 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     return phase
 
 
-def SinCosBasis(Nact1D):
+def sine_cosine_basis(Nact1D):
     """ --------------------------------------------------
     For a given number of actuator accross the DM, create coefficients for the sin/cos basis
 
@@ -157,7 +157,7 @@ def SinCosBasis(Nact1D):
     
     Returns
     ------
-    SinCosBasis : 3D array 
+    SinCos : 3D array
                 Coefficient to apply to DMs to obtain sine and cosine phases.
                 size :[(Nact1D)^2,Nact1D,Nact1D] if even
                 size :[(Nact1D)^2 -1 ,Nact1D,Nact1D] if odd (to remove piston)
