@@ -80,12 +80,12 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
     else:
         raise Exception("No active DMs")
 
-    _, _, invertGDH = wsc.invertSVD(Gmatrix,
-                                    Nbmodes,
-                                    goal="c",
-                                    regul=regularization,
-                                    visu=True,
-                                    filename_visu=os.path.join(matrix_directory,
+    _, _, invertGDH = wsc.invert_svd(Gmatrix,
+                                     Nbmodes,
+                                     goal="c",
+                                     regul=regularization,
+                                     visu=True,
+                                     filename_visu=os.path.join(matrix_directory,
                                                                "SVD_Modes" + str(Nbmodes) + ".png"))
 
     if name_active_DM == 13 or name_active_DM == 31:

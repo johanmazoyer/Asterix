@@ -19,7 +19,7 @@ import Asterix.optical_systems as OptSy
 #################################################################################
 
 
-def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, filename_visu=None):
+def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, filename_visu=None):
     """ --------------------------------------------------
     Invert a matrix after a Singular Value Decomposition
     https://en.wikipedia.org/wiki/Singular_value_decomposition
@@ -97,7 +97,7 @@ def invertSVD(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, f
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def creatingInteractionmatrix(testbed: OptSy.Testbed,
+def create_interaction_matrix(testbed: OptSy.Testbed,
                               dimEstim,
                               amplitudeEFC,
                               matrix_dir,
@@ -466,9 +466,9 @@ def creatingInteractionmatrix(testbed: OptSy.Testbed,
     return InterMat
 
 
-def cropDHInteractionMatrix(FullInteractionMatrix: np.ndarray, mask: np.ndarray):
+def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.ndarray):
     """ --------------------------------------------------
-    Crop the  Interaction Matrix. to the mask size
+    Crop the  Interaction Matrix to the DH mask size.
     AUTHOR : Johan Mazoyer
 
     Parameters
@@ -583,8 +583,8 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: OptSy.T
     return testbed.basis_vector_to_act_vector(produit_mat)
 
 
-def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast, last_best_alpha,
-               testbed: OptSy.Testbed):
+def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast, last_best_alpha,
+                            testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region in the stroke min solution
@@ -695,7 +695,7 @@ def solutionSM(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContra
     return testbed.basis_vector_to_act_vector(DMSurfaceCoeff), alpha
 
 
-def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: OptSy.Testbed):
+def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: OptSy.Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize
     the speckle intensity in the dark hole region
@@ -740,7 +740,7 @@ def solutionSteepest(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: O
 #################################################################################
 
 
-def createPWmatrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength):
+def create_pw_matrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
 
@@ -808,21 +808,21 @@ def createPWmatrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim, cutsv
             matrix[:, 1] = np.imag(deltapsik[:, i, j])
 
             try:
-                inversion = invertSVD(matrix, cutsvd, visu=False)
+                inversion = invert_svd(matrix, cutsvd, visu=False)
                 SVD[:, i, j] = inversion[0]
                 PWMatrix[l] = inversion[2]
             except:
-                print("Careful: Error in invertSVD! for l=" + str(l))
+                print("Careful: Error in invert_svd()! for l=" + str(l))
                 SVD[:, i, j] = np.zeros(2)
                 PWMatrix[l] = np.zeros((2, numprobe))
             l = l + 1
     return [PWMatrix, SVD]
 
 
-def FP_PWestimate(Difference, Vectorprobes):
+def calculate_pw_estimate(Difference, Vectorprobes):
     """ --------------------------------------------------
-    Calculate the focal plane electric field from the prone image
-    differences and the modeled probe matrix
+    Calculate the focal plane electric field from the probe image
+    differences and the modeled probe matrix.
 
     AUTHOR : Axel Potier
 
@@ -859,14 +859,14 @@ def FP_PWestimate(Difference, Vectorprobes):
     return Resultat / 4.
 
 
-def createdifference(input_wavefront,
-                     testbed: OptSy.Testbed,
-                     posprobes,
-                     dimimages,
-                     amplitudePW,
-                     voltage_vector=0.,
-                     wavelength=None,
-                     **kwargs):
+def simulate_pw_difference(input_wavefront,
+                           testbed: OptSy.Testbed,
+                           posprobes,
+                           dimimages,
+                           amplitudePW,
+                           voltage_vector=0.,
+                           wavelength=None,
+                           **kwargs):
     """ --------------------------------------------------
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]. 
@@ -925,13 +925,13 @@ def createdifference(input_wavefront,
             indice_acum_number_act += DM.number_act
 
         # When we go polychromatic, lets be careful with the normalization, because
-        # todetector_Intensity is normalizing to polychromatic PSF.
-        Ikmoins = testbed.todetector_Intensity(entrance_EF=input_wavefront,
+        # todetector_intensity is normalizing to polychromatic PSF.
+        Ikmoins = testbed.todetector_intensity(entrance_EF=input_wavefront,
                                                voltage_vector=voltage_vector - Voltage_probe,
                                                wavelengths=wavelength,
                                                **kwargs)
 
-        Ikplus = testbed.todetector_Intensity(entrance_EF=input_wavefront,
+        Ikplus = testbed.todetector_intensity(entrance_EF=input_wavefront,
                                               voltage_vector=voltage_vector + Voltage_probe,
                                               wavelengths=wavelength,
                                               **kwargs)

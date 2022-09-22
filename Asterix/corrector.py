@@ -228,7 +228,7 @@ class Corrector:
             self.FirstIterNewMat = True
 
             start_time = time.time()
-            interMat = wsc.creatingInteractionmatrix(testbed,
+            interMat = wsc.create_interaction_matrix(testbed,
                                                      estimator.dimEstim,
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
@@ -241,7 +241,7 @@ class Corrector:
             print("time for direct matrix " + testbed.string_os + " (s):", round(time.time() - start_time))
             print("")
 
-            self.Gmatrix = wsc.cropDHInteractionMatrix(interMat, self.MaskEstim)
+            self.Gmatrix = wsc.crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
 
             # useful.quickfits(self.Gmatrix)
 
@@ -295,11 +295,11 @@ class Corrector:
             if mode != self.previousmode:
                 self.previousmode = mode
                 # we only re-invert the matrix if it is different from last time
-                _, _, self.invertGDH = wsc.invertSVD(self.Gmatrix,
-                                                     mode,
-                                                     goal="c",
-                                                     visu=False,
-                                                     regul=self.regularization)
+                _, _, self.invertGDH = wsc.invert_svd(self.Gmatrix,
+                                                      mode,
+                                                      goal="c",
+                                                      visu=False,
+                                                      regul=self.regularization)
 
             solutionefc = wsc.solutionEFC(self.MaskEstim, estimate, self.invertGDH, testbed)
 
@@ -349,8 +349,8 @@ class Corrector:
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
-            solutionSM, self.last_best_alpha = wsc.solutionSM(self.MaskEstim, estimate, self.M0, self.G,
-                                                              DesiredContrast, self.last_best_alpha, testbed)
+            solutionSM, self.last_best_alpha = wsc.calc_strokemin_solution(self.MaskEstim, estimate, self.M0, self.G,
+                                                                           DesiredContrast, self.last_best_alpha, testbed)
 
             if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (
                     isinstance(solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
@@ -386,18 +386,18 @@ class Corrector:
 
             if mode != self.previousmode:
                 self.previousmode = mode
-                _, _, self.invertM0 = wsc.invertSVD(self.M0,
-                                                    mode,
-                                                    goal="c",
-                                                    visu=False,
-                                                    regul=self.regularization)
+                _, _, self.invertM0 = wsc.invert_svd(self.M0,
+                                                     mode,
+                                                     goal="c",
+                                                     visu=False,
+                                                     regul=self.regularization)
 
             return -self.amplitudeEFC * wsc.solutionEM(self.MaskEstim, estimate, self.invertM0, self.G,
                                                        testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return -self.amplitudeEFC * wsc.solutionSteepest(self.MaskEstim, estimate, self.M0, self.G,
-                                                             testbed)
+            return -self.amplitudeEFC * wsc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G,
+                                                                   testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")

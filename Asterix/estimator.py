@@ -153,8 +153,8 @@ class Estimator:
                 self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
             else:
                 print("Saving " + filePW + " ...")
-                self.PWMatrix, showSVD = wsc.createPWmatrix(testbed, self.amplitudePW, self.posprobes,
-                                                            self.dimEstim, cutsvdPW, testbed.wavelength_0)
+                self.PWMatrix, showSVD = wsc.create_pw_matrix(testbed, self.amplitudePW, self.posprobes,
+                                                              self.dimEstim, cutsvdPW, testbed.wavelength_0)
                 fits.writeto(matrix_dir + filePW + ".fits", np.array(self.PWMatrix))
                 visuPWMap = "EigenPW_" + string_dims_PWMatrix
                 fits.writeto(matrix_dir + visuPWMap + ".fits", np.array(showSVD[1]))
@@ -254,16 +254,16 @@ class Estimator:
             return proc.resizing(resultatestimation, self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
-            Difference = wsc.createdifference(entrance_EF,
-                                              testbed,
-                                              self.posprobes,
-                                              self.dimEstim,
-                                              self.amplitudePW,
-                                              voltage_vector=voltage_vector,
-                                              wavelength=wavelength,
-                                              **kwargs)
+            Difference = wsc.simulate_pw_difference(entrance_EF,
+                                                    testbed,
+                                                    self.posprobes,
+                                                    self.dimEstim,
+                                                    self.amplitudePW,
+                                                    voltage_vector=voltage_vector,
+                                                    wavelength=wavelength,
+                                                    **kwargs)
 
-            return wsc.FP_PWestimate(Difference, self.PWMatrix)
+            return wsc.calculate_pw_estimate(Difference, self.PWMatrix)
 
         elif self.technique == 'coffee':
             return np.zeros((self.dimEstim, self.dimEstim))

@@ -227,7 +227,7 @@ class OpticalSystem:
 
         return focal_plane_EF
 
-    def todetector_Intensity(self,
+    def todetector_intensity(self,
                              entrance_EF=1.,
                              wavelengths=None,
                              in_contrast=True,
@@ -291,7 +291,7 @@ class OpticalSystem:
         -------------------------------------------------- """
 
         if 'wavelength' in kwargs:
-            raise Exception("""todetector_Intensity() function is polychromatic, 
+            raise Exception("""todetector_intensity() function is polychromatic, 
                 do not use wavelength keyword.
                 Use wavelengths keyword even for monochromatic intensity""")
 
@@ -330,11 +330,11 @@ class OpticalSystem:
 
         if in_contrast == True:
             if (wavelength_vec != self.wav_vec).all():
-                raise Exception("""carefull: contrast normalization in todetector_Intensity assumes
+                raise Exception("""Careful: contrast normalization in todetector_intensity assumes
                      it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1
                      and you want only one BW with the good contrast normalization, use
                      np.abs(to_detector(wavelength = wavelength))**2... If you want a specific
-                     normalization for a subset of  wavelengths, use in_contrast = False and
+                     normalization for a subset of  wavelengths, use in_contrast=False and
                      measure the PSF to normalize.
                 """)
             else:
@@ -1589,7 +1589,7 @@ class DeformableMirror(OpticalSystem):
         self.DM_pushact = self.creatingpushact(DMconfig)
 
         # create or load 'which actuators are in pupil'
-        self.WhichInPupil = self.creatingWhichinPupil()
+        self.WhichInPupil = self.id_in_pupil_actuators()
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
         # now if we relaunch self.DM_pushact, and if misregistration = True
@@ -1835,7 +1835,7 @@ class DeformableMirror(OpticalSystem):
 
         return pushact3d
 
-    def creatingWhichinPupil(self):
+    def id_in_pupil_actuators(self):
         """ --------------------------------------------------
         Create a vector with the index of all the actuators located in the entrance pupil
         
@@ -2040,7 +2040,7 @@ class DeformableMirror(OpticalSystem):
             Name_FourrierBasis_fits = "Fourier_basis_" + self.Name_DM + '_prad' + str(
                 self.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
 
-            cossinbasis = phase_ampl.SinCosBasis(sqrtnbract)
+            cossinbasis = phase_ampl.sine_cosine_basis(sqrtnbract)
 
             basis_size = cossinbasis.shape[0]
             basis = np.zeros((basis_size, self.number_act))

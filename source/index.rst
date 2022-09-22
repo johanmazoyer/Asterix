@@ -61,7 +61,7 @@ correction_loop.py
 .. automodule:: Asterix.correction_loop
     :members:
 
-.. callgraph:: Asterix.correction_loop.CorrectionLoop
+.. callgraph:: Asterix.correction_loop.correction_loop
     :toctree: api
     :zoomable:
     :direction: horizontal

@@ -27,6 +27,6 @@ def test_default_coronagraph():
 
     # Create the coronagraph
     corono = OptSy.Coronagraph(modelconfig, Coronaconfig)
-    coro_psf = corono.todetector_Intensity(center_on_pixel=True)
+    coro_psf = corono.todetector_intensity(center_on_pixel=True)
 
     assert np.max(coro_psf) == 0.0, "A perfect coronagraph should return an empty array."
