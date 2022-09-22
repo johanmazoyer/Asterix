@@ -6,7 +6,8 @@ import numpy as np
 from astropy.io import fits
 import skimage.transform
 
-from Asterix.optical_systems import OpticalSystem, model_dir
+from Asterix import model_dir
+from Asterix.optical_systems import OpticalSystem
 import Asterix.processing_functions as proc
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.save_and_read as saveread

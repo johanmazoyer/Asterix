@@ -5,14 +5,11 @@ import copy
 import numpy as np
 from astropy.io import fits
 
-from Asterix import Asterix_root
+from Asterix import model_dir
 import Asterix.processing_functions as proc
 import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.save_and_read as saveread
-
-model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
-
 
 class OpticalSystem:
     """ --------------------------------------------------

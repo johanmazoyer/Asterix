@@ -6,7 +6,8 @@ import time
 import numpy as np
 from astropy.io import fits
 
-from Asterix.optical_systems import OpticalSystem, model_dir, Pupil
+from Asterix import model_dir
+from Asterix.optical_systems import OpticalSystem, Pupil
 
 import Asterix.processing_functions as proc
 import Asterix.propagation_functions as prop
