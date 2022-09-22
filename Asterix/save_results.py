@@ -10,7 +10,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-import Asterix.optical_systems as OptSy
+from Asterix.testbed import Testbed
+from Asterix.deformable_mirror import DeformableMirror
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -284,7 +285,7 @@ def contrast_curves(reduced_data,
     return contrast_curve
 
 
-def save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, MaskScience, result_dir):
+def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir):
     """ --------------------------------------------------
     Save the result from a correction loop in result_dir
     
@@ -380,7 +381,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, Mask
                      header,
                      overwrite=True)
 
-        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+        DM = vars(testbed)[DM_name]  # type: DeformableMirror
         voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:indice_acum_number_act +
                                                  DM.number_act]
         indice_acum_number_act += DM.number_act
