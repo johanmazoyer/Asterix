@@ -22,10 +22,10 @@ Parameter file can be read using ``Asterix.save_and_read.read_parameter_file`` f
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
+    import Asterix.save_and_read as saveread
     from Asterix.optical_systems import OpticalSystem
 
-    config = useful.read_parameter_file(parameter_file)
+    config = saveread.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
 
     generic_os = OpticalSystem(modelconfig)
@@ -82,10 +82,10 @@ and concatenate them with other elements.
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
+    import Asterix.save_and_read as saveread
     from Asterix.pupil import Pupil
 
-    config = useful.read_parameter_file(parameter_file)
+    config = saveread.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
 
     pup_round = Pupil(modelconfig)
@@ -132,10 +132,10 @@ documentation can be found in Section :ref:`coronagraph-label`.
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
+    import Asterix.save_and_read as saveread
     from Asterix.coronagraph import Coronagraph
 
-    config = useful.read_parameter_file(parameter_file)
+    config = saveread.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
     Coronaconfig = config["Coronaconfig"]
 
@@ -161,10 +161,10 @@ of a deformable mirror (DM) system.
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
+    import Asterix.save_and_read as saveread
     from Asterix.deformable_mirror import DeformableMirror
 
-    config = useful.read_parameter_file(parameter_file)
+    config = saveread.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
     DMconfig = config["DMconfig"]
 
@@ -195,13 +195,13 @@ It can only be initialized by giving a list of Optical Systems and it will creat
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
+    import Asterix.save_and_read as saveread
     from Asterix.pupil import Pupil
     from Asterix.coronagraph import Coronagraph
     from Asterix.deformable_mirror import DeformableMirror
     from Asterix.testbed import Testbed
 
-    config = useful.read_parameter_file(parameter_file)
+    config = saveread.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
     Coronaconfig = config["Coronaconfig"]
     DMconfig = config["DMconfig"]

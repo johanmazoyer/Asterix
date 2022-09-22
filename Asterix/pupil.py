@@ -9,7 +9,7 @@ import skimage.transform
 from Asterix.optical_systems import OpticalSystem, model_dir
 import Asterix.processing_functions as proc
 import Asterix.phase_amplitude_functions as phase_ampl
-import Asterix.save_and_read as useful
+import Asterix.save_and_read as saveread
 
 
 class Pupil(OpticalSystem):
@@ -227,7 +227,7 @@ class Pupil(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_pupil' + '_wl{}'.format(int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         if len(self.pup.shape) == 2:
             exit_EF = entrance_EF * self.pup
@@ -244,6 +244,6 @@ class Pupil(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_after_pupil' + '_wl{}'.format(int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, exit_EF)
+            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, exit_EF)
 
         return exit_EF

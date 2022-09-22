@@ -7,7 +7,7 @@ import numpy as np
 from configobj import ConfigObj
 from validate import Validator
 
-import Asterix.save_and_read as useful
+import Asterix.save_and_read as saveread
 
 from Asterix.optical_systems import Asterix_root
 from Asterix.pupil import Pupil
@@ -66,7 +66,7 @@ pup_round_100 = Pupil(modelconfig, prad=100)
 # Careful, pup_roman is not an array, it is an Optical System object.
 # If you want to access the pupil itself as an attribute that is an array, and save it out if you like.
 numpy_array_pup = pup_roman.pup
-useful._quickfits(numpy_array_pup, dir=result_dir, name="numpy_array_pup")
+saveread._quickfits(numpy_array_pup, dir=result_dir, name="numpy_array_pup")
 
 # --> Once you defined an Optical System object, so we can easily access several feature of this class.
 
@@ -76,7 +76,7 @@ EF_through_roman = pup_roman.EF_through(entrance_EF=1.)
 
 #  Calculate the associated PSF. Default is polychromatic.
 psf_roman = pup_roman.todetector_intensity()
-useful._quickfits(psf_roman, dir=result_dir, name="psf_roman")
+saveread._quickfits(psf_roman, dir=result_dir, name="psf_roman")
 
 # The chromaticity of the source is defined in all opitcal systems with three parameters:
 print("Central wavelength: ", pup_roman.wavelength_0)
@@ -141,7 +141,7 @@ coronagraphic_PSF = corono.todetector_intensity(entrance_EF=aberrated_EF)
 
 # Which we can now normalize:
 normalized_coronagraphic_PSF = coronagraphic_PSF / Max_No_mask_PSF
-useful._quickfits(normalized_coronagraphic_PSF,
+saveread._quickfits(normalized_coronagraphic_PSF,
                   dir=result_dir,
                   name="Normalized_coronagraphic_PSF")
 

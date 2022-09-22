@@ -3,7 +3,7 @@
 
 import numpy as np
 import scipy.optimize as opt
-import Asterix.save_and_read as useful
+import Asterix.save_and_read as saveread
 
 
 def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=True):
@@ -319,7 +319,7 @@ def actuator_position(measured_grid, measured_ActuN, ActuN, sampling_simu_over_m
         simu_grid[:, i] = measured_grid[:, i] - measured_grid[:, int(ActuN)] + measured_ActuN
     simu_grid = simu_grid * sampling_simu_over_measured
 
-    useful._quickfits(simu_grid)
+    saveread._quickfits(simu_grid)
     return simu_grid
 
 

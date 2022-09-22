@@ -11,7 +11,7 @@ from Asterix.pupil import Pupil
 import Asterix.processing_functions as proc
 import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
-import Asterix.save_and_read as useful
+import Asterix.save_and_read as saveread
 
 class DeformableMirror(OpticalSystem):
     """ --------------------------------------------------
@@ -178,9 +178,9 @@ class DeformableMirror(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
             name_plane = 'phase_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, DMphase)
+            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, DMphase)
 
         # if the DM is not active or if the surface is 0
         # we save some time : the EF is not modified
@@ -199,7 +199,7 @@ class DeformableMirror(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_after_DM)
+            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, EF_after_DM)
 
         return EF_after_DM
 
@@ -469,7 +469,7 @@ class DeformableMirror(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
+            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # Add DM phase at the right WL
         EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(phase_abb=phase_DM,
@@ -477,7 +477,7 @@ class DeformableMirror(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
-            useful.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
+            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # and propagate to next pupil plane
 
@@ -585,7 +585,7 @@ class DeformableMirror(OpticalSystem):
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
-                        useful._progress(i, basis_size, status='')
+                        saveread._progress(i, basis_size, status='')
                 fits.writeto(self.Model_local_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
             print("time for " + Name_FourrierBasis_fits, time.time() - start_time)
 

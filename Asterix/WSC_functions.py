@@ -10,7 +10,7 @@ from astropy.io import fits
 
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
-import Asterix.save_and_read as useful
+import Asterix.save_and_read as saveread
 
 from Asterix.optical_systems import OpticalSystem
 from Asterix.deformable_mirror import DeformableMirror
@@ -275,7 +275,7 @@ def create_interaction_matrix(testbed: Testbed,
             if save_all_planes_to_fits == True:
                 # save the basis phase to check what is happening
                 name_plane = DM_name + '_' + DM.basis_type + '_basis_Phase'
-                useful.save_plane_in_fits(dir_save_all_planes, name_plane, phasesBasis)
+                saveread.save_plane_in_fits(dir_save_all_planes, name_plane, phasesBasis)
 
             # to be applicable to all Testbed configurations and save time we separate the testbed in 3 parts:
             # - The optics before the DM we want to actuate (these can be propagated through only once)
@@ -298,7 +298,7 @@ def create_interaction_matrix(testbed: Testbed,
                 if save_all_planes_to_fits == True:
                     # save PP plane before this subsystem
                     name_plane = 'EF_PP_before_' + osname + '_wl{}'.format(int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
+                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
                 if isinstance(OpticSysbefore, DeformableMirror) and OpticSysbefore.active:
                     # this subsystem is an active DM but not the one we actuate now (located before the one we actuate)
 
@@ -312,7 +312,7 @@ def create_interaction_matrix(testbed: Testbed,
                     if save_all_planes_to_fits == True:
                         # save phase on this DM
                         name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(int(wavelength * 1e9))
-                        useful.save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
+                        saveread.save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
 
                 else:
                     wavefrontupstream = OpticSysbefore.EF_through(entrance_EF=wavefrontupstream)
@@ -320,7 +320,7 @@ def create_interaction_matrix(testbed: Testbed,
                 if save_all_planes_to_fits == True:
                     # save PP plane after this subsystem
                     name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
+                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
 
             # then the DM we want to actuate !
             #
@@ -341,7 +341,7 @@ def create_interaction_matrix(testbed: Testbed,
             for i in range(DM.basis_size):
 
                 if i % 10:
-                    useful._progress(i, DM.basis_size, status='')
+                    saveread._progress(i, DM.basis_size, status='')
 
                 if MatrixType == 'perfect':
                     if DM.z_position == 0:
@@ -351,7 +351,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                         if save_all_planes_to_fits == True:
                             name_plane = 'Phase_on_' + DM_name + '_wl{}'.format(int(wavelength * 1e9))
-                            useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                            saveread.save_plane_in_fits(dir_save_all_planes, name_plane,
                                                       OpticSysbefore.phase_init)
 
                     else:
@@ -379,7 +379,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                 if save_all_planes_to_fits == True:
                     name_plane = 'EF_PP_after_' + DM_name + '_wl{}'.format(int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, wavefront)
+                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, wavefront)
                 # and finally we go through the subsystems after the DMs we want to actuate
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
                 for osname in OpticSysNameAfter:
@@ -398,7 +398,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                             if save_all_planes_to_fits == True:
                                 name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(int(wavelength * 1e9))
-                                useful.save_plane_in_fits(dir_save_all_planes, name_plane,
+                                saveread.save_plane_in_fits(dir_save_all_planes, name_plane,
                                                           OpticSysAfter.phase_init)
 
                         else:
@@ -406,7 +406,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                         if save_all_planes_to_fits == True:
                             name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(int(wavelength * 1e9))
-                            useful.save_plane_in_fits(dir_save_all_planes, name_plane, wavefront)
+                            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, wavefront)
                     else:
                         # this is the last one ! so we propagate to FP and resample to estimation size
                         # we have to be careful with the normalization, by default this is the
@@ -423,7 +423,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                         if save_all_planes_to_fits == True:
                             name_plane = 'FPAfterTestbed_' + osname + '_wl{}'.format(int(wavelength * 1e9))
-                            useful.save_plane_in_fits(dir_save_all_planes, name_plane, Gvector)
+                            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, Gvector)
 
                 # TODO Should we remove the intial FP field G0 in all casese ? For ideal
                 # corono and flat DMs, this is 0, but it's not for non ideal coronagraph
@@ -433,7 +433,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                 if save_all_planes_to_fits == True:
                     name_plane = 'Gvector_in_matrix_' + osname + '_wl{}'.format(int(wavelength * 1e9))
-                    useful.save_plane_in_fits(dir_save_all_planes, name_plane, Gvector)
+                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, Gvector)
 
                 if visu:
                     plt.clf()

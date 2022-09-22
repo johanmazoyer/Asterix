@@ -244,7 +244,7 @@ class Corrector:
 
             self.Gmatrix = wsc.crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
 
-            # useful.quickfits(self.Gmatrix)
+            # saveread.quickfits(self.Gmatrix)
 
             if self.correction_algorithm in ["em", "steepest", "sm"]:
 
