@@ -6,10 +6,10 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix import model_dir
-import Asterix.utils.processing_functions as proc
+
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
-from Asterix.utils import save_plane_in_fits
+from Asterix.utils import save_plane_in_fits, ft_subpixel_shift, ft_zoom_out, crop_or_pad_image
 
 class OpticalSystem:
     """ --------------------------------------------------
@@ -568,15 +568,15 @@ class OpticalSystem:
 
                         # recenter
                         if centerX != size_ampl // 2 - 1 / 2 or centerY != size_ampl // 2 - 1 / 2:
-                            testbedampl = proc.ft_subpixel_shift(testbedampl,
+                            testbedampl = ft_subpixel_shift(testbedampl,
                                                                  xshift=size_ampl // 2 - 1 / 2 - centerX,
                                                                  yshift=size_ampl // 2 - 1 / 2 - centerY)
 
                     # reshape at the good size
                     # TODO we may have to check the centering is ok
                     res_pup = testbedampl_header["RESPUP"]  #Pup resolution meter/pixel
-                    testbedampl = proc.crop_or_pad_image(
-                        proc.ft_zoom_out(testbedampl, res_pup / (self.diam_pup_in_m / (2 * self.prad))),
+                    testbedampl = crop_or_pad_image(
+                        ft_zoom_out(testbedampl, res_pup / (self.diam_pup_in_m / (2 * self.prad))),
                         self.dim_overpad_pupil)
 
                     #Set the average to 0 inside entrancepupil

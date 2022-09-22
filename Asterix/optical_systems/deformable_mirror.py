@@ -10,9 +10,7 @@ from Asterix import model_dir
 from Asterix.optical_systems import OpticalSystem, Pupil
 
 import Asterix.utils.gaussians as gauss
-import Asterix.utils.processing_functions as proc
-from Asterix.utils import save_plane_in_fits
-from Asterix.utils.save_and_read import progress
+from Asterix.utils import save_plane_in_fits, progress, ft_subpixel_shift, ft_zoom_out, crop_or_pad_image
 
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
@@ -292,14 +290,14 @@ class DeformableMirror(OpticalSystem):
 
         # Scaling the influence function to the desired dimension
         # for numerical simulation
-        resizeactshape = proc.ft_zoom_out(actshape,
+        resizeactshape = ft_zoom_out(actshape,
                                           (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape,
                                            diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape))
 
         # make sure the actuator shape is in a squarre array of enven dimension (useful for the fft shift).
         # We do not care exactly about the centering since we recenter the actuator just after
         dim_even = int(np.ceil(np.max(resizeactshape.shape) / 2 + 1)) * 2
-        resizeactshape = proc.crop_or_pad_image(resizeactshape, dim_even)
+        resizeactshape = crop_or_pad_image(resizeactshape, dim_even)
 
         # Gauss2Dfit for centering the rescaled influence function
         Gaussian_fit_param = gauss.gauss2Dfit(resizeactshape)
@@ -308,11 +306,11 @@ class DeformableMirror(OpticalSystem):
         xycent = len(resizeactshape) / 2
 
         # Center the actuator shape on a pixel and normalize
-        resizeactshape = proc.ft_subpixel_shift(resizeactshape, xshift=xycent - dx,
+        resizeactshape = ft_subpixel_shift(resizeactshape, xshift=xycent - dx,
                                                 yshift=xycent - dy) / np.amax(resizeactshape)
 
         # Put the centered influence function inside an array (self.dim_overpad_pupil x self.dim_overpad_pupil)
-        actshapeinpupil = proc.crop_or_pad_image(resizeactshape, dim_array)
+        actshapeinpupil = crop_or_pad_image(resizeactshape, dim_array)
         xycenttmp = len(actshapeinpupil) / 2
 
         # Fill an array with the influence functions of all actuators
@@ -330,7 +328,7 @@ class DeformableMirror(OpticalSystem):
                 simu_grid[0, i] = simu_grid[1, i] * np.sin(np.radians(angerror)) + simu_grid[0, i] * np.cos(
                     np.radians(angerror))
 
-            Psivector = proc.ft_subpixel_shift(ft_actu,
+            Psivector = ft_subpixel_shift(ft_actu,
                                                xshift=simu_grid[1, i] - xycenttmp + xerror * pitch_actshape,
                                                yshift=simu_grid[0, i] - xycenttmp + yerror * pitch_actshape,
                                                fourier=True,
@@ -400,7 +398,7 @@ class DeformableMirror(OpticalSystem):
 
         if self.z_position != 0:
 
-            Pup_inDMplane = proc.crop_or_pad_image(
+            Pup_inDMplane = crop_or_pad_image(
                 prop.prop_angular_spectrum(self.clearpup.pup, self.wavelength_0, self.z_position,
                                            self.diam_pup_in_m / 2, self.prad), self.dim_overpad_pupil)
         else:
@@ -468,7 +466,7 @@ class DeformableMirror(OpticalSystem):
 
         -------------------------------------------------- """
 
-        EF_inDMplane = proc.crop_or_pad_image(
+        EF_inDMplane = crop_or_pad_image(
             prop.prop_angular_spectrum(entrance_EF, wavelength, self.z_position, self.diam_pup_in_m / 2.,
                                        self.prad), self.dim_overpad_pupil)
 
@@ -486,7 +484,7 @@ class DeformableMirror(OpticalSystem):
 
         # and propagate to next pupil plane
 
-        EF_back_in_pup_plane = proc.crop_or_pad_image(
+        EF_back_in_pup_plane = crop_or_pad_image(
             prop.prop_angular_spectrum(EF_inDMplane_after_DM, wavelength, -self.z_position,
                                        self.diam_pup_in_m / 2., self.prad), self.dim_overpad_pupil)
 

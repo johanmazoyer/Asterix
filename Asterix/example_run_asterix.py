@@ -2,7 +2,6 @@
 # pylint: disable=trailing-whitespace
 
 import time
-
 from Asterix import main_THD, Asterix_root
 
 start_time = time.time()

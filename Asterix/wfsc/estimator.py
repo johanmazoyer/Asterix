@@ -5,7 +5,7 @@ import os
 import numpy as np
 from astropy.io import fits
 
-import Asterix.utils.processing_functions as proc
+from Asterix.utils import resizing
 
 from .wf_sensing_functions import *
 
@@ -251,7 +251,7 @@ class Estimator:
                                                     wavelength=wavelength,
                                                     **kwargs)
 
-            return proc.resizing(resultatestimation, self.dimEstim)
+            return resizing(resultatestimation, self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
             Difference = simulate_pw_difference(entrance_EF,

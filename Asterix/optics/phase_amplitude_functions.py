@@ -3,7 +3,8 @@
 
 import numpy as np
 from .propagation_functions import mft
-import Asterix.utils.processing_functions as proc
+from Asterix.utils import crop_or_pad_image, rebin
+
 
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     """ --------------------------------------------------
@@ -40,7 +41,7 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     if no_pixel == True:
         factor_bin = int(10)
         pup_large = roundpupil(int(2 * prad) * factor_bin, factor_bin * prad, no_pixel=False)
-        return proc.crop_or_pad_image(proc.rebin(pup_large, factor=factor_bin, center_on_pixel=False), dim_pp)
+        return crop_or_pad_image(rebin(pup_large, factor=factor_bin, center_on_pixel=False), dim_pp)
 
     else:
         xx, yy = np.meshgrid(np.arange(dim_pp) - (dim_pp) // 2, np.arange(dim_pp) - (dim_pp) // 2)

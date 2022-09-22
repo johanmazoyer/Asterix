@@ -5,7 +5,7 @@ import numpy as np
 
 from utils import invert_svd
 
-import Asterix.utils.processing_functions as proc
+from Asterix.utils import resizing
 from Asterix.optical_systems import DeformableMirror, Testbed
 
 
@@ -67,7 +67,7 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
         # I tried to remove "1+"". It breaks the code
         # (coronagraph does not "remove the 1 exactly")
 
-        deltapsik[k] = proc.resizing(testbed.todetector(entrance_EF=1 + 1j * probephase[k]) - psi0, dimEstim)
+        deltapsik[k] = resizing(testbed.todetector(entrance_EF=1 + 1j * probephase[k]) - psi0, dimEstim)
         k = k + 1
 
     l = 0
@@ -205,6 +205,6 @@ def simulate_pw_difference(input_wavefront,
                                               wavelengths=wavelength,
                                               **kwargs)
 
-        Difference[count] = proc.resizing(Ikplus - Ikmoins, dimimages)
+        Difference[count] = resizing(Ikplus - Ikmoins, dimimages)
 
     return Difference

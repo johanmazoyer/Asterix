@@ -2,7 +2,7 @@
 # pylint: disable=trailing-whitespace
 
 import numpy as np
-import Asterix.utils.processing_functions as proc
+from Asterix.utils import crop_or_pad_image
 
 def mft(image,
         real_dim_input,
@@ -350,7 +350,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     Nfourier = gamma * diam_pup_in_pix
     cycles = diam_pup_in_pix
 
-    four = np.fft.fft2(proc.crop_or_pad_image(pup, Nfourier), norm='ortho')
+    four = np.fft.fft2(crop_or_pad_image(pup, Nfourier), norm='ortho')
     u, v = np.meshgrid(np.arange(Nfourier) - Nfourier / 2, np.arange(Nfourier) - Nfourier / 2)
 
     rho2D = np.fft.fftshift(np.hypot(v, u)) * (cycles / diam_pup_in_m) / Nfourier

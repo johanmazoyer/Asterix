@@ -4,12 +4,10 @@
 import os
 
 from Asterix.utils import read_parameter_file
-
-from Asterix.wfsc import Estimator, Corrector, MaskDH
-from Asterix.correction_loop import correction_loop
-from Asterix.save_results import save_loop_results
-
 from Asterix.optical_systems import Pupil, Coronagraph, DeformableMirror, Testbed
+from Asterix.wfsc import Estimator, Corrector, MaskDH
+from Asterix.loop import correction_loop, save_loop_results
+
 
 #######################################################
 #######################################################

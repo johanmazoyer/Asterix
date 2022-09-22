@@ -7,8 +7,7 @@ from astropy.io import fits
 
 from Asterix.optical_systems import OpticalSystem, model_dir, Pupil
 
-from Asterix.utils import save_plane_in_fits
-import Asterix.utils.processing_functions as proc
+from Asterix.utils import save_plane_in_fits, crop_or_pad_image
 
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
@@ -126,7 +125,7 @@ class Coronagraph(OpticalSystem):
             self.prop_apod2lyot = 'mft'
             self.string_os += '2020'
             self.FPmsk = list([
-                self.EF_from_phase_and_ampl(phase_abb=proc.crop_or_pad_image(
+                self.EF_from_phase_and_ampl(phase_abb=crop_or_pad_image(
                     fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]), self.dimScience))
             ])
             self.perfect_coro = True
@@ -261,7 +260,7 @@ class Coronagraph(OpticalSystem):
 
         if self.prop_apod2lyot == "fft":
             dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(wavelength)]
-            input_wavefront_after_apod_pad = proc.crop_or_pad_image(input_wavefront_after_apod,
+            input_wavefront_after_apod_pad = crop_or_pad_image(input_wavefront_after_apod,
                                                                     dim_fp_fft_here)
 
             corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad,
@@ -328,7 +327,7 @@ class Coronagraph(OpticalSystem):
 
             # Focal plane to Lyot plane
             # Babinet's trick:
-            lyotplane_before_lyot_central_part = proc.crop_or_pad_image(
+            lyotplane_before_lyot_central_part = crop_or_pad_image(
                 prop.mft(corono_focal_plane * (1 - FPmsk),
                          self.dim_fpm,
                          int(2 * self.prad),
@@ -366,7 +365,7 @@ class Coronagraph(OpticalSystem):
                 save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
 
             # Focal plane to Lyot plane
-            lyotplane_before_lyot = proc.crop_or_pad_image(
+            lyotplane_before_lyot = crop_or_pad_image(
                 prop.mft(corono_focal_plane * FPmsk,
                          self.dimScience,
                          int(2 * self.prad),
@@ -385,7 +384,7 @@ class Coronagraph(OpticalSystem):
         lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
 
         # crop to the dim_overpad_pupil expeted size
-        lyotplane_before_lyot_crop = proc.crop_or_pad_image(lyotplane_before_lyot, self.dim_overpad_pupil)
+        lyotplane_before_lyot_crop = crop_or_pad_image(lyotplane_before_lyot, self.dim_overpad_pupil)
 
         # Field after filtering by Lyot stop
         lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot_crop,
@@ -442,7 +441,7 @@ class Coronagraph(OpticalSystem):
                 dim_fp = self.dimScience
 
             phase4q = np.zeros((dim_fp, dim_fp))
-            fqpm_thick_cut = proc.crop_or_pad_image(fqpm_thick, dim_fp)
+            fqpm_thick_cut = crop_or_pad_image(fqpm_thick, dim_fp)
             phase4q[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
 
             if self.achrom_fqpm == True:
@@ -493,7 +492,7 @@ class Coronagraph(OpticalSystem):
             else:
                 dim_fp = self.dimScience
 
-            phasevortex_cut = proc.crop_or_pad_image(phase_vortex,
+            phasevortex_cut = crop_or_pad_image(phase_vortex,
                                                      dim_fp)  #*phase_ampl.roundpupil(dim_fp, dim_fp/2)
             vortex.append(np.exp(1j * phasevortex_cut))
 

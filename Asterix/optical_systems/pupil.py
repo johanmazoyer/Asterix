@@ -8,9 +8,8 @@ import skimage.transform
 
 from Asterix import model_dir
 from Asterix.optical_systems import OpticalSystem
-import Asterix.utils.processing_functions as proc
 import Asterix.optics.phase_amplitude_functions as phase_ampl
-from Asterix.utils import save_plane_in_fits
+from Asterix.utils import save_plane_in_fits, crop_or_pad_image, rebin
 
 
 class Pupil(OpticalSystem):
@@ -171,11 +170,11 @@ class Pupil(OpticalSystem):
                         "Choose a divisor of the .fits file size ({0}) for diam_pup_in_pix parameter: {1}".
                         format(pup_fits.shape[0], find_divisors))
                 
-                pup_fits_right_size = proc.rebin(pup_fits,
+                pup_fits_right_size = rebin(pup_fits,
                                                      int(pup_fits.shape[0] / (2 * self.prad)),
                                                      center_on_pixel=False)
 
-            self.pup = proc.crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
+            self.pup = crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
