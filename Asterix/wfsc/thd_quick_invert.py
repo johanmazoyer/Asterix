@@ -7,8 +7,7 @@ import time
 import numpy as np
 
 from astropy.io import fits
-import Asterix.WSC_functions as wsc
-
+from wf_control_functions import invert_svd
 
 def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
     """ --------------------------------------------------
@@ -82,7 +81,7 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
     else:
         raise Exception("No active DMs")
 
-    _, _, invertGDH = wsc.invert_svd(Gmatrix,
+    _, _, invertGDH = invert_svd(Gmatrix,
                                      Nbmodes,
                                      goal="c",
                                      regul=regularization,

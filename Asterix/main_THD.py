@@ -5,9 +5,8 @@ import os
 
 import Asterix.save_and_read as saveread
 
-from Asterix.MaskDH import MaskDH
-from Asterix.estimator import Estimator
-from Asterix.corrector import Corrector
+from Asterix.mask_DH import MaskDH
+from Asterix.wfsc import Estimator, Corrector
 from Asterix.correction_loop import correction_loop
 from Asterix.save_results import save_loop_results
 

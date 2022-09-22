@@ -1,16 +1,13 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
-
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-from Asterix.MaskDH import MaskDH
-from Asterix.estimator import Estimator
-from Asterix.corrector import Corrector
-
+from Asterix.mask_DH import MaskDH
+from Asterix.wfsc import Corrector, Estimator
 from Asterix.optical_systems import Testbed
 
 def correction_loop(testbed: Testbed,

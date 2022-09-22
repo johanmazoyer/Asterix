@@ -1,7 +1,6 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
-import os
 import time
 
 from Asterix import main_THD, Asterix_root

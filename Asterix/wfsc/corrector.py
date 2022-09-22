@@ -7,9 +7,10 @@ import time
 import numpy as np
 from astropy.io import fits
 
-from Asterix.estimator import Estimator
-import Asterix.WSC_functions as wsc
-from Asterix.THD_quick_invert import THD_quick_invert
+from estimator import Estimator
+
+from thd_quick_invert import THD_quick_invert
+import wf_control_functions as wfc
 
 from Asterix.optical_systems import OpticalSystem, DeformableMirror, Testbed
 
@@ -227,7 +228,7 @@ class Corrector:
             self.FirstIterNewMat = True
 
             start_time = time.time()
-            interMat = wsc.create_interaction_matrix(testbed,
+            interMat = wfc.create_interaction_matrix(testbed,
                                                      estimator.dimEstim,
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
@@ -240,7 +241,7 @@ class Corrector:
             print("time for direct matrix " + testbed.string_os + " (s):", round(time.time() - start_time))
             print("")
 
-            self.Gmatrix = wsc.crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
+            self.Gmatrix = wfc.crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
 
             # saveread.quickfits(self.Gmatrix)
 
@@ -294,13 +295,13 @@ class Corrector:
             if mode != self.previousmode:
                 self.previousmode = mode
                 # we only re-invert the matrix if it is different from last time
-                _, _, self.invertGDH = wsc.invert_svd(self.Gmatrix,
+                _, _, self.invertGDH = wfc.invert_svd(self.Gmatrix,
                                                       mode,
                                                       goal="c",
                                                       visu=False,
                                                       regul=self.regularization)
 
-            solutionefc = wsc.solutionEFC(self.MaskEstim, estimate, self.invertGDH, testbed)
+            solutionefc = wfc.calc_efc_solution(self.MaskEstim, estimate, self.invertGDH, testbed)
 
             # # gain_individual_DM = [1.,1.]
             # # gain_individual_DM = [0.5,1.]
@@ -348,7 +349,7 @@ class Corrector:
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
-            solutionSM, self.last_best_alpha = wsc.calc_strokemin_solution(self.MaskEstim, estimate, self.M0, self.G,
+            solutionSM, self.last_best_alpha = wfc.calc_strokemin_solution(self.MaskEstim, estimate, self.M0, self.G,
                                                                            DesiredContrast, self.last_best_alpha, testbed)
 
             if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (
@@ -385,18 +386,18 @@ class Corrector:
 
             if mode != self.previousmode:
                 self.previousmode = mode
-                _, _, self.invertM0 = wsc.invert_svd(self.M0,
+                _, _, self.invertM0 = wfc.invert_svd(self.M0,
                                                      mode,
                                                      goal="c",
                                                      visu=False,
                                                      regul=self.regularization)
 
-            return -self.amplitudeEFC * wsc.solutionEM(self.MaskEstim, estimate, self.invertM0, self.G,
+            return -self.amplitudeEFC * wfc.calc_em_solution(self.MaskEstim, estimate, self.invertM0, self.G,
                                                        testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return -self.amplitudeEFC * wsc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G,
+            return -self.amplitudeEFC * wfc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G,
                                                                    testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")
