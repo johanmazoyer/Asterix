@@ -7,8 +7,8 @@ from astropy.io import fits
 
 from Asterix.optical_systems import OpticalSystem, model_dir, Pupil
 import Asterix.processing_functions as proc
-import Asterix.propagation_functions as prop
-import Asterix.phase_amplitude_functions as phase_ampl
+import Asterix.optics.propagation_functions as prop
+import Asterix.optics.phase_amplitude_functions as phase_ampl
 import Asterix.save_and_read as saveread
 
 

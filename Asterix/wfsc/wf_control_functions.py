@@ -8,7 +8,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-import Asterix.propagation_functions as prop
+import Asterix.optics.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.save_and_read as saveread
 

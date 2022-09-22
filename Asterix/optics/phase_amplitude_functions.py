@@ -2,7 +2,7 @@
 # pylint: disable=trailing-whitespace
 
 import numpy as np
-import Asterix.propagation_functions as prop
+from .propagation_functions import mft
 import Asterix.processing_functions as proc
 
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
@@ -188,7 +188,7 @@ def sine_cosine_basis(Nact1D):
             Coeffs[Nact1D - i - 1, Nact1D - j - 1] = -1 / (2 * 1j)
         TFCoeffs[Coeff_SinCos] = Coeffs
 
-        SinCos[Coeff_SinCos] = np.real(prop.mft(TFCoeffs[Coeff_SinCos], Nact1D, Nact1D, Nact1D))
+        SinCos[Coeff_SinCos] = np.real(mft(TFCoeffs[Coeff_SinCos], Nact1D, Nact1D, Nact1D))
 
     if Nact1D % 2 == 1:
         # in the odd case the last one is a piston
