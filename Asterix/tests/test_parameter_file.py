@@ -1,7 +1,7 @@
 import os
 from configobj import ConfigObj
 from validate import Validator
-import Asterix.Optical_System_functions as OptSy
+import Asterix.optical_systems as OptSy
 
 
 def test_example_parameter_file():

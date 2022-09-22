@@ -7,7 +7,7 @@ Optical System
 +++++++++++++++++++++++
 
 Asterix have been thought from the beginning to be able to easily adapt to new configurations of the testbed 
-wihtout major changes. This modularity is based on the ``Asterix.Optical_System_functions.OpticalSystem`` class.
+wihtout major changes. This modularity is based on the ``Asterix.optical_systems.OpticalSystem`` class.
 An OpticalSystem is a part of the testbed which starts and ends in a pupil plane, which allows them to be easily
 concatenated. To be able to be well concatenated, they must all be using the same general parameters (physical 
 and numerical parameters). These parameters are stored in the first part of the parameter file, common to 
@@ -17,13 +17,13 @@ will set up all other dimensions. The pupil planes are overpadded compared to th
 some ``OpticalSystem`` require it. By convention, all pupil planes are centered bewteen the 4 central pixels.
 
 
-Parameter file can be read using ``Asterix.fits_functions.read_parameter_file`` function. We can create a generic
+Parameter file can be read using ``Asterix.save_and_read.read_parameter_file`` function. We can create a generic
 ``OpticalSystem`` like this.
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -36,7 +36,7 @@ For the moment, this ``generic_os`` does not do anything, it's like an empty pup
 Each ``OpticalSystem`` has an attribute function ``EF_through`` which describes the effect this optical system has
 on the electrical field when going through it. Once this function is defined, all OpticalSystem instances have access to
 a library of functions, common to all ``OpticalSystem`` : ``todetector`` (electrical field in the next focal plane),
-``todetector_Intensity`` (Intensity in the next focal plane), ``transmission`` (measure ratio of photons lost 
+``todetector_intensity`` (Intensity in the next focal plane), ``transmission`` (measure ratio of photons lost
 when crossing the system), etc.
 
 .. code-block:: python
@@ -44,7 +44,7 @@ when crossing the system), etc.
     exit_EF = generic_os.EF_through() # electrical field after the system 
                                     # (by default, entrance field is 1.)
     EF_FP = generic_os.todetector() # electrical field in the next focal plane
-    PSF = generic_os.todetector_Intensity() #  Intensity in the next focal plane
+    PSF = generic_os.todetector_intensity() #  Intensity in the next focal plane
 
 
 Finally, for all optical system, you can use generic functions like to creaet and manipulate phase and amplitude screens
@@ -57,7 +57,7 @@ Finally, for all optical system, you can use generic functions like to creaet an
     input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up)
 
     # Focal plane intensity for this aberrations
-    PSF = generic_os.todetector_Intensity(entrance_EF = input_wavefront) 
+    PSF = generic_os.todetector_intensity(entrance_EF = input_wavefront)
 
 
 
@@ -82,8 +82,8 @@ and concatenate them with other elements.
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -95,7 +95,7 @@ and concatenate them with other elements.
     exit_EF = pup_round.EF_through() # electrical field after the system 
                                     #(by default, entrance field is 1.)
     EF_FP = pup_round.todetector() # electrical field in the next focal plane
-    PSF = pup_round.todetector_Intensity() #  Intensity in the next focal plane
+    PSF = pup_round.todetector_intensity() #  Intensity in the next focal plane
 
 
 You can define a different radius than the pupil one in the parameter file
@@ -132,8 +132,8 @@ documentation can be found in Section :ref:`coronagraph-label`.
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -144,12 +144,12 @@ documentation can be found in Section :ref:`coronagraph-label`.
     exit_EF = corono.EF_through() # electrical field after the system 
                                     #(by default, entrance field is 1.)
     EF_FP = corono.todetector() # electrical field in the next focal plane
-    PSF = corono.todetector_Intensity() #  Intensity in the next focal plane
+    PSF = corono.todetector_intensity() #  Intensity in the next focal plane
 
 Type of coronagraph can be changed with ``corona_type`` parameter.  Currently supported ``corona_type`` 
 are 'fqpm' or 'knife', 'classiclyot' or 'HLC'. Focal plane functions are automatically normalized in contrast
 by default. For details about the way to normalize in polychromatic light, see ``measure_normalization`` 
-and ``todetector_Intensity`` documentation in :ref:`os-label`
+and ``todetector_intensity`` documentation in :ref:`os-label`
 
 
 Deformable Mirror
@@ -161,8 +161,8 @@ of a deformable mirror (DM) system.
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -195,8 +195,8 @@ It can only be initialized by giving a list of Optical Systems and it will creat
 
 .. code-block:: python
     
-    import Asterix.fits_functions as useful
-    import Asterix.Optical_System_functions as OptSy
+    import Asterix.save_and_read as useful
+    import Asterix.optical_systems as OptSy
 
     config = useful.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]

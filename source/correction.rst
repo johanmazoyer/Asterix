@@ -41,7 +41,7 @@ Interaction Matrix
 +++++++++++++++++++++++++++++++
 
 Most correction algorithms requires the measurement of an Interaction Matrix.
-The specific function doing this is located in WSC_functions.py : creatingInteractionmatrix
+The specific function doing this is located in WSC_functions.py : create_interaction_matrix()
 
 We  save the matrix in .fits independently for each DMs so that you do not have to recalculate if you go 
 from 1 to 2 DMs (provided that this is the only change in the testbed of course).
@@ -126,11 +126,11 @@ Same parameters as efc
 Correction loop
 +++++++++++++++++++++++++++++++
 
-``correction_loop.py`` contains 3 functions. The first one is ``CorrectionLoop1Matrix`` which is a for loop repeated
-``Number_matrix`` , which update the Interference Matrix and run the ``CorrectionLoop1Matrix`` at each iteration.
+``correction_loop.py`` contains 3 functions. The first one is ``correction_loop_1matrix()`` which is a for loop repeated
+``Number_matrix`` , which update the Interference Matrix and run the ``correction_loop_1matrix()`` at each iteration.
 
 
-The ``CorrectionLoop1Matrix`` function is a loop running ``Nbiter_corr`` times that is basically doing:
+The ``correction_loop_1matrix()`` function is a loop running ``Nbiter_corr`` times that is basically doing:
 
 * estimation
 
@@ -138,6 +138,6 @@ The ``CorrectionLoop1Matrix`` function is a loop running ``Nbiter_corr`` times t
 
 * application on DM and measure of DM
 
-The results are stored in a dictionnary then sent to ``Save_loop_results`` for ploting and saving in the folder 
+The results are stored in a dictionnary then sent to ``save_loop_results()`` for ploting and saving in the folder
 named '/Results/Name_experiement' where ``Name_Experiment`` is a parameter. All .fits saved have all parameters in the header. 
 The config (with updated parameters) is also saved in a .ini file, so you can run the same experiment. 

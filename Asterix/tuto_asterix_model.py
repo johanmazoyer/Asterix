@@ -4,8 +4,8 @@ import numpy as np
 from configobj import ConfigObj
 from validate import Validator
 
-import Asterix.Optical_System_functions as OptSy
-import Asterix.fits_functions as useful
+import Asterix.optical_systems as OptSy
+import Asterix.save_and_read as useful
 
 
 # Set the path to your configuration file of choice
@@ -68,7 +68,7 @@ useful._quickfits(numpy_array_pup, dir=result_dir, name="numpy_array_pup")
 EF_through_roman = pup_roman.EF_through(entrance_EF=1.)
 
 #  Calculate the associated PSF. Default is polychromatic.
-psf_roman = pup_roman.todetector_Intensity()
+psf_roman = pup_roman.todetector_intensity()
 useful._quickfits(psf_roman, dir=result_dir, name="psf_roman")
 
 # The chromaticity of the source is defined in all opitcal systems with three parameters:
@@ -117,7 +117,7 @@ Coronaconfig.update({'filename_instr_apod': "RoundPup"})
 corono = OptSy.Coronagraph(modelconfig, Coronaconfig)
 
 # For the coronagraph, we can measure 2 types of PSFs: with or without the FPM
-No_mask_PSF = corono.todetector_Intensity(center_on_pixel=True, noFPM=True)
+No_mask_PSF = corono.todetector_intensity(center_on_pixel=True, noFPM=True)
 # This allows us to normalize the images.
 Max_No_mask_PSF = np.max(No_mask_PSF)
 
@@ -130,7 +130,7 @@ phase = corono.generate_phase_aberr(SIMUconfig,
 aberrated_EF = corono.EF_from_phase_and_ampl(phase_abb=phase)
 
 # By default, this is the normal coronagraphic PSF (with FPM)
-coronagraphic_PSF = corono.todetector_Intensity(entrance_EF=aberrated_EF)
+coronagraphic_PSF = corono.todetector_intensity(entrance_EF=aberrated_EF)
 
 # Which we can now normalize:
 normalized_coronagraphic_PSF = coronagraphic_PSF / Max_No_mask_PSF
@@ -146,7 +146,7 @@ if not os.path.exists(plot_all_fits_dir):
     os.makedirs(plot_all_fits_dir)
 
 # Be careful, this can produce tens of fits files and more, especially in a correction loop:
-FP_after_corono_in_contrast = corono.todetector_Intensity(entrance_EF=aberrated_EF,
+FP_after_corono_in_contrast = corono.todetector_intensity(entrance_EF=aberrated_EF,
                                                           save_all_planes_to_fits=True,
                                                           dir_save_all_planes=plot_all_fits_dir) / No_mask_PSF
 
@@ -160,7 +160,7 @@ DM3 = OptSy.DeformableMirror(modelconfig,
 # DMs are also optical systems but have another parameter to control them, DMphase.
 # Measure the EF through the DM:
 EF_though_DM = DM3.EF_through(entrance_EF=1., DMphase=0.)
-# plus all normal functions of optical systems (todetector, todetector_Intensity)
+# plus all normal functions of optical systems (todetector, todetector_intensity)
 
 # For example, something like the following can be funny:
 EF_though_DM = DM3.EF_through(entrance_EF=aberrated_EF, DMphase=phase)
@@ -178,11 +178,11 @@ testbed_1DM = OptSy.Testbed([pup_round, DM3, corono],
 # --> testbed_1DM.entrancepupil, testbed.DM3, etc
 
 # To avoid any confusion in case of multiple DMs, the command to access DMs is now XXXphase, where XXX is the name of the DM.
-PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF,
+PSF_after_testbed = testbed_1DM.todetector_intensity(entrance_EF=aberrated_EF,
                                                      DM3phase=phase)
 
 # And the confusing DM3phase is removed so this will send an error:
-# PSF_after_testbed = testbed_1DM.todetector_Intensity(entrance_EF=aberrated_EF, DMphase = phase)
+# PSF_after_testbed = testbed_1DM.todetector_intensity(entrance_EF=aberrated_EF, DMphase = phase)
 
 # We can now play with all the things we defined up to now, for example:
 testbed_1DM_romanpup = OptSy.Testbed([pup_roman, DM3, corono],

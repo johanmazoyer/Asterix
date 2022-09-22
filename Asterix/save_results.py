@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-import Asterix.Optical_System_functions as OptSy
+import Asterix.optical_systems as OptSy
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -281,7 +281,7 @@ def contrast_curves(reduced_data,
     return contrast_curve
 
 
-def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, MaskScience, result_dir):
+def save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, MaskScience, result_dir):
     """ --------------------------------------------------
     Save the result from a correction loop in result_dir
     
@@ -294,10 +294,10 @@ def Save_loop_results(CorrectionLoopResult, config, testbed: OptSy.Testbed, Mask
     Parameters
     ----------
     CorrectionLoopResult: dict 
-        dictionnary containing the results from CorrectionLoop1Matrix or CorrectionLoop
+        dictionary containing the results from correction_loop_1matrix() or correction_loop()
 
     config: dict
-        complete parameter dictionnary
+        complete parameter dictionary
 
     testbed: OpticalSystem
         an OpticalSystem object which describes your testbed
