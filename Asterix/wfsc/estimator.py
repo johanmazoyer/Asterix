@@ -7,7 +7,7 @@ from astropy.io import fits
 
 import Asterix.processing_functions as proc
 
-import wf_sensing_functions as wfs
+from .wf_sensing_functions import *
 
 from Asterix.optical_systems import OpticalSystem, DeformableMirror, Testbed
 
@@ -152,7 +152,7 @@ class Estimator:
                 self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
             else:
                 print("Saving " + filePW + " ...")
-                self.PWMatrix, showSVD = wfs.create_pw_matrix(testbed, self.amplitudePW, self.posprobes,
+                self.PWMatrix, showSVD = create_pw_matrix(testbed, self.amplitudePW, self.posprobes,
                                                               self.dimEstim, cutsvdPW, testbed.wavelength_0)
                 fits.writeto(matrix_dir + filePW + ".fits", np.array(self.PWMatrix))
                 visuPWMap = "EigenPW_" + string_dims_PWMatrix
@@ -254,7 +254,7 @@ class Estimator:
             return proc.resizing(resultatestimation, self.dimEstim)
 
         elif self.technique in ["pairwise", "pw"]:
-            Difference = wfs.simulate_pw_difference(entrance_EF,
+            Difference = simulate_pw_difference(entrance_EF,
                                                     testbed,
                                                     self.posprobes,
                                                     self.dimEstim,
@@ -263,7 +263,7 @@ class Estimator:
                                                     wavelength=wavelength,
                                                     **kwargs)
 
-            return wfs.calculate_pw_estimate(Difference, self.PWMatrix)
+            return calculate_pw_estimate(Difference, self.PWMatrix)
 
         elif self.technique == 'coffee':
             return np.zeros((self.dimEstim, self.dimEstim))
