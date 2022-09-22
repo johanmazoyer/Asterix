@@ -6,10 +6,10 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix import model_dir
-import Asterix.processing_functions as proc
+import Asterix.utils.processing_functions as proc
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
-import Asterix.save_and_read as saveread
+from Asterix.utils import save_plane_in_fits
 
 class OpticalSystem:
     """ --------------------------------------------------
@@ -207,7 +207,7 @@ class OpticalSystem:
         if save_all_planes_to_fits == True:
             who_called_me = self.__class__.__name__
             name_plane = 'EF_FP_after_' + who_called_me + '_obj' + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_EF)
+            save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_EF)
 
         return focal_plane_EF
 
@@ -331,7 +331,7 @@ class OpticalSystem:
         if save_all_planes_to_fits == True:
             who_called_me = self.__class__.__name__
             name_plane = 'Int_FP_after_' + who_called_me + '_obj'
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_Intensity)
+            save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_Intensity)
 
         return focal_plane_Intensity
 

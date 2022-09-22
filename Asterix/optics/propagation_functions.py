@@ -2,7 +2,7 @@
 # pylint: disable=trailing-whitespace
 
 import numpy as np
-import Asterix.processing_functions as proc
+import Asterix.utils.processing_functions as proc
 
 def mft(image,
         real_dim_input,

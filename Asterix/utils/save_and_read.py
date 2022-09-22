@@ -15,22 +15,6 @@ from validate import Validator
 
 from Asterix import Asterix_root
 
-def _quickshow(tab):
-    """
-    Function to quickly show an array.
-    tab: array to be shown
-
-    Johan's quick function
-    """
-
-    tmp = np.copy(tab)
-    # tmp = tmp.T
-    plt.axis('off')
-    plt.imshow(tmp, origin='lower', cmap='gray')
-    plt.show()
-    plt.close()
-
-
 def save_plane_in_fits(dir_save_fits, name_plane, image):
     """
         Function to quickly save a real or complex file in fits.
@@ -67,8 +51,22 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     else:
         fits.writeto(os.path.join(dir_save_fits, name_fits + '_RE.fits'), image, overwrite=True)
 
+def quickshow(tab):
+    """
+    Function to quickly show an array.
+    tab: array to be shown
 
-def _quickfits(tab, dir='', name='tmp'):
+    Johan's quick function
+    """
+
+    tmp = np.copy(tab)
+    # tmp = tmp.T
+    plt.axis('off')
+    plt.imshow(tmp, origin='lower', cmap='gray')
+    plt.show()
+    plt.close()
+
+def quickfits(tab, dir='', name='tmp'):
     """
     Johan's quick function
 
@@ -98,7 +96,7 @@ def _quickfits(tab, dir='', name='tmp'):
     fits.writeto(os.path.join(dir, name + '.fits'), tab, overwrite=True)
 
 
-def _quickpng(tab, dir='', name='tmp'):
+def quickpng(tab, dir='', name='tmp'):
     """
     Function to quickly save in .png.
     By default, it will save on the desktop with a random name
@@ -132,7 +130,7 @@ def _quickpng(tab, dir='', name='tmp'):
     plt.close()
 
 
-def _progress(count, total, status=''):
+def progress(count, total, status=''):
     """ --------------------------------------------------
     print a progress bar for a for loop
 

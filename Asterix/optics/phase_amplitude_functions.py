@@ -3,7 +3,7 @@
 
 import numpy as np
 from .propagation_functions import mft
-import Asterix.processing_functions as proc
+import Asterix.utils.processing_functions as proc
 
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     """ --------------------------------------------------

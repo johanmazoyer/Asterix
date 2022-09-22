@@ -2,9 +2,10 @@
 # pylint: disable=trailing-whitespace
 
 import numpy as np
-from .wf_control_functions import invert_svd
 
-import Asterix.processing_functions as proc
+from utils import invert_svd
+
+import Asterix.utils.processing_functions as proc
 from Asterix.optical_systems import DeformableMirror, Testbed
 
 

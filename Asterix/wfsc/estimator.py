@@ -5,7 +5,7 @@ import os
 import numpy as np
 from astropy.io import fits
 
-import Asterix.processing_functions as proc
+import Asterix.utils.processing_functions as proc
 
 from .wf_sensing_functions import *
 

@@ -11,6 +11,7 @@ from .estimator import Estimator
 
 from .thd_quick_invert import THD_quick_invert
 from .wf_control_functions import *
+from utils import invert_svd
 
 from Asterix.optical_systems import OpticalSystem, DeformableMirror, Testbed
 

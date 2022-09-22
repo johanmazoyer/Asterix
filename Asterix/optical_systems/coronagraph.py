@@ -6,10 +6,12 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix.optical_systems import OpticalSystem, model_dir, Pupil
-import Asterix.processing_functions as proc
+
+from Asterix.utils import save_plane_in_fits
+import Asterix.utils.processing_functions as proc
+
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
-import Asterix.save_and_read as saveread
 
 
 class Coronagraph(OpticalSystem):
@@ -236,7 +238,7 @@ class Coronagraph(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_apod' + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         if noFPM:
             FPmsk = 1.
@@ -249,10 +251,10 @@ class Coronagraph(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'apod' + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, self.apod_pup.pup)
+            save_plane_in_fits(dir_save_all_planes, name_plane, self.apod_pup.pup)
 
             name_plane = 'EF_PP_after_apod' + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, input_wavefront_after_apod)
+            save_plane_in_fits(dir_save_all_planes, name_plane, input_wavefront_after_apod)
 
         # we take the convention that for all propation methods, the PSF must be
         # "in between 4 pixels" in the focal plane.
@@ -269,24 +271,24 @@ class Coronagraph(OpticalSystem):
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                saveread.save_plane_in_fits(dir_save_all_planes, name_plane,
+                save_plane_in_fits(dir_save_all_planes, name_plane,
                                           np.fft.fftshift(corono_focal_plane))
 
                 name_plane = 'PSF EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                saveread.save_plane_in_fits(dir_save_all_planes, name_plane,
+                save_plane_in_fits(dir_save_all_planes, name_plane,
                                           np.fft.fftshift(np.abs(corono_focal_plane)**2))
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
+                    save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
 
                     name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
-                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
+                    save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
 
                     name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
-                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
+                    save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                saveread.save_plane_in_fits(dir_save_all_planes, name_plane,
+                save_plane_in_fits(dir_save_all_planes, name_plane,
                                           np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
@@ -307,22 +309,22 @@ class Coronagraph(OpticalSystem):
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                saveread.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
+                save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
+                    save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
 
                     name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
-                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
+                    save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
 
                     name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
-                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
+                    save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                saveread.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
+                save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
 
                 name_plane = 'EF_FP_after_1minusFPM' + '_wl{}'.format(int(wavelength * 1e9))
-                saveread.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * (1 - FPmsk))
+                save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * (1 - FPmsk))
 
             # Focal plane to Lyot plane
             # Babinet's trick:
@@ -349,19 +351,19 @@ class Coronagraph(OpticalSystem):
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                saveread.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
+                save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
+                    save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
 
                     name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
-                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
+                    save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
 
                     name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
-                    saveread.save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
+                    save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                saveread.save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
+                save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = proc.crop_or_pad_image(
@@ -377,7 +379,7 @@ class Coronagraph(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_LS' + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, lyotplane_before_lyot)
+            save_plane_in_fits(dir_save_all_planes, name_plane, lyotplane_before_lyot)
 
         # we add the downstream aberrations if we need them
         lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
@@ -395,10 +397,10 @@ class Coronagraph(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'LS' + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, self.lyot_pup.pup)
+            save_plane_in_fits(dir_save_all_planes, name_plane, self.lyot_pup.pup)
 
             name_plane = 'EF_PP_after_LS' + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, lyotplane_after_lyot)
+            save_plane_in_fits(dir_save_all_planes, name_plane, lyotplane_after_lyot)
 
         return lyotplane_after_lyot
 

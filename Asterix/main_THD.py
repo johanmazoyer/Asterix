@@ -3,7 +3,7 @@
 
 import os
 
-import Asterix.save_and_read as saveread
+from Asterix.utils import read_parameter_file
 
 from Asterix.wfsc import Estimator, Corrector, MaskDH
 from Asterix.correction_loop import correction_loop
@@ -52,7 +52,7 @@ def runthd2(parameter_file,
         -------------------------------------------------- """
 
     ### CONFIGURATION FILE
-    config = saveread.read_parameter_file(parameter_file,
+    config = read_parameter_file(parameter_file,
                                         NewMODELconfig=NewMODELconfig,
                                         NewDMconfig=NewDMconfig,
                                         NewCoronaconfig=NewCoronaconfig,

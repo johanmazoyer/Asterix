@@ -9,10 +9,14 @@ from astropy.io import fits
 from Asterix import model_dir
 from Asterix.optical_systems import OpticalSystem, Pupil
 
-import Asterix.processing_functions as proc
+import Asterix.utils.gaussians as gauss
+import Asterix.utils.processing_functions as proc
+from Asterix.utils import save_plane_in_fits
+from Asterix.utils.save_and_read import progress
+
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
-import Asterix.save_and_read as saveread
+
 
 class DeformableMirror(OpticalSystem):
     """ --------------------------------------------------
@@ -179,9 +183,9 @@ class DeformableMirror(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
+            save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
             name_plane = 'phase_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, DMphase)
+            save_plane_in_fits(dir_save_all_planes, name_plane, DMphase)
 
         # if the DM is not active or if the surface is 0
         # we save some time : the EF is not modified
@@ -200,7 +204,7 @@ class DeformableMirror(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, EF_after_DM)
+            save_plane_in_fits(dir_save_all_planes, name_plane, EF_after_DM)
 
         return EF_after_DM
 
@@ -298,7 +302,7 @@ class DeformableMirror(OpticalSystem):
         resizeactshape = proc.crop_or_pad_image(resizeactshape, dim_even)
 
         # Gauss2Dfit for centering the rescaled influence function
-        Gaussian_fit_param = proc.gauss2Dfit(resizeactshape)
+        Gaussian_fit_param = gauss.gauss2Dfit(resizeactshape)
         dx = Gaussian_fit_param[3]
         dy = Gaussian_fit_param[4]
         xycent = len(resizeactshape) / 2
@@ -338,7 +342,7 @@ class DeformableMirror(OpticalSystem):
                 xy0 = np.unravel_index(Psivector.argmax(), Psivector.shape)
                 x, y = np.mgrid[0:dim_array, 0:dim_array]
                 xy = (x, y)
-                Psivector = proc.twoD_Gaussian(xy,
+                Psivector = gauss.twoD_Gaussian(xy,
                                                1,
                                                1 + gausserror,
                                                1 + gausserror,
@@ -470,7 +474,7 @@ class DeformableMirror(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
+            save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # Add DM phase at the right WL
         EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(phase_abb=phase_DM,
@@ -478,7 +482,7 @@ class DeformableMirror(OpticalSystem):
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
-            saveread.save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
+            save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # and propagate to next pupil plane
 
@@ -586,7 +590,7 @@ class DeformableMirror(OpticalSystem):
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
-                        saveread._progress(i, basis_size, status='')
+                        progress(i, basis_size, status='')
                 fits.writeto(self.Model_local_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
             print("time for " + Name_FourrierBasis_fits, time.time() - start_time)
 
