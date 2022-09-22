@@ -4,17 +4,16 @@
 import sys
 import os
 
+import datetime
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+
+from astropy.io import fits
 from configobj import ConfigObj
 from validate import Validator
 
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits
-import datetime
-
-import random
-
-from optical_systems import Asterix_root
+Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 
 def _quickshow(tab):
     """

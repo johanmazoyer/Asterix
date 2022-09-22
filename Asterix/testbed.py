@@ -1,7 +1,6 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
-import os
 import inspect
 import copy
 import numpy as np

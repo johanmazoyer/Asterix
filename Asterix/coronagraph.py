@@ -1,5 +1,6 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
+
 import os
 import numpy as np
 from astropy.io import fits
@@ -84,7 +85,7 @@ class Coronagraph(OpticalSystem):
             self.string_os += '_' + str_achrom
             self.perfect_coro = True
 
-        elif self.corona_type == "classiclyot" or self.corona_type == "hlc":
+        elif self.corona_type in ("classiclyot", "hlc"):
             self.prop_apod2lyot = 'mft-babinet'
             self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
             # we oversample the center in babinet's mode because we can
@@ -594,6 +595,3 @@ class Coronagraph(OpticalSystem):
                 self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
 
         return hlc_all_wl
-
-
-

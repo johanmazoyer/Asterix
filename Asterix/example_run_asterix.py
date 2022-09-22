@@ -2,9 +2,9 @@
 # pylint: disable=trailing-whitespace
 
 import os
+import time
 
 from Asterix import main_THD
-import time
 
 Asterixroot = os.path.dirname(os.path.realpath(__file__))
 

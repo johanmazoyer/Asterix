@@ -670,4 +670,3 @@ class OpticalSystem:
             entrance_EF = entrance_EF[0]
 
         return entrance_EF
-
