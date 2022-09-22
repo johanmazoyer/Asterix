@@ -418,7 +418,6 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
         center_pup = np.array([0.5, 0.5])
 
         for i in range(Nact1D**2):
-            toto = np.copy(pos_actu_in_pix[:, i])
             pos_actu_in_pix[:,
                             i] = pos_actu_in_pix[:,
                                                  i] - pos_actuhalfactfromcenter + halfactfromcenter + center_pup

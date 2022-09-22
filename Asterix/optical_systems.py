@@ -84,7 +84,7 @@ class OpticalSystem:
     #We define functions that all OpticalSystem object can use.
     # These can be overwritten for a subclass if need be
 
-    def EF_through(self, entrance_EF=1., save_all_planes_to_fits=False, dir_save_all_planes=None, **kwargs):
+    def EF_through(self, entrance_EF=1., **kwargs):
         """ --------------------------------------------------
         Propagate the electric field from entrance pupil to exit pupil
 
@@ -116,21 +116,11 @@ class OpticalSystem:
             Electric field in the pupil plane a the exit of the system
 
 
-
         -------------------------------------------------- """
-
-        # if isinstance(entrance_EF, float) or isinstance(entrance_EF, np.float):
-        #     entrance_EF = np.full(
-        #         (self.dim_overpad_pupil, self.dim_overpad_pupil),
-        #         np.float(entrance_EF))
 
         if isinstance(entrance_EF, (float, np.float, np.ndarray)) == False:
             print(entrance_EF)
             raise Exception("entrance_EF should be a float of a numpy array of floats")
-
-        if save_all_planes_to_fits == True and dir_save_all_planes == None:
-            raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +
-                            "please define a clear directory using dir_save_all_planes kw argument")
 
         exit_EF = entrance_EF
         return exit_EF

@@ -230,6 +230,10 @@ class Coronagraph(OpticalSystem):
 
         if wavelength is None:
             wavelength = self.wavelength_0
+        
+        if save_all_planes_to_fits == True and dir_save_all_planes == None:
+            raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +
+                            "please define a clear directory using dir_save_all_planes kw argument")
 
         if save_all_planes_to_fits == True:
             name_plane = 'EF_PP_before_apod' + '_wl{}'.format(int(wavelength * 1e9))

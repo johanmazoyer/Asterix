@@ -162,6 +162,10 @@ class DeformableMirror(OpticalSystem):
 
         -------------------------------------------------- """
 
+        if save_all_planes_to_fits == True and dir_save_all_planes == None:
+            raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +
+                            "please define a clear directory using dir_save_all_planes kw argument")
+
         # call the OpticalSystem super function to check
         # and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
