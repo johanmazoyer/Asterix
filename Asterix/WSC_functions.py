@@ -12,9 +12,7 @@ import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.save_and_read as saveread
 
-from Asterix.optical_systems import OpticalSystem
-from Asterix.deformable_mirror import DeformableMirror
-from Asterix.testbed import Testbed
+from Asterix.optical_systems import OpticalSystem, DeformableMirror, Testbed
 
 #################################################################################
 ### Correction functions

@@ -162,7 +162,7 @@ of a deformable mirror (DM) system.
 .. code-block:: python
     
     import Asterix.save_and_read as saveread
-    from Asterix.deformable_mirror import DeformableMirror
+    from Asterix.optical_systems import DeformableMirror
 
     config = saveread.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -196,10 +196,7 @@ It can only be initialized by giving a list of Optical Systems and it will creat
 .. code-block:: python
     
     import Asterix.save_and_read as saveread
-    from Asterix.pupil import Pupil
-    from Asterix.coronagraph import Coronagraph
-    from Asterix.deformable_mirror import DeformableMirror
-    from Asterix.testbed import Testbed
+    from Asterix.optical_systems import Pupil, Coronagraph, DeformableMirror, Testbed
 
     config = saveread.read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]

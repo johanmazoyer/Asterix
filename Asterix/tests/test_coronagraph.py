@@ -3,14 +3,14 @@ import numpy as np
 from configobj import ConfigObj
 from validate import Validator
 
-from Asterix.optical_systems import Asterix_root
-from Asterix.coronagraph import Coronagraph
+from Asterix import Asterix_root
+from Asterix.optical_systems import Coronagraph
 
 def test_default_coronagraph():
     # Load the example parameter file
-    parameter_file_ex = Asterix_root + os.path.sep + "Example_param_file.ini"
+    parameter_file_ex = Asterix_root + "Example_param_file.ini"
     # Load the template parameter file
-    configspec_file = Asterix_root + os.path.sep + "Param_configspec.ini"
+    configspec_file = Asterix_root + "Param_configspec.ini"
     # Load configuration - all three of the below lines are necessary
     config = ConfigObj(parameter_file_ex, configspec=configspec_file, default_encoding="utf8")
     vtor = Validator()

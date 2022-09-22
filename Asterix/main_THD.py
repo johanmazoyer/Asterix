@@ -11,10 +11,7 @@ from Asterix.corrector import Corrector
 from Asterix.correction_loop import correction_loop
 from Asterix.save_results import save_loop_results
 
-from Asterix.pupil import Pupil
-from Asterix.coronagraph import Coronagraph
-from Asterix.deformable_mirror import DeformableMirror
-from Asterix.testbed import Testbed
+from Asterix.optical_systems import Pupil, Coronagraph, DeformableMirror, Testbed
 
 #######################################################
 #######################################################

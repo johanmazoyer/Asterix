@@ -11,9 +11,7 @@ from Asterix.estimator import Estimator
 import Asterix.WSC_functions as wsc
 from Asterix.THD_quick_invert import THD_quick_invert
 
-from Asterix.optical_systems import OpticalSystem
-from Asterix.deformable_mirror import DeformableMirror
-from Asterix.testbed import Testbed
+from Asterix.optical_systems import OpticalSystem, DeformableMirror, Testbed
 
 class Corrector:
     """ --------------------------------------------------

@@ -10,8 +10,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-from Asterix.testbed import Testbed
-from Asterix.deformable_mirror import DeformableMirror
+from Asterix.optical_systems import DeformableMirror, Testbed
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 

@@ -11,7 +11,7 @@ from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
 
-from Asterix.testbed import Testbed
+from Asterix.optical_systems import Testbed
 
 def correction_loop(testbed: Testbed,
                     estimator: Estimator,

@@ -7,19 +7,15 @@ import numpy as np
 from configobj import ConfigObj
 from validate import Validator
 
+from Asterix import Asterix_root
 import Asterix.save_and_read as saveread
-
-from Asterix.optical_systems import Asterix_root
-from Asterix.pupil import Pupil
-from Asterix.coronagraph import Coronagraph
-from Asterix.deformable_mirror import DeformableMirror
-from Asterix.testbed import Testbed
+from Asterix.optical_systems import  Pupil, Coronagraph, DeformableMirror, Testbed
 
 # Set the path to your configuration file of choice
-parameter_file = Asterix_root + os.path.sep + "Example_param_file.ini"
+parameter_file = Asterix_root + "Example_param_file.ini"
 
 # Check the picked configuration file against a template of the configuraiton file and load it
-configspec_file = Asterix_root + os.path.sep + "Param_configspec.ini"
+configspec_file = Asterix_root + "Param_configspec.ini"
 config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
 vtor = Validator()
 checks = config.validate(vtor, copy=True)   #TODO: what is this supposed to do?

@@ -4,12 +4,10 @@
 import os
 import time
 
-from Asterix import main_THD
-
-Asterixroot = os.path.dirname(os.path.realpath(__file__))
+from Asterix import main_THD, Asterix_root
 
 start_time = time.time()
-main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+main_THD.runthd2(Asterix_root + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': False},
                  NewEstimationconfig={'estimation': 'pw'},
                  NewCorrectionconfig={
@@ -29,7 +27,7 @@ print("")
 print("")
 
 start_time = time.time()
-main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+main_THD.runthd2(Asterix_root + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': False},
                  NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
@@ -48,7 +46,7 @@ print("")
 print("")
 
 start_time = time.time()
-main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+main_THD.runthd2(Asterix_root + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': True},
                  NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
@@ -67,7 +65,7 @@ print("")
 print("")
 
 start_time = time.time()
-main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+main_THD.runthd2(Asterix_root + 'Example_param_file.ini',
                  NewDMconfig={'DM1_active': True},
                  NewEstimationconfig={'estimation': 'pw'},
                  NewCorrectionconfig={

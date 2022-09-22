@@ -5,8 +5,7 @@ import inspect
 import copy
 import numpy as np
 
-from Asterix.optical_systems import OpticalSystem
-from Asterix.deformable_mirror import DeformableMirror
+from Asterix.optical_systems import OpticalSystem, DeformableMirror
 
 class Testbed(OpticalSystem):
     """ --------------------------------------------------

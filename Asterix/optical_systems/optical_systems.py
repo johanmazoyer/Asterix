@@ -5,12 +5,12 @@ import copy
 import numpy as np
 from astropy.io import fits
 
+from Asterix import Asterix_root
 import Asterix.processing_functions as proc
 import Asterix.propagation_functions as prop
 import Asterix.phase_amplitude_functions as phase_ampl
 import Asterix.save_and_read as saveread
 
-Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 model_dir = os.path.join(Asterix_root, "Model") + os.path.sep
 
 

@@ -13,7 +13,7 @@ from astropy.io import fits
 from configobj import ConfigObj
 from validate import Validator
 
-Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
+from Asterix import Asterix_root
 
 def _quickshow(tab):
     """
@@ -194,7 +194,7 @@ def read_parameter_file(parameter_file,
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file + " cannot be found")
 
-    configspec_file = Asterix_root + os.path.sep + "Param_configspec.ini"
+    configspec_file = Asterix_root + "Param_configspec.ini"
 
     if not os.path.exists(configspec_file):
         raise Exception("The parameter config file " + configspec_file + " cannot be found")
