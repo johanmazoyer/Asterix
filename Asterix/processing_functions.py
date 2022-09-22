@@ -1,3 +1,6 @@
+# pylint: disable=invalid-name
+# pylint: disable=trailing-whitespace
+
 import numpy as np
 import scipy.optimize as opt
 import Asterix.save_and_read as useful

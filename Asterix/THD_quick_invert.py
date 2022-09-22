@@ -1,5 +1,7 @@
-import sys
+# pylint: disable=invalid-name
+# pylint: disable=trailing-whitespace
 
+import sys
 import os
 import time
 import numpy as np

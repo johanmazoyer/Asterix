@@ -5,11 +5,13 @@ import os
 import numpy as np
 from astropy.io import fits
 
-import Asterix.save_and_read as useful
 import Asterix.processing_functions as proc
-import Asterix.optical_systems as OptSy
+
 import Asterix.WSC_functions as wsc
 
+from Asterix.optical_systems import OpticalSystem
+from Asterix.deformable_mirror import DeformableMirror
+from Asterix.testbed import Testbed
 
 class Estimator:
     """ --------------------------------------------------
@@ -42,7 +44,7 @@ class Estimator:
 
     def __init__(self,
                  Estimationconfig,
-                 testbed: OptSy.Testbed,
+                 testbed: Testbed,
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -82,7 +84,7 @@ class Estimator:
             print("Creating directory " + matrix_dir + " ...")
             os.makedirs(matrix_dir)
 
-        if isinstance(testbed, OptSy.OpticalSystem) == False:
+        if isinstance(testbed, OpticalSystem) == False:
             raise Exception("testbed must be an OpticalSystem object")
 
         self.technique = Estimationconfig["estimation"].lower()
@@ -126,7 +128,7 @@ class Estimator:
                     #If several DMs we check if there is at least one in PP
                     number_DMs_in_PP = 0
                     for DM_name in testbed.name_of_DMs:
-                        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+                        DM = vars(testbed)[DM_name]  # type: DeformableMirror
                         if DM.z_position == 0.:
                             number_DMs_in_PP += 1
                             testbed.name_DM_to_probe_in_PW = DM_name
@@ -188,7 +190,7 @@ class Estimator:
             raise Exception("This estimation algorithm is not yet implemented")
 
     def estimate(self,
-                 testbed: OptSy.Testbed,
+                 testbed: Testbed,
                  entrance_EF=1.,
                  voltage_vector=0.,
                  wavelength=None,

@@ -3,14 +3,14 @@ import numpy as np
 from configobj import ConfigObj
 from validate import Validator
 
-import Asterix.optical_systems as OptSy
-
+from Asterix.optical_systems import Asterix_root
+from Asterix.coronagraph import Coronagraph
 
 def test_default_coronagraph():
     # Load the example parameter file
-    parameter_file_ex = OptSy.Asterix_root + os.path.sep + "Example_param_file.ini"
+    parameter_file_ex = Asterix_root + os.path.sep + "Example_param_file.ini"
     # Load the template parameter file
-    configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
+    configspec_file = Asterix_root + os.path.sep + "Param_configspec.ini"
     # Load configuration - all three of the below lines are necessary
     config = ConfigObj(parameter_file_ex, configspec=configspec_file, default_encoding="utf8")
     vtor = Validator()
@@ -26,7 +26,7 @@ def test_default_coronagraph():
     Coronaconfig.update({'filename_instr_apod': "RoundPup"})
 
     # Create the coronagraph
-    corono = OptSy.Coronagraph(modelconfig, Coronaconfig)
+    corono = Coronagraph(modelconfig, Coronaconfig)
     coro_psf = corono.todetector_intensity(center_on_pixel=True)
 
     assert np.max(coro_psf) == 0.0, "A perfect coronagraph should return an empty array."

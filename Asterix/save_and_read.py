@@ -1,18 +1,20 @@
+# pylint: disable=invalid-name
+# pylint: disable=trailing-whitespace
+
 import sys
 import os
 
 from configobj import ConfigObj
 from validate import Validator
 
-import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 import datetime
 
 import random
-import Asterix.optical_systems as OptSy
 
+from optical_systems import Asterix_root
 
 def _quickshow(tab):
     """
@@ -193,7 +195,7 @@ def read_parameter_file(parameter_file,
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file + " cannot be found")
 
-    configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
+    configspec_file = Asterix_root + os.path.sep + "Param_configspec.ini"
 
     if not os.path.exists(configspec_file):
         raise Exception("The parameter config file " + configspec_file + " cannot be found")

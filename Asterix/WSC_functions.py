@@ -2,7 +2,6 @@
 # pylint: disable=trailing-whitespace
 
 import os
-import copy
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
@@ -12,7 +11,10 @@ from astropy.io import fits
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
 import Asterix.save_and_read as useful
-import Asterix.optical_systems as OptSy
+
+from Asterix.optical_systems import OpticalSystem
+from Asterix.deformable_mirror import DeformableMirror
+from Asterix.testbed import Testbed
 
 #################################################################################
 ### Correction functions
@@ -97,7 +99,7 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
     return [np.diag(InvS), np.diag(InvS_truncated), pseudoinverse]
 
 
-def create_interaction_matrix(testbed: OptSy.Testbed,
+def create_interaction_matrix(testbed: Testbed,
                               dimEstim,
                               amplitudeEFC,
                               matrix_dir,
@@ -189,7 +191,7 @@ def create_interaction_matrix(testbed: OptSy.Testbed,
 
     for i, DM_name in enumerate(testbed.name_of_DMs):
 
-        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+        DM = vars(testbed)[DM_name]  # type: DeformableMirror
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
@@ -221,7 +223,7 @@ def create_interaction_matrix(testbed: OptSy.Testbed,
 
     for DM_name in testbed.name_of_DMs:
 
-        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+        DM = vars(testbed)[DM_name]  # type: DeformableMirror
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(DM.basis_size)
@@ -291,13 +293,13 @@ def create_interaction_matrix(testbed: OptSy.Testbed,
             wavefrontupstream = input_wavefront
 
             for osname in OpticSysNameBefore:
-                OpticSysbefore = vars(testbed)[osname]  # type: OptSy.OpticalSystem
+                OpticSysbefore = vars(testbed)[osname]  # type: OpticalSystem
 
                 if save_all_planes_to_fits == True:
                     # save PP plane before this subsystem
                     name_plane = 'EF_PP_before_' + osname + '_wl{}'.format(int(wavelength * 1e9))
                     useful.save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
-                if isinstance(OpticSysbefore, OptSy.DeformableMirror) and OpticSysbefore.active:
+                if isinstance(OpticSysbefore, DeformableMirror) and OpticSysbefore.active:
                     # this subsystem is an active DM but not the one we actuate now (located before the one we actuate)
 
                     if OpticSysbefore.z_position == 0:
@@ -381,10 +383,10 @@ def create_interaction_matrix(testbed: OptSy.Testbed,
                 # and finally we go through the subsystems after the DMs we want to actuate
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
                 for osname in OpticSysNameAfter:
-                    OpticSysAfter = vars(testbed)[osname]  # type: OptSy.OpticalSystem
+                    OpticSysAfter = vars(testbed)[osname]  # type: OpticalSystem
                     if osname != OpticSysNameAfter[-1]:
 
-                        if isinstance(OpticSysAfter, OptSy.DeformableMirror) and OpticSysAfter.active:
+                        if isinstance(OpticSysAfter, DeformableMirror) and OpticSysAfter.active:
 
                             # this subsystem is an active DM but not the one we actuate now (located after the one we actuate)
                             if OpticSysAfter.z_position == 0:
@@ -458,7 +460,7 @@ def create_interaction_matrix(testbed: OptSy.Testbed,
 
     # clean to save memory
     for i, DM_name in enumerate(testbed.name_of_DMs):
-        DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+        DM = vars(testbed)[DM_name]  # type: DeformableMirror
         DM.phase_init = 0
 
     print("")
@@ -501,7 +503,7 @@ def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.nd
     return DHInteractionMatrix
 
 
-def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed: OptSy.Testbed):
+def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed: Testbed):
     """ --------------------------------------------------
     Voltages to apply on the deformable mirrors in order to minimize the speckle
     intensity in the dark hole region
@@ -541,7 +543,7 @@ def solutionEFC(mask, Result_Estimate, inversed_jacobian, testbed: OptSy.Testbed
     return testbed.basis_vector_to_act_vector(produit_mat)
 
 
-def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: OptSy.Testbed):
+def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region
@@ -584,7 +586,7 @@ def solutionEM(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: OptSy.T
 
 
 def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast, last_best_alpha,
-                            testbed: OptSy.Testbed):
+                            testbed: Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region in the stroke min solution
@@ -695,7 +697,7 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
     return testbed.basis_vector_to_act_vector(DMSurfaceCoeff), alpha
 
 
-def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: OptSy.Testbed):
+def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize
     the speckle intensity in the dark hole region
@@ -740,7 +742,7 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
 #################################################################################
 
 
-def create_pw_matrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength):
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength):
     """ --------------------------------------------------
     Build the interaction matrix for pair-wise probing.
 
@@ -782,7 +784,7 @@ def create_pw_matrix(testbed: OptSy.Testbed, amplitude, posprobes, dimEstim, cut
     PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
 
-    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]  # type: OptSy.DeformableMirror
+    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]  # type: DeformableMirror
 
     psi0 = testbed.todetector()
     k = 0
@@ -860,7 +862,7 @@ def calculate_pw_estimate(Difference, Vectorprobes):
 
 
 def simulate_pw_difference(input_wavefront,
-                           testbed: OptSy.Testbed,
+                           testbed: Testbed,
                            posprobes,
                            dimimages,
                            amplitudePW,
@@ -914,7 +916,7 @@ def simulate_pw_difference(input_wavefront,
         indice_acum_number_act = 0
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+            DM = vars(testbed)[DM_name]  # type: DeformableMirror
 
             if DM_name == testbed.name_DM_to_probe_in_PW:
                 Voltage_probeDMprobe = np.zeros(DM.number_act)

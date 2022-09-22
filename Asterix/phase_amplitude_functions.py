@@ -1,8 +1,9 @@
+# pylint: disable=invalid-name
+# pylint: disable=trailing-whitespace
+
 import numpy as np
 import Asterix.propagation_functions as prop
 import Asterix.processing_functions as proc
-import Asterix.save_and_read as useful
-
 
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     """ --------------------------------------------------

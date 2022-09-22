@@ -1,3 +1,6 @@
+# pylint: disable=invalid-name
+# pylint: disable=trailing-whitespace
+
 import os
 import warnings
 import datetime

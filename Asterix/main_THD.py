@@ -1,16 +1,20 @@
-__author__ = 'Raphael Galicher, Johan Mazoyer, and Axel Potier'
 # pylint: disable=invalid-name
+# pylint: disable=trailing-whitespace
 
 import os
 
 import Asterix.save_and_read as useful
-import Asterix.optical_systems as OptSy
 
 from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
 from Asterix.correction_loop import correction_loop
 from Asterix.save_results import save_loop_results
+
+from Asterix.pupil import Pupil
+from Asterix.coronagraph import Coronagraph
+from Asterix.deformable_mirror import DeformableMirror
+from Asterix.testbed import Testbed
 
 #######################################################
 #######################################################
@@ -99,18 +103,18 @@ def runthd2(parameter_file,
     Labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
     # Initialize thd:
-    entrance_pupil = OptSy.Pupil(modelconfig,
+    entrance_pupil = Pupil(modelconfig,
                                  PupType=modelconfig['filename_instr_pup'],
                                  angle_rotation=modelconfig['entrance_pup_rotation'],
                                  Model_local_dir=Model_local_dir)
 
-    DM1 = OptSy.DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
+    DM1 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
 
-    DM3 = OptSy.DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
+    DM3 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
 
-    corono = OptSy.Coronagraph(modelconfig, Coronaconfig, Model_local_dir=Model_local_dir)
+    corono = Coronagraph(modelconfig, Coronaconfig, Model_local_dir=Model_local_dir)
     # and then just concatenate
-    thd2 = OptSy.Testbed([entrance_pupil, DM1, DM3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
+    thd2 = Testbed([entrance_pupil, DM1, DM3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
 
     # The following line can be used to change the DM to make the PW probe,
     # including with a DM out of the pupil plane.

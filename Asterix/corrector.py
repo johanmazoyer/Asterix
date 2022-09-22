@@ -7,12 +7,13 @@ import time
 import numpy as np
 from astropy.io import fits
 
-import Asterix.save_and_read as useful
-import Asterix.optical_systems as OptSy
 from Asterix.estimator import Estimator
 import Asterix.WSC_functions as wsc
 from Asterix.THD_quick_invert import THD_quick_invert
 
+from Asterix.optical_systems import OpticalSystem
+from Asterix.deformable_mirror import DeformableMirror
+from Asterix.testbed import Testbed
 
 class Corrector:
     """ --------------------------------------------------
@@ -40,7 +41,7 @@ class Corrector:
 
     def __init__(self,
                  Correctionconfig,
-                 testbed: OptSy.Testbed,
+                 testbed: Testbed,
                  MaskDH,
                  estimator: Estimator,
                  matrix_dir=None,
@@ -86,14 +87,14 @@ class Corrector:
             print("Creating directory " + matrix_dir + " ...")
             os.makedirs(matrix_dir)
 
-        if isinstance(testbed, OptSy.OpticalSystem) == False:
+        if isinstance(testbed, OpticalSystem) == False:
             raise Exception("testbed must be an OpticalSystem object")
 
         basis_type = Correctionconfig["DM_basis"].lower()
         self.total_number_modes = 0
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+            DM = vars(testbed)[DM_name]  # type: DeformableMirror
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
             self.total_number_modes += DM.basis_size
@@ -179,7 +180,7 @@ class Corrector:
         # DM for a given voltage when using DM.voltage_to_phase
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+            DM = vars(testbed)[DM_name]  # type: DeformableMirror
             if DM.misregistration:
                 print(DM_name + " Misregistration!")
                 DM.DM_pushact = DM.creatingpushact(DM.DMconfig)
@@ -191,7 +192,7 @@ class Corrector:
         self.previousmode = np.nan
 
     def update_matrices(self,
-                        testbed: OptSy.Testbed,
+                        testbed: Testbed,
                         estimator: Estimator,
                         initial_DM_voltage=0.,
                         input_wavefront=1.):
@@ -256,7 +257,7 @@ class Corrector:
         else:
             raise Exception("This correction algorithm is not yet implemented")
 
-    def toDM_voltage(self, testbed: OptSy.Testbed, estimate, mode=1, ActualCurrentContrast=1., **kwargs):
+    def toDM_voltage(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., **kwargs):
         """ --------------------------------------------------
         Run a correction from a estimate, and return the DM voltage compatible with the testbed
 
@@ -311,7 +312,7 @@ class Corrector:
             # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
 
             #     # we access each DM object individually
-            #     DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+            #     DM = vars(testbed)[DM_name]  # type: DeformableMirror
 
             #     # we multpily each DM by a specific DM gain
             #     solutionefc[
@@ -371,7 +372,7 @@ class Corrector:
             # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
 
             #     # we access each DM object individually
-            #     DM = vars(testbed)[DM_name]  # type: OptSy.DeformableMirror
+            #     DM = vars(testbed)[DM_name]  # type: DeformableMirror
 
             #     # we multpily each DM by a specific DM gain
             #     solutionSM[

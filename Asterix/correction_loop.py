@@ -1,24 +1,19 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
-## Correction loop
 
 import numpy as np
-
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-
-import Asterix.optical_systems as OptSy
 
 from Asterix.MaskDH import MaskDH
 from Asterix.estimator import Estimator
 from Asterix.corrector import Corrector
 
-import Asterix.save_and_read as useful
+from Asterix.testbed import Testbed
 
-
-def correction_loop(testbed: OptSy.Testbed,
+def correction_loop(testbed: Testbed,
                     estimator: Estimator,
                     corrector: Corrector,
                     mask_dh: MaskDH,
@@ -155,7 +150,7 @@ def correction_loop(testbed: OptSy.Testbed,
     return Resultats_correction_loop
 
 
-def correction_loop_1matrix(testbed: OptSy.Testbed,
+def correction_loop_1matrix(testbed: Testbed,
                             estimator: Estimator,
                             corrector: Corrector,
                             mask_dh: MaskDH,
