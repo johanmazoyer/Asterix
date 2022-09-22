@@ -66,7 +66,7 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
         
         -------------------------------------------------- """
 
-    if name_active_DM == 13 or name_active_DM == 31:
+    if name_active_DM in (13, 31):
         Gmatrix = fits.getdata(os.path.join(matrix_directory, "Direct_Matrix_2DM.fits"))
         DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
@@ -90,7 +90,7 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
                                      filename_visu=os.path.join(matrix_directory,
                                                                "SVD_Modes" + str(Nbmodes) + ".png"))
 
-    if name_active_DM == 13 or name_active_DM == 31:
+    if name_active_DM in (13, 31):
         DM1_basis_size = DM1_basis.shape[0]
 
         invertGDH_DM1 = invertGDH[:DM1_basis_size]

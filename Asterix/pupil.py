@@ -169,8 +169,8 @@ class Pupil(OpticalSystem):
                     raise Exception(
                         "Choose a divisor of the .fits file size ({0}) for diam_pup_in_pix parameter: {1}".
                         format(pup_fits.shape[0], find_divisors))
-                else:
-                    pup_fits_right_size = proc.rebin(pup_fits,
+                
+                pup_fits_right_size = proc.rebin(pup_fits,
                                                      int(pup_fits.shape[0] / (2 * self.prad)),
                                                      center_on_pixel=False)
 
@@ -237,8 +237,7 @@ class Pupil(OpticalSystem):
                 raise Exception("I'm confused, your pupil seem to be polychromatic" +
                                 "(pup.shape=3) but the # of WL (pup.shape[0]={}) ".format(self.pup.shape[0]) +
                                 "is different from the system # of WL (nb_wav={})".format(self.nb_wav))
-            else:
-                exit_EF = entrance_EF * self.pup[self.wav_vec.tolist().index(wavelength)]
+            exit_EF = entrance_EF * self.pup[self.wav_vec.tolist().index(wavelength)]
         else:
             raise Exception("pupil dimension are not acceptable")
 

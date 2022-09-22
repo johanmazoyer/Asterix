@@ -108,41 +108,40 @@ class Estimator:
             self.is_complex = True
 
             self.amplitudePW = Estimationconfig["amplitudePW"]
-            self.posprobes = [i for i in Estimationconfig["posprobes"]]
+            self.posprobes = list(Estimationconfig["posprobes"])
             cutsvdPW = Estimationconfig["cut"]
 
             if hasattr(testbed, 'name_DM_to_probe_in_PW'):
                 if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
                     raise Exception("Cannot use this DM for PW, this testbed has no DM named " +
                                     testbed.name_DM_to_probe_in_PW)
+            # If name_DM_to_probe_in_PW is not set,
+            # automatically check which DM to use to probe in this case
+            # this is only done once.
+            if len(testbed.name_of_DMs) == 0:
+                raise Exception("you need at least one activated DM to do PW")
+            #If only one DM, we use this one, independenlty of its position
+            elif len(testbed.name_of_DMs) == 1:
+                testbed.name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
             else:
-                # If name_DM_to_probe_in_PW is not set,
-                # automatically check which DM to use to probe in this case
-                # this is only done once.
-                if len(testbed.name_of_DMs) == 0:
-                    raise Exception("you need at least one activated DM to do PW")
-                #If only one DM, we use this one, independenlty of its position
-                elif len(testbed.name_of_DMs) == 1:
-                    testbed.name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
-                else:
-                    #If several DMs we check if there is at least one in PP
-                    number_DMs_in_PP = 0
-                    for DM_name in testbed.name_of_DMs:
-                        DM = vars(testbed)[DM_name]  # type: DeformableMirror
-                        if DM.z_position == 0.:
-                            number_DMs_in_PP += 1
-                            testbed.name_DM_to_probe_in_PW = DM_name
+                #If several DMs we check if there is at least one in PP
+                number_DMs_in_PP = 0
+                for DM_name in testbed.name_of_DMs:
+                    DM = vars(testbed)[DM_name]  # type: DeformableMirror
+                    if DM.z_position == 0.:
+                        number_DMs_in_PP += 1
+                        testbed.name_DM_to_probe_in_PW = DM_name
 
-                    #If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
-                    if number_DMs_in_PP > 1:
-                        raise Exception(
-                            "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
-                        )
-                    #Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
-                    if number_DMs_in_PP == 0:
-                        raise Exception(
-                            "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
-                        )
+                #If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
+                if number_DMs_in_PP > 1:
+                    raise Exception(
+                        "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                    )
+                #Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
+                if number_DMs_in_PP == 0:
+                    raise Exception(
+                        "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                    )
 
             string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(
                 str, self.posprobes)) + "_PWampl" + str(int(self.amplitudePW)) + "_cut" + str(
@@ -183,6 +182,7 @@ class Estimator:
                 fits.writeto(realtestbed_dir + "Matr_mult_estim" + namepwmatrix + ".fits",
                              vectorPW,
                              overwrite=True)
+        
         elif self.technique == 'coffee':
             pass
 

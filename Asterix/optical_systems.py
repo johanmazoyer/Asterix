@@ -324,8 +324,8 @@ class OpticalSystem:
                      normalization for a subset of  wavelengths, use in_contrast=False and
                      measure the PSF to normalize.
                 """)
-            else:
-                focal_plane_Intensity /= self.norm_polychrom
+            
+            focal_plane_Intensity /= self.norm_polychrom
 
         if photon_noise == True:
             focal_plane_Intensity = np.random.poisson(
@@ -559,9 +559,9 @@ class OpticalSystem:
                             print("")
                             print("")
                             raise
-                        else:
-                            print("Opening {0} file for testbed aberrations.".format(ampl_abb_filename))
-                            print("This file should have centerX, centerY and RESPUP keyword in header")
+
+                        print("Opening {0} file for testbed aberrations.".format(ampl_abb_filename))
+                        print("This file should have centerX, centerY and RESPUP keyword in header")
 
                         testbedampl = fits.getdata(ampl_abb_filename)
                         testbedampl_header = fits.getheader(ampl_abb_filename)

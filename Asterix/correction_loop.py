@@ -95,7 +95,7 @@ def correction_loop(testbed: Testbed,
     nb_photons = SIMUconfig["nb_photons"]
 
     # reading the loop parameter files
-    Nbiter_corr = [i for i in Loopconfig["Nbiter_corr"]]
+    Nbiter_corr = list(Loopconfig["Nbiter_corr"])
     Number_matrix = Loopconfig["Number_matrix"]
 
     Nbmode_corr = []
@@ -103,7 +103,7 @@ def correction_loop(testbed: Testbed,
         Linesearch = Loopconfig["Linesearch"]
         gain = Loopconfig["gain"]
         if Linesearch == False:
-            Nbmode_corr = [i for i in Loopconfig["Nbmode_corr"]]
+            Nbmode_corr = list(Loopconfig["Nbmode_corr"])
             if len(Nbiter_corr) != len(Nbmode_corr):
                 raise Exception("""In this correction mode and if Linesearch = False, 
                 the length of Nbmode_corr must match the length of Nbiter_corr""")
