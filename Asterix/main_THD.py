@@ -35,7 +35,7 @@ def runthd2(parameter_file,
     Parameters
     ----------
     parameter_file: string
-        Path to a .ini parameter file
+        Absolute path to a .ini parameter file
     NewMODELconfig: dict, optional
         Can be used to directly change a parameter in the MODELconfig section of the input parameter file.
     NewDMconfig: dict, optional
