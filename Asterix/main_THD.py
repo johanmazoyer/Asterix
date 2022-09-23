@@ -144,3 +144,5 @@ def runthd2(parameter_file,
                               silence=False)
 
     save_loop_results(results, config, thd2, science_mask_dh, result_dir)
+
+    return results
