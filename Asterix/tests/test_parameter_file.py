@@ -1,4 +1,4 @@
-import os
+
 from configobj import ConfigObj
 from validate import Validator
 

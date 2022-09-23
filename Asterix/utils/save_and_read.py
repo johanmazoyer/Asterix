@@ -221,3 +221,31 @@ def read_parameter_file(parameter_file,
                         name, key))
 
     return config
+
+
+
+def from_param_to_header(config):
+    """ --------------------------------------------------
+    Convert ConfigObj parameters to fits header type list
+    AUTHOR: Axel Potier
+
+    Parameters
+    ----------
+    config: dict
+        config obj
+
+    Returns
+    ------
+    header: dict
+        list of parameters
+
+
+    
+    -------------------------------------------------- """
+    header = fits.Header()
+    for sect in config.sections:
+        # print(config[str(sect)])
+        for scalar in config[str(sect)].scalars:
+            header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
+    return header
+
