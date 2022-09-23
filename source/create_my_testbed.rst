@@ -54,7 +54,7 @@ Finally, for all optical system, you can use generic functions like to creaet an
     SIMUconfig = config["SIMUconfig"] #parameters for phase aberrations
 
     phase_abb_up = generic_os.generate_phase_aberr(SIMUconfig)
-    input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up)
+    input_wavefront = generic_os.EF_from_phase_and_ampl(phase_abb=phase_abb_up)
 
     # Focal plane intensity for this aberrations
     PSF = generic_os.todetector_intensity(entrance_EF = input_wavefront)
@@ -83,7 +83,7 @@ and concatenate them with other elements.
 .. code-block:: python
     
     from Asterix.utils import read_parameter_file
-    from Asterix.pupil import Pupil
+    from Asterix.optical_systems import  Pupil
 
     config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -133,7 +133,7 @@ documentation can be found in Section :ref:`coronagraph-label`.
 .. code-block:: python
     
     from Asterix.utils import read_parameter_file
-    from Asterix.coronagraph import Coronagraph
+    from Asterix.optical_systems import Coronagraph
 
     config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
