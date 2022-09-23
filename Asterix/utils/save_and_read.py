@@ -52,6 +52,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     else:
         fits.writeto(os.path.join(dir_save_fits, name_fits + '_RE.fits'), image, overwrite=True)
 
+
 def quickshow(tab):
     """
     Function to quickly show an array.
@@ -66,6 +67,7 @@ def quickshow(tab):
     plt.imshow(tmp, origin='lower', cmap='gray')
     plt.show()
     plt.close()
+
 
 def quickfits(tab, dir='', name='tmp'):
     """
@@ -223,7 +225,6 @@ def read_parameter_file(parameter_file,
     return config
 
 
-
 def from_param_to_header(config):
     """ --------------------------------------------------
     Convert ConfigObj parameters to fits header type list
@@ -248,4 +249,3 @@ def from_param_to_header(config):
         for scalar in config[str(sect)].scalars:
             header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
     return header
-

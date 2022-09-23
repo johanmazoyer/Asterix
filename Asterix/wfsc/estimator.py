@@ -179,7 +179,7 @@ class Estimator:
                 fits.writeto(realtestbed_dir + "Matr_mult_estim" + namepwmatrix + ".fits",
                              vectorPW,
                              overwrite=True)
-        
+
         elif self.technique == 'coffee':
             pass
 

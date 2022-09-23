@@ -321,7 +321,7 @@ class OpticalSystem:
                      normalization for a subset of  wavelengths, use in_contrast=False and
                      measure the PSF to normalize.
                 """)
-            
+
             focal_plane_Intensity /= self.norm_polychrom
 
         if photon_noise == True:
@@ -569,8 +569,8 @@ class OpticalSystem:
                         # recenter
                         if centerX != size_ampl // 2 - 1 / 2 or centerY != size_ampl // 2 - 1 / 2:
                             testbedampl = ft_subpixel_shift(testbedampl,
-                                                                 xshift=size_ampl // 2 - 1 / 2 - centerX,
-                                                                 yshift=size_ampl // 2 - 1 / 2 - centerY)
+                                                            xshift=size_ampl // 2 - 1 / 2 - centerX,
+                                                            yshift=size_ampl // 2 - 1 / 2 - centerY)
 
                     # reshape at the good size
                     # TODO we may have to check the centering is ok

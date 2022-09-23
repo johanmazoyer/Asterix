@@ -1,10 +1,9 @@
-
 import numpy as np
-
 
 from Asterix import Asterix_root
 from Asterix.utils import read_parameter_file
 from Asterix.optics import Coronagraph
+
 
 def test_default_coronagraph():
     # Load the example parameter file

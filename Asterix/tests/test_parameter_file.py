@@ -1,8 +1,8 @@
-
 from configobj import ConfigObj
 from validate import Validator
 
 from Asterix import Asterix_root
+
 
 def test_example_parameter_file():
     # Define where to load the example parameter file from.

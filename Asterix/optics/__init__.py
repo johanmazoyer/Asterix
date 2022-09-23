@@ -1,10 +1,4 @@
-__all__ = [
-    'OpticalSystem',
-    'Pupil',
-    'Coronagraph',
-    'DeformableMirror',
-    'Testbed'
-]
+__all__ = ['OpticalSystem', 'Pupil', 'Coronagraph', 'DeformableMirror', 'Testbed']
 
 from .optical_systems import *
 from .pupil import *

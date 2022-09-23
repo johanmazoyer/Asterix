@@ -229,7 +229,7 @@ class Coronagraph(OpticalSystem):
 
         if wavelength is None:
             wavelength = self.wavelength_0
-        
+
         if save_all_planes_to_fits == True and dir_save_all_planes == None:
             raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +
                             "please define a clear directory using dir_save_all_planes kw argument")
@@ -259,8 +259,7 @@ class Coronagraph(OpticalSystem):
 
         if self.prop_apod2lyot == "fft":
             dim_fp_fft_here = self.dim_fp_fft[self.wav_vec.tolist().index(wavelength)]
-            input_wavefront_after_apod_pad = crop_or_pad_image(input_wavefront_after_apod,
-                                                                    dim_fp_fft_here)
+            input_wavefront_after_apod_pad = crop_or_pad_image(input_wavefront_after_apod, dim_fp_fft_here)
 
             corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad,
                                                        inverse=False,
@@ -269,12 +268,11 @@ class Coronagraph(OpticalSystem):
 
             if save_all_planes_to_fits == True:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
-                save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          np.fft.fftshift(corono_focal_plane))
+                save_plane_in_fits(dir_save_all_planes, name_plane, np.fft.fftshift(corono_focal_plane))
 
                 name_plane = 'PSF EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          np.fft.fftshift(np.abs(corono_focal_plane)**2))
+                                   np.fft.fftshift(np.abs(corono_focal_plane)**2))
                 if not noFPM:
                     name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
                     save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
@@ -287,7 +285,7 @@ class Coronagraph(OpticalSystem):
 
                 name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 save_plane_in_fits(dir_save_all_planes, name_plane,
-                                          np.fft.fftshift(corono_focal_plane * FPmsk))
+                                   np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk,
@@ -492,7 +490,7 @@ class Coronagraph(OpticalSystem):
                 dim_fp = self.dimScience
 
             phasevortex_cut = crop_or_pad_image(phase_vortex,
-                                                     dim_fp)  #*phase_ampl.roundpupil(dim_fp, dim_fp/2)
+                                                dim_fp)  #*phase_ampl.roundpupil(dim_fp, dim_fp/2)
             vortex.append(np.exp(1j * phasevortex_cut))
 
         return vortex

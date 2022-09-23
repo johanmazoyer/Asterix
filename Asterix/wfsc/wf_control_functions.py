@@ -4,10 +4,10 @@
 import os
 import numpy as np
 import matplotlib
+
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from astropy.io import fits
-
 
 from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress
 import Asterix.optics.propagation_functions as prop
@@ -266,8 +266,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                         if save_all_planes_to_fits == True:
                             name_plane = 'Phase_on_' + DM_name + '_wl{}'.format(int(wavelength * 1e9))
-                            save_plane_in_fits(dir_save_all_planes, name_plane,
-                                                      OpticSysbefore.phase_init)
+                            save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
 
                     else:
 
@@ -313,8 +312,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                             if save_all_planes_to_fits == True:
                                 name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(int(wavelength * 1e9))
-                                save_plane_in_fits(dir_save_all_planes, name_plane,
-                                                          OpticSysAfter.phase_init)
+                                save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysAfter.phase_init)
 
                         else:
                             wavefront = OpticSysAfter.EF_through(entrance_EF=wavefront)
@@ -500,8 +498,8 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
     return testbed.basis_vector_to_act_vector(produit_mat)
 
 
-def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast, last_best_alpha,
-                            testbed: Testbed):
+def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast,
+                            last_best_alpha, testbed: Testbed):
     """ --------------------------------------------------
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region in the stroke min solution

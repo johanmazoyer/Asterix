@@ -169,10 +169,10 @@ class Pupil(OpticalSystem):
                     raise Exception(
                         "Choose a divisor of the .fits file size ({0}) for diam_pup_in_pix parameter: {1}".
                         format(pup_fits.shape[0], find_divisors))
-                
+
                 pup_fits_right_size = rebin(pup_fits,
-                                                     int(pup_fits.shape[0] / (2 * self.prad)),
-                                                     center_on_pixel=False)
+                                            int(pup_fits.shape[0] / (2 * self.prad)),
+                                            center_on_pixel=False)
 
             self.pup = crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 

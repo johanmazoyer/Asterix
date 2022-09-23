@@ -294,10 +294,10 @@ class Corrector:
                 self.previousmode = mode
                 # we only re-invert the matrix if it is different from last time
                 _, _, self.invertGDH = invert_svd(self.Gmatrix,
-                                                      mode,
-                                                      goal="c",
-                                                      visu=False,
-                                                      regul=self.regularization)
+                                                  mode,
+                                                  goal="c",
+                                                  visu=False,
+                                                  regul=self.regularization)
 
             solutionefc = wfc.calc_efc_solution(self.MaskEstim, estimate, self.invertGDH, testbed)
 
@@ -347,8 +347,9 @@ class Corrector:
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
-            solutionSM, self.last_best_alpha = wfc.calc_strokemin_solution(self.MaskEstim, estimate, self.M0, self.G,
-                                                                           DesiredContrast, self.last_best_alpha, testbed)
+            solutionSM, self.last_best_alpha = wfc.calc_strokemin_solution(self.MaskEstim, estimate, self.M0,
+                                                                           self.G, DesiredContrast,
+                                                                           self.last_best_alpha, testbed)
 
             if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (
                     isinstance(solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
@@ -385,13 +386,13 @@ class Corrector:
             if mode != self.previousmode:
                 self.previousmode = mode
                 _, _, self.invertM0 = invert_svd(self.M0,
-                                                     mode,
-                                                     goal="c",
-                                                     visu=False,
-                                                     regul=self.regularization)
+                                                 mode,
+                                                 goal="c",
+                                                 visu=False,
+                                                 regul=self.regularization)
 
             return -self.amplitudeEFC * wfc.calc_em_solution(self.MaskEstim, estimate, self.invertM0, self.G,
-                                                       testbed)
+                                                             testbed)
 
         if self.correction_algorithm == "steepest":
 

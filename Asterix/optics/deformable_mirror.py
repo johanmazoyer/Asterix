@@ -281,7 +281,7 @@ class DeformableMirror(OpticalSystem):
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
             pitchDM = DMconfig[self.Name_DM + "_pitch"]
             simu_grid = generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m,
-                                                       diam_pup_in_pix) + dim_array / 2
+                                                  diam_pup_in_pix) + dim_array / 2
             pitchDMX = pitchDMY = pitchDM
 
         # Influence function and the pitch in pixels
@@ -290,9 +290,8 @@ class DeformableMirror(OpticalSystem):
 
         # Scaling the influence function to the desired dimension
         # for numerical simulation
-        resizeactshape = ft_zoom_out(actshape,
-                                          (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape,
-                                           diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape))
+        resizeactshape = ft_zoom_out(actshape, (diam_pup_in_pix / diam_pup_in_m * pitchDMX / pitch_actshape,
+                                                diam_pup_in_pix / diam_pup_in_m * pitchDMY / pitch_actshape))
 
         # make sure the actuator shape is in a squarre array of enven dimension (useful for the fft shift).
         # We do not care exactly about the centering since we recenter the actuator just after
@@ -307,7 +306,7 @@ class DeformableMirror(OpticalSystem):
 
         # Center the actuator shape on a pixel and normalize
         resizeactshape = ft_subpixel_shift(resizeactshape, xshift=xycent - dx,
-                                                yshift=xycent - dy) / np.amax(resizeactshape)
+                                           yshift=xycent - dy) / np.amax(resizeactshape)
 
         # Put the centered influence function inside an array (self.dim_overpad_pupil x self.dim_overpad_pupil)
         actshapeinpupil = crop_or_pad_image(resizeactshape, dim_array)
@@ -329,10 +328,10 @@ class DeformableMirror(OpticalSystem):
                     np.radians(angerror))
 
             Psivector = ft_subpixel_shift(ft_actu,
-                                               xshift=simu_grid[1, i] - xycenttmp + xerror * pitch_actshape,
-                                               yshift=simu_grid[0, i] - xycenttmp + yerror * pitch_actshape,
-                                               fourier=True,
-                                               norm="ortho")
+                                          xshift=simu_grid[1, i] - xycenttmp + xerror * pitch_actshape,
+                                          yshift=simu_grid[0, i] - xycenttmp + yerror * pitch_actshape,
+                                          fourier=True,
+                                          norm="ortho")
 
             if gausserror != 0:
                 # Add an error on the sizes of the influence functions
@@ -341,14 +340,14 @@ class DeformableMirror(OpticalSystem):
                 x, y = np.mgrid[0:dim_array, 0:dim_array]
                 xy = (x, y)
                 Psivector = gauss.twoD_Gaussian(xy,
-                                               1,
-                                               1 + gausserror,
-                                               1 + gausserror,
-                                               xy0[0],
-                                               xy0[1],
-                                               0,
-                                               0,
-                                               flatten=False)
+                                                1,
+                                                1 + gausserror,
+                                                1 + gausserror,
+                                                xy0[0],
+                                                xy0[1],
+                                                0,
+                                                0,
+                                                flatten=False)
             Psivector[np.where(Psivector < 1e-4)] = 0
 
             pushact3d[i] = Psivector
@@ -596,6 +595,7 @@ class DeformableMirror(OpticalSystem):
             raise Exception(basis_type + " is is not a valid basis_type")
 
         return basis
+
 
 def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     """ --------------------------------------------------

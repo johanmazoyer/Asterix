@@ -7,7 +7,7 @@ import numpy as np
 
 from Asterix import Asterix_root
 from Asterix.utils import quickfits, read_parameter_file
-from Asterix.optics import  Pupil, Coronagraph, DeformableMirror, Testbed
+from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
 
 # Set the path to your configuration file of choice
 parameter_file = Asterix_root + "Example_param_file.ini"
@@ -118,8 +118,7 @@ No_mask_PSF = corono.todetector_intensity(center_on_pixel=True, noFPM=True)
 Max_No_mask_PSF = np.max(No_mask_PSF)
 
 # Set an initial phase and amplitude
-phase = corono.generate_phase_aberr(SIMUconfig,
-                                    Model_local_dir=Model_local_dir)
+phase = corono.generate_phase_aberr(SIMUconfig, Model_local_dir=Model_local_dir)
 
 # From this phase we create an electrical field. This is a general
 # aberrated field before any pupil multiplication.
@@ -130,9 +129,7 @@ coronagraphic_PSF = corono.todetector_intensity(entrance_EF=aberrated_EF)
 
 # Which we can now normalize:
 normalized_coronagraphic_PSF = coronagraphic_PSF / Max_No_mask_PSF
-quickfits(normalized_coronagraphic_PSF,
-                  dir=result_dir,
-                  name="Normalized_coronagraphic_PSF")
+quickfits(normalized_coronagraphic_PSF, dir=result_dir, name="Normalized_coronagraphic_PSF")
 
 # If you want to debug something, you can save out all planes in the propagation, triggered by a keyword in most
 # propagation functions and methods.
@@ -148,10 +145,7 @@ FP_after_corono_in_contrast = corono.todetector_intensity(entrance_EF=aberrated_
 
 # Finally, we can initialize some DMs. DMs can be in a pupil or outside a pupil.
 # In the default configuraiton file, this one is in a pupil plane.
-DM3 = DeformableMirror(modelconfig,
-                             DMconfig,
-                             Name_DM='DM3',
-                             Model_local_dir=Model_local_dir)
+DM3 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Model_local_dir)
 
 # DMs are also optical systems but have another parameter to control them, DMphase.
 # Measure the EF through the DM:
@@ -167,22 +161,19 @@ EF_though_DM = DM3.EF_through(entrance_EF=aberrated_EF, DMphase=phase)
 #                               - A list of the same size containing the names of those systems so that you can access them
 # The list order is from the first optical system to the last in the
 # path of the light (so usually from entrance pupil to Lyot pupil).
-testbed_1DM = Testbed([pup_round, DM3, corono],
-                            ["entrancepupil", "DM3", "corono"])
+testbed_1DM = Testbed([pup_round, DM3, corono], ["entrancepupil", "DM3", "corono"])
 
 # Each of the subsystems can now be accessed individually with the name you have given it:
 # --> testbed_1DM.entrancepupil, testbed.DM3, etc
 
 # To avoid any confusion in case of multiple DMs, the command to access DMs is now XXXphase, where XXX is the name of the DM.
-PSF_after_testbed = testbed_1DM.todetector_intensity(entrance_EF=aberrated_EF,
-                                                     DM3phase=phase)
+PSF_after_testbed = testbed_1DM.todetector_intensity(entrance_EF=aberrated_EF, DM3phase=phase)
 
 # And the confusing DM3phase is removed so this will send an error:
 # PSF_after_testbed = testbed_1DM.todetector_intensity(entrance_EF=aberrated_EF, DMphase = phase)
 
 # We can now play with all the things we defined up to now, for example:
-testbed_1DM_romanpup = Testbed([pup_roman, DM3, corono],
-                                     ["entrancepupil", "DM3", "corono"])
+testbed_1DM_romanpup = Testbed([pup_roman, DM3, corono], ["entrancepupil", "DM3", "corono"])
 
 # If you have DMs in your system, these are saved in the structure so that you can access them:
 print("Number of DMs in testbed_1DM_romanpup:", testbed_1DM_romanpup.number_DMs)
@@ -204,18 +195,14 @@ DM3 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=Mod
 
 DMconfig.update({'DM1_active': True})
 
-DM1 = DeformableMirror(modelconfig,
-                             DMconfig,
-                             Name_DM='DM1',
-                             Model_local_dir=Model_local_dir)
+DM1 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
 
 # We also need to "clear" the apodizer plane because  there is no apodizer plane on the thd2 bench.
 Coronaconfig.update({'filename_instr_apod': "Clear"})
 corono_thd = Coronagraph(modelconfig, Coronaconfig)
 
 # And then just concatenate:
-thd2 = Testbed([pup_round, DM1, DM3, corono_thd],
-                     ["entrancepupil", "DM1", "DM3", "corono"])
+thd2 = Testbed([pup_round, DM1, DM3, corono_thd], ["entrancepupil", "DM1", "DM3", "corono"])
 
 # If you have DMs in your system, these are saved in the structure so that you can access them:
 print("Number of DMs in thd2:", thd2.number_DMs)
@@ -226,10 +213,7 @@ print("Name of the DMs: ", thd2.name_of_DMs)
 DMconfig.update({'DM1_z_position': -15e-2})  # meter
 DMconfig.update({'DM1_active': True})
 
-DMnew = DeformableMirror(modelconfig,
-                               DMconfig,
-                               Name_DM='DM1',
-                               Model_local_dir=Model_local_dir)
+DMnew = DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=Model_local_dir)
 # The variable Name_DM in this function is to be understood as the type of DM you want to use (DM3 is a BMC32x32 type DM
 # and DM1 is a BMC34x34) but the real name in the system is to be defined in the concatenation.
 
@@ -240,11 +224,10 @@ pupil_inbetween_DM = Pupil(modelconfig)
 # And a roman entrance pupil
 pup_roman = Pupil(modelconfig, PupType="RomanPup")
 
-
 # Let's concatenate everything!
 
 testbed_3DM = Testbed([pup_roman, DM1, DM3, pupil_inbetween_DM, DMnew, corono_thd],
-                            ["entrancepupil", "DM1", "DM3", "pupil_inbetween_DM", "DMnew", "corono"])
+                      ["entrancepupil", "DM1", "DM3", "pupil_inbetween_DM", "DMnew", "corono"])
 
 print("Number of DMs in testbed_3DM:", testbed_3DM.number_DMs)
 print("Name of the DMs: ", testbed_3DM.name_of_DMs)

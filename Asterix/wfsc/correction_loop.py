@@ -5,6 +5,7 @@ import os
 import datetime
 import numpy as np
 import matplotlib
+
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from astropy.io import fits
@@ -278,7 +279,7 @@ def correction_loop_1matrix(testbed: Testbed,
         print("Initial contrast in DH: ", initialFP_contrast)
         plt.ion()
         fig = plt.figure()
-        ax = plt.subplot(1,1,1)
+        ax = plt.subplot(1, 1, 1)
         im = ax.imshow(np.log10(initialFP), vmin=-8, vmax=-5)
         plt.gca().invert_yaxis()
         ax.figure.colorbar(im)
@@ -301,19 +302,20 @@ def correction_loop_1matrix(testbed: Testbed,
                 # if we are just trying to find the best mode, we just call the function itself
                 # on the Linesearchmodes but without updating the results.
                 # this is elegant but must be carefully done if we want to avoid infinite loop.
-                bestcontrast, bestmode = correction_loop_1matrix(testbed,
-                                                                 estimator,
-                                                                 corrector,
-                                                                 mask_dh,
-                                                                 np.ones(len(Linesearchmodes), dtype=int),
-                                                                 dict(),
-                                                                 gain=gain,
-                                                                 Nbmode_corr=Linesearchmodes,
-                                                                 Search_best_Mode=True,
-                                                                 input_wavefront=input_wavefront,
-                                                                 initial_DM_voltage=thisloop_voltages_DMs[iteration],
-                                                                 silence=True,
-                                                                 **kwargs)
+                bestcontrast, bestmode = correction_loop_1matrix(
+                    testbed,
+                    estimator,
+                    corrector,
+                    mask_dh,
+                    np.ones(len(Linesearchmodes), dtype=int),
+                    dict(),
+                    gain=gain,
+                    Nbmode_corr=Linesearchmodes,
+                    Search_best_Mode=True,
+                    input_wavefront=input_wavefront,
+                    initial_DM_voltage=thisloop_voltages_DMs[iteration],
+                    silence=True,
+                    **kwargs)
 
                 print("Best Mode is ", bestmode, " with contrast: ", bestcontrast)
                 mode = bestmode
@@ -565,4 +567,3 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                          mask_DH=MaskScience,
                          path=result_dir,
                          filename=current_time_str)
-
