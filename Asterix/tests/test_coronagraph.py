@@ -1,20 +1,15 @@
 
 import numpy as np
-from configobj import ConfigObj
-from validate import Validator
+
 
 from Asterix import Asterix_root
+from Asterix.utils import read_parameter_file
 from Asterix.optics import Coronagraph
 
 def test_default_coronagraph():
     # Load the example parameter file
     parameter_file_ex = Asterix_root + "Example_param_file.ini"
-    # Load the template parameter file
-    configspec_file = Asterix_root + "Param_configspec.ini"
-    # Load configuration - all three of the below lines are necessary
-    config = ConfigObj(parameter_file_ex, configspec=configspec_file, default_encoding="utf8")
-    vtor = Validator()
-    checks = config.validate(vtor, copy=True)
+    config = read_parameter_file(parameter_file_ex)
 
     # Reassign the parameter groups to variables
     modelconfig = config["modelconfig"]

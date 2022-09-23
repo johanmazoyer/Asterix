@@ -4,21 +4,14 @@
 import os
 
 import numpy as np
-from configobj import ConfigObj
-from validate import Validator
 
 from Asterix import Asterix_root
-from Asterix.utils import quickfits
+from Asterix.utils import quickfits, read_parameter_file
 from Asterix.optics import  Pupil, Coronagraph, DeformableMirror, Testbed
 
 # Set the path to your configuration file of choice
 parameter_file = Asterix_root + "Example_param_file.ini"
-
-# Check the picked configuration file against a template of the configuraiton file and load it
-configspec_file = Asterix_root + "Param_configspec.ini"
-config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
-vtor = Validator()
-checks = config.validate(vtor, copy=True)   #TODO: what is this supposed to do?
+config = read_parameter_file(parameter_file)
 
 # Load the configuration parameters from the configuration file
 modelconfig = config["modelconfig"]
