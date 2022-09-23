@@ -72,12 +72,6 @@ correction_loop
     :zoomable:
     :direction: horizontal
 
-.. callgraph:: Asterix.loop.correction_loop.correction_loop_1matrix
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
-
-
 optical_systems
 -----------------
 
