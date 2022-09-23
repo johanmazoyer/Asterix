@@ -78,7 +78,7 @@ optical_systems
 OpticalSystem: main class
 ++++++++++++++++++++++++++
 .. _os-label:
-.. autoclass:: Asterix.optical_systems.OpticalSystem
+.. autoclass:: Asterix.optics.OpticalSystem
     :members:
     :show-inheritance:
 
@@ -86,18 +86,18 @@ OpticalSystem: main class
 OpticalSystem: pupil subclass
 ++++++++++++++++++++++++++
 .. _pupil-label:
-.. autoclass:: Asterix.optical_systems.Pupil
+.. autoclass:: Asterix.optics.Pupil
     :members:
     :show-inheritance:
 
 OpticalSystem: coronagraph subclass
 ++++++++++++++++++++++++++
 .. _coronagraph-label:
-.. autoclass:: Asterix.optical_systems.Coronagraph
+.. autoclass:: Asterix.optics.Coronagraph
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.optical_systems.coronagraph.Coronagraph.__init__
+.. callgraph:: Asterix.optics.coronagraph.Coronagraph.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -105,11 +105,11 @@ OpticalSystem: coronagraph subclass
 OpticalSystem: DeformableMirror subclass
 ++++++++++++++++++++++++++
 .. _deformable-mirror-label:
-.. autoclass:: Asterix.optical_systems.DeformableMirror
+.. autoclass:: Asterix.optics.DeformableMirror
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.optical_systems.deformable_mirror.DeformableMirror.__init__
+.. callgraph:: Asterix.optics.deformable_mirror.DeformableMirror.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -117,7 +117,7 @@ OpticalSystem: DeformableMirror subclass
 OpticalSystem: Testbed subclass
 ++++++++++++++++++++++++++
 .. _testbed-label:
-.. autoclass:: Asterix.optical_systems.Testbed
+.. autoclass:: Asterix.optics.Testbed
     :members:
     :show-inheritance:
 

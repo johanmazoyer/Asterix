@@ -5,10 +5,9 @@ import os
 import numpy as np
 from astropy.io import fits
 
+from Asterix import model_dir
 from Asterix.utils import save_plane_in_fits, crop_or_pad_image
-
-from Asterix.optical_systems import OpticalSystem, model_dir, Pupil
-
+from Asterix.optics import OpticalSystem, Pupil
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
 

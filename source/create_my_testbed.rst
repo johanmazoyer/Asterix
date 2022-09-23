@@ -7,7 +7,7 @@ Optical System
 +++++++++++++++++++++++
 
 Asterix have been thought from the beginning to be able to easily adapt to new configurations of the testbed 
-wihtout major changes. This modularity is based on the ``Asterix.optical_systems.OpticalSystem`` class.
+wihtout major changes. This modularity is based on the ``Asterix.optics.OpticalSystem`` class.
 An OpticalSystem is a part of the testbed which starts and ends in a pupil plane, which allows them to be easily
 concatenated. To be able to be well concatenated, they must all be using the same general parameters (physical 
 and numerical parameters). These parameters are stored in the first part of the parameter file, common to 
@@ -23,7 +23,7 @@ Parameter file can be read using ``Asterix.save_and_read.read_parameter_file`` f
 .. code-block:: python
     
     from Asterix.utils import read_parameter_file
-    from Asterix.optical_systems import OpticalSystem
+    from Asterix.optics import OpticalSystem
 
     config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -83,7 +83,7 @@ and concatenate them with other elements.
 .. code-block:: python
     
     from Asterix.utils import read_parameter_file
-    from Asterix.optical_systems import  Pupil
+    from Asterix.optics import  Pupil
 
     config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -133,7 +133,7 @@ documentation can be found in Section :ref:`coronagraph-label`.
 .. code-block:: python
     
     from Asterix.utils import read_parameter_file
-    from Asterix.optical_systems import Coronagraph
+    from Asterix.optics import Coronagraph
 
     config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -162,7 +162,7 @@ of a deformable mirror (DM) system.
 .. code-block:: python
     
     from Asterix.utils import read_parameter_file
-    from Asterix.optical_systems import DeformableMirror
+    from Asterix.optics import DeformableMirror
 
     config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
@@ -196,7 +196,7 @@ It can only be initialized by giving a list of Optical Systems and it will creat
 .. code-block:: python
     
     import from Asterix.utils import read_parameter_file
-    from Asterix.optical_systems import Pupil, Coronagraph, DeformableMirror, Testbed
+    from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
 
     config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]

@@ -7,7 +7,7 @@ from astropy.io import fits
 import skimage.transform
 
 from Asterix import model_dir
-from Asterix.optical_systems import OpticalSystem
+from Asterix.optics import OpticalSystem
 import Asterix.optics.phase_amplitude_functions as phase_ampl
 from Asterix.utils import save_plane_in_fits, crop_or_pad_image, rebin
 

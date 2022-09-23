@@ -7,11 +7,11 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix import model_dir
-from Asterix.optical_systems import OpticalSystem, Pupil
 
 import Asterix.utils.gaussians as gauss
 from Asterix.utils import save_plane_in_fits, progress, ft_subpixel_shift, ft_zoom_out, crop_or_pad_image
 
+from Asterix.optics import OpticalSystem, Pupil
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
 

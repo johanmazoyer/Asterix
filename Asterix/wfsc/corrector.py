@@ -8,7 +8,7 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix.utils import invert_svd
-from Asterix.optical_systems import OpticalSystem, DeformableMirror, Testbed
+from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 from Asterix.wfsc.estimator import Estimator
 from Asterix.wfsc.thd_quick_invert import THD_quick_invert
 import Asterix.wfsc.wf_control_functions as wfc

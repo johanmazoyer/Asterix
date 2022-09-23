@@ -4,7 +4,7 @@ from configobj import ConfigObj
 from validate import Validator
 
 from Asterix import Asterix_root
-from Asterix.optical_systems import Coronagraph
+from Asterix.optics import Coronagraph
 
 def test_default_coronagraph():
     # Load the example parameter file

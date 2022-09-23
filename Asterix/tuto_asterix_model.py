@@ -9,7 +9,7 @@ from validate import Validator
 
 from Asterix import Asterix_root
 from Asterix.utils import quickfits
-from Asterix.optical_systems import  Pupil, Coronagraph, DeformableMirror, Testbed
+from Asterix.optics import  Pupil, Coronagraph, DeformableMirror, Testbed
 
 # Set the path to your configuration file of choice
 parameter_file = Asterix_root + "Example_param_file.ini"

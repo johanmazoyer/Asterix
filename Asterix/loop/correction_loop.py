@@ -6,8 +6,9 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
+from Asterix.optics import Testbed
 from Asterix.wfsc import Corrector, Estimator, MaskDH
-from Asterix.optical_systems import Testbed
+
 
 def correction_loop(testbed: Testbed,
                     estimator: Estimator,

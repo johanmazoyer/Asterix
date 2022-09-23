@@ -6,7 +6,7 @@ import numpy as np
 from utils import invert_svd
 
 from Asterix.utils import resizing
-from Asterix.optical_systems import DeformableMirror, Testbed
+from Asterix.optics import DeformableMirror, Testbed
 
 
 def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength):
