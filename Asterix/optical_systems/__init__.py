@@ -2,7 +2,8 @@ __all__ = [
     'OpticalSystem',
     'Pupil',
     'Coronagraph',
-    'DeformableMirror'
+    'DeformableMirror',
+    'Testbed'
 ]
 
 from .optical_systems import *
