@@ -12,6 +12,7 @@ import Asterix.optics.propagation_functions as prop
 from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress
 from Asterix.optical_systems import OpticalSystem, DeformableMirror, Testbed
 
+
 def create_interaction_matrix(testbed: Testbed,
                               dimEstim,
                               amplitudeEFC,

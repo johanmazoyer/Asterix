@@ -2,6 +2,7 @@
 import numpy as np
 import scipy.optimize as opt
 
+
 def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=True):
     """ --------------------------------------------------
     Create a gaussian in 2D.

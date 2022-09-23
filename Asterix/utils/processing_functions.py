@@ -3,6 +3,7 @@
 
 import numpy as np
 
+
 def resizing(image, new):
     """ --------------------------------------------------
     Resample the focal plane image to create a 2D array with new dimensions

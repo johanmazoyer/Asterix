@@ -11,6 +11,7 @@ import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
 from Asterix.utils import save_plane_in_fits, ft_subpixel_shift, ft_zoom_out, crop_or_pad_image
 
+
 class OpticalSystem:
     """ --------------------------------------------------
     Super class OpticalSystem allows passing parameters to all subclasses.

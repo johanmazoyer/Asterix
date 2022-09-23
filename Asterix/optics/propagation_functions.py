@@ -4,6 +4,7 @@
 import numpy as np
 from Asterix.utils import crop_or_pad_image
 
+
 def mft(image,
         real_dim_input,
         dim_output,

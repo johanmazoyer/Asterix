@@ -7,7 +7,9 @@ import time
 import numpy as np
 
 from astropy.io import fits
+
 from Asterix.utils import invert_svd
+
 
 def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
     """ --------------------------------------------------

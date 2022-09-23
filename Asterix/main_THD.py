@@ -8,11 +8,9 @@ from Asterix.optical_systems import Pupil, Coronagraph, DeformableMirror, Testbe
 from Asterix.wfsc import Estimator, Corrector, MaskDH
 from Asterix.loop import correction_loop, save_loop_results
 
-
 #######################################################
 #######################################################
 ######## Simulation of a correction loop for thd2 testbed
-
 
 def runthd2(parameter_file,
             NewMODELconfig={},

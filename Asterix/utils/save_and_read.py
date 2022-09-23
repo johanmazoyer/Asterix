@@ -15,6 +15,7 @@ from validate import Validator
 
 from Asterix import Asterix_root
 
+
 def save_plane_in_fits(dir_save_fits, name_plane, image):
     """
         Function to quickly save a real or complex file in fits.

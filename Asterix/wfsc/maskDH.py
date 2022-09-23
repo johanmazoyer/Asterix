@@ -3,6 +3,7 @@
 
 import numpy as np
 
+
 class MaskDH:
     """ --------------------------------------------------
         A very small class to do all the mask related stuff: retrieve parameters and
