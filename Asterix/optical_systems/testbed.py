@@ -176,7 +176,6 @@ class Testbed(OpticalSystem):
             DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
 
             indice_acum_number_act += DM.number_act
-        # saveread.quickfits(DMphases, dir="/Users/jmazoyer/Desktop/DM_phase/")
 
         return DMphases
 

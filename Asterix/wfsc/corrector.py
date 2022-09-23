@@ -244,8 +244,6 @@ class Corrector:
 
             self.Gmatrix = crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
 
-            # saveread.quickfits(self.Gmatrix)
-
             if self.correction_algorithm in ["em", "steepest", "sm"]:
 
                 self.G = np.zeros((int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]), dtype=complex)

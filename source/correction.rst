@@ -21,7 +21,9 @@ and measure the string to save matrices.
 
 .. code-block:: python
     
+    from Asterix.wfsc import MaskDH
     # testbed is previously defined
+
     Correctionconfig = config["Correctionconfig"]
     mask_dh = MaskDH(Correctionconfig)
 
@@ -66,6 +68,7 @@ The Matrix calculation is done during initialization:
 
 .. code-block:: python
 
+    from Asterix.wfsc import MaskDH, Corrector
     # testbed is previously defined
     # estimator is previously defined
 

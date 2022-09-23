@@ -19,7 +19,9 @@ set by the ``Estim_bin_factor`` parameter and is ``dimScience`` / ``Estim_bin_fa
 
 .. code-block:: python
 
+    from Asterix.wfsc import Estimator 
     # testbed is previously defined
+
     Estimationconfig = config["Estimationconfig"]
 
     myestim = Estimator(Estimationconfig,
@@ -39,6 +41,8 @@ this estimation by setting the parameter ``estimation='Perfect'`` before initial
 this estimation can be also done wihtout initialization or if another estimation have been initialized: 
 
 .. code-block:: python
+
+    from Asterix.wfsc import Estimator
 
     # testbed is previously defined
     Estimationconfig = config["Estimationconfig"]    
@@ -77,10 +81,10 @@ resized to the ``Estim_sampling``:
 
 .. code-block:: python
 
-    import Asterix.processing_functions as proc
+    from Asterix.utils import resizing
     # testbed is previously defined
 
-    resultatestimation = proc.resizing(testbed.todetector(voltage_vector=init_voltage,
+    resultatestimation = resizing(testbed.todetector(voltage_vector=init_voltage,
                                     entrance_EF=input_wavefront),myestim.dimEstim) 
 
 

@@ -9,13 +9,12 @@
 - COFFEE estimation (curently underway)
 - add coronagraphs (apodizations for APLC and Vortex)
 - SCC estimation (on hold, not priority and required a lot of changes to the code core)
-- add tools for quick DH analysis (Contrast curves, off axis PSF for throughput measurement)
+- add tools for quick DH analysis (off axis PSF for throughput measurement)
 
 If you want to participate please contact us ! 
 
 **To Check**: These are part of the code that need to be particularly checked and tested :
 
-- check how rescale and subpix shift of influence functions are done. Maybe change that ?
 - tools to rotate pupil / apod / Lyot have not been properly checked
  
 **To Discuss**: These are part of the code that should be discussed between the authors:
