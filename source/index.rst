@@ -45,7 +45,7 @@ Annex: Asterix Functions
 ==================
 
 
-main_THD.py
+main_THD
 -----------------
 .. automodule:: Asterix.main_THD
     :members:
@@ -56,18 +56,29 @@ main_THD.py
     :direction: horizontal
 
 
-correction_loop.py
+correction_loop
 -----------------
-.. automodule:: Asterix.correction_loop
+.. automodule:: Asterix.loop.correction_loop
     :members:
+    :show-inheritance:
 
-.. callgraph:: Asterix.correction_loop.correction_loop
+.. automodule:: Asterix.loop.save_and_read
+    :members:
+    :show-inheritance:
+
+
+.. callgraph:: Asterix.loop.correction_loop.correction_loop
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+
+.. callgraph:: Asterix.loop.correction_loop.correction_loop_1matrix
     :toctree: api
     :zoomable:
     :direction: horizontal
 
 
-optical_systems.py
+optical_systems
 -----------------
 
 OpticalSystem: main class
@@ -92,7 +103,7 @@ OpticalSystem: coronagraph subclass
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.optical_systems.Coronagraph.__init__
+.. callgraph:: Asterix.optical_systems.coronagraph.Coronagraph.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -104,7 +115,7 @@ OpticalSystem: DeformableMirror subclass
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.optical_systems.DeformableMirror.__init__
+.. callgraph:: Asterix.optical_systems.deformable_mirror.DeformableMirror.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -117,24 +128,23 @@ OpticalSystem: Testbed subclass
     :show-inheritance:
 
 
-WSC_functions.py
------------------
-.. automodule:: Asterix.WSC_functions
-    :members:
 
-
-estimator.py
+estimator
 -----------------
 .. _estimationfiles-label:
-.. automodule:: Asterix.estimator
+.. automodule:: Asterix.wfsc.estimator
     :members:
 
-.. callgraph:: Asterix.estimator.Estimator.__init__
+.. _estimationfiles-label:
+.. automodule:: Asterix.wfsc.wf_sensing_functions
+    :members:
+
+.. callgraph:: Asterix.wfsc.estimator.Estimator.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-.. callgraph:: Asterix.estimator.Estimator.estimate
+.. callgraph:: Asterix.wfsc.estimator.Estimator.estimate
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -142,16 +152,24 @@ estimator.py
 
 corrector.py
 -----------------
-.. _correctionfiles-label:
-.. automodule:: Asterix.corrector
+.. _estimationfiles-label:
+.. automodule:: Asterix.wfsc.corrector
     :members:
 
-.. callgraph:: Asterix.corrector.Corrector.update_matrices 
+.. _estimationfiles-label:
+.. automodule:: Asterix.wfsc.wf_control_functions
+    :members:
+
+.. _estimationfiles-label:
+.. automodule:: Asterix.wfsc.thd_quick_invert
+    :members:
+
+.. callgraph:: Asterix.wfsc.corrector.Corrector.update_matrices 
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-.. callgraph:: Asterix.corrector.Corrector.toDM_voltage
+.. callgraph:: Asterix.wfsc.corrector.Corrector.toDM_voltage
     :toctree: api
     :zoomable:
     :direction: horizontal
@@ -159,28 +177,28 @@ corrector.py
 
 MaskDH.py
 -----------------
-.. automodule:: Asterix.MaskDH
+.. automodule:: Asterix.wfsc.MaskDH
     :members:
 
 propagation_functions.py
 -----------------
-.. automodule:: Asterix.propagation_functions
+.. automodule:: Asterix.optics.propagation_functions
     :members:
 
 phase_amplitude_functions.py
 -----------------
-.. automodule:: Asterix.phase_amplitude_functions
+.. automodule:: Asterix.optics.phase_amplitude_functions
     :members:
 
 processing_functions.py
 -----------------
-.. automodule:: Asterix.processing_functions
+.. automodule:: Asterix.utils.processing_functions
     :members:
 
 
 save_and_read.py
 -----------------
-.. automodule:: Asterix.save_and_read
+.. automodule:: Asterix.utils.save_and_read
     :members:
 
 
