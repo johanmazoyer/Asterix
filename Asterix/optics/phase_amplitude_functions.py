@@ -2,7 +2,7 @@
 # pylint: disable=trailing-whitespace
 
 import numpy as np
-from .propagation_functions import mft
+from Asterix.optics.propagation_functions import mft
 from Asterix.utils import crop_or_pad_image, rebin
 
 
