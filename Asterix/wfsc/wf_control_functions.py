@@ -4,8 +4,9 @@
 import os
 import numpy as np
 import matplotlib
-
-matplotlib.use('TkAgg')
+from IPython import get_ipython
+if get_ipython() is None:
+    matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
