@@ -78,9 +78,9 @@ The Matrix calculation is done during initialization:
 
     #initalize the corrector
     correc = Corrector(Correctionconfig,
-                    testbed,
-                    mask_dh,
-                    estimator)
+                       testbed,
+                       mask_dh,
+                       estimator)
 
 
 Once you have initialized, you can update the matrix during the correction wihtout re-initializing using : 
@@ -88,9 +88,9 @@ Once you have initialized, you can update the matrix during the correction wihto
 .. code-block:: python
     
     corrector.update_matrices(testbed,
-                                      estimator,
-                                      initial_DM_voltage=initial_DM_voltage,
-                                      input_wavefront=1.)
+                              estimator,
+                              initial_DM_voltage=initial_DM_voltage,
+                              input_wavefront=1.)
 
 
 This can be useful if the strokes are too high and makes the algorithm not as efficient. 

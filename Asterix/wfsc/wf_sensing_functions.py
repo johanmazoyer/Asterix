@@ -3,9 +3,7 @@
 
 import numpy as np
 
-from utils import invert_svd
-
-from Asterix.utils import resizing
+from Asterix.utils import resizing, invert_svd
 from Asterix.optics import DeformableMirror, Testbed
 
 

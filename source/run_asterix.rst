@@ -35,8 +35,8 @@ For example:
 .. code-block:: python
 
     from Asterix import main_THD
-    main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini'
-        NewCoronaconfig={"corona_type" : 'fqpm'})
+    main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini',
+                     NewCoronaconfig={"corona_type" : 'fqpm'})
 
 will overide the current corona_type parameter and replace it with "fqpm", leaving all other parameters unchanged.
 

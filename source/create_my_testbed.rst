@@ -169,9 +169,9 @@ of a deformable mirror (DM) system.
     DMconfig = config["DMconfig"]
 
     DM1 = DeformableMirror(modelconfig,
-                                    DMconfig,
-                                    Name_DM='DM1',
-                                    Model_local_dir=Model_local_dir)
+                           DMconfig,
+                           Name_DM='DM1',
+                           Model_local_dir=Model_local_dir)
 
 You need to provide the influence function .fits file and the distance compared to the pupil plane ``DM1_z_position``
 In the case of a generic DM (``DM1_Generic = True``), we need only two more parameter to define the DM: the DM pitch ``DM_pitch`` in meters and the number of actuator ``N_act1D`` in one of its principal direction.
@@ -206,19 +206,19 @@ It can only be initialized by giving a list of Optical Systems and it will creat
     pup_round = Pupil(modelconfig)
 
     DM34act = DeformableMirror(modelconfig,
-                                    DMconfig,
-                                    Name_DM='DM1',
-                                    Model_local_dir=Model_local_dir)
+                               DMconfig,
+                               Name_DM='DM1',
+                               Model_local_dir=Model_local_dir)
 
     DM32act = DeformableMirror(modelconfig,
-                                    DMconfig,
-                                    Name_DM='DM3',
-                                    Model_local_dir=Model_local_dir)
+                               DMconfig,
+                               Name_DM='DM3',
+                               Model_local_dir=Model_local_dir)
 
     corono = Coronagraph(modelconfig, Coronaconfig)
     # and then just concatenate
     testbed = Testbed([pup_round, DM34act, DM32act, corono],
-                            ["entrancepupil", "DM1", "DM3", "corono"])
+                      ["entrancepupil", "DM1", "DM3", "corono"])
 
 
 
@@ -228,7 +228,7 @@ just like that:
 .. code-block:: python
 
     testbed = Testbed([pup_round, DM34act, DM32act, DM32act, corono],
-                        ["entrancepupil", "DM1", "DM3", "DM4", "corono"])
+                      ["entrancepupil", "DM1", "DM3", "DM4", "corono"])
 
 
 or a specific pupil in the entrance plane of the coronagraph (e.g. like the Roman configuration).
@@ -237,7 +237,7 @@ or a specific pupil in the entrance plane of the coronagraph (e.g. like the Roma
 
     pup_roman = Pupil(modelconfig, PupType = "RomanPup")
     testbed = Testbed([pup_round, DM34act, DM32act,pup_roman, corono],
-                                ["entrancepupil", "DM1", "DM3", "romanpupil" , "corono"])
+                      ["entrancepupil", "DM1", "DM3", "romanpupil" , "corono"])
     
 
 
