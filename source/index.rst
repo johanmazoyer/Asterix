@@ -50,12 +50,6 @@ Main_THD
 .. automodule:: Asterix.main_THD
     :members:
 
-.. callgraph:: Asterix.main_THD.runthd2
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
-
-
 Correction loop
 -----------------
 .. automodule:: Asterix.wfsc.correction_loop
@@ -67,11 +61,6 @@ Correction loop
     :zoomable:
     :direction: horizontal
 
-.. callgraph:: Asterix.wfsc.correction_loop.correction_loop_1matrix
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
-    
 HCI metric plots
 -----------------
 .. automodule:: Asterix.utils.hci_metrics
@@ -80,7 +69,7 @@ HCI metric plots
 
 
 Coronagraphis instrument simulation
------------------
+------------------------------------
 
 OpticalSystem: main class
 ++++++++++++++++++++++++++
@@ -91,14 +80,14 @@ OpticalSystem: main class
 
 
 OpticalSystem: pupil subclass
-++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++
 .. _pupil-label:
 .. autoclass:: Asterix.optics.Pupil
     :members:
     :show-inheritance:
 
 OpticalSystem: coronagraph subclass
-++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++
 .. _coronagraph-label:
 .. autoclass:: Asterix.optics.Coronagraph
     :members:
@@ -110,7 +99,7 @@ OpticalSystem: coronagraph subclass
     :direction: horizontal
 
 OpticalSystem: DeformableMirror subclass
-++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++
 .. _deformable-mirror-label:
 .. autoclass:: Asterix.optics.DeformableMirror
     :members:
@@ -122,7 +111,7 @@ OpticalSystem: DeformableMirror subclass
     :direction: horizontal
 
 OpticalSystem: Testbed subclass
-++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++
 .. _testbed-label:
 .. autoclass:: Asterix.optics.Testbed
     :members:
@@ -135,7 +124,7 @@ Propagation functions
     :members:
 
 Phase and amplitude functions
-++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++
 .. automodule:: Asterix.optics.phase_amplitude_functions
     :members:
 
@@ -146,7 +135,6 @@ WF Estimation
 .. automodule:: Asterix.wfsc.estimator
     :members:
 
-.. _estimationfiles-label:
 .. automodule:: Asterix.wfsc.wf_sensing_functions
     :members:
 
@@ -163,15 +151,13 @@ WF Estimation
 
 WF Correction
 -----------------
-.. _estimationfiles-label:
+.. _correctionfiles-label:
 .. automodule:: Asterix.wfsc.corrector
     :members:
 
-.. _estimationfiles-label:
 .. automodule:: Asterix.wfsc.wf_control_functions
     :members:
 
-.. _estimationfiles-label:
 .. automodule:: Asterix.wfsc.thd_quick_invert
     :members:
 
@@ -187,20 +173,18 @@ WF Correction
 
 
 DH Mask
------------------
+--------
 .. automodule:: Asterix.wfsc.MaskDH
     :members:
 
-
-
 Utils: processing
------------------
+------------------
 .. automodule:: Asterix.utils.processing_functions
     :members:
 
 
 Utils: Save and read
------------------
+----------------------
 .. automodule:: Asterix.utils.save_and_read
     :members:
 

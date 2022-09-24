@@ -5,4 +5,4 @@ model_dir = os.path.join(Asterix_root, "model") + os.path.sep
 
 from .utils.hci_metrics import *
 
-__version__ = "2.3"
+__version__ = "2.4"
