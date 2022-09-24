@@ -168,30 +168,31 @@ def read_parameter_file(parameter_file,
                         NewLoopconfig={},
                         NewSIMUconfig={}):
     """
-    check existence of the parameter file, read it and check validity
+    Check existence of the given parameter file, read it and check validity.
     
     AUTHOR: Johan Mazoyer
 
     Parameters
     ----------
-    parameter_file: path 
-        path to a .ini parameter file
-    
-    NewMODELconfig: dict
-    NewDMconfig: dict
-    NewCoronaconfig: dict
-    NewEstimationconfig: dict
-    NewCorrectionconfig: dict
-    NewSIMUconfig: dict
-        Can be used to directly change a parameter if needed, outside of the param file    
-
-
+    parameter_file: string
+        Absolute path to a .ini parameter file.
+    NewMODELconfig: dict, optional
+        Can be used to directly change a parameter in the MODELconfig section of the input parameter file.
+    NewDMconfig: dict, optional
+        Can be used to directly change a parameter in the DMconfig section of the input parameter file.
+    NewCoronaconfig: dict, optional
+        Can be used to directly change a parameter in the Coronaconfig section of the input parameter file.
+    NewEstimationconfig: dict, optional
+        Can be used to directly change a parameter in the Estimationconfig section of the input parameter file.
+    NewCorrectionconfig: dict, optional
+        Can be used to directly change a parameter in the Correctionconfig section of the input parameter file.
+    NewSIMUconfig: dict, optional
+        Can be used to directly change a parameter in the SIMUconfig section of the input parameter file.
 
     Returns
     ------
     config: dict
-        parameter dictionnary
-
+        Parameter dictionary
     """
 
     if not os.path.exists(parameter_file):
@@ -202,7 +203,7 @@ def read_parameter_file(parameter_file,
     if not os.path.exists(configspec_file):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), configspec_file)
 
-    ### CONFIGURATION FILE
+    # Define configuration file
     config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
 
     config["modelconfig"].update(NewMODELconfig)
