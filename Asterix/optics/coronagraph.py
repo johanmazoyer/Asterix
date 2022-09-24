@@ -495,9 +495,9 @@ class Coronagraph(optsy.OpticalSystem):
         thval = np.array([0, 3, 4, 5, 8]) * np.pi / 8
         phval = np.array([3, 0, 1, 2, 1]) * np.pi
         jump = np.array([2, 2, 2, 2]) * np.pi
-        phase_wrapped_vortex = create_wrapped_vortex_mask(dim=maxdimension_array_fpm,
-                                                          thval=thval, phval=phval, jump=jump,
-                                                          offsest=offset, cen_shift=cen_shift)
+        _, phase_wrapped_vortex = create_wrapped_vortex_mask(dim=maxdimension_array_fpm,
+                                                             thval=thval, phval=phval, jump=jump,
+                                                             offset=offset, cen_shift=cen_shift)
 
         wrapped_vortex = list()
         for i, wav in enumerate(self.wav_vec):
