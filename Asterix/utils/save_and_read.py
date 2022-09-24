@@ -3,6 +3,7 @@
 import errno
 import sys
 import os
+import time
 
 import datetime
 import random
@@ -288,3 +289,14 @@ def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="aste
         if not os.path.isdir(home_path):
             os.mkdir(home_path)
         return home_path
+
+
+def create_experiment_dir(append=''):
+    time_stamp = time.time()
+    date_time_string = datetime.datetime.fromtimestamp(time_stamp).strftime("%Y%m%d_%H-%M-%S")
+
+    if append != "":
+        append = "_" + append
+
+    experiment_folder = date_time_string + append
+    return experiment_folder
