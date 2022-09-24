@@ -313,7 +313,7 @@ def correction_loop_1matrix(testbed: Testbed,
                     Search_best_Mode=True,
                     input_wavefront=input_wavefront,
                     initial_DM_voltage=thisloop_voltages_DMs[iteration],
-                    silence=True,
+                    silence=silence,
                     **kwargs)
 
                 print("Best Mode is ", bestmode, " with contrast: ", bestcontrast)
