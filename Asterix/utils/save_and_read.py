@@ -284,4 +284,7 @@ def get_data_dir(env_var_name="THD2_DATA_PATH", config_in=None, datadir="thd2_da
     if config_in is not None and config_in != '.':
         return config_in
     else:
-        return os.path.abspath(os.path.join(os.path.expanduser("~"), datadir))
+        home_path = os.path.abspath(os.path.join(os.path.expanduser("~"), datadir))
+        if not os.path.isdir(home_path):
+            os.mkdir(home_path)
+        return home_path
