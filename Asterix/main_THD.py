@@ -73,10 +73,10 @@ def runthd2(parameter_file,
     Name_Experiment = create_experiment_dir(append=SIMUconfig["Name_Experiment"])
 
     # Initialize all directories
-    model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
-    matrix_dir = os.path.join(Data_dir, "Interaction_Matrices") + os.path.sep
-    result_dir = os.path.join(Data_dir, "Results", Name_Experiment) + os.path.sep
-    labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
+    model_local_dir = os.path.join(Data_dir, "Model_local")
+    matrix_dir = os.path.join(Data_dir, "Interaction_Matrices")
+    result_dir = os.path.join(Data_dir, "Results", Name_Experiment)
+    labview_dir = os.path.join(Data_dir, "Labview")
 
     # Create all optical elements of the THD
     entrance_pupil = Pupil(modelconfig,
