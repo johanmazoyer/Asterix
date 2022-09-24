@@ -27,60 +27,48 @@ def correction_loop(testbed: Testbed,
                     silence=False,
                     **kwargs):
     """
-    Run a full loop for several Matrix. at each iteration, we update the matrix and
-    run correction_loop_1matrix().
+    Run a full loop for several matrices.
+
+    In each new iteration, we update the matrix and run correction_loop_1matrix() anew.
 
     AUTHOR : Johan Mazoyer
 
     Parameters
     ----------
-        
     testbed: OpticalSystem.Testbed
-            object which describes your testbed
-    
+        Object which describes your testbed.
     estimator: Estimator 
-            This contains all information about the estimation
-    
+        Estimator object containing all information about the WF estimation.
     corrector: Corrector. 
-            This contains all information about the correction
-    
+        Corrector object containing all information about the WF correction.
     mask_dh: 2d numpy array
-        binary array of size [dimScience, dimScience] : dark hole mask
-    
+        Binary array of size [dimScience, dimScience], the dark-hole mask.
     Loopconfig: dict
-            simulation parameters containing the loop parameters
-
+        Simulation parameters containing for the WFS&C loop.
     SIMUconfig: dict
-            simulation parameters containing the Simulation parameters
-    
+        Simulation parameters.
     input_wavefront: float or 2d complex array or 3d complex array
-    initial wavefront at the beginning of this loop.
-        Electrical Field which can be a :
-            float 1. if no phase / amplitude (default)
+        Initial wavefront at the beginning of this loop.
+        Electrical Field which can be a:
+            float=1 if there are no phase/amplitude aberrations (default)
             2D complex array, of size phase_abb.shape if monochromatic
-            or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic   
-        
-        !!CAREFUL!!: right now we do not use this wf to measure the matrix, although update_matrices
-                    function allows it. Currently each matrix is measured with a flat field in 
-                    entrance of the testbed (input_wavefront = 1). 
-                    input_wavefront is only used in the loop once the matrix is calcultated   
-                    This can be changed but be careful.             
-
+            or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic
+        !!CAREFUL!!: right now we do not use this wf to measure the matrix, although the update_matrices()
+            method inside the Corrector allows it. Currently, each matrix is measured with a flat field in
+            entrance of the testbed (input_wavefront = 1).
+            input_wavefront is only used in the loop once the matrix is calculated. This can be changed but be careful.
     initial_DM_voltage: float or 1D array
-            initial DM voltages at the beginning of this loop. The Matrix is measured 
-            using this initial DM voltages. Can be:
+        Initial DM voltages at the beginning of this loop. The Matrix is measured using this initial DM voltages.
+        Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
-
-    
-    silence=False: Boolean, default False
-                if False, print and plot results as the loop runs
+    silence: Boolean, default False
+        Whether to silence printing and plotting results as the loop runs.
 
     Returns
     ------
     CorrectionLoopResult : dict
-                a dictionnary containing the results of all loops
-
+        A dictionary containing the results of all loops.
     """
 
     CorrectionLoopResult = dict()
@@ -173,64 +161,50 @@ def correction_loop_1matrix(testbed: Testbed,
 
     Parameters
     ----------
-        
     testbed: OpticalSystem.Testbed
             object which describes your testbed
-    
     estimator: Estimator 
             This contains all information about the estimation
-    
     corrector: Corrector. 
             This contains all information about the correction
-    
     mask_dh: 2d numpy array
-        binary array of size [dimScience, dimScience] : dark hole mask
-    
+            binary array of size [dimScience, dimScience] : dark hole mask
     Nbiter_corr: int or list of int
             number of iterations in the loop
-    
     CorrectionLoopResult: dict
-                dictionnary containing the result of the previous loop. 
-                This will be updated with the result of this loop
-    
+            Dictionary containing the result of the previous loop.
+            This will be updated with the result of the current loop.
     gain:  float between 0 and 1, default 0.1
-            gain of the loop in EFC mode. 
-            
-    
-    Nbmode_corr: int or list of int of same size as Nbiter_corr,
-                    SVD modes for each iteration
-    
+            Control gain of the loop in EFC mode.
+    Nbmode_corr: int or list of int
+            Of same size as Nbiter_corr; SVD modes for each iteration.
     Linesearch: bool, default False. 
-                If True, In this mode, the function correction_loop_1matrix()
-                will call itself at each iteration with Search_best_Mode= True to find 
-                the best SVD inversion mode among a few Linesearchmodes. 
-
+            If True, the function correction_loop_1matrix()
+            will call itself at each iteration with Search_best_Mode=True to find
+            the best SVD inversion mode among a few Linesearch modes.
     Search_best_Mode: bool, default False. 
-                    If true, the algorithm does not return the
-                    loop information, just the best mode and best contrast. 
-                    This mode is used in Linesearch mode
-                    Be careful when using this parameter, it can create an infinite loop
-    
+            If true, the algorithm does not return the
+            loop information, just the best mode and best contrast.
+            This mode is used in Linesearch mode.
+            Be careful when using this parameter, it can create an infinite loop.
     input_wavefront: float or 2d complex array or 3d complex array
-        initial wavefront at the beginning of this loop.
-        Electrical Field which can be a :
-            float 1. if no phase / amplitude (default)
-            2D complex array, of size phase_abb.shape if monochromatic
-            or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic                   
-
+            Initial wavefront at the beginning of this loop.
+            Electrical Field which can be a:
+                float=1 if no phase/amplitude aberrations present (default)
+                2D complex array, of size phase_abb.shape if monochromatic
+                or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic
     initial_DM_voltage: float or 1D array
-            initial DM voltages at the beginning of this loop. The Matrix is measured 
-            using this initial DM voltages. Can be:
-            float 0 if flat DMs (default)
-            or 1D array of size testbed.number_act
-            
+            Initial DM voltages at the beginning of this loop. The Matrix is measured using this initial DM voltages.
+            Can be:
+                float 0 if flat DMs (default)
+                or 1D array of size testbed.number_act
     silence: Boolean, default False
-                if False, print and plot results as the loop runs
+            If False, print and plot results as the loop runs.
 
     Returns
     ------
     if Search_best_Mode == True, return [bestMode, bestContrast]
-    else return CorrectionLoopResult dictionnary updated with the results from this loop
+    else return CorrectionLoopResult dictionary updated with the results from this loop
     
     """
 
@@ -240,8 +214,7 @@ def correction_loop_1matrix(testbed: Testbed,
 
     thisloop_expected_iteration_number = sum(Nbiter_corr)
 
-    ## Number of modes that is used as a function of the iteration cardinal
-    # in the EFC case
+    # Number of modes that is used as a function of the iteration cardinal in the EFC case.
 
     if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
         modevector = []
@@ -396,7 +369,7 @@ def correction_loop_1matrix(testbed: Testbed,
         return np.amin(thisloop_MeanDHContrast[1:]), modevector[np.argmin(thisloop_MeanDHContrast[1:])]
 
     else:
-        # create a dictionnary to save all results
+        # create a dictionary to save all results
 
         CorrectionLoopResult["nb_total_iter"] += iteration_number
         CorrectionLoopResult["Nb_iter_per_mat"].append(iteration_number)
@@ -422,10 +395,10 @@ def correction_loop_1matrix(testbed: Testbed,
 
 def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir):
     """
-    Save the result from a correction loop in result_dir
+    Save the result from a correction loop in result_dir.
     
-    All fits have all parameters in the header.
-    The config is also saved in a .ini file
+    All fits files have all parameters in their header.
+    The config is also saved in an .ini file.
 
     AUTHOR : Johan Mazoyer
     
@@ -433,19 +406,14 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     ----------
     CorrectionLoopResult: dict 
         dictionary containing the results from correction_loop_1matrix() or correction_loop()
-
     config: dict
         complete parameter dictionary
-
     testbed: OpticalSystem
         an OpticalSystem object which describes your testbed
-    
-    mask_dh: 2d numpy array
+    MaskScience: 2d numpy array
         binary array of size [dimScience, dimScience] : dark hole mask
-    
     result_dir: path
         directory where to save the results
-
     """
 
     if not os.path.exists(result_dir):
