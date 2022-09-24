@@ -518,10 +518,10 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                                                  DM.number_act]
         indice_acum_number_act += DM.number_act
 
-        fits.writetoos.path.join((result_dir, current_time_str + '_' + DM_name + "_voltages" + ".fits"),
-                                 voltage_DMs_tosave,
-                                 header,
-                                 overwrite=True)
+        fits.writeto(os.path.join(result_dir, current_time_str + '_' + DM_name + "_voltages" + ".fits"),
+                     voltage_DMs_tosave,
+                     header,
+                     overwrite=True)
 
         plt.plot(np.std(DMstrokes[j], axis=(1, 2)), label=DM_name + " RMS")
         plt.plot(np.max(DMstrokes[j], axis=(1, 2)) - np.min(DMstrokes[j], axis=(1, 2)), label=DM_name + " PV")
