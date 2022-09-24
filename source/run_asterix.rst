@@ -27,7 +27,7 @@ copying Example_param_file.ini in another directory and create you own calling p
 .. code-block:: python
 
     from Asterix import main_THD
-    main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini')
+    main_THD.runthd2(os.path.join(path_to_my_param_file, 'my_param_file.ini'))
 
 To run several simulation with slightly different parameters, you can override one of the parameters directly from the main. 
 For example:
@@ -35,7 +35,7 @@ For example:
 .. code-block:: python
 
     from Asterix import main_THD
-    main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini',
+    main_THD.runthd2(os.path.join(path_to_my_param_file, 'my_param_file.ini'),
                      NewCoronaconfig={"corona_type" : 'fqpm'})
 
 will overide the current corona_type parameter and replace it with "fqpm", leaving all other parameters unchanged.
