@@ -1,18 +1,17 @@
 import os
-from Asterix import main_THD
+from Asterix import main_THD, Asterix_root
 from Asterix.tests.test_utils import read_test_results_from_file
 
 
-asterix_root = os.path.dirname(os.path.realpath(__file__))   #TODO: the result of this is the 'test' folder
-print(asterix_root)
-param_file_path = asterix_root + os.path.sep + 'Example_param_file.ini'
-regression_path = os.path.join(asterix_root, )   #TODO: need oto define this
+param_file_path = os.path.join(Asterix_root, 'Example_param_file.ini')
+regression_path = os.path.join(Asterix_root, 'tests')   #TODO: need to define this
 
 
-def test_perfect_estimate_with_strokemin(tmpdir):   #TODO: need to be able to overwrite the data_dir in the WFS loop
+def test_perfect_estimate_with_strokemin():
 
     # Known results for this setup on a full DH
-    regression_results_full_dh = read_test_results_from_file("perfect_estim_with_strokemin_FullDH.txt")
+    regression_results_full_dh = read_test_results_from_file(os.path.join(regression_path,
+                                                                          "perfect_estim_with_strokemin_FullDH.txt"))
 
     # Run on full DH
     results_full_dh = main_THD.runthd2(param_file_path,
@@ -30,7 +29,8 @@ def test_perfect_estimate_with_strokemin(tmpdir):   #TODO: need to be able to ov
                                        NewSIMUconfig={'Name_Experiment': "My_fourth_experiment"})
 
     # Known results for this setup on a right-sided half-DH
-    regression_results_half_dh = read_test_results_from_file("perfect_estim_with_strokemin_RightDH.txt")
+    regression_results_half_dh = read_test_results_from_file(os.path.join(regression_path,
+                                                                          "perfect_estim_with_strokemin_RightDH.txt"))
 
     # Run on half-DH
     results_half_dh = main_THD.runthd2(param_file_path,

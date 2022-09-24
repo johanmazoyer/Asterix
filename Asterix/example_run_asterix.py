@@ -5,10 +5,10 @@ import time
 from Asterix import main_THD, Asterix_root
 
 # please replace with your own parameter file
-Your_directory = Asterix_root
-Your_parameter_file_name = 'Example_param_file.ini'
+your_directory = Asterix_root
+your_parameter_file_name = 'Example_param_file.ini'
 
-parameter_file_path = os.path.join(Your_directory, Your_parameter_file_name)
+parameter_file_path = os.path.join(your_directory, your_parameter_file_name)
 
 start_time = time.time()
 results_first = main_THD.runthd2(parameter_file_path,
@@ -50,38 +50,38 @@ print("")
 print("")
 
 start_time = time.time()
-results_four = main_THD.runthd2(parameter_file_path,
-                                NewDMconfig={'DM1_active': True},
-                                NewEstimationconfig={'estimation': 'perfect'},
-                                NewCorrectionconfig={
-                                    'DH_side': "Full",
-                                    'correction_algorithm': "sm",
-                                    'Nbmodes_OnTestbed': 600
-                                },
-                                NewLoopconfig={
-                                    'Nbiter_corr': [20],
-                                    'Nbmode_corr': [250]
-                                },
-                                NewSIMUconfig={'Name_Experiment': "My_fourth_experiment"})
+results_fourth = main_THD.runthd2(parameter_file_path,
+                                  NewDMconfig={'DM1_active': True},
+                                  NewEstimationconfig={'estimation': 'perfect'},
+                                  NewCorrectionconfig={
+                                      'DH_side': "Full",
+                                      'correction_algorithm': "sm",
+                                      'Nbmodes_OnTestbed': 600
+                                  },
+                                  NewLoopconfig={
+                                      'Nbiter_corr': [20],
+                                      'Nbmode_corr': [250]
+                                  },
+                                  NewSIMUconfig={'Name_Experiment': "My_fourth_experiment"})
 print('time correction 2DM perfect estim sm', time.time() - start_time)
 print("")
 print("")
 print("")
 
 start_time = time.time()
-results_five = main_THD.runthd2(parameter_file_path,
-                                NewDMconfig={'DM1_active': True},
-                                NewEstimationconfig={'estimation': 'pw'},
-                                NewCorrectionconfig={
-                                    'DH_side': "Full",
-                                    'correction_algorithm': "efc",
-                                    'Nbmodes_OnTestbed': 600
-                                },
-                                NewLoopconfig={
-                                    'Nbiter_corr': [5, 1, 1, 1, 3, 2, 1, 2, 4, 3],
-                                    'Nbmode_corr': [500, 800, 500, 1000, 700, 900, 1000, 900, 700, 900]
-                                },
-                                NewSIMUconfig={'Name_Experiment': "My_fifth_experiment"})
+results_fifth = main_THD.runthd2(parameter_file_path,
+                                 NewDMconfig={'DM1_active': True},
+                                 NewEstimationconfig={'estimation': 'pw'},
+                                 NewCorrectionconfig={
+                                     'DH_side': "Full",
+                                     'correction_algorithm': "efc",
+                                     'Nbmodes_OnTestbed': 600
+                                 },
+                                 NewLoopconfig={
+                                     'Nbiter_corr': [5, 1, 1, 1, 3, 2, 1, 2, 4, 3],
+                                     'Nbmode_corr': [500, 800, 500, 1000, 700, 900, 1000, 900, 700, 900]
+                                 },
+                                 NewSIMUconfig={'Name_Experiment': "My_fifth_experiment"})
 print('time correction 2DM pw efc', time.time() - start_time)
 print("")
 print("")
