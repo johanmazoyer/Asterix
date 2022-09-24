@@ -248,3 +248,37 @@ def from_param_to_header(config):
         for scalar in config[str(sect)].scalars:
             header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
     return header
+
+
+def get_data_dir(env_var_name="THD2_DATA_PATH", datadir="thd2_data"):
+    """
+    Create a path to local data directory.
+
+    If the environment variable `THD2_DATA_PATH` exists, this is returned as the full data path and the input 'datadir'
+    is ignored. You can set this individually on your OS.
+    If the environment variable does not exist (default for all new users) but the user adapted the ini file, the
+    configfile entry is returned.
+    If the environment variable does not exist and the Data_dir entry in the ini file is '.', the directory 'datadir'
+    is appended to the user's home directory and returned as an absolute path.
+    On MacOS of user 'myuser' for example, this would return:
+        '/Users/myuser/thd2_data'
+
+    Parameters
+    ----------
+    env_var_name : string
+        Environment variable for optional override.
+    datadir : string
+        Name of the top-level data directory.
+
+    Returns
+    -------
+    Absolute path to top-level data directory.
+    """
+    try:
+        ret_path = os.environ[env_var_name]
+        print(f"Using the following data path from env var {env_var_name}: '{ret_path}'")
+        return ret_path
+    except KeyError:
+        pass
+
+    return os.path.abspath(os.path.join(os.path.expanduser("~"), datadir))
