@@ -12,7 +12,7 @@ from Asterix.utils import invert_svd
 
 
 def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
-    """ --------------------------------------------------
+    """
         This code invert the matrix just in the case of THD testbed
         The goal is to be able to invert the matrix directly on the RTC to be 
         able to do it during correction
@@ -62,10 +62,8 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
 
         Returns
         ------
-        None
         
-        
-        -------------------------------------------------- """
+        """
 
     if name_active_DM in (13, 31):
         Gmatrix = fits.getdata(os.path.join(matrix_directory, "Direct_Matrix_2DM.fits"))

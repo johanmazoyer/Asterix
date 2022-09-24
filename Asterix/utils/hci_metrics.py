@@ -34,7 +34,7 @@ def plot_contrast_curves(reduced_data,
     several iterations of a loop) using concentric rings.
     You can chooose the center, the size of the rings, the type of contrast (mean or std)
     The DH is set using a binary mask (1s where the DH is, 0 elsewhere)
-    The abciss unit can be in pixel mas or in λ/D.
+    The abcisse unit can be in pixel mas or in lambda/D.
 
     AUTHOR: J. Mazoyer
     16/03/2022
@@ -61,8 +61,8 @@ def plot_contrast_curves(reduced_data,
                     'stddev_5sig' : 5 sigma standard deviation on the rings
     
         numberofpix_per_loD: float, defaut None
-            resolution of the focal plane in # of pixel per λ / D (useful for testbed)
-            If set the absciss unit will be in λ/D 
+            resolution of the focal plane in # of pixel per lambda/D (useful for testbed)
+            If set the absciss unit will be in lambda/D 
 
         numberofmas_per_pix: float, defaut None
             resolution of the focal plane in # of mas per pixel  (useful for real instruments)
@@ -85,9 +85,6 @@ def plot_contrast_curves(reduced_data,
             If None and if the array is of dimension 2, no legend
             If None and if the array is of dimension 3, we assume these are iterations
 
-    Returns
-    ------
-        No return
     """
 
     filename = filename + '_ContrastCurve_DH'
@@ -200,7 +197,7 @@ def contrast_curves(reduced_data,
                     delta_raddii=3,
                     type_of_contrast='mean',
                     mask_DH=None):
-    """  -------------------------------------------------- 
+    """  
     create a contrast curve from a image using concentric rings
     You can chooose the center, the size of the rings, the type of contrast (mean or std)
     The DH is set using a binary mask (1s where the DH is, 0 elsewhere)
@@ -238,7 +235,7 @@ def contrast_curves(reduced_data,
         1d array with the contrast on concentric rings measure with different metrics
         Values outside of the mask are nan
 
-     -------------------------------------------------- """
+     """
     if xcen is None:
         xcen = reduced_data.shape[0] / 2 - 1 / 2
 

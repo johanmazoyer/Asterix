@@ -134,7 +134,7 @@ def quickpng(tab, dir='', name='tmp'):
 
 
 def progress(count, total, status=''):
-    """ --------------------------------------------------
+    """
     print a progress bar for a for loop
 
     Parameters
@@ -145,7 +145,7 @@ def progress(count, total, status=''):
     total: int
         number of iterations in the for loop
 
-    -------------------------------------------------- """
+    """
     bar_len = 60
     filled_len = int(round(bar_len * count / float(total)))
 
@@ -164,7 +164,7 @@ def read_parameter_file(parameter_file,
                         NewCorrectionconfig={},
                         NewLoopconfig={},
                         NewSIMUconfig={}):
-    """ --------------------------------------------------
+    """
     check existence of the parameter file, read it and check validity
     
     AUTHOR: Johan Mazoyer
@@ -189,8 +189,7 @@ def read_parameter_file(parameter_file,
     config: dict
         parameter dictionnary
 
-
-    -------------------------------------------------- """
+    """
 
     if not os.path.exists(parameter_file):
         raise Exception("The parameter file " + parameter_file + " cannot be found")
@@ -226,7 +225,7 @@ def read_parameter_file(parameter_file,
 
 
 def from_param_to_header(config):
-    """ --------------------------------------------------
+    """
     Convert ConfigObj parameters to fits header type list
     AUTHOR: Axel Potier
 
@@ -240,9 +239,7 @@ def from_param_to_header(config):
     header: dict
         list of parameters
 
-
-    
-    -------------------------------------------------- """
+    """
     header = fits.Header()
     for sect in config.sections:
         # print(config[str(sect)])

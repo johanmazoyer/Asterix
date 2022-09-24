@@ -45,7 +45,7 @@ Annex: Asterix Functions
 ==================
 
 
-main_THD
+Main_THD
 -----------------
 .. automodule:: Asterix.main_THD
     :members:
@@ -56,23 +56,30 @@ main_THD
     :direction: horizontal
 
 
-correction_loop
+Correction loop
 -----------------
-.. automodule:: Asterix.loop.correction_loop
+.. automodule:: Asterix.wfsc.correction_loop
     :members:
     :show-inheritance:
 
-.. automodule:: Asterix.loop.save_and_read
-    :members:
-    :show-inheritance:
-
-
-.. callgraph:: Asterix.loop.correction_loop.correction_loop
+.. callgraph:: Asterix.wfsc.correction_loop.correction_loop
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-optical_systems
+.. callgraph:: Asterix.wfsc.correction_loop.correction_loop_1matrix
+    :toctree: api
+    :zoomable:
+    :direction: horizontal
+    
+HCI metric plots
+-----------------
+.. automodule:: Asterix.utils.hci_metrics
+    :members:
+    :show-inheritance:
+
+
+Coronagraphis instrument simulation
 -----------------
 
 OpticalSystem: main class
@@ -122,8 +129,18 @@ OpticalSystem: Testbed subclass
     :show-inheritance:
 
 
+Propagation functions
+++++++++++++++++++++++++++
+.. automodule:: Asterix.optics.propagation_functions
+    :members:
 
-estimator
+Phase and amplitude functions
+++++++++++++++++++++++++++
+.. automodule:: Asterix.optics.phase_amplitude_functions
+    :members:
+
+
+WF Estimation
 -----------------
 .. _estimationfiles-label:
 .. automodule:: Asterix.wfsc.estimator
@@ -144,7 +161,7 @@ estimator
     :direction: horizontal
 
 
-corrector.py
+WF Correction
 -----------------
 .. _estimationfiles-label:
 .. automodule:: Asterix.wfsc.corrector
@@ -169,28 +186,20 @@ corrector.py
     :direction: horizontal
 
 
-MaskDH.py
+DH Mask
 -----------------
 .. automodule:: Asterix.wfsc.MaskDH
     :members:
 
-propagation_functions.py
------------------
-.. automodule:: Asterix.optics.propagation_functions
-    :members:
 
-phase_amplitude_functions.py
------------------
-.. automodule:: Asterix.optics.phase_amplitude_functions
-    :members:
 
-processing_functions.py
+Utils: processing
 -----------------
 .. automodule:: Asterix.utils.processing_functions
     :members:
 
 
-save_and_read.py
+Utils: Save and read
 -----------------
 .. automodule:: Asterix.utils.save_and_read
     :members:

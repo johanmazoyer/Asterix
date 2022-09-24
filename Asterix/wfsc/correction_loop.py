@@ -25,7 +25,7 @@ def correction_loop(testbed: Testbed,
                     initial_DM_voltage=0.,
                     silence=False,
                     **kwargs):
-    """ --------------------------------------------------
+    """
     Run a full loop for several Matrix. at each iteration, we update the matrix and
     run correction_loop_1matrix().
 
@@ -80,8 +80,7 @@ def correction_loop(testbed: Testbed,
     CorrectionLoopResult : dict
                 a dictionnary containing the results of all loops
 
-    
-    -------------------------------------------------- """
+    """
 
     CorrectionLoopResult = dict()
     CorrectionLoopResult["nb_total_iter"] = 0
@@ -166,7 +165,7 @@ def correction_loop_1matrix(testbed: Testbed,
                             initial_DM_voltage=0.,
                             silence=False,
                             **kwargs):
-    """ --------------------------------------------------
+    """
     Run a loop for a given interaction matrix.
 
     AUTHOR : Johan Mazoyer
@@ -232,8 +231,7 @@ def correction_loop_1matrix(testbed: Testbed,
     if Search_best_Mode == True, return [bestMode, bestContrast]
     else return CorrectionLoopResult dictionnary updated with the results from this loop
     
-
-    -------------------------------------------------- """
+    """
 
     if Search_best_Mode:
         # This is to prevent an infinite loop
@@ -422,12 +420,11 @@ def correction_loop_1matrix(testbed: Testbed,
 
 
 def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir):
-    """ --------------------------------------------------
+    """
     Save the result from a correction loop in result_dir
     
     All fits have all parameters in the header.
     The config is also saved in a .ini file
-    . No return
 
     AUTHOR : Johan Mazoyer
     
@@ -448,8 +445,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     result_dir: path
         directory where to save the results
 
-    
-    -------------------------------------------------- """
+    """
 
     if not os.path.exists(result_dir):
         print("Creating directory " + result_dir + " ...")

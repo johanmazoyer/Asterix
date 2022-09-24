@@ -7,7 +7,7 @@ from Asterix.utils import crop_or_pad_image, rebin
 
 
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
-    """ --------------------------------------------------
+    """
     Create a circular pupil. 
     no_pixel mode is a way to create very ovsersampled pupil that are then rescaled using rebin. 
 
@@ -36,7 +36,7 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     pupilnormal : 2D array
         Output circular pupil
 
-    -------------------------------------------------- """
+    """
 
     if no_pixel == True:
         factor_bin = int(10)
@@ -61,7 +61,7 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
 
 
 def shift_phase_ramp(dim_pp, shift_x, shift_y):
-    """ --------------------------------------------------
+    """
     Create a phase ramp of size (dim_pp,dim_pp) that can be used as follow
     to shift one image by (a,b) pixels : shift_im = real(fft(ifft(im)*exp(i phase ramp)))
     
@@ -81,8 +81,7 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     masktot : 2D array
         Phase ramp
 
-
-    -------------------------------------------------- """
+    """
     if (shift_x == 0) & (shift_y == 0):
         ramp = 1
     else:
@@ -94,7 +93,7 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
 
 
 def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
-    """ --------------------------------------------------
+    """
     Create a random phase map, whose PSD decrease in f^(-slope)
     average is null and stadard deviation is phaserms
 
@@ -122,8 +121,7 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     phase : 2D array
         Static random phase map (or OPD) generated
     
-    
-    -------------------------------------------------- """
+    """
 
     # create a circular pupil of the same radius of the given pupil
     # this will be the pupil over which phase rms = phaserms
@@ -143,7 +141,7 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
 
 def sine_cosine_basis(Nact1D):
-    """ --------------------------------------------------
+    """
     For a given number of actuator accross the DM, create coefficients for the sin/cos basis
 
     TODO Check with Pierre that this is equivalent to what is done on the testbed
@@ -164,8 +162,7 @@ def sine_cosine_basis(Nact1D):
                 size :[(Nact1D)^2,Nact1D,Nact1D] if even
                 size :[(Nact1D)^2 -1 ,Nact1D,Nact1D] if odd (to remove piston)
     
-    
-    -------------------------------------------------- """
+    """
 
     TFCoeffs = np.zeros((Nact1D**2, Nact1D, Nact1D), dtype=complex)
     SinCos = np.zeros((Nact1D**2, Nact1D, Nact1D))

@@ -5,14 +5,17 @@ import numpy as np
 
 
 class MaskDH:
-    """ --------------------------------------------------
+    """
         A very small class to do all the mask related stuff: retrieve parameters and
         combined them measure the mask and measure the string to save matrices.
         They're fast to measure so we do not need to save except in 'onbench' case
-    -------------------------------------------------- """
+        
+        AUTHOR : Johan Mazoyer
+    
+    """
 
     def __init__(self, Correctionconfig):
-        """ --------------------------------------------------
+        """
         initialize the mask object
 
         AUTHOR : Johan Mazoyer
@@ -22,8 +25,7 @@ class MaskDH:
         Correctionconfig: dict
                 general correction file which contains mask parameters
     
-    
-        -------------------------------------------------- """
+        """
 
         self.DH_shape = Correctionconfig["DH_shape"].lower()
 
@@ -43,7 +45,7 @@ class MaskDH:
         self.string_mask = self.tostring()
 
     def creatingMaskDH(self, dimFP, FP_sampling):
-        """ --------------------------------------------------
+        """
         Create a binary mask.
 
         AUTHOR : Johan Mazoyer
@@ -60,8 +62,7 @@ class MaskDH:
         maskDH: 2D array    
             binary mask delimiting the DH
 
-
-        -------------------------------------------------- """
+        """
 
         maskDH = np.ones((dimFP, dimFP))
 
@@ -109,8 +110,12 @@ class MaskDH:
 
             AUTHOR : Johan Mazoyer
         
+            Returns
+            ------
+            stringdh: str
+                mask String to save .fits files
 
-        -------------------------------------------------- """
+        """
 
         if self.DH_shape == "square":
             stringdh = "MaskDH_square_" + "_".join(map(str, self.corner_pos))

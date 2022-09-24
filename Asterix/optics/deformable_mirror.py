@@ -17,7 +17,7 @@ import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 
 class DeformableMirror(OpticalSystem):
-    """ --------------------------------------------------
+    """
     initialize and describe the behavior of a deformable mirror
     (in pupil plane or out of pupil plane)
     coronagraph is a sub class of OpticalSystem.
@@ -25,11 +25,10 @@ class DeformableMirror(OpticalSystem):
 
     AUTHOR : Johan Mazoyer
 
-
-    -------------------------------------------------- """
+    """
 
     def __init__(self, modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=None):
-        """ --------------------------------------------------
+        """
         Initialize a deformable mirror object
 
         AUTHOR : Johan Mazoyer
@@ -50,8 +49,7 @@ class DeformableMirror(OpticalSystem):
                 directory to save things you can measure yourself
                     and can save to save time
         
-        
-        -------------------------------------------------- """
+        """
 
         # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
@@ -126,7 +124,7 @@ class DeformableMirror(OpticalSystem):
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
                    **kwargs):
-        """ --------------------------------------------------
+        """
         Propagate the electric field through the DM.
         if z_DM = 0, then it's just a phase multiplication
         if z_DM != 0, this is where we do the fresnel
@@ -162,8 +160,7 @@ class DeformableMirror(OpticalSystem):
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
 
-
-        -------------------------------------------------- """
+        """
 
         if save_all_planes_to_fits == True and dir_save_all_planes == None:
             raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +
@@ -207,7 +204,7 @@ class DeformableMirror(OpticalSystem):
         return EF_after_DM
 
     def creatingpushact(self, DMconfig):
-        """ --------------------------------------------------
+        """
         OPD map induced in the DM plane for each actuator.
 
         This large array is initialized at the beginning and will be use
@@ -232,8 +229,7 @@ class DeformableMirror(OpticalSystem):
                     of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]  
                     contains all the DM OPD map induced in the DM plane for each actuator.
 
-        
-        -------------------------------------------------- """
+        """
         start_time = time.time()
         Name_pushact_fits = "PushAct_" + self.Name_DM
 
@@ -363,7 +359,7 @@ class DeformableMirror(OpticalSystem):
         return pushact3d
 
     def id_in_pupil_actuators(self):
-        """ --------------------------------------------------
+        """
         Create a vector with the index of all the actuators located in the entrance pupil
         
         AUTHOR: Johan Mazoyer
@@ -379,8 +375,7 @@ class DeformableMirror(OpticalSystem):
         WhichInPupil: 1D array
                 index of all the actuators located inside the pupil
 
-        
-        -------------------------------------------------- """
+        """
         start_time = time.time()
         Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
 
@@ -427,7 +422,7 @@ class DeformableMirror(OpticalSystem):
                                 wavelength,
                                 save_all_planes_to_fits=False,
                                 dir_save_all_planes=None):
-        """ --------------------------------------------------
+        """
         Propagate the field towards an out-of-pupil plane ,
         add the DM phase, and propagate to the next pupil plane
         
@@ -461,9 +456,7 @@ class DeformableMirror(OpticalSystem):
         EF_back_in_pup_plane : 2D array (complex)
                             Wavefront in the pupil plane following the DM
 
-            
-
-        -------------------------------------------------- """
+        """
 
         EF_inDMplane = crop_or_pad_image(
             prop.prop_angular_spectrum(entrance_EF, wavelength, self.z_position, self.diam_pup_in_m / 2.,
@@ -490,7 +483,7 @@ class DeformableMirror(OpticalSystem):
         return EF_back_in_pup_plane
 
     def voltage_to_phase(self, actu_vect, einstein_sum=False):
-        """ --------------------------------------------------
+        """
         Generate the phase applied on one DM for a give vector of actuator amplitude
         We decided to do it without matrix multiplication to save time because a
         lot of the time we have lot of zeros in it
@@ -513,8 +506,7 @@ class DeformableMirror(OpticalSystem):
             DM_phase: 2D array
                         phase map in the same unit as actu_vect * DM_pushact)
         
-
-        -------------------------------------------------- """
+        """
 
         where_non_zero_voltage = np.where(actu_vect != 0)
 
@@ -533,7 +525,7 @@ class DeformableMirror(OpticalSystem):
         return phase_on_DM
 
     def create_DM_basis(self, basis_type='actuator'):
-        """ --------------------------------------------------
+        """
         Create a DM basis.
         TODO do a zernike basis ?
 
@@ -549,8 +541,7 @@ class DeformableMirror(OpticalSystem):
         basis: 2d numpy array 
             basis [Size basis, Number of active act in the DM]
 
-
-        -------------------------------------------------- """
+        """
         if basis_type == 'actuator':
             # no need to remove the inactive actuators,
             # they are already removed in pushact
@@ -598,7 +589,7 @@ class DeformableMirror(OpticalSystem):
 
 
 def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
-    """ --------------------------------------------------
+    """
     Create a grid of position of actuators for generic  DM.
     The DM will then be automatically defined as squared with Nact1D x Nact1D actuators
     and the pupil centered on this DM.
@@ -629,8 +620,8 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
                 Array of shape is 2 x Nb_actuator
                 x and y positions of each actuator for simulation
     
-    
-    -------------------------------------------------- """
+    """
+
     if Nact1D * pitchDM < diam_pup_in_m:
         raise Exception("""Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil""")
 

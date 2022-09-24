@@ -8,7 +8,7 @@ from Asterix.optics import DeformableMirror, Testbed
 
 
 def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength):
-    """ --------------------------------------------------
+    """
     Build the interaction matrix for pair-wise probing.
 
     AUTHOR : Axel Potier
@@ -39,9 +39,7 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
                 map of the inverse singular values for each pixels and
                 before regularization
     
-    
-
-    -------------------------------------------------- """
+    """
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=complex)
     probephase = np.zeros((numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
@@ -87,7 +85,7 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
 
 
 def calculate_pw_estimate(Difference, Vectorprobes):
-    """ --------------------------------------------------
+    """
     Calculate the focal plane electric field from the probe image
     differences and the modeled probe matrix.
 
@@ -107,8 +105,7 @@ def calculate_pw_estimate(Difference, Vectorprobes):
             cube with image difference for each probes.
             Used for pair-wise probing
 
-
-    -------------------------------------------------- """
+    """
 
     dimimages = len(Difference[0])
     numprobe = len(Vectorprobes[0, 0])
@@ -134,7 +131,7 @@ def simulate_pw_difference(input_wavefront,
                            voltage_vector=0.,
                            wavelength=None,
                            **kwargs):
-    """ --------------------------------------------------
+    """
     Simulate the acquisition of probe images using Pair-wise
     and calculate the difference of images [I(+probe) - I(-probe)]. 
     we use testbed.name_DM_to_probe_in_PW to do the probes. 
@@ -170,8 +167,7 @@ def simulate_pw_difference(input_wavefront,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
 
-
-    -------------------------------------------------- """
+    """
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 

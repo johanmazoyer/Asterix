@@ -20,7 +20,7 @@ def runthd2(parameter_file,
             NewCorrectionconfig={},
             NewLoopconfig={},
             NewSIMUconfig={}):
-    """ --------------------------------------------------
+    """
         Initialize the thd 2 testbed, the estimation method, 
         the correction method from parameter_file file
         Run the loop and save the results
@@ -45,7 +45,7 @@ def runthd2(parameter_file,
         NewSIMUconfig: dict
             Can be used to directly change a parameter if needed, outside of the param file    
         
-        -------------------------------------------------- """
+        """
 
     ### CONFIGURATION FILE
     config = read_parameter_file(parameter_file,

@@ -15,7 +15,7 @@ import Asterix.wfsc.wf_control_functions as wfc
 
 
 class Corrector:
-    """ --------------------------------------------------
+    """
     Corrector Class allows you to define a corrector with
     different algorithms.
 
@@ -36,7 +36,7 @@ class Corrector:
 
     AUTHOR : Johan Mazoyer
 
-    -------------------------------------------------- """
+    """
 
     def __init__(self,
                  Correctionconfig,
@@ -46,7 +46,7 @@ class Corrector:
                  matrix_dir=None,
                  save_for_bench=False,
                  realtestbed_dir=''):
-        """ --------------------------------------------------
+        """
         Initialize the corrector.
         This is where you define the EFC matrix
         For all large files you should use a method of "save to fits" if
@@ -80,8 +80,7 @@ class Corrector:
         realtestbed_dir: path 
                 save all the files the real testbed need to run your code
 
-
-        -------------------------------------------------- """
+        """
         if not os.path.exists(matrix_dir):
             print("Creating directory " + matrix_dir + " ...")
             os.makedirs(matrix_dir)
@@ -195,7 +194,7 @@ class Corrector:
                         estimator: Estimator,
                         initial_DM_voltage=0.,
                         input_wavefront=1.):
-        """ --------------------------------------------------
+        """
         Measure the interaction matrices needed for the correction
         Is launch once in the Correction initialization and then once each time we update the matrix
 
@@ -216,8 +215,7 @@ class Corrector:
         input_wavefront : float or 2d numpy array or 3d numpy array, default 1.
             initial wavefront to measure the Matrix
 
-
-        -------------------------------------------------- """
+        """
 
         if self.correction_algorithm in ["efc", "em", "steepest", "sm"]:
 
@@ -255,7 +253,7 @@ class Corrector:
             raise Exception("This correction algorithm is not yet implemented")
 
     def toDM_voltage(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., **kwargs):
-        """ --------------------------------------------------
+        """
         Run a correction from a estimate, and return the DM voltage compatible with the testbed
 
         AUTHOR : Johan Mazoyer
@@ -286,8 +284,7 @@ class Corrector:
         solution: 1d numpy real float array
             a voltage vector to be applied to the testbed
 
-
-        -------------------------------------------------- """
+        """
 
         if self.correction_algorithm == "efc":
             if mode != self.previousmode:

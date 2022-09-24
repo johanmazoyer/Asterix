@@ -5,7 +5,7 @@ import numpy as np
 
 
 def resizing(image, new):
-    """ --------------------------------------------------
+    """
     Resample the focal plane image to create a 2D array with new dimensions
 
     - v1.0 2020 A. Potier
@@ -27,8 +27,7 @@ def resizing(image, new):
     Gvector: 2D array
         image resampled into new dimensions
 
-
-    -------------------------------------------------- """
+    """
 
     dimScience = len(image)
     dimEstim = new
@@ -44,7 +43,7 @@ def resizing(image, new):
 
 
 def cropimage(img, ctr_x, ctr_y, newsizeimg):
-    """ --------------------------------------------------
+    """
     Crop an image to create a 2D array with new dimensions
     AUTHOR: Axel Potier
 
@@ -65,14 +64,13 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
     Gvector: 2D array
         squared image cropped into new dimensions
 
-
-    -------------------------------------------------- """
+    """
     newimgs2 = newsizeimg / 2
     return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2), int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]
 
 
 def crop_or_pad_image(image, dimout):
-    """ --------------------------------------------------
+    """
     crop or padd with zero to a 2D image depeding: 
         - if dimout < dim : cropped image around pixel (dim/2,dim/2)
         - if dimout > dim : image around pixel (dim/2,dim/2) surrounded by 0
@@ -92,8 +90,7 @@ def crop_or_pad_image(image, dimout):
     im_out : 2D array (float)
         resized image
 
-
-    -------------------------------------------------- """
+    """
     if float(dimout) < image.shape[0]:
         im_out = np.zeros((image.shape[0], image.shape[1]), dtype=image.dtype)
         im_out = image[int((image.shape[0] - dimout) / 2):int((image.shape[0] + dimout) / 2),
@@ -108,7 +105,7 @@ def crop_or_pad_image(image, dimout):
 
 
 def rebin(image, factor=4, center_on_pixel=False):
-    """ --------------------------------------------------
+    """
     bin the image by a factor. The dimension dim MUST be divisible by factor
     or it will raise an error. It this is not the case, use function resize_crop_bin
 
@@ -136,7 +133,7 @@ def rebin(image, factor=4, center_on_pixel=False):
     im_out : 2D array (float)
         resized image of size dim1 // 4 x dim2//4
 
-    -------------------------------------------------- """
+    """
 
     dim1, dim2 = image.shape
 
@@ -152,7 +149,7 @@ def rebin(image, factor=4, center_on_pixel=False):
 
 
 def resize_crop_bin(image, new_dim, center_on_pixel=False):
-    """ --------------------------------------------------
+    """
     resize the imge by : 
         - cropping entrance image to nearest multiplicative number of new_dim
         - bin the image to new_dim size
@@ -181,7 +178,7 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
     im_out : 2D array (float)
         resized image of size new_dim x new_dim
 
-    -------------------------------------------------- """
+    """
 
     dim1, dim2 = image.shape
 

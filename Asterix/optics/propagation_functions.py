@@ -89,6 +89,7 @@ def mft(image,
             Output is a complex array dimft x dimft with the position of the
             0-frequency in between the 4 pixel (dim_output_x/2+x1,dim_output_y/2+y1) and (dim_output_x/2+x1 +1,dim_output_y/2+y1+1)
             if x1 and y1 are integer
+            
     """
 
     # check dimensions and type of real_dim_input
@@ -190,7 +191,7 @@ def mft(image,
 
 
 def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
-    """ --------------------------------------------------
+    """
     Fresnel propagation of electric field along a distance z
     in a collimated beam and in Free space
 
@@ -245,9 +246,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         dxout : float
                 lateral sampling in the output array
 
-
-
-    -------------------------------------------------- """
+    """
     # dimension of the input array
     if retscale == 0:
         dim = pup.shape[0]
@@ -303,7 +302,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
 
 
 def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
-    """ --------------------------------------------------
+    """
     Angular spectrum propagation of electric field along a distance z
     in a collimated beam and in Free space in close field (small z).
 
@@ -343,7 +342,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
             electric field after propagating in free space along
             a distance z
 
-    -------------------------------------------------- """
+    """
 
     diam_pup_in_m = 2 * rad
     diam_pup_in_pix = 2 * prad

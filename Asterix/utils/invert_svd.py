@@ -6,7 +6,7 @@ import numpy as np
 
 
 def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, filename_visu=None):
-    """ --------------------------------------------------
+    """
     Invert a matrix after a Singular Value Decomposition
     https://en.wikipedia.org/wiki/Singular_value_decomposition
     The inversion can be regularized. We return the inverse, the singular values, 
@@ -43,9 +43,7 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
     pseudoinverse :  2D numpy array
         Regularized inverse of the input matrix
 
-
-
-    -------------------------------------------------- """
+    """
     U, s, V = np.linalg.svd(matrix_to_invert, full_matrices=False)
     #print(np.max(np.abs(U @ np.diag(s) @ V)))
 

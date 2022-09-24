@@ -11,7 +11,7 @@ import Asterix.wfsc.wf_sensing_functions as wfs
 
 
 class Estimator:
-    """ --------------------------------------------------
+    """
     Estimator Class allows you to define a WF estimator.
 
         It must contains 2 functions at least:
@@ -36,8 +36,7 @@ class Estimator:
 
     AUTHOR : Johan Mazoyer
 
-
-    -------------------------------------------------- """
+    """
 
     def __init__(self,
                  Estimationconfig,
@@ -45,7 +44,7 @@ class Estimator:
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
-        """ --------------------------------------------------
+        """
         Initialize the estimator.
         This is where you define the pw matrix, the modified Lyot stop
         or the COFFEE gradiant...
@@ -75,8 +74,7 @@ class Estimator:
         realtestbed_dir: path 
             save all the files the real thd2 testbed need to run your code
 
-
-        -------------------------------------------------- """
+        """
         if not os.path.exists(matrix_dir):
             print("Creating directory " + matrix_dir + " ...")
             os.makedirs(matrix_dir)
@@ -193,7 +191,7 @@ class Estimator:
                  wavelength=None,
                  perfect_estimation=False,
                  **kwargs):
-        """ --------------------------------------------------
+        """
         Run an estimation from a testbed, with a given input wavefront
         and a state of the DMs
         
@@ -225,9 +223,7 @@ class Estimator:
                 array of size [self.dimEstim,self.dimEstim]
                 estimation of the Electrical field
 
-
-
-        -------------------------------------------------- """
+        """
 
         if isinstance(entrance_EF, (float, int)):
             pass

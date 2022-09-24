@@ -3,7 +3,7 @@ import scipy.optimize as opt
 
 
 def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=True):
-    """ --------------------------------------------------
+    """
     Create a gaussian in 2D.
 
     Author : Axel Potier
@@ -37,9 +37,7 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=Tru
     gauss: 2d numpy array
         2D gaussian function
 
-
-
-    -------------------------------------------------- """
+    """
     x = xy[0]
     y = xy[1]
     xo = float(xo)
@@ -54,7 +52,7 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=Tru
 
 
 def gauss2Dfit(data):
-    """ --------------------------------------------------
+    """
     Return the parameter of the 2D-Gaussian that best fits data
 
     Parameters
@@ -67,7 +65,7 @@ def gauss2Dfit(data):
     popt: tupple of float
         parameter of the gaussian: max, sig_x, sig_y, x_cen, y_cen, angle, offset
 
-    -------------------------------------------------- """
+    """
     # 2D-Gaussian fit
     popt = np.zeros(8)
     w, h = data.shape

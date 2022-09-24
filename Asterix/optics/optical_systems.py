@@ -12,7 +12,7 @@ from Asterix.utils import save_plane_in_fits, ft_subpixel_shift, ft_zoom_out, cr
 
 
 class OpticalSystem:
-    """ --------------------------------------------------
+    """
     Super class OpticalSystem allows passing parameters to all subclasses.
     We can then creat blocks inside this super class. An OpticalSystem start and
     end in the pupil plane.
@@ -22,10 +22,10 @@ class OpticalSystem:
 
     AUTHOR : Johan Mazoyer
 
-        -------------------------------------------------- """
+        """
 
     def __init__(self, modelconfig):
-        """ --------------------------------------------------
+        """
         Initialize OpticalSystem objects
         AUTHOR : Johan Mazoyer
 
@@ -34,7 +34,7 @@ class OpticalSystem:
         modelconfig : dict
                 general configuration parameters (sizes and dimensions)
 
-        -------------------------------------------------- """
+        """
 
         #pupil in pixel
         self.prad = modelconfig["diam_pup_in_pix"] / 2
@@ -82,7 +82,7 @@ class OpticalSystem:
     # These can be overwritten for a subclass if need be
 
     def EF_through(self, entrance_EF=1., **kwargs):
-        """ --------------------------------------------------
+        """
         Propagate the electric field from entrance pupil to exit pupil
 
         NEED TO BE DEFINED FOR ALL OpticalSystem subclasses
@@ -112,8 +112,7 @@ class OpticalSystem:
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
 
-
-        -------------------------------------------------- """
+        """
 
         if isinstance(entrance_EF, (float, np.float, np.ndarray)) == False:
             print(entrance_EF)
@@ -130,7 +129,7 @@ class OpticalSystem:
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
                    **kwargs):
-        """ --------------------------------------------------
+        """
         Propagate the electric field from entrance plane through the system and then
         to Science focal plane.
 
@@ -174,8 +173,7 @@ class OpticalSystem:
                 the lambda / D is defined with the entrance pupil diameter, such as:
                 self.wavelength_0 /  (2*self.prad) = self.Science_sampling pixels
 
-
-        -------------------------------------------------- """
+        """
         if center_on_pixel == True:
             Psf_offset = (0.5, 0.5)
         else:
@@ -221,7 +219,7 @@ class OpticalSystem:
                              save_all_planes_to_fits=False,
                              dir_save_all_planes=None,
                              **kwargs):
-        """ --------------------------------------------------
+        """
         Propagate the electric field from entrance plane through the system, then
         to Science focal plane and measure intensity
 
@@ -271,8 +269,7 @@ class OpticalSystem:
                     the entrance pupil diameter, such as:
                     self.wavelength_0 /  (2*self.prad) = self.Science_sampling pixels
 
-
-        -------------------------------------------------- """
+        """
 
         if 'wavelength' in kwargs:
             raise Exception("""todetector_intensity() function is polychromatic, 
@@ -358,8 +355,7 @@ class OpticalSystem:
         transimssion : float  
             ratio exit flux  / clear entrance pupil flux
 
-
-        -------------------------------------------------- """
+        """
         clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
 
         # all parameter can be passed here, but in the case there is a coronagraph,
@@ -371,7 +367,7 @@ class OpticalSystem:
         return throughput
 
     def measure_normalization(self):
-        """ --------------------------------------------------
+        """
         Functions must me used at the end of all Optical Systems initalization
 
         Measure 3 differents values to normalize the data:
@@ -389,8 +385,7 @@ class OpticalSystem:
         
         AUTHOR : Johan Mazoyer
 
-
-        -------------------------------------------------- """
+        """
 
         PSF_bw = np.zeros((self.dimScience, self.dimScience))
         self.norm_monochrom = np.zeros((len(self.wav_vec)))
@@ -409,7 +404,7 @@ class OpticalSystem:
         self.normPupto1 = self.transmission() * self.norm_polychrom / self.sum_polychrom
 
     def generate_phase_aberr(self, SIMUconfig, up_or_down='up', Model_local_dir=None):
-        """ --------------------------------------------------
+        """
         
         Generate and save  phase aberations
         
@@ -436,8 +431,7 @@ class OpticalSystem:
         return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                 phase abberation at the reference wavelength
 
-
-        -------------------------------------------------- """
+        """
         if Model_local_dir is None:
             pass
         elif not os.path.exists(Model_local_dir):
@@ -483,7 +477,7 @@ class OpticalSystem:
         return return_phase
 
     def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None):
-        """ --------------------------------------------------
+        """
         Generate and save amplitude aberations
 
         AUTHOR : Johan Mazoyer
@@ -503,8 +497,7 @@ class OpticalSystem:
         return_ampl : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                 amplitude abberation
 
-
-        -------------------------------------------------- """
+        """
         if not os.path.exists(Model_local_dir):
             print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
@@ -600,7 +593,7 @@ class OpticalSystem:
             return 0.
 
     def EF_from_phase_and_ampl(self, phase_abb=0., ampl_abb=0., wavelengths=-1.):
-        """ --------------------------------------------------
+        """
         Create an electrical field from an phase and amplitude aberrations as follows:
 
         EF = (1 + ample_abb)*exp(i*phase_abb * self.wavelength_0 / wavelength)
@@ -630,8 +623,7 @@ class OpticalSystem:
             2D array, of size phase_abb.shape if monochromatic
             or 3D array of size [self.nb_wav,phase_abb.shape] in case of polychromatic
 
-
-        -------------------------------------------------- """
+        """
 
         if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
             raise Exception("phase_abb and ampl_abb must be real arrays or float, not complex")

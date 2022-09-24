@@ -13,7 +13,7 @@ from Asterix.utils import save_plane_in_fits, crop_or_pad_image, rebin
 
 
 class Pupil(OpticalSystem):
-    """ --------------------------------------------------
+    """
     initialize and describe the behavior of single pupil
     pupil is a sub class of OpticalSystem.
 
@@ -26,11 +26,10 @@ class Pupil(OpticalSystem):
 
     AUTHOR : Johan Mazoyer
 
-    
-    -------------------------------------------------- """
+    """
 
     def __init__(self, modelconfig, prad=0., PupType=None, angle_rotation=0, Model_local_dir=None):
-        """ --------------------------------------------------
+        """
         Initialize a pupil object.           
         TODO: include an SCC Lyot pupil function here !
         TODO: for now pupil .fits are monochromatic but the pupil propagation EF_through
@@ -71,7 +70,7 @@ class Pupil(OpticalSystem):
                     directory to save things you can measure yourself
                     and can save to save time
 
-        -------------------------------------------------- """
+        """
         # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
@@ -185,7 +184,7 @@ class Pupil(OpticalSystem):
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
                    **kwargs):
-        """ --------------------------------------------------
+        """
         Propagate the electric field through the pupil
         AUTHOR : Johan Mazoyer
 
@@ -213,8 +212,7 @@ class Pupil(OpticalSystem):
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                         Electric field in the pupil plane a the exit of the system
 
-
-        -------------------------------------------------- """
+        """
 
         if save_all_planes_to_fits == True and dir_save_all_planes == None:
             raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +

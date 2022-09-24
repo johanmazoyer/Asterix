@@ -13,16 +13,16 @@ import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 
 class Coronagraph(OpticalSystem):
-    """ --------------------------------------------------
+    """
     initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
     coronagraph is a sub class of OpticalSystem.
 
     AUTHOR : Johan Mazoyer
 
-    -------------------------------------------------- """
+    """
 
     def __init__(self, modelconfig, coroconfig, Model_local_dir=None):
-        """ --------------------------------------------------
+        """
         Initialize a coronograph object
 
         AUTHOR : Johan Mazoyer
@@ -38,8 +38,7 @@ class Coronagraph(OpticalSystem):
                     directory to save things you can measure yourself
                     and can save to save times      
         
-
-        -------------------------------------------------- """
+        """
 
         # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
@@ -181,7 +180,7 @@ class Coronagraph(OpticalSystem):
                    save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
                    **kwargs):
-        """ --------------------------------------------------
+        """
         Propagate the electric field from apod plane before the apod
         pupil to Lyot plane after Lyot pupil
 
@@ -221,8 +220,7 @@ class Coronagraph(OpticalSystem):
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
                 Electric field in the pupil plane a the exit of the system
         
-
-        -------------------------------------------------- """
+        """
 
         # call the OpticalSystem super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
@@ -401,7 +399,7 @@ class Coronagraph(OpticalSystem):
         return lyotplane_after_lyot
 
     def FQPM(self):
-        """ --------------------------------------------------
+        """
         Create a Four Quadrant Phase Mask coronagraph
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
@@ -412,8 +410,7 @@ class Coronagraph(OpticalSystem):
         FQPM : list of len(self.wav_vec) 2D arrays   
             complex transmission of the FQPM mask at all wl
         
-        
-        -------------------------------------------------- """
+        """
 
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
@@ -453,7 +450,7 @@ class Coronagraph(OpticalSystem):
         return fqpm
 
     def Vortex(self, vortex_charge=2):
-        """ --------------------------------------------------
+        """
         Create a charge2 vortex.
 
         AUTHOR : Johan Mazoyer
@@ -468,8 +465,7 @@ class Coronagraph(OpticalSystem):
         vortex_fpm : list of 2D numpy array
                             the FP mask at all wl
 
-
-        -------------------------------------------------- """
+        """
 
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
@@ -496,7 +492,7 @@ class Coronagraph(OpticalSystem):
         return vortex
 
     def KnifeEdgeCoro(self):
-        """ --------------------------------------------------
+        """
         Create a Knife edge coronagraph of size (dimScience,dimScience)
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
@@ -506,8 +502,7 @@ class Coronagraph(OpticalSystem):
         Knife FPM : list of len(self.wav_vec) 2D arrays 
                     gcomplex transmission of the Knife edge coronagraph mask at all wl
 
-
-        -------------------------------------------------- """
+        """
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
             if len(self.wav_vec) > 1:
@@ -543,7 +538,7 @@ class Coronagraph(OpticalSystem):
         return knife_allwl
 
     def ClassicalLyot(self):
-        """ --------------------------------------------------
+        """
         Create a classical Lyot coronagraph of radius rad_LyotFP 0
         AUTHOR : Johan Mazoyer
 
@@ -552,8 +547,7 @@ class Coronagraph(OpticalSystem):
         classical Lyot fpm : list of 2D numpy array
                             the FP mask at all wl
 
-        
-        -------------------------------------------------- """
+        """
 
         rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
 
@@ -566,7 +560,7 @@ class Coronagraph(OpticalSystem):
         return ClassicalLyotFPM_allwl
 
     def HLC(self):
-        """ --------------------------------------------------
+        """
         Create a HLC of radius rad_LyotFP 0
         AUTHOR : Johan Mazoyer
 
@@ -575,8 +569,7 @@ class Coronagraph(OpticalSystem):
         classical Lyot hlc : list of 2D numpy array
                             the FP mask at all wl
         
-        
-        -------------------------------------------------- """
+        """
 
         # we create a Classical Lyot Focal plane
         ClassicalLyotFP = self.ClassicalLyot()[0]
