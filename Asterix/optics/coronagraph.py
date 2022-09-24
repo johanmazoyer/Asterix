@@ -578,3 +578,126 @@ class Coronagraph(optsy.OpticalSystem):
                 self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
 
         return hlc_all_wl
+
+
+def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0,0)):
+    """
+    Create a wrapped vortex phase mask.
+
+    Analytical calculation of this phase mask coronagraph see [Galicher2020]_.
+
+    .. [Galicher2020] Galicher et al. 2020, "A family of phase masks for broadband coronagraphy example of the wrapped
+            vortex phase mask theory and laboratory demonstration "
+
+    Parameters
+    ----------
+    dim : int
+       Number of pixels for the resulting phase mask.
+    thval : array
+        Angle values at location of phase jumps. First is 0, last is pi, completing a half of a unit circle.
+    phval : array
+        Phase values corresponding to the angle values thval just after the phase jump happened.
+    jump : array
+        Phase jump between phase segments on the unit circle. Has one less element than thval and phval.
+    return_1d : bool
+        If True, return a 1D phase profile, otherwise a 2D phase mask; default False.
+    piperiodic: bool
+        If True, assume max(thval) is pi and return a pi-periodic mask. Needs to be True to get full 2D phase mask.
+    offset : float
+        General offset to the whole ramp; default 0.
+    cen_shift : tuple of floats
+        x- and y-shift of the center of the mask with respect to the center of the array; default (0,0).
+
+    Returns
+    -------
+    angles : array
+        Array holding angle values in radians. 1D array or 2D array depending on return_1d.
+    phase_mask : array
+        Array holding the phase mask, in radians. 1D array or 2D array depending on return_1d.
+
+    Examples
+    --------
+    ### Galicher et al 2020 mask (orientation for THD2 on sep-2022)
+    # Input parameters
+    thval = np.array([0, 3, 4, 5, 8]) * np.pi / 8
+    phval = np.array([3, 0, 1, 2, 1]) * np.pi
+    jump = np.array([2, 2, 2, 2]) * np.pi
+
+    # Create an dplot focal plane mask in 1D
+    angles_1d, phase_1d = create_wrapped_vortex_mask(dim=128, thval=thval, phval=phval, jump=jump, return_1d=True)
+    plt.figure(figsize=(16,8))
+    plt.plot(angles_1d, phase_1d)
+    plt.xlabel("Angle (rad)")
+    plt.ylabel("Phase (rad)")
+    plt.show()
+
+    # Create an dplot focal plane mask in 2D
+    angles_2d, phase_2d = create_wrapped_vortex_mask(dim=128, thval=thval, phval=phval, jump=jump, return_1d=False)
+    plt.figure(figsize=(7,7))
+    plt.imshow(phase_2d, cmap="Reds", origin="lower")
+    plt.colorbar(label="Phase (rad)")
+    plt.show()
+    """
+    if phval.shape != thval.shape:
+        raise ValueError("The arrays 'phval' and 'thval' need to have the same shape.")
+
+    if return_1d:
+        # Create a continuous 1D phase ramp from 0 to pi, including an offset.
+        theta = (np.arange(dim) / (dim-1) * (np.max(thval)-np.min(thval)) + np.min(thval) + offset) % np.pi
+    else:
+        # Define the 2D theta array
+        ty = (np.arange(dim) - dim/2 - cen_shift[0] + 0.5)
+        tx = (np.arange(dim) - dim/2 - cen_shift[1] + 0.5)
+        xx, yy = np.meshgrid(ty, tx)
+        theta = (-(np.arctan2(yy, xx) - np.pi) + offset) % (2 * np.pi)
+
+    # Create empty phase mask.
+    phase = np.zeros_like(theta)
+
+    # Find the angles between thval[k] and thval[k+1].
+    for k in range(thval.shape[0]-1):
+        section = np.where((theta >= thval[k]) & (theta <= thval[k+1]))
+
+        # If such angles exist then:
+        if section[0].shape[0] != 0:
+
+            # 1st step (k=0): Create phase mask section going from phval[k] to phval[k+1].
+            if k == 0:
+                phase[section] = phval[k] + (theta[section]-thval[k]) / (thval[k+1]-thval[k]) * (phval[k+1]-phval[k])
+            # All other steps, do the same thing but add the phase shift jump[k-1] first.
+            else:
+                phase[section] = phval[k] + jump[k-1] + (theta[section]-thval[k]) / (thval[k+1]-thval[k]) * (phval[k+1]-phval[k]-jump[k-1])
+
+    if return_1d:
+        # Define the angle in radians.
+        theta = np.arange(dim) / (dim-1) * (np.max(thval)-np.min(thval)) + np.min(thval)
+
+        # If piperiodic is True, then assume max(thval) is pi and make phase pi-periodic.
+        if piperiodic:
+            angles = np.concatenate((theta, theta + np.pi))
+            phase_mask = np.concatenate((phase, phase))
+        else:
+            angles = theta
+            phase_mask = phase
+    else:
+        # If piperiodic is True, then assume max(thval) is pi and make phase pi-periodic.
+        if piperiodic:
+            # Find the angles between thval(k)+pi and thval(k+1)+pi.
+            for k in range(thval.shape[0]-1):
+                section = np.where((theta >= (thval[k] + np.pi)) & (theta <= (thval[k+1] + np.pi)))
+
+                # If such elements exist then:
+                if section[0].shape[0] != 0:
+
+                    # 1st step [k=1]: Create phase mask section going from phval[k] to phval[k+1].
+                    if k == 0:
+                        phase[section] = phval[k] + (theta[section] - thval[k] - np.pi) / (thval[k+1] - thval[k]) * (phval[k+1] - phval[k])
+                    # All other steps, do the same thing but add the phase shift jump[k-1] first.
+                    else:
+                        phase[section] = phval[k] + jump[k-1] + (theta[section] - thval[k] - np.pi) / (
+                                    thval[k+1] - thval[k]) * (phval[k+1] - phval[k] - jump[k-1])
+
+        angles = theta
+        phase_mask = phase
+
+    return angles, phase_mask
