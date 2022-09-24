@@ -17,7 +17,7 @@ with the THD2 testbed, just run:
 
     import os
     from Asterix import main_THD, Asterixroot
-    results = main_THD.runthd2(os.path.join(Asterix_root, 'Example_param_file.ini'))
+    ain_THD.runthd2(os.path.join(Asterix_root, 'Example_param_file.ini'))
 
 Please avoid running Asterix directly in the Asterix install directory to avoid saving .fits files everywhere.
 The first parameter of the parameter file is ``Data_dir``. By default it is set to '.' which means it will save the files
@@ -27,7 +27,7 @@ copying Example_param_file.ini in another directory and create you own calling p
 .. code-block:: python
 
     from Asterix import main_THD
-    results = main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini')
+    main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini')
 
 To run several simulation with slightly different parameters, you can override one of the parameters directly from the main. 
 For example:
@@ -35,8 +35,8 @@ For example:
 .. code-block:: python
 
     from Asterix import main_THD
-    results = main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini',
-                               NewCoronaconfig={"corona_type" : 'fqpm'})
+    main_THD.runthd2(path_to_my_param_file + 'my_param_file.ini',
+                     NewCoronaconfig={"corona_type" : 'fqpm'})
 
 will overide the current corona_type parameter and replace it with "fqpm", leaving all other parameters unchanged.
 
