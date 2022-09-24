@@ -20,9 +20,17 @@ with the THD2 testbed, just run:
     main_THD.runthd2(os.path.join(Asterix_root, 'Example_param_file.ini'))
 
 Please avoid running Asterix directly in the Asterix install directory to avoid saving .fits files everywhere.
-The first parameter of the parameter file is ``Data_dir``. By default it is set to '.' which means it will save the files
-in the directory you currently are when you run this code. A good practice is therefore to create your own parameter file by
-copying Example_param_file.ini in another directory and create you own calling python file which call ``main_THD.runthd2()``.
+The first parameter of the parameter file is ``Data_dir``. By default it is set to '.' which means no target directory
+is set and outputs will be saved to some pre-defined default locations. There are several options for this:
+
+1. Create your own parameter file by copying ``Example_param_file.ini`` into another directory and to create
+your own python file which calls ``main_THD.runthd2()``.
+
+2. Leave the parameter file entry ``Data_dir`` in whichever file you are reading set to '.', which will look for a
+directory called ``thd2_data`` in your home directory and save all data there. If the code can't find it, it will create one.
+
+3. You can create the environment variable ``THD2_DATA_PATH`` on your local machine which will define the top-level
+directory to which all your data outputs from Asterix will be saved.
 
 .. code-block:: python
 
@@ -38,13 +46,13 @@ For example:
     main_THD.runthd2(os.path.join(path_to_my_param_file, 'my_param_file.ini'),
                      NewCoronaconfig={"corona_type" : 'fqpm'})
 
-will overide the current corona_type parameter and replace it with "fqpm", leaving all other parameters unchanged.
+will override the current corona_type parameter and replace it with "fqpm", leaving all other parameters unchanged.
 
 When you run Asterix, the first time several directories will be created:
 
 * Model_local/ contains all .fits files that are essentials to the correction but that can be measured, even if it can take a long time.
 
-* Interaction_Matrices/ is the directoy where Matrices are saved, both for estimation (e.g. pair wise) and correction (e.g. Interaction Matrices).
+* Interaction_Matrices/ is the directory where Matrices are saved, both for estimation (e.g. pair wise) and correction (e.g. Interaction Matrices).
 
 * Results/ where it will save the results of your correction. The code will automatically create a directory in Results/Name_Experiment/ where 'Name_Experiment' is a parameter in the .ini file.
 
