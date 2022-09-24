@@ -2,8 +2,6 @@
 # pylint: disable=trailing-whitespace
 
 import os
-import time
-
 import numpy as np
 from astropy.io import fits
 
@@ -82,7 +80,7 @@ class Corrector:
 
         """
         if not os.path.exists(matrix_dir):
-            print("Creating directory " + matrix_dir + " ...")
+            print("Creating directory " + matrix_dir)
             os.makedirs(matrix_dir)
 
         if isinstance(testbed, OpticalSystem) == False:
@@ -119,7 +117,7 @@ class Corrector:
 
         if self.correction_algorithm == "efc" and save_for_bench == True:
             if not os.path.exists(realtestbed_dir):
-                print("Creating directory " + realtestbed_dir + " ...")
+                print("Creating directory " + realtestbed_dir)
                 os.makedirs(realtestbed_dir)
 
             if testbed.DM1.active & testbed.DM3.active:
@@ -167,8 +165,10 @@ class Corrector:
             THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"], number_Active_testbeds, realtestbed_dir,
                              self.regularization)
 
-            fits.writeto(realtestbed_dir + "DH_mask.fits", self.MaskEstim.astype(np.float32), overwrite=True)
-            fits.writeto(realtestbed_dir + "DH_mask_where_x_y.fits",
+            fits.writeto(os.path.join(realtestbed_dir, "DH_mask.fits"),
+                         self.MaskEstim.astype(np.float32),
+                         overwrite=True)
+            fits.writeto(os.path.join(realtestbed_dir, "DH_mask_where_x_y.fits"),
                          np.array(np.where(self.MaskEstim == 1)).astype(np.float32),
                          overwrite=True)
 
@@ -225,7 +225,6 @@ class Corrector:
 
             self.FirstIterNewMat = True
 
-            start_time = time.time()
             interMat = wfc.create_interaction_matrix(testbed,
                                                      estimator.dimEstim,
                                                      self.amplitudeEFC,
@@ -235,9 +234,6 @@ class Corrector:
                                                      MatrixType=self.MatrixType,
                                                      save_all_planes_to_fits=False,
                                                      dir_save_all_planes="/Users/jmazoyer/Desktop/g0_all/")
-
-            print("time for direct matrix " + testbed.string_os + " (s):", round(time.time() - start_time))
-            print("")
 
             self.Gmatrix = wfc.crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
 

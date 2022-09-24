@@ -44,7 +44,7 @@ class Coronagraph(OpticalSystem):
         super().__init__(modelconfig)
 
         if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
-            print("Creating directory " + Model_local_dir + " ...")
+            print("Creating directory " + Model_local_dir)
             os.makedirs(Model_local_dir)
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.

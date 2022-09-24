@@ -2,6 +2,7 @@
 # pylint: disable=trailing-whitespace
 
 import os
+import time
 import numpy as np
 import matplotlib
 from IPython import get_ipython
@@ -130,8 +131,6 @@ def create_interaction_matrix(testbed: Testbed,
         headfile += "_EFCampl" + str(amplitudeEFC)
     else:
         raise Exception("This Basis type does not exist")
-    print("")
-    print("Start Interaction Matrix")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
@@ -160,6 +159,8 @@ def create_interaction_matrix(testbed: Testbed,
             pos_in_matrix += DM.basis_size
 
         else:
+            start_time = time.time()
+
             # We measure the initial Focal plane that will be removed at the end.
             # Be careful because todetector automatically normalized to contrast with the full testbed
             # We checked that this is the same normalization as in Gvector
@@ -173,7 +174,7 @@ def create_interaction_matrix(testbed: Testbed,
                 print("")
                 print("The matrix " + fileDirectMatrix + " does not exists")
 
-            print("Start " + DM_name)
+            print("Start interaction Matrix " + DM_name + ' (wait a few 10s of seconds)')
 
             # we measure the phases of the Basis we will apply on the DM.
             # In the case of the Fourier Basis, this is a bit long so we load an existing .fits file
@@ -372,14 +373,15 @@ def create_interaction_matrix(testbed: Testbed,
             if (initial_DM_voltage == 0.).all():
                 fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
                              InterMat[:, init_pos_in_matrix:init_pos_in_matrix + DM.basis_size])
+            print("")
+            print("Time for interaction Matrix " + DM_name + " (s):", round(time.time() - start_time))
+            print("")
 
     # clean to save memory
     for i, DM_name in enumerate(testbed.name_of_DMs):
         DM = vars(testbed)[DM_name]  # type: DeformableMirror
         DM.phase_init = 0
 
-    print("")
-    print("End Interaction Matrix")
     return InterMat
 
 

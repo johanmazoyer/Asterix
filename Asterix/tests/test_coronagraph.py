@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 from Asterix import Asterix_root
@@ -7,7 +8,7 @@ from Asterix.optics import Coronagraph
 
 def test_default_coronagraph():
     # Load the example parameter file
-    parameter_file_ex = Asterix_root + "Example_param_file.ini"
+    parameter_file_ex = os.path.join(Asterix_root, "Example_param_file.ini")
     config = read_parameter_file(parameter_file_ex)
 
     # Reassign the parameter groups to variables

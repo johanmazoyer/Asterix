@@ -2,6 +2,7 @@
 # pylint: disable=trailing-whitespace
 
 import os
+import time
 import numpy as np
 from astropy.io import fits
 
@@ -76,7 +77,7 @@ class Estimator:
 
         """
         if not os.path.exists(matrix_dir):
-            print("Creating directory " + matrix_dir + " ...")
+            print("Creating directory " + matrix_dir)
             os.makedirs(matrix_dir)
 
         if isinstance(testbed, OpticalSystem) == False:
@@ -143,22 +144,26 @@ class Estimator:
                     int(cutsvdPW // 1000)) + "k_dimEstim" + str(self.dimEstim) + testbed.string_os
 
             ####Calculating and Saving PW matrix
+            print("")
             filePW = "MatPW_" + string_dims_PWMatrix
             if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")) == True:
-                print("The matrix " + filePW + " already exists")
+                print("The PWmatrix " + filePW + " already exists")
                 self.PWMatrix = fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
             else:
-                print("Saving " + filePW + " ...")
+                start_time = time.time()
+                print("The PWmatrix " + filePW + " does not exists")
+                print("Start PW matrix (wait a few seconds)")
                 self.PWMatrix, showSVD = wfs.create_pw_matrix(testbed, self.amplitudePW, self.posprobes,
                                                               self.dimEstim, cutsvdPW, testbed.wavelength_0)
                 fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(self.PWMatrix))
                 visuPWMap = "EigenPW_" + string_dims_PWMatrix
                 fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(showSVD[1]))
+                print("Time for PW Matrix", time.time() - start_time)
 
             # Saving PW matrix in Labview directory
             if save_for_bench == True:
                 if not os.path.exists(realtestbed_dir):
-                    print("Creating directory " + realtestbed_dir + " ...")
+                    print("Creating directory: " + realtestbed_dir)
                     os.makedirs(realtestbed_dir)
 
                 probes = np.zeros((len(self.posprobes), testbed.DM3.number_act), dtype=np.float32)

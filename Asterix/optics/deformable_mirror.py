@@ -239,6 +239,8 @@ class DeformableMirror(OpticalSystem):
         Name_pushact_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
+        print("Start " + Name_pushact_fits + " (wait a few seconds)")
+
         if (self.misregistration is False) and (os.path.exists(
                 os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
             pushact3d = fits.getdata(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
@@ -354,7 +356,7 @@ class DeformableMirror(OpticalSystem):
         if self.misregistration is False and (not os.path.exists(
                 os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
             fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'), pushact3d)
-            print("time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
+            print("Time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
 
         return pushact3d
 
@@ -414,7 +416,7 @@ class DeformableMirror(OpticalSystem):
         fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'),
                      WhichInPupil,
                      overwrite=True)
-        print("time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time))
+        print("Time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time))
 
         return WhichInPupil
 
@@ -569,21 +571,22 @@ class DeformableMirror(OpticalSystem):
                 vec = cossinbasis[i].flatten()[self.active_actuators]
                 basis[i] = vec
 
-            start_time = time.time()
             # This is a very time consuming part of the code.
             # from N voltage vectors with the sine and cosine value, we go N times through the
             # voltage_to_phase functions. For this reason we save the Fourrier base 2D phases on each DMs
             # in a specific .fits file
             if not os.path.exists(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits')):
+                start_time = time.time()
                 phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil, self.dim_overpad_pupil))
-                print("Start " + Name_FourrierBasis_fits)
+                print("Start " + Name_FourrierBasis_fits + " (wait a few seconds)")
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
                         progress(i, basis_size, status='')
                 fits.writeto(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits'),
                              phasesFourrier)
-            print("time for " + Name_FourrierBasis_fits, time.time() - start_time)
+                print("")
+                print("Time for " + Name_FourrierBasis_fits, time.time() - start_time)
 
         else:
             raise Exception(basis_type + " is is not a valid basis_type")

@@ -449,7 +449,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     """
 
     if not os.path.exists(result_dir):
-        print("Creating directory " + result_dir + " ...")
+        print("Creating directory " + result_dir)
         os.makedirs(result_dir)
 
     FP_Intensities = CorrectionLoopResult["FP_Intensities"]

@@ -435,7 +435,7 @@ class OpticalSystem:
         if Model_local_dir is None:
             pass
         elif not os.path.exists(Model_local_dir):
-            print("Creating directory " + Model_local_dir + " ...")
+            print("Creating directory " + Model_local_dir)
             os.makedirs(Model_local_dir)
 
         if up_or_down == 'up':
@@ -500,7 +500,7 @@ class OpticalSystem:
 
         """
         if not os.path.exists(Model_local_dir):
-            print("Creating directory " + Model_local_dir + " ...")
+            print("Creating directory " + Model_local_dir)
             os.makedirs(Model_local_dir)
 
         set_amplitude_abb = SIMUconfig["set_amplitude_abb"]

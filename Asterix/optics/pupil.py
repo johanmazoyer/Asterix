@@ -75,7 +75,7 @@ class Pupil(OpticalSystem):
         super().__init__(modelconfig)
 
         if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
-            print("Creating directory " + Model_local_dir + " ...")
+            print("Creating directory " + Model_local_dir)
             os.makedirs(Model_local_dir)
 
         if prad == 0:
