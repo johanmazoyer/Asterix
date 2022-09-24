@@ -11,7 +11,7 @@ Your_parameter_file_name = 'Example_param_file.ini'
 parameter_file_path = os.path.join(Your_directory, Your_parameter_file_name)
 
 start_time = time.time()
-results_first = main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+results_first = main_THD.runthd2(parameter_file_path,
                                  NewDMconfig={'DM1_active': False},
                                  NewEstimationconfig={'estimation': 'pw'},
                                  NewCorrectionconfig={
@@ -31,7 +31,7 @@ print("")
 print("")
 
 start_time = time.time()
-results_second = main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+results_second = main_THD.runthd2(parameter_file_path,
                                   NewDMconfig={'DM1_active': False},
                                   NewEstimationconfig={'estimation': 'perfect'},
                                   NewCorrectionconfig={
@@ -50,7 +50,7 @@ print("")
 print("")
 
 start_time = time.time()
-results_four = main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+results_four = main_THD.runthd2(parameter_file_path,
                                 NewDMconfig={'DM1_active': True},
                                 NewEstimationconfig={'estimation': 'perfect'},
                                 NewCorrectionconfig={
@@ -69,7 +69,7 @@ print("")
 print("")
 
 start_time = time.time()
-results_five = main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+results_five = main_THD.runthd2(parameter_file_path,
                                 NewDMconfig={'DM1_active': True},
                                 NewEstimationconfig={'estimation': 'pw'},
                                 NewCorrectionconfig={

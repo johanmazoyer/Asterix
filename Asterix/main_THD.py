@@ -7,9 +7,6 @@ from Asterix.utils import read_parameter_file
 from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
 from Asterix.wfsc import Estimator, Corrector, MaskDH, correction_loop, save_loop_results
 
-#######################################################
-#######################################################
-######## Simulation of a correction loop for thd2 testbed
 
 def runthd2(parameter_file,
             NewMODELconfig={},
@@ -51,14 +48,14 @@ def runthd2(parameter_file,
     """
 
     # Load configuration file
-    config = useful.read_parameter_file(parameter_file,
-                                        NewMODELconfig=NewMODELconfig,
-                                        NewDMconfig=NewDMconfig,
-                                        NewCoronaconfig=NewCoronaconfig,
-                                        NewEstimationconfig=NewEstimationconfig,
-                                        NewCorrectionconfig=NewCorrectionconfig,
-                                        NewLoopconfig=NewLoopconfig,
-                                        NewSIMUconfig=NewSIMUconfig)
+    config = read_parameter_file(parameter_file,
+                                 NewMODELconfig=NewMODELconfig,
+                                 NewDMconfig=NewDMconfig,
+                                 NewCoronaconfig=NewCoronaconfig,
+                                 NewEstimationconfig=NewEstimationconfig,
+                                 NewCorrectionconfig=NewCorrectionconfig,
+                                 NewLoopconfig=NewLoopconfig,
+                                 NewSIMUconfig=NewSIMUconfig)
 
     Data_dir = config["Data_dir"]
     onbench = config["onbench"]
@@ -78,16 +75,17 @@ def runthd2(parameter_file,
     labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
 
     # Create all optical elements of the THD
-    entrance_pupil = OptSy.Pupil(modelconfig,
-                                 PupType=modelconfig['filename_instr_pup'],
-                                 angle_rotation=modelconfig['entrance_pup_rotation'],
-                                 Model_local_dir=model_local_dir)
-    DM1 = OptSy.DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=model_local_dir)
-    DM3 = OptSy.DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=model_local_dir)
-    corono = OptSy.Coronagraph(modelconfig, Coronaconfig, Model_local_dir=model_local_dir)
+    entrance_pupil = Pupil(modelconfig,
+                           PupType=modelconfig['filename_instr_pup'],
+                           angle_rotation=modelconfig['entrance_pup_rotation'],
+                           Model_local_dir=model_local_dir)
+    DM1 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=model_local_dir)
+    DM3 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=model_local_dir)
+    corono = Coronagraph(modelconfig, Coronaconfig, Model_local_dir=model_local_dir)
 
     # Concatenate into the full testbed optical system
-    thd2 = OptSy.Testbed([entrance_pupil, DM1, DM3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
+    thd2 = Testbed([entrance_pupil, DM1, DM3, corono],
+                   ["entrancepupil", "DM1", "DM3", "corono"])
 
     # The following line can be used to change the DM which aplpies PW probes. This could be used to use the DM out of
     # the pupil plane.
