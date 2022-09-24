@@ -3,6 +3,7 @@ dependencies:
   - astropy
   - configobj
   - jupyter
+  - ipykernel
   - matplotlib
   - numpy
   - pytest
