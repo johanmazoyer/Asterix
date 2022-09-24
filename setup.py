@@ -30,6 +30,5 @@ setup(
     ],
     keywords='Exoplanets imaging high-contrast coronagraphy',
     install_requires=[
-        'astropy', 'configobj', 'jupyter', 'ipykernel', 'matplotlib', 'numpy', 'pytest', 'scikit-image',
-        'scipy'
+        'astropy', 'configobj', 'jupyter', 'matplotlib', 'numpy', 'pytest', 'scikit-image', 'scipy'
     ])
