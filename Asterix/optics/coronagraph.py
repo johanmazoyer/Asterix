@@ -121,10 +121,7 @@ class Coronagraph(optsy.OpticalSystem):
         elif self.corona_type == "wrapped_vortex":
             self.prop_apod2lyot = 'mft'
             self.string_os += '2020'
-            self.FPmsk = list([
-                self.EF_from_phase_and_ampl(phase_abb=crop_or_pad_image(
-                    fits.getdata(coroconfig["wrapped_vortex_fits_file"]), self.dimScience))
-            ])
+            self.FPmsk = self.WrappedVortex()
             self.perfect_coro = True
 
         else:
@@ -479,6 +476,48 @@ class Coronagraph(optsy.OpticalSystem):
             vortex.append(np.exp(1j * phasevortex_cut))
 
         return vortex
+
+    def WrappedVortex(self, offset=0, cen_shift=(0,0)):
+        """
+        Create a wrapped vortex coronagraph.
+
+        Parameters
+        ----------
+        offset : float
+            General offset to the whole ramp; default 0.
+        cen_shift : tuple of floats
+            x- and y-shift of the center of the mask with respect to the center of the array; default (0,0).
+
+        Returns
+        -------
+        wrapped_vortex : list of 2D numpy array
+            The FP masks at all wavelengths.
+        """
+        if self.prop_apod2lyot == "fft":
+            maxdimension_array_fpm = np.max(self.dim_fp_fft)
+        else:
+            maxdimension_array_fpm = self.dimScience
+
+        # TODO: The below should not be hard-coded, but ok until we actually want to be able to use different values.
+        thval = np.array([0, 3, 4, 5, 8]) * np.pi / 8
+        phval = np.array([3, 0, 1, 2, 1]) * np.pi
+        jump = np.array([2, 2, 2, 2]) * np.pi
+        phase_wrapped_vortex = create_wrapped_vortex_mask(dim=maxdimension_array_fpm,
+                                                          thval=thval, phval=phval, jump=jump,
+                                                          offsest=offset, cen_shift=cen_shift)
+
+        wrapped_vortex = list()
+        for i, wav in enumerate(self.wav_vec):
+            if self.prop_apod2lyot == "fft":
+                dim_fp = self.dim_fp_fft[i]
+            else:
+                dim_fp = self.dimScience
+
+            phasevortex_cut = crop_or_pad_image(phase_wrapped_vortex,
+                                                dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
+            wrapped_vortex.append(np.exp(1j * phasevortex_cut))
+
+        return wrapped_vortex
 
     def KnifeEdgeCoro(self):
         """
