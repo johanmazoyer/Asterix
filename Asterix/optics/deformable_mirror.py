@@ -353,7 +353,7 @@ class DeformableMirror(OpticalSystem):
 
         if self.misregistration is False and (not os.path.exists(
                 os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
-            fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits', pushact3d))
+            fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'), pushact3d)
             print("time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
 
         return pushact3d
