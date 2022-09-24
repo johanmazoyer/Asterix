@@ -239,13 +239,13 @@ class DeformableMirror(OpticalSystem):
         Name_pushact_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
-        print("Start " + Name_pushact_fits + " (wait a few seconds)")
-
         if (self.misregistration is False) and (os.path.exists(
                 os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
             pushact3d = fits.getdata(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
             print("Load " + Name_pushact_fits)
             return pushact3d
+
+        print("Start " + Name_pushact_fits + " (wait a few seconds)")
 
         if self.misregistration:
             xerror = float(DMconfig[self.Name_DM + "_xerror"])
