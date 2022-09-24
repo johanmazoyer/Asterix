@@ -13,16 +13,14 @@ import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 class Coronagraph(optsy.OpticalSystem):
     """
-    initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
-    coronagraph is a sub class of OpticalSystem.
+    Initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane).
 
     AUTHOR : Johan Mazoyer
-
     """
 
     def __init__(self, modelconfig, coroconfig, Model_local_dir=None):
         """
-        Initialize a coronograph object
+        Initialize a coronagraph object.
 
         AUTHOR : Johan Mazoyer
 
@@ -56,7 +54,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         self.string_os += '_Apod' + self.apod_pup.string_os
 
-        #coronagraph focal plane mask type
+        # Define coronagraph focal plane mask type
         self.corona_type = coroconfig["corona_type"].lower()
 
         self.string_os += '_' + self.corona_type
@@ -144,7 +142,7 @@ class Coronagraph(optsy.OpticalSystem):
 
             if coroconfig["filename_instr_apod"] == "Clear":
                 # We need a round pupil only to measure the response
-                # of the coronograph to a round pupil to remove it
+                # of the coronagraph to a round pupil to remove it
                 # THIS IS NOT THE ENTRANCE PUPIL,
                 # this is a round pupil of the same size
                 pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad)
@@ -175,8 +173,8 @@ class Coronagraph(optsy.OpticalSystem):
                    dir_save_all_planes=None,
                    **kwargs):
         """
-        Propagate the electric field from apod plane before the apod
-        pupil to Lyot plane after Lyot pupil
+        Propagate the electric field from the apodizer plane before the apodizer pupil to the Lyot plane after the
+        Lyot pupil.
 
         AUTHOR : Johan Mazoyer
 
@@ -184,25 +182,23 @@ class Coronagraph(optsy.OpticalSystem):
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Can also be a float scalar in which case entrance_EF is constant
-            default is 1.
-            Electric field in the pupil plane a the entrance of the system.
-
-        wavelength : float. Default is self.wavelength_0 the reference wavelength
-            Current wavelength in m.
-
-        noFPM : bool (default: False)
-            if True, remove the FPM if one want to measure a un-obstructed PSF
-        
-        EF_aberrations_introduced_in_LS: 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Can also be a float scalar in which case entrance_EF is constant
-            default is 1.
-            electrical field created by the downstream aberrations introduced directly in the Lyot Stop
-        
-        dir_save_all_planes : default None. 
-            If not None, directory to save all planes in fits for debugging purposes.
-            This can generate a lot of fits especially if in a loop, use with caution
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]; or float
+                Can also be a float scalar in which case entrance_EF is constant; default=1.
+                Electric field in the pupil plane at the entrance of the system.
+        wavelength : float
+                Current wavelength in m.
+                Default is self.wavelength_0, the reference wavelength.
+        noFPM : bool
+                If True, remove the FPM if one want to measure an un-obstructed PSF; default False.
+        EF_aberrations_introduced_in_LS : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+                Electrical field created by the downstream aberrations introduced directly in the Lyot Stop.
+                Can also be a float scalar in which case entrance_EF is constant; default=1.
+        save_all_planes_to_fits : bool, default False
+                If True, save all planes to fits file for debugging purposes, to dir_save_all_planes.
+                This can generate a lot of files especially if in a loo,p so the code forces you
+                to define a repository.
+        dir_save_all_planes : string, default None
+                Directory to save all planes into fits files if save_all_planes_to_fits=True.
 
         Returns
         ------
@@ -237,7 +233,7 @@ class Coronagraph(optsy.OpticalSystem):
             name_plane = 'EF_PP_after_apod' + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, input_wavefront_after_apod)
 
-        # we take the convention that for all propation methods, the PSF must be
+        # we take the convention that for all propagation methods, the PSF must be
         # "in between 4 pixels" in the focal plane.
 
         if self.prop_apod2lyot == "fft":
@@ -385,15 +381,15 @@ class Coronagraph(optsy.OpticalSystem):
 
     def FQPM(self):
         """
-        Create a Four Quadrant Phase Mask coronagraph
+        Create a Four Quadrant Phase Mask coronagraph.
+
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
 
-
         Returns
         ------
-        FQPM : list of len(self.wav_vec) 2D arrays   
-            complex transmission of the FQPM mask at all wl
+        fqpm : list of len(self.wav_vec) 2D arrays
+            Complex transmission of the FQPM mask at all wavelengths.
         
         """
 
@@ -428,28 +424,26 @@ class Coronagraph(optsy.OpticalSystem):
                 # of the phase with the wl.
                 fqpm.append(np.exp(1j * phase4q))
             else:
-                # in the general case, we use the EF_from_phase_and_ampl which handle the phase
-                # chromaticity.
+                # in the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
                 fqpm.append(self.EF_from_phase_and_ampl(phase_abb=phase4q, wavelengths=wav))
 
         return fqpm
 
     def Vortex(self, vortex_charge=2):
         """
-        Create a charge2 vortex.
+        Create a vortex coronagraph with charge 'vorrtex_charge'.
 
         AUTHOR : Johan Mazoyer
 
         Parameters
         ------
-        Charge : int, defaut 2
-            charge of the vortex. can be 2, 4, 6. Defaut is charge 2
+        vortex_charge : int, default=2
+            charge of the vortex. can be 2, 4, 6. Defaut is charge 2.
 
         Returns
         ------
-        vortex_fpm : list of 2D numpy array
-            The FP mask at all wl
-
+        vortex : list of 2D numpy array
+            The FP mask at all wavelengths.
         """
 
         if self.prop_apod2lyot == "fft":
@@ -520,7 +514,8 @@ class Coronagraph(optsy.OpticalSystem):
 
     def KnifeEdgeCoro(self):
         """
-        Create a Knife edge coronagraph of size (dimScience,dimScience)
+        Create a Knife edge coronagraph of size (dimScience,dimScience).
+
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
 
@@ -541,7 +536,6 @@ class Coronagraph(optsy.OpticalSystem):
         # to define the orientation of the coronagraph
 
         #  Number of pixels per resolution element at central wavelength
-
         xx, yy = np.meshgrid(np.arange(maxdimension_array_fpm), np.arange(maxdimension_array_fpm))
 
         Knife = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
@@ -566,7 +560,8 @@ class Coronagraph(optsy.OpticalSystem):
 
     def ClassicalLyot(self):
         """
-        Create a classical Lyot coronagraph of radius rad_LyotFP 0
+        Create a classical Lyot coronagraph of radius rad_LyotFP.
+
         AUTHOR : Johan Mazoyer
 
         Returns
@@ -577,7 +572,6 @@ class Coronagraph(optsy.OpticalSystem):
         """
 
         rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
-
         ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm, rad_LyotFP_pix)
 
         ClassicalLyotFPM_allwl = []
@@ -588,19 +582,18 @@ class Coronagraph(optsy.OpticalSystem):
 
     def HLC(self):
         """
-        Create a HLC of radius rad_LyotFP 0
+        Create an HLC of radius rad_LyotFP.
+
         AUTHOR : Johan Mazoyer
 
         Returns
         ------
-        classical Lyot hlc : list of 2D numpy array
-            The FP mask at all wl
-        
+        hlc_all_wl : list of 2D numpy array
+                the FP mask at all wl
         """
 
         # we create a Classical Lyot Focal plane
         ClassicalLyotFP = self.ClassicalLyot()[0]
-
         whClassicalLyotstop = np.where(ClassicalLyotFP == 0.)
 
         # we define phase and amplitude for the HLC at the reference WL
