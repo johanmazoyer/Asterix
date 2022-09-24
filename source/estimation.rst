@@ -19,15 +19,15 @@ set by the ``Estim_bin_factor`` parameter and is ``dimScience`` / ``Estim_bin_fa
 
 .. code-block:: python
 
+    from Asterix.wfsc import Estimator 
     # testbed is previously defined
+
     Estimationconfig = config["Estimationconfig"]
 
-    myestim = Estimator(Estimationconfig,
-                    testbed)
-    resultatestimation = myestim.estimate(
-                        testbed,
-                        voltage_vector=init_voltage,
-                        entrance_EF=input_wavefront)
+    myestim = Estimator(Estimationconfig, testbed)
+    resultatestimation = myestim.estimate(testbed,
+                                          voltage_vector=init_voltage,
+                                          entrance_EF=input_wavefront)
 
 
 
@@ -40,35 +40,32 @@ this estimation can be also done wihtout initialization or if another estimation
 
 .. code-block:: python
 
+    from Asterix.wfsc import Estimator
+
     # testbed is previously defined
     Estimationconfig = config["Estimationconfig"]    
     
     # we initialize in perfect mode
     Estimationconfig.update({'estimation': "Perfect"})
-    myestim = Estimator(Estimationconfig,
-                    testbed)
-    resultatestimation = myestim.estimate(
-                        testbed,
-                        voltage_vector=init_voltage,
-                        entrance_EF=input_wavefront)
+    myestim = Estimator(Estimationconfig, testbed)
+    resultatestimation = myestim.estimate(testbed,
+                                          voltage_vector=init_voltage,
+                                          entrance_EF=input_wavefront)
     # this is a perfect FP estimation
 
     # we re- initialize in pair-wise mode
     Estimationconfig.update({'estimation': "pw"})
-    myestim = Estimator(Estimationconfig,
-                    testbed)
+    myestim = Estimator(Estimationconfig, testbed)
 
-    resultatestimation = myestim.estimate(
-                        testbed,
-                        voltage_vector=init_voltage,
-                        entrance_EF=input_wavefront)
+    resultatestimation = myestim.estimate(testbed,
+                                          voltage_vector=init_voltage,
+                                          entrance_EF=input_wavefront)
     # this is a pair-wise FP estimation
 
-    resultatestimation = myestim.estimate(
-                    testbed,
-                    voltage_vector=init_voltage,
-                    entrance_EF=input_wavefront,
-                    perfect_estimation=True)
+    resultatestimation = myestim.estimate(testbed,
+                                          voltage_vector=init_voltage,
+                                          entrance_EF=input_wavefront,
+                                          perfect_estimation=True)
     # this is also a perfect FP estimation, without 
     # re-initializing the estimator
 
@@ -77,11 +74,11 @@ resized to the ``Estim_sampling``:
 
 .. code-block:: python
 
-    import Asterix.processing_functions as proc
+    from Asterix.utils import resizing
     # testbed is previously defined
 
-    resultatestimation = proc.resizing(testbed.todetector(voltage_vector=init_voltage,
-                                    entrance_EF=input_wavefront),myestim.dimEstim) 
+    resultatestimation = resizing(testbed.todetector(voltage_vector=init_voltage,
+                                  entrance_EF=input_wavefront),myestim.dimEstim) 
 
 
 All estimators are done this way (first obtains images in the focal plane at the ``Science_sampling`` and 

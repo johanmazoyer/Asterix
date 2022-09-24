@@ -1,15 +1,16 @@
 import os
 from configobj import ConfigObj
 from validate import Validator
-import Asterix.optical_systems as OptSy
+
+from Asterix import Asterix_root
 
 
 def test_example_parameter_file():
     # Define where to load the example parameter file from.
-    parameter_file_ex = OptSy.Asterix_root + os.path.sep + "Example_param_file.ini"
+    parameter_file_ex = os.path.join(Asterix_root, "Example_param_file.ini")
 
     # Define where to load the template parameter file from.
-    configspec_file = OptSy.Asterix_root + os.path.sep + "Param_configspec.ini"
+    configspec_file = os.path.join(Asterix_root, "Param_configspec.ini")
 
     # Create the ConfigObj object with file to be tested and validation file, and the validator object.
     config = ConfigObj(parameter_file_ex, configspec=configspec_file, default_encoding="utf8")

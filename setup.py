@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='Asterix',
-    version='2.3',
+    version='2.4',
     description='Asterix: A simulation tool for high-contrast sensing and control algorithms',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -27,7 +27,8 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3.8, 3.9, 3.10',
-        ],
+    ],
     keywords='Exoplanets imaging high-contrast coronagraphy',
-    install_requires=['astropy', 'configobj', 'jupyter', 'matplotlib', 'numpy', 'pytest', 'scikit-image', 'scipy']
-    )
+    install_requires=[
+        'astropy', 'configobj', 'jupyter', 'matplotlib', 'numpy', 'pytest', 'scikit-image', 'scipy'
+    ])

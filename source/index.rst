@@ -45,142 +45,147 @@ Annex: Asterix Functions
 ==================
 
 
-main_THD.py
+Main_THD
 -----------------
 .. automodule:: Asterix.main_THD
     :members:
 
-.. callgraph:: Asterix.main_THD.runthd2
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
-
-
-correction_loop.py
+Correction loop
 -----------------
-.. automodule:: Asterix.correction_loop
+.. automodule:: Asterix.wfsc.correction_loop
     :members:
+    :show-inheritance:
 
-.. callgraph:: Asterix.correction_loop.correction_loop
+.. callgraph:: Asterix.wfsc.correction_loop.correction_loop
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-
-optical_systems.py
+HCI metric plots
 -----------------
+.. automodule:: Asterix.utils.hci_metrics
+    :members:
+    :show-inheritance:
+
+
+Coronagraphis instrument simulation
+------------------------------------
 
 OpticalSystem: main class
 ++++++++++++++++++++++++++
 .. _os-label:
-.. autoclass:: Asterix.optical_systems.OpticalSystem
+.. autoclass:: Asterix.optics.OpticalSystem
     :members:
     :show-inheritance:
 
 
 OpticalSystem: pupil subclass
-++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++
 .. _pupil-label:
-.. autoclass:: Asterix.optical_systems.Pupil
+.. autoclass:: Asterix.optics.Pupil
     :members:
     :show-inheritance:
 
 OpticalSystem: coronagraph subclass
-++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++
 .. _coronagraph-label:
-.. autoclass:: Asterix.optical_systems.Coronagraph
+.. autoclass:: Asterix.optics.Coronagraph
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.optical_systems.Coronagraph.__init__
+.. callgraph:: Asterix.optics.coronagraph.Coronagraph.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
 
 OpticalSystem: DeformableMirror subclass
-++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++
 .. _deformable-mirror-label:
-.. autoclass:: Asterix.optical_systems.DeformableMirror
+.. autoclass:: Asterix.optics.DeformableMirror
     :members:
     :show-inheritance:
 
-.. callgraph:: Asterix.optical_systems.DeformableMirror.__init__
+.. callgraph:: Asterix.optics.deformable_mirror.DeformableMirror.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
 
 OpticalSystem: Testbed subclass
-++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++
 .. _testbed-label:
-.. autoclass:: Asterix.optical_systems.Testbed
+.. autoclass:: Asterix.optics.Testbed
     :members:
     :show-inheritance:
 
 
-WSC_functions.py
------------------
-.. automodule:: Asterix.WSC_functions
+Propagation functions
+++++++++++++++++++++++++++
+.. automodule:: Asterix.optics.propagation_functions
+    :members:
+
+Phase and amplitude functions
++++++++++++++++++++++++++++++++++
+.. automodule:: Asterix.optics.phase_amplitude_functions
     :members:
 
 
-estimator.py
+WF Estimation
 -----------------
 .. _estimationfiles-label:
-.. automodule:: Asterix.estimator
+.. automodule:: Asterix.wfsc.estimator
     :members:
 
-.. callgraph:: Asterix.estimator.Estimator.__init__
+.. automodule:: Asterix.wfsc.wf_sensing_functions
+    :members:
+
+.. callgraph:: Asterix.wfsc.estimator.Estimator.__init__
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-.. callgraph:: Asterix.estimator.Estimator.estimate
+.. callgraph:: Asterix.wfsc.estimator.Estimator.estimate
     :toctree: api
     :zoomable:
     :direction: horizontal
 
 
-corrector.py
+WF Correction
 -----------------
 .. _correctionfiles-label:
-.. automodule:: Asterix.corrector
+.. automodule:: Asterix.wfsc.corrector
     :members:
 
-.. callgraph:: Asterix.corrector.Corrector.update_matrices 
+.. automodule:: Asterix.wfsc.wf_control_functions
+    :members:
+
+.. automodule:: Asterix.wfsc.thd_quick_invert
+    :members:
+
+.. callgraph:: Asterix.wfsc.corrector.Corrector.update_matrices 
     :toctree: api
     :zoomable:
     :direction: horizontal
 
-.. callgraph:: Asterix.corrector.Corrector.toDM_voltage
+.. callgraph:: Asterix.wfsc.corrector.Corrector.toDM_voltage
     :toctree: api
     :zoomable:
     :direction: horizontal
 
 
-MaskDH.py
------------------
-.. automodule:: Asterix.MaskDH
+DH Mask
+--------
+.. automodule:: Asterix.wfsc.MaskDH
     :members:
 
-propagation_functions.py
------------------
-.. automodule:: Asterix.propagation_functions
-    :members:
-
-phase_amplitude_functions.py
------------------
-.. automodule:: Asterix.phase_amplitude_functions
-    :members:
-
-processing_functions.py
------------------
-.. automodule:: Asterix.processing_functions
+Utils: processing
+------------------
+.. automodule:: Asterix.utils.processing_functions
     :members:
 
 
-save_and_read.py
------------------
-.. automodule:: Asterix.save_and_read
+Utils: Save and read
+----------------------
+.. automodule:: Asterix.utils.save_and_read
     :members:
 
 

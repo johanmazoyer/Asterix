@@ -26,7 +26,8 @@ author = 'Johan Mazoyer, Iva Laginja, Axel Potier, Raphaël Galicher'
 # release = 'v2.0'
 # release = 'v2.1' # change version 22/02/22
 # release = 'v2.2' # change version 15/03/22
-release = 'v2.3' # change version 02/09/22
+# release = 'v2.3' # change version 02/09/22
+release = 'v2.4' # change version 24/09/22
 
 # -- General configuration ---------------------------------------------------
 

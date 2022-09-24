@@ -7,7 +7,7 @@ Optical System
 +++++++++++++++++++++++
 
 Asterix have been thought from the beginning to be able to easily adapt to new configurations of the testbed 
-wihtout major changes. This modularity is based on the ``Asterix.optical_systems.OpticalSystem`` class.
+wihtout major changes. This modularity is based on the ``Asterix.optics.OpticalSystem`` class.
 An OpticalSystem is a part of the testbed which starts and ends in a pupil plane, which allows them to be easily
 concatenated. To be able to be well concatenated, they must all be using the same general parameters (physical 
 and numerical parameters). These parameters are stored in the first part of the parameter file, common to 
@@ -22,13 +22,13 @@ Parameter file can be read using ``Asterix.save_and_read.read_parameter_file`` f
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
-    import Asterix.optical_systems as OptSy
+    from Asterix.utils import read_parameter_file
+    from Asterix.optics import OpticalSystem
 
-    config = useful.read_parameter_file(parameter_file)
+    config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
 
-    generic_os = OptSy.OpticalSystem(modelconfig)
+    generic_os = OpticalSystem(modelconfig)
 
 
 For the moment, this ``generic_os`` does not do anything, it's like an empty pupil plane. 
@@ -54,16 +54,16 @@ Finally, for all optical system, you can use generic functions like to creaet an
     SIMUconfig = config["SIMUconfig"] #parameters for phase aberrations
 
     phase_abb_up = generic_os.generate_phase_aberr(SIMUconfig)
-    input_wavefront = thd2.EF_from_phase_and_ampl(phase_abb=phase_abb_up)
+    input_wavefront = generic_os.EF_from_phase_and_ampl(phase_abb=phase_abb_up)
 
     # Focal plane intensity for this aberrations
     PSF = generic_os.todetector_intensity(entrance_EF = input_wavefront)
 
 
 
-In the next section, we will present the existing ``OpticalSystem``s (``OpticalSystem.Pupil``,
-``OpticalSystem.Coronagraph``, ``OpticalSystem.DeformableMirror``) and the
-way to concatenate them easily to create an ``OpticalSystem.Testbed``.
+In the next section, we will present the existing ``OpticalSystem`` (``Pupil``,
+``Coronagraph``, ``DeformableMirror``) and the
+way to concatenate them easily to create an ``Testbed``.
 
 Finally, ``OpticalSystem`` have been set up with a mode where each optical plane is save to .fits for debugging purposes.
 This can generate a lot of fits especially if in a loop so be careful. 
@@ -74,7 +74,7 @@ Function documentation can be found in Section :ref:`os-label`.
 Pupil
 +++++++++++++++++++++++
 
-``OpticalSystem.Pupil`` is the most simple type of ``OpticalSystem``. It initializes and describes the behavior
+``Pupil`` is the most simple type of ``OpticalSystem``. It initializes and describes the behavior
 of single pupil pupil is a sub class of ``OpticalSystem``. Obviously you can define your pupil without that
 with 2d arrray multiplication (this is a fairly simple object). The main advantage of defining them using 
 ``OpticalSystem`` is that you can use default ``OpticalSystem`` functions to obtain PSF, transmission, etc...
@@ -82,13 +82,13 @@ and concatenate them with other elements.
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
-    import Asterix.optical_systems as OptSy
+    from Asterix.utils import read_parameter_file
+    from Asterix.optics import  Pupil
 
-    config = useful.read_parameter_file(parameter_file)
+    config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
 
-    pup_round = OptSy.Pupil(modelconfig)
+    pup_round = Pupil(modelconfig)
 
     # Because this is an OpticalSystem, you can access attribute functions:
     
@@ -102,13 +102,13 @@ You can define a different radius than the pupil one in the parameter file
 
 .. code-block:: python
 
-    pup_round = OptSy.Pupil(modelconfig, prad = 43)
+    pup_round = Pupil(modelconfig, prad = 43)
 
 Some specific aperture types are defined that you can access using the keyword ``PupType``
 
 .. code-block:: python
 
-    pup_roman = OptSy.Pupil(modelconfig, PupType = "RomanPup")
+    pup_roman = Pupil(modelconfig, PupType = "RomanPup")
 
 Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plane), "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2".
 
@@ -125,21 +125,21 @@ Function documentation can be found in Section :ref:`pupil-label`.
 Coronagraph
 +++++++++++++++++++++++
 
-``OpticalSystem.Coronagraph`` is a sub class of ``OpticalSystem`` which initializes and describes the behavior
+``Coronagraph`` is a sub class of ``OpticalSystem`` which initializes and describes the behavior
 of a coronagraph system (from apodization plane at the entrance of the coronagraph to the Lyot plane). Function
 documentation can be found in Section :ref:`coronagraph-label`. 
 
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
-    import Asterix.optical_systems as OptSy
+    from Asterix.utils import read_parameter_file
+    from Asterix.optics import Coronagraph
 
-    config = useful.read_parameter_file(parameter_file)
+    config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
     Coronaconfig = config["Coronaconfig"]
 
-    corono = OptSy.Coronagraph(modelconfig, Coronaconfig)
+    corono = Coronagraph(modelconfig, Coronaconfig)
     
     exit_EF = corono.EF_through() # electrical field after the system 
                                     #(by default, entrance field is 1.)
@@ -155,23 +155,23 @@ and ``todetector_intensity`` documentation in :ref:`os-label`
 Deformable Mirror
 +++++++++++++++++++++++
 
-``OpticalSystem.DeformableMirror`` is a subclass of ``OpticalSystem`` which initializes and describes the behavior
+``DeformableMirror`` is a subclass of ``OpticalSystem`` which initializes and describes the behavior
 of a deformable mirror (DM) system. 
 
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
-    import Asterix.optical_systems as OptSy
+    from Asterix.utils import read_parameter_file
+    from Asterix.optics import DeformableMirror
 
-    config = useful.read_parameter_file(parameter_file)
+    config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
     DMconfig = config["DMconfig"]
 
-    DM1 = OptSy.DeformableMirror(modelconfig,
-                                    DMconfig,
-                                    Name_DM='DM1',
-                                    Model_local_dir=Model_local_dir)
+    DM1 = DeformableMirror(modelconfig,
+                           DMconfig,
+                           Name_DM='DM1',
+                           Model_local_dir=Model_local_dir)
 
 You need to provide the influence function .fits file and the distance compared to the pupil plane ``DM1_z_position``
 In the case of a generic DM (``DM1_Generic = True``), we need only two more parameter to define the DM: the DM pitch ``DM_pitch`` in meters and the number of actuator ``N_act1D`` in one of its principal direction.
@@ -195,30 +195,30 @@ It can only be initialized by giving a list of Optical Systems and it will creat
 
 .. code-block:: python
     
-    import Asterix.save_and_read as useful
-    import Asterix.optical_systems as OptSy
+    import from Asterix.utils import read_parameter_file
+    from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
 
-    config = useful.read_parameter_file(parameter_file)
+    config = read_parameter_file(parameter_file)
     modelconfig = config["modelconfig"]
     Coronaconfig = config["Coronaconfig"]
     DMconfig = config["DMconfig"]
 
-    pup_round = OptSy.Pupil(modelconfig)
+    pup_round = Pupil(modelconfig)
 
-    DM34act = OptSy.DeformableMirror(modelconfig,
-                                    DMconfig,
-                                    Name_DM='DM1',
-                                    Model_local_dir=Model_local_dir)
+    DM34act = DeformableMirror(modelconfig,
+                               DMconfig,
+                               Name_DM='DM1',
+                               Model_local_dir=Model_local_dir)
 
-    DM32act = OptSy.DeformableMirror(modelconfig,
-                                    DMconfig,
-                                    Name_DM='DM3',
-                                    Model_local_dir=Model_local_dir)
+    DM32act = DeformableMirror(modelconfig,
+                               DMconfig,
+                               Name_DM='DM3',
+                               Model_local_dir=Model_local_dir)
 
-    corono = OptSy.Coronagraph(modelconfig, Coronaconfig)
+    corono = Coronagraph(modelconfig, Coronaconfig)
     # and then just concatenate
-    testbed = OptSy.Testbed([pup_round, DM34act, DM32act, corono],
-                            ["entrancepupil", "DM1", "DM3", "corono"])
+    testbed = Testbed([pup_round, DM34act, DM32act, corono],
+                      ["entrancepupil", "DM1", "DM3", "corono"])
 
 
 
@@ -227,17 +227,17 @@ just like that:
 
 .. code-block:: python
 
-    testbed = OptSy.Testbed([pup_round, DM34act, DM32act, DM32act, corono],
-                        ["entrancepupil", "DM1", "DM3", "DM4", "corono"])
+    testbed = Testbed([pup_round, DM34act, DM32act, DM32act, corono],
+                      ["entrancepupil", "DM1", "DM3", "DM4", "corono"])
 
 
 or a specific pupil in the entrance plane of the coronagraph (e.g. like the Roman configuration).
 
 .. code-block:: python
 
-    pup_roman = OptSy.Pupil(modelconfig, PupType = "RomanPup")
-    testbed = OptSy.Testbed([pup_round, DM34act, DM32act,pup_roman, corono],
-                                ["entrancepupil", "DM1", "DM3", "romanpupil" , "corono"])
+    pup_roman = Pupil(modelconfig, PupType = "RomanPup")
+    testbed = Testbed([pup_round, DM34act, DM32act,pup_roman, corono],
+                      ["entrancepupil", "DM1", "DM3", "romanpupil" , "corono"])
     
 
 

@@ -21,7 +21,9 @@ and measure the string to save matrices.
 
 .. code-block:: python
     
+    from Asterix.wfsc import MaskDH
     # testbed is previously defined
+
     Correctionconfig = config["Correctionconfig"]
     mask_dh = MaskDH(Correctionconfig)
 
@@ -66,6 +68,7 @@ The Matrix calculation is done during initialization:
 
 .. code-block:: python
 
+    from Asterix.wfsc import MaskDH, Corrector
     # testbed is previously defined
     # estimator is previously defined
 
@@ -75,9 +78,9 @@ The Matrix calculation is done during initialization:
 
     #initalize the corrector
     correc = Corrector(Correctionconfig,
-                    testbed,
-                    mask_dh,
-                    estimator)
+                       testbed,
+                       mask_dh,
+                       estimator)
 
 
 Once you have initialized, you can update the matrix during the correction wihtout re-initializing using : 
@@ -85,9 +88,9 @@ Once you have initialized, you can update the matrix during the correction wihto
 .. code-block:: python
     
     corrector.update_matrices(testbed,
-                                      estimator,
-                                      initial_DM_voltage=initial_DM_voltage,
-                                      input_wavefront=1.)
+                              estimator,
+                              initial_DM_voltage=initial_DM_voltage,
+                              input_wavefront=1.)
 
 
 This can be useful if the strokes are too high and makes the algorithm not as efficient. 

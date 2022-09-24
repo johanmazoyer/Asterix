@@ -1,15 +1,17 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
-
 import os
-
-from Asterix import main_THD
 import time
+from Asterix import main_THD, Asterix_root
 
-Asterixroot = os.path.dirname(os.path.realpath(__file__))
+# please replace with your own parameter file
+Your_directory = Asterix_root
+Your_parameter_file_name = 'Example_param_file.ini'
+
+parameter_file_path = os.path.join(Your_directory, Your_parameter_file_name)
 
 start_time = time.time()
-main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+main_THD.runthd2(parameter_file_path,
                  NewDMconfig={'DM1_active': False},
                  NewEstimationconfig={'estimation': 'pw'},
                  NewCorrectionconfig={
@@ -29,7 +31,7 @@ print("")
 print("")
 
 start_time = time.time()
-main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+main_THD.runthd2(parameter_file_path,
                  NewDMconfig={'DM1_active': False},
                  NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
@@ -48,7 +50,7 @@ print("")
 print("")
 
 start_time = time.time()
-main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+main_THD.runthd2(parameter_file_path,
                  NewDMconfig={'DM1_active': True},
                  NewEstimationconfig={'estimation': 'perfect'},
                  NewCorrectionconfig={
@@ -67,7 +69,7 @@ print("")
 print("")
 
 start_time = time.time()
-main_THD.runthd2(Asterixroot + os.path.sep + 'Example_param_file.ini',
+main_THD.runthd2(parameter_file_path,
                  NewDMconfig={'DM1_active': True},
                  NewEstimationconfig={'estimation': 'pw'},
                  NewCorrectionconfig={
