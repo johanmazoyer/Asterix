@@ -77,12 +77,12 @@ class DeformableMirror(OpticalSystem):
         else:
             # first thing we do is to open filename_grid_actu to check the number of
             # actuator of this DM. We need the number of act to read and load pushact .fits
-            self.total_act = fits.getdata(model_dir + DMconfig[self.Name_DM + "_filename_grid_actu"]).shape[1]
+            self.total_act = fits.getdata(
+                os.path.join(model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"])).shape[1]
 
             if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
-                self.active_actuators = fits.getdata(model_dir +
-                                                     DMconfig[self.Name_DM +
-                                                              "_filename_active_actu"]).astype(int)
+                self.active_actuators = fits.getdata(
+                    os.path.join(model_dir, DMconfig[self.Name_DM + "_filename_active_actu"])).astype(int)
                 self.number_act = len(self.active_actuators)
 
             else:
@@ -239,8 +239,8 @@ class DeformableMirror(OpticalSystem):
         Name_pushact_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
-        if (self.misregistration is False) and (os.path.exists(self.Model_local_dir + Name_pushact_fits +
-                                                               '.fits')):
+        if (self.misregistration is False) and (os.path.exists(
+                os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
             pushact3d = fits.getdata(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
             print("Load " + Name_pushact_fits)
             return pushact3d
@@ -264,13 +264,13 @@ class DeformableMirror(OpticalSystem):
 
         if DMconfig[self.Name_DM + "_Generic"] == False:
             #Measured positions for each actuator in pixel with (0,0) = center of pupil
-            simu_grid = fits.getdata(
-                model_dir + DMconfig[self.Name_DM + "_filename_grid_actu"]) * diam_pup_in_pix + dim_array / 2
+            simu_grid = fits.getdata(os.path.join(
+                model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"])) * diam_pup_in_pix + dim_array / 2
             # the DM pitchs are read in the header
-            pitchDMX = fits.getheader(model_dir +
-                                      DMconfig[self.Name_DM + "_filename_grid_actu"])["PitchV"] * 1e-6
-            pitchDMY = fits.getheader(model_dir +
-                                      DMconfig[self.Name_DM + "_filename_grid_actu"])["PitchH"] * 1e-6
+            pitchDMX = fits.getheader(os.path.join(
+                model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"]))["PitchV"] * 1e-6
+            pitchDMY = fits.getheader(os.path.join(
+                model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"]))["PitchH"] * 1e-6
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             # the pitch is read in the parameter file
@@ -281,8 +281,8 @@ class DeformableMirror(OpticalSystem):
             pitchDMX = pitchDMY = pitchDM
 
         # Influence function and the pitch in pixels
-        actshape = fits.getdata(model_dir + filename_actu_infl_fct)
-        pitch_actshape = fits.getheader(model_dir + filename_actu_infl_fct)['PITCH']
+        actshape = fits.getdata(os.path.join(model_dir, filename_actu_infl_fct))
+        pitch_actshape = fits.getheader(os.path.join(model_dir, filename_actu_infl_fct))['PITCH']
 
         # Scaling the influence function to the desired dimension
         # for numerical simulation
@@ -351,9 +351,9 @@ class DeformableMirror(OpticalSystem):
         # we exclude the actuators non active
         pushact3d = pushact3d[self.active_actuators]
 
-        if self.misregistration is False and (
-                not os.path.exists(self.Model_local_dir + Name_pushact_fits + '.fits')):
-            fits.writeto(self.Model_local_dir + Name_pushact_fits + '.fits', pushact3d)
+        if self.misregistration is False and (not os.path.exists(
+                os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
+            fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits', pushact3d))
             print("time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
 
         return pushact3d
@@ -388,7 +388,7 @@ class DeformableMirror(OpticalSystem):
 
         if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits + '.fits'):
             print("Load " + Name_WhichInPup_fits)
-            return fits.getdata(self.Model_local_dir + Name_WhichInPup_fits + '.fits')
+            return fits.getdata(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'))
 
         if self.z_position != 0:
 
@@ -411,7 +411,9 @@ class DeformableMirror(OpticalSystem):
 
         WhichInPupil = np.array(WhichInPupil)
 
-        fits.writeto(self.Model_local_dir + Name_WhichInPup_fits + '.fits', WhichInPupil, overwrite=True)
+        fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'),
+                     WhichInPupil,
+                     overwrite=True)
         print("time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time))
 
         return WhichInPupil
@@ -572,14 +574,15 @@ class DeformableMirror(OpticalSystem):
             # from N voltage vectors with the sine and cosine value, we go N times through the
             # voltage_to_phase functions. For this reason we save the Fourrier base 2D phases on each DMs
             # in a specific .fits file
-            if not os.path.exists(self.Model_local_dir + Name_FourrierBasis_fits + '.fits'):
+            if not os.path.exists(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits')):
                 phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil, self.dim_overpad_pupil))
                 print("Start " + Name_FourrierBasis_fits)
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
                         progress(i, basis_size, status='')
-                fits.writeto(self.Model_local_dir + Name_FourrierBasis_fits + '.fits', phasesFourrier)
+                fits.writeto(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits'),
+                             phasesFourrier)
             print("time for " + Name_FourrierBasis_fits, time.time() - start_time)
 
         else:

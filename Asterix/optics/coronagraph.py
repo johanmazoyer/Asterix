@@ -124,7 +124,7 @@ class Coronagraph(OpticalSystem):
             self.string_os += '2020'
             self.FPmsk = list([
                 self.EF_from_phase_and_ampl(phase_abb=crop_or_pad_image(
-                    fits.getdata(model_dir + coroconfig["wrapped_vortex_fits_file"]), self.dimScience))
+                    fits.getdata(coroconfig["wrapped_vortex_fits_file"]), self.dimScience))
             ])
             self.perfect_coro = True
 

@@ -462,10 +462,9 @@ class OpticalSystem:
             phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:.1f}".format(
                 int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc, self.prad)
 
-        if set_random_phase is False and Model_local_dir is not None and os.path.isfile(Model_local_dir +
-                                                                                        phase_abb_filename +
-                                                                                        ".fits") == True:
-            return_phase = fits.getdata(Model_local_dir + phase_abb_filename + ".fits")
+        if set_random_phase is False and Model_local_dir is not None and os.path.isfile(
+                os.path.join(Model_local_dir, phase_abb_filename + ".fits")) == True:
+            return_phase = fits.getdata(os.path.join(Model_local_dir, phase_abb_filename + ".fits"))
 
         else:
             phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
@@ -473,7 +472,9 @@ class OpticalSystem:
             return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms,
                                                        phase_rhoc, phase_slope)
             if Model_local_dir is not None:
-                fits.writeto(Model_local_dir + phase_abb_filename + ".fits", return_phase, overwrite=True)
+                fits.writeto(os.path.join(Model_local_dir, phase_abb_filename + ".fits"),
+                             return_phase,
+                             overwrite=True)
         return return_phase
 
     def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None):
@@ -520,22 +521,25 @@ class OpticalSystem:
                     ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
                         int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
 
-                    if os.path.isfile(Model_local_dir + ampl_abb_filename) == True:
-                        return fits.getdata(Model_local_dir + ampl_abb_filename)
+                    if os.path.isfile(os.path.join(Model_local_dir, ampl_abb_filename)) == True:
+                        return fits.getdata(os.path.join(Model_local_dir, ampl_abb_filename))
 
                     else:
                         return_ampl = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil,
                                                                   ampl_rms / 100, ampl_rhoc, ampl_slope)
 
-                        fits.writeto(Model_local_dir + ampl_abb_filename, return_ampl, overwrite=True)
+                        fits.writeto(os.path.join(Model_local_dir, ampl_abb_filename),
+                                     return_ampl,
+                                     overwrite=True)
 
                         return return_ampl
 
                 else:
                     # in this case, the user wants the THD2 amplitude aberration
                     if ampl_abb_filename == 'Amplitude_THD2':
-                        testbedampl = fits.getdata(model_dir + ampl_abb_filename + '.fits')
-                        testbedampl_header = fits.getheader(model_dir + ampl_abb_filename + '.fits')
+                        testbedampl = fits.getdata(os.path.join(model_dir, ampl_abb_filename + '.fits'))
+                        testbedampl_header = fits.getheader(
+                            os.path.join(model_dir, ampl_abb_filename + '.fits'))
                         # in this case we know it's already well centered
 
                     else:
@@ -585,7 +589,7 @@ class OpticalSystem:
                 return_ampl = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, ampl_rms / 100,
                                                           ampl_rhoc, ampl_slope)
 
-                fits.writeto(Model_local_dir + ampl_abb_filename, return_ampl, overwrite=True)
+                fits.writeto(os.path.join(Model_local_dir, ampl_abb_filename), return_ampl, overwrite=True)
 
                 return return_ampl
 

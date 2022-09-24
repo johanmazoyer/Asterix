@@ -461,22 +461,22 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     header = from_param_to_header(config)
 
     current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
-    fits.writeto(result_dir + current_time_str + "_FocalPlane_Intensities" + ".fits",
+    fits.writeto(os.path.join(result_dir, current_time_str + "_FocalPlane_Intensities" + ".fits"),
                  np.array(FP_Intensities),
                  header,
                  overwrite=True)
 
-    fits.writeto(result_dir + current_time_str + "_Mean_Contrast_DH" + ".fits",
+    fits.writeto(os.path.join(result_dir, current_time_str + "_Mean_Contrast_DH" + ".fits"),
                  np.array(meancontrast),
                  header,
                  overwrite=True)
 
-    fits.writeto(result_dir + current_time_str + "_estimationFP_RE" + ".fits",
+    fits.writeto(os.path.join(result_dir, current_time_str + "_estimationFP_RE" + ".fits"),
                  np.real(np.array(EF_estim)),
                  header,
                  overwrite=True)
 
-    fits.writeto(result_dir + current_time_str + "_estimationFP_IM" + ".fits",
+    fits.writeto(os.path.join(result_dir, current_time_str + "_estimationFP_IM" + ".fits"),
                  np.imag(np.array(EF_estim)),
                  header,
                  overwrite=True)
@@ -503,12 +503,12 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     plt.figure()
 
     for j, DM_name in enumerate(testbed.name_of_DMs):
-        fits.writeto(result_dir + current_time_str + '_' + DM_name + "_phases" + ".fits",
+        fits.writeto(os.path.join(result_dir, current_time_str + '_' + DM_name + "_phases" + ".fits"),
                      DM_phases[j],
                      header,
                      overwrite=True)
 
-        fits.writeto(result_dir + current_time_str + '_' + DM_name + "_strokes" + ".fits",
+        fits.writeto(os.path.join(result_dir, current_time_str + '_' + DM_name + "_strokes" + ".fits"),
                      DMstrokes[j],
                      header,
                      overwrite=True)
@@ -518,10 +518,10 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                                                  DM.number_act]
         indice_acum_number_act += DM.number_act
 
-        fits.writeto(result_dir + current_time_str + '_' + DM_name + "_voltages" + ".fits",
-                     voltage_DMs_tosave,
-                     header,
-                     overwrite=True)
+        fits.writetoos.path.join((result_dir, current_time_str + '_' + DM_name + "_voltages" + ".fits"),
+                                 voltage_DMs_tosave,
+                                 header,
+                                 overwrite=True)
 
         plt.plot(np.std(DMstrokes[j], axis=(1, 2)), label=DM_name + " RMS")
         plt.plot(np.max(DMstrokes[j], axis=(1, 2)) - np.min(DMstrokes[j], axis=(1, 2)), label=DM_name + " PV")
@@ -541,12 +541,12 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     #             FP_Intensities[i] * testbed.normPupto1 *
     #             config["SIMUconfig"]["nb_photons"])
 
-    #     fits.writeto(result_dir + current_time_str + "_NoPhoton_noise" + ".fits",
+    #     fits.writeto(os.path.join(result_dir , current_time_str + "_NoPhoton_noise" + ".fits"),
     #                  FP_Intensities_photonnoise,
     #                  header,
     #                  overwrite=True)
 
-    config.filename = result_dir + current_time_str + "_Simulation_parameters" + ".ini"
+    config.filename = os.path.join(result_dir, current_time_str + "_Simulation_parameters" + ".ini")
     config.write()
 
     plt.figure()

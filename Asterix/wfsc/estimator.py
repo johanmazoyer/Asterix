@@ -144,16 +144,16 @@ class Estimator:
 
             ####Calculating and Saving PW matrix
             filePW = "MatPW_" + string_dims_PWMatrix
-            if os.path.exists(matrix_dir + filePW + ".fits") == True:
+            if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")) == True:
                 print("The matrix " + filePW + " already exists")
-                self.PWMatrix = fits.getdata(matrix_dir + filePW + ".fits")
+                self.PWMatrix = fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
             else:
                 print("Saving " + filePW + " ...")
                 self.PWMatrix, showSVD = wfs.create_pw_matrix(testbed, self.amplitudePW, self.posprobes,
                                                               self.dimEstim, cutsvdPW, testbed.wavelength_0)
-                fits.writeto(matrix_dir + filePW + ".fits", np.array(self.PWMatrix))
+                fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(self.PWMatrix))
                 visuPWMap = "EigenPW_" + string_dims_PWMatrix
-                fits.writeto(matrix_dir + visuPWMap + ".fits", np.array(showSVD[1]))
+                fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(showSVD[1]))
 
             # Saving PW matrix in Labview directory
             if save_for_bench == True:
@@ -173,8 +173,10 @@ class Estimator:
                     vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
                              self.dimEstim] = self.PWMatrix[:, 1, i].flatten()
                 namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW
-                fits.writeto(realtestbed_dir + "Probes" + namepwmatrix + ".fits", probes, overwrite=True)
-                fits.writeto(realtestbed_dir + "Matr_mult_estim" + namepwmatrix + ".fits",
+                fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
+                             probes,
+                             overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Matr_mult_estim" + namepwmatrix + ".fits"),
                              vectorPW,
                              overwrite=True)
 

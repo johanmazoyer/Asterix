@@ -149,11 +149,12 @@ def create_interaction_matrix(testbed: Testbed,
         # For 1DM test / 2DM test
         # Matrix is saved/loaded for all the FP and then crop at the good size later
 
-        if os.path.exists(matrix_dir + fileDirectMatrix + ".fits") and (initial_DM_voltage == 0.).all():
+        if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage
+                                                                                     == 0.).all():
             print("The matrix " + fileDirectMatrix + " already exists")
 
-            InterMat[:, pos_in_matrix:pos_in_matrix +
-                     DM.basis_size] = fits.getdata(matrix_dir + fileDirectMatrix + ".fits")
+            InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(
+                os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
 
             pos_in_matrix += DM.basis_size
 
@@ -179,7 +180,8 @@ def create_interaction_matrix(testbed: Testbed,
                 sqrtnbract = int(np.sqrt(DM.total_act))
                 Name_FourrierBasis_fits = "Fourier_basis_" + DM.Name_DM + '_prad' + str(
                     DM.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
-                phasesBasis = fits.getdata(DM.Model_local_dir + Name_FourrierBasis_fits + '.fits')
+                phasesBasis = fits.getdata(os.path.join(DM.Model_local_dir,
+                                                        Name_FourrierBasis_fits + '.fits'))
 
             else:
                 phasesBasis = np.zeros((DM.basis_size, DM.dim_overpad_pupil, DM.dim_overpad_pupil))
@@ -367,7 +369,7 @@ def create_interaction_matrix(testbed: Testbed,
                 plt.ioff()
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
-                fits.writeto(matrix_dir + fileDirectMatrix + ".fits",
+                fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
                              InterMat[:, init_pos_in_matrix:init_pos_in_matrix + DM.basis_size])
 
     # clean to save memory
