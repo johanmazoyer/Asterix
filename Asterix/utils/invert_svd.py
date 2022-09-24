@@ -3,7 +3,7 @@
 
 import matplotlib
 from IPython import get_ipython
-if get_ipython() is None: # this matplotlib option is just in non-notebook case
+if get_ipython() is None:  # this matplotlib option is just in non-notebook case
     matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
