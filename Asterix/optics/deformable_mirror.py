@@ -11,12 +11,13 @@ from Asterix import model_dir
 import Asterix.utils.gaussians as gauss
 from Asterix.utils import save_plane_in_fits, progress, ft_subpixel_shift, ft_zoom_out, crop_or_pad_image
 
-from Asterix.optics import OpticalSystem, Pupil
+import Asterix.optics.optical_systems as optsy
+from Asterix.optics import Pupil
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 
-class DeformableMirror(OpticalSystem):
+class DeformableMirror(optsy.OpticalSystem):
     """
     initialize and describe the behavior of a deformable mirror
     (in pupil plane or out of pupil plane)
