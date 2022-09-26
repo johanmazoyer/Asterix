@@ -12,7 +12,7 @@ import Asterix.utils.gaussians as gauss
 from Asterix.utils import save_plane_in_fits, progress, ft_subpixel_shift, ft_zoom_out, crop_or_pad_image
 
 import Asterix.optics.optical_systems as optsy
-from Asterix.optics import Pupil
+import Asterix.optics.pupil as pupil
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
 
@@ -105,7 +105,7 @@ class DeformableMirror(optsy.OpticalSystem):
         # We need a pupil in creatingpushact_inpup() and for
         # which in pup. THIS IS NOT THE ENTRANCE PUPIL,
         # this is a round pupil of the same size
-        self.clearpup = Pupil(modelconfig, PupType="RoundPup", prad=self.prad)
+        self.clearpup = pupil.Pupil(modelconfig, PupType="RoundPup", prad=self.prad)
 
         # create the DM_pushact, surface of the DM for each individual act
         # DM_pushact is always in the DM plane
