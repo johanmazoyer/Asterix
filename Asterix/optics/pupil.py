@@ -163,7 +163,7 @@ class Pupil(optsy.OpticalSystem):
                     if pup_fits.shape[0] % i == 0:
                         find_divisors.append(i)
 
-                if not int(2 * self.prad) in find_divisors:
+                if int(2 * self.prad) not in find_divisors:
                     raise Exception(
                         f"Choose a divisor of the .fits file size ({pup_fits.shape[0]}) for diam_pup_in_pix parameter: {find_divisors}"
                     )
