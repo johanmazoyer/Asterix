@@ -39,8 +39,8 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
     name_fits = current_time_str + '_' + name_plane
 
-    if dir_save_fits is None:
-        raise Exception("Please define a directoy for dir_save_fits")
+    if os.path.exists(dir_save_fits) is False:
+        raise Exception("Please define an existing directory for dir_save_fits keyword or None")
 
     # sometime the image can be a single float (0 for phase or 1 for EF).
     if isinstance(image, (int, float, np.float)):

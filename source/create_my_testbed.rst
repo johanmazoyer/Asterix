@@ -67,7 +67,7 @@ way to concatenate them easily to create an ``Testbed``.
 
 Finally, ``OpticalSystem`` have been set up with a mode where each optical plane is save to .fits for debugging purposes.
 This can generate a lot of fits especially if in a loop so be careful. 
-To use this options use keywords ``save_all_planes_to_fits = True`` and set up the directory ``dir_save_all_planes``
+To use this option, set up the keyword ``dir_save_all_planes`` to an existing path directory.
 
 Function documentation can be found in Section :ref:`os-label`. 
 

@@ -41,7 +41,7 @@ Several shape are possible for the DH using the parameter ``DH_shape``:
 - "noDH" DH. In this mode, the mask is just 1 everywhere. 
 
 ``creatingMaskDH()`` function has been set up with a mode where each optical plane is save to .fits for debugging purposes.
-To use this options use keywords ``save_all_planes_to_fits = True`` and set up the directory ``dir_save_all_planes``.
+To use this option, set up the keyword ``dir_save_all_planes`` to an existing path directory.
 
 Interaction Matrix
 +++++++++++++++++++++++++++++++

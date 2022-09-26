@@ -23,7 +23,6 @@ def create_interaction_matrix(testbed: Testbed,
                               initial_DM_voltage=0.,
                               input_wavefront=1.,
                               MatrixType='',
-                              save_all_planes_to_fits=False,
                               dir_save_all_planes=None,
                               visu=False):
     """
@@ -69,14 +68,9 @@ def create_interaction_matrix(testbed: Testbed,
     input_wavefront: 2D-array complex
         input wavefront in pupil plane
     
-    save_all_planes_to_fits: Bool, default False.
-            if True, save all planes to fits for debugging purposes to dir_save_all_planes
-            This can generate a lot of fits especially if in a loop so the code force you
-            to define a repository.
-
-    dir_save_all_planes : path, default None. 
-                            directory to save all plane
-                            in fits if save_all_planes_to_fits = True
+    dir_save_all_planes : default None. 
+                               if not None, directory to save all planes in fits for debugging purposes.
+                               This can generate a lot of fits especially if in a loop, use with caution
     
     visu : bool default false
             if true show the focal plane intensity in 2D for each mode
@@ -167,7 +161,6 @@ def create_interaction_matrix(testbed: Testbed,
             G0 = resizing(
                 testbed.todetector(entrance_EF=input_wavefront,
                                    voltage_vector=initial_DM_voltage,
-                                   save_all_planes_to_fits=save_all_planes_to_fits,
                                    dir_save_all_planes=dir_save_all_planes), dimEstim)
 
             if (initial_DM_voltage == 0.).all():
@@ -190,7 +183,7 @@ def create_interaction_matrix(testbed: Testbed,
                 for i in range(DM.basis_size):
                     phasesBasis[i] = DM.voltage_to_phase(DM.basis[i]) * amplitudeEFC
 
-            if save_all_planes_to_fits == True:
+            if dir_save_all_planes is not None:
                 # save the basis phase to check what is happening
                 name_plane = DM_name + '_' + DM.basis_type + '_basis_Phase'
                 save_plane_in_fits(dir_save_all_planes, name_plane, phasesBasis)
@@ -213,7 +206,7 @@ def create_interaction_matrix(testbed: Testbed,
             for osname in OpticSysNameBefore:
                 OpticSysbefore = vars(testbed)[osname]  # type: OpticalSystem
 
-                if save_all_planes_to_fits == True:
+                if dir_save_all_planes is not None:
                     # save PP plane before this subsystem
                     name_plane = 'EF_PP_before_' + osname + '_wl{}'.format(int(wavelength * 1e9))
                     save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
@@ -227,7 +220,7 @@ def create_interaction_matrix(testbed: Testbed,
                         wavefrontupstream = OpticSysbefore.prop_pup_to_DM_and_back(
                             wavefrontupstream, OpticSysbefore.phase_init, wavelength)
 
-                    if save_all_planes_to_fits == True:
+                    if dir_save_all_planes is not None:
                         # save phase on this DM
                         name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(int(wavelength * 1e9))
                         save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
@@ -235,7 +228,7 @@ def create_interaction_matrix(testbed: Testbed,
                 else:
                     wavefrontupstream = OpticSysbefore.EF_through(entrance_EF=wavefrontupstream)
 
-                if save_all_planes_to_fits == True:
+                if dir_save_all_planes is not None:
                     # save PP plane after this subsystem
                     name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(int(wavelength * 1e9))
                     save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
@@ -267,7 +260,7 @@ def create_interaction_matrix(testbed: Testbed,
                         wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(phase_abb=phasesBasis[i] +
                                                                                   DM.phase_init)
 
-                        if save_all_planes_to_fits == True:
+                        if dir_save_all_planes is not None:
                             name_plane = 'Phase_on_' + DM_name + '_wl{}'.format(int(wavelength * 1e9))
                             save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
 
@@ -294,7 +287,7 @@ def create_interaction_matrix(testbed: Testbed,
                                 DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init), DM.wavelength_0,
                                 -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
 
-                if save_all_planes_to_fits == True:
+                if dir_save_all_planes is not None:
                     name_plane = 'EF_PP_after_' + DM_name + '_wl{}'.format(int(wavelength * 1e9))
                     save_plane_in_fits(dir_save_all_planes, name_plane, wavefront)
                 # and finally we go through the subsystems after the DMs we want to actuate
@@ -313,14 +306,14 @@ def create_interaction_matrix(testbed: Testbed,
                                 wavefront = OpticSysAfter.prop_pup_to_DM_and_back(
                                     wavefront, OpticSysAfter.phase_init, wavelength)
 
-                            if save_all_planes_to_fits == True:
+                            if dir_save_all_planes is not None:
                                 name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(int(wavelength * 1e9))
                                 save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysAfter.phase_init)
 
                         else:
                             wavefront = OpticSysAfter.EF_through(entrance_EF=wavefront)
 
-                        if save_all_planes_to_fits == True:
+                        if dir_save_all_planes is not None:
                             name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(int(wavelength * 1e9))
                             save_plane_in_fits(dir_save_all_planes, name_plane, wavefront)
                     else:
@@ -337,7 +330,7 @@ def create_interaction_matrix(testbed: Testbed,
                             OpticSysAfter.todetector(entrance_EF=wavefront, in_contrast=False) /
                             normalisation_testbed_EF_contrast, dimEstim)
 
-                        if save_all_planes_to_fits == True:
+                        if dir_save_all_planes is not None:
                             name_plane = 'FPAfterTestbed_' + osname + '_wl{}'.format(int(wavelength * 1e9))
                             save_plane_in_fits(dir_save_all_planes, name_plane, Gvector)
 
@@ -347,7 +340,7 @@ def create_interaction_matrix(testbed: Testbed,
                 # to be investigated, in simulation and on the testbed
                 Gvector = Gvector - G0
 
-                if save_all_planes_to_fits == True:
+                if dir_save_all_planes is not None:
                     name_plane = 'Gvector_in_matrix_' + osname + '_wl{}'.format(int(wavelength * 1e9))
                     save_plane_in_fits(dir_save_all_planes, name_plane, Gvector)
 

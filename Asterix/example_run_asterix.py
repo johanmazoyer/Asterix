@@ -24,7 +24,6 @@ main_THD.runthd2(parameter_file_path,
                      "Nbmode_corr": [320, 340]
                  },
                  NewSIMUconfig={'Name_Experiment': "My_first_experiment"},
-                 save_all_planes_to_fits=False,
                  dir_save_all_planes=None)
 
 print('time correction 1DM perfect estim efc', time.time() - start_time)

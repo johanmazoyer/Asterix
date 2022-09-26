@@ -52,14 +52,14 @@ When you run Asterix, the first time several directories will be created:
 
 
 As with a lot of function in Asterix, ``runthd2()`` has been set up with a mode where each optical plane is save to .fits for debugging purposes.
-This can generate a lot of fits especially if in a loop so be careful. To use this options use keywords ``save_all_planes_to_fits = True`` and set up the directory ``dir_save_all_planes``.
+This can generate a lot of fits especially if in a loop so use with caution. To use this option, set up the keyword ``dir_save_all_planes`` to an existing path directory.
 What is saved if you activate this option in runthd2() was crefully thougth about, to avoid sending thousands of .fits per second:
 
 * Dark Hole Mask
 * PW Estimate at each iteration.
 * 1 full run through testbed (~17 fits for 1 DM testbed -one before and after each planes more or less-) at each iteration.
 
-What we are not saved by default, but can be easily done if adding save_all_planes_to_fits=True individually to these functions:
+What we are not saved by default, but can be easily done by setting up the keyword ``dir_save_all_planes`` to an existing path directory, individually for these functions:
 * PW Matrix (nb_probes*17 fits for 1 DM testbed)
 * EFC Matrix (nb_actuator*17 fits for 1 DM testbed)
 * PW difference (nb_probes x17 fits for 1 DM testbed), at each iteration

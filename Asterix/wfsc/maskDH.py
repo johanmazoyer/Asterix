@@ -45,12 +45,7 @@ class MaskDH:
 
         self.string_mask = self.tostring()
 
-    def creatingMaskDH(self,
-                       dimFP,
-                       FP_sampling,
-                       save_all_planes_to_fits=False,
-                       dir_save_all_planes=None,
-                       **kwargs):
+    def creatingMaskDH(self, dimFP, FP_sampling, dir_save_all_planes=None, **kwargs):
         """
         Create a binary mask.
 
@@ -62,13 +57,9 @@ class MaskDH:
             size of the output FP mask
         FP_sampling: float
             resolution of focal plane pixel  per lambda / D
-        save_all_planes_to_fits: Bool, default False.
-            if True, save all planes to fits for debugging purposes to dir_save_all_planes
-            This can generate a lot of fits especially if in a loop so the code force you
-            to define a repository.
         dir_save_all_planes : default None. 
-                            directory to save all plane in
-                            fits if save_all_planes_to_fits = True
+                               if not None, directory to save all planes in fits for debugging purposes.
+                               This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
         ------
@@ -116,7 +107,7 @@ class MaskDH:
                     maskDH[yy - xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
                     maskDH[yy + xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'DH_mask'
             save_plane_in_fits(dir_save_all_planes, name_plane, maskDH)
 

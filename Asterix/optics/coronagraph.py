@@ -176,7 +176,6 @@ class Coronagraph(OpticalSystem):
                    wavelength=None,
                    noFPM=False,
                    EF_aberrations_introduced_in_LS=1.,
-                   save_all_planes_to_fits=False,
                    dir_save_all_planes=None,
                    **kwargs):
         """
@@ -204,16 +203,10 @@ class Coronagraph(OpticalSystem):
                         Can also be a float scalar in which case entrance_EF is constant
                         default is 1.
                         electrical field created by the downstream aberrations introduced directly in the Lyot Stop
-
-        save_all_planes_to_fits: Bool, default False.
-                if True, save all planes to fits for debugging purposes to dir_save_all_planes
-                This can generate a lot of fits especially if in a loop so the code force you
-                to define a repository.
         
         dir_save_all_planes : default None. 
-                                directory to save all plane in
-                              fits if save_all_planes_to_fits = True
-
+                               if not None, directory to save all planes in fits for debugging purposes.
+                               This can generate a lot of fits especially if in a loop, use with caution
         Returns
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
@@ -227,11 +220,7 @@ class Coronagraph(OpticalSystem):
         if wavelength is None:
             wavelength = self.wavelength_0
 
-        if save_all_planes_to_fits == True and dir_save_all_planes == None:
-            raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +
-                            "please define a clear directory using dir_save_all_planes kw argument")
-
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'EF_PP_before_apod' + '_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
@@ -244,7 +233,7 @@ class Coronagraph(OpticalSystem):
 
         input_wavefront_after_apod = self.apod_pup.EF_through(entrance_EF=entrance_EF, wavelength=wavelength)
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'apod' + '_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, self.apod_pup.pup)
 
@@ -263,7 +252,7 @@ class Coronagraph(OpticalSystem):
                                                        center_pos='bb',
                                                        norm='ortho')
 
-            if save_all_planes_to_fits == True:
+            if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 save_plane_in_fits(dir_save_all_planes, name_plane, np.fft.fftshift(corono_focal_plane))
 
@@ -300,7 +289,7 @@ class Coronagraph(OpticalSystem):
                                           inverse=False,
                                           norm='ortho')
 
-            if save_all_planes_to_fits == True:
+            if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
                 if not noFPM:
@@ -342,7 +331,7 @@ class Coronagraph(OpticalSystem):
                                           inverse=False,
                                           norm='ortho')
 
-            if save_all_planes_to_fits == True:
+            if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
                 save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
                 if not noFPM:
@@ -370,7 +359,7 @@ class Coronagraph(OpticalSystem):
         else:
             raise Exception(self.prop_apod2lyot + " is not a known prop_apod2lyot propagation mehtod")
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'EF_PP_before_LS' + '_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, lyotplane_before_lyot)
 
@@ -388,7 +377,7 @@ class Coronagraph(OpticalSystem):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(
                 wavelength)]
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'LS' + '_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, self.lyot_pup.pup)
 

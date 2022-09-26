@@ -31,7 +31,7 @@ set by the ``Estim_bin_factor`` parameter and is ``dimScience`` / ``Estim_bin_fa
 
 
 ``estimate`` function has been set up with a mode where each optical plane is save to .fits for debugging purposes.
-To use this options use keywords ``save_all_planes_to_fits = True`` and set up the directory ``dir_save_all_planes``.
+To use this option, set up the keyword ``dir_save_all_planes`` to an existing path directory.
 
 Perfect Estimation
 +++++++++++++++++++++++

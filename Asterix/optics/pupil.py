@@ -178,12 +178,7 @@ class Pupil(OpticalSystem):
         #initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
 
-    def EF_through(self,
-                   entrance_EF=1.,
-                   wavelength=None,
-                   save_all_planes_to_fits=False,
-                   dir_save_all_planes=None,
-                   **kwargs):
+    def EF_through(self, entrance_EF=1., wavelength=None, dir_save_all_planes=None, **kwargs):
         """
         Propagate the electric field through the pupil
         AUTHOR : Johan Mazoyer
@@ -198,14 +193,9 @@ class Pupil(OpticalSystem):
         wavelength : float. Default is self.wavelength_0 the reference wavelength
                 current wavelength in m.
 
-        save_all_planes_to_fits: Bool, default False.
-                if True, save all planes to fits for debugging purposes to dir_save_all_planes
-                This can generate a lot of fits especially if in a loop so the code force you
-                to define a repository.
-
         dir_save_all_planes : default None. 
-                                directory to save all plane
-                                in fits if save_all_planes_to_fits = True
+                               if not None, directory to save all planes in fits for debugging purposes.
+                               This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
         ------
@@ -214,16 +204,12 @@ class Pupil(OpticalSystem):
 
         """
 
-        if save_all_planes_to_fits == True and dir_save_all_planes == None:
-            raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +
-                            "please define a clear directory using dir_save_all_planes kw argument")
-
         # call the OpticalSystem super function to check and format the variable entrance_EF
         entrance_EF = super().EF_through(entrance_EF=entrance_EF)
         if wavelength is None:
             wavelength = self.wavelength_0
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'EF_PP_before_pupil' + '_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
@@ -239,7 +225,7 @@ class Pupil(OpticalSystem):
         else:
             raise Exception("pupil dimension are not acceptable")
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'EF_PP_after_pupil' + '_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, exit_EF)
 
