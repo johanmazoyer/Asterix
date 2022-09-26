@@ -65,8 +65,8 @@ def gauss2Dfit(data):
 
     Returns
     ------
-    popt: tupple of float
-        parameter of the gaussian: max, sig_x, sig_y, x_cen, y_cen, angle, offset
+    popt: tuple of floats
+        Parameters of the gaussian: max, sig_x, sig_y, x_cen, y_cen, angle, offset.
 
     """
     # 2D-Gaussian fit

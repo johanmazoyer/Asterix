@@ -288,7 +288,7 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
     
     Returns
     ------
-    dimensions : tupple of float of len 2
+    dimensions : tuple of 2 floats
         best_size_large, best_size_small
     """
     best_size_large = init_size_large

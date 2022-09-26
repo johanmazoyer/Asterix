@@ -38,11 +38,11 @@ def mft(image,
             Entrance image (entrance size in x and y can be different)
         real_dim_input : int or tuple of ints of dim 2
             Diameter of the support in pup (can differ from image.shape)
-            Example : real_dim_input = diameter of the pupil in pixel for a padded pupil
-        dim_output : int or tupple of int of dim 2
-            Dimension of the output in pixels (square if int, rectangular if (int, int)
-        nbres: float or tupple of float of dim 2
-            Number of spatial resolution elements (same in both directions if float)
+            Example: real_dim_input = diameter of the pupil in pixel for a padded pupil
+        dim_output : int or tuple of int of dim 2
+            Dimension of the output in pixels (square if int, rectangular if (int, int).
+        nbres: float or tuple of float of dim 2
+            Number of spatial resolution elements (same in both directions if float).
         inverse : bool, default False
             Direction of the MFT.
             If inverse=False, direct mft (default value).
@@ -115,8 +115,7 @@ def mft(image,
         raise TypeError(error_string_dim_output)
 
     # check dimensions and type of nbres
-    error_string_nbr = """nbres must be an float or int (square output)
-                                or tupple of float or int of dimension 2"""
+    error_string_nbr = "'nbres' must be an float or int (square output) or tuple of float or int of dimension 2"
     if np.isscalar(nbres):
         if isinstance(nbres, (float, int)):
             nbresx = float(nbres)
