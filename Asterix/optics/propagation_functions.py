@@ -19,41 +19,34 @@ def mft(image,
     Based on Matrix Direct Fourier transform (MFT) from R. Galicher
     (cf. Soummer et al. 2007, OSA)
         - Return the Matrix Direct Fourier transform (MFT) of a 2D image
-        - Can deal with any size, any position of
-            the 0-frequency...
+        - Can deal with any size, any position of the 0-frequency...
     
     AUTHORS: Baudoz, Galicher, Mazoyer
 
-
     REVISION HISTORY :
-        -Revision 1.1  2011  Initial revision. Raphaël Galicher (from soummer, in IDL)
+        -Revision 1.1  2011  Initial revision. Raphaël Galicher (from Soummer, in IDL)
         -Revision 2.0  2012-04-12 P. Baudoz (IDL version): added pup offset
         -Revision 3.0  2020-03-10 J. Mazoyer (to python). Replace the MFT with no input offset option
         -Revision 4.0  2020-04-20 J. Mazoyer. change the normalization. Change dim_pup name to be more
                                         coherent. Made better parameter format check
-        -Revision 5.0  2022-03-09 J. Mazoyer. 1/2 pixel error in xx0, xx1, uu0 and uu1. Now MFT of clear 
-                                            pup if fully real. 
+        -Revision 5.0  2022-03-09 J. Mazoyer. 1/2 pixel error in xx0, xx1, uu0 and uu1. Now MFT of clear
+                                        pup if fully real.
 
     Parameters
     ----------
         image : 2D array
             Entrance image (entrance size in x and y can be different)
-
-        real_dim_input : int or tupple of int of dim 2
-                Diameter of the support in pup (can differ from image.shape)
-                Example : real_dim_input = diameter of the pupil in pixel for a padded pupil
-
+        real_dim_input : int or tuple of ints of dim 2
+            Diameter of the support in pup (can differ from image.shape)
+            Example : real_dim_input = diameter of the pupil in pixel for a padded pupil
         dim_output : int or tupple of int of dim 2
-                Dimension of the output in pixels (square if int, rectangular if (int, int)
-
+            Dimension of the output in pixels (square if int, rectangular if (int, int)
         nbres: float or tupple of float of dim 2
-                Number of spatial resolution elements (same in both directions if float)
-
+            Number of spatial resolution elements (same in both directions if float)
         inverse : bool, default False
-                direction of the MFT
-                inverse = False, direct mft (default value)
-                inverse = True, indirect mft
-
+            Direction of the MFT.
+            If inverse=False, direct mft (default value).
+            If inverse=True, indirect mft.
         norm : string default 'backward'
                 'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
                 https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
@@ -62,22 +55,18 @@ def mft(image,
                 if 'ortho' 1/sqrt(N) normalisation is done in both directions.
                 Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
                 The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
-
         X_offset_input : float default 0
                 position of the 0-frequency pixel in x for the entrance
                 image with respect to the center of the entrance image (real position
                 of the 0-frequency pixel on dim_input_x/2+x0)
-
         Y_offset_input : float default 0 
                 position of the 0-frequency pixel in Y for the entrance
                 image with respect to the center of the entrance image (real position
                 of the 0-frequency pixel on dim_input_y/2+y0)
-
         X_offset_output : float default 0 
                 position of the 0-frequency pixel in x for the output
                 image with respect to the center of the output image (real position
                 of the 0-frequency pixel on dim_output_x/2+x1)
-
         Y_offset_output : float default 0 
                 position of the 0-frequency pixel in Y for the output
                 image with respect to the center of the output image (real position
@@ -200,28 +189,23 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     Parameters
     ----------
     pup : 2D array (complex or real)
-        IF retscale == 0
+        If retscale == 0
             electric field at z=0
             CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
-            where dimpup is the pup array dimension
-        ELSE
+            where 'dimpup' is the pup array dimension
+        else:
             dim of the input array that will be used for pup
-
     lam : float
          wavelength in meter
-
     z : float
          distance of propagation
-
     rad : float
          if z>0: entrance beam radius in meter
          if z<0: output beam radius in meter
-
     prad : float
          if z>0: entrance beam radius in pixel
          if z<0: output beam radius in pixel
-
-    retscale int 0 or 1:
+    retscale : int 0 or 1:
         IF NOT 0, the function returns the scales
         of the input and output arrays
         IF 0, the function returns the output
@@ -229,20 +213,18 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
 
     Returns
     ------
-    IF retscale is 0
+    IF retscale is 0:
         pup_z : 2D array (complex)
                 electric field after propagating in free space along
                 a distance z
         dxout : float
                 lateral sampling in the output array
 
-    ELSE
+    else:
         dx : float
                 lateral sampling in the input array
-
         dxout : float
                 lateral sampling in the output array
-
     """
     # dimension of the input array
     if retscale == 0:
@@ -313,20 +295,15 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     pup : 2D array (complex or real)
             electric field at z=0
             CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
-            where dimpup is the pup array dimension
-
+            where 'dimpup' is the pup array dimension
     lam : float
          wavelength in meter
-
     z : float
          distance of propagation in meter
-
     rad : float
         entrance beam radius in meter
-        
     prad : float
         entrance beam radius in pixel
-    
     gamma : int >=2
         factor of oversizing in the fourrier plane in diameter of the pupil 
         (gamma*2*prad is the output dim)
@@ -334,11 +311,9 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
 
     Returns
     ------
-
     pup_z : 2D array (complex) of size [2*gamma*prad,2*gamma*prad]
             electric field after propagating in free space along
             a distance z
-
     """
 
     diam_pup_in_m = 2 * rad
@@ -372,15 +347,13 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
 
     Parameters
     ----------
-    image : 2D numpy array
-            inital array.
-
+    input : 2D numpy array
+            initial array.
     inverse : bool (optional, default False)
             direction of the FFT,
             inverse == False for direct FFT,
             inverse == True for inverse FFT.
-
-    center_pos : string (optinal defaut 'bb')
+    center_pos : string (optional, default 'bb')
                       option for the origin. Shorthand for specifying
                       the origin center in direct and fourier spaces when
                       manipulating centered arrays.
@@ -392,8 +365,7 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
                if dim_i (i = x or y) is even or odd : 
                     Central pix = dim_i // 2
                     Between 4 central pix: between dim_i // 2 - 1 and dim_i // 2
-                with // the euclidian division. 
-
+                with // the euclidian division.
     norm : string default 'backward'
                 'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
                 https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
@@ -407,7 +379,6 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     ------
     FFT_array : 2D numpy array
         FFT of input array with respect to the input centering parameters.
-
     """
 
     Nx = np.shape(image)[0]
