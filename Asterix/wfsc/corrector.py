@@ -8,7 +8,7 @@ from astropy.io import fits
 from Asterix.utils import invert_svd
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
-import Asterix.wfsc.estimator as estimator
+import Asterix.wfsc.estimator as estimator_mod
 import Asterix.wfsc.thd_quick_invert as thd_quick_invert
 import Asterix.wfsc.wf_control_functions as wfc
 
@@ -41,7 +41,7 @@ class Corrector:
                  Correctionconfig,
                  testbed: Testbed,
                  MaskDH,
-                 estimator: estimator.Estimator,
+                 estimator: estimator_mod.Estimator,
                  matrix_dir=None,
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -192,7 +192,7 @@ class Corrector:
 
     def update_matrices(self,
                         testbed: Testbed,
-                        estimator: estimator.Estimator,
+                        estimator: estimator_mod.Estimator,
                         initial_DM_voltage=0.,
                         input_wavefront=1.):
         """
