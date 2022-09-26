@@ -251,16 +251,7 @@ def correction_loop_1matrix(testbed: Testbed,
 
     initialFP = testbed.todetector_intensity(entrance_EF=input_wavefront,
                                              voltage_vector=initial_DM_voltage,
-                                             save_all_planes_to_fits=False,
-                                             dir_save_all_planes='/Users/jmazoyer/Desktop/test/',
                                              **kwargs)
-
-    estim_init = estimator.estimate(testbed,
-                                    voltage_vector=initial_DM_voltage,
-                                    entrance_EF=input_wavefront,
-                                    wavelength=testbed.wavelength_0,
-                                    **kwargs)
-
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
     thisloop_voltages_DMs = list()
@@ -271,7 +262,6 @@ def correction_loop_1matrix(testbed: Testbed,
 
     thisloop_voltages_DMs.append(initial_DM_voltage)
     thisloop_FP_Intensities.append(initialFP)
-    thisloop_EF_estim.append(estim_init)
     thisloop_MeanDHContrast.append(initialFP_contrast)
 
     if not silence:
@@ -368,11 +358,7 @@ def correction_loop_1matrix(testbed: Testbed,
             new_voltage = thisloop_voltages_DMs[-1] + gain * solution
 
         thisloop_FP_Intensities.append(
-            testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                         voltage_vector=new_voltage,
-                                         save_all_planes_to_fits=False,
-                                         dir_save_all_planes='/Users/jmazoyer/Desktop/test_roundpup/',
-                                         **kwargs))
+            testbed.todetector_intensity(entrance_EF=input_wavefront, voltage_vector=new_voltage, **kwargs))
         thisloop_EF_estim.append(resultatestimation)
         thisloop_MeanDHContrast.append(np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))
 

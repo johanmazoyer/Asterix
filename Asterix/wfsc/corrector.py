@@ -233,7 +233,7 @@ class Corrector:
                                                      input_wavefront=input_wavefront,
                                                      MatrixType=self.MatrixType,
                                                      save_all_planes_to_fits=False,
-                                                     dir_save_all_planes="/Users/jmazoyer/Desktop/g0_all/")
+                                                     dir_save_all_planes=None)
 
             self.Gmatrix = wfc.crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
 

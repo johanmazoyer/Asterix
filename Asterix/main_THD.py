@@ -15,7 +15,8 @@ def runthd2(parameter_file,
             NewEstimationconfig={},
             NewCorrectionconfig={},
             NewLoopconfig={},
-            NewSIMUconfig={}):
+            NewSIMUconfig={},
+            **kwargs):
     """
     Run a simulation of a correction loop for the THD2 testbed.
 
@@ -84,8 +85,7 @@ def runthd2(parameter_file,
     corono = Coronagraph(modelconfig, Coronaconfig, Model_local_dir=model_local_dir)
 
     # Concatenate into the full testbed optical system
-    thd2 = Testbed([entrance_pupil, DM1, DM3, corono],
-                   ["entrancepupil", "DM1", "DM3", "corono"])
+    thd2 = Testbed([entrance_pupil, DM1, DM3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
 
     # The following line can be used to change the DM which aplpies PW probes. This could be used to use the DM out of
     # the pupil plane.
@@ -101,7 +101,7 @@ def runthd2(parameter_file,
 
     # Initialize the DH masks
     mask_dh = MaskDH(Correctionconfig)
-    science_mask_dh = mask_dh.creatingMaskDH(thd2.dimScience, thd2.Science_sampling)
+    science_mask_dh = mask_dh.creatingMaskDH(thd2.dimScience, thd2.Science_sampling, **kwargs)
 
     # Initialize the corrector
     corrector = Corrector(Correctionconfig,
@@ -139,6 +139,7 @@ def runthd2(parameter_file,
                               input_wavefront=input_wavefront,
                               EF_aberrations_introduced_in_LS=wavefront_in_LS,
                               initial_DM_voltage=0,
-                              silence=False)
+                              silence=False,
+                              **kwargs)
 
     save_loop_results(results, config, thd2, science_mask_dh, result_dir)
