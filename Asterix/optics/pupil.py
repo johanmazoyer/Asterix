@@ -158,7 +158,7 @@ class Pupil(optsy.OpticalSystem):
                 pup_fits_right_size = pup_fits
             else:
                 #Rescale to the pupil size
-                find_divisors = list()
+                find_divisors = []
                 for i in range(60, pup_fits.shape[0] + 1):
                     if pup_fits.shape[0] % i == 0:
                         find_divisors.append(i)

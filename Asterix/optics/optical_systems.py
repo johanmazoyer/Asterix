@@ -629,7 +629,7 @@ class OpticalSystem:
         else:
             wavelength_vec = wavelengths
 
-        entrance_EF = list()
+        entrance_EF = []
         for wavelength in wavelength_vec:
             entrance_EF.append((1 + ampl_abb) * np.exp(1j * phase_abb * self.wavelength_0 / wavelength))
         entrance_EF = np.array(entrance_EF)

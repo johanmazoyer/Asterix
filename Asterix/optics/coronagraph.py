@@ -415,7 +415,7 @@ class Coronagraph(optsy.OpticalSystem):
         fqpm_thick_hor[np.where(yy >= 0)] = 1
         fqpm_thick = fqpm_thick_vert - fqpm_thick_hor
 
-        fqpm = list()
+        fqpm = []
         for i, wav in enumerate(self.wav_vec):
             if self.prop_apod2lyot == "fft":
                 dim_fp = self.dim_fp_fft[i]
@@ -466,7 +466,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         phase_vortex = vortex_charge * np.angle(xx + 1j * yy)
 
-        vortex = list()
+        vortex = []
         for i, wav in enumerate(self.wav_vec):
             if self.prop_apod2lyot == "fft":
                 dim_fp = self.dim_fp_fft[i]
@@ -519,7 +519,7 @@ class Coronagraph(optsy.OpticalSystem):
             Knife[np.where(
                 yy < (maxdimension_array_fpm / 2 - self.knife_coro_offset * self.Science_sampling))] = 1
 
-        knife_allwl = list()
+        knife_allwl = []
         for i in range(len(self.wav_vec)):
             knife_allwl.append(Knife)
 
@@ -541,7 +541,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm, rad_LyotFP_pix)
 
-        ClassicalLyotFPM_allwl = list()
+        ClassicalLyotFPM_allwl = []
         for wav in self.wav_vec:
             ClassicalLyotFPM_allwl.append(ClassicalLyotFPM)
 
@@ -571,7 +571,7 @@ class Coronagraph(optsy.OpticalSystem):
         ampl_hlc = np.zeros(ClassicalLyotFP.shape)
         ampl_hlc[whClassicalLyotstop] = np.sqrt(self.transmission_fpm) - 1
 
-        hlc_all_wl = list()
+        hlc_all_wl = []
         for wav in self.wav_vec:
             hlc_all_wl.append(
                 self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
