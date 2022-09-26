@@ -208,7 +208,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                 if dir_save_all_planes is not None:
                     # save PP plane before this subsystem
-                    name_plane = 'EF_PP_before_' + osname + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'EF_PP_before_' + osname + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
                 if isinstance(OpticSysbefore, DeformableMirror) and OpticSysbefore.active:
                     # this subsystem is an active DM but not the one we actuate now (located before the one we actuate)
@@ -222,7 +222,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                     if dir_save_all_planes is not None:
                         # save phase on this DM
-                        name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(int(wavelength * 1e9))
+                        name_plane = 'Phase_init_on_' + osname + f'_wl{int(wavelength * 1e9)}'
                         save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
 
                 else:
@@ -230,7 +230,7 @@ def create_interaction_matrix(testbed: Testbed,
 
                 if dir_save_all_planes is not None:
                     # save PP plane after this subsystem
-                    name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'EF_PP_after_' + osname + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
 
             # then the DM we want to actuate !
@@ -261,7 +261,7 @@ def create_interaction_matrix(testbed: Testbed,
                                                                                   DM.phase_init)
 
                         if dir_save_all_planes is not None:
-                            name_plane = 'Phase_on_' + DM_name + '_wl{}'.format(int(wavelength * 1e9))
+                            name_plane = 'Phase_on_' + DM_name + f'_wl{int(wavelength * 1e9)}'
                             save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
 
                     else:
@@ -288,7 +288,7 @@ def create_interaction_matrix(testbed: Testbed,
                                 -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
 
                 if dir_save_all_planes is not None:
-                    name_plane = 'EF_PP_after_' + DM_name + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'EF_PP_after_' + DM_name + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, wavefront)
                 # and finally we go through the subsystems after the DMs we want to actuate
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
@@ -307,14 +307,14 @@ def create_interaction_matrix(testbed: Testbed,
                                     wavefront, OpticSysAfter.phase_init, wavelength)
 
                             if dir_save_all_planes is not None:
-                                name_plane = 'Phase_init_on_' + osname + '_wl{}'.format(int(wavelength * 1e9))
+                                name_plane = 'Phase_init_on_' + osname + f'_wl{int(wavelength * 1e9)}'
                                 save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysAfter.phase_init)
 
                         else:
                             wavefront = OpticSysAfter.EF_through(entrance_EF=wavefront)
 
                         if dir_save_all_planes is not None:
-                            name_plane = 'EF_PP_after_' + osname + '_wl{}'.format(int(wavelength * 1e9))
+                            name_plane = 'EF_PP_after_' + osname + f'_wl{int(wavelength * 1e9)}'
                             save_plane_in_fits(dir_save_all_planes, name_plane, wavefront)
                     else:
                         # this is the last one ! so we propagate to FP and resample to estimation size
@@ -331,7 +331,7 @@ def create_interaction_matrix(testbed: Testbed,
                             normalisation_testbed_EF_contrast, dimEstim)
 
                         if dir_save_all_planes is not None:
-                            name_plane = 'FPAfterTestbed_' + osname + '_wl{}'.format(int(wavelength * 1e9))
+                            name_plane = 'FPAfterTestbed_' + osname + f'_wl{int(wavelength * 1e9)}'
                             save_plane_in_fits(dir_save_all_planes, name_plane, Gvector)
 
                 # TODO Should we remove the intial FP field G0 in all casese ? For ideal
@@ -341,7 +341,7 @@ def create_interaction_matrix(testbed: Testbed,
                 Gvector = Gvector - G0
 
                 if dir_save_all_planes is not None:
-                    name_plane = 'Gvector_in_matrix_' + osname + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'Gvector_in_matrix_' + osname + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, Gvector)
 
                 if visu:
@@ -579,9 +579,10 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
                 # this step is to check if the SM is divergeing too quickly
                 return "SMFailedTooManyTime", alpha
 
-            print("For alpha={:f}, Current Contrast:{:f}, Last Contrast:{:f}, Desired Contrast: {:f}".format(
-                np.log10(alpha), np.log10(CurrentContrast), np.log10(LastCurrentContrast),
-                np.log10(DesiredContrast)))
+            print(
+                f"For alpha={np.log10(alpha):f}, Current Contrast:{np.log10(CurrentContrast):f}, " +
+                f"Last Contrast:{np.log10(LastCurrentContrast):f}, Desired Contrast: {np.log10(DesiredContrast):f}"
+            )
 
         if iteralpha == 0:
             # we must do at least 1 iteration (the SM found a solution that dig the contrast)
@@ -595,7 +596,7 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
         else:
             TestSMfailed = False
 
-    print("Number of iteration in this stroke min (number of tested alpha): {:d}".format(iteralpha))
+    print(f"Number of iteration in this stroke min (number of tested alpha): {iteralpha:d}")
     return testbed.basis_vector_to_act_vector(DMSurfaceCoeff), alpha
 
 

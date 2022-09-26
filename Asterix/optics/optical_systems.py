@@ -195,7 +195,7 @@ class OpticalSystem:
 
         if dir_save_all_planes is not None:
             who_called_me = self.__class__.__name__
-            name_plane = 'EF_FP_after_' + who_called_me + '_obj' + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_FP_after_' + who_called_me + '_obj' + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_EF)
 
         return focal_plane_EF
@@ -534,12 +534,12 @@ class OpticalSystem:
 
                         if not os.path.exists(ampl_abb_filename):
                             # check existence
-                            print("Specified amplitude file {0} does not exist.".format(ampl_abb_filename))
+                            print(f"Specified amplitude file {ampl_abb_filename} does not exist.")
                             print("")
                             print("")
                             raise
 
-                        print("Opening {0} file for testbed aberrations.".format(ampl_abb_filename))
+                        print(f"Opening {ampl_abb_filename} file for testbed aberrations.")
                         print("This file should have centerX, centerY and RESPUP keyword in header")
 
                         testbedampl = fits.getdata(ampl_abb_filename)
