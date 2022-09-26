@@ -51,6 +51,20 @@ When you run Asterix, the first time several directories will be created:
 * Labview/ Finally, if the parameter 'onbench' is set to True, the code will create a directory to put matrices in the format needed to control the THD2 testbed. 
 
 
+As with a lot of function in Asterix, ``runthd2()`` has been set up with a mode where each optical plane is save to .fits for debugging purposes.
+This can generate a lot of fits especially if in a loop so be careful. To use this options use keywords ``save_all_planes_to_fits = True`` and set up the directory ``dir_save_all_planes``.
+What is saved if you activate this option in runthd2() was crefully thougth about, to avoid sending thousands of .fits per second:
+
+* Dark Hole Mask
+* PW Estimate at each iteration.
+* 1 full run through testbed (~17 fits for 1 DM testbed -one before and after each planes more or less-) at each iteration.
+
+What we are not saved by default, but can be easily done if adding save_all_planes_to_fits=True individually to these functions:
+* PW Matrix (nb_probes*17 fits for 1 DM testbed)
+* EFC Matrix (nb_actuator*17 fits for 1 DM testbed)
+* PW difference (nb_probes x17 fits for 1 DM testbed), at each iteration
+
+
 Description of the parameter file
 +++++++++++++++++++++++
 

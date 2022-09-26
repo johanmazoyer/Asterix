@@ -30,6 +30,8 @@ set by the ``Estim_bin_factor`` parameter and is ``dimScience`` / ``Estim_bin_fa
                                           entrance_EF=input_wavefront)
 
 
+``estimate`` function has been set up with a mode where each optical plane is save to .fits for debugging purposes.
+To use this options use keywords ``save_all_planes_to_fits = True`` and set up the directory ``dir_save_all_planes``.
 
 Perfect Estimation
 +++++++++++++++++++++++
