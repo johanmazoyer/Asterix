@@ -6,12 +6,13 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix.utils import save_plane_in_fits, crop_or_pad_image
-from Asterix.optics import OpticalSystem, Pupil
+import Asterix.optics.optical_systems as optsy
+from Asterix.optics import Pupil
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 
-class Coronagraph(OpticalSystem):
+class Coronagraph(optsy.OpticalSystem):
     """
     initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
     coronagraph is a sub class of OpticalSystem.
