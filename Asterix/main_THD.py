@@ -18,7 +18,6 @@ def runthd2(parameter_file,
             NewSIMUconfig={},
             silence=False,
             **kwargs):
-
     """
     Run a simulation of a correction loop for the THD2 testbed.
 
