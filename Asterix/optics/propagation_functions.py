@@ -89,44 +89,41 @@ def mft(image,
             Output is a complex array dimft x dimft with the position of the
             0-frequency in between the 4 pixel (dim_output_x/2+x1,dim_output_y/2+y1) and (dim_output_x/2+x1 +1,dim_output_y/2+y1+1)
             if x1 and y1 are integer
-            
     """
 
     # check dimensions and type of real_dim_input
-    error_string_real_dim_input = """dimpup must be an int (square input pupil)
-                             or tupple of int of dimension 2"""
+    error_string_real_dim_input = "'dimpup' must be an int (square input pupil) or tuple of ints of dimension 2"
     if np.isscalar(real_dim_input):
         if isinstance(real_dim_input, int):
             real_dim_input_x = real_dim_input
             real_dim_input_y = real_dim_input
         else:
-            raise Exception(error_string_real_dim_input)
+            raise TypeError(error_string_real_dim_input)
     elif isinstance(real_dim_input, tuple):
         if all(isinstance(dims, int) for dims in real_dim_input) & (len(real_dim_input) == 2):
             real_dim_input_x = real_dim_input[0]
             real_dim_input_y = real_dim_input[1]
         else:
-            raise Exception(error_string_real_dim_input)
+            raise TypeError(error_string_real_dim_input)
     else:
-        raise Exception(error_string_real_dim_input)
+        raise TypeError(error_string_real_dim_input)
 
     # check dimensions and type of dim_output
-    error_string_dim_output = """dim_output must be an int (square output)
-                                or tupple of int of dimension 2"""
+    error_string_dim_output = "'dim_output' must be an int (square output) or tuple of ints of dimension 2"
     if np.isscalar(dim_output):
         if isinstance(dim_output, int):
             dim_output_x = dim_output
             dim_output_y = dim_output
         else:
-            raise Exception(error_string_dim_output)
+            raise TypeError(error_string_dim_output)
     elif isinstance(dim_output, tuple):
         if all(isinstance(dims, int) for dims in dim_output) & (len(dim_output) == 2):
             dim_output_x = dim_output[0]
             dim_output_y = dim_output[1]
         else:
-            raise Exception(error_string_dim_output)
+            raise TypeError(error_string_dim_output)
     else:
-        raise Exception(error_string_dim_output)
+        raise TypeError(error_string_dim_output)
 
     # check dimensions and type of nbres
     error_string_nbr = """nbres must be an float or int (square output)
@@ -136,15 +133,15 @@ def mft(image,
             nbresx = float(nbres)
             nbresy = float(nbres)
         else:
-            raise Exception(error_string_nbr)
+            raise TypeError(error_string_nbr)
     elif isinstance(nbres, tuple):
         if all(isinstance(nbresi, (float, int)) for nbresi in nbres) & (len(nbres) == 2):
             nbresx = float(nbres[0])
             nbresy = float(nbres[1])
         else:
-            raise Exception(error_string_nbr)
+            raise TypeError(error_string_nbr)
     else:
-        raise Exception(error_string_nbr)
+        raise TypeError(error_string_nbr)
 
     dim_input_x = image.shape[0]
     dim_input_y = image.shape[1]
