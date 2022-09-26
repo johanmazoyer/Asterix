@@ -16,7 +16,9 @@ def runthd2(parameter_file,
             NewCorrectionconfig={},
             NewLoopconfig={},
             NewSIMUconfig={},
+            silence=False,
             **kwargs):
+
     """
     Run a simulation of a correction loop for the THD2 testbed.
 
@@ -46,6 +48,8 @@ def runthd2(parameter_file,
         Can be used to directly change a parameter in the Correctionconfig section of the input parameter file.
     NewSIMUconfig: dict, optional
         Can be used to directly change a parameter in the SIMUconfig section of the input parameter file.
+    silence : boolean
+        Whether to silence correction loop outputs; default False.
     """
 
     # Load configuration file
@@ -139,7 +143,7 @@ def runthd2(parameter_file,
                               input_wavefront=input_wavefront,
                               EF_aberrations_introduced_in_LS=wavefront_in_LS,
                               initial_DM_voltage=0,
-                              silence=False,
+                              silence=silence,
                               **kwargs)
 
     save_loop_results(results, config, thd2, science_mask_dh, result_dir)
