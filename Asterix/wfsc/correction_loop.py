@@ -95,7 +95,7 @@ def correction_loop(testbed: Testbed,
     if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
         Linesearch = Loopconfig["Linesearch"]
         gain = Loopconfig["gain"]
-        if Linesearch == False:
+        if not Linesearch:
             Nbmode_corr = list(Loopconfig["Nbmode_corr"])
             if len(Nbiter_corr) != len(Nbmode_corr):
                 raise Exception("""In this correction mode and if Linesearch = False, 
@@ -324,7 +324,7 @@ def correction_loop_1matrix(testbed: Testbed,
             print("we stop the correction")
             break
 
-        elif isinstance(solution, str) and solution == "RebootTheLoop":
+        if isinstance(solution, str) and solution == "RebootTheLoop":
             # for each correction algorithm, we can break the loop by
             # the string "RebootTheLoop" instead of a correction vector
             print("we go back to last best correction")
@@ -339,7 +339,7 @@ def correction_loop_1matrix(testbed: Testbed,
         thisloop_EF_estim.append(resultatestimation)
         thisloop_MeanDHContrast.append(np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))
 
-        if Search_best_Mode == False:
+        if not Search_best_Mode:
             # if we are only looking for the best mode, we do not update the DM shape
             # for the next iteration
             thisloop_voltages_DMs.append(new_voltage)

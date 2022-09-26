@@ -111,7 +111,7 @@ class OpticalSystem:
 
         """
 
-        if isinstance(entrance_EF, (float, np.float, np.ndarray)) == False:
+        if not isinstance(entrance_EF, (float, np.float, np.ndarray)):
             print(entrance_EF)
             raise Exception("entrance_EF should be a float of a numpy array of floats")
 
@@ -166,7 +166,7 @@ class OpticalSystem:
                 self.wavelength_0 /  (2*self.prad) = self.Science_sampling pixels
 
         """
-        if center_on_pixel == True:
+        if center_on_pixel:
             Psf_offset = (0.5, 0.5)
         else:
             Psf_offset = (0, 0)
@@ -190,7 +190,7 @@ class OpticalSystem:
                                   inverse=False,
                                   norm='ortho')
 
-        if in_contrast == True:
+        if in_contrast:
             focal_plane_EF /= np.sqrt(self.norm_monochrom[self.wav_vec.tolist().index(wavelength)])
 
         if dir_save_all_planes is not None:
@@ -262,7 +262,7 @@ class OpticalSystem:
                 do not use wavelength keyword.
                 Use wavelengths keyword even for monochromatic intensity""")
 
-        if wavelengths == None:
+        if wavelengths is None:
             wavelength_vec = self.wav_vec
 
         elif isinstance(wavelengths, (float, int)):
@@ -294,7 +294,7 @@ class OpticalSystem:
                                 dir_save_all_planes=dir_save_all_planes,
                                 **kwargs))**2
 
-        if in_contrast == True:
+        if in_contrast:
             if (wavelength_vec != self.wav_vec).all():
                 raise Exception("""Careful: contrast normalization in todetector_intensity assumes
                      it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1
@@ -306,7 +306,7 @@ class OpticalSystem:
 
             focal_plane_Intensity /= self.norm_polychrom
 
-        if photon_noise == True:
+        if photon_noise:
             focal_plane_Intensity = np.random.poisson(
                 focal_plane_Intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
 
@@ -440,15 +440,15 @@ class OpticalSystem:
 
         ## Phase map and amplitude map for the static aberrations
 
-        if set_phase_abb is False:
+        if not set_phase_abb:
             return 0.
 
         if phase_abb_filename == '':
             phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:.1f}".format(
                 int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc, self.prad)
 
-        if set_random_phase is False and Model_local_dir is not None and os.path.isfile(
-                os.path.join(Model_local_dir, phase_abb_filename + ".fits")) == True:
+        if (not set_random_phase) and Model_local_dir is not None and os.path.isfile(
+                os.path.join(Model_local_dir, phase_abb_filename + ".fits")):
             return_phase = fits.getdata(os.path.join(Model_local_dir, phase_abb_filename + ".fits"))
 
         else:
@@ -495,8 +495,8 @@ class OpticalSystem:
         ampl_rhoc = SIMUconfig["ampl_rhoc"]
         ampl_slope = SIMUconfig["ampl_slope"]
 
-        if set_amplitude_abb == True:
-            if set_random_ampl is False:
+        if set_amplitude_abb:
+            if not set_random_ampl:
 
                 if ampl_abb_filename == '':
                     # in this case, the user does not want a random amplitude map but did not specified a name
@@ -506,7 +506,7 @@ class OpticalSystem:
                     ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
                         int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
 
-                    if os.path.isfile(os.path.join(Model_local_dir, ampl_abb_filename)) == True:
+                    if os.path.isfile(os.path.join(Model_local_dir, ampl_abb_filename)):
                         return fits.getdata(os.path.join(Model_local_dir, ampl_abb_filename))
 
                     else:

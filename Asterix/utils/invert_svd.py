@@ -55,7 +55,7 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
     InvS = np.linalg.inv(S)
     InvS_truncated = np.linalg.inv(S)
     # print(InvS)
-    if visu == True:
+    if visu:
         plt.figure()
         plt.clf
         plt.plot(np.diag(InvS), "r.")
@@ -72,7 +72,7 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
             InvS_truncated[cut:] = 0
         if regul == "tikhonov":
             InvS_truncated = np.diag(s / (s**2 + s[cut]**2))
-            if visu == True:
+            if visu:
                 plt.ion()
                 plt.plot(np.diag(InvS_truncated), "b.")
                 plt.yscale("log")

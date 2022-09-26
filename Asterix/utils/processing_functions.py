@@ -142,7 +142,7 @@ def rebin(image, factor=4, center_on_pixel=False):
 
     shape = (dim1 // factor, factor, dim2 // factor, factor)
 
-    if center_on_pixel is False:
+    if not center_on_pixel:
         return np.fft.fftshift(np.fft.fftshift(image).reshape(shape).mean(-1).mean(1))
     else:
         return image.reshape(shape).mean(-1).mean(1)
@@ -247,10 +247,10 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
     NP = sz[0]
     NL = sz[1]
 
-    if fourier is False and float(xshift).is_integer() and float(yshift).is_integer():
+    if (not fourier) and float(xshift).is_integer() and float(yshift).is_integer():
         return np.roll(image, (xshift, yshift), axis=(0, 1))
 
-    if fourier == True:
+    if fourier:
         ft_image = image
     else:
         ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(image), norm=norm))
@@ -275,7 +275,7 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
     shifted_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift), norm=norm))
 
     # if the initial data is real, we take the real part
-    if complex_image is False:
+    if not complex_image:
         shifted_image = np.real(shifted_image)
 
     return shifted_image
@@ -425,7 +425,8 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
             2):int((smaller_image.shape[1] + int(np.ceil(factor_zoomouty * NL))) / 2)]
 
     # if the initial data is real, we take the real part
-    if complex_image is False:
+    if not complex_image:
         smaller_image_cropped = np.real(smaller_image_cropped)
 
     return smaller_image_cropped
+    

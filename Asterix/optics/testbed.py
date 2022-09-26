@@ -8,6 +8,7 @@ import numpy as np
 import Asterix.optics.optical_systems as optsy
 import Asterix.optics.deformable_mirror as deformable_mirror
 
+
 class Testbed(optsy.OpticalSystem):
     """
     
@@ -90,7 +91,7 @@ class Testbed(optsy.OpticalSystem):
                     list_os[num_optical_sys].EF_through, list_os_names[num_optical_sys] + "phase")
                 known_keywords.append(list_os_names[num_optical_sys] + "phase")
 
-                if list_os[num_optical_sys].active == False:
+                if not list_os[num_optical_sys].active:
                     # if the Dm is not active, we just add it to the testbed model
                     # but not to the EF_through function
                     vars(self)[list_os_names[num_optical_sys]] = list_os[num_optical_sys]

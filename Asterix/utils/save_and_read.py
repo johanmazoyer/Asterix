@@ -39,7 +39,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
     name_fits = current_time_str + '_' + name_plane
 
-    if os.path.exists(dir_save_fits) is False:
+    if not os.path.exists(dir_save_fits):
         raise Exception("Please define an existing directory for dir_save_fits keyword or None")
 
     # sometime the image can be a single float (0 for phase or 1 for EF).
@@ -215,12 +215,12 @@ def read_parameter_file(parameter_file,
 
     test_validity_params = config.validate(Validator(), copy=True)
 
-    if test_validity_params is not True:
+    if not test_validity_params:
         for name, section in test_validity_params.items():
-            if section is True:
+            if section:
                 continue
             for key, value in section.items():
-                if value is False:
+                if not value:
                     raise Exception(f'In section [{name}], parameter "{key}" is not properly defined')
 
     return config

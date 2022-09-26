@@ -49,7 +49,7 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=Tru
     b = -(np.sin(2 * theta)) / (4 * sigma_x**2) + (np.sin(2 * theta)) / (4 * sigma_y**2)
     c = (np.sin(theta)**2) / (2 * sigma_x**2) + (np.cos(theta)**2) / (2 * sigma_y**2)
     g = (amplitude * np.exp(-(a * ((x - xo)**2) + 2 * b * (x - xo) * (y - yo) + c * ((y - yo)**2))) + h)
-    if flatten == True:
+    if flatten:
         g = g.flatten()
     return g
 
@@ -79,7 +79,7 @@ def gauss2Dfit(data):
     initial_guess = (np.amax(data), 1, 1, len(data) / 2, len(data) / 2, 0, 0)
 
     try:
-        popt, pcov = opt.curve_fit(twoD_Gaussian, xy, data.flatten(), p0=initial_guess)
+        popt, _ = opt.curve_fit(twoD_Gaussian, xy, data.flatten(), p0=initial_guess)
     except RuntimeError:
         print("Error - curve_fit failed")
 

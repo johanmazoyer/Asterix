@@ -165,7 +165,7 @@ def mft(image,
     uu1 = ((np.arange(dim_output_y) - Y1 + 1 / 2) / dim_output_y - 1 / 2) * nbresy  #Fourier plane
 
     norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
-    if inverse == False:
+    if not inverse:
         if norm == 'backward':
             norm0 = 1.
         elif norm == 'forward':
@@ -174,7 +174,7 @@ def mft(image,
             norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
         sign_exponential = -1
 
-    elif inverse == True:
+    else:
         if norm == 'backward':
             norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
         elif norm == 'forward':
@@ -415,12 +415,12 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
 
     Nx = np.shape(image)[0]
     Ny = np.shape(image)[1]
-    if inverse == True:
+    if inverse:
         sens = 1
     else:
         sens = -1
 
-    if not center_pos.lower() in ['pp', 'pb', 'bp', 'bb']:
+    if  center_pos.lower() not in ['pp', 'pb', 'bp', 'bb']:
         raise Exception("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
 
     if center_pos.lower()[0] == 'p':
@@ -436,11 +436,11 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     X, Y = np.meshgrid(np.linspace(0, Ny, Ny, endpoint=False), np.linspace(0, Nx, Nx, endpoint=False))
 
     # shift in Fourier space, i.e. multiplication in direct space, and computation of FFT
-    if inverse == False:
+    if not inverse:
         farray = np.fft.fft2(image * np.exp(
             (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
                              norm=norm)
-    if inverse == True:
+    else:
         farray = np.fft.ifft2(image * np.exp(
             (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
                               norm=norm)
