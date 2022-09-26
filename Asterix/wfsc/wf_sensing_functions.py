@@ -3,11 +3,11 @@
 
 import numpy as np
 
-from Asterix.utils import resizing, invert_svd
+from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
-def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength):
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength, **kwargs):
     """
     Build the interaction matrix for pair-wise probing.
 
@@ -63,7 +63,8 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
         # I tried to remove "1+"". It breaks the code
         # (coronagraph does not "remove the 1 exactly")
 
-        deltapsik[k] = resizing(testbed.todetector(entrance_EF=1 + 1j * probephase[k]) - psi0, dimEstim)
+        deltapsik[k] = resizing(
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k], **kwargs) - psi0, dimEstim)
         k = k + 1
 
     l = 0
@@ -84,7 +85,11 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
     return [PWMatrix, SVD]
 
 
-def calculate_pw_estimate(Difference, Vectorprobes):
+def calculate_pw_estimate(Difference,
+                          Vectorprobes,
+                          save_all_planes_to_fits=False,
+                          dir_save_all_planes=None,
+                          **kwargs):
     """
     Calculate the focal plane electric field from the probe image
     differences and the modeled probe matrix.
@@ -98,6 +103,15 @@ def calculate_pw_estimate(Difference, Vectorprobes):
 
     Vectorprobes: 2D array
             model probe matrix for the same probe as for difference
+
+    save_all_planes_to_fits: Bool, default False.
+            if True, save all planes to fits for debugging purposes to dir_save_all_planes
+            This can generate a lot of fits especially if in a loop so the code force you
+            to define a repository.
+    
+    dir_save_all_planes : default None. 
+                            directory to save all plane in
+                            fits if save_all_planes_to_fits = True
 
     Returns
     ------
@@ -119,6 +133,10 @@ def calculate_pw_estimate(Difference, Vectorprobes):
             Resultat[i, j] = Resultatbis[0] + 1j * Resultatbis[1]
 
             l = l + 1
+
+    if save_all_planes_to_fits == True:
+        name_plane = 'PW_Estimate'
+        save_plane_in_fits(dir_save_all_planes, name_plane, Resultat / 4.)
 
     return Resultat / 4.
 
