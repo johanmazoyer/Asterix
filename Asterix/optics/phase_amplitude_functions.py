@@ -44,7 +44,7 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
         return crop_or_pad_image(rebin(pup_large, factor=factor_bin, center_on_pixel=False), dim_pp)
 
     else:
-        xx, yy = np.meshgrid(np.arange(dim_pp) - (dim_pp) // 2, np.arange(dim_pp) - (dim_pp) // 2)
+        xx, yy = np.meshgrid(np.arange(dim_pp) - dim_pp // 2, np.arange(dim_pp) - dim_pp // 2)
 
         if center_pos.lower() == 'b':
             offset = 1 / 2
