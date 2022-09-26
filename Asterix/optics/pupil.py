@@ -227,3 +227,41 @@ class Pupil(optsy.OpticalSystem):
             save_plane_in_fits(dir_save_all_planes, name_plane, exit_EF)
 
         return exit_EF
+
+
+def grey_pupil(dim, rad, rad_inner=None, fac=4):
+    """
+    Create a round grey-scale pupil in a square array.
+
+    Creates a round pupil with radius 'rad' in a square array of dimensions 'dim' x 'dim'. Optionally adds a central
+    obscuration with radius 'rad_inner'. This pupil will be overscaled by a te factor 'fac' and then binned back down
+    to the requested array dimensions.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the square array the pupil will be embedded in, in pixels.
+    rad : int
+        Radius of the round pupil, in pixels.
+    rad_inner : int, optional
+        Radius of othe central obscuration, in pixels.
+    fac : int
+        Oversampling factor of the pupil.
+
+    Returns
+    -------
+    pupil : array
+        Oversampled and then binned down pupil array.
+    """
+
+    length = np.arange(dim * fac)
+    cen = length.shape[0] / 2
+    xx, yy = np.meshgrid(length - cen, length - cen)
+    p0 = np.array((xx ** 2 + yy ** 2) <= (rad * fac) ** 2, dtype=float)
+
+    if rad_inner is not None:
+        obscuration = np.array((xx ** 2 + yy ** 2) <= (rad_inner * fac) ** 2, dtype=float)
+        p0 -= obscuration
+
+    pupil = rebin(p0, fac)
+    return pupil
