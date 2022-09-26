@@ -390,7 +390,6 @@ class Coronagraph(optsy.OpticalSystem):
         ------
         fqpm : list of len(self.wav_vec) 2D arrays
             Complex transmission of the FQPM mask at all wavelengths.
-        
         """
 
         if self.prop_apod2lyot == "fft":
@@ -398,15 +397,7 @@ class Coronagraph(optsy.OpticalSystem):
         else:
             maxdimension_array_fpm = self.dimScience
 
-        xx, yy = np.meshgrid(
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
-
-        fqpm_thick_vert = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
-        fqpm_thick_vert[np.where(xx < 0)] = 1
-        fqpm_thick_hor = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
-        fqpm_thick_hor[np.where(yy >= 0)] = 1
-        fqpm_thick = fqpm_thick_vert - fqpm_thick_hor
+        phase_fqpm = fqpm_mask(maxdimension_array_fpm)
 
         fqpm = []
         for i, wav in enumerate(self.wav_vec):
@@ -416,15 +407,15 @@ class Coronagraph(optsy.OpticalSystem):
                 dim_fp = self.dimScience
 
             phase4q = np.zeros((dim_fp, dim_fp))
-            fqpm_thick_cut = crop_or_pad_image(fqpm_thick, dim_fp)
+            fqpm_thick_cut = crop_or_pad_image(phase_fqpm, dim_fp)
             phase4q[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
 
             if self.achrom_fqpm:
-                # if we want to do an an achromatic_fqpm, we do not include a variation
+                # If we want to do an achromatic_fqpm, we do not include a variation
                 # of the phase with the wl.
                 fqpm.append(np.exp(1j * phase4q))
             else:
-                # in the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
+                # In the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
                 fqpm.append(self.EF_from_phase_and_ampl(phase_abb=phase4q, wavelengths=wav))
 
         return fqpm
@@ -609,6 +600,32 @@ class Coronagraph(optsy.OpticalSystem):
                 self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
 
         return hlc_all_wl
+
+
+def fqpm_mask(dim):
+    """
+    Create a FQPM phase mask.
+
+    Parameters
+    ----------
+    dim : int
+       Number of pixels for the resulting phase mask.
+
+    Returns
+    -------
+    fqpm_thick : array
+        Array holding the phase mask, in radians.
+    """
+    xx, yy = np.meshgrid(np.arange(dim) - dim / 2,
+                         np.arange(dim) - dim / 2)
+
+    fqpm_thick_vert = np.zeros((dim, dim))
+    fqpm_thick_vert[np.where(xx < 0)] = 1
+    fqpm_thick_hor = np.zeros((dim, dim))
+    fqpm_thick_hor[np.where(yy >= 0)] = 1
+    fqpm_thick = fqpm_thick_vert - fqpm_thick_hor
+
+    return fqpm_thick
 
 
 def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0,0)):
