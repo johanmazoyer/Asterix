@@ -7,8 +7,9 @@ from astropy.io import fits
 
 from Asterix.utils import invert_svd
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
-from Asterix.wfsc.estimator import Estimator
-from Asterix.wfsc.thd_quick_invert import THD_quick_invert
+
+import Asterix.wfsc.estimator as estimator
+import Asterix.wfsc.thd_quick_invert as thd_quick_invert
 import Asterix.wfsc.wf_control_functions as wfc
 
 
@@ -40,7 +41,7 @@ class Corrector:
                  Correctionconfig,
                  testbed: Testbed,
                  MaskDH,
-                 estimator: Estimator,
+                 estimator: estimator.Estimator,
                  matrix_dir=None,
                  save_for_bench=False,
                  realtestbed_dir=''):
@@ -162,8 +163,8 @@ class Corrector:
                         "Nbmodes_OnTestbed ({0}) in inversion for THD is probably too high for 1DM".format(
                             Correctionconfig["Nbmodes_OnTestbed"]))
 
-            THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"], number_Active_testbeds, realtestbed_dir,
-                             self.regularization)
+            thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"], number_Active_testbeds,
+                                              realtestbed_dir, self.regularization)
 
             fits.writeto(os.path.join(realtestbed_dir, "DH_mask.fits"),
                          self.MaskEstim.astype(np.float32),
@@ -191,7 +192,7 @@ class Corrector:
 
     def update_matrices(self,
                         testbed: Testbed,
-                        estimator: Estimator,
+                        estimator: estimator.Estimator,
                         initial_DM_voltage=0.,
                         input_wavefront=1.):
         """
