@@ -8,8 +8,9 @@ from Asterix.utils import crop_or_pad_image, rebin
 
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     """
-    Create a circular pupil. 
-    no_pixel mode is a way to create very ovsersampled pupil that are then rescaled using rebin. 
+    Create a circular pupil.
+
+    With no_pixel=True, this is a way to create a very oversampled pupil that is then rescaled using rebin.
 
     AUTHORS : Axel Pottier, Johan Mazoyer
     7/9/22 Modified by J Mazoyer to remove the pixel crenellation with rebin and add a better center option
@@ -20,22 +21,20 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
         Size of the image (in pixels)
     prad : float
         Size of the pupil radius (in pixels)
-    no_pixel : boolean (defaut false).
+    no_pixel : boolean (default False).
         If true, the pupil is first defined at a very large
-        scale (prad = 10*prad) and then rescale to the given parameter prad.
-        This limits the pixel crenellation in pupil for small pupils
-
-    center_pos : string (optinal defaut 'b')
-        option for the center. 
-            'p' center on pixel dim_pp//2
-            'b' center in between pixels dim_pp//2 -1 and dim_pp//2
-        for dim_pp odd or even
+        scale (prad = 10*prad) and then rescaled to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        See also Asterix.optics.pupil.grey_pupil().
+    center_pos : string (optional, default 'b')
+        Option for the center pixel.
+        If 'p', center on the pixel dim_pp//2.
+        If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
 
     Returns
     ------
     pupilnormal : 2D array
         Output circular pupil
-
     """
 
     if no_pixel:
