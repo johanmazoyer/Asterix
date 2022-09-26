@@ -44,7 +44,7 @@ def correction_loop(testbed: Testbed,
     mask_dh: 2d numpy array
         Binary array of size [dimScience, dimScience], the dark-hole mask.
     Loopconfig: dict
-        Simulation parameters containing for the WFS&C loop.
+        Simulation parameters for the WFS&C loop.
     SIMUconfig: dict
         Simulation parameters.
     input_wavefront: float or 2d complex array or 3d complex array
@@ -53,12 +53,12 @@ def correction_loop(testbed: Testbed,
             float=1 if there are no phase/amplitude aberrations (default)
             2D complex array, of size phase_abb.shape if monochromatic
             or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic
-        !!CAREFUL!!: right now we do not use this wf to measure the matrix, although the update_matrices()
+        !!CAREFUL!!: Right now we do not use this wf to measure the matrix, although the update_matrices()
             method inside the Corrector allows it. Currently, each matrix is measured with a flat field in
-            entrance of the testbed (input_wavefront = 1).
-            input_wavefront is only used in the loop once the matrix is calculated. This can be changed but be careful.
+            the entrance of the testbed (input_wavefront = 1).
+            'input_wavefront' is only used in the loop once the matrix is calculated. This can be changed but be careful.
     initial_DM_voltage: float or 1D array
-        Initial DM voltages at the beginning of this loop. The Matrix is measured using this initial DM voltages.
+        Initial DM voltages at the beginning of this loop. The Matrix is measured using these initial DM voltages.
         Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
