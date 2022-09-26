@@ -512,8 +512,8 @@ class Coronagraph(optsy.OpticalSystem):
 
         Returns
         ------
-        Knife FPM : list of len(self.wav_vec) 2D arrays 
-            Complex transmission of the Knife edge coronagraph mask at all wl
+        knife_allwl : list of len(self.wav_vec) 2D arrays
+                Complex transmission of the knife-edge coronagraph mask at all wavelengths.
 
         """
         if self.prop_apod2lyot == "fft":
@@ -557,9 +557,8 @@ class Coronagraph(optsy.OpticalSystem):
 
         Returns
         ------
-        classical Lyot fpm : list of 2D numpy array
-            The FP mask at all wl
-
+        ClassicalLyotFPM_allwl : list of 2D numpy arrays
+            The FP masks at all wavelengths.
         """
 
         rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
@@ -580,7 +579,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         hlc_all_wl : list of 2D numpy array
-                the FP mask at all wl
+            The FP masks at all wavelengths.
         """
 
         # we create a Classical Lyot Focal plane
