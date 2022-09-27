@@ -229,7 +229,7 @@ class Pupil(optsy.OpticalSystem):
         return exit_EF
 
 
-def grey_pupil(dim, rad, rad_inner=None, fac=4):
+def grey_pupil(dim, rad, rad_inner=None, fac=10):
     """
     Create a round grey-scale pupil in a square array.
 
@@ -243,10 +243,10 @@ def grey_pupil(dim, rad, rad_inner=None, fac=4):
     ----------
     dim : int
         Dimension of the square array the pupil will be embedded in, in pixels.
-    rad : int
+    rad : float
         Radius of the round pupil, in pixels.
-    rad_inner : int, optional
-        Radius of othe central obscuration, in pixels.
+    rad_inner : flaot, optional
+        Radius of the central obscuration, in pixels.
     fac : int
         Oversampling factor of the pupil.
 

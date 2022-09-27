@@ -425,7 +425,7 @@ class Coronagraph(optsy.OpticalSystem):
         Parameters
         ------
         vortex_charge : int, default=2
-            charge of the vortex. can be 2, 4, 6. Defaut is charge 2.
+            Charge of the vortex. Usually a positive, even number (2, 4, 6). Default is charge 2.
 
         Returns
         ------
@@ -635,7 +635,7 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
     Parameters
     ----------
     dim : int
-       Number of pixels for the resulting phase mask.
+       Number of pixels for the resulting phase mask, needs to be even to keep center between pixels.
     thval : array
         Angle values at location of phase jumps. First is 0, last is pi, completing a half of a unit circle.
     phval : array
@@ -649,7 +649,8 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
     offset : float
         General offset to the whole ramp; default 0.
     cen_shift : tuple of floats
-        x- and y-shift of the center of the mask with respect to the center of the array; default (0,0).
+        x- and y-shift of the center of the mask with respect to the center of the array, which is between pixels as
+        long as 'dim' is even; default (0,0).
 
     Returns
     -------
@@ -674,7 +675,7 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
     plt.ylabel("Phase (rad)")
     plt.show()
 
-    # Create an dplot focal plane mask in 2D
+    # Create and plot focal plane mask in 2D
     angles_2d, phase_2d = create_wrapped_vortex_mask(dim=128, thval=thval, phval=phval, jump=jump, return_1d=False)
     plt.figure(figsize=(7,7))
     plt.imshow(phase_2d, cmap="Reds", origin="lower")

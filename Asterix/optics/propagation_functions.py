@@ -212,7 +212,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
 
     Returns
     ------
-    IF retscale is 0:
+    if retscale is 0:
         pup_z : 2D array (complex)
                 electric field after propagating in free space along
                 a distance z
