@@ -24,3 +24,16 @@ Then install Asterix into this conda environment:
 $ conda activate asterix
 $ pip install -e '.'
 ```
+
+## Contributing
+
+To contribute to Asterix, please follow the following steps:
+1. Make sure your local `master` branch is up-to-date by pulling.
+2. Create a new branch off `master` with a name of your choice and commit your work.
+3. When done, open a PR and request a review after ensuring your branch is up-to-date with the base branch you're merging into (usually `master`).
+4. Iterate on the review, once it's approved it will be immediately merged.
+
+Generale guidelines:
+- Do not touch other people's branches.
+- Do not touch Draft PRs.
+- If you approve a PR, you can immediately merge it.
