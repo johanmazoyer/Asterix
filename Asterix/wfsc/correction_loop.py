@@ -308,7 +308,7 @@ def correction_loop_1matrix(testbed: Testbed,
         resultatestimation = estimator.estimate(testbed,
                                                 voltage_vector=thisloop_voltages_DMs[-1],
                                                 entrance_EF=input_wavefront,
-                                                wavelength=testbed.wavelength_0,
+                                                wavelengths=testbed.wavelength_0,
                                                 perfect_estimation=Search_best_Mode,
                                                 **kwargs)
 

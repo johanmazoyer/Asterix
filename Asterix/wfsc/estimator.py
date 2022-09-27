@@ -2,7 +2,6 @@
 # pylint: disable=trailing-whitespace
 
 import os
-import time
 import numpy as np
 from astropy.io import fits
 
@@ -140,26 +139,13 @@ class Estimator:
                         "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
                     )
 
-            string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(
-                str, self.posprobes)) + "_PWampl" + str(int(self.amplitudePW)) + "_cut" + str(
-                    int(cutsvdPW // 1000)) + "k_dimEstim" + str(self.dimEstim) + testbed.string_os
-
-            ####Calculating and Saving PW matrix
-            print("")
-            filePW = "MatPW_" + string_dims_PWMatrix
-            if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
-                print("The PWmatrix " + filePW + " already exists")
-                self.PWMatrix = fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
-            else:
-                start_time = time.time()
-                print("The PWmatrix " + filePW + " does not exists")
-                print("Start PW matrix (wait a few seconds)")
-                self.PWMatrix, showSVD = wfs.create_pw_matrix(testbed, self.amplitudePW, self.posprobes,
-                                                              self.dimEstim, cutsvdPW, testbed.wavelength_0)
-                fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(self.PWMatrix))
-                visuPWMap = "EigenPW_" + string_dims_PWMatrix
-                fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(showSVD[1]))
-                print("Time for PW Matrix", time.time() - start_time)
+            self.PWMatrix = wfs.create_pw_matrix(testbed,
+                                                 self.amplitudePW,
+                                                 self.posprobes,
+                                                 self.dimEstim,
+                                                 cutsvdPW,
+                                                 matrix_dir,
+                                                 wavelengths=testbed.wavelength_0)
 
             # Saving PW matrix in Labview directory
             if save_for_bench:
@@ -239,7 +225,7 @@ class Estimator:
                 Use wavelengths keyword even for monochromatic intensity""")
 
         if wavelengths is None:
-            wavelength_vec = self.wav_vec
+            wavelength_vec = testbed.wav_vec
 
         elif isinstance(wavelengths, (float, int)):
             wavelength_vec = [wavelengths]
@@ -247,42 +233,51 @@ class Estimator:
             wavelength_vec = wavelengths
 
         if isinstance(entrance_EF, (float, int)):
-            entrance_EF = np.repeat(entrance_EF, self.nb_wav)
-        elif entrance_EF.shape == self.wav_vec.shape:
+            entrance_EF = np.repeat(entrance_EF, testbed.nb_wav)
+        elif entrance_EF.shape == testbed.wav_vec.shape:
             pass
-        elif entrance_EF.shape == (self.dim_overpad_pupil, self.dim_overpad_pupil):
-            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...], self.nb_wav, axis=0)
-        elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil):
+        elif entrance_EF.shape == (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
+            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...], testbed.nb_wav, axis=0)
+        elif entrance_EF.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
             pass
         else:
-            raise Exception(""""entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
-                        2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
-                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)""")
-        
+            raise Exception(
+                """"entrance_EFs must be scalar (same for all WL), or a testbed.nb_wav scalars or a
+                        2D array of size (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil) or a 3D array of size
+                        (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil)""")
+
         if (self.technique == "perfect") or (perfect_estimation):
             # If polychromatic, assume a perfect estimation at one wavelength
-            
+
             result_estim = []
 
-            for i, wavei in enumerate(wavelengths):
+            for i, wavei in enumerate(wavelength_vec):
 
                 resultatestimation = testbed.todetector(entrance_EF=entrance_EF[i],
                                                         voltage_vector=voltage_vector,
                                                         wavelength=wavei)
                 result_estim.append(resizing(resultatestimation, self.dimEstim))
 
-            return result_estim
+            return result_estim[
+                0]  # TODO [0] should be removed, I only put that so that I can continue to run the code while I develop in polychromatic
 
         elif self.technique in ["pairwise", "pw"]:
-            Difference = wfs.simulate_pw_difference(entrance_EF,
-                                                    testbed,
-                                                    self.posprobes,
-                                                    self.dimEstim,
-                                                    self.amplitudePW,
-                                                    voltage_vector=voltage_vector,
-                                                    wavelength=wavelength)
 
-            return wfs.calculate_pw_estimate(Difference, self.PWMatrix, **kwargs)
+            result_estim = []
+
+            for i, wavei in enumerate(wavelength_vec):
+
+                Difference = wfs.simulate_pw_difference(entrance_EF[i],
+                                                        testbed,
+                                                        self.posprobes,
+                                                        self.dimEstim,
+                                                        self.amplitudePW,
+                                                        voltage_vector=voltage_vector,
+                                                        wavelength=wavei)
+                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix, **kwargs))
+
+                return result_estim[
+                    0]  # TODO [0] should be removed, I only put that so that I can continue to run the code while I develop in polychromatic
 
         elif self.technique == 'coffee':
             return np.zeros((self.dimEstim, self.dimEstim))
