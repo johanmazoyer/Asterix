@@ -221,8 +221,7 @@ def read_parameter_file(parameter_file,
                 continue
             for key, value in section.items():
                 if value is False:
-                    raise Exception('In section [{}], parameter "{}" is not properly defined'.format(
-                        name, key))
+                    raise Exception(f'In section [{name}], parameter "{key}" is not properly defined')
 
     return config
 

@@ -161,9 +161,9 @@ class DeformableMirror(optsy.OpticalSystem):
             DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil), np.float(DMphase))
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_PP_before_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_PP_before_' + self.Name_DM + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
-            name_plane = 'phase_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'phase_' + self.Name_DM + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, DMphase)
 
         # if the DM is not active or if the surface is 0
@@ -181,7 +181,7 @@ class DeformableMirror(optsy.OpticalSystem):
                                                        dir_save_all_planes=dir_save_all_planes)
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_PP_after_' + self.Name_DM + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_after_DM)
 
         return EF_after_DM
@@ -441,7 +441,7 @@ class DeformableMirror(optsy.OpticalSystem):
                                        self.prad), self.dim_overpad_pupil)
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_before_DM_in_' + self.Name_DM + f'plane_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # Add DM phase at the right WL
@@ -449,7 +449,7 @@ class DeformableMirror(optsy.OpticalSystem):
                                                                            wavelengths=wavelength)
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_after_DM_in_' + self.Name_DM + f'plane_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # and propagate to next pupil plane

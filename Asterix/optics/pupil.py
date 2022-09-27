@@ -120,12 +120,11 @@ class Pupil(optsy.OpticalSystem):
             else:
                 if not os.path.exists(PupType):
 
-                    print("""
-                            filename_instr_XXX parameters must either be a known keyword 
+                    print(f"""filename_instr_XXX parameters must either be a known keyword 
                             'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' , 'RomanPupTHD2', 'THD2',
                             or an exisiting full path .fits name. This is not the case here,
-                            the name  '{0}' is not a known keyword and is not an existing filename
-                            """.format(PupType))
+                            the name  '{PupType}' is not a known keyword and is not an existing filename
+                            """)
                     print("")
                     print("")
                     raise
@@ -166,8 +165,8 @@ class Pupil(optsy.OpticalSystem):
 
                 if not int(2 * self.prad) in find_divisors:
                     raise Exception(
-                        "Choose a divisor of the .fits file size ({0}) for diam_pup_in_pix parameter: {1}".
-                        format(pup_fits.shape[0], find_divisors))
+                        f"Choose a divisor of the .fits file size ({pup_fits.shape[0]}) for diam_pup_in_pix parameter: {find_divisors}"
+                    )
 
                 pup_fits_right_size = rebin(pup_fits,
                                             int(pup_fits.shape[0] / (2 * self.prad)),
@@ -208,7 +207,7 @@ class Pupil(optsy.OpticalSystem):
             wavelength = self.wavelength_0
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_PP_before_pupil' + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = f'EF_PP_before_pupil_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         if len(self.pup.shape) == 2:
@@ -217,14 +216,14 @@ class Pupil(optsy.OpticalSystem):
         elif len(self.pup.shape) == 3:
             if self.pup.shape != self.nb_wav:
                 raise Exception("I'm confused, your pupil seem to be polychromatic" +
-                                "(pup.shape=3) but the # of WL (pup.shape[0]={}) ".format(self.pup.shape[0]) +
-                                "is different from the system # of WL (nb_wav={})".format(self.nb_wav))
+                                f"(pup.shape=3) but the # of WL (pup.shape[0]={self.pup.shape[0]}) " +
+                                f"is different from the system # of WL (nb_wav={self.nb_wav})")
             exit_EF = entrance_EF * self.pup[self.wav_vec.tolist().index(wavelength)]
         else:
             raise Exception("pupil dimension are not acceptable")
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_PP_after_pupil' + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = f'EF_PP_after_pupil_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, exit_EF)
 
         return exit_EF
