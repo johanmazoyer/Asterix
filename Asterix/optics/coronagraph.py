@@ -745,36 +745,3 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
         phase_mask = phase
 
     return angles, phase_mask
-
-
-def butterworth_circle(dim, sizebut, order=5, xshift=0, yshift=0):
-    """
-    Return a circular Butterworth filter.
-
-    AUTHOR: Raphaël Galicher (in IDL)
-            ILa (to Python)
-
-    Parameters
-    ----------
-    dim : int
-        Dimension of 2D output array in pixels.
-    sizebut : int
-
-    order : int
-        Order of the filter.
-    xshift : int
-        Shift in x direction in pixels.
-    yshift : int
-        Shift in y direction in pixels.
-
-    Returns
-    -------
-    butterworth : array
-    """
-    ty = (np.arange(dim) - yshift - dim / 2)
-    tx = (np.arange(dim) - xshift - dim / 2)
-    xx, yy = np.meshgrid(ty, tx)
-
-    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx**2 + yy**2) / np.abs(sizebut) * 2)**(2. * order))
-
-    return butterworth
