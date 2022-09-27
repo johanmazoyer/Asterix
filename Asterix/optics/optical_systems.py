@@ -75,9 +75,8 @@ class OpticalSystem:
             self.wav_vec = np.array([self.wavelength_0])
             self.nb_wav = 1
 
-        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + '_wl' + str(
-            int(self.wavelength_0 * 1e9)) + "_resFP" + str(round(self.Science_sampling, 2)) + "_dimFP" + str(
-                int(self.dimScience))
+        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_resFP" + str(
+            round(self.Science_sampling, 2)) + "_dimFP" + str(int(self.dimScience))
 
     #We define functions that all OpticalSystem object can use.
     # These can be overwritten for a subclass if need be

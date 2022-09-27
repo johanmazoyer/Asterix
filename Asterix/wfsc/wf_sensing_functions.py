@@ -1,13 +1,23 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
-
+import os
+import time
 import numpy as np
+
+from astropy.io import fits
 
 from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
-def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelengths=None, **kwargs):
+def create_pw_matrix(testbed: Testbed,
+                     amplitude,
+                     posprobes,
+                     dimEstim,
+                     cutsvd,
+                     matrix_dir,
+                     wavelengths=None,
+                     **kwargs):
     """
     Build the interaction matrix for pair-wise probing.
 
@@ -16,34 +26,30 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
     Parameters
     ----------
     testbed: Testbed Optical_element
-            a testbed with one or more DM
+        a testbed with one or more DM
     amplitude:  float
-            amplitude of the actuator pokes for pair(wise probing in nm
+        amplitude of the actuator pokes for pair(wise probing in nm
     posprobes:  1D-array
-            index of the actuators to push and pull for pair-wise probing
+        index of the actuators to push and pull for pair-wise probing
     dimEstim:  int
-            size of the output image after resizing in pixels
+        size of the output image after resizing in pixels
     cutsvd:     float
-            value not to exceed for the inverse eigeinvalues at each pixels
+        value not to exceed for the inverse eigeinvalues at each pixels
+    matrix_dir : path. 
+        save all the matrices files here
     wavelengths : float or list of floats. 
-            Default is all the wl of the testbed testbed.wav_vec
-            wavelengths in m.
-
+        Default is all the wl of the testbed testbed.wav_vec
+        wavelengths in m.
 
     Returns
     ------
     PWVector:   2D array
                 vector probe to be multiplied by the image difference
                 matrix in order to retrieve the focal plane electric field
-
-    SVD:        2D array
-                map of the inverse singular values for each pixels and
-                before regularization
-    
     """
 
     if 'wavelength' in kwargs:
-            raise Exception("""create_pw_matrix() function is polychromatic, 
+        raise Exception("""create_pw_matrix() function is polychromatic, 
                 do not use wavelength keyword.
                 Use wavelengths keyword even for monochromatic intensity""")
 
@@ -62,6 +68,21 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
     else:
         wavelength_vec = wavelengths
 
+    string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(
+        str, posprobes)) + "_PWampl" + str(int(amplitude)) + "_cut" + str(int(
+            cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + '_wl' + str(
+                int(testbed.wavelength_0 * 1e9))
+
+    ####Calculating and Saving PW matrix
+    print("")
+    filePW = "MatPW_" + string_dims_PWMatrix
+    if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
+        print("The PWmatrix " + filePW + " already exists")
+        return fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
+
+    start_time = time.time()
+    print("The PWmatrix " + filePW + " does not exists")
+    print("Start PW matrix (wait a few seconds)")
 
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=complex)
@@ -72,9 +93,9 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
 
     DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]  # type: DeformableMirror
 
-    psi0 = testbed.todetector()
+    psi0 = testbed.todetector(wavelength=testbed.wavelength_0)
     k = 0
-    
+
     for i in posprobes:
 
         Voltage_probe = np.zeros(DM_probe.number_act)
@@ -85,9 +106,11 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
         # with an hypothesis of small phase.
         # I tried to remove "1+"". It breaks the code
         # (coronagraph does not "remove the 1 exactly")
+        # **kwarg is here to send dir_save_all_planes
 
         deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k], **kwargs) - psi0, dimEstim)
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=testbed.wavelength_0, **kwargs)
+            - psi0, dimEstim)
         k = k + 1
 
     l = 0
@@ -105,7 +128,12 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
                 SVD[:, i, j] = np.zeros(2)
                 PWMatrix[l] = np.zeros((2, numprobe))
             l = l + 1
-    return [PWMatrix, SVD]
+    fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix))
+    visuPWMap = "EigenPW_" + string_dims_PWMatrix
+    fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]))
+    print("Time for PW Matrix (s): ", np.round(time.time() - start_time))
+
+    return PWMatrix
 
 
 def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, **kwargs):
