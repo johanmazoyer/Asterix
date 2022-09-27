@@ -24,21 +24,26 @@ class Testbed(optsy.OpticalSystem):
 
     def __init__(self, list_os, list_os_names):
         """
-        This function allows you to concatenate OpticalSystem objects to create a testbed:
-        parameter:
-            list_os:        list of OpticalSystem instances
-                            all the systems must have been defined with
-                            the same modelconfig or it will send an error.
-                            The list order is form the first optics system to the last in the
-                            path of the light (so usually from entrance pupil to Lyot pupil)
+        This function allows you to concatenate OpticalSystem objects to create a testbed
+        
+        AUTHOR : Johan Mazoyer
+        
+        Parameters
+        ----------
+        list_os:    list of OpticalSystem instances
+            all the systems must have been defined with
+            the same modelconfig or it will send an error.
+            The list order is form the first optics system to the last in the
+            path of the light (so usually from entrance pupil to Lyot pupil)
 
-            list_os_names:  list of string of the same size as list_os 
-                            Name of the optical systems. 
-                            Then can then be accessed inside the Testbed object by os_#i = Testbed.list_os_names[i]
+        list_os_names:  list of string of the same size as list_os 
+            Name of the optical systems. 
+            Then can then be accessed inside the Testbed object by os_#i = Testbed.list_os_names[i]
 
         Returns
         ------
-            testbed : an optical system which is the concatenation of all the optical systems
+        testbed : Asterix.optics.testbed.Tesbed
+            an optical system which is the concatenation of all the optical systems
 
         """
         if len(list_os) != len(list_os_names):
@@ -143,21 +148,21 @@ class Testbed(optsy.OpticalSystem):
         actuator amplitude. I split theactu_vect and  then for each DM, it uses
         DM.voltage_to_phase (no s)
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ----------
         actu_vect : float or 1D array of size testbed.number_act
-                    values of the amplitudes for each actuator and each DM
-        einstein_sum : boolean. default false
-                        Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
-                        gives the same results as normal sum. Seems ot be faster for unique actuator
-                        but slower for more complex phases
+            values of the amplitudes for each actuator and each DM
+        einstein_sum : boolean. default False
+            Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
+            gives the same results as normal sum. Seems ot be faster for unique actuator
+            but slower for more complex phases
 
         Returns
         ------
-            3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
+        phases: 3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
             phase maps for each DMs by order of light path in the same unit as actu_vect * DM_pushact
-
-        AUTHOR : Johan Mazoyer
 
         """
         DMphases = np.zeros((self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
@@ -185,17 +190,19 @@ class Testbed(optsy.OpticalSystem):
         transform a vector of voltages on the mode of a basis in a  vector of
         voltages of the actuators of the DMs of the system
 
+        AUTHOR : Johan Mazoyer
+
         Parameters
         ----------
         vector_basis_voltage: 1D-array real : 
-                        vector of voltages of size (total(basisDM sizes)) on the mode of the basis for all
-                        DMs by order of the light path
+            vector of voltages of size (total(basisDM sizes)) on the mode of the basis for all
+            DMs by order of the light path
 
         Returns
         ------
         vector_actuator_voltage: 1D-array real : 
-                        vector of base coefficients for all actuators of the DMs by order of the light path
-                        size (total(DM actuators))
+            vector of base coefficients for all actuators of the DMs by order of the light path
+            size (total(DM actuators))
         
         """
 
@@ -229,21 +236,21 @@ class Testbed(optsy.OpticalSystem):
 # Some internal functions to properly concatenate the EF_through functions
 def _swap_DMphase_name(DM_EF_through_function, name_var):
     """
-   A function to rename the DMphase parameter to another name (usually DMXXphase)
+    A function to rename the DMphase parameter to another name (usually DMXXphase)
         
     AUTHOR : Johan Mazoyer
 
     Parameters:
     ------
-        DM_EF_through_function : function
-            the function of which we want to change the params
-        name_var : string 
-            the name of the  new name variable
+    DM_EF_through_function : function
+        the function of which we want to change the params
+    name_var : string 
+        the name of the  new name variable
 
     Returns
     ------
-        the_new_function: function
-            with name_var as a param
+    the_new_function: function
+        with name_var as a param
 
     """
 
@@ -267,15 +274,15 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
 
     Parameters:
     ------
-        outer_fun: function
-                x -> outer_fun(x)
-        inner_fun: function 
-                x -> inner_fun(x)
+    outer_fun: function
+        x -> outer_fun(x)
+    inner_fun: function 
+        x -> inner_fun(x)
 
     Returns
-        ------
-        the concatenated function: function
-                x -> outer_fun(inner_fun(x))
+    ------
+    the concatenated function: function
+        x -> outer_fun(inner_fun(x))
 
     """
 
@@ -298,13 +305,13 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
 
     Parameters:
     ------
-         testbed_EF_through: function
-         known_keywords: list of strings of known keywords
+    testbed_EF_through: function
+        known_keywords: list of strings of known keywords
 
     Returns
     ------
-        cleaned_testbed_EF_through: function
-            a function where only known keywords are allowed
+    cleaned_testbed_EF_through: function
+        a function where only known keywords are allowed
         
     """
 
@@ -338,15 +345,15 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
 
     Parameters:
     ------
-        DM_EF_through_function : function
-                the function of which we want to change the params
-        name_var : string 
-                the name of the  new name variable
+    DM_EF_through_function : function
+        the function of which we want to change the params
+    name_var : string 
+        the name of the  new name variable
 
     Returns
     ------
-        the_new_function: function
-                with name_var as a param
+    the_new_function: function
+        with name_var as a param
 
     """
 

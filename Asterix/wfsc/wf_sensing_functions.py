@@ -95,20 +95,20 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, **
     Parameters
     ----------
     Difference: 3D array
-            cube with image difference for each probes
+        cube with image difference for each probes
 
     Vectorprobes: 2D array
-            model probe matrix for the same probe as for difference
+        model probe matrix for the same probe as for difference
 
     dir_save_all_planes : default None. 
-                               if not None, directory to save all planes in fits for debugging purposes.
-                               This can generate a lot of fits especially if in a loop, use with caution
+        If not None, directory to save all planes in fits for debugging purposes.
+        This can generate a lot of fits especially if in a loop, use with caution
                                
     Returns
     ------
     Difference: 3D array
-            cube with image difference for each probes.
-            Used for pair-wise probing
+        cube with image difference for each probes.
+        Used for pair-wise probing
 
     """
 

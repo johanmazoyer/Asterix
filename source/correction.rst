@@ -40,7 +40,7 @@ Several shape are possible for the DH using the parameter ``DH_shape``:
     - ``DH_side`` : can be set to "top", "bottom", "left", "right" and "full" to create full and half dark hole.
 - "noDH" DH. In this mode, the mask is just 1 everywhere. 
 
-``creatingMaskDH()`` function has been set up with a mode where each optical plane is save to .fits for debugging purposes.
+``creatingMaskDH()`` function has been set up with a mode where each optical plane is saved to .fits file for debugging purposes.
 To use this option, set up the keyword ``dir_save_all_planes`` to an existing path directory.
 
 Interaction Matrix

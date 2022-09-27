@@ -42,49 +42,49 @@ def plot_contrast_curves(reduced_data,
     
     Parameters
     ----------
-        reduced_data: array [dim, dim] or [nb_iter, dim, dim]
-            array containing the reduced data. Assume to be already in contrast unit (divided by max of PSF)
-            if the array is of dimension 3, the first dimension is assumed to be the number of iter and a 
-            contrast curve will be plotted for each
-        
-        xcen: float, default None (reduced_data.shape[0]/2 - 1/2)
-            pixel, position x of the star
-        
-        ycen: float, default None (reduced_data.shape[1]/2 - 1/2)
-            pixel, position y of the star
-        
-        delta_raddii: default 3
-            pixel, width of the small concentric rings
-        
-        type_of_contrast: string default 'mean'
-            can be  'mean' : mean contrast on the rings 
-                    'stddev_1sig' : 1 sigma standard deviation on the rings
-                    'stddev_5sig' : 5 sigma standard deviation on the rings
+    reduced_data: array [dim, dim] or [nb_iter, dim, dim]
+        array containing the reduced data. Assume to be already in contrast unit (divided by max of PSF)
+        if the array is of dimension 3, the first dimension is assumed to be the number of iter and a 
+        contrast curve will be plotted for each
     
-        numberofpix_per_loD: float, defaut None
-            resolution of the focal plane in # of pixel per lambda/D (useful for testbed)
-            If set the absciss unit will be in lambda/D 
+    xcen: float, default None (reduced_data.shape[0]/2 - 1/2)
+        pixel, position x of the star
+    
+    ycen: float, default None (reduced_data.shape[1]/2 - 1/2)
+        pixel, position y of the star
+    
+    delta_raddii: default 3
+        pixel, width of the small concentric rings
+    
+    type_of_contrast: string default 'mean'
+        can be  'mean' : mean contrast on the rings 
+                'stddev_1sig' : 1 sigma standard deviation on the rings
+                'stddev_5sig' : 5 sigma standard deviation on the rings
 
-        numberofmas_per_pix: float, defaut None
-            resolution of the focal plane in # of mas per pixel  (useful for real instruments)
-            If set the absciss unit will be in mas
-            
-            If none of these keywords are set, the absciss unit will be in pixels
-            If both are set, it will raise an error
+    numberofpix_per_loD: float, defaut None
+        resolution of the focal plane in # of pixel per lambda/D (useful for testbed)
+        If set the absciss unit will be in lambda/D 
+
+    numberofmas_per_pix: float, defaut None
+        resolution of the focal plane in # of mas per pixel  (useful for real instruments)
+        If set the absciss unit will be in mas
         
-        mask_DH : 2d binary Array  default is all focal plane
-            mask delimiting the DH
-        
-        path: string, default ''
-            path where to save the pdf plot file
-        
-        filename: string, default ''
-            base of the file name to save the pdf plot file
-        
-        legend_labels: string array of the same number of images in the first cube, default None
-            Name of the legend labels,
-            If None and if the array is of dimension 2, no legend
-            If None and if the array is of dimension 3, we assume these are iterations
+        If none of these keywords are set, the absciss unit will be in pixels
+        If both are set, it will raise an error
+    
+    mask_DH : 2d binary Array  default is all focal plane
+        mask delimiting the DH
+    
+    path: string, default ''
+        path where to save the pdf plot file
+    
+    filename: string, default ''
+        base of the file name to save the pdf plot file
+    
+    legend_labels: string array of the same number of images in the first cube, default None
+        Name of the legend labels,
+        If None and if the array is of dimension 2, no legend
+        If None and if the array is of dimension 3, we assume these are iterations
 
     """
 
@@ -207,33 +207,31 @@ def contrast_curves(reduced_data,
     16/03/2022
     
     Parameters
-    ----------
-        
-        reduced_data: array
-            [dim dim] array containing the reduced data
-        
-        xcen: float, default None (reduced_data.shape[0]/2 -1/2) 
-            pixel, position x of the star
-        
-        ycen: float, default None (reduced_data.shape[1]/2 -1/2) 
-            pixel, position y of the star
-        
-        delta_raddii: default 3
-            pixel, width of the small concentric rings
-        
-        type_of_contrast: string default 'mean'
-            can be  'mean' : mean contrast on the rings 
-                    'stddev_1sig' : 1 sigma standard deviation on the rings
-                    'stddev_5sig' : 5 sigma standard deviation on the rings
-        
-        mask_DH : 2d binary Array  default is all focal plane
-            mask delimiting the DH
-
+    ---------- 
+    reduced_data: array
+        [dim dim] array containing the reduced data
+    
+    xcen: float, default None (reduced_data.shape[0]/2 -1/2) 
+        pixel, position x of the star
+    
+    ycen: float, default None (reduced_data.shape[1]/2 -1/2) 
+        pixel, position y of the star
+    
+    delta_raddii: default 3
+        pixel, width of the small concentric rings
+    
+    type_of_contrast: string default 'mean'
+        can be  'mean' : mean contrast on the rings 
+                'stddev_1sig' : 1 sigma standard deviation on the rings
+                'stddev_5sig' : 5 sigma standard deviation on the rings
+    
+    mask_DH : 2d binary Array  default is all focal plane
+        mask delimiting the DH
 
     Returns
     ------
-
-        1d array with the contrast on concentric rings measure with different metrics
+    contrast_curve: 1d numpy array
+        array with the contrast on concentric rings measure with different metrics.
         Values outside of the mask are nan
 
      """

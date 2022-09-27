@@ -30,13 +30,13 @@ class Coronagraph(optsy.OpticalSystem):
         Parameters
         ----------
         modelconfig : dict
-                general configuration parameters (sizes and dimensions)
+            general configuration parameters (sizes and dimensions)
         coroconfig : : dict
-                coronagraph parameters
+            coronagraph parameters
 
         Model_local_dir: string, default None
-                    directory to save things you can measure yourself
-                    and can save to save times      
+            directory to save things you can measure yourself
+            and can save to save times      
         
         """
 
@@ -190,28 +190,29 @@ class Coronagraph(optsy.OpticalSystem):
         Parameters
         ----------
         entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-                        Can also be a float scalar in which case entrance_EF is constant
-                        default is 1.
-                        Electric field in the pupil plane a the entrance of the system.
+            Can also be a float scalar in which case entrance_EF is constant
+            default is 1.
+            Electric field in the pupil plane a the entrance of the system.
 
         wavelength : float. Default is self.wavelength_0 the reference wavelength
-                        current wavelength in m.
+            Current wavelength in m.
 
         noFPM : bool (default: False)
             if True, remove the FPM if one want to measure a un-obstructed PSF
         
         EF_aberrations_introduced_in_LS: 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-                        Can also be a float scalar in which case entrance_EF is constant
-                        default is 1.
-                        electrical field created by the downstream aberrations introduced directly in the Lyot Stop
+            Can also be a float scalar in which case entrance_EF is constant
+            default is 1.
+            electrical field created by the downstream aberrations introduced directly in the Lyot Stop
         
         dir_save_all_planes : default None. 
-                               if not None, directory to save all planes in fits for debugging purposes.
-                               This can generate a lot of fits especially if in a loop, use with caution
+            If not None, directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution
+
         Returns
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-                Electric field in the pupil plane a the exit of the system
+            Electric field in the pupil plane a the exit of the system
         
         """
 
@@ -452,7 +453,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         vortex_fpm : list of 2D numpy array
-                            the FP mask at all wl
+            The FP mask at all wl
 
         """
 
@@ -489,7 +490,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         Knife FPM : list of len(self.wav_vec) 2D arrays 
-                    gcomplex transmission of the Knife edge coronagraph mask at all wl
+            Complex transmission of the Knife edge coronagraph mask at all wl
 
         """
         if self.prop_apod2lyot == "fft":
@@ -534,7 +535,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         classical Lyot fpm : list of 2D numpy array
-                            the FP mask at all wl
+            The FP mask at all wl
 
         """
 
@@ -556,7 +557,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         classical Lyot hlc : list of 2D numpy array
-                            the FP mask at all wl
+            The FP mask at all wl
         
         """
 

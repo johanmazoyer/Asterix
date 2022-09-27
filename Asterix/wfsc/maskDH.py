@@ -58,8 +58,8 @@ class MaskDH:
         FP_sampling: float
             resolution of focal plane pixel  per lambda / D
         dir_save_all_planes : default None. 
-                               if not None, directory to save all planes in fits for debugging purposes.
-                               This can generate a lot of fits especially if in a loop, use with caution
+            If not None, directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
         ------

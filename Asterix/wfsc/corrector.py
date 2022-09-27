@@ -59,25 +59,25 @@ class Corrector:
         Parameters
         ----------
         Correctionconfig : dict
-                general correction parameters
+            general correction parameters
 
         testbed :  OpticalSystem.Testbed
-                Testbed object which describe your testbed
+            Testbed object which describe your testbed
 
         MaskDH: 2d numpy array
-                binary array of size [dimEstim, dimEstim] : dark hole mask
+            binary array of size [dimEstim, dimEstim] : dark hole mask
 
         estimator: Estimator
-                an estimator object. This contains all information about the estimation
+            an estimator object. This contains all information about the estimation
 
         matrix_dir: path default: None
-                save all the difficult to measure files here
+            save all the difficult to measure files here
 
         save_for_bench: bool default: false
-                should we save for the real testbed in realtestbed_dir
+            should we save for the real testbed in realtestbed_dir
 
         realtestbed_dir: path 
-                save all the files the real testbed need to run your code
+            save all the files the real testbed need to run your code
 
         """
         if not os.path.exists(matrix_dir):
@@ -205,13 +205,13 @@ class Corrector:
         ----------
        
         testbed :  OpticalSystem.Testbed
-                Testbed object which describe your testbed
+            Testbed object which describe your testbed
 
         estimator: Estimator
-                an estimator object. This contains all information about the estimation
+            an estimator object. This contains all information about the estimation
 
         initial_DM_voltage : float or 1d numpy array, default 0.
-                initial DM voltages to measure the Matrix
+            initial DM voltages to measure the Matrix
 
         input_wavefront : float or 2d numpy array or 3d numpy array, default 1.
             initial wavefront to measure the Matrix
@@ -257,22 +257,22 @@ class Corrector:
         Parameters
         ----------
         testbed :  OpticalSystem.Testbed
-                Testbed object which describe your testbed
+            Testbed object which describe your testbed
 
         estimate: 2D complex array 
-                    Array of size of sixe [dimEstim, dimEstim]. 
-                    This is the result of Estimator.estimate, from which this function 
-                    send a command to the DM
+            Array of size of sixe [dimEstim, dimEstim]. 
+            This is the result of Estimator.estimate, from which this function 
+            send a command to the DM
         
         mode: int, defaut 1
-                Use in EFC, EM, and Steepest, this is the mode we use in the SVD inversion
-                if the mode is the same than the previous iteration, we store the inverted 
-                matrix to avoid inverted it again
+            Use in EFC, EM, and Steepest, this is the mode we use in the SVD inversion
+            if the mode is the same than the previous iteration, we store the inverted 
+            matrix to avoid inverted it again
         
         
         ActualCurrentContrast: float defaut 1. 
-                Use in StrokeMin to find a target contrast
-                Contrast at the current iteration of the loop 
+            Use in StrokeMin to find a target contrast
+            Contrast at the current iteration of the loop 
 
         
         Return
