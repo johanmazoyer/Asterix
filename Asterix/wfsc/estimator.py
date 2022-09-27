@@ -250,8 +250,7 @@ class Estimator:
 
             resultatestimation = testbed.todetector(entrance_EF=entrance_EF,
                                                     voltage_vector=voltage_vector,
-                                                    wavelength=wavelength,
-                                                    **kwargs)
+                                                    wavelength=wavelength)
 
             return resizing(resultatestimation, self.dimEstim)
 
@@ -262,10 +261,9 @@ class Estimator:
                                                     self.dimEstim,
                                                     self.amplitudePW,
                                                     voltage_vector=voltage_vector,
-                                                    wavelength=wavelength,
-                                                    **kwargs)
+                                                    wavelength=wavelength)
 
-            return wfs.calculate_pw_estimate(Difference, self.PWMatrix)
+            return wfs.calculate_pw_estimate(Difference, self.PWMatrix, **kwargs)
 
         elif self.technique == 'coffee':
             return np.zeros((self.dimEstim, self.dimEstim))

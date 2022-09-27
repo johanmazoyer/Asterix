@@ -21,15 +21,15 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     prad : float
         Size of the pupil radius (in pixels)
     no_pixel : boolean (defaut false).
-                If true, the pupil is first defined at a very large
-                scale (prad = 10*prad) and then rescale to the given parameter prad.
-                This limits the pixel crenellation in pupil for small pupils
+        If true, the pupil is first defined at a very large
+        scale (prad = 10*prad) and then rescale to the given parameter prad.
+        This limits the pixel crenellation in pupil for small pupils
 
     center_pos : string (optinal defaut 'b')
-                      option for the center. 
-                      'p' center on pixel dim_pp//2
-                      'b' center in between pixels dim_pp//2 -1 and dim_pp//2
-                      for dim_pp odd or even
+        option for the center. 
+            'p' center on pixel dim_pp//2
+            'b' center in between pixels dim_pp//2 -1 and dim_pp//2
+        for dim_pp odd or even
 
     Returns
     ------
@@ -70,11 +70,11 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     Parameters
     ----------
     dim_pp : int
-                Size of the phase ramp (in pixels)
+        Size of the phase ramp (in pixels)
     shift_x : float
-                Shift desired in the x direction (in pixels)
+        Shift desired in the x direction (in pixels)
     shift_y : float
-                Shift desired in the y direction (in pixels)
+        Shift desired in the y direction (in pixels)
 
     Returns
     ------
@@ -158,9 +158,9 @@ def sine_cosine_basis(Nact1D):
     Returns
     ------
     SinCos : 3D array
-                Coefficient to apply to DMs to obtain sine and cosine phases.
-                size :[(Nact1D)^2,Nact1D,Nact1D] if even
-                size :[(Nact1D)^2 -1 ,Nact1D,Nact1D] if odd (to remove piston)
+        Coefficient to apply to DMs to obtain sine and cosine phases.
+        size :[(Nact1D)^2,Nact1D,Nact1D] if even
+        size :[(Nact1D)^2 -1 ,Nact1D,Nact1D] if odd (to remove piston)
     
     """
 

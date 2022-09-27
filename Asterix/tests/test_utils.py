@@ -15,9 +15,11 @@ def write_test_results_to_file(results_in, fname):
     fname : string
         Full path and filename, including ".txt" at the end, for the file to be written out.
     """
-    results = {'nb_total_iter': results_in['nb_total_iter'],
-               'Nb_iter_per_mat': results_in['Nb_iter_per_mat'],
-               'MeanDHContrast': results_in['MeanDHContrast']}
+    results = {
+        'nb_total_iter': results_in['nb_total_iter'],
+        'Nb_iter_per_mat': results_in['Nb_iter_per_mat'],
+        'MeanDHContrast': results_in['MeanDHContrast']
+    }
 
     with open(fname, 'w') as convert_file:
         convert_file.write(json.dumps(results))

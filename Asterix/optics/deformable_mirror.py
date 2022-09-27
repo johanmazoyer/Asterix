@@ -117,13 +117,7 @@ class DeformableMirror(OpticalSystem):
         # now if we relaunch self.DM_pushact, and if misregistration = True
         # it will be different due to misregistration
 
-    def EF_through(self,
-                   entrance_EF=1.,
-                   wavelength=None,
-                   DMphase=0.,
-                   save_all_planes_to_fits=False,
-                   dir_save_all_planes=None,
-                   **kwargs):
+    def EF_through(self, entrance_EF=1., wavelength=None, DMphase=0., dir_save_all_planes=None, **kwargs):
         """
         Propagate the electric field through the DM.
         if z_DM = 0, then it's just a phase multiplication
@@ -133,27 +127,20 @@ class DeformableMirror(OpticalSystem):
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or float scalar in which case entrance_EF is constant
-                        default is 1.
-                        Electric field in the pupil plane a the entrance of the system.
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or complex/float scalar (entrance_EF is constant)
+            default is 1. Electric field in the pupil plane a the entrance of the system.
 
         wavelength : float. Default is self.wavelength_0 the reference wavelength
-                    current wavelength in m.
+            Current wavelength in m.
 
-        DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex or float scalar in which case DM_phase is constant
-                    default is 0.
+        DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (DM_phase is constant)
+            Default is 0.
+            CAREFUL !! If the DM is part of a testbed. this variable name is changed
+            to DMXXphase (DMXX: name of the DM) to avoid confusion
 
-                    CAREFUL !! If the DM is part of a testbed. this variable name is changed
-                    to DMXXphase (DMXX: name of the DM) to avoid confusion with
-
-        save_all_planes_to_fits: Bool, default False
-                if True, save all planes to fits for debugging purposes to dir_save_all_planes
-                This can generate a lot of fits especially if in a loop so the code force you
-                to define a repository.
-
-        dir_save_all_planes : path, default None 
-                            directory to save all plane in
-                                    fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. 
+            if not None, directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
         ------
@@ -161,10 +148,6 @@ class DeformableMirror(OpticalSystem):
             Electric field in the pupil plane a the exit of the system
 
         """
-
-        if save_all_planes_to_fits == True and dir_save_all_planes == None:
-            raise Exception("save_all_planes_to_fits = True can generate a lot of .fits files" +
-                            "please define a clear directory using dir_save_all_planes kw argument")
 
         # call the OpticalSystem super function to check
         # and format the variable entrance_EF
@@ -176,7 +159,7 @@ class DeformableMirror(OpticalSystem):
         if isinstance(DMphase, (int, float, np.float)):
             DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil), np.float(DMphase))
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'EF_PP_before_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
             name_plane = 'phase_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
@@ -194,10 +177,9 @@ class DeformableMirror(OpticalSystem):
             EF_after_DM = self.prop_pup_to_DM_and_back(entrance_EF,
                                                        DMphase,
                                                        wavelength,
-                                                       save_all_planes_to_fits=save_all_planes_to_fits,
                                                        dir_save_all_planes=dir_save_all_planes)
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_after_DM)
 
@@ -420,12 +402,7 @@ class DeformableMirror(OpticalSystem):
 
         return WhichInPupil
 
-    def prop_pup_to_DM_and_back(self,
-                                entrance_EF,
-                                phase_DM,
-                                wavelength,
-                                save_all_planes_to_fits=False,
-                                dir_save_all_planes=None):
+    def prop_pup_to_DM_and_back(self, entrance_EF, phase_DM, wavelength, dir_save_all_planes=None):
         """
         Propagate the field towards an out-of-pupil plane ,
         add the DM phase, and propagate to the next pupil plane
@@ -439,26 +416,22 @@ class DeformableMirror(OpticalSystem):
         Parameters
         ----------
         pupil_wavefront : 2D array (float, double or complex)
-                    Wavefront in the pupil plane
+            Wavefront in the pupil plane
 
         phase_DM : 2D array
-                    Phase introduced by out of PP DM
+            Phase introduced by out of PP DM
 
         wavelength : float
-                    wavelength in m
+            wavelength in m
 
-        save_all_planes_to_fits: Bool, default False
-                if True, save all planes to fits for debugging purposes to dir_save_all_planes
-                This can generate a lot of fits especially if in a loop so the code force you
-                to define a repository.
-        
-        dir_save_all_planes : string default None. 
-                            directory to save all plane in fits if save_all_planes_to_fits = True
+        dir_save_all_planes : default None. 
+            If not None, directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
         ------
         EF_back_in_pup_plane : 2D array (complex)
-                            Wavefront in the pupil plane following the DM
+            Wavefront in the pupil plane following the DM
 
         """
 
@@ -466,7 +439,7 @@ class DeformableMirror(OpticalSystem):
             prop.prop_angular_spectrum(entrance_EF, wavelength, self.z_position, self.diam_pup_in_m / 2.,
                                        self.prad), self.dim_overpad_pupil)
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
@@ -474,7 +447,7 @@ class DeformableMirror(OpticalSystem):
         EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(phase_abb=phase_DM,
                                                                            wavelengths=wavelength)
 
-        if save_all_planes_to_fits == True:
+        if dir_save_all_planes is not None:
             name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 

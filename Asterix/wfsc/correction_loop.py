@@ -162,44 +162,44 @@ def correction_loop_1matrix(testbed: Testbed,
     Parameters
     ----------
     testbed: OpticalSystem.Testbed
-            object which describes your testbed
+        object which describes your testbed
     estimator: Estimator 
-            This contains all information about the estimation
+        This contains all information about the estimation
     corrector: Corrector. 
-            This contains all information about the correction
+        This contains all information about the correction
     mask_dh: 2d numpy array
-            binary array of size [dimScience, dimScience] : dark hole mask
+        binary array of size [dimScience, dimScience] : dark hole mask
     Nbiter_corr: int or list of int
-            number of iterations in the loop
+        number of iterations in the loop
     CorrectionLoopResult: dict
-            Dictionary containing the result of the previous loop.
-            This will be updated with the result of the current loop.
+        Dictionary containing the result of the previous loop.
+        This will be updated with the result of the current loop.
     gain:  float between 0 and 1, default 0.1
-            Control gain of the loop in EFC mode.
+        Control gain of the loop in EFC mode.
     Nbmode_corr: int or list of int
-            Of same size as Nbiter_corr; SVD modes for each iteration.
+        Of same size as Nbiter_corr; SVD modes for each iteration.
     Linesearch: bool, default False. 
-            If True, the function correction_loop_1matrix()
-            will call itself at each iteration with Search_best_Mode=True to find
-            the best SVD inversion mode among a few Linesearch modes.
+        If True, the function correction_loop_1matrix()
+        will call itself at each iteration with Search_best_Mode=True to find
+        the best SVD inversion mode among a few Linesearch modes.
     Search_best_Mode: bool, default False. 
-            If true, the algorithm does not return the
-            loop information, just the best mode and best contrast.
-            This mode is used in Linesearch mode.
-            Be careful when using this parameter, it can create an infinite loop.
+        If true, the algorithm does not return the
+        loop information, just the best mode and best contrast.
+        This mode is used in Linesearch mode.
+        Be careful when using this parameter, it can create an infinite loop.
     input_wavefront: float or 2d complex array or 3d complex array
-            Initial wavefront at the beginning of this loop.
-            Electrical Field which can be a:
-                float=1 if no phase/amplitude aberrations present (default)
-                2D complex array, of size phase_abb.shape if monochromatic
-                or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic
+        Initial wavefront at the beginning of this loop.
+        Electrical Field which can be a:
+            float=1 if no phase/amplitude aberrations present (default)
+            2D complex array, of size phase_abb.shape if monochromatic
+            or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic
     initial_DM_voltage: float or 1D array
-            Initial DM voltages at the beginning of this loop. The Matrix is measured using this initial DM voltages.
-            Can be:
-                float 0 if flat DMs (default)
-                or 1D array of size testbed.number_act
+        Initial DM voltages at the beginning of this loop. The Matrix is measured using this initial DM voltages.
+        Can be:
+            float 0 if flat DMs (default)
+            or 1D array of size testbed.number_act
     silence: Boolean, default False
-            If False, print and plot results as the loop runs.
+        If False, print and plot results as the loop runs.
 
     Returns
     ------
@@ -224,16 +224,7 @@ def correction_loop_1matrix(testbed: Testbed,
 
     initialFP = testbed.todetector_intensity(entrance_EF=input_wavefront,
                                              voltage_vector=initial_DM_voltage,
-                                             save_all_planes_to_fits=False,
-                                             dir_save_all_planes='/Users/jmazoyer/Desktop/test/',
                                              **kwargs)
-
-    estim_init = estimator.estimate(testbed,
-                                    voltage_vector=initial_DM_voltage,
-                                    entrance_EF=input_wavefront,
-                                    wavelength=testbed.wavelength_0,
-                                    **kwargs)
-
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
     thisloop_voltages_DMs = list()
@@ -244,7 +235,6 @@ def correction_loop_1matrix(testbed: Testbed,
 
     thisloop_voltages_DMs.append(initial_DM_voltage)
     thisloop_FP_Intensities.append(initialFP)
-    thisloop_EF_estim.append(estim_init)
     thisloop_MeanDHContrast.append(initialFP_contrast)
 
     if not silence:
@@ -341,11 +331,7 @@ def correction_loop_1matrix(testbed: Testbed,
             new_voltage = thisloop_voltages_DMs[-1] + gain * solution
 
         thisloop_FP_Intensities.append(
-            testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                         voltage_vector=new_voltage,
-                                         save_all_planes_to_fits=False,
-                                         dir_save_all_planes='/Users/jmazoyer/Desktop/test_roundpup/',
-                                         **kwargs))
+            testbed.todetector_intensity(entrance_EF=input_wavefront, voltage_vector=new_voltage, **kwargs))
         thisloop_EF_estim.append(resultatestimation)
         thisloop_MeanDHContrast.append(np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))
 

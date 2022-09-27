@@ -3,11 +3,11 @@
 
 import numpy as np
 
-from Asterix.utils import resizing, invert_svd
+from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
-def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength):
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength, **kwargs):
     """
     Build the interaction matrix for pair-wise probing.
 
@@ -63,7 +63,8 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
         # I tried to remove "1+"". It breaks the code
         # (coronagraph does not "remove the 1 exactly")
 
-        deltapsik[k] = resizing(testbed.todetector(entrance_EF=1 + 1j * probephase[k]) - psi0, dimEstim)
+        deltapsik[k] = resizing(
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k], **kwargs) - psi0, dimEstim)
         k = k + 1
 
     l = 0
@@ -84,7 +85,7 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
     return [PWMatrix, SVD]
 
 
-def calculate_pw_estimate(Difference, Vectorprobes):
+def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, **kwargs):
     """
     Calculate the focal plane electric field from the probe image
     differences and the modeled probe matrix.
@@ -94,16 +95,20 @@ def calculate_pw_estimate(Difference, Vectorprobes):
     Parameters
     ----------
     Difference: 3D array
-            cube with image difference for each probes
+        cube with image difference for each probes
 
     Vectorprobes: 2D array
-            model probe matrix for the same probe as for difference
+        model probe matrix for the same probe as for difference
 
+    dir_save_all_planes : default None. 
+        If not None, directory to save all planes in fits for debugging purposes.
+        This can generate a lot of fits especially if in a loop, use with caution
+                               
     Returns
     ------
     Difference: 3D array
-            cube with image difference for each probes.
-            Used for pair-wise probing
+        cube with image difference for each probes.
+        Used for pair-wise probing
 
     """
 
@@ -119,6 +124,10 @@ def calculate_pw_estimate(Difference, Vectorprobes):
             Resultat[i, j] = Resultatbis[0] + 1j * Resultatbis[1]
 
             l = l + 1
+
+    if dir_save_all_planes is not None:
+        name_plane = 'PW_Estimate'
+        save_plane_in_fits(dir_save_all_planes, name_plane, Resultat / 4.)
 
     return Resultat / 4.
 
