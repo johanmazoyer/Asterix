@@ -508,3 +508,33 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     farray *= np.exp(sens * (2. * 1j * np.pi / np.sqrt(Nx * Ny)) * np.sum(direct * fourier))
 
     return farray
+
+
+def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
+    """
+    Return a circular Butterworth filter.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of 2D output array in pixels.
+    size_filter : int
+        Size of the filter in pixels.
+    order : int
+        Order of the filter.
+    xshift : float
+        Shift in x direction in pixels.
+    yshift : float
+        Shift in y direction in pixels.
+
+    Returns
+    -------
+    butterworth : array
+    """
+    ty = (np.arange(dim) - yshift - dim / 2)
+    tx = (np.arange(dim) - xshift - dim / 2)
+    xx, yy = np.meshgrid(ty, tx)
+
+    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx ** 2 + yy ** 2) / np.abs(size_filter) * 2) ** (2. * order))
+
+    return butterworth
