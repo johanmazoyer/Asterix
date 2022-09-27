@@ -127,22 +127,20 @@ class DeformableMirror(OpticalSystem):
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or float scalar in which case entrance_EF is constant
-                        default is 1.
-                        Electric field in the pupil plane a the entrance of the system.
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or complex/float scalar (entrance_EF is constant)
+            default is 1. Electric field in the pupil plane a the entrance of the system.
 
         wavelength : float. Default is self.wavelength_0 the reference wavelength
-                    current wavelength in m.
+            Current wavelength in m.
 
-        DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil],can be complex or float scalar in which case DM_phase is constant
-                    default is 0.
-
-                    CAREFUL !! If the DM is part of a testbed. this variable name is changed
-                    to DMXXphase (DMXX: name of the DM) to avoid confusion with
+        DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (DM_phase is constant)
+            Default is 0.
+            CAREFUL !! If the DM is part of a testbed. this variable name is changed
+            to DMXXphase (DMXX: name of the DM) to avoid confusion
 
         dir_save_all_planes : default None. 
-                               if not None, directory to save all planes in fits for debugging purposes.
-                               This can generate a lot of fits especially if in a loop, use with caution
+            if not None, directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
         ------
@@ -418,22 +416,22 @@ class DeformableMirror(OpticalSystem):
         Parameters
         ----------
         pupil_wavefront : 2D array (float, double or complex)
-                    Wavefront in the pupil plane
+            Wavefront in the pupil plane
 
         phase_DM : 2D array
-                    Phase introduced by out of PP DM
+            Phase introduced by out of PP DM
 
         wavelength : float
-                    wavelength in m
+            wavelength in m
 
         dir_save_all_planes : default None. 
-                               if not None, directory to save all planes in fits for debugging purposes.
-                               This can generate a lot of fits especially if in a loop, use with caution
+            If not None, directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
         ------
         EF_back_in_pup_plane : 2D array (complex)
-                            Wavefront in the pupil plane following the DM
+            Wavefront in the pupil plane following the DM
 
         """
 

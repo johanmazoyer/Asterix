@@ -57,10 +57,10 @@ def create_interaction_matrix(testbed: Testbed,
         save all the matrices here
     
     MatrixType: string
-            'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
-            or 'perfect' (we keep exp(i phi)).
-            in both case, if the DMs are not initially flat (non zero initial_DM_voltage), 
-                    we do not make the small phase assumption for initial DM phase
+        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
+        or 'perfect' (we keep exp(i phi)).
+        in both case, if the DMs are not initially flat (non zero initial_DM_voltage), 
+        we do not make the small phase assumption for initial DM phase
 
     input_wavefront: 1D-array real
         initial DM voltage for all DMs
@@ -69,11 +69,11 @@ def create_interaction_matrix(testbed: Testbed,
         input wavefront in pupil plane
     
     dir_save_all_planes : default None. 
-                               if not None, directory to save all planes in fits for debugging purposes.
-                               This can generate a lot of fits especially if in a loop, use with caution
+        If not None, directory to save all planes in fits for debugging purposes.
+        This can generate a lot of fits especially if in a loop, use with caution
     
     visu : bool default false
-            if true show the focal plane intensity in 2D for each mode
+        if true show the focal plane intensity in 2D for each mode
 
     Returns
     ------
@@ -387,7 +387,8 @@ def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.nd
     ----------
     FullInteractionMatrix: Interaction matrix over the full focal plane
 
-    mask : a binary mask to delimitate the DH
+    mask : 2D numpy array
+        a binary mask to delimitate the DH
 
     Returns 
     ------
@@ -419,8 +420,8 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
 
     Parameters
     ----------
-    mask:               2D Binary mask 
-        corresponding to the dark hole region
+    mask:   2D Binary mask 
+        dark hole region
 
     Result_Estimate:    2D array 
         can be complex, focal plane electric field
