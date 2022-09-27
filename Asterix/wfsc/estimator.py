@@ -196,7 +196,7 @@ class Estimator:
                  testbed: Testbed,
                  entrance_EF=1.,
                  voltage_vector=0.,
-                 wavelength=None,
+                 wavelengths=None,
                  perfect_estimation=False,
                  **kwargs):
         """
@@ -233,27 +233,45 @@ class Estimator:
 
         """
 
+        if 'wavelength' in kwargs:
+            raise Exception("""todetector_intensity() function is polychromatic, 
+                do not use wavelength keyword.
+                Use wavelengths keyword even for monochromatic intensity""")
+
+        if wavelengths is None:
+            wavelength_vec = self.wav_vec
+
+        elif isinstance(wavelengths, (float, int)):
+            wavelength_vec = [wavelengths]
+        else:
+            wavelength_vec = wavelengths
+
         if isinstance(entrance_EF, (float, int)):
+            entrance_EF = np.repeat(entrance_EF, self.nb_wav)
+        elif entrance_EF.shape == self.wav_vec.shape:
             pass
-        elif entrance_EF.shape == testbed.wav_vec.shape:
-            entrance_EF = entrance_EF[testbed.wav_vec.tolist().index(wavelength)]
-        elif entrance_EF.shape == (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
+        elif entrance_EF.shape == (self.dim_overpad_pupil, self.dim_overpad_pupil):
+            entrance_EF = np.repeat(entrance_EF[np.newaxis, ...], self.nb_wav, axis=0)
+        elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil):
             pass
-        elif entrance_EF.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
-            entrance_EF = entrance_EF[testbed.wav_vec.tolist().index(wavelength)]
         else:
             raise Exception(""""entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
                         2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
                         (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)""")
-
+        
         if (self.technique == "perfect") or (perfect_estimation):
             # If polychromatic, assume a perfect estimation at one wavelength
+            
+            result_estim = []
 
-            resultatestimation = testbed.todetector(entrance_EF=entrance_EF,
-                                                    voltage_vector=voltage_vector,
-                                                    wavelength=wavelength)
+            for i, wavei in enumerate(wavelengths):
 
-            return resizing(resultatestimation, self.dimEstim)
+                resultatestimation = testbed.todetector(entrance_EF=entrance_EF[i],
+                                                        voltage_vector=voltage_vector,
+                                                        wavelength=wavei)
+                result_estim.append(resizing(resultatestimation, self.dimEstim))
+
+            return result_estim
 
         elif self.technique in ["pairwise", "pw"]:
             Difference = wfs.simulate_pw_difference(entrance_EF,

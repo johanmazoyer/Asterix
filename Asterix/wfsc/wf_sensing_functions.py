@@ -7,7 +7,7 @@ from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
-def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength, **kwargs):
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelengths=None, **kwargs):
     """
     Build the interaction matrix for pair-wise probing.
 
@@ -25,8 +25,9 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
             size of the output image after resizing in pixels
     cutsvd:     float
             value not to exceed for the inverse eigeinvalues at each pixels
-    wavelength: float
-            wavelength in meter
+    wavelengths : float or list of floats. 
+            Default is all the wl of the testbed testbed.wav_vec
+            wavelengths in m.
 
 
     Returns
@@ -40,6 +41,28 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
                 before regularization
     
     """
+
+    if 'wavelength' in kwargs:
+            raise Exception("""create_pw_matrix() function is polychromatic, 
+                do not use wavelength keyword.
+                Use wavelengths keyword even for monochromatic intensity""")
+
+    if wavelengths is None:
+        wavelength_vec = testbed.wav_vec
+
+    elif isinstance(wavelengths, (float, int)):
+        wavelength_vec = [wavelengths]
+    else:
+        wavelength_vec = wavelengths
+    if wavelengths is None:
+        wavelength_vec = testbed.wav_vec
+
+    elif isinstance(wavelengths, (float, int)):
+        wavelength_vec = [wavelengths]
+    else:
+        wavelength_vec = wavelengths
+
+
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=complex)
     probephase = np.zeros((numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
@@ -51,7 +74,7 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, w
 
     psi0 = testbed.todetector()
     k = 0
-
+    
     for i in posprobes:
 
         Voltage_probe = np.zeros(DM_probe.number_act)
