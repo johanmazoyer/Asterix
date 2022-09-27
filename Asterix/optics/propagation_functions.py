@@ -333,7 +333,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     gamma : int >=2
         factor of oversizing in the fourrier plane in diameter of the pupil 
         (gamma*2*prad is the output dim)
-        optionnal: default = 2
+        optional: default = 2
 
     Returns
     ------

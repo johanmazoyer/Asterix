@@ -81,8 +81,8 @@ def quickfits(tab, folder='', name='tmp'):
     Not sure the default saving on Desktop works for windows OS, but it work on mac and linux
 
     tab: array to be saved
-    folder (optionnal): directory where to save the .fits. by default the Desktop.
-    name (optionnal): name of the .fits. By defaut tmp_currenttimeinms.fits
+    folder (optional): directory where to save the .fits. by default the Desktop.
+    name (optional): name of the .fits. By defaut tmp_currenttimeinms.fits
     """
 
     if folder == '':
@@ -108,8 +108,8 @@ def quickpng(tab, folder='', name='tmp'):
     By default, it will save on the desktop with a random name
 
     tab: array to be saved
-    folder (optionnal): directory where to save the .png
-    name (optionnal): name of the .png.  By defaut tmpXX.png where xx is a random number
+    folder (optional): directory where to save the .png
+    name (optional): name of the .png.  By defaut tmpXX.png where xx is a random number
 
     Johan's quick function
     """
@@ -117,7 +117,7 @@ def quickpng(tab, folder='', name='tmp'):
         desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
         bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
         if os.path.exists(desktop):
-            dfolfolderderir = desktop
+            folder = desktop
         elif os.path.exists(bureau):
             # of you are french are you ?
             folder = bureau
@@ -132,7 +132,7 @@ def quickpng(tab, folder='', name='tmp'):
     if name == 'toto':
         name = name + str(int(random.random() * 100))
     plt.tight_layout()
-    plt.savefig(folder + name + '.png', dpi=300)
+    plt.savefig(os.path.join(folder, name + '.png'), dpi=300)
     plt.close()
 
 

@@ -154,14 +154,12 @@ class Corrector:
 
             if testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] < 500:
-                    raise Exception(
-                        f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']}) in inversion for THD is probably too low for 2DM"
-                    )
+                    raise Exception(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+                                    " in inversion for THD is probably too low for 2DM")
             if not testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] > 500:
-                    raise Exception(
-                        f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']}) in inversion for THD is probably too high for 1DM"
-                    )
+                    raise Exception(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+                                    " in inversion for THD is probably too high for 1DM")
 
             thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"], number_Active_testbeds,
                                               realtestbed_dir, self.regularization)
@@ -350,9 +348,8 @@ class Corrector:
                 self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast) / 3
                 self.count_since_last_best = 0
                 self.last_best_alpha *= 20
-                print(
-                    f"we do not improve contrast anymore, we go back to last best and change the gain to {self.expected_gain_in_contrast:f}"
-                )
+                print("we do not improve contrast anymore, we go back to last " +
+                      f"best and change the gain to {self.expected_gain_in_contrast:f}")
                 return "RebootTheLoop"
 
             # # gain_individual_DM = [1.,1.]

@@ -289,9 +289,8 @@ def correction_loop_1matrix(testbed: Testbed,
 
             if mode > corrector.total_number_modes:
                 if not Search_best_Mode:
-                    print(
-                        f"You cannot use a cutoff mode ({mode:d}) larger than the total size of basis ({corrector.Gmatrix.shape[1]:d})"
-                    )
+                    print(f"You cannot use a cutoff mode ({mode:d}) larger than" +
+                          f"the total size of basis ({corrector.Gmatrix.shape[1]:d})")
                     print("We skip this iteration")
                 continue
 

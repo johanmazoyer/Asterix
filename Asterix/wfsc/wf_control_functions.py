@@ -580,10 +580,9 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
                 # this step is to check if the SM is divergeing too quickly
                 return "SMFailedTooManyTime", alpha
 
-            print(
-                f"For alpha={np.log10(alpha):f}, Current Contrast:{np.log10(CurrentContrast):f}, " +
-                f"Last Contrast:{np.log10(LastCurrentContrast):f}, Desired Contrast: {np.log10(DesiredContrast):f}"
-            )
+            print(f"For alpha={np.log10(alpha):f}, " + f"Current Contrast:{np.log10(CurrentContrast):f}, " +
+                  f"Last Contrast:{np.log10(LastCurrentContrast):f}, " +
+                  f"Desired Contrast: {np.log10(DesiredContrast):f}")
 
         if iteralpha == 0:
             # we must do at least 1 iteration (the SM found a solution that dig the contrast)
