@@ -22,6 +22,9 @@ def create_pw_matrix(testbed: Testbed,
     Build the interaction matrix for pair-wise probing.
 
     AUTHOR : Axel Potier
+    Modified by Johan Mazoyer
+
+    Sept 2022 : .fits file saving directly in the function to clean up estimator
 
     Parameters
     ----------
