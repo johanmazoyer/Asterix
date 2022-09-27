@@ -27,9 +27,9 @@ is set and outputs will be saved to some pre-defined default locations. There ar
 your own python file which calls ``main_THD.runthd2()``.
 
 2. Leave the parameter file entry ``Data_dir`` in whichever file you are reading set to '.', which will look for a
-directory called ``thd2_data`` in your home directory and save all data there. If the code can't find it, it will create one.
+directory called ``asterix_data`` in your home directory and save all data there. If the code can't find it, it will create one.
 
-3. You can create the environment variable ``THD2_DATA_PATH`` on your local machine which will define the top-level
+3. You can create the environment variable ``ASTERIX_DATA_PATH`` on your local machine which will define the top-level
 directory to which all your data outputs from Asterix will be saved.
 
 .. code-block:: python

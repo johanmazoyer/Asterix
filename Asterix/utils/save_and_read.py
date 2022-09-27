@@ -251,17 +251,17 @@ def from_param_to_header(config):
     return header
 
 
-def get_data_dir(env_var_name="THD2_DATA_PATH", config_in=None, datadir="thd2_data"):
+def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="asterix_data"):
     """
     Create a path to the local data directory.
 
-    If the environment variable `THD2_DATA_PATH` exists, this is returned as the full data path and the input 'datadir'
+    If the environment variable `ASTERIX_DATA_PATH` exists, this is returned as the full data path and the input 'datadir'
         is ignored. You can set this individually on your OS.
     If the environment variable does not exist (default for all new users) but the user adapted the ini file and
         accesses the 'Data_dir' entry, the configfile entry is returned and 'datadir' is ignored.
     If the environment variable does not exist and the Data_dir entry in the ini file is not passed or set to '.',
         the directory 'datadir' is appended to the user's home directory and returned as an absolute path. On MacOS of
-        user 'myuser' for example, this would return: '/Users/myuser/thd2_data'
+        user 'myuser' for example, this would return: '/Users/myuser/asterix_data'
 
     Parameters
     ----------
