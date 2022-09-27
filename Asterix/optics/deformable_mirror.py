@@ -373,7 +373,7 @@ class DeformableMirror(optsy.OpticalSystem):
             int(self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(
                 self.WhichInPup_threshold)
 
-        if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits + '.fits'):
+        if os.path.exists(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits')):
             print("Load " + Name_WhichInPup_fits)
             return fits.getdata(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'))
 

@@ -12,9 +12,9 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.append('/Users/jmazoyer/GitProjects/my_projects/Asterix/Asterix/')
-
 
 # -- Project information -----------------------------------------------------
 
@@ -27,14 +27,16 @@ author = 'Johan Mazoyer, Iva Laginja, Axel Potier, Raphaël Galicher'
 # release = 'v2.1' # change version 22/02/22
 # release = 'v2.2' # change version 15/03/22
 # release = 'v2.3' # change version 02/09/22
-release = 'v2.4' # change version 24/09/22
+release = 'v2.4'  # change version 24/09/22
 
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon', "sphinx.ext.graphviz", "pyan.sphinx"]
+extensions = [
+    'sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon', "sphinx.ext.graphviz", "pyan.sphinx"
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -53,7 +55,6 @@ pygments_style = 'sphinx'
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -65,7 +66,6 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
 
 # add graphviz options
 graphviz_output_format = "svg"
