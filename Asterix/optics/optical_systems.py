@@ -1,5 +1,6 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
+import errno
 import os
 import copy
 import numpy as np
@@ -522,11 +523,8 @@ class OpticalSystem:
                         #  have centerX, centerY and RESPUP keyword in header.
 
                         if not os.path.exists(ampl_abb_filename):
-                            # check existence
-                            print(f"Specified amplitude file {ampl_abb_filename} does not exist.")
-                            print("")
-                            print("")
-                            raise
+                            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT),
+                                                    ampl_abb_filename)
 
                         print(f"Opening {ampl_abb_filename} file for testbed aberrations.")
                         print("This file should have centerX, centerY and RESPUP keyword in header")

@@ -1,6 +1,6 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
-
+import errno
 import sys
 import os
 
@@ -195,12 +195,12 @@ def read_parameter_file(parameter_file,
     """
 
     if not os.path.exists(parameter_file):
-        raise Exception("The parameter file " + parameter_file + " cannot be found")
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), parameter_file)
 
     configspec_file = os.path.join(Asterix_root, "Param_configspec.ini")
 
     if not os.path.exists(configspec_file):
-        raise Exception("The parameter config file " + configspec_file + " cannot be found")
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), configspec_file)
 
     ### CONFIGURATION FILE
     config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
