@@ -139,12 +139,12 @@ class Coronagraph(optsy.OpticalSystem):
         self.string_os += '_LS' + self.lyot_pup.string_os
 
         if "bool_overwrite_perfect_coro" in coroconfig:
-            if coroconfig["bool_overwrite_perfect_coro"] is True:
+            if coroconfig["bool_overwrite_perfect_coro"]:
                 self.perfect_coro = True
-            if coroconfig["bool_overwrite_perfect_coro"] is False:
+            else:
                 self.perfect_coro = False
 
-        if self.perfect_coro is True:
+        if self.perfect_coro:
 
             if coroconfig["filename_instr_apod"] == "Clear":
                 # We need a round pupil only to measure the response
@@ -374,7 +374,7 @@ class Coronagraph(optsy.OpticalSystem):
         lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot_crop,
                                                         wavelength=wavelength)
 
-        if (self.perfect_coro == True) & (noFPM == False):
+        if (self.perfect_coro) & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(
                 wavelength)]
 
@@ -427,7 +427,7 @@ class Coronagraph(optsy.OpticalSystem):
             fqpm_thick_cut = crop_or_pad_image(fqpm_thick, dim_fp)
             phase4q[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
 
-            if self.achrom_fqpm == True:
+            if self.achrom_fqpm:
                 # if we want to do an an achromatic_fqpm, we do not include a variation
                 # of the phase with the wl.
                 fqpm.append(np.exp(1j * phase4q))

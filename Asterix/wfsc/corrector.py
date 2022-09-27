@@ -84,7 +84,7 @@ class Corrector:
             print("Creating directory " + matrix_dir)
             os.makedirs(matrix_dir)
 
-        if isinstance(testbed, OpticalSystem) == False:
+        if not isinstance(testbed, OpticalSystem):
             raise Exception("testbed must be an OpticalSystem object")
 
         basis_type = Correctionconfig["DM_basis"].lower()
@@ -116,7 +116,7 @@ class Corrector:
 
         self.update_matrices(testbed, estimator)
 
-        if self.correction_algorithm == "efc" and save_for_bench == True:
+        if self.correction_algorithm == "efc" and save_for_bench:
             if not os.path.exists(realtestbed_dir):
                 print("Creating directory " + realtestbed_dir)
                 os.makedirs(realtestbed_dir)

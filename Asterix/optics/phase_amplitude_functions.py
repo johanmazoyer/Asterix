@@ -38,7 +38,7 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
 
     """
 
-    if no_pixel == True:
+    if no_pixel:
         factor_bin = int(10)
         pup_large = roundpupil(int(2 * prad) * factor_bin, factor_bin * prad, no_pixel=False)
         return crop_or_pad_image(rebin(pup_large, factor=factor_bin, center_on_pixel=False), dim_pp)

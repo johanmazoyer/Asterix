@@ -81,7 +81,7 @@ class Estimator:
             print("Creating directory " + matrix_dir)
             os.makedirs(matrix_dir)
 
-        if isinstance(testbed, OpticalSystem) == False:
+        if not isinstance(testbed, OpticalSystem):
             raise Exception("testbed must be an OpticalSystem object")
 
         self.technique = Estimationconfig["estimation"].lower()
@@ -147,7 +147,7 @@ class Estimator:
             ####Calculating and Saving PW matrix
             print("")
             filePW = "MatPW_" + string_dims_PWMatrix
-            if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")) == True:
+            if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
                 print("The PWmatrix " + filePW + " already exists")
                 self.PWMatrix = fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
             else:
@@ -162,7 +162,7 @@ class Estimator:
                 print("Time for PW Matrix", time.time() - start_time)
 
             # Saving PW matrix in Labview directory
-            if save_for_bench == True:
+            if save_for_bench:
                 if not os.path.exists(realtestbed_dir):
                     print("Creating directory: " + realtestbed_dir)
                     os.makedirs(realtestbed_dir)
@@ -246,7 +246,7 @@ class Estimator:
                         2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
                         (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)""")
 
-        if (self.technique == "perfect") or (perfect_estimation is True):
+        if (self.technique == "perfect") or (perfect_estimation):
             # If polychromatic, assume a perfect estimation at one wavelength
 
             resultatestimation = testbed.todetector(entrance_EF=entrance_EF,
