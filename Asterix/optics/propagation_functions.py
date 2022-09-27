@@ -359,7 +359,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     return np.fft.ifft2(angular * four, norm='ortho')
 
 
-def fft_choosecenter(input, inverse=False, center_pos='bb', norm='backward'):
+def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     """
     FFT Computation. IDL "FFT" routine uses coordinates origin at pixel [0,0].
              This routine FFTSHIFT2 uses a coordinate origin at any pixel [k,l],
@@ -413,8 +413,8 @@ def fft_choosecenter(input, inverse=False, center_pos='bb', norm='backward'):
 
     """
 
-    Nx = np.shape(input)[0]
-    Ny = np.shape(input)[1]
+    Nx = np.shape(image)[0]
+    Ny = np.shape(image)[1]
     if inverse == True:
         sens = 1
     else:
@@ -437,11 +437,11 @@ def fft_choosecenter(input, inverse=False, center_pos='bb', norm='backward'):
 
     # shift in Fourier space, i.e. multiplication in direct space, and computation of FFT
     if inverse == False:
-        farray = np.fft.fft2(input * np.exp(
+        farray = np.fft.fft2(image * np.exp(
             (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
                              norm=norm)
     if inverse == True:
-        farray = np.fft.ifft2(input * np.exp(
+        farray = np.fft.ifft2(image * np.exp(
             (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
                               norm=norm)
 
