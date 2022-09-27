@@ -168,30 +168,31 @@ def read_parameter_file(parameter_file,
                         NewLoopconfig={},
                         NewSIMUconfig={}):
     """
-    check existence of the parameter file, read it and check validity
+    Check existence of the given parameter file, read it and check validity.
     
     AUTHOR: Johan Mazoyer
 
     Parameters
     ----------
-    parameter_file: path 
-        path to a .ini parameter file
-    
-    NewMODELconfig: dict
-    NewDMconfig: dict
-    NewCoronaconfig: dict
-    NewEstimationconfig: dict
-    NewCorrectionconfig: dict
-    NewSIMUconfig: dict
-        Can be used to directly change a parameter if needed, outside of the param file    
-
-
+    parameter_file: string
+        Absolute path to a .ini parameter file.
+    NewMODELconfig: dict, optional
+        Can be used to directly change a parameter in the MODELconfig section of the input parameter file.
+    NewDMconfig: dict, optional
+        Can be used to directly change a parameter in the DMconfig section of the input parameter file.
+    NewCoronaconfig: dict, optional
+        Can be used to directly change a parameter in the Coronaconfig section of the input parameter file.
+    NewEstimationconfig: dict, optional
+        Can be used to directly change a parameter in the Estimationconfig section of the input parameter file.
+    NewCorrectionconfig: dict, optional
+        Can be used to directly change a parameter in the Correctionconfig section of the input parameter file.
+    NewSIMUconfig: dict, optional
+        Can be used to directly change a parameter in the SIMUconfig section of the input parameter file.
 
     Returns
     ------
     config: dict
-        parameter dictionnary
-
+        Parameter dictionary
     """
 
     if not os.path.exists(parameter_file):
@@ -202,7 +203,7 @@ def read_parameter_file(parameter_file,
     if not os.path.exists(configspec_file):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), configspec_file)
 
-    ### CONFIGURATION FILE
+    # Define configuration file
     config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
 
     config["modelconfig"].update(NewMODELconfig)
@@ -221,7 +222,7 @@ def read_parameter_file(parameter_file,
                 continue
             for key, value in section.items():
                 if not value:
-                    raise Exception(f'In section [{name}], parameter "{key}" is not properly defined')
+                    raise ValueError(f'In section [{name}], parameter "{key}" is not properly defined')
 
     return config
 
@@ -248,3 +249,42 @@ def from_param_to_header(config):
         for scalar in config[str(sect)].scalars:
             header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
     return header
+
+
+def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="asterix_data"):
+    """
+    Create a path to the local data directory.
+
+    If the environment variable `ASTERIX_DATA_PATH` exists, this is returned as the full data path and the input 'datadir'
+        is ignored. You can set this individually on your OS.
+    If the environment variable does not exist (default for all new users) but the user adapted the ini file and
+        accesses the 'Data_dir' entry, the configfile entry is returned and 'datadir' is ignored.
+    If the environment variable does not exist and the Data_dir entry in the ini file is not passed or set to '.',
+        the directory 'datadir' is appended to the user's home directory and returned as an absolute path. On MacOS of
+        user 'myuser' for example, this would return: '/Users/myuser/asterix_data'
+
+    Parameters
+    ----------
+    env_var_name : string
+        Environment variable for optional override.
+    datadir : string
+        Name of the top-level data directory.
+
+    Returns
+    -------
+    Absolute path to top-level data directory.
+    """
+    try:
+        ret_path = os.environ[env_var_name]
+        print(f"Using the following data path from env var {env_var_name}: '{ret_path}'")
+        return ret_path
+    except KeyError:
+        pass
+
+    if config_in is not None and config_in != '.':
+        return config_in
+    else:
+        home_path = os.path.abspath(os.path.join(os.path.expanduser("~"), datadir))
+        if not os.path.isdir(home_path):
+            os.mkdir(home_path)
+        return home_path

@@ -3,7 +3,7 @@
 
 import os
 
-from Asterix.utils import read_parameter_file
+from Asterix.utils import get_data_dir, read_parameter_file
 from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
 from Asterix.wfsc import Estimator, Corrector, MaskDH, correction_loop, save_loop_results
 
@@ -61,7 +61,7 @@ def runthd2(parameter_file,
                                  NewLoopconfig=NewLoopconfig,
                                  NewSIMUconfig=NewSIMUconfig)
 
-    Data_dir = config["Data_dir"]
+    Data_dir = get_data_dir(config_in=config["Data_dir"])
     onbench = config["onbench"]
     modelconfig = config["modelconfig"]
     DMconfig = config["DMconfig"]

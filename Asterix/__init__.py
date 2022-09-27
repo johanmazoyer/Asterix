@@ -1,6 +1,6 @@
 import os
 
-Asterix_root = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
-model_dir = os.path.join(Asterix_root, "model") + os.path.sep
+Asterix_root = os.path.dirname(os.path.realpath(__file__))
+model_dir = os.path.join(Asterix_root, "model")
 
 __version__ = "2.4"
