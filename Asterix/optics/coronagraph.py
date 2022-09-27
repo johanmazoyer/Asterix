@@ -183,22 +183,18 @@ class Coronagraph(optsy.OpticalSystem):
         Parameters
         ----------
         entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]; or float
-                Can also be a float scalar in which case entrance_EF is constant; default=1.
-                Electric field in the pupil plane at the entrance of the system.
+            Can also be a float scalar in which case entrance_EF is constant; default=1.
+            Electric field in the pupil plane at the entrance of the system.
         wavelength : float
-                Current wavelength in m.
-                Default is self.wavelength_0, the reference wavelength.
+            Current wavelength in m.
+            Default is self.wavelength_0, the reference wavelength.
         noFPM : bool
-                If True, remove the FPM if one want to measure an un-obstructed PSF; default False.
+            If True, remove the FPM if one want to measure an un-obstructed PSF; default False.
         EF_aberrations_introduced_in_LS : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-                Electrical field created by the downstream aberrations introduced directly in the Lyot Stop.
-                Can also be a float scalar in which case entrance_EF is constant; default=1.
-        save_all_planes_to_fits : bool, default False
-                If True, save all planes to fits file for debugging purposes, to dir_save_all_planes.
-                This can generate a lot of files especially if in a loo,p so the code forces you
-                to define a repository.
+            Electrical field created by the downstream aberrations introduced directly in the Lyot Stop.
+            Can also be a float scalar in which case entrance_EF is constant; default=1.
         dir_save_all_planes : string, default None
-                Directory to save all planes into fits files if save_all_planes_to_fits=True.
+            Directory to save all planes into fits files if save_all_planes_to_fits=True.
 
         Returns
         ------
@@ -513,7 +509,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         knife_allwl : list of len(self.wav_vec) 2D arrays
-                Complex transmission of the knife-edge coronagraph mask at all wavelengths.
+            Complex transmission of the knife-edge coronagraph mask at all wavelengths.
 
         """
         if self.prop_apod2lyot == "fft":
