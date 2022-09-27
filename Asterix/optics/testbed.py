@@ -60,12 +60,12 @@ class Testbed(optsy.OpticalSystem):
 
         self.number_DMs = 0
         self.number_act = 0
-        self.name_of_DMs = list()
+        self.name_of_DMs = []
 
         # this is the collection of all the possible keywords that can be used in
         # practice in the final testbed.EF_through, so that can be used in
         # all the EF_through functions
-        known_keywords = list()
+        known_keywords = []
 
         # we store the name of all the sub systems
         self.subsystems = list_os_names

@@ -76,12 +76,12 @@ def correction_loop(testbed: Testbed,
 
     CorrectionLoopResult = dict()
     CorrectionLoopResult["nb_total_iter"] = 0
-    CorrectionLoopResult["Nb_iter_per_mat"] = list()
-    CorrectionLoopResult["voltage_DMs"] = list()
-    CorrectionLoopResult["FP_Intensities"] = list()
-    CorrectionLoopResult["EF_estim"] = list()
-    CorrectionLoopResult["MeanDHContrast"] = list()
-    CorrectionLoopResult["SVDmodes"] = list()
+    CorrectionLoopResult["Nb_iter_per_mat"] = []
+    CorrectionLoopResult["voltage_DMs"] = []
+    CorrectionLoopResult["FP_Intensities"] = []
+    CorrectionLoopResult["EF_estim"] = []
+    CorrectionLoopResult["MeanDHContrast"] = []
+    CorrectionLoopResult["SVDmodes"] = []
 
     # reading the simulation parameter files
     photon_noise = SIMUconfig["photon_noise"]
@@ -230,11 +230,11 @@ def correction_loop_1matrix(testbed: Testbed,
                                              **kwargs)
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
-    thisloop_voltages_DMs = list()
-    thisloop_FP_Intensities = list()
-    thisloop_MeanDHContrast = list()
-    thisloop_EF_estim = list()
-    thisloop_actual_modes = list()
+    thisloop_voltages_DMs = []
+    thisloop_FP_Intensities = []
+    thisloop_MeanDHContrast = []
+    thisloop_EF_estim = []
+    thisloop_actual_modes = []
 
     thisloop_voltages_DMs.append(initial_DM_voltage)
     thisloop_FP_Intensities.append(initialFP)
