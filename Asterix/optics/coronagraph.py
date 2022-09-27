@@ -100,8 +100,7 @@ class Coronagraph(optsy.OpticalSystem):
             else:
                 self.transmission_fpm = coroconfig["transmission_fpm"]
                 self.phase_fpm = coroconfig["phase_fpm"]
-                self.string_os += '_' + "trans{:.1e}".format(self.transmission_fpm) + "_pha{0}".format(
-                    round(self.phase_fpm, 2))
+                self.string_os += '_' + f"trans{self.transmission_fpm:.1e}_pha{round(self.phase_fpm, 2)}"
                 self.FPmsk = self.HLC()
 
         elif self.corona_type == "knife":
@@ -140,12 +139,12 @@ class Coronagraph(optsy.OpticalSystem):
         self.string_os += '_LS' + self.lyot_pup.string_os
 
         if "bool_overwrite_perfect_coro" in coroconfig:
-            if coroconfig["bool_overwrite_perfect_coro"] is True:
+            if coroconfig["bool_overwrite_perfect_coro"]:
                 self.perfect_coro = True
-            if coroconfig["bool_overwrite_perfect_coro"] is False:
+            else:
                 self.perfect_coro = False
 
-        if self.perfect_coro is True:
+        if self.perfect_coro:
 
             if coroconfig["filename_instr_apod"] == "Clear":
                 # We need a round pupil only to measure the response
@@ -223,7 +222,7 @@ class Coronagraph(optsy.OpticalSystem):
             wavelength = self.wavelength_0
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_PP_before_apod' + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_PP_before_apod' + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
 
         if noFPM:
@@ -236,10 +235,10 @@ class Coronagraph(optsy.OpticalSystem):
         input_wavefront_after_apod = self.apod_pup.EF_through(entrance_EF=entrance_EF, wavelength=wavelength)
 
         if dir_save_all_planes is not None:
-            name_plane = 'apod' + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'apod' + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, self.apod_pup.pup)
 
-            name_plane = 'EF_PP_after_apod' + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_PP_after_apod' + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, input_wavefront_after_apod)
 
         # we take the convention that for all propation methods, the PSF must be
@@ -255,23 +254,23 @@ class Coronagraph(optsy.OpticalSystem):
                                                        norm='ortho')
 
             if dir_save_all_planes is not None:
-                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
                 save_plane_in_fits(dir_save_all_planes, name_plane, np.fft.fftshift(corono_focal_plane))
 
-                name_plane = 'PSF EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                name_plane = 'PSF EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
                 save_plane_in_fits(dir_save_all_planes, name_plane,
                                    np.fft.fftshift(np.abs(corono_focal_plane)**2))
                 if not noFPM:
-                    name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPM' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
 
-                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPMphase' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
 
-                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPMmod' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
-                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                name_plane = 'EF_FP_after_FPM' + f'_wl{int(wavelength * 1e9)}'
                 save_plane_in_fits(dir_save_all_planes, name_plane,
                                    np.fft.fftshift(corono_focal_plane * FPmsk))
 
@@ -292,22 +291,22 @@ class Coronagraph(optsy.OpticalSystem):
                                           norm='ortho')
 
             if dir_save_all_planes is not None:
-                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
                 save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
                 if not noFPM:
-                    name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPM' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
 
-                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPMphase' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
 
-                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPMmod' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
-                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                name_plane = 'EF_FP_after_FPM' + f'_wl{int(wavelength * 1e9)}'
                 save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
 
-                name_plane = 'EF_FP_after_1minusFPM' + '_wl{}'.format(int(wavelength * 1e9))
+                name_plane = 'EF_FP_after_1minusFPM' + f'_wl{int(wavelength * 1e9)}'
                 save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * (1 - FPmsk))
 
             # Focal plane to Lyot plane
@@ -334,19 +333,19 @@ class Coronagraph(optsy.OpticalSystem):
                                           norm='ortho')
 
             if dir_save_all_planes is not None:
-                name_plane = 'EF_FP_before_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
                 save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane)
                 if not noFPM:
-                    name_plane = 'FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPM' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
 
-                    name_plane = 'FPMphase' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPMphase' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
 
-                    name_plane = 'FPMmod' + '_wl{}'.format(int(wavelength * 1e9))
+                    name_plane = 'FPMmod' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
-                name_plane = 'EF_FP_after_FPM' + '_wl{}'.format(int(wavelength * 1e9))
+                name_plane = 'EF_FP_after_FPM' + f'_wl{int(wavelength * 1e9)}'
                 save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
 
             # Focal plane to Lyot plane
@@ -362,7 +361,7 @@ class Coronagraph(optsy.OpticalSystem):
             raise Exception(self.prop_apod2lyot + " is not a known prop_apod2lyot propagation mehtod")
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_PP_before_LS' + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_PP_before_LS' + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, lyotplane_before_lyot)
 
         # we add the downstream aberrations if we need them
@@ -375,15 +374,15 @@ class Coronagraph(optsy.OpticalSystem):
         lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot_crop,
                                                         wavelength=wavelength)
 
-        if (self.perfect_coro == True) & (noFPM == False):
+        if (self.perfect_coro) & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(
                 wavelength)]
 
         if dir_save_all_planes is not None:
-            name_plane = 'LS' + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'LS' + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, self.lyot_pup.pup)
 
-            name_plane = 'EF_PP_after_LS' + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_PP_after_LS' + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, lyotplane_after_lyot)
 
         return lyotplane_after_lyot
@@ -417,7 +416,7 @@ class Coronagraph(optsy.OpticalSystem):
         fqpm_thick_hor[np.where(yy >= 0)] = 1
         fqpm_thick = fqpm_thick_vert - fqpm_thick_hor
 
-        fqpm = list()
+        fqpm = []
         for i, wav in enumerate(self.wav_vec):
             if self.prop_apod2lyot == "fft":
                 dim_fp = self.dim_fp_fft[i]
@@ -428,7 +427,7 @@ class Coronagraph(optsy.OpticalSystem):
             fqpm_thick_cut = crop_or_pad_image(fqpm_thick, dim_fp)
             phase4q[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
 
-            if self.achrom_fqpm == True:
+            if self.achrom_fqpm:
                 # if we want to do an an achromatic_fqpm, we do not include a variation
                 # of the phase with the wl.
                 fqpm.append(np.exp(1j * phase4q))
@@ -468,7 +467,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         phase_vortex = vortex_charge * np.angle(xx + 1j * yy)
 
-        vortex = list()
+        vortex = []
         for i, wav in enumerate(self.wav_vec):
             if self.prop_apod2lyot == "fft":
                 dim_fp = self.dim_fp_fft[i]
@@ -521,7 +520,7 @@ class Coronagraph(optsy.OpticalSystem):
             Knife[np.where(
                 yy < (maxdimension_array_fpm / 2 - self.knife_coro_offset * self.Science_sampling))] = 1
 
-        knife_allwl = list()
+        knife_allwl = []
         for i in range(len(self.wav_vec)):
             knife_allwl.append(Knife)
 
@@ -543,7 +542,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm, rad_LyotFP_pix)
 
-        ClassicalLyotFPM_allwl = list()
+        ClassicalLyotFPM_allwl = []
         for wav in self.wav_vec:
             ClassicalLyotFPM_allwl.append(ClassicalLyotFPM)
 
@@ -573,7 +572,7 @@ class Coronagraph(optsy.OpticalSystem):
         ampl_hlc = np.zeros(ClassicalLyotFP.shape)
         ampl_hlc[whClassicalLyotstop] = np.sqrt(self.transmission_fpm) - 1
 
-        hlc_all_wl = list()
+        hlc_all_wl = []
         for wav in self.wav_vec:
             hlc_all_wl.append(
                 self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))

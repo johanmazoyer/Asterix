@@ -129,7 +129,7 @@ def plot_contrast_curves(reduced_data,
 
         # reduced_data is a cube
         if legend_labels is None:
-            legend_labels = list()
+            legend_labels = []
             legend_labels.append("Initial")
             for i in range(1, reduced_data.shape[0]):
                 legend_labels.append(f"iter #{i}")

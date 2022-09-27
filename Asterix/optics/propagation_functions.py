@@ -165,7 +165,7 @@ def mft(image,
     uu1 = ((np.arange(dim_output_y) - Y1 + 1 / 2) / dim_output_y - 1 / 2) * nbresy  #Fourier plane
 
     norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
-    if inverse == False:
+    if not inverse:
         if norm == 'backward':
             norm0 = 1.
         elif norm == 'forward':
@@ -174,7 +174,7 @@ def mft(image,
             norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
         sign_exponential = -1
 
-    elif inverse == True:
+    else:
         if norm == 'backward':
             norm0 = nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y
         elif norm == 'forward':
@@ -333,7 +333,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     gamma : int >=2
         factor of oversizing in the fourrier plane in diameter of the pupil 
         (gamma*2*prad is the output dim)
-        optionnal: default = 2
+        optional: default = 2
 
     Returns
     ------
@@ -359,7 +359,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     return np.fft.ifft2(angular * four, norm='ortho')
 
 
-def fft_choosecenter(input, inverse=False, center_pos='bb', norm='backward'):
+def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     """
     FFT Computation. IDL "FFT" routine uses coordinates origin at pixel [0,0].
              This routine FFTSHIFT2 uses a coordinate origin at any pixel [k,l],
@@ -413,14 +413,14 @@ def fft_choosecenter(input, inverse=False, center_pos='bb', norm='backward'):
 
     """
 
-    Nx = np.shape(input)[0]
-    Ny = np.shape(input)[1]
-    if inverse == True:
+    Nx = np.shape(image)[0]
+    Ny = np.shape(image)[1]
+    if inverse:
         sens = 1
     else:
         sens = -1
 
-    if not center_pos.lower() in ['pp', 'pb', 'bp', 'bb']:
+    if center_pos.lower() not in ['pp', 'pb', 'bp', 'bb']:
         raise Exception("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
 
     if center_pos.lower()[0] == 'p':
@@ -436,12 +436,12 @@ def fft_choosecenter(input, inverse=False, center_pos='bb', norm='backward'):
     X, Y = np.meshgrid(np.linspace(0, Ny, Ny, endpoint=False), np.linspace(0, Nx, Nx, endpoint=False))
 
     # shift in Fourier space, i.e. multiplication in direct space, and computation of FFT
-    if inverse == False:
-        farray = np.fft.fft2(input * np.exp(
+    if not inverse:
+        farray = np.fft.fft2(image * np.exp(
             (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
                              norm=norm)
-    if inverse == True:
-        farray = np.fft.ifft2(input * np.exp(
+    else:
+        farray = np.fft.ifft2(image * np.exp(
             (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
                               norm=norm)
 

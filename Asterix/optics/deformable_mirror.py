@@ -71,7 +71,7 @@ class DeformableMirror(optsy.OpticalSystem):
         # estimation and correction matrices are created.
         self.misregistration = False
 
-        if DMconfig[self.Name_DM + "_Generic"] == True:
+        if DMconfig[self.Name_DM + "_Generic"]:
             self.total_act = DMconfig[self.Name_DM + "_Nact1D"]**2
             self.number_act = self.total_act
             self.active_actuators = np.arange(self.number_act)
@@ -93,10 +93,10 @@ class DeformableMirror(optsy.OpticalSystem):
         self.string_os += '_' + self.Name_DM + "_z" + str(int(self.z_position * 1000)) + "_Nact" + str(
             int(self.number_act))
 
-        if DMconfig[self.Name_DM + "_Generic"] == True:
+        if DMconfig[self.Name_DM + "_Generic"]:
             self.string_os += "Gen"
 
-        if self.active == False:
+        if not self.active:
             print(self.Name_DM + ' is not activated')
             return
 
@@ -161,14 +161,14 @@ class DeformableMirror(optsy.OpticalSystem):
             DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil), np.float(DMphase))
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_PP_before_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_PP_before_' + self.Name_DM + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, entrance_EF)
-            name_plane = 'phase_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'phase_' + self.Name_DM + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, DMphase)
 
         # if the DM is not active or if the surface is 0
         # we save some time : the EF is not modified
-        if self.active == False or (DMphase == 0.).all():
+        if (not self.active) or (DMphase == 0.).all():
             return entrance_EF
 
         if self.z_position == 0:
@@ -181,7 +181,7 @@ class DeformableMirror(optsy.OpticalSystem):
                                                        dir_save_all_planes=dir_save_all_planes)
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_PP_after_' + self.Name_DM + '_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_PP_after_' + self.Name_DM + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_after_DM)
 
         return EF_after_DM
@@ -216,13 +216,13 @@ class DeformableMirror(optsy.OpticalSystem):
         start_time = time.time()
         Name_pushact_fits = "PushAct_" + self.Name_DM
 
-        if DMconfig[self.Name_DM + "_Generic"] == True:
+        if DMconfig[self.Name_DM + "_Generic"]:
             Name_pushact_fits += "Gen"
 
         Name_pushact_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
-        if (self.misregistration is False) and (os.path.exists(
+        if (not self.misregistration) and (os.path.exists(
                 os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
             pushact3d = fits.getdata(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
             print("Load " + Name_pushact_fits)
@@ -247,7 +247,7 @@ class DeformableMirror(optsy.OpticalSystem):
 
         filename_actu_infl_fct = DMconfig[self.Name_DM + "_filename_actu_infl_fct"]
 
-        if DMconfig[self.Name_DM + "_Generic"] == False:
+        if not DMconfig[self.Name_DM + "_Generic"]:
             #Measured positions for each actuator in pixel with (0,0) = center of pupil
             simu_grid = fits.getdata(os.path.join(
                 model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"])) * diam_pup_in_pix + dim_array / 2
@@ -336,7 +336,7 @@ class DeformableMirror(optsy.OpticalSystem):
         # we exclude the actuators non active
         pushact3d = pushact3d[self.active_actuators]
 
-        if self.misregistration is False and (not os.path.exists(
+        if (not self.misregistration) and (not os.path.exists(
                 os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
             fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'), pushact3d)
             print("Time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
@@ -364,14 +364,14 @@ class DeformableMirror(optsy.OpticalSystem):
         start_time = time.time()
         Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
 
-        if self.DMconfig[self.Name_DM + "_Generic"] == True:
+        if self.DMconfig[self.Name_DM + "_Generic"]:
             Name_WhichInPup_fits += "Gen"
 
         Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(
             int(self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(
                 self.WhichInPup_threshold)
 
-        if os.path.exists(self.Model_local_dir + Name_WhichInPup_fits + '.fits'):
+        if os.path.exists(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits')):
             print("Load " + Name_WhichInPup_fits)
             return fits.getdata(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'))
 
@@ -441,7 +441,7 @@ class DeformableMirror(optsy.OpticalSystem):
                                        self.prad), self.dim_overpad_pupil)
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_before_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_before_DM_in_' + self.Name_DM + f'plane_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # Add DM phase at the right WL
@@ -449,7 +449,7 @@ class DeformableMirror(optsy.OpticalSystem):
                                                                            wavelengths=wavelength)
 
         if dir_save_all_planes is not None:
-            name_plane = 'EF_after_DM_in_' + self.Name_DM + 'plane_wl{}'.format(int(wavelength * 1e9))
+            name_plane = 'EF_after_DM_in_' + self.Name_DM + f'plane_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # and propagate to next pupil plane
@@ -492,7 +492,7 @@ class DeformableMirror(optsy.OpticalSystem):
         # DM_pushact is in opd nanometer
         opd_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
 
-        if einstein_sum == True or len(where_non_zero_voltage[0]) < 3:
+        if einstein_sum or len(where_non_zero_voltage[0]) < 3:
             phase_on_DM = np.einsum('i,ijk->jk', actu_vect[where_non_zero_voltage],
                                     self.DM_pushact[where_non_zero_voltage]) * opd_to_phase
         else:

@@ -84,7 +84,7 @@ class Corrector:
             print("Creating directory " + matrix_dir)
             os.makedirs(matrix_dir)
 
-        if isinstance(testbed, OpticalSystem) == False:
+        if not isinstance(testbed, OpticalSystem):
             raise Exception("testbed must be an OpticalSystem object")
 
         basis_type = Correctionconfig["DM_basis"].lower()
@@ -116,7 +116,7 @@ class Corrector:
 
         self.update_matrices(testbed, estimator)
 
-        if self.correction_algorithm == "efc" and save_for_bench == True:
+        if self.correction_algorithm == "efc" and save_for_bench:
             if not os.path.exists(realtestbed_dir):
                 print("Creating directory " + realtestbed_dir)
                 os.makedirs(realtestbed_dir)
@@ -154,14 +154,12 @@ class Corrector:
 
             if testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] < 500:
-                    raise Exception(
-                        "Nbmodes_OnTestbed ({0}) in inversion for THD is probably too low for 2DM".format(
-                            Correctionconfig["Nbmodes_OnTestbed"]))
+                    raise Exception(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+                                    " in inversion for THD is probably too low for 2DM")
             if not testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] > 500:
-                    raise Exception(
-                        "Nbmodes_OnTestbed ({0}) in inversion for THD is probably too high for 1DM".format(
-                            Correctionconfig["Nbmodes_OnTestbed"]))
+                    raise Exception(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+                                    " in inversion for THD is probably too high for 1DM")
 
             thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"], number_Active_testbeds,
                                               realtestbed_dir, self.regularization)
@@ -350,9 +348,8 @@ class Corrector:
                 self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast) / 3
                 self.count_since_last_best = 0
                 self.last_best_alpha *= 20
-                print(
-                    "we do not improve contrast anymore, we go back to last best and change the gain to {:f}".
-                    format(self.expected_gain_in_contrast))
+                print("we do not improve contrast anymore, we go back to last " +
+                      f"best and change the gain to {self.expected_gain_in_contrast:f}")
                 return "RebootTheLoop"
 
             # # gain_individual_DM = [1.,1.]

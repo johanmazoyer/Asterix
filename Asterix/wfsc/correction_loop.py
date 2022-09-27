@@ -76,12 +76,12 @@ def correction_loop(testbed: Testbed,
 
     CorrectionLoopResult = dict()
     CorrectionLoopResult["nb_total_iter"] = 0
-    CorrectionLoopResult["Nb_iter_per_mat"] = list()
-    CorrectionLoopResult["voltage_DMs"] = list()
-    CorrectionLoopResult["FP_Intensities"] = list()
-    CorrectionLoopResult["EF_estim"] = list()
-    CorrectionLoopResult["MeanDHContrast"] = list()
-    CorrectionLoopResult["SVDmodes"] = list()
+    CorrectionLoopResult["Nb_iter_per_mat"] = []
+    CorrectionLoopResult["voltage_DMs"] = []
+    CorrectionLoopResult["FP_Intensities"] = []
+    CorrectionLoopResult["EF_estim"] = []
+    CorrectionLoopResult["MeanDHContrast"] = []
+    CorrectionLoopResult["SVDmodes"] = []
 
     # reading the simulation parameter files
     photon_noise = SIMUconfig["photon_noise"]
@@ -95,7 +95,7 @@ def correction_loop(testbed: Testbed,
     if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
         Linesearch = Loopconfig["Linesearch"]
         gain = Loopconfig["gain"]
-        if Linesearch == False:
+        if not Linesearch:
             Nbmode_corr = list(Loopconfig["Nbmode_corr"])
             if len(Nbiter_corr) != len(Nbmode_corr):
                 raise Exception("""In this correction mode and if Linesearch = False, 
@@ -230,11 +230,11 @@ def correction_loop_1matrix(testbed: Testbed,
                                              **kwargs)
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
-    thisloop_voltages_DMs = list()
-    thisloop_FP_Intensities = list()
-    thisloop_MeanDHContrast = list()
-    thisloop_EF_estim = list()
-    thisloop_actual_modes = list()
+    thisloop_voltages_DMs = []
+    thisloop_FP_Intensities = []
+    thisloop_MeanDHContrast = []
+    thisloop_EF_estim = []
+    thisloop_actual_modes = []
 
     thisloop_voltages_DMs.append(initial_DM_voltage)
     thisloop_FP_Intensities.append(initialFP)
@@ -289,8 +289,8 @@ def correction_loop_1matrix(testbed: Testbed,
 
             if mode > corrector.total_number_modes:
                 if not Search_best_Mode:
-                    print("You cannot use a cutoff mode ({:d}) larger than the total size of basis ({:d})".
-                          format(mode, corrector.Gmatrix.shape[1]))
+                    print(f"You cannot use a cutoff mode ({mode:d}) larger than" +
+                          f"the total size of basis ({corrector.Gmatrix.shape[1]:d})")
                     print("We skip this iteration")
                 continue
 
@@ -323,7 +323,7 @@ def correction_loop_1matrix(testbed: Testbed,
             print("we stop the correction")
             break
 
-        elif isinstance(solution, str) and solution == "RebootTheLoop":
+        if isinstance(solution, str) and solution == "RebootTheLoop":
             # for each correction algorithm, we can break the loop by
             # the string "RebootTheLoop" instead of a correction vector
             print("we go back to last best correction")
@@ -338,7 +338,7 @@ def correction_loop_1matrix(testbed: Testbed,
         thisloop_EF_estim.append(resultatestimation)
         thisloop_MeanDHContrast.append(np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))
 
-        if Search_best_Mode == False:
+        if not Search_best_Mode:
             # if we are only looking for the best mode, we do not update the DM shape
             # for the next iteration
             thisloop_voltages_DMs.append(new_voltage)

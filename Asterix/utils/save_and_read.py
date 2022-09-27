@@ -1,6 +1,6 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
-
+import errno
 import sys
 import os
 
@@ -39,7 +39,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
     name_fits = current_time_str + '_' + name_plane
 
-    if os.path.exists(dir_save_fits) is False:
+    if not os.path.exists(dir_save_fits):
         raise Exception("Please define an existing directory for dir_save_fits keyword or None")
 
     # sometime the image can be a single float (0 for phase or 1 for EF).
@@ -72,7 +72,7 @@ def quickshow(tab):
     plt.close()
 
 
-def quickfits(tab, dir='', name='tmp'):
+def quickfits(tab, folder='', name='tmp'):
     """
     Johan's quick function
 
@@ -81,48 +81,48 @@ def quickfits(tab, dir='', name='tmp'):
     Not sure the default saving on Desktop works for windows OS, but it work on mac and linux
 
     tab: array to be saved
-    dir (optionnal): directory where to save the .fits. by default the Desktop.
-    name (optionnal): name of the .fits. By defaut tmp_currenttimeinms.fits
+    folder (optional): directory where to save the .fits. by default the Desktop.
+    name (optional): name of the .fits. By defaut tmp_currenttimeinms.fits
     """
 
-    if dir == '':
+    if folder == '':
         desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
         bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
         if os.path.exists(desktop):
-            dir = desktop
+            folder = desktop
         elif os.path.exists(bureau):
             # of you are french are you ?
-            dir = bureau
+            folder = bureau
         else:
-            raise Exception("I cannot find your desktop, please give me a dir to save the .fits")
+            raise Exception("I cannot find your desktop, please give me a folder to save the .fits")
 
     if name == 'tmp':
         current_time_str = datetime.datetime.today().strftime('_%H_%M_%S_%f')[:-3]
         name = name + current_time_str
-    fits.writeto(os.path.join(dir, name + '.fits'), tab, overwrite=True)
+    fits.writeto(os.path.join(folder, name + '.fits'), tab, overwrite=True)
 
 
-def quickpng(tab, dir='', name='tmp'):
+def quickpng(tab, folder='', name='tmp'):
     """
     Function to quickly save in .png.
     By default, it will save on the desktop with a random name
 
     tab: array to be saved
-    dir (optionnal): directory where to save the .png
-    name (optionnal): name of the .png.  By defaut tmpXX.png where xx is a random number
+    folder (optional): directory where to save the .png
+    name (optional): name of the .png.  By defaut tmpXX.png where xx is a random number
 
     Johan's quick function
     """
-    if dir == '':
+    if folder == '':
         desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
         bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
         if os.path.exists(desktop):
-            dir = desktop
+            folder = desktop
         elif os.path.exists(bureau):
             # of you are french are you ?
-            dir = bureau
+            folder = bureau
         else:
-            raise Exception("I cannot find your desktop, please give me a dir to save the .png")
+            raise Exception("I cannot find your desktop, please give me a folder to save the .png")
 
     plt.figure(figsize=(10, 10))
     tmp = tab
@@ -132,7 +132,7 @@ def quickpng(tab, dir='', name='tmp'):
     if name == 'toto':
         name = name + str(int(random.random() * 100))
     plt.tight_layout()
-    plt.savefig(dir + name + '.png', dpi=300)
+    plt.savefig(os.path.join(folder, name + '.png'), dpi=300)
     plt.close()
 
 
@@ -195,12 +195,12 @@ def read_parameter_file(parameter_file,
     """
 
     if not os.path.exists(parameter_file):
-        raise Exception("The parameter file " + parameter_file + " cannot be found")
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), parameter_file)
 
     configspec_file = os.path.join(Asterix_root, "Param_configspec.ini")
 
     if not os.path.exists(configspec_file):
-        raise Exception("The parameter config file " + configspec_file + " cannot be found")
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), configspec_file)
 
     ### CONFIGURATION FILE
     config = ConfigObj(parameter_file, configspec=configspec_file, default_encoding="utf8")
@@ -215,14 +215,13 @@ def read_parameter_file(parameter_file,
 
     test_validity_params = config.validate(Validator(), copy=True)
 
-    if test_validity_params is not True:
+    if not test_validity_params:
         for name, section in test_validity_params.items():
-            if section is True:
+            if section:
                 continue
             for key, value in section.items():
-                if value is False:
-                    raise Exception('In section [{}], parameter "{}" is not properly defined'.format(
-                        name, key))
+                if not value:
+                    raise Exception(f'In section [{name}], parameter "{key}" is not properly defined')
 
     return config
 
