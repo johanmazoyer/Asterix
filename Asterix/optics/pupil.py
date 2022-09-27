@@ -237,6 +237,8 @@ def grey_pupil(dim, rad, rad_inner=None, fac=4):
     obscuration with radius 'rad_inner'. This pupil will be overscaled by a te factor 'fac' and then binned back down
     to the requested array dimensions.
 
+    See also Asterix.optics.phase_amplitude_functions.roundpupil().
+
     Parameters
     ----------
     dim : int

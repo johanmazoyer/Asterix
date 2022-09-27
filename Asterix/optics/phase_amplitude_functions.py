@@ -11,6 +11,7 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     Create a circular pupil.
 
     With no_pixel=True, this is a way to create a very oversampled pupil that is then rescaled using rebin.
+    See also Asterix.optics.pupil.grey_pupil().
 
     AUTHORS : Axel Pottier, Johan Mazoyer
     7/9/22 Modified by J Mazoyer to remove the pixel crenellation with rebin and add a better center option
