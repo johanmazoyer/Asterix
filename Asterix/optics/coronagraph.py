@@ -418,7 +418,7 @@ class Coronagraph(optsy.OpticalSystem):
 
     def Vortex(self, vortex_charge=2):
         """
-        Create a vortex coronagraph with charge 'vorrtex_charge'.
+        Create a vortex coronagraph with charge 'vortex_charge'.
 
         AUTHOR : Johan Mazoyer
 
