@@ -7,12 +7,12 @@ from astropy.io import fits
 import skimage.transform
 
 from Asterix import model_dir
-from Asterix.optics import OpticalSystem
+import Asterix.optics.optical_systems as optsy
 import Asterix.optics.phase_amplitude_functions as phase_ampl
 from Asterix.utils import save_plane_in_fits, crop_or_pad_image, rebin
 
 
-class Pupil(OpticalSystem):
+class Pupil(optsy.OpticalSystem):
     """
     initialize and describe the behavior of single pupil
     pupil is a sub class of OpticalSystem.

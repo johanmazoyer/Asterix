@@ -6,12 +6,13 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix.utils import save_plane_in_fits, crop_or_pad_image
-from Asterix.optics import OpticalSystem, Pupil
+import Asterix.optics.optical_systems as optsy
+import Asterix.optics.pupil as pupil
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 
-class Coronagraph(OpticalSystem):
+class Coronagraph(optsy.OpticalSystem):
     """
     initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
     coronagraph is a sub class of OpticalSystem.
@@ -48,11 +49,11 @@ class Coronagraph(OpticalSystem):
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
         # In Roman this is where is the apodiser
-        self.apod_pup = Pupil(modelconfig,
-                              prad=self.prad,
-                              PupType=coroconfig["filename_instr_apod"],
-                              angle_rotation=coroconfig['apod_pup_rotation'],
-                              Model_local_dir=Model_local_dir)
+        self.apod_pup = pupil.Pupil(modelconfig,
+                                    prad=self.prad,
+                                    PupType=coroconfig["filename_instr_apod"],
+                                    angle_rotation=coroconfig['apod_pup_rotation'],
+                                    Model_local_dir=Model_local_dir)
 
         self.string_os += '_Apod' + self.apod_pup.string_os
 
@@ -130,11 +131,11 @@ class Coronagraph(OpticalSystem):
         else:
             raise Exception(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
 
-        self.lyot_pup = Pupil(modelconfig,
-                              prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
-                              PupType=coroconfig["filename_instr_lyot"],
-                              angle_rotation=coroconfig['lyot_pup_rotation'],
-                              Model_local_dir=Model_local_dir)
+        self.lyot_pup = pupil.Pupil(modelconfig,
+                                    prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
+                                    PupType=coroconfig["filename_instr_lyot"],
+                                    angle_rotation=coroconfig['lyot_pup_rotation'],
+                                    Model_local_dir=Model_local_dir)
 
         self.string_os += '_LS' + self.lyot_pup.string_os
 
@@ -151,7 +152,7 @@ class Coronagraph(OpticalSystem):
                 # of the coronograph to a round pupil to remove it
                 # THIS IS NOT THE ENTRANCE PUPIL,
                 # this is a round pupil of the same size
-                pup_for_perfect_coro = Pupil(modelconfig, prad=self.prad)
+                pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad)
 
                 # do a propagation once with self.perfect_Lyot_pupil = 0 to
                 # measure the Lyot pupil that will be removed after

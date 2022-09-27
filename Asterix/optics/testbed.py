@@ -5,10 +5,11 @@ import inspect
 import copy
 import numpy as np
 
-from Asterix.optics import OpticalSystem, DeformableMirror
+import Asterix.optics.optical_systems as optsy
+import Asterix.optics.deformable_mirror as deformable_mirror
 
 
-class Testbed(OpticalSystem):
+class Testbed(optsy.OpticalSystem):
     """
     
     Initialize and describe the behavior of a testbed.
@@ -74,7 +75,7 @@ class Testbed(OpticalSystem):
 
             # we first check that all variables in the list are optical systems
             # defined the same way.
-            if not isinstance(list_os[num_optical_sys], OpticalSystem):
+            if not isinstance(list_os[num_optical_sys], optsy.OpticalSystem):
                 raise Exception("list_os[" + str(num_optical_sys) + "] is not an optical system")
 
             if list_os[num_optical_sys].modelconfig != self.modelconfig:
@@ -87,7 +88,7 @@ class Testbed(OpticalSystem):
             for params in inspect.signature(list_os[num_optical_sys].EF_through).parameters:
                 known_keywords.append(params)
 
-            if isinstance(list_os[num_optical_sys], DeformableMirror):
+            if isinstance(list_os[num_optical_sys], deformable_mirror.DeformableMirror):
 
                 #this function is to replace the DMphase variable by a XXphase variable
                 # where XX is the name of the DM
@@ -176,7 +177,7 @@ class Testbed(OpticalSystem):
 
         for i, DM_name in enumerate(self.name_of_DMs):
 
-            DM = vars(self)[DM_name]  # type: DeformableMirror
+            DM = vars(self)[DM_name]  # type: deformable_mirror.DeformableMirror
             actu_vect_DM = actu_vect[indice_acum_number_act:indice_acum_number_act + DM.number_act]
             DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
 
@@ -212,7 +213,7 @@ class Testbed(OpticalSystem):
         for DM_name in self.name_of_DMs:
 
             # we access each DM object individually
-            DM = vars(self)[DM_name]  # type: DeformableMirror
+            DM = vars(self)[DM_name]  # type: deformable_mirror.DeformableMirror
 
             # we extract the voltages for this one
             # this voltages are in the DM basis

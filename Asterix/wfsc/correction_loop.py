@@ -13,13 +13,16 @@ from astropy.io import fits
 
 from Asterix.utils import plot_contrast_curves, from_param_to_header
 from Asterix.optics import DeformableMirror, Testbed
-from Asterix.wfsc import Corrector, Estimator, MaskDH
+
+import Asterix.wfsc.corrector as corrector_mod
+import Asterix.wfsc.estimator as estimator_mod
+import Asterix.wfsc.maskDH as maskDH
 
 
 def correction_loop(testbed: Testbed,
-                    estimator: Estimator,
-                    corrector: Corrector,
-                    mask_dh: MaskDH,
+                    estimator: estimator_mod.Estimator,
+                    corrector: corrector_mod.Corrector,
+                    mask_dh: maskDH.MaskDH,
                     Loopconfig,
                     SIMUconfig,
                     input_wavefront=0,
@@ -141,9 +144,9 @@ def correction_loop(testbed: Testbed,
 
 
 def correction_loop_1matrix(testbed: Testbed,
-                            estimator: Estimator,
-                            corrector: Corrector,
-                            mask_dh: MaskDH,
+                            estimator: estimator_mod.Estimator,
+                            corrector: corrector_mod.Corrector,
+                            mask_dh: maskDH.MaskDH,
                             Nbiter_corr,
                             CorrectionLoopResult,
                             gain=0.1,
