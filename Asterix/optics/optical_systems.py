@@ -436,8 +436,7 @@ class OpticalSystem:
             return 0.
 
         if phase_abb_filename == '':
-            phase_abb_filename = up_or_down + "phase_{:d}opdrms_lam{:d}_spd{:d}_rhoc{:.1f}_rad{:.1f}".format(
-                int(opd_rms * 1e9), int(self.wavelength_0 * 1e9), int(phase_slope), phase_rhoc, self.prad)
+            phase_abb_filename = up_or_down + f"phase_{int(opd_rms * 1e9):d}opdrms_lam{int(self.wavelength_0 * 1e9):d}_spd{int(phase_slope):d}_rhoc{phase_rhoc:.1f}_rad{self.prad:.1f}"
 
         if (not set_random_phase) and Model_local_dir is not None and os.path.isfile(
                 os.path.join(Model_local_dir, phase_abb_filename + ".fits")):
@@ -494,8 +493,7 @@ class OpticalSystem:
                     # we will create an amplitude map (if it does not exist) for these parameters, save it as .fits
                     # and always use the same one in the future
 
-                    ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
-                        int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
+                    ampl_abb_filename = f"ampl_{int(ampl_rms):d}percentrms_spd{int(ampl_slope):d}_rhoc{ampl_rhoc:.1f}_rad{self.prad:d}.fits"
 
                     if os.path.isfile(os.path.join(Model_local_dir, ampl_abb_filename)):
                         return fits.getdata(os.path.join(Model_local_dir, ampl_abb_filename))
@@ -559,8 +557,7 @@ class OpticalSystem:
                     return testbedampl
 
             else:
-                ampl_abb_filename = "ampl_{:d}percentrms_spd{:d}_rhoc{:.1f}_rad{:d}.fits".format(
-                    int(ampl_rms), int(ampl_slope), ampl_rhoc, self.prad)
+                ampl_abb_filename = f"ampl_{int(ampl_rms):d}percentrms_spd{int(ampl_slope):d}_rhoc{ampl_rhoc:.1f}_rad{self.prad:d}.fits"
 
                 return_ampl = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, ampl_rms / 100,
                                                           ampl_rhoc, ampl_slope)

@@ -72,7 +72,7 @@ def quickshow(tab):
     plt.close()
 
 
-def quickfits(tab, dir='', name='tmp'):
+def quickfits(tab, folder='', name='tmp'):
     """
     Johan's quick function
 
@@ -81,48 +81,48 @@ def quickfits(tab, dir='', name='tmp'):
     Not sure the default saving on Desktop works for windows OS, but it work on mac and linux
 
     tab: array to be saved
-    dir (optionnal): directory where to save the .fits. by default the Desktop.
+    folder (optionnal): directory where to save the .fits. by default the Desktop.
     name (optionnal): name of the .fits. By defaut tmp_currenttimeinms.fits
     """
 
-    if dir == '':
+    if folder == '':
         desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
         bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
         if os.path.exists(desktop):
-            dir = desktop
+            folder = desktop
         elif os.path.exists(bureau):
             # of you are french are you ?
-            dir = bureau
+            folder = bureau
         else:
-            raise Exception("I cannot find your desktop, please give me a dir to save the .fits")
+            raise Exception("I cannot find your desktop, please give me a folder to save the .fits")
 
     if name == 'tmp':
         current_time_str = datetime.datetime.today().strftime('_%H_%M_%S_%f')[:-3]
         name = name + current_time_str
-    fits.writeto(os.path.join(dir, name + '.fits'), tab, overwrite=True)
+    fits.writeto(os.path.join(folder, name + '.fits'), tab, overwrite=True)
 
 
-def quickpng(tab, dir='', name='tmp'):
+def quickpng(tab, folder='', name='tmp'):
     """
     Function to quickly save in .png.
     By default, it will save on the desktop with a random name
 
     tab: array to be saved
-    dir (optionnal): directory where to save the .png
+    folder (optionnal): directory where to save the .png
     name (optionnal): name of the .png.  By defaut tmpXX.png where xx is a random number
 
     Johan's quick function
     """
-    if dir == '':
+    if folder == '':
         desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
         bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
         if os.path.exists(desktop):
-            dir = desktop
+            dfolfolderderir = desktop
         elif os.path.exists(bureau):
             # of you are french are you ?
-            dir = bureau
+            folder = bureau
         else:
-            raise Exception("I cannot find your desktop, please give me a dir to save the .png")
+            raise Exception("I cannot find your desktop, please give me a folder to save the .png")
 
     plt.figure(figsize=(10, 10))
     tmp = tab
@@ -132,7 +132,7 @@ def quickpng(tab, dir='', name='tmp'):
     if name == 'toto':
         name = name + str(int(random.random() * 100))
     plt.tight_layout()
-    plt.savefig(dir + name + '.png', dpi=300)
+    plt.savefig(folder + name + '.png', dpi=300)
     plt.close()
 
 

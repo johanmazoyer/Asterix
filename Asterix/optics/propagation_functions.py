@@ -420,7 +420,7 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     else:
         sens = -1
 
-    if  center_pos.lower() not in ['pp', 'pb', 'bp', 'bb']:
+    if center_pos.lower() not in ['pp', 'pb', 'bp', 'bb']:
         raise Exception("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
 
     if center_pos.lower()[0] == 'p':
