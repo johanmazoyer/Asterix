@@ -236,7 +236,8 @@ def grey_pupil(dim, rad, rad_inner=None, fac=10):
     Parameters
     ----------
     dim : int
-        Dimension of the square array the pupil will be embedded in, in pixels.
+        Dimension of the square array the pupil will be embedded in, in pixels. If even, pupil will be centered on a
+        pixel. If odd, pupil will be centered between pixels.
     rad : float
         Radius of the round pupil, in pixels.
     rad_inner : float, optional

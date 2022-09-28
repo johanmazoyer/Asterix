@@ -31,50 +31,48 @@ def mft(image,
 
     Parameters
     ----------
-        image : 2D array
-            Entrance image (entrance size in x and y can be different)
-        real_dim_input : int or tuple of ints of dim 2
-            Diameter of the support in pup (can differ from image.shape)
-            Example: real_dim_input = diameter of the pupil in pixel for a padded pupil
-        dim_output : int or tuple of int of dim 2
-            Dimension of the output in pixels (square if int, rectangular if (int, int).
-        nbres: float or tuple of float of dim 2
-            Number of spatial resolution elements (same in both directions if float).
-        inverse : bool, default False
-            Direction of the MFT.
-            If inverse=False, direct mft (default value).
-            If inverse=True, indirect mft.
-        norm : string default 'backward'
-                'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
-                https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
-                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse = True)
-                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse = True)
-                if 'ortho' 1/sqrt(N) normalisation is done in both directions.
-                Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
-                The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
-        X_offset_input : float default 0
-                position of the 0-frequency pixel in x for the entrance
-                image with respect to the center of the entrance image (real position
-                of the 0-frequency pixel on dim_input_x/2+x0)
-        Y_offset_input : float default 0
-                position of the 0-frequency pixel in Y for the entrance
-                image with respect to the center of the entrance image (real position
-                of the 0-frequency pixel on dim_input_y/2+y0)
-        X_offset_output : float default 0
-                position of the 0-frequency pixel in x for the output
-                image with respect to the center of the output image (real position
-                of the 0-frequency pixel on dim_output_x/2+x1)
-        Y_offset_output : float default 0
-                position of the 0-frequency pixel in Y for the output
-                image with respect to the center of the output image (real position
-                of the 0-frequency pixel on dim_output_y/2+y1)
+    image : 2D array
+        Entrance image (entrance size in x and y can be different).
+    real_dim_input : int or tuple of ints of dim 2
+        Diameter of the pupil support in pixels if 'image' contains a padded rim around the pupil.
+        Example: real_dim_input = image.shape if there is no padding.
+    dim_output : int or tuple of int of dim 2
+        Dimension of the output in pixels (square if int, rectangular if (int, int)).
+    nbres: float or tuple of 2 floats
+        Number of spatial resolution elements across the total field of view in the images plane (same in both
+        directions if float).
+    inverse : bool, default False
+        Direction of the MFT.
+        If inverse=False, direct mft (default value).
+        If inverse=True, indirect mft.
+    norm : string default 'backward'
+        'backward', 'forward' or 'ortho'. This is the same parameter as in numpy.fft functions.
+        https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
+        if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse = True)
+        if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse = True)
+        if 'ortho' 1/sqrt(N) normalisation is done in both directions.
+        Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane.
+        The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
+    X_offset_input : float default 0
+        Position of the 0-frequency pixel in x for the entrance image with respect to the center of the entrance
+        image (real position of the 0-frequency pixel on dim_input_x/2+x0).
+    Y_offset_input : float default 0
+        Position of the 0-frequency pixel in Y for the entrance image with respect to the center of the entrance
+        image (real position of the 0-frequency pixel on dim_input_y/2+y0).
+    X_offset_output : float default 0
+        Position of the 0-frequency pixel in x for the output image with respect to the center of the output image
+        (real position of the 0-frequency pixel on dim_output_x/2+x1).
+    Y_offset_output : float default 0
+        Position of the 0-frequency pixel in Y for the output image with respect to the center of the output image
+        (real position of the 0-frequency pixel on dim_output_y/2+y1).
 
     Returns
     ------
-        result : complex 2D array
-            Output is a complex array dimft x dimft with the position of the
-            0-frequency in between the 4 pixel (dim_output_x/2+x1,dim_output_y/2+y1) and (dim_output_x/2+x1 +1,dim_output_y/2+y1+1)
-            if x1 and y1 are integer
+    result : complex 2D array
+        Output is a complex array of dimensions dim_output x dim_output with the position of the 0-frequency in between
+        the four pixels:
+            (dim_output_x/2 + x1, dim_output_y/2 + y1) and (dim_output_x/2 + x1 + 1, dim_output_y/2 + y1 + 1)
+        if x1 and y1 are integers.
     """
 
     # check dimensions and type of real_dim_input
@@ -289,9 +287,9 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     Parameters
     ----------
     pup : 2D array (complex or real)
-            electric field at z=0
-            CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
-            where 'dimpup' is the pup array dimension
+        electric field at z=0
+        CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
+        where 'dimpup' is the pup array dimension
     lam : float
          wavelength in meter
     z : float
@@ -308,8 +306,8 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     Returns
     ------
     pup_z : 2D array (complex) of size [2*gamma*prad,2*gamma*prad]
-            electric field after propagating in free space along
-            a distance z
+        electric field after propagating in free space along
+        a distance z
     """
 
     diam_pup_in_m = 2 * rad
@@ -428,15 +426,16 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     Parameters
     ----------
     dim : int
-        Dimension of 2D output array in pixels.
+        Dimension of 2D output array in pixels. If even, filter will be centered on a pixel, but can be shifted to
+        between pixels by using xshift=-0.5 and yshift=-0.5. If uneven, filter will be centered between pixels.
     size_filter : int
-        Size of the filter in pixels.
+        Inverse size of the filter.
     order : int
         Order of the filter.
     xshift : float
-        Shift in x direction in pixels.
+        Shift of filter with respect to its array in the x direction, in pixels.
     yshift : float
-        Shift in y direction in pixels.
+        Shift of filter with respect to its array in the y direction, in pixels.
 
     Returns
     -------

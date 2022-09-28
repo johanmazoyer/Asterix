@@ -16,9 +16,9 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     Parameters
     ----------
     dim_pp : int
-        Size of the image (in pixels)
+        Size of the image array (in pixels).
     prad : float
-        Size of the pupil radius (in pixels)
+        Pupil radius within the image array (in pixels).
     no_pixel : boolean (default False).
         If true, the pupil is first defined at a very large
         scale (prad = 10*prad) and then rescaled to the given parameter 'prad'.
