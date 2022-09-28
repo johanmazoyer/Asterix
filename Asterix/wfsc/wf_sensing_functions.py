@@ -1,5 +1,7 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
+from cgi import test
+from msilib.schema import Error
 import os
 import time
 import numpy as np
@@ -10,14 +12,40 @@ from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
-def create_pw_matrix(testbed: Testbed,
-                     amplitude,
-                     posprobes,
-                     dimEstim,
-                     cutsvd,
-                     matrix_dir,
-                     wavelengths=None,
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom,
                      **kwargs):
+    return_matrix = []
+    if polychrom in ['centralwl','multiwl']:
+        for wave_i in testbed.wav_vec:
+            return_matrix.append(
+            create_single_pw_matrix(testbed,
+                                 amplitude,
+                                 posprobes,
+                                 dimEstim,
+                                 cutsvd,
+                                 matrix_dir,
+                                 wavelength=wave_i),**kwargs)
+    elif polychrom == 'broadband':
+        raise Exception("do not use polychrom == 'broadband' right now")
+        return_matrix.append(
+        create_single_pw_matrix(testbed,
+                                amplitude,
+                                posprobes,
+                                dimEstim,
+                                cutsvd,
+                                matrix_dir,
+                                wavelength=testbed.wav_vec),**kwargs)
+    return return_matrix
+
+
+def create_single_pw_matrix(testbed: Testbed,
+                         amplitude,
+                         posprobes,
+                         dimEstim,
+                         cutsvd,
+                         matrix_dir,
+                         wavelengths,
+                         **kwargs):
     """
     Build the interaction matrix for pair-wise probing.
 
@@ -41,7 +69,6 @@ def create_pw_matrix(testbed: Testbed,
     matrix_dir : path. 
         save all the matrices files here
     wavelengths : float or list of floats. 
-        Default is all the wl of the testbed testbed.wav_vec
         wavelengths in m.
 
     Returns
@@ -51,30 +78,18 @@ def create_pw_matrix(testbed: Testbed,
                 matrix in order to retrieve the focal plane electric field
     """
 
-    if 'wavelength' in kwargs:
-        raise Exception("""create_pw_matrix() function is polychromatic, 
-                do not use wavelength keyword.
-                Use wavelengths keyword even for monochromatic intensity""")
-
-    if wavelengths is None:
-        wavelength_vec = testbed.wav_vec
-
-    elif isinstance(wavelengths, (float, int)):
-        wavelength_vec = [wavelengths]
+    if isinstance(wavelengths, (float, int)):
+        broadband_bool = False
+        central_wavelength = wavelengths
     else:
-        wavelength_vec = wavelengths
-    if wavelengths is None:
-        wavelength_vec = testbed.wav_vec
+        broadband_bool = True
+        central_wavelength = wavelengths[len(wavelengths)//2 + 1]
 
-    elif isinstance(wavelengths, (float, int)):
-        wavelength_vec = [wavelengths]
-    else:
-        wavelength_vec = wavelengths
 
     string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(
         str, posprobes)) + "_PWampl" + str(int(amplitude)) + "_cut" + str(int(
             cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + '_wl' + str(
-                int(testbed.wavelength_0 * 1e9))
+                int(central_wavelength* 1e9))
 
     ####Calculating and Saving PW matrix
     print("")
@@ -95,8 +110,16 @@ def create_pw_matrix(testbed: Testbed,
     SVD = np.zeros((2, dimEstim, dimEstim))
 
     DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]  # type: DeformableMirror
+    if not broadband_bool:
+        psi0 = testbed.todetector(wavelength=central_wavelength)
+    else:
+        # we have to be careful here with the normalization. By default in Asterix
+        # todetector() is monochromatic and therefore return EF normalize to the squareroot of their own WL
+        # TODO Im not sure what does that mean to have the EF estimation in broadband so this mode is stopped until further notice
+        for wave_i in wavelengths:
+            psi0 += testbed.todetector(wavelength=wave_i, in_contrast=False)
+        psi0 /= np.sqrt(testbed.norm_polychrom) 
 
-    psi0 = testbed.todetector(wavelength=testbed.wavelength_0)
     k = 0
 
     for i in posprobes:
@@ -110,10 +133,18 @@ def create_pw_matrix(testbed: Testbed,
         # I tried to remove "1+"". It breaks the code
         # (coronagraph does not "remove the 1 exactly")
         # **kwarg is here to send dir_save_all_planes
+        
+        if not broadband_bool:
+            deltapsik[k] = resizing(
+                testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=central_wavelength, **kwargs)
+                - psi0, dimEstim)
+        else:
+            for wave_i in wavelengths:
+                deltapsik[k] = resizing(
+                testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wave_i, in_contrast=False **kwargs),
+                 dimEstim)
+            deltapsik[k] = deltapsik[k]/np.sqrt(testbed.norm_polychrom) - psi0,
 
-        deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=testbed.wavelength_0, **kwargs)
-            - psi0, dimEstim)
         k = k + 1
 
     l = 0
