@@ -514,6 +514,9 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     """
     Return a circular Butterworth filter.
 
+    AUTHOR: Raphaël Galicher (in IDL)
+            ILa (to Python)
+
     Parameters
     ----------
     dim : int

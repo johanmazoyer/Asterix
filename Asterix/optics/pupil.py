@@ -233,7 +233,7 @@ def grey_pupil(dim, rad, rad_inner=None, fac=10):
         Dimension of the square array the pupil will be embedded in, in pixels.
     rad : float
         Radius of the round pupil, in pixels.
-    rad_inner : flaot, optional
+    rad_inner : float, optional
         Radius of the central obscuration, in pixels.
     fac : int
         Oversampling factor of the pupil.
