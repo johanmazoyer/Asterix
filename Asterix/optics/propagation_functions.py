@@ -188,7 +188,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     Parameters
     ----------
     pup : 2D array (complex or real)
-        If retscale == 0
+        if retscale == 0
             electric field at z=0
             CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
             where 'dimpup' is the pup array dimension
@@ -205,9 +205,9 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
          if z>0: entrance beam radius in pixel
          if z<0: output beam radius in pixel
     retscale : int 0 or 1:
-        IF NOT 0, the function returns the scales
+        if not 0, the function returns the scales
         of the input and output arrays
-        IF 0, the function returns the output
+        if 0, the function returns the output
         electric field (see Returns)
 
     Returns
