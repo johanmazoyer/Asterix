@@ -479,7 +479,7 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
         sens = -1
 
     if center_pos.lower() not in ['pp', 'pb', 'bp', 'bb']:
-        raise Exception("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
+        raise ValueError("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
 
     if center_pos.lower()[0] == 'p':
         direct = np.array([Nx // 2, Ny // 2])
