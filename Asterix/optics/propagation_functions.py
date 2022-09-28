@@ -544,19 +544,28 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     return butterworth
 
 
-def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), ls_outer=2):
+def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, filter_order=15, alpha=15):
     """
+    # TODO: function description
+
+    AUTHOR: R. Galicher (in IDL)
+            ILa (to Python)
 
     Parameters
     ----------
     pup : 2D array
-
+        Input mage array containing the entrance pupil of the optical system.
     fpm : 2D array
-
-    nbres : 1D array
-
-    ls_outer : float
-
+        Complex focal-plane mask.
+    nbres : 1D array or list
+        List of the number of resolution elements in the total image plane for all propagation layers.
+    samp_outer : float
+        Sampling in the outermost layer of propagations.
+    filter_order : int
+        Order of the Butterworth filter.
+    alpha : float
+        Scale factor for the filter size. The larger this number, the smaller the filter size witih respect to the
+        input array.
 
     Returns
     -------
@@ -566,9 +575,7 @@ def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), ls_outer=2):
 
     ### Inner part of the focal plane
     # Butterworth filter
-    b_order = 15
-    alph = 15
-    but0 = butterworth_circle(dim, dim / alph, b_order, -0.5, -0.5)
+    but0 = butterworth_circle(dim, dim / alpha, filter_order, -0.5, -0.5)
 
     # E-field before the FPM in inner part of focal plane
     efield_before_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres[0],
@@ -582,12 +589,12 @@ def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), ls_outer=2):
     ### From inner to outer part of FPM
     for k in range(nbres.shape[0] - 1):
         # Butterworth filter in each layer
-        sizebut_here = dim / alph * nbres[k] / nbres[k + 1]
-        but = (1 - butterworth_circle(dim, sizebut_here, b_order, xshift=-0.5, yshift=-0.5)) * butterworth_circle(dim,
-                                                                                                                dim / alph,
-                                                                                                                b_order,
-                                                                                                                xshift=-0.5,
-                                                                                                                yshift=-0.5)
+        sizebut_here = dim / alpha * nbres[k] / nbres[k + 1]
+        but = (1 - butterworth_circle(dim, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * butterworth_circle(dim,
+                                                                                                        dim / alpha,
+                                                                                                        filter_order,
+                                                                                                        xshift=-0.5,
+                                                                                                        yshift=-0.5)
 
         # E-field before the FPM in each layer
         ef_pre_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres[k + 1],
@@ -603,9 +610,9 @@ def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), ls_outer=2):
 
     ### Outer part of the FPM
     # Butterworth filter in outer part of focal plane
-    nbres_outer = dim / ls_outer
-    sizebut_outer = dim / alph * nbres[-1] / nbres_outer
-    but_outer = 1 - butterworth_circle(dim, sizebut_outer, b_order, xshift=-0.5, yshift=-0.5)
+    nbres_outer = dim / samp_outer
+    sizebut_outer = dim / alpha * nbres[-1] / nbres_outer
+    but_outer = 1 - butterworth_circle(dim, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
 
     # E-field before the FPM in outer part of focal plane
     ef_pre_fpm_outer = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres_outer,
