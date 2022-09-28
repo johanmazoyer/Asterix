@@ -381,9 +381,9 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     Parameters
     ----------
     pup : 2D array (complex or real)
-            electric field at z=0
-            CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
-            where 'dimpup' is the pup array dimension
+        electric field at z=0
+        CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
+        where 'dimpup' is the pup array dimension
     lam : float
          wavelength in meter
     z : float
@@ -400,8 +400,8 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     Returns
     ------
     pup_z : 2D array (complex) of size [2*gamma*prad,2*gamma*prad]
-            electric field after propagating in free space along
-            a distance z
+        electric field after propagating in free space along
+        a distance z
     """
 
     diam_pup_in_m = 2 * rad
@@ -520,15 +520,16 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     Parameters
     ----------
     dim : int
-        Dimension of 2D output array in pixels.
+        Dimension of 2D output array in pixels. If even, filter will be centered on a pixel, but can be shifted to
+        between pixels by using xshift=-0.5 and yshift=-0.5. If uneven, filter will be centered between pixels.
     size_filter : int
-        Size of the filter in pixels.
+        Inverse size of the filter.
     order : int
         Order of the filter.
     xshift : float
-        Shift in x direction in pixels.
+        Shift of filter with respect to its array in the x direction, in pixels.
     yshift : float
-        Shift in y direction in pixels.
+        Shift of filter with respect to its array in the y direction, in pixels.
 
     Returns
     -------
