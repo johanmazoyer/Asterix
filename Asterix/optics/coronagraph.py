@@ -601,6 +601,8 @@ def fqpm_mask(dim):
     """
     Create a FQPM phase mask.
 
+    AUTHOR: Axel Potier
+
     Parameters
     ----------
     dim : int
@@ -628,6 +630,9 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
     Create a wrapped vortex phase mask.
 
     Analytical calculation of this phase mask coronagraph see [Galicher2020]_.
+
+    AUTHOR: Raphaël Galicher (in IDL)
+            ILa (to Python)
 
     .. [Galicher2020] Galicher et al. 2020, "A family of phase masks for broadband coronagraphy example of the wrapped
             vortex phase mask theory and laboratory demonstration "
@@ -750,6 +755,9 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
 def butterworth_circle(dim, sizebut, order=5, xshift=0, yshift=0):
     """
     Return a circular Butterworth filter.
+
+    AUTHOR: Raphaël Galicher (in IDL)
+            ILa (to Python)
     
     Parameters
     ----------
