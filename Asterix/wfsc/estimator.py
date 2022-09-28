@@ -84,6 +84,7 @@ class Estimator:
             raise Exception("testbed must be an OpticalSystem object")
 
         self.technique = Estimationconfig["estimation"].lower()
+        self.polychrom = Estimationconfig["polychromatic"].lower()
 
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 
@@ -115,10 +116,13 @@ class Estimator:
                                                  self.dimEstim,
                                                  cutsvdPW,
                                                  matrix_dir,
-                                                 wavelengths=testbed.wavelength_0)
+                                                 polychromatic = self.polychrom)
 
             # Saving PW matrix in Labview directory
             if save_for_bench:
+                if self.polychrom in ['broadband', 'multiwl']:
+                    print("cannot save PW matrix for THD in mode "+ self.polychrom)
+                    pass
                 if not os.path.exists(realtestbed_dir):
                     print("Creating directory: " + realtestbed_dir)
                     os.makedirs(realtestbed_dir)
@@ -221,33 +225,37 @@ class Estimator:
 
             result_estim = []
 
-            for i, wavei in enumerate(wavelength_vec):
+            if self.polychrom in ['centralwl','multiwl']:
+                for i, wavei in enumerate(wavelength_vec):
+                    resultatestimation = testbed.todetector(entrance_EF=entrance_EF[i],
+                                                            voltage_vector=voltage_vector,
+                                                            wavelength=wavei)
+                    result_estim.append(resizing(resultatestimation, self.dimEstim))
+            else:
+                raise Exception("do not use polychrom == 'broadband' right now")
 
-                resultatestimation = testbed.todetector(entrance_EF=entrance_EF[i],
-                                                        voltage_vector=voltage_vector,
-                                                        wavelength=wavei)
-                result_estim.append(resizing(resultatestimation, self.dimEstim))
 
-            return result_estim[
-                0]  # TODO [0] should be removed, I only put that so that I can continue to run the code while I develop in polychromatic
+            return result_estim
 
         elif self.technique in ["pairwise", "pw"]:
 
             result_estim = []
+            if self.polychrom in ['centralwl','multiwl']:
+                for i, wavei in enumerate(wavelength_vec):
 
-            for i, wavei in enumerate(wavelength_vec):
+                    Difference = wfs.simulate_pw_difference(entrance_EF[i],
+                                                            testbed,
+                                                            self.posprobes,
+                                                            self.dimEstim,
+                                                            self.amplitudePW,
+                                                            voltage_vector=voltage_vector,
+                                                            wavelength=wavei)
+                    result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[i], **kwargs))
 
-                Difference = wfs.simulate_pw_difference(entrance_EF[i],
-                                                        testbed,
-                                                        self.posprobes,
-                                                        self.dimEstim,
-                                                        self.amplitudePW,
-                                                        voltage_vector=voltage_vector,
-                                                        wavelength=wavei)
-                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix, **kwargs))
+                    return result_estim
+            else:
+                raise Exception("do not use polychrom == 'broadband' right now")
 
-                return result_estim[
-                    0]  # TODO [0] should be removed, I only put that so that I can continue to run the code while I develop in polychromatic
 
         elif self.technique == 'coffee':
             return np.zeros((self.dimEstim, self.dimEstim))
