@@ -6,14 +6,13 @@ import numpy as np
 
 def resizing(image, new):
     """
-    Resample the focal plane image to create a 2D array with new dimensions
+    Resample the focal plane image to create a 2D array with new dimensions.
 
     - v1.0 2020 A. Potier
     - v2.0 19/03/21 J Mazoyer clean names + if image is real, result is real.
-    - v3.0 05/2021 J Mazoyer Replacing currenly with standard scipy function zoom
+    - v3.0 05/2021 J Mazoyer Replacing currently with standard scipy function zoom
     - v4.0 06/2022 J Mazoyer Replacing with the rebin and crop function following discussion with L. Mugnier
     - v5.0 08/2022 J Mazoyer Rename to resizing
-
 
     Parameters
     ----------
@@ -26,7 +25,6 @@ def resizing(image, new):
     ------
     Gvector: 2D array
         image resampled into new dimensions
-
     """
 
     dimScience = len(image)
@@ -34,9 +32,8 @@ def resizing(image, new):
 
     Estim_bin_factor = int(np.round(dimScience / dimEstim))
 
-    # if the image was not orinigally a factor of Estim_bin_factor we crop a few raws
+    # if the image was not originally a factor of Estim_bin_factor we crop a few raws
     slightly_crop_image = crop_or_pad_image(image, dimEstim * Estim_bin_factor)
-
     resized_image = resize_crop_bin(slightly_crop_image, dimEstim)
 
     return resized_image
@@ -44,7 +41,8 @@ def resizing(image, new):
 
 def cropimage(img, ctr_x, ctr_y, newsizeimg):
     """
-    Crop an image to create a 2D array with new dimensions
+    Crop an image to create a 2D array with smaller dimensions.
+
     AUTHOR: Axel Potier
 
     Parameters
@@ -55,7 +53,6 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
         Center of the input image in the x direction around which you make the cut
     ctr_y: float
         Center of the input image in the y direction around which you make the cut
-    
     newsizeimg: int
         Size of the new image
 
@@ -63,7 +60,6 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
     ------
     Gvector: 2D array
         squared image cropped into new dimensions
-
     """
     newimgs2 = newsizeimg / 2
     return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2), int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]
@@ -71,7 +67,7 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
 
 def crop_or_pad_image(image, dimout):
     """
-    crop or padd with zero to a 2D image depeding: 
+    Crop or padd with zero to a 2D image depending on:
         - if dimout < dim : cropped image around pixel (dim/2,dim/2)
         - if dimout > dim : image around pixel (dim/2,dim/2) surrounded by 0
 
@@ -80,11 +76,9 @@ def crop_or_pad_image(image, dimout):
     Parameters
     ----------
     image : 2D array (float, double or complex)
-            dim x dim array
-
+        dim x dim array to crop or pad
     dimout : int
          dimension of the output array
-
     Returns
     ------
     im_out : 2D array (float)
@@ -106,33 +100,30 @@ def crop_or_pad_image(image, dimout):
 
 def rebin(image, factor=4, center_on_pixel=False):
     """
-    bin the image by a factor. The dimension dim MUST be divisible by factor
-    or it will raise an error. It this is not the case, use function resize_crop_bin
+    Bin the image by a give factor. The dimensions of the image MUST be divisible by 'factor'
+    or teh function. will raise an error. It this is not the case, use function resize_crop_bin().
 
-    we add a center_on_pixel option . If false we shift the image to put 0 freq in the corner 
-    before binning and then shift back.
-    The goal is if you have a PSF center in between 4 pixel this property is conserved.
-    If center_on_pixel= True there is no way to conserve this property unless we 
-    are binning by odd number
+    We add a 'center_on_pixel' option. If false, we shift the image to put the 0-frequency in the corner
+    before binning and then shift it back to the center.
+    The goal is if you have a PSF center in between 4 pixels, this property is conserved.
+    If center_on_pixel=True there is no way to conserve this property unless we
+    are binning by an odd number.
 
     AUTHOR: Johan Mazoyer
 
     Parameters
     ----------
     image : 2D array (float, double or complex)
-            dim1 x dim2 array with dim1 and dim2 are divisible by factor
-
+            dim1 x dim2 array with dim1 and dim2 are divisible by 'factor'
     factor : int
          factor of bin init_image size / final_image size
-
-    center_on_pixe :bool (optional, default: False). 
-                If False the PSf is shifhted before bining
+    center_on_pixel : bool (optional, default: False).
+            If False the PSF is shifted before binning.
 
     Returns
     ------
     im_out : 2D array (float)
         resized image of size dim1 // 4 x dim2//4
-
     """
 
     dim1, dim2 = image.shape
@@ -150,15 +141,15 @@ def rebin(image, factor=4, center_on_pixel=False):
 
 def resize_crop_bin(image, new_dim, center_on_pixel=False):
     """
-    resize the imge by : 
-        - cropping entrance image to nearest multiplicative number of new_dim
-        - bin the image to new_dim size
+    Resize the image by :
+        1. Cropping the entrance image to the nearest multiplicative number of new_dim,
+        2. binning the image to size (new_dim, new_dim).
 
-    we add a center_on_pixel option . If false we shift the image to put 0 freq in the corner 
-    before binning and then shift back.
-    The goal is if you have a PSF center in between 4 pixel this property is conserved.
-    If center_on_pixel= True there is no way to conserve this property unless we 
-    are binning by odd number
+    We add a 'center_on_pixel' option. If false, we shift the image to put the 0-frequency in the corner
+    before binning and then shift it back to the center.
+    The goal is if you have a PSF center in between 4 pixels, this property is conserved.
+    If center_on_pixel=True there is no way to conserve this property unless we
+    are binning by an odd number.
 
     AUTHOR: Johan Mazoyer
 
@@ -166,18 +157,15 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
     ----------
     image : 2D array (float, double or complex)
             dim1 x dim2 array with dim1 and dim2 are divisible by factor
-
     new_dim : int
-         dimenstion of output image. new_dim must be samller than dim of the entrance image
-
+         Dimension of output image. new_dim must be smaller than dim of the entrance image
     center_on_pixel :bool (optional, default: False). 
-                If False the PSf is shifhted before bining
+        If False the PSf is shifted before binning.
 
     Returns
     ------
-    im_out : 2D array (float)
+    return_image : 2D array (float)
         resized image of size new_dim x new_dim
-
     """
 
     dim1, dim2 = image.shape
@@ -189,7 +177,7 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
     dim_smaller = min(dim1, dim2)
     factor = dim_smaller // new_dim
 
-    # crop at the right size. Careful with the centering @TODO check
+    # crop at the right size. Careful with the centering #TODO check
     return_image = cropimage(image, dim1 // 2, dim2 // 2, factor * new_dim)
 
     # Bin at the right size
@@ -200,8 +188,7 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
 
 def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False, norm="backward"):
     """
-    This function returns an image shifted by a non-integer amount via a
-    Fourier domain computation.
+    This function returns an image shifted by a non-integer amount via a Fourier-domain computation.
 
     (Based on subpixel_shift.pro from ONERA's IDL library by Laurent Mugnier)
     Renamed into ft_subpixel_shift to be clear on its purpose
@@ -212,31 +199,30 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
     05/09/2022 : add complex_array param Mazoyer
     05/09/2022 : we invert xshift and yshift to be in agreement with np.roll (integer shift in numpy) Mazoyer
     06/09/2022 : added integer shift if we can Mazoyer
-    06/09/2022 : works for non square array / non even dimensions array Mazoyer
+    06/09/2022 : works for non-square array / non even dimensions array Mazoyer
 
     Parameters
     ----------
     image : 2D numpy array 
-            intial image to be shifted
+            Initial image to be shifted.
     xshift : float
-            amount of desired shift in X direction.
+            Amount of desired shift in X direction.
     yshift : float
-            amount of desired shift in Y direction.
-    fourier : bool (optional, , default False) 
-            if "True", then the input image is assumed to be already Fourier 
+            Amount of desired shift in Y direction.
+    fourier : bool (optional, default False)
+            If True, then the input image is assumed to be already Fourier
             transformed, i.e. the input is FFT^-1(image).
-    complex_image : bool (optional, , default False)  
-            if "False", then the output array will be
-            assumed to be real. If you want to shift an complex array, use complex_image = True
-    
+    complex_image : bool (optional, default False)
+            If "False", then the output array will be
+            assumed to be real. If you want to shift a complex array, use complex_image = True.
     norm : string default 'backward'
             'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
             https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
-            if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse = True)
-            if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse = True)
-            if 'ortho' 1/sqrt(N) normalisation is done in both directions.
-            Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
-            The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
+            If 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse=True).
+            If 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse=True).
+            If 'ortho' 1/sqrt(N) normalisation is done in both directions.
+            Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane.
+            The default is 'backward' to be consistent with numpy.fft.fft2() and numpy.fft.ifft2().
                
     Returns
     ------
@@ -294,17 +280,15 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
     Parameters
     ----------
     init_size_large : int
-        inital size
-
-    factor_dezoom : float
-        factor to be zoomed out (final_image size / init_image size). factor_dezoom<1
-
+        initial size
+    factor_zoomout : float
+        factor to be zoomed out (final_image size / init_image size). factor_zoomout < 1
     max_allowed_fft_size : int 
         the maximum size to check
     
     Returns
     ------
-    dimensions : tupple of float of len 2
+    dimensions : tuple of 2 floats
         best_size_large, best_size_small
     """
     best_size_large = init_size_large
@@ -334,12 +318,12 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
 
 def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size=2000):
     """
-    This function returns an image zoom out with Fourier domain computation. The array is padded
+    This function returns an image zoomed out with Fourier-domain computation. The array is padded
     until max_allowed_fft_size and takes the best size so that factor_zoomout*size_padded is the closest 
     to an integer. 
 
     BE CAREFUL WITH THE CENTERING, IT IS HARD TO FIND A GOOD RULE FOR ALL CASES (ODD OR EVEN DIMENSION IN OUTPUT AND INPUT)
-    SO IT IS WHAT IT IS AND USERS ARE ENCOURAGED TO CHECK IF THIS IS WHAT THEY WANT
+    SO IT IS WHAT IT IS AND USERS ARE ENCOURAGED TO CHECK IF THIS IS WHAT THEY WANT.
 
     AUTHORS: J Mazoyer
 
@@ -348,24 +332,19 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
     Parameters
     ----------
     image : 2D numpy array
-        inital array. Must be square 
-
-    factor_dezoom : float
-        factor to be zoomed out (final_image size / init_image size). factor_dezoom<1
-
+        Initial array, must be square .
+    factor_zoomout : float
+        Factor to be zoomed out by (final_image size / init_image size). factor_zoomout < 1
     complex_image : bool(optional input, default False) 
-            if this keyword is "False", then the output array will be
-            assumed to be real. If you want to shift an complex array, use complex_image = True
-
+        If this keyword is "False", then the output array will be
+        assumed to be real. If you want to shift a complex array, use complex_image=True.
     max_allowed_fft_size : int (optional input, default 2000)
-        the maximum size of the first fft. If you increase, you might find a better match but it might take longer
+        The maximum size of the first fft. If you increase, you might find a better match, but it might take longer.
 
-        
     Returns
     ------
-    zoomed_out_array : 2D numpy array
+    smaller_image_cropped : 2D numpy array
         zoomed out array
-
     """
     sz = np.shape(image)
     NP = sz[0]

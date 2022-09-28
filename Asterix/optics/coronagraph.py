@@ -3,7 +3,6 @@
 
 import os
 import numpy as np
-from astropy.io import fits
 
 from Asterix.utils import save_plane_in_fits, crop_or_pad_image
 import Asterix.optics.optical_systems as optsy
@@ -14,16 +13,14 @@ import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 class Coronagraph(optsy.OpticalSystem):
     """
-    initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane)
-    coronagraph is a sub class of OpticalSystem.
+    Initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane).
 
     AUTHOR : Johan Mazoyer
-
     """
 
     def __init__(self, modelconfig, coroconfig, Model_local_dir=None):
         """
-        Initialize a coronograph object
+        Initialize a coronagraph object.
 
         AUTHOR : Johan Mazoyer
 
@@ -57,7 +54,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         self.string_os += '_Apod' + self.apod_pup.string_os
 
-        #coronagraph focal plane mask type
+        # Define coronagraph focal plane mask type
         self.corona_type = coroconfig["corona_type"].lower()
 
         self.string_os += '_' + self.corona_type
@@ -121,10 +118,7 @@ class Coronagraph(optsy.OpticalSystem):
         elif self.corona_type == "wrapped_vortex":
             self.prop_apod2lyot = 'mft'
             self.string_os += '2020'
-            self.FPmsk = list([
-                self.EF_from_phase_and_ampl(phase_abb=crop_or_pad_image(
-                    fits.getdata(coroconfig["wrapped_vortex_fits_file"]), self.dimScience))
-            ])
+            self.FPmsk = self.WrappedVortex()
             self.perfect_coro = True
 
         else:
@@ -148,7 +142,7 @@ class Coronagraph(optsy.OpticalSystem):
 
             if coroconfig["filename_instr_apod"] == "Clear":
                 # We need a round pupil only to measure the response
-                # of the coronograph to a round pupil to remove it
+                # of the coronagraph to a round pupil to remove it
                 # THIS IS NOT THE ENTRANCE PUPIL,
                 # this is a round pupil of the same size
                 pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad)
@@ -179,8 +173,8 @@ class Coronagraph(optsy.OpticalSystem):
                    dir_save_all_planes=None,
                    **kwargs):
         """
-        Propagate the electric field from apod plane before the apod
-        pupil to Lyot plane after Lyot pupil
+        Propagate the electric field from the apodizer plane before the apodizer pupil to the Lyot plane after the
+        Lyot pupil.
 
         AUTHOR : Johan Mazoyer
 
@@ -188,25 +182,19 @@ class Coronagraph(optsy.OpticalSystem):
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Can also be a float scalar in which case entrance_EF is constant
-            default is 1.
-            Electric field in the pupil plane a the entrance of the system.
-
-        wavelength : float. Default is self.wavelength_0 the reference wavelength
+        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]; or float
+            Can also be a float scalar in which case entrance_EF is constant; default=1.
+            Electric field in the pupil plane at the entrance of the system.
+        wavelength : float
             Current wavelength in m.
-
-        noFPM : bool (default: False)
-            if True, remove the FPM if one want to measure a un-obstructed PSF
-        
-        EF_aberrations_introduced_in_LS: 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Can also be a float scalar in which case entrance_EF is constant
-            default is 1.
-            electrical field created by the downstream aberrations introduced directly in the Lyot Stop
-        
-        dir_save_all_planes : default None. 
-            If not None, directory to save all planes in fits for debugging purposes.
-            This can generate a lot of fits especially if in a loop, use with caution
+            Default is self.wavelength_0, the reference wavelength.
+        noFPM : bool
+            If True, remove the FPM if one want to measure an un-obstructed PSF; default False.
+        EF_aberrations_introduced_in_LS : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
+            Electrical field created by the downstream aberrations introduced directly in the Lyot Stop.
+            Can also be a float scalar in which case entrance_EF is constant; default=1.
+        dir_save_all_planes : string, default None
+            Directory to save all planes into fits files if save_all_planes_to_fits=True.
 
         Returns
         ------
@@ -241,7 +229,7 @@ class Coronagraph(optsy.OpticalSystem):
             name_plane = 'EF_PP_after_apod' + f'_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, input_wavefront_after_apod)
 
-        # we take the convention that for all propation methods, the PSF must be
+        # we take the convention that for all propagation methods, the PSF must be
         # "in between 4 pixels" in the focal plane.
 
         if self.prop_apod2lyot == "fft":
@@ -389,16 +377,15 @@ class Coronagraph(optsy.OpticalSystem):
 
     def FQPM(self):
         """
-        Create a Four Quadrant Phase Mask coronagraph
+        Create a Four Quadrant Phase Mask coronagraph.
+
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
 
-
         Returns
         ------
-        FQPM : list of len(self.wav_vec) 2D arrays   
-            complex transmission of the FQPM mask at all wl
-        
+        fqpm : list of len(self.wav_vec) 2D arrays
+            Complex transmission of the FQPM mask at all wavelengths.
         """
 
         if self.prop_apod2lyot == "fft":
@@ -406,15 +393,7 @@ class Coronagraph(optsy.OpticalSystem):
         else:
             maxdimension_array_fpm = self.dimScience
 
-        xx, yy = np.meshgrid(
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2,
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2)
-
-        fqpm_thick_vert = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
-        fqpm_thick_vert[np.where(xx < 0)] = 1
-        fqpm_thick_hor = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
-        fqpm_thick_hor[np.where(yy >= 0)] = 1
-        fqpm_thick = fqpm_thick_vert - fqpm_thick_hor
+        phase_fqpm = fqpm_mask(maxdimension_array_fpm)
 
         fqpm = []
         for i, wav in enumerate(self.wav_vec):
@@ -424,36 +403,34 @@ class Coronagraph(optsy.OpticalSystem):
                 dim_fp = self.dimScience
 
             phase4q = np.zeros((dim_fp, dim_fp))
-            fqpm_thick_cut = crop_or_pad_image(fqpm_thick, dim_fp)
+            fqpm_thick_cut = crop_or_pad_image(phase_fqpm, dim_fp)
             phase4q[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
 
             if self.achrom_fqpm:
-                # if we want to do an an achromatic_fqpm, we do not include a variation
+                # If we want to do an achromatic_fqpm, we do not include a variation
                 # of the phase with the wl.
                 fqpm.append(np.exp(1j * phase4q))
             else:
-                # in the general case, we use the EF_from_phase_and_ampl which handle the phase
-                # chromaticity.
+                # In the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
                 fqpm.append(self.EF_from_phase_and_ampl(phase_abb=phase4q, wavelengths=wav))
 
         return fqpm
 
     def Vortex(self, vortex_charge=2):
         """
-        Create a charge2 vortex.
+        Create a vortex coronagraph with charge 'vortex_charge'.
 
         AUTHOR : Johan Mazoyer
 
         Parameters
         ------
-        Charge : int, defaut 2
-            charge of the vortex. can be 2, 4, 6. Defaut is charge 2
+        vortex_charge : int, default=2
+            Charge of the vortex. Usually a positive, even number (2, 4, 6). Default is charge 2.
 
         Returns
         ------
-        vortex_fpm : list of 2D numpy array
-            The FP mask at all wl
-
+        vortex : list of 2D numpy array
+            The FP mask at all wavelengths.
         """
 
         if self.prop_apod2lyot == "fft":
@@ -480,16 +457,59 @@ class Coronagraph(optsy.OpticalSystem):
 
         return vortex
 
+    def WrappedVortex(self, offset=0, cen_shift=(0,0)):
+        """
+        Create a wrapped vortex coronagraph.
+
+        Parameters
+        ----------
+        offset : float
+            General offset to the whole ramp; default 0.
+        cen_shift : tuple of floats
+            x- and y-shift of the center of the mask with respect to the center of the array; default (0,0).
+
+        Returns
+        -------
+        wrapped_vortex : list of 2D numpy array
+            The FP masks at all wavelengths.
+        """
+        if self.prop_apod2lyot == "fft":
+            maxdimension_array_fpm = np.max(self.dim_fp_fft)
+        else:
+            maxdimension_array_fpm = self.dimScience
+
+        # TODO: The below should not be hard-coded, but ok until we actually want to be able to use different values.
+        thval = np.array([0, 3, 4, 5, 8]) * np.pi / 8
+        phval = np.array([3, 0, 1, 2, 1]) * np.pi
+        jump = np.array([2, 2, 2, 2]) * np.pi
+        _, phase_wrapped_vortex = create_wrapped_vortex_mask(dim=maxdimension_array_fpm,
+                                                             thval=thval, phval=phval, jump=jump,
+                                                             offset=offset, cen_shift=cen_shift)
+
+        wrapped_vortex = list()
+        for i, wav in enumerate(self.wav_vec):
+            if self.prop_apod2lyot == "fft":
+                dim_fp = self.dim_fp_fft[i]
+            else:
+                dim_fp = self.dimScience
+
+            phasevortex_cut = crop_or_pad_image(phase_wrapped_vortex,
+                                                dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
+            wrapped_vortex.append(np.exp(1j * phasevortex_cut))
+
+        return wrapped_vortex
+
     def KnifeEdgeCoro(self):
         """
-        Create a Knife edge coronagraph of size (dimScience,dimScience)
+        Create a Knife edge coronagraph of size (dimScience,dimScience).
+
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
 
         Returns
         ------
-        Knife FPM : list of len(self.wav_vec) 2D arrays 
-            Complex transmission of the Knife edge coronagraph mask at all wl
+        knife_allwl : list of len(self.wav_vec) 2D arrays
+            Complex transmission of the knife-edge coronagraph mask at all wavelengths.
 
         """
         if self.prop_apod2lyot == "fft":
@@ -503,7 +523,6 @@ class Coronagraph(optsy.OpticalSystem):
         # to define the orientation of the coronagraph
 
         #  Number of pixels per resolution element at central wavelength
-
         xx, yy = np.meshgrid(np.arange(maxdimension_array_fpm), np.arange(maxdimension_array_fpm))
 
         Knife = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
@@ -528,18 +547,17 @@ class Coronagraph(optsy.OpticalSystem):
 
     def ClassicalLyot(self):
         """
-        Create a classical Lyot coronagraph of radius rad_LyotFP 0
+        Create a classical Lyot coronagraph of radius rad_LyotFP.
+
         AUTHOR : Johan Mazoyer
 
         Returns
         ------
-        classical Lyot fpm : list of 2D numpy array
-            The FP mask at all wl
-
+        ClassicalLyotFPM_allwl : list of 2D numpy arrays
+            The FP masks at all wavelengths.
         """
 
         rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
-
         ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm, rad_LyotFP_pix)
 
         ClassicalLyotFPM_allwl = []
@@ -550,19 +568,18 @@ class Coronagraph(optsy.OpticalSystem):
 
     def HLC(self):
         """
-        Create a HLC of radius rad_LyotFP 0
+        Create an HLC of radius rad_LyotFP.
+
         AUTHOR : Johan Mazoyer
 
         Returns
         ------
-        classical Lyot hlc : list of 2D numpy array
-            The FP mask at all wl
-        
+        hlc_all_wl : list of 2D numpy array
+            The FP masks at all wavelengths.
         """
 
         # we create a Classical Lyot Focal plane
         ClassicalLyotFP = self.ClassicalLyot()[0]
-
         whClassicalLyotstop = np.where(ClassicalLyotFP == 0.)
 
         # we define phase and amplitude for the HLC at the reference WL
@@ -578,3 +595,191 @@ class Coronagraph(optsy.OpticalSystem):
                 self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
 
         return hlc_all_wl
+
+
+def fqpm_mask(dim):
+    """
+    Create a FQPM phase mask.
+
+    AUTHOR: Axel Potier
+
+    Parameters
+    ----------
+    dim : int
+       Number of pixels for the resulting phase mask.
+
+    Returns
+    -------
+    fqpm_thick : array
+        Array holding the phase mask, in radians.
+    """
+    xx, yy = np.meshgrid(np.arange(dim) - dim / 2,
+                         np.arange(dim) - dim / 2)
+
+    fqpm_thick_vert = np.zeros((dim, dim))
+    fqpm_thick_vert[np.where(xx < 0)] = 1
+    fqpm_thick_hor = np.zeros((dim, dim))
+    fqpm_thick_hor[np.where(yy >= 0)] = 1
+    fqpm_thick = fqpm_thick_vert - fqpm_thick_hor
+
+    return fqpm_thick
+
+
+def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0,0)):
+    """
+    Create a wrapped vortex phase mask.
+
+    Analytical calculation of this phase mask coronagraph see [Galicher2020]_.
+
+    AUTHOR: Raphaël Galicher (in IDL)
+            ILa (to Python)
+
+    .. [Galicher2020] Galicher et al. 2020, "A family of phase masks for broadband coronagraphy example of the wrapped
+            vortex phase mask theory and laboratory demonstration "
+
+    Parameters
+    ----------
+    dim : int
+       Number of pixels for the resulting phase mask, needs to be even to keep center between pixels.
+    thval : array
+        Angle values at location of phase jumps. First is 0, last is pi, completing a half of a unit circle.
+    phval : array
+        Phase values corresponding to the angle values thval just after the phase jump happened.
+    jump : array
+        Phase jump between phase segments on the unit circle. Has one less element than thval and phval.
+    return_1d : bool
+        If True, return a 1D phase profile, otherwise a 2D phase mask; default False.
+    piperiodic: bool
+        If True, assume max(thval) is pi and return a pi-periodic mask. Needs to be True to get full 2D phase mask.
+    offset : float
+        General offset to the whole ramp; default 0.
+    cen_shift : tuple of floats
+        x- and y-shift of the center of the mask with respect to the center of the array, which is between pixels as
+        long as 'dim' is even; default (0,0).
+
+    Returns
+    -------
+    angles : array
+        Array holding angle values in radians. 1D array or 2D array depending on return_1d.
+    phase_mask : array
+        Array holding the phase mask, in radians. 1D array or 2D array depending on return_1d.
+
+    Examples
+    --------
+    ### Galicher et al 2020 mask (orientation for THD2 on sep-2022)
+    # Input parameters
+    thval = np.array([0, 3, 4, 5, 8]) * np.pi / 8
+    phval = np.array([3, 0, 1, 2, 1]) * np.pi
+    jump = np.array([2, 2, 2, 2]) * np.pi
+
+    # Create an dplot focal plane mask in 1D
+    angles_1d, phase_1d = create_wrapped_vortex_mask(dim=128, thval=thval, phval=phval, jump=jump, return_1d=True)
+    plt.figure(figsize=(16,8))
+    plt.plot(angles_1d, phase_1d)
+    plt.xlabel("Angle (rad)")
+    plt.ylabel("Phase (rad)")
+    plt.show()
+
+    # Create and plot focal plane mask in 2D
+    angles_2d, phase_2d = create_wrapped_vortex_mask(dim=128, thval=thval, phval=phval, jump=jump, return_1d=False)
+    plt.figure(figsize=(7,7))
+    plt.imshow(phase_2d, cmap="Reds", origin="lower")
+    plt.colorbar(label="Phase (rad)")
+    plt.show()
+    """
+    if phval.shape != thval.shape:
+        raise ValueError("The arrays 'phval' and 'thval' need to have the same shape.")
+
+    if return_1d:
+        # Create a continuous 1D phase ramp from 0 to pi, including an offset.
+        theta = (np.arange(dim) / (dim-1) * (np.max(thval)-np.min(thval)) + np.min(thval) + offset) % np.pi
+    else:
+        # Define the 2D theta array
+        ty = (np.arange(dim) - dim/2 - cen_shift[0] + 0.5)
+        tx = (np.arange(dim) - dim/2 - cen_shift[1] + 0.5)
+        xx, yy = np.meshgrid(ty, tx)
+        theta = (-(np.arctan2(yy, xx) - np.pi) + offset) % (2 * np.pi)
+
+    # Create empty phase mask.
+    phase = np.zeros_like(theta)
+
+    # Find the angles between thval[k] and thval[k+1].
+    for k in range(thval.shape[0]-1):
+        section = np.where((theta >= thval[k]) & (theta <= thval[k+1]))
+
+        # If such angles exist then:
+        if section[0].shape[0] != 0:
+
+            # 1st step (k=0): Create phase mask section going from phval[k] to phval[k+1].
+            if k == 0:
+                phase[section] = phval[k] + (theta[section]-thval[k]) / (thval[k+1]-thval[k]) * (phval[k+1]-phval[k])
+            # All other steps, do the same thing but add the phase shift jump[k-1] first.
+            else:
+                phase[section] = phval[k] + jump[k-1] + (theta[section]-thval[k]) / (thval[k+1]-thval[k]) * (phval[k+1]-phval[k]-jump[k-1])
+
+    if return_1d:
+        # Define the angle in radians.
+        theta = np.arange(dim) / (dim-1) * (np.max(thval)-np.min(thval)) + np.min(thval)
+
+        # If piperiodic is True, then assume max(thval) is pi and make phase pi-periodic.
+        if piperiodic:
+            angles = np.concatenate((theta, theta + np.pi))
+            phase_mask = np.concatenate((phase, phase))
+        else:
+            angles = theta
+            phase_mask = phase
+    else:
+        # If piperiodic is True, then assume max(thval) is pi and make phase pi-periodic.
+        if piperiodic:
+            # Find the angles between thval(k)+pi and thval(k+1)+pi.
+            for k in range(thval.shape[0]-1):
+                section = np.where((theta >= (thval[k] + np.pi)) & (theta <= (thval[k+1] + np.pi)))
+
+                # If such elements exist then:
+                if section[0].shape[0] != 0:
+
+                    # 1st step [k=1]: Create phase mask section going from phval[k] to phval[k+1].
+                    if k == 0:
+                        phase[section] = phval[k] + (theta[section] - thval[k] - np.pi) / (thval[k+1] - thval[k]) * (phval[k+1] - phval[k])
+                    # All other steps, do the same thing but add the phase shift jump[k-1] first.
+                    else:
+                        phase[section] = phval[k] + jump[k-1] + (theta[section] - thval[k] - np.pi) / (
+                                    thval[k+1] - thval[k]) * (phval[k+1] - phval[k] - jump[k-1])
+
+        angles = theta
+        phase_mask = phase
+
+    return angles, phase_mask
+
+
+def butterworth_circle(dim, sizebut, order=5, xshift=0, yshift=0):
+    """
+    Return a circular Butterworth filter.
+
+    AUTHOR: Raphaël Galicher (in IDL)
+            ILa (to Python)
+    
+    Parameters
+    ----------
+    dim : int
+        Dimension of 2D output array in pixels.
+    sizebut : int
+
+    order : int
+        Order of the filter.
+    xshift : int
+        Shift in x direction in pixels.
+    yshift : int
+        Shift in y direction in pixels.
+
+    Returns
+    -------
+    butterworth : array
+    """
+    ty = (np.arange(dim) - yshift - dim / 2)
+    tx = (np.arange(dim) - xshift - dim / 2)
+    xx, yy = np.meshgrid(ty, tx)
+
+    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx ** 2 + yy ** 2) / np.abs(sizebut) * 2) ** (2. * order))
+
+    return butterworth
