@@ -173,7 +173,7 @@ def mft(image,
 def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     """
     Fresnel propagation of electric field along a distance z
-    in a collimated beam and in Free space
+    in a collimated beam and in Free space.
 
     AUTHOR : Raphael Galicher
 
@@ -450,9 +450,15 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     return butterworth
 
 
-def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, filter_order=15, alpha=1.5):
+def prop_fpm_regional_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, filter_order=15, alpha=1.5):
     """
-    # TODO: function description
+    Calculate the coronagraphic electric field in th Lyot plane by using varying sampling in different parts of the FPM.
+
+    Starting from the electric field in an input pupil plane, propagate through a phase-mask coronagraph with
+    different sampling values in different rings around the FPM center. Each propagation goes from the pupil to the FPM
+    and then to the Lyot plane (without Lyot stop applied), using MFTs, while a (combination of) Butterworth filters
+    marks annular regions around the FPM center that are considered in the propagation in each step. The electric field
+    contribution from each step is then summed up to yield the total electric field in the Lyot plane (before the LS).
 
     AUTHOR: R. Galicher (in IDL)
             ILa (to Python)
@@ -470,7 +476,7 @@ def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, fi
     filter_order : int
         Order of the Butterworth filter.
     alpha : float
-        Scale factor for the filter size. The larger this number, the smaller the filter size witih respect to the
+        Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
         input array.
 
     Returns
@@ -479,18 +485,13 @@ def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, fi
     """
     dim = pup.shape[0]
 
-    ### Inner part of the focal plane
-    # Butterworth filter
-    but0 = butterworth_circle(dim, dim / alpha, filter_order, -0.5, -0.5)
+    # Innermost part of the focal plane
+    but_inner = butterworth_circle(dim, dim / alpha, filter_order, -0.5, -0.5)
+    efield_before_fpm_inner = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres[0])
+    efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner, real_dim_input=dim, dim_output=dim,
+                           nbres=nbres[0], inverse=True)
 
-    # E-field before the FPM in inner part of focal plane
-    efield_before_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres[0])
-
-    # Total E-field before the LS
-    efield_before_ls = mft(efield_before_fpm * fpm * but0, real_dim_input=dim, dim_output=dim, nbres=nbres[0],
-                           inverse=True)
-
-    ### From inner to outer part of FPM
+    # From inner to outer part of FPM
     for k in range(nbres.shape[0] - 1):
         # Butterworth filter in each layer
         sizebut_here = dim / alpha * nbres[k] / nbres[k + 1]
@@ -499,26 +500,18 @@ def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, fi
                                                                                                         filter_order,
                                                                                                         xshift=-0.5,
                                                                                                         yshift=-0.5)
-
-        # E-field before the FPM in each layer
         ef_pre_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres[k + 1])
-
-        # E-field before the LS in each layer
         ef_pre_ls = mft(ef_pre_fpm * fpm * but, real_dim_input=dim, dim_output=dim, nbres=nbres[k + 1], inverse=True)
 
-        # Total E-field before the LS
+        # Sum up E-field contributions before the LS
         efield_before_ls += ef_pre_ls
 
-    ### Outer part of the FPM
-    # Butterworth filter in outer part of focal plane
+    # Outer part of the FPM
     nbres_outer = dim / samp_outer
     sizebut_outer = dim / alpha * nbres[-1] / nbres_outer
     but_outer = 1 - butterworth_circle(dim, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
 
-    # E-field before the FPM in outer part of focal plane
     ef_pre_fpm_outer = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres_outer, inverse=True)
-
-    # E-field before the LS in outer part of focal plane
     ef_pre_ls_outer = mft(ef_pre_fpm_outer * fpm * but_outer, real_dim_input=dim, dim_output=dim, nbres=nbres_outer,
                           inverse=True)
 
