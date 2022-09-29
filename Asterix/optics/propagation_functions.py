@@ -450,7 +450,7 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     return butterworth
 
 
-def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, filter_order=15, alpha=15):
+def prop_fpm_layered_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, filter_order=15, alpha=1.5):
     """
     # TODO: function description
 
