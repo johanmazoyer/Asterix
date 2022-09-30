@@ -4,7 +4,7 @@ from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional
 
 def test_mft_centering():
     """
-    Test default centering of MFT, which in Asterix isi defined to be from between pixels to between pixels.
+    Test default centering of MFT, which in Asterix is defined to be from in between pixels to in between pixels.
     """
     pdim = 8
     rad = pdim / 2
@@ -80,12 +80,12 @@ def test_prop_area_sampling():
     # Uniform-sampling propagation
     pre_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
     post_fpm = pre_fpm * np.exp(1j * fpm)
-    pre_ls_direct = mft(post_fpm, real_dim_input=dim, dim_output=dim, nbres=nbres_direct, inverse=True)
-    post_ls_direct = pre_ls_direct * lyot_stop
+    pre_ls_uniform = mft(post_fpm, real_dim_input=dim, dim_output=dim, nbres=nbres_direct, inverse=True)
+    post_ls_uniform = pre_ls_uniform * lyot_stop
 
-    coro_ef_direct = mft(post_ls_direct, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
-    coro_psf_direct = np.abs(coro_ef_direct) ** 2 / norm
+    coro_ef_uniform = mft(post_ls_uniform, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
+    coro_psf_uniform = np.abs(coro_ef_uniform) ** 2 / norm
 
     # Comparison
-    assert np.sum(np.abs(post_ls_areas)**2) < np.sum(np.abs(post_ls_direct)**2)
-    assert (np.max(coro_psf_areas) / np.max(coro_psf_direct)) < 3e-2
+    assert np.sum(np.abs(post_ls_areas)**2) < np.sum(np.abs(post_ls_uniform)**2)
+    assert (np.max(coro_psf_areas) / np.max(coro_psf_uniform)) < 3e-2
