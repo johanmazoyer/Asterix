@@ -6,7 +6,8 @@ from Asterix.utils import crop_or_pad_image, rebin
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     """Create a circular pupil.
 
-    With no_pixel=True, this is a way to create a very oversampled pupil that is then rescaled using rebin.
+    With no_pixel=True, this is a way to create a 10x oversampled pupil that is then rescaled to the requested size
+    using rebin().
 
     AUTHORS : Axel Pottier, Johan Mazoyer
     7/9/22 Modified by J Mazoyer to remove the pixel crenellation with rebin and add a better center option
