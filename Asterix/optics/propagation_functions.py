@@ -439,7 +439,7 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
 
     Returns
     -------
-    butterworth : array
+    2D array
     """
     ty = (np.arange(dim) - yshift - dim / 2)
     tx = (np.arange(dim) - xshift - dim / 2)
@@ -468,7 +468,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, f
     pup : 2D array
         Input mage array containing the entrance pupil of the optical system.
     fpm : 2D array
-        Complex focal-plane mask.
+        Complex electric field in the focal plane of the focal-plane mask.
     nbres : 1D array or list
         List of the number of resolution elements in the total image plane for all propagation layers.
     samp_outer : float
