@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
+import glob
 import sys
 import os
 import time
@@ -11,7 +12,7 @@ from astropy.io import fits
 from Asterix.utils import invert_svd
 
 
-def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
+def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, number_wl_in_matrix=1):
     """
         This code invert the matrix just in the case of THD testbed
         The goal is to be able to invert the matrix directly on the RTC to be 
@@ -59,6 +60,10 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
                             singular values are truncated
             if 'tikhonov': when goal is set to 'c', the modes with the highest inverse
                             singular values are smoothed (low pass filter)
+        
+        number_wl_in_matrix : int, default 1
+            number of wavelength in the direct matrix
+        
 
         Returns
         ------
@@ -66,16 +71,19 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization):
         """
 
     if name_active_DM in (13, 31):
-        Gmatrix = fits.getdata(os.path.join(matrix_directory, "Direct_Matrix_2DM.fits"))
+        Gmatrix = fits.getdata(
+            os.path.join(matrix_directory, f"Direct_Matrix_2DM_wl{number_wl_in_matrix}.fits"))
         DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     elif name_active_DM == 1:
-        Gmatrix = fits.getdata(os.path.join(matrix_directory, "Direct_Matrix_DM1only.fits"))
+        Gmatrix = fits.getdata(
+            os.path.join(matrix_directory, f"Direct_Matrix_DM1only_wl{number_wl_in_matrix}.fits"))
         DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
 
     elif name_active_DM == 3:
-        Gmatrix = fits.getdata(os.path.join(matrix_directory, "Direct_Matrix_DM3only.fits"))
+        Gmatrix = fits.getdata(
+            os.path.join(matrix_directory, f"Direct_Matrix_DM3only_wl{number_wl_in_matrix}.fits"))
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     else:
