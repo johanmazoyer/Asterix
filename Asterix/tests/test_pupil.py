@@ -1,7 +1,3 @@
-import os
-import numpy as np
-
-
 from Asterix.optics import roundpupil
 
 
