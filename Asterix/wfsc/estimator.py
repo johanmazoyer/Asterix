@@ -99,6 +99,8 @@ class Estimator:
         if self.technique == "perfect":
             self.is_focal_plane = True
             self.is_complex = True
+            if self.polychrom == 'broadband_pwprobes':
+                raise Exception("cannot use polychrom='broadband_pwprobes' in perfect mode")
 
         elif self.technique in ["pairwise", "pw"]:
             self.is_focal_plane = True
@@ -110,41 +112,41 @@ class Estimator:
 
             testbed.name_DM_to_probe_in_PW = self.find_DM_to_probe(testbed)
 
-            self.PWMatrix = wfs.create_pw_matrix(testbed,
-                                                 self.amplitudePW,
-                                                 self.posprobes,
-                                                 self.dimEstim,
-                                                 cutsvdPW,
-                                                 matrix_dir,
-                                                 polychromatic = self.polychrom)
+            self.PWMatrix = wfs.create_pw_matrix(testbed, self.amplitudePW, self.posprobes, self.dimEstim,
+                                                 cutsvdPW, matrix_dir, self.polychrom)
 
             # Saving PW matrix in Labview directory
             if save_for_bench:
-                if self.polychrom in ['broadband', 'multiwl']:
-                    print("cannot save PW matrix for THD in mode "+ self.polychrom)
-                    pass
+
                 if not os.path.exists(realtestbed_dir):
                     print("Creating directory: " + realtestbed_dir)
                     os.makedirs(realtestbed_dir)
 
-                probes = np.zeros((len(self.posprobes), testbed.DM3.number_act), dtype=np.float32)
-                vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(self.posprobes)),
-                                    dtype=np.float32)
+                if self.polychrom in ['centralwl', 'broadband_pwprobes']:
+                    wl_in_pw_matrix = [testbed.wavelength_0]
+                else:
+                    wl_in_pw_matrix = testbed.wav_vec
+                    #careful if you want to estimate at different wl
 
-                for i in np.arange(len(self.posprobes)):
-                    # TODO WTH is the hardcoded 17. @Raphael @Axel
-                    probes[i, self.posprobes[i]] = self.amplitudePW / 17
-                    vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
-                             self.dimEstim] = self.PWMatrix[:, 0, i].flatten()
-                    vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
-                             self.dimEstim] = self.PWMatrix[:, 1, i].flatten()
-                namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW
-                fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
-                             probes,
-                             overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Matr_mult_estim" + namepwmatrix + ".fits"),
-                             vectorPW,
-                             overwrite=True)
+                for k, wave_k in enumerate(wl_in_pw_matrix):
+                    probes = np.zeros((len(self.posprobes), testbed.DM3.number_act), dtype=np.float32)
+                    vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(self.posprobes)),
+                                        dtype=np.float32)
+
+                    for i in np.arange(len(self.posprobes)):
+                        # TODO WTH is the hardcoded 17. @Raphael @Axel
+                        probes[i, self.posprobes[i]] = self.amplitudePW / 17
+                        vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
+                                 self.dimEstim] = self.PWMatrix[k][:, 0, i].flatten()
+                        vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
+                                 self.dimEstim] = self.PWMatrix[k][:, 1, i].flatten()
+                    namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + '_wl' + str(int(wave_k * 1e9))
+                    fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
+                                 probes,
+                                 overwrite=True)
+                    fits.writeto(os.path.join(realtestbed_dir, "Matr_mult_estim" + namepwmatrix + ".fits"),
+                                 vectorPW,
+                                 overwrite=True)
 
         elif self.technique == 'coffee':
             pass
@@ -156,7 +158,6 @@ class Estimator:
                  testbed: Testbed,
                  entrance_EF=1.,
                  voltage_vector=0.,
-                 wavelengths=None,
                  perfect_estimation=False,
                  **kwargs):
         """
@@ -176,9 +177,6 @@ class Estimator:
         voltage_vector : 1D float array
             vector of voltages vectors for each DMs
 
-        wavelength  :  float default None,
-            wavelength of the estimation in m
-        
         perfect_estimation: bool, default = False. 
                     if true This is equivalent to have self.technique = "perfect" 
                     but even if we are using another technique, we sometimes 
@@ -187,8 +185,9 @@ class Estimator:
                                             
         Returns
         ------
-        estimation : 2D array 
-                array of size [self.dimEstim,self.dimEstim]
+        estimation : list of 2D array 
+                list is the number of wl in the estimation, usually 1 or testbed.nb_wav
+                Each arrays are of size of sixe [dimEstim, dimEstim]. 
                 estimation of the Electrical field
 
         """
@@ -197,14 +196,6 @@ class Estimator:
             raise Exception("""todetector_intensity() function is polychromatic, 
                 do not use wavelength keyword.
                 Use wavelengths keyword even for monochromatic intensity""")
-
-        if wavelengths is None:
-            wavelength_vec = testbed.wav_vec
-
-        elif isinstance(wavelengths, (float, int)):
-            wavelength_vec = [wavelengths]
-        else:
-            wavelength_vec = wavelengths
 
         if isinstance(entrance_EF, (float, int)):
             entrance_EF = np.repeat(entrance_EF, testbed.nb_wav)
@@ -225,37 +216,62 @@ class Estimator:
 
             result_estim = []
 
-            if self.polychrom in ['centralwl','multiwl']:
-                for i, wavei in enumerate(wavelength_vec):
+            if self.polychrom == 'multiwl':
+                for i, wavei in enumerate(testbed.wav_vec):
                     resultatestimation = testbed.todetector(entrance_EF=entrance_EF[i],
                                                             voltage_vector=voltage_vector,
                                                             wavelength=wavei)
                     result_estim.append(resizing(resultatestimation, self.dimEstim))
+            elif self.polychrom == 'centralwl':
+                resultatestimation = testbed.todetector(
+                    entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(testbed.wavelength_0)],
+                    voltage_vector=voltage_vector,
+                    wavelength=testbed.wavelength_0)
+                result_estim.append(resizing(resultatestimation, self.dimEstim))
+            elif self.polychrom == 'broadband_pwprobes':
+                raise Exception("cannot use polychrom='broadband_pwprobes' in perfect mode")
             else:
-                raise Exception("do not use polychrom == 'broadband' right now")
-
-
+                raise Exception(self.polychrom + "is not a valid polychromatic estimation/correction mode")
             return result_estim
 
         elif self.technique in ["pairwise", "pw"]:
 
             result_estim = []
-            if self.polychrom in ['centralwl','multiwl']:
-                for i, wavei in enumerate(wavelength_vec):
 
+            if self.polychrom == 'multiwl':
+                for i, wavei in enumerate(testbed.wav_vec):
                     Difference = wfs.simulate_pw_difference(entrance_EF[i],
                                                             testbed,
                                                             self.posprobes,
                                                             self.dimEstim,
                                                             self.amplitudePW,
                                                             voltage_vector=voltage_vector,
-                                                            wavelength=wavei)
+                                                            wavelengths=wavei)
+
                     result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[i], **kwargs))
 
-                    return result_estim
-            else:
-                raise Exception("do not use polychrom == 'broadband' right now")
+            elif self.polychrom == 'centralwl':
+                Difference = wfs.simulate_pw_difference(entrance_EF,
+                                                        testbed,
+                                                        self.posprobes,
+                                                        self.dimEstim,
+                                                        self.amplitudePW,
+                                                        voltage_vector=voltage_vector,
+                                                        wavelengths=testbed.wavelength_0)
 
+                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0], **kwargs))
+            elif self.polychrom == 'broadband_pwprobes':
+                Difference = wfs.simulate_pw_difference(entrance_EF,
+                                                        testbed,
+                                                        self.posprobes,
+                                                        self.dimEstim,
+                                                        self.amplitudePW,
+                                                        voltage_vector=voltage_vector,
+                                                        wavelengths=testbed.wav_vec)
+                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0], **kwargs))
+            else:
+                raise Exception(self.polychrom + " is not a valid polychromatic estimation/correction mode")
+            return result_estim
 
         elif self.technique == 'coffee':
             return np.zeros((self.dimEstim, self.dimEstim))
@@ -263,8 +279,8 @@ class Estimator:
         else:
             raise Exception("This estimation algorithm is not yet implemented")
 
-        def find_DM_to_probe(self, testbed: Testbed):
-            """
+    def find_DM_to_probe(self, testbed: Testbed):
+        """
             function to find which DM to use for the PW probes
 
             AUTHOR : Johan Mazoyer
@@ -282,38 +298,38 @@ class Estimator:
 
             """
 
-            # we chose it already. We only check its existence
-            if hasattr(testbed, 'name_DM_to_probe_in_PW'):
-                if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
-                    raise Exception("Cannot use this DM for PW, this testbed has no DM named " +
-                                    testbed.name_DM_to_probe_in_PW)
-                return testbed.name_DM_to_probe_in_PW
+        # we chose it already. We only check its existence
+        if hasattr(testbed, 'name_DM_to_probe_in_PW'):
+            if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
+                raise Exception("Cannot use this DM for PW, this testbed has no DM named " +
+                                testbed.name_DM_to_probe_in_PW)
+            return testbed.name_DM_to_probe_in_PW
 
-            # If name_DM_to_probe_in_PW is not already set,
-            # automatically check which DM to use to probe in this case
-            # this is only done once.
-            if len(testbed.name_of_DMs) == 0:
-                raise Exception("you need at least one activated DM to do PW")
-            #If only one DM, we use this one, independenlty of its position
-            elif len(testbed.name_of_DMs) == 1:
-                name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
-            else:
-                #If several DMs we check if there is at least one in PP
-                number_DMs_in_PP = 0
-                for DM_name in testbed.name_of_DMs:
-                    DM = vars(testbed)[DM_name]  # type: DeformableMirror
-                    if DM.z_position == 0.:
-                        number_DMs_in_PP += 1
-                        name_DM_to_probe_in_PW = DM_name
+        # If name_DM_to_probe_in_PW is not already set,
+        # automatically check which DM to use to probe in this case
+        # this is only done once.
+        if len(testbed.name_of_DMs) == 0:
+            raise Exception("you need at least one activated DM to do PW")
+        #If only one DM, we use this one, independenlty of its position
+        elif len(testbed.name_of_DMs) == 1:
+            name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
+        else:
+            #If several DMs we check if there is at least one in PP
+            number_DMs_in_PP = 0
+            for DM_name in testbed.name_of_DMs:
+                DM = vars(testbed)[DM_name]  # type: DeformableMirror
+                if DM.z_position == 0.:
+                    number_DMs_in_PP += 1
+                    name_DM_to_probe_in_PW = DM_name
 
-                #If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
-                if number_DMs_in_PP > 1:
-                    raise Exception(
-                        "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
-                    )
-                #Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
-                if number_DMs_in_PP == 0:
-                    raise Exception(
-                        "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
-                    )
-            return name_DM_to_probe_in_PW
+            #If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
+            if number_DMs_in_PP > 1:
+                raise Exception(
+                    "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                )
+            #Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
+            if number_DMs_in_PP == 0:
+                raise Exception(
+                    "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
+                )
+        return name_DM_to_probe_in_PW
