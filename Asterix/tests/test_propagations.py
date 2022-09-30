@@ -1,5 +1,5 @@
 import numpy as np
-from Asterix.optics import butterworth_circle, mft, roundpupil
+from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil
 
 
 def test_mft_centering():
@@ -53,3 +53,39 @@ def test_butterworth():
     assert bfilter15[rad][47] > bfilter15[rad][59]
     assert bfilter15[rad][59] > bfilter15[rad][71]
     assert bfilter15[rad][71] > bfilter15[rad][89]
+
+
+def test_prop_area_sampling():
+    dim = 512
+    rad = dim / 2
+    samp_outer = 4
+    nbres_direct = dim / samp_outer
+
+    pup = roundpupil(dim, rad, no_pixel=True)
+    lyot_stop = roundpupil(dim, rad * 0.95, no_pixel=False)
+    fpm = fqpm_mask(dim)
+
+    direct_ef = mft(pup*lyot_stop, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
+    direct_psf = np.abs(direct_ef)**2
+    norm = direct_psf.max()
+
+    # Propagation with different sampling in FPM areas
+    res_list = np.array([0.1, 1, 10, 100])
+    pre_ls_areas = prop_fpm_regional_sampling(pup, np.exp(1j * fpm), nbres=res_list, samp_outer=samp_outer)
+    post_ls_areas = pre_ls_areas * lyot_stop
+
+    coro_ef_areas = mft(post_ls_areas, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
+    coro_psf_areas = np.abs(coro_ef_areas) ** 2 / norm
+
+    # Uniform-sampling propagation
+    pre_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
+    post_fpm = pre_fpm * np.exp(1j * fpm)
+    pre_ls_direct = mft(post_fpm, real_dim_input=dim, dim_output=dim, nbres=nbres_direct, inverse=True)
+    post_ls_direct = pre_ls_direct * lyot_stop
+
+    coro_ef_direct = mft(post_ls_direct, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
+    coro_psf_direct = np.abs(coro_ef_direct) ** 2 / norm
+
+    # Comparison
+    assert np.sum(np.abs(post_ls_areas)**2) < np.sum(np.abs(post_ls_direct)**2)
+    assert (np.max(coro_psf_areas) / np.max(coro_psf_direct)) < 3e-2
