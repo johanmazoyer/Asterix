@@ -1,6 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
-
 import numpy as np
 from Asterix.utils import crop_or_pad_image
 

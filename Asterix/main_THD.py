@@ -1,6 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
-
 import os
 
 from Asterix.utils import create_experiment_dir, get_data_dir, read_parameter_file

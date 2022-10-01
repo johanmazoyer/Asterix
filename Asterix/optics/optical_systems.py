@@ -1,5 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
 import errno
 import os
 import copy
