@@ -110,30 +110,30 @@ def create_interaction_matrix(testbed: Testbed,
     if polychrom in ['centralwl', 'broadband_pwprobes']:
         return_matrix.append(
             create_singlewl_interaction_matrix(testbed,
-                                             dimEstim,
-                                             amplitudeEFC,
-                                             testbed.wavelength_0,
-                                             matrix_dir,
-                                             initial_DM_voltage=initial_DM_voltage,
-                                             input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(
-                                                 testbed.wavelength_0)],
-                                             MatrixType=MatrixType,
-                                             dir_save_all_planes=dir_save_all_planes,
-                                             visu=visu))
+                                               dimEstim,
+                                               amplitudeEFC,
+                                               testbed.wavelength_0,
+                                               matrix_dir,
+                                               initial_DM_voltage=initial_DM_voltage,
+                                               input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(
+                                                   testbed.wavelength_0)],
+                                               MatrixType=MatrixType,
+                                               dir_save_all_planes=dir_save_all_planes,
+                                               visu=visu))
 
     elif polychrom == 'multiwl':
         for i, wave_i in enumerate(testbed.wav_vec):
             return_matrix.append(
                 create_singlewl_interaction_matrix(testbed,
-                                                 dimEstim,
-                                                 amplitudeEFC,
-                                                 wave_i,
-                                                 matrix_dir,
-                                                 initial_DM_voltage=initial_DM_voltage,
-                                                 input_wavefront=input_wavefront[i],
-                                                 MatrixType=MatrixType,
-                                                 dir_save_all_planes=dir_save_all_planes,
-                                                 visu=visu))
+                                                   dimEstim,
+                                                   amplitudeEFC,
+                                                   wave_i,
+                                                   matrix_dir,
+                                                   initial_DM_voltage=initial_DM_voltage,
+                                                   input_wavefront=input_wavefront[i],
+                                                   MatrixType=MatrixType,
+                                                   dir_save_all_planes=dir_save_all_planes,
+                                                   visu=visu))
     else:
         raise Exception(polychrom + " is not a valid polychromatic estimation/correction mode")
 
@@ -141,15 +141,15 @@ def create_interaction_matrix(testbed: Testbed,
 
 
 def create_singlewl_interaction_matrix(testbed: Testbed,
-                                     dimEstim,
-                                     amplitudeEFC,
-                                     wavelength,
-                                     matrix_dir,
-                                     initial_DM_voltage=0.,
-                                     input_wavefront=1.,
-                                     MatrixType='',
-                                     dir_save_all_planes=None,
-                                     visu=False):
+                                       dimEstim,
+                                       amplitudeEFC,
+                                       wavelength,
+                                       matrix_dir,
+                                       initial_DM_voltage=0.,
+                                       input_wavefront=1.,
+                                       MatrixType='',
+                                       dir_save_all_planes=None,
+                                       visu=False):
     """
     Create the jacobian matrix for Electric Field Conjugation for one wavelength. The Matrix is not
     limited to the DH size but to the whole FP [dimEstim, dimEstim]. 
@@ -296,7 +296,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 print("")
                 print("The matrix " + fileDirectMatrix + " does not exists")
 
-            print("Start interaction Matrix " + DM_name + ' (wait a few 10s of seconds)')
+            print("Start interaction Matrix " + DM_name + ' at ' + str(int(wavelength * 1e9)) +
+                  'nm (wait a few 10s of seconds)')
 
             # we measure the phases of the Basis we will apply on the DM.
             # In the case of the Fourier Basis, this is a bit long so we load an existing .fits file
@@ -628,7 +629,7 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
 
     """
     # probably not working in polychromatic yet
-    if len(Result_Estimate)>1:
+    if len(Result_Estimate) > 1:
         raise Exception("EM correction does not workin polychromatic")
 
     # With notations from Potier PhD eq 4.74 p78:
@@ -785,7 +786,7 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
    
     """
     # probably not working in polychromatic yet
-    if len(Result_Estimate)>1:
+    if len(Result_Estimate) > 1:
         raise Exception("steepest correction does not workin polychromatic")
 
     Eab = np.zeros(int(np.sum(mask)))

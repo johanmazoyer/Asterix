@@ -13,7 +13,6 @@ from Asterix.optics import DeformableMirror, Testbed
 
 def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom,
                      **kwargs):
-    
     """
     Build the nbwl times interaction matrix for pair-wise probing.
 
@@ -53,33 +52,33 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, m
     if polychrom in ['centralwl', 'broadband_pwprobes']:
         return_matrix.append(
             create_singlewl_pw_matrix(testbed,
-                                    amplitude,
-                                    posprobes,
-                                    dimEstim,
-                                    cutsvd,
-                                    matrix_dir,
-                                    wavelength=testbed.wavelength_0,
-                                    **kwargs))
+                                      amplitude,
+                                      posprobes,
+                                      dimEstim,
+                                      cutsvd,
+                                      matrix_dir,
+                                      wavelength=testbed.wavelength_0,
+                                      **kwargs))
 
     elif polychrom == 'multiwl':
         for wave_i in testbed.wav_vec:
             return_matrix.append(
                 create_singlewl_pw_matrix(testbed,
-                                        amplitude,
-                                        posprobes,
-                                        dimEstim,
-                                        cutsvd,
-                                        matrix_dir,
-                                        wavelength=wave_i,
-                                        **kwargs))
+                                          amplitude,
+                                          posprobes,
+                                          dimEstim,
+                                          cutsvd,
+                                          matrix_dir,
+                                          wavelength=wave_i,
+                                          **kwargs))
     else:
         raise Exception(polychrom + " is not a valid polychromatic estimation/correction mode")
 
     return return_matrix
 
 
-def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, wavelength,
-                            **kwargs):
+def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir,
+                              wavelength, **kwargs):
     """
     Build the interaction matrix for pair-wise probing at 1 WL
 
@@ -126,7 +125,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
 
     start_time = time.time()
     print("The PWmatrix " + filePW + " does not exists")
-    print("Start PW matrix (wait a few seconds)")
+    print("Start PW matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
 
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=complex)
