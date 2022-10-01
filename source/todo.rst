@@ -4,8 +4,6 @@
 
 - add a parameter to do an offset en between PSF and detector (in lambda /D): during matrix measurement and a different one during correction 
 - add a parameter to do an offset en between corono and detector (in lambda /D): during matrix measurement and a different one during correction 
-- polychromatic correction (concatenation of matrices at multiple wavelengths)
-- polychromatic estimation for current estimator
 - COFFEE estimation (curently underway)
 - add coronagraphs (apodizations for APLC and Vortex)
 - SCC estimation (on hold, not priority and required a lot of changes to the code core)
