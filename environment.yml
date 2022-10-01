@@ -2,6 +2,7 @@ name: asterix
 dependencies:
   - astropy
   - configobj
+  - flake8
   - jupyter
   - matplotlib
   - numpy
