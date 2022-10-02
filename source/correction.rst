@@ -3,20 +3,20 @@
 Correction
 ---------------
 
-This section describes how to correct the electrical field in focal plane in Asterix. Several correction modes 
+This section describes how to correct the electrical field in the focal plane in Asterix. Several correction modes
 are possible in Asterix. Files can be found in :ref:`correctionfiles-label`;
 
 - an initialization (e.g. Jacobian matrix) ``Corrector.__init__`` : The initialization requires previous initialization of the testbed and of the estimator.
-- a matrix update function ``Corrector.update_matrices`` This function is called once during initalization abd then each time we need to recompute the Jacobian in the middle of the correction using usign differents DM voltages as starting point.
-- a correction function ``Corrector.toDM_voltage`` which takes the results of an estimation and returns the DM Voltage. 
+- a matrix update function ``Corrector.update_matrices`` This function is called once during initialization and then each time we need to recompute the Jacobian in the middle of the correction using different DM voltages as the starting point.
+- a correction function ``Corrector.toDM_voltage`` which takes the results of an estimation and returns the DM voltages.
 
 Dark Hole Mask Definition
 +++++++++++++++++++++++++++++++
 
 The estimation estimates the focal plane electrical field in a large zone larger than the
-correction zone achievable by the DMs. We can reduce the focal plane correction using binary mask
+correction zone achievable by the DMs. We can reduce the focal plane correction using a binary mask.
 
-``MaskDH`` is a very small class to do all the mask related stuff: retrieve parameters and measure the mask 
+``MaskDH`` is a very small class to do all the mask related stuff: retrieve parameters, measure the mask
 and measure the string to save matrices.
 
 .. code-block:: python
@@ -26,21 +26,21 @@ and measure the string to save matrices.
 
     Correctionconfig = config["Correctionconfig"]
     mask_dh = MaskDH(Correctionconfig) # read the configuration
-    science_mask_dh = mask_dh.creatingMaskDH(testbed.dimScience, testbed.Science_sampling, **kwargs) # create a mask at a given size and resolution
+    science_mask_dh = mask_dh.creatingMaskDH(testbed.dimScience, testbed.Science_sampling, **kwargs) # create a mask with a given size and resolution
 
 
                                             
-Several shape are possible for the DH using the parameter ``DH_shape``:
+Several shapes are possible for the DH using the input parameter ``DH_shape``:
 
-- "square" DH. Size can be defined using the position of the corners in :math:`{\lambda}`/ D with the parameter parameter ``corner_pos``: [xmin, xmax, ymin, ymax], with 0 beeing the star position. ``DH_side`` parameter is not used and the symetry of the DH is only set using the corners positions.
-- "circle" DH Size can be defined using parameters 
-    - ``Sep_Min_Max`` : 2 element array [iwa, owa] inner and outer working angle of the dark hole
+- "square" DH. Size can be defined using the position of the corners in :math:`{\lambda}`/ D with the parameter ``corner_pos``: [xmin, xmax, ymin, ymax], with 0 being the star position. ``DH_side`` parameter is not used and the symmetry of the DH is only set using the corners positions.
+- "circle" DH Size can be defined using the parameters
+    - ``Sep_Min_Max`` : 2 element array [iwa, owa], inner and outer working angle of the dark hole
     - ``circ_offset`` : if half DH, we remove separations closer than circ_offset (in :math:`{\lambda}`/ D) from the DH 
     - ``circ_angle`` : if half DH, we remove the angles closer than circ_angle (in degrees) from the DH 
     - ``DH_side`` : can be set to "top", "bottom", "left", "right" and "full" to create full and half dark hole.
 - "noDH" DH. In this mode, the mask is just 1 everywhere. 
 
-``creatingMaskDH()`` function has been set up with a mode where each optical plane is saved to .fits file for debugging purposes.
+``creatingMaskDH()`` function has been set up with a mode where each optical plane is saved to a .fits file for debugging purposes.
 To use this option, set up the keyword ``dir_save_all_planes`` to an existing path directory.
 
 Interaction Matrix
@@ -134,7 +134,7 @@ Correction loop
 +++++++++++++++++++++++++++++++
 
 ``correction_loop.py`` contains 3 functions. The first one is ``correction_loop_1matrix()`` which is a for loop repeated
-``Number_matrix`` , which update the Interference Matrix and run the ``correction_loop_1matrix()`` at each iteration.
+``Number_matrix`` of times , which updates the interaction matrix and runs ``correction_loop_1matrix()`` in each iteration.
 
 
 The ``correction_loop_1matrix()`` function is a loop running ``Nbiter_corr`` times that is basically doing:
@@ -145,6 +145,6 @@ The ``correction_loop_1matrix()`` function is a loop running ``Nbiter_corr`` tim
 
 * application on DM and measure of DM
 
-The results are stored in a dictionnary then sent to ``save_loop_results()`` for ploting and saving in the folder
-named '/Results/Name_experiement' where ``Name_Experiment`` is a parameter. All .fits saved have all parameters in the header. 
-The config (with updated parameters) is also saved in a .ini file, so you can run the same experiment. 
+The results are stored in a dictionary and then sent to ``save_loop_results()`` for plotting and saving in the folder
+named '/Results/timestamp-Name_experiement' where ``Name_Experiment`` is a parameter from the configuration file. All saved .fits files have all parameters in their headers.
+The config (with updated parameters) is also saved in a .ini file, so you can run the same experiment again at a later time.
