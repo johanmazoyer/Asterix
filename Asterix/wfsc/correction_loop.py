@@ -417,22 +417,22 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     # SAVING...
     header = from_param_to_header(config)
 
-    fits.writeto(os.path.join(result_dir, "FocalPlane_Intensities" + ".fits"),
+    fits.writeto(os.path.join(result_dir, "FocalPlane_Intensities.fits"),
                  np.array(FP_Intensities),
                  header,
                  overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, "Mean_Contrast_DH" + ".fits"),
+    fits.writeto(os.path.join(result_dir, "Mean_Contrast_DH.fits"),
                  np.array(meancontrast),
                  header,
                  overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, "estimationFP_RE" + ".fits"),
+    fits.writeto(os.path.join(result_dir, "estimationFP_RE.fits"),
                  np.real(np.array(EF_estim)),
                  header,
                  overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, "estimationFP_IM" + ".fits"),
+    fits.writeto(os.path.join(result_dir, "estimationFP_IM.fits"),
                  np.imag(np.array(EF_estim)),
                  header,
                  overwrite=True)
@@ -502,7 +502,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     #                  header,
     #                  overwrite=True)
 
-    config.filename = os.path.join(result_dir, "Simulation_parameters" + ".ini")
+    config.filename = os.path.join(result_dir, "Simulation_parameters.ini")
     config.write()
 
     plt.figure()
@@ -510,7 +510,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     plt.yscale("log")
     plt.xlabel("Number of iterations")
     plt.ylabel("Mean contrast in Dark Hole")
-    plt.savefig(os.path.join(result_dir, "Mean_Contrast_DH" + ".pdf"))
+    plt.savefig(os.path.join(result_dir, "Mean_Contrast_DH.pdf"))
     plt.close()
     plot_contrast_curves(np.asarray(FP_Intensities),
                          delta_raddii=3,
