@@ -3,7 +3,7 @@
 
 import os
 
-from Asterix.utils import get_data_dir, read_parameter_file
+from Asterix.utils import create_experiment_dir, get_data_dir, read_parameter_file
 from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
 from Asterix.wfsc import Estimator, Corrector, MaskDH, correction_loop, save_loop_results
 
@@ -70,13 +70,13 @@ def runthd2(parameter_file,
     Correctionconfig = config["Correctionconfig"]
     Loopconfig = config["Loopconfig"]
     SIMUconfig = config["SIMUconfig"]
-    Name_Experiment = SIMUconfig["Name_Experiment"]
+    Name_Experiment = create_experiment_dir(append=SIMUconfig["Name_Experiment"])
 
     # Initialize all directories
-    model_local_dir = os.path.join(Data_dir, "Model_local") + os.path.sep
-    matrix_dir = os.path.join(Data_dir, "Interaction_Matrices") + os.path.sep
-    result_dir = os.path.join(Data_dir, "Results", Name_Experiment) + os.path.sep
-    labview_dir = os.path.join(Data_dir, "Labview") + os.path.sep
+    model_local_dir = os.path.join(Data_dir, "Model_local")
+    matrix_dir = os.path.join(Data_dir, "Interaction_Matrices")
+    result_dir = os.path.join(Data_dir, "Results", Name_Experiment)
+    labview_dir = os.path.join(Data_dir, "Labview")
 
     # Create all optical elements of the THD
     entrance_pupil = Pupil(modelconfig,

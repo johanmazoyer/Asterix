@@ -23,7 +23,7 @@ class OpticalSystem:
 
     AUTHOR : Johan Mazoyer
 
-        """
+    """
 
     def __init__(self, modelconfig):
         """

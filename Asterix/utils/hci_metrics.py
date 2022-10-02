@@ -31,11 +31,13 @@ def plot_contrast_curves(reduced_data,
                          path='',
                          filename=''):
     """
-    Plot and save in pdf contrast curves from a image or a cube of images (assumed to be 
+    Plot contrast curves from image or image cube as pdf file to disk.
+
+    Plot and contrast curves from an image or a cube of images (assumed to be
     several iterations of a loop) using concentric rings.
-    You can chooose the center, the size of the rings, the type of contrast (mean or std)
+    You can choose the center, the size of the rings, the type of contrast (mean or std)
     The DH is set using a binary mask (1s where the DH is, 0 elsewhere)
-    The abcisse unit can be in pixel mas or in lambda/D.
+    The abscissa unit can be in pixel mas or in lambda/D.
 
     AUTHOR: J. Mazoyer
     16/03/2022
@@ -65,7 +67,7 @@ def plot_contrast_curves(reduced_data,
         resolution of the focal plane in # of pixel per lambda/D (useful for testbed)
         If set the absciss unit will be in lambda/D 
 
-    numberofmas_per_pix: float, defaut None
+    numberofmas_per_pix: float, default None
         resolution of the focal plane in # of mas per pixel  (useful for real instruments)
         If set the absciss unit will be in mas
         
@@ -79,7 +81,7 @@ def plot_contrast_curves(reduced_data,
         path where to save the pdf plot file
     
     filename: string, default ''
-        base of the file name to save the pdf plot file
+        Filename prefix for pdf files of the plots saved to disk.
     
     legend_labels: string array of the same number of images in the first cube, default None
         Name of the legend labels,
@@ -87,8 +89,10 @@ def plot_contrast_curves(reduced_data,
         If None and if the array is of dimension 3, we assume these are iterations
 
     """
-
-    filename = filename + '_ContrastCurve_DH'
+    if filename != '':
+        filename += '_ContrastCurve_DH'
+    else:
+        filename += 'ContrastCurve_DH'
 
     if numberofpix_per_loD is not None and numberofmas_per_pix is None:
         # absice is in lambda over D

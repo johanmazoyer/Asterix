@@ -384,25 +384,24 @@ def correction_loop_1matrix(testbed: Testbed,
 
 def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir):
     """
-    Save the result from a correction loop in result_dir.
+    Save the results from a correction loop into the directory 'result_dir'.
     
-    All fits files have all parameters in their header.
-    The config is also saved in an .ini file.
+    All fits files have all parameters in their header. The configfile is also saved, to an .ini file.
 
     AUTHOR : Johan Mazoyer
     
     Parameters
     ----------
-    CorrectionLoopResult: dict 
-        dictionary containing the results from correction_loop_1matrix() or correction_loop()
-    config: dict
-        complete parameter dictionary
-    testbed: OpticalSystem
-        an OpticalSystem object which describes your testbed
-    MaskScience: 2d numpy array
-        binary array of size [dimScience, dimScience] : dark hole mask
-    result_dir: path
-        directory where to save the results
+    CorrectionLoopResult : dict
+        Dictionary containing the results from correction_loop_1matrix() or correction_loop().
+    config : dict
+        Dictionary holding the configuration from the input parameter file.
+    testbed : OpticalSystem
+        An OpticalSystem object which describes your testbed.
+    MaskScience : 2d numpy array
+        Binary array of size [dimScience, dimScience]: dark hole mask.
+    result_dir : string
+        Directory to save the results to.
     """
 
     if not os.path.exists(result_dir):
@@ -415,26 +414,25 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     nb_total_iter = CorrectionLoopResult["nb_total_iter"]
     EF_estim = CorrectionLoopResult["EF_estim"]
 
-    ## SAVING...
+    # SAVING...
     header = from_param_to_header(config)
 
-    current_time_str = datetime.datetime.today().strftime("%Y%m%d_%Hh%Mm%Ss")
-    fits.writeto(os.path.join(result_dir, current_time_str + "_FocalPlane_Intensities" + ".fits"),
+    fits.writeto(os.path.join(result_dir, "FocalPlane_Intensities.fits"),
                  np.array(FP_Intensities),
                  header,
                  overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, current_time_str + "_Mean_Contrast_DH" + ".fits"),
+    fits.writeto(os.path.join(result_dir, "Mean_Contrast_DH.fits"),
                  np.array(meancontrast),
                  header,
                  overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, current_time_str + "_estimationFP_RE" + ".fits"),
+    fits.writeto(os.path.join(result_dir, "estimationFP_RE.fits"),
                  np.real(np.array(EF_estim)),
                  header,
                  overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, current_time_str + "_estimationFP_IM" + ".fits"),
+    fits.writeto(os.path.join(result_dir, "estimationFP_IM.fits"),
                  np.imag(np.array(EF_estim)),
                  header,
                  overwrite=True)
@@ -461,12 +459,12 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     plt.figure()
 
     for j, DM_name in enumerate(testbed.name_of_DMs):
-        fits.writeto(os.path.join(result_dir, current_time_str + '_' + DM_name + "_phases" + ".fits"),
+        fits.writeto(os.path.join(result_dir, f"{DM_name}_phases.fits"),
                      DM_phases[j],
                      header,
                      overwrite=True)
 
-        fits.writeto(os.path.join(result_dir, current_time_str + '_' + DM_name + "_strokes" + ".fits"),
+        fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"),
                      DMstrokes[j],
                      header,
                      overwrite=True)
@@ -476,7 +474,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                                                  DM.number_act]
         indice_acum_number_act += DM.number_act
 
-        fits.writeto(os.path.join(result_dir, current_time_str + '_' + DM_name + "_voltages" + ".fits"),
+        fits.writeto(os.path.join(result_dir,  f"{DM_name}_voltages.fits"),
                      voltage_DMs_tosave,
                      header,
                      overwrite=True)
@@ -487,7 +485,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     plt.xlabel("Number of iterations")
     plt.ylabel("DM Strokes (nm)")
     plt.legend()
-    plt.savefig(os.path.join(result_dir, current_time_str + "_DM_Strokes" + ".pdf"))
+    plt.savefig(os.path.join(result_dir, "DM_Strokes" + ".pdf"))
     plt.close()
     # TODO Now FP_Intensities are save with photon noise if it's on
     # We need to do them without just to save in the results
@@ -499,12 +497,12 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     #             FP_Intensities[i] * testbed.normPupto1 *
     #             config["SIMUconfig"]["nb_photons"])
 
-    #     fits.writeto(os.path.join(result_dir , current_time_str + "_NoPhoton_noise" + ".fits"),
+    #     fits.writeto(os.path.join(result_dir, "NoPhoton_noise" + ".fits"),
     #                  FP_Intensities_photonnoise,
     #                  header,
     #                  overwrite=True)
 
-    config.filename = os.path.join(result_dir, current_time_str + "_Simulation_parameters" + ".ini")
+    config.filename = os.path.join(result_dir, "Simulation_parameters.ini")
     config.write()
 
     plt.figure()
@@ -512,12 +510,11 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     plt.yscale("log")
     plt.xlabel("Number of iterations")
     plt.ylabel("Mean contrast in Dark Hole")
-    plt.savefig(os.path.join(result_dir, current_time_str + "_Mean_Contrast_DH" + ".pdf"))
+    plt.savefig(os.path.join(result_dir, "Mean_Contrast_DH.pdf"))
     plt.close()
     plot_contrast_curves(np.asarray(FP_Intensities),
                          delta_raddii=3,
                          numberofpix_per_loD=config["modelconfig"]["Science_sampling"],
                          type_of_contrast='mean',
                          mask_DH=MaskScience,
-                         path=result_dir,
-                         filename=current_time_str)
+                         path=result_dir)

@@ -3,6 +3,7 @@
 import errno
 import sys
 import os
+import time
 
 import datetime
 import random
@@ -255,7 +256,7 @@ def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="aste
     """
     Create a path to the local data directory.
 
-    If the environment variable `ASTERIX_DATA_PATH` exists, this is returned as the full data path and the input 'datadir'
+    If the environment variable `env_var_name` exists, this is returned as the full data path and the input 'datadir'
         is ignored. You can set this individually on your OS.
     If the environment variable does not exist (default for all new users) but the user adapted the ini file and
         accesses the 'Data_dir' entry, the configfile entry is returned and 'datadir' is ignored.
@@ -265,10 +266,12 @@ def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="aste
 
     Parameters
     ----------
-    env_var_name : string
-        Environment variable for optional override.
-    datadir : string
-        Name of the top-level data directory.
+    env_var_name : string, optional
+        Environment variable for optional override, default 'ASTERIX_DATA_PATH'.
+    config_in : string, optional
+        Directory name passed through from configuration file.
+    datadir : string, optional
+        Name of the top-level data directory, default "asterix_data".
 
     Returns
     -------
@@ -288,3 +291,25 @@ def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="aste
         if not os.path.isdir(home_path):
             os.mkdir(home_path)
         return home_path
+
+
+def create_experiment_dir(append=''):
+    """
+    Create the name for an experiment directory.
+
+    Create a timestamp including current year, month and day, as well as hour, minute and second. Add the passed
+    suffix 'append' before returning it.
+
+    Parameters
+    ----------
+    append : string
+        Filename suffix to add to timestamp, default is ''.
+    """
+    time_stamp = time.time()
+    date_time_string = datetime.datetime.fromtimestamp(time_stamp).strftime("%Y%m%d_%H-%M-%S")
+
+    if append != "":
+        append = "_" + append
+
+    experiment_folder = date_time_string + append
+    return experiment_folder

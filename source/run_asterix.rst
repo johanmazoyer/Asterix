@@ -54,7 +54,7 @@ When you run Asterix, the first time several directories will be created:
 
 * Interaction_Matrices/ is the directory where Matrices are saved, both for estimation (e.g. pair wise) and correction (e.g. Interaction Matrices).
 
-* Results/ where it will save the results of your correction. The code will automatically create a directory in Results/Name_Experiment/ where 'Name_Experiment' is a parameter in the .ini file.
+* Results/ where it will save the results of your correction. The code will automatically create a directory in Results/Name_Experiment/ where 'Name_Experiment' is a parameter in the .ini file and will be preceded by a time stamp.
 
 * Labview/ Finally, if the parameter 'onbench' is set to True, the code will create a directory to put matrices in the format needed to control the THD2 testbed. 
 
