@@ -292,6 +292,17 @@ def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="aste
 
 
 def create_experiment_dir(append=''):
+    """
+    Create the name for an experiment directory.
+
+    Create a timestamp including current year, month and day, as well as hour, minute and second. Add the passed
+    suffix 'append' before returning it.
+
+    Parameters
+    ----------
+    append : string
+        Filename suffix to add to timestamp, default is ''.
+    """
     time_stamp = time.time()
     date_time_string = datetime.datetime.fromtimestamp(time_stamp).strftime("%Y%m%d_%H-%M-%S")
 
