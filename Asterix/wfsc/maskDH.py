@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
+from astropy.io import fits
 import numpy as np
 from Asterix.utils import save_plane_in_fits
 
@@ -35,13 +36,14 @@ class MaskDH:
         elif self.DH_shape == "circle":
             self.DH_side = Correctionconfig["DH_side"].lower()
             self.Sep_Min_Max = [float(i) for i in Correctionconfig["Sep_Min_Max"]]
-
             self.circ_offset = Correctionconfig["circ_offset"]
             self.circ_angle = Correctionconfig["circ_angle"]
+        elif self.DH_shape == "custom":
+            self.dh_mask_fname = Correctionconfig["dh_mask_fname"]
         elif self.DH_shape == "nodh":
             pass
         else:
-            raise Exception("Not valid DH Shape")
+            raise ValueError(f"'{self.DH_shape}' is not a valid DH shape.")
 
         self.string_mask = self.tostring()
 
@@ -76,14 +78,23 @@ class MaskDH:
         if self.DH_shape == "nodh":
             return maskDH
 
-        if self.DH_shape == "square":
+        elif self.DH_shape == "custom":
+            try:
+                maskDH = fits.getdata(self.dh_mask_fname)
+                if self.dh_mask.shape != (dimFP, dimFP):
+                    raise ValueError(
+                        "The shape of DH mask loaded mask from fits file does not correspond to focal-plane dimensions read from configfile ('dimScience'). ")
+            except FileNotFoundError:
+                print(f"Passed path to DH mask fits file '{self.dh_mask_fname}' found no such file. Using circular DH instead.")
+                self.DH_shape = "circle"
 
+        elif self.DH_shape == "square":
             maskDH[xx < self.corner_pos[0] * FP_sampling] = 0
             maskDH[xx > self.corner_pos[1] * FP_sampling] = 0
             maskDH[yy < self.corner_pos[2] * FP_sampling] = 0
             maskDH[yy > self.corner_pos[3] * FP_sampling] = 0
 
-        if self.DH_shape == "circle":
+        elif self.DH_shape == "circle":
             maskDH[rr >= self.Sep_Min_Max[1] * FP_sampling] = 0
             maskDH[rr < self.Sep_Min_Max[0] * FP_sampling] = 0
             if self.DH_side == "right":
