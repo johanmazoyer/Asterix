@@ -66,11 +66,10 @@ def create_interaction_matrix(testbed: Testbed,
         we do not make the small phase assumption for initial DM phase
     
     polychrom: string
-        For polychromatic estimation / correction : 
+        For polychromatic estimation and correction : 
         - 'centralwl': only the central bandwidth is used for estimation / correction. 1 Interation Matrix
-        - 'broadband_pwprobes': probes images PW are broadband but matrixes are at central bandwidth: 1 Interation Matrix
-        - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation / correction: 3 Interation Matrices
-
+        - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central bandwidth: 1 PW Matrix and 1 Interation Matrix
+        - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     initial_DM_voltage: 1D-array real
         initial DM voltage for all DMs
     
