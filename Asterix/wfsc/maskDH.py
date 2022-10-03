@@ -79,7 +79,7 @@ class MaskDH:
             fnt = ImageFont.truetype('/Library/Fonts/Arial Bold.ttf', size=int(dimFP / 4))
             d = ImageDraw.Draw(img)
             d.text((int(dimFP / 4), int(dimFP / 4)), "C N \nR S", font=fnt, fill=1)
-            maskDH = np.asarray(img, dtype=float)
+            maskDH = np.flipud(np.asarray(img, dtype=float))
 
         elif self.DH_shape == "square":
             maskDH[xx < self.corner_pos[0] * FP_sampling] = 0
