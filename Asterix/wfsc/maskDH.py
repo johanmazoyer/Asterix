@@ -76,9 +76,9 @@ class MaskDH:
 
         elif self.DH_shape == "custom":
             img = Image.new(mode="L", size=(dimFP, dimFP))
-            fnt = ImageFont.truetype('/Library/Fonts/Arial Black.ttf', size=int(dimFP / 4))
+            fnt = ImageFont.truetype('/Library/Fonts/Arial Bold.ttf', size=int(dimFP / 4))
             d = ImageDraw.Draw(img)
-            d.text((int(dimFP / 4), int(dimFP * 0.175)), "C N \nR S", font=fnt, fill=1)
+            d.text((int(dimFP / 4), int(dimFP / 4)), "C N \nR S", font=fnt, fill=1)
             maskDH = np.asarray(img, dtype=float)
 
         elif self.DH_shape == "square":
