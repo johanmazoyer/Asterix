@@ -1,8 +1,8 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
-from astropy.io import fits
 import numpy as np
+from PIL import Image, ImageDraw, ImageFont
 from Asterix.utils import save_plane_in_fits
 
 
@@ -38,9 +38,7 @@ class MaskDH:
             self.Sep_Min_Max = [float(i) for i in Correctionconfig["Sep_Min_Max"]]
             self.circ_offset = Correctionconfig["circ_offset"]
             self.circ_angle = Correctionconfig["circ_angle"]
-        elif self.DH_shape == "custom":
-            self.dh_mask_fname = Correctionconfig["dh_mask_fname"]
-        elif self.DH_shape == "nodh":
+        elif self.DH_shape in ["nodh", "custom"]:
             pass
         else:
             raise ValueError(f"'{self.DH_shape}' is not a valid DH shape.")
@@ -69,9 +67,7 @@ class MaskDH:
             binary mask delimiting the DH
 
         """
-
         maskDH = np.ones((dimFP, dimFP))
-
         xx, yy = np.meshgrid(np.arange(dimFP) - (dimFP) / 2, np.arange(dimFP) - (dimFP) / 2)
         rr = np.hypot(yy, xx)
 
@@ -79,14 +75,11 @@ class MaskDH:
             return maskDH
 
         elif self.DH_shape == "custom":
-            try:
-                maskDH = fits.getdata(self.dh_mask_fname)
-                if self.dh_mask.shape != (dimFP, dimFP):
-                    raise ValueError(
-                        "The shape of DH mask loaded mask from fits file does not correspond to focal-plane dimensions read from configfile ('dimScience'). ")
-            except FileNotFoundError:
-                print(f"Passed path to DH mask fits file '{self.dh_mask_fname}' found no such file. Using circular DH instead.")
-                self.DH_shape = "circle"
+            img = Image.new(mode="L", size=(dimFP, dimFP))
+            fnt = ImageFont.truetype('/Library/Fonts/Arial Black.ttf', size=int(dimFP / 4))
+            d = ImageDraw.Draw(img)
+            d.text((int(dimFP / 4), int(dimFP * 0.175)), "C N \nR S", font=fnt, fill=1)
+            maskDH = np.asarray(img, dtype=float)
 
         elif self.DH_shape == "square":
             maskDH[xx < self.corner_pos[0] * FP_sampling] = 0
@@ -139,14 +132,15 @@ class MaskDH:
 
         if self.DH_shape == "square":
             stringdh = "MaskDH_square_" + "_".join(map(str, self.corner_pos))
-        if self.DH_shape == "circle":
+        elif self.DH_shape == "circle":
             stringdh = "_circle_rad" + "_".join(map(str, self.Sep_Min_Max)) + "_" + str(self.DH_side)
             if self.DH_side != 'full':
                 stringdh = stringdh + '_ang' + str(int(self.circ_angle))
                 if self.circ_offset > 0.:
                     stringdh = stringdh + '_off' + str(self.circ_offset)
-
-        if self.DH_shape == "nodh":
+        elif self.DH_shape == "custom":
+            stringdh = "CustomDHmask"
+        elif self.DH_shape == "nodh":
             stringdh = "FullDH"
 
         return stringdh
