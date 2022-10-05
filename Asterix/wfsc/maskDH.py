@@ -69,7 +69,7 @@ class MaskDH:
 
         """
         maskDH = np.ones((dimFP, dimFP))
-        xx, yy = np.meshgrid(np.arange(dimFP) - (dimFP) / 2, np.arange(dimFP) - (dimFP) / 2)
+        xx, yy = np.meshgrid(np.arange(dimFP) - dimFP / 2, np.arange(dimFP) - dimFP / 2)
         rr = np.hypot(yy, xx)
 
         if self.DH_shape == "nodh":
