@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 
+import platform
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from Asterix.utils import save_plane_in_fits
@@ -75,8 +76,14 @@ class MaskDH:
             return maskDH
 
         elif self.DH_shape == "custom":
+            your_os = platform.system()
             img = Image.new(mode="L", size=(dimFP, dimFP))
-            fnt = ImageFont.truetype('/Library/Fonts/Arial Bold.ttf', size=int(dimFP / 4))
+            if your_os == "Darwin":
+                fnt = ImageFont.truetype('/Library/Fonts/Arial Bold.ttf', size=int(dimFP / 4))
+            elif your_os == "Linux":
+                fnt = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSerif.ttf', size=int(dimFP / 4))
+            else:
+                raise OSError("The path to fonts is not implemented for your OS yet.")
             d = ImageDraw.Draw(img)
             d.text((int(dimFP / 4), int(dimFP / 4)), "C N \nR S", font=fnt, fill=1)
             maskDH = np.flipud(np.asarray(img, dtype=float))
