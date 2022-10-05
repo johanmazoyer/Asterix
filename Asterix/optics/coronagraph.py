@@ -25,7 +25,7 @@ class Coronagraph(optsy.OpticalSystem):
         ----------
         modelconfig : dict
             general configuration parameters (sizes and dimensions)
-        coroconfig : : dict
+        coroconfig : dict
             coronagraph parameters
         Model_local_dir: string, default None
             directory to save things you can measure yourself and can save to save times
