@@ -100,7 +100,7 @@ class Estimator:
             self.is_focal_plane = True
             self.is_complex = True
             if self.polychrom == 'broadband_pwprobes':
-                raise Exception("cannot use polychrom='broadband_pwprobes' in perfect mode")
+                raise ValueError("cannot use polychrom='broadband_pwprobes' in perfect mode")
 
         elif self.technique in ["pairwise", "pw"]:
             self.is_focal_plane = True
@@ -126,7 +126,6 @@ class Estimator:
                     wl_in_pw_matrix = [testbed.wavelength_0]
                 else:
                     wl_in_pw_matrix = testbed.wav_vec
-                    #careful if you want to estimate at different wl
 
                 for k, wave_k in enumerate(wl_in_pw_matrix):
                     probes = np.zeros((len(self.posprobes), testbed.DM3.number_act), dtype=np.float32)
@@ -193,9 +192,9 @@ class Estimator:
         """
 
         if 'wavelength' in kwargs:
-            raise Exception("""todetector_intensity() function is polychromatic, 
+            raise Exception("""estimate() function is polychromatic, 
                 do not use wavelength keyword.
-                Use wavelengths keyword even for monochromatic intensity""")
+                Use 'wavelengths' keyword even for monochromatic intensity""")
 
         if isinstance(entrance_EF, (float, int)):
             entrance_EF = np.repeat(entrance_EF, testbed.nb_wav)
@@ -206,8 +205,8 @@ class Estimator:
         elif entrance_EF.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
             pass
         else:
-            raise Exception(
-                """"entrance_EFs must be scalar (same for all WL), or a testbed.nb_wav scalars or a
+            raise TypeError(
+                """entrance_EFs must be scalar (same for all WLs), or a testbed.nb_wav scalars or a
                         2D array of size (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil) or a 3D array of size
                         (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil)""")
 
@@ -229,9 +228,9 @@ class Estimator:
                     wavelength=testbed.wavelength_0)
                 result_estim.append(resizing(resultatestimation, self.dimEstim))
             elif self.polychrom == 'broadband_pwprobes':
-                raise Exception("cannot use polychrom='broadband_pwprobes' in perfect mode")
+                raise ValueError("cannot use polychrom='broadband_pwprobes' in perfect mode")
             else:
-                raise Exception(self.polychrom + "is not a valid polychromatic estimation/correction mode")
+                raise ValueError(self.polychrom + "is not a valid polychromatic estimation/correction mode")
             return result_estim
 
         elif self.technique in ["pairwise", "pw"]:
@@ -270,7 +269,7 @@ class Estimator:
                                                         wavelengths=testbed.wav_vec)
                 result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0], **kwargs))
             else:
-                raise Exception(self.polychrom + " is not a valid polychromatic estimation/correction mode")
+                raise ValueError(self.polychrom + " is not a valid polychromatic estimation/correction mode")
             return result_estim
 
         elif self.technique == 'coffee':
@@ -301,7 +300,7 @@ class Estimator:
         # we chose it already. We only check its existence
         if hasattr(testbed, 'name_DM_to_probe_in_PW'):
             if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
-                raise Exception("Cannot use this DM for PW, this testbed has no DM named " +
+                raise ValueError("Cannot use this DM for PW, this testbed has no DM named " +
                                 testbed.name_DM_to_probe_in_PW)
             return testbed.name_DM_to_probe_in_PW
 
