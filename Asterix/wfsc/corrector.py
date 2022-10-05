@@ -70,14 +70,14 @@ class Corrector:
         estimator: Estimator
             an estimator object. This contains all information about the estimation
 
-        matrix_dir: path default: None
-            save all the difficult to measure files here
+        matrix_dir: string, default: None
+            path to directory to save interraction matrices
 
         save_for_bench: bool default: false
             should we save for the real testbed in realtestbed_dir
 
-        realtestbed_dir: path 
-            save all the files the real testbed need to run your code
+        realtestbed_dir: string 
+            path to directory to save all the files the real testbed need
 
         """
         if not os.path.exists(matrix_dir):

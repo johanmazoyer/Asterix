@@ -32,8 +32,8 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, m
         size of the output image after resizing in pixels
     cutsvd:     float
         value not to exceed for the inverse eigeinvalues at each pixels
-    matrix_dir : path. 
-        save all the matrices files here
+    matrix_dir : string
+        path to directory to save all the matrices here
     polychrom: string
         For polychromatic estimation and correction : 
         - 'centralwl': only the central bandwidth is used for estimation / correction. 1 Interation Matrix
@@ -99,8 +99,8 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
         size of the output image after resizing in pixels
     cutsvd:     float
         value not to exceed for the inverse eigeinvalues at each pixels
-    matrix_dir : path. 
-        save all the matrices files here
+    matrix_dir : string
+        path to directory to save all the matrices here
     wavelength : float
         wavelength in m.
 
@@ -250,8 +250,8 @@ def simulate_pw_difference(input_wavefront,
 
     Parameters
     ----------
-    input_wavefront : 2D-array (complex)
-        Input wavefront in pupil plane
+    input_wavefront: complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
+        Input wavefront in pupil plane   
     
     testbed: Testbed Optical_element
             a testbed with one or more DM

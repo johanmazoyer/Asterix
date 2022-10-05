@@ -66,14 +66,14 @@ class Estimator:
         testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
-        matrix_dir: path. 
-            save all the matrices files here
+        matrix_dir: string 
+            pat to directory. save all the matrices files here
 
         save_for_bench. bool default: false
                 should we save for the real testbed in realtestbed_dir
 
-        realtestbed_dir: path 
-            save all the files the real thd2 testbed need to run your code
+        realtestbed_dir: string 
+            path to directory to save all the files the real thd2 testbed need to run your code
 
         """
         if not os.path.exists(matrix_dir):

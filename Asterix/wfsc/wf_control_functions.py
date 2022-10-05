@@ -56,8 +56,8 @@ def create_interaction_matrix(testbed: Testbed,
     amplitudeEFC: float
         amplitude of the EFC probe on the DM
     
-    matrix_dir : path. 
-        save all the matrices here
+    matrix_dir : string. 
+        path to directory to save all the matrices here
     
     MatrixType: string
         'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
@@ -73,8 +73,8 @@ def create_interaction_matrix(testbed: Testbed,
     initial_DM_voltage: 1D-array real
         initial DM voltage for all DMs
     
-    input_wavefront: 
-        input wavefront in pupil plane
+    input_wavefront: complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
+        Input wavefront in pupil plane    
     
     dir_save_all_planes : default None. 
         If not None, directory to save all planes in fits for debugging purposes.
@@ -100,7 +100,7 @@ def create_interaction_matrix(testbed: Testbed,
     elif input_wavefront.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
         pass
     else:
-        raise Exception(""""input_wavefront must be scalar (same for all WL), or a nb_wav scalars or a
+        raise TypeError("""input_wavefront must be scalar (same for all WL), or a nb_wav scalars or a
                     2D array of size (dim_overpad_pupil, dim_overpad_pupil) or a 3D array of size
                     (nb_wav, dim_overpad_pupil, dim_overpad_pupil)""")
 
@@ -134,7 +134,7 @@ def create_interaction_matrix(testbed: Testbed,
                                                    dir_save_all_planes=dir_save_all_planes,
                                                    visu=visu))
     else:
-        raise Exception(polychrom + " is not a valid polychromatic estimation/correction mode")
+        raise ValueError(polychrom + " is not a valid polychromatic estimation/correction mode")
 
     return return_matrix
 
@@ -180,8 +180,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     wavelength : float
         wavelength in m.
     
-    matrix_dir : path. 
-        save all the matrices here
+    matrix_dir : string. 
+        path to directory to save all the matrices here
     
     MatrixType: string
         'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
@@ -192,11 +192,11 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     initial_DM_voltage: 1D-array real
         initial DM voltage for all DMs
     
-    input_wavefront: 
-        input wavefront in pupil plane
+    input_wavefront: 2D complex array or complex scalar. Default is 1 (flat WF)
+        Input wavefront in pupil plane   
     
-    dir_save_all_planes : default None. 
-        If not None, directory to save all planes in fits for debugging purposes.
+    dir_save_all_planes : string, default None. 
+        If not None, path to directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution
     
     visu : bool default false
@@ -627,9 +627,8 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
         voltage to apply on each deformable mirror actuator
 
     """
-    # probably not working in polychromatic yet
     if len(Result_Estimate) > 1:
-        raise Exception("EM correction does not workin polychromatic")
+        raise ValueError("EM correction is not working in polychromatic mode.")
 
     # With notations from Potier PhD eq 4.74 p78:
     Eab = Result_Estimate[0][np.where(mask == 1)]
@@ -784,9 +783,8 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
          voltage to apply on each deformable mirror actuator
    
     """
-    # probably not working in polychromatic yet
     if len(Result_Estimate) > 1:
-        raise Exception("steepest correction does not workin polychromatic")
+        raise ValueError("Steepest correction is not working in polychromatic mode.")
 
     Eab = np.zeros(int(np.sum(mask)))
     Resultat_cropdh = Result_Estimate[0][np.where(mask == 1)]

@@ -46,8 +46,8 @@ class DeformableMirror(optsy.OpticalSystem):
                 the name of the DM, which allows to find it in the parameter file
                 we measure and save the pushact functions
 
-        Model_local_dir: path
-                directory to save things you can measure yourself
+        Model_local_dir : string
+                path directory to save things you can measure yourself
                     and can save to save time
         
         """

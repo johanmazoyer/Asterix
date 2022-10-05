@@ -25,7 +25,7 @@ def correction_loop(testbed: Testbed,
                     mask_dh: maskDH.MaskDH,
                     Loopconfig,
                     SIMUconfig,
-                    input_wavefront=0,
+                    input_wavefront=1.,
                     initial_DM_voltage=0.,
                     silence=False,
                     **kwargs):

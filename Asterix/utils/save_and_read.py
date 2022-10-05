@@ -24,8 +24,8 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
         Parameters
         ----------
 
-        dir_save_fits: path
-            directory to save 
+        dir_save_fits: string
+            path to directory to save the fits
         
         name_plane : string
             name of the plane.
