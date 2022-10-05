@@ -125,10 +125,10 @@ This is specifically the optimized Stroke Minimization described in `Mazoyer et 
 No parameters except ``Nbiter_corr`` : number of iterations in each loop.
 
 **Energy Minimization (EM)**: 
-Same parameters as efc. Do not currently work in polychromatic correction
+Same parameters as efc. Does not currently work in polychromatic correction.
 
 **Steepest** : 
-Same parameters as efc. Do not currently work in polychromatic correction
+Same parameters as efc. Does not currently work in polychromatic correction.
 
 Polychromatic Correction
 +++++++++++++++++++++++++++++++
