@@ -36,8 +36,8 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, m
         path to directory to save all the matrices here
     polychrom: string
         For polychromatic estimation and correction : 
-        - 'centralwl': only the central bandwidth is used for estimation / correction. 1 Interation Matrix
-        - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central bandwidth: 1 PW Matrix and 1 Interation Matrix
+        - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
+        - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
 
     Returns
@@ -72,7 +72,7 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, m
                                           wavelength=wave_i,
                                           **kwargs))
     else:
-        raise Exception(polychrom + " is not a valid polychromatic estimation/correction mode")
+        raise ValueError(polychrom + " is not a valid polychromatic estimation/correction mode")
 
     return return_matrix
 
@@ -337,7 +337,7 @@ def simulate_pw_difference(input_wavefront,
                                                   **kwargs)
 
         else:
-            raise Exception(
+            raise ValueError(
                 """You are trying to do a pw_difference with wavelength parameters I don't understand. 
                                 Code it yourself in simulate_pw_difference and be careful with the normalization"""
             )

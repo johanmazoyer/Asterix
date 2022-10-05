@@ -262,10 +262,10 @@ def grey_pupil(dim, rad, rad_inner=None, fac=10):
     length = np.arange(dim * fac)
     cen = length.shape[0] / 2
     xx, yy = np.meshgrid(length - cen, length - cen)
-    p0 = np.array((xx ** 2 + yy ** 2) <= (rad * fac) ** 2, dtype=float)
+    p0 = np.array((xx**2 + yy**2) <= (rad * fac)**2, dtype=float)
 
     if rad_inner is not None:
-        obscuration = np.array((xx ** 2 + yy ** 2) <= (rad_inner * fac) ** 2, dtype=float)
+        obscuration = np.array((xx**2 + yy**2) <= (rad_inner * fac)**2, dtype=float)
         p0 -= obscuration
 
     pupil = rebin(p0, fac)

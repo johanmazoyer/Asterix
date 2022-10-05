@@ -34,12 +34,24 @@ def test_wrapped_vortex_phase_mask():
     phval = np.array([3, 0, 1, 2, 1]) * np.pi
     jump = np.array([2, 2, 2, 2]) * np.pi
 
-    angles_1d, phase_1d = create_wrapped_vortex_mask(dim=size, thval=thval, phval=phval, jump=jump, return_1d=True)
-    assert np.max(angles_1d) <= 2*np.pi, "Angles go beyond 2pi."
+    angles_1d, phase_1d = create_wrapped_vortex_mask(dim=size,
+                                                     thval=thval,
+                                                     phval=phval,
+                                                     jump=jump,
+                                                     return_1d=True)
+    assert np.max(angles_1d) <= 2 * np.pi, "Angles go beyond 2pi."
 
-    angles_2d, phase_2d = create_wrapped_vortex_mask(dim=size, thval=thval, phval=phval, jump=jump, return_1d=False)
-    assert np.max(angles_2d) <= 2*np.pi, "Angles go beyond 2pi."
+    angles_2d, phase_2d = create_wrapped_vortex_mask(dim=size,
+                                                     thval=thval,
+                                                     phval=phval,
+                                                     jump=jump,
+                                                     return_1d=False)
+    assert np.max(angles_2d) <= 2 * np.pi, "Angles go beyond 2pi."
 
-    angles_2d_shifted, phase_2d_shifted = create_wrapped_vortex_mask(dim=size, thval=thval, phval=phval, jump=jump,
-                                                                     return_1d=False, cen_shift=(10,10))
+    angles_2d_shifted, phase_2d_shifted = create_wrapped_vortex_mask(dim=size,
+                                                                     thval=thval,
+                                                                     phval=phval,
+                                                                     jump=jump,
+                                                                     return_1d=False,
+                                                                     cen_shift=(10, 10))
     assert np.sum(phase_2d - phase_2d_shifted) != 0., "Shifting of phase mask does not work."

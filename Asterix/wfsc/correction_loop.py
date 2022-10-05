@@ -458,10 +458,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     plt.figure()
 
     for j, DM_name in enumerate(testbed.name_of_DMs):
-        fits.writeto(os.path.join(result_dir, f"{DM_name}_phases.fits"),
-                     DM_phases[j],
-                     header,
-                     overwrite=True)
+        fits.writeto(os.path.join(result_dir, f"{DM_name}_phases.fits"), DM_phases[j], header, overwrite=True)
 
         fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"),
                      DMstrokes[j],
@@ -473,7 +470,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                                                  DM.number_act]
         indice_acum_number_act += DM.number_act
 
-        fits.writeto(os.path.join(result_dir,  f"{DM_name}_voltages.fits"),
+        fits.writeto(os.path.join(result_dir, f"{DM_name}_voltages.fits"),
                      voltage_DMs_tosave,
                      header,
                      overwrite=True)

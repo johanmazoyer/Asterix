@@ -67,7 +67,7 @@ class Estimator:
                 Testbed object which describe your testbed
 
         matrix_dir: string 
-            pat to directory. save all the matrices files here
+            path to directory. save all the matrix files here
 
         save_for_bench. bool default: false
                 should we save for the real testbed in realtestbed_dir
@@ -301,7 +301,7 @@ class Estimator:
         if hasattr(testbed, 'name_DM_to_probe_in_PW'):
             if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
                 raise ValueError("Cannot use this DM for PW, this testbed has no DM named " +
-                                testbed.name_DM_to_probe_in_PW)
+                                 testbed.name_DM_to_probe_in_PW)
             return testbed.name_DM_to_probe_in_PW
 
         # If name_DM_to_probe_in_PW is not already set,
