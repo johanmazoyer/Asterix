@@ -4,12 +4,11 @@ from Asterix.utils import save_plane_in_fits
 
 class MaskDH:
     """
-        A very small class to do all the mask related stuff: retrieve parameters and
-        combined them measure the mask and measure the string to save matrices.
-        They're fast to measure so we do not need to save except in 'onbench' case
-        
-        AUTHOR : Johan Mazoyer
-    
+    A very small class to do all the mask related stuff: retrieve parameters and
+    combined them measure the mask and measure the string to save matrices.
+    They're fast to measure so we do not need to save except in 'onbench' case
+
+    AUTHOR : Johan Mazoyer
     """
 
     def __init__(self, Correctionconfig):
@@ -22,7 +21,6 @@ class MaskDH:
         ----------
         Correctionconfig: dict
                 general correction file which contains mask parameters
-    
         """
 
         self.DH_shape = Correctionconfig["DH_shape"].lower()
@@ -54,15 +52,14 @@ class MaskDH:
             size of the output FP mask
         FP_sampling: float
             resolution of focal plane pixel  per lambda / D
-        dir_save_all_planes : default None. 
+        dir_save_all_planes : default None.
             If not None, directory to save all planes in fits for debugging purposes.
             This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
         ------
-        maskDH: 2D array    
+        maskDH: 2D array
             binary mask delimiting the DH
-
         """
 
         maskDH = np.ones((dimFP, dimFP))
@@ -115,12 +112,11 @@ class MaskDH:
             directly update self.stringdh
 
             AUTHOR : Johan Mazoyer
-        
+
             Returns
             ------
             stringdh: str
                 mask String to save .fits files
-
         """
 
         if self.DH_shape == "square":
