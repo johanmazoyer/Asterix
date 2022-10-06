@@ -100,9 +100,9 @@ def create_interaction_matrix(testbed: Testbed,
     elif input_wavefront.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
         pass
     else:
-        raise TypeError("""input_wavefront must be scalar (same for all WL), or a nb_wav scalars or a
-                    2D array of size (dim_overpad_pupil, dim_overpad_pupil) or a 3D array of size
-                    (nb_wav, dim_overpad_pupil, dim_overpad_pupil)""")
+        raise TypeError(("input_wavefront must be scalar (same for all WL), or a nb_wav scalars or a "
+                         "2D array of size (dim_overpad_pupil, dim_overpad_pupil) or a 3D array of size "
+                         "(nb_wav, dim_overpad_pupil, dim_overpad_pupil)"))
 
     return_matrix = []
 

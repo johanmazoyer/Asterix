@@ -98,8 +98,8 @@ def correction_loop(testbed: Testbed,
         if not Linesearch:
             Nbmode_corr = list(Loopconfig["Nbmode_corr"])
             if len(Nbiter_corr) != len(Nbmode_corr):
-                raise Exception("""In this correction mode and if Linesearch = False, 
-                the length of Nbmode_corr must match the length of Nbiter_corr""")
+                raise Exception(("In this correction mode and if Linesearch = False, "
+                "the length of Nbmode_corr must match the length of Nbiter_corr"))
 
     else:
         Linesearch = None

@@ -192,9 +192,9 @@ class Estimator:
         """
 
         if 'wavelength' in kwargs:
-            raise Exception("""estimate() function is polychromatic, 
-                do not use wavelength keyword.
-                Use 'wavelengths' keyword even for monochromatic intensity""")
+            raise Exception(("estimate() function is polychromatic, "
+                             "do not use wavelength keyword. "
+                             "Use 'wavelengths' keyword even for monochromatic intensity"))
 
         if isinstance(entrance_EF, (float, int)):
             entrance_EF = np.repeat(entrance_EF, testbed.nb_wav)
@@ -206,9 +206,10 @@ class Estimator:
             pass
         else:
             raise TypeError(
-                """entrance_EFs must be scalar (same for all WLs), or a testbed.nb_wav scalars or a
-                        2D array of size (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil) or a 3D array of size
-                        (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil)""")
+                ("entrance_EFs must be scalar (same for all WLs), or a testbed.nb_wav scalars "
+                 "or a2D array of size (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil) "
+                 "or a 3D array of size(testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil)"
+                 ))
 
         if (self.technique == "perfect") or (perfect_estimation):
             # If polychromatic, assume a perfect estimation at one wavelength

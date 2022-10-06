@@ -603,7 +603,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     """
 
     if Nact1D * pitchDM < diam_pup_in_m:
-        raise Exception("""Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil""")
+        raise Exception("Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil")
 
     pitchDM_in_pix = pitchDM * diam_pup_in_pix / diam_pup_in_m
 

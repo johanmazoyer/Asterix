@@ -120,11 +120,10 @@ class Pupil(optsy.OpticalSystem):
             else:
                 if not os.path.exists(PupType):
 
-                    print(f"""filename_instr_XXX parameters must either be a known keyword 
-                            'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' , 'RomanPupTHD2', 'THD2',
-                            or an exisiting full path .fits name. This is not the case here,
-                            the name  '{PupType}' is not a known keyword and is not an existing filename
-                            """)
+                    print(("filename_instr_XXX parameters must either be a known keyword "
+                           "'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' , 'RomanPupTHD2', 'THD2', "
+                           "or an exisiting full path .fits name. This is not the case here, "
+                           f"the name  '{PupType}' is not a known keyword and is not an existing filename"))
                     print("")
                     print("")
                     raise

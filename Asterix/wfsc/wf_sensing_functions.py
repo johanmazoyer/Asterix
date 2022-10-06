@@ -338,9 +338,8 @@ def simulate_pw_difference(input_wavefront,
 
         else:
             raise ValueError(
-                """You are trying to do a pw_difference with wavelength parameters I don't understand. 
-                                Code it yourself in simulate_pw_difference and be careful with the normalization"""
-            )
+                ("You are trying to do a pw_difference with wavelength parameters I don't understand."
+                 " Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
         Difference[count] = resizing(Ikplus - Ikmoins, dimimages)
 
