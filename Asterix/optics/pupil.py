@@ -27,7 +27,7 @@ class Pupil(optsy.OpticalSystem):
 
     def __init__(self, modelconfig, prad=0., PupType=None, angle_rotation=0, Model_local_dir=None):
         """
-        Initialize a pupil object.           
+        Initialize a pupil object.
         TODO: include an SCC Lyot pupil function here !
         TODO: for now pupil .fits are monochromatic but the pupil propagation EF_through
             use wavelenght as a parameter
@@ -44,29 +44,27 @@ class Pupil(optsy.OpticalSystem):
             Default is the pupil radius in the parameter file (self.prad)
             radius in pixels of the round pupil.
 
-        PupType : string (default None) 
-            Currently known possiibilities are 
+        PupType : string (default None)
+            Currently known possibilities are
             "RoundPup", "ClearPlane", "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2"
 
             if not one of those , it will try a full path to a fits file given by the user:
 
             The pupil .fits files should be 2D and square with an even number of pix.
             with even number of pix and centered between 4 pixels.
-            The array size will be assumed to correspond to the size of the entrance pupil 
+            The array size will be assumed to correspond to the size of the entrance pupil
             and will be rescaled self.prad and then padded to self.dim_overpad_pupil
 
             This is a bit dangerous because your .fits file might must be defined
             the right way so be careful
-        
+
         angle_rotation: float (default 0)
             angle of rotation of the pupil in degrees in counter-clockwise direction.
             this is only used if the pupil is not clear or empty
 
-
         Model_local_dir: string, default None
                     directory to save things you can measure yourself
                     and can save to save time
-
         """
         # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
@@ -153,7 +151,7 @@ class Pupil(optsy.OpticalSystem):
             if pup_fits.shape[0] == 2 * self.prad:
                 pup_fits_right_size = pup_fits
             else:
-                #Rescale to the pupil size
+                # Rescale to the pupil size
                 find_divisors = []
                 for i in range(60, pup_fits.shape[0] + 1):
                     if pup_fits.shape[0] % i == 0:
@@ -170,7 +168,7 @@ class Pupil(optsy.OpticalSystem):
 
             self.pup = crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 
-        #initialize the max and sum of PSFs for the normalization to contrast
+        # initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
 
     def EF_through(self, entrance_EF=1., wavelength=None, dir_save_all_planes=None, **kwargs):
@@ -180,13 +178,11 @@ class Pupil(optsy.OpticalSystem):
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or complex/float scalar (entrance_EF is constant)
+        entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or complex/float scalar (entrance_EF is constant)
             Default is 1. Electric field in the pupil plane a the entrance of the system.
-
         wavelength : float. Default is self.wavelength_0 the reference wavelength
             Current wavelength in m.
-
-        dir_save_all_planes : default None. 
+        dir_save_all_planes : default None
             If not None, directory to save all planes in fits for debugging purposes.
             This can generate a lot of fits especially if in a loop, use with caution
 
@@ -194,7 +190,6 @@ class Pupil(optsy.OpticalSystem):
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
-
         """
 
         # call the OpticalSystem super function to check and format the variable entrance_EF
