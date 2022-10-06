@@ -120,11 +120,10 @@ class Pupil(optsy.OpticalSystem):
             else:
                 if not os.path.exists(PupType):
 
-                    print(f"""filename_instr_XXX parameters must either be a known keyword 
-                            'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' , 'RomanPupTHD2', 'THD2',
-                            or an exisiting full path .fits name. This is not the case here,
-                            the name  '{PupType}' is not a known keyword and is not an existing filename
-                            """)
+                    print(("filename_instr_XXX parameters must either be a known keyword "
+                           "'RoundPup', 'Clear', 'RomanPup', 'RomanLyot' , 'RomanPupTHD2', 'THD2', "
+                           "or an exisiting full path .fits name. This is not the case here, "
+                           f"the name  '{PupType}' is not a known keyword and is not an existing filename"))
                     print("")
                     print("")
                     raise
@@ -262,10 +261,10 @@ def grey_pupil(dim, rad, rad_inner=None, fac=10):
     length = np.arange(dim * fac)
     cen = length.shape[0] / 2
     xx, yy = np.meshgrid(length - cen, length - cen)
-    p0 = np.array((xx ** 2 + yy ** 2) <= (rad * fac) ** 2, dtype=float)
+    p0 = np.array((xx**2 + yy**2) <= (rad * fac)**2, dtype=float)
 
     if rad_inner is not None:
-        obscuration = np.array((xx ** 2 + yy ** 2) <= (rad_inner * fac) ** 2, dtype=float)
+        obscuration = np.array((xx**2 + yy**2) <= (rad_inner * fac)**2, dtype=float)
         p0 -= obscuration
 
     pupil = rebin(p0, fac)

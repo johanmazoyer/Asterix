@@ -70,14 +70,14 @@ class Corrector:
         estimator: Estimator
             an estimator object. This contains all information about the estimation
 
-        matrix_dir: path default: None
-            save all the difficult to measure files here
+        matrix_dir: string, default: None
+            path to directory to save interraction matrices
 
         save_for_bench: bool default: false
             should we save for the real testbed in realtestbed_dir
 
-        realtestbed_dir: path 
-            save all the files the real testbed need to run your code
+        realtestbed_dir: string 
+            path to directory to save all the files the real testbed need
 
         """
         if not os.path.exists(matrix_dir):
@@ -121,8 +121,13 @@ class Corrector:
                 print("Creating directory " + realtestbed_dir)
                 os.makedirs(realtestbed_dir)
 
+            if estimator.polychrom in ['centralwl', 'broadband_pwprobes']:
+                number_wl_in_matrix = 1
+            else:
+                number_wl_in_matrix = 3
+
             if testbed.DM1.active & testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir, "Direct_Matrix_2DM.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_wl{number_wl_in_matrix}.fits"),
                              self.Gmatrix,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
@@ -134,7 +139,8 @@ class Corrector:
                 number_Active_testbeds = 13
 
             elif testbed.DM1.active:
-                fits.writeto(os.path.join(realtestbed_dir, "Direct_Matrix_DM1only.fits"),
+                fits.writeto(os.path.join(realtestbed_dir,
+                                          f"Direct_Matrix_DM1only_wl{number_wl_in_matrix}.fits"),
                              self.Gmatrix,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
@@ -142,7 +148,8 @@ class Corrector:
                              overwrite=True)
                 number_Active_testbeds = 1
             elif testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir, "Direct_Matrix_DM3only.fits"),
+                fits.writeto(os.path.join(realtestbed_dir,
+                                          f"Direct_Matrix_DM3only_wl{number_wl_in_matrix}.fits"),
                              self.Gmatrix,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
@@ -161,8 +168,11 @@ class Corrector:
                     raise Exception(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
                                     " in inversion for THD is probably too high for 1DM")
 
-            thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"], number_Active_testbeds,
-                                              realtestbed_dir, self.regularization)
+            thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],
+                                              number_Active_testbeds,
+                                              realtestbed_dir,
+                                              self.regularization,
+                                              number_wl_in_matrix=number_wl_in_matrix)
 
             fits.writeto(os.path.join(realtestbed_dir, "DH_mask.fits"),
                          self.MaskEstim.astype(np.float32),
@@ -231,15 +241,23 @@ class Corrector:
                                                      initial_DM_voltage=initial_DM_voltage,
                                                      input_wavefront=input_wavefront,
                                                      MatrixType=self.MatrixType,
-                                                     dir_save_all_planes=None)
+                                                     polychrom=estimator.polychrom,
+                                                     dir_save_all_planes=None,
+                                                     visu=False)
 
             self.Gmatrix = wfc.crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
 
             if self.correction_algorithm in ["em", "steepest", "sm"]:
+                pixel_in_mask = int(np.sum(self.MaskEstim))
+                number_wl_matrix = self.Gmatrix.shape[0] // (2 * pixel_in_mask)
 
-                self.G = np.zeros((int(np.sum(self.MaskEstim)), self.Gmatrix.shape[1]), dtype=complex)
-                self.G = (self.Gmatrix[0:int(self.Gmatrix.shape[0] / 2), :] +
-                          1j * self.Gmatrix[int(self.Gmatrix.shape[0] / 2):, :])
+                self.G = np.zeros((number_wl_matrix * pixel_in_mask, self.Gmatrix.shape[1]), dtype=complex)
+
+                for i in range(number_wl_matrix):
+                    self.G[i * pixel_in_mask:(i + 1) * pixel_in_mask, :] = (
+                        self.Gmatrix[2 * i * pixel_in_mask:(2 * i + 1) * pixel_in_mask, :] +
+                        1j * self.Gmatrix[(2 * i + 1) * pixel_in_mask:(2 * i + 2) * pixel_in_mask, :])
+
                 transposecomplexG = np.transpose(np.conjugate(self.G))
                 self.M0 = np.real(np.dot(transposecomplexG, self.G))
                 self.Gmatrix = 0.
@@ -257,8 +275,9 @@ class Corrector:
         testbed :  OpticalSystem.Testbed
             Testbed object which describe your testbed
 
-        estimate: 2D complex array 
-            Array of size of sixe [dimEstim, dimEstim]. 
+        estimate: list of 2D complex array 
+            list is the number of wl in the estimation, usually 1 or testbed.nb_wav
+            Each arrays are of size of sixe [dimEstim, dimEstim]. 
             This is the result of Estimator.estimate, from which this function 
             send a command to the DM
         

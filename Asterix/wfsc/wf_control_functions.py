@@ -23,10 +23,134 @@ def create_interaction_matrix(testbed: Testbed,
                               initial_DM_voltage=0.,
                               input_wavefront=1.,
                               MatrixType='',
+                              polychrom='centralwl',
                               dir_save_all_planes=None,
                               visu=False):
     """
     Create the jacobian matrix for Electric Field Conjugation. The Matrix is not
+    limited to the DH size but to the whole FP [dimEstim, dimEstim]. 
+    First half is real part, second half is imag part.
+
+    The matrix size is therefore [total(DM.basis_size), 2*dimEstim^2]
+
+    We save the matrix in .fits independently for each DMs, only if the initial 
+    wavefront and DMs are flat.
+
+    This code works for all testbeds without prior assumption (if we have at 
+    least 1 DM of course). We have optimized the code to only do once the optical 
+    elements before the DM movement and repeat only what is after the DMS
+    
+    AUTHOR : Johan Mazoyer
+
+    Sept 2022 : created 
+
+    Parameters
+    ----------
+
+    testbed: Testbed Optical_element
+        testbed structure with at least 1 DM
+    
+    dimEstim: int
+        size of the output image in teh estimator
+    
+    amplitudeEFC: float
+        amplitude of the EFC probe on the DM
+    
+    matrix_dir : string. 
+        path to directory to save all the matrices here
+    
+    MatrixType: string
+        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
+        or 'perfect' (we keep exp(i phi)).
+        in both case, if the DMs are not initially flat (non zero initial_DM_voltage), 
+        we do not make the small phase assumption for initial DM phase
+    
+    polychrom: string
+        For polychromatic estimation and correction : 
+        - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
+        - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
+        - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
+    initial_DM_voltage: 1D-array real
+        initial DM voltage for all DMs
+    
+    input_wavefront: complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
+        Input wavefront in pupil plane    
+    
+    dir_save_all_planes : default None. 
+        If not None, directory to save all planes in fits for debugging purposes.
+        This can generate a lot of fits especially if in a loop, use with caution
+    
+    visu : bool default false
+        if true show the focal plane intensity in 2D for each mode
+
+    Returns
+    ------
+    InterMat: 2D array of size [total(DM.basis_size), 2*dimEstim^2]
+        jacobian matrix for Electric Field Conjugation.
+
+    """
+
+    ## careful here if we do not want the matrix done exactly at the same wl as the testbed
+    if isinstance(input_wavefront, (float, int)):
+        input_wavefront = np.repeat(input_wavefront, testbed.nb_wav)
+    elif input_wavefront.shape == testbed.wav_vec.shape:
+        pass
+    elif input_wavefront.shape == (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
+        input_wavefront = np.repeat(input_wavefront[np.newaxis, ...], testbed.nb_wav, axis=0)
+    elif input_wavefront.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
+        pass
+    else:
+        raise TypeError(("input_wavefront must be scalar (same for all WL), or a nb_wav scalars or a "
+                         "2D array of size (dim_overpad_pupil, dim_overpad_pupil) or a 3D array of size "
+                         "(nb_wav, dim_overpad_pupil, dim_overpad_pupil)"))
+
+    return_matrix = []
+
+    if polychrom in ['centralwl', 'broadband_pwprobes']:
+        return_matrix.append(
+            create_singlewl_interaction_matrix(testbed,
+                                               dimEstim,
+                                               amplitudeEFC,
+                                               testbed.wavelength_0,
+                                               matrix_dir,
+                                               initial_DM_voltage=initial_DM_voltage,
+                                               input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(
+                                                   testbed.wavelength_0)],
+                                               MatrixType=MatrixType,
+                                               dir_save_all_planes=dir_save_all_planes,
+                                               visu=visu))
+
+    elif polychrom == 'multiwl':
+        for i, wave_i in enumerate(testbed.wav_vec):
+            return_matrix.append(
+                create_singlewl_interaction_matrix(testbed,
+                                                   dimEstim,
+                                                   amplitudeEFC,
+                                                   wave_i,
+                                                   matrix_dir,
+                                                   initial_DM_voltage=initial_DM_voltage,
+                                                   input_wavefront=input_wavefront[i],
+                                                   MatrixType=MatrixType,
+                                                   dir_save_all_planes=dir_save_all_planes,
+                                                   visu=visu))
+    else:
+        raise ValueError(polychrom + " is not a valid polychromatic estimation/correction mode")
+
+    return return_matrix
+
+
+def create_singlewl_interaction_matrix(testbed: Testbed,
+                                       dimEstim,
+                                       amplitudeEFC,
+                                       wavelength,
+                                       matrix_dir,
+                                       initial_DM_voltage=0.,
+                                       input_wavefront=1.,
+                                       MatrixType='',
+                                       dir_save_all_planes=None,
+                                       visu=False):
+    """
+    Create the jacobian matrix for Electric Field Conjugation for one wavelength. The Matrix is not
     limited to the DH size but to the whole FP [dimEstim, dimEstim]. 
     First half is real part, second half is imag part.
 
@@ -53,8 +177,11 @@ def create_interaction_matrix(testbed: Testbed,
     amplitudeEFC: float
         amplitude of the EFC probe on the DM
     
-    matrix_dir : path. 
-        save all the matrices here
+    wavelength : float
+        wavelength in m.
+    
+    matrix_dir : string. 
+        path to directory to save all the matrices here
     
     MatrixType: string
         'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
@@ -62,14 +189,14 @@ def create_interaction_matrix(testbed: Testbed,
         in both case, if the DMs are not initially flat (non zero initial_DM_voltage), 
         we do not make the small phase assumption for initial DM phase
 
-    input_wavefront: 1D-array real
+    initial_DM_voltage: 1D-array real
         initial DM voltage for all DMs
     
-    input_wavefront: 2D-array complex
-        input wavefront in pupil plane
+    input_wavefront: 2D complex array or complex scalar. Default is 1 (flat WF)
+        Input wavefront in pupil plane   
     
-    dir_save_all_planes : default None. 
-        If not None, directory to save all planes in fits for debugging purposes.
+    dir_save_all_planes : string, default None. 
+        If not None, path to directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution
     
     visu : bool default false
@@ -84,7 +211,7 @@ def create_interaction_matrix(testbed: Testbed,
     if isinstance(initial_DM_voltage, (int, float)):
         initial_DM_voltage = np.zeros(testbed.number_act) + float(initial_DM_voltage)
 
-    wavelength = testbed.wavelength_0
+    # wavelength = testbed.wavelength_0
     normalisation_testbed_EF_contrast = np.sqrt(
         testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelength)])
 
@@ -103,7 +230,7 @@ def create_interaction_matrix(testbed: Testbed,
 
         DM = vars(testbed)[DM_name]  # type: DeformableMirror
         total_number_basis_modes += DM.basis_size
-        DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
+        DM_small_str = "_" + "_".join(DM.string_os.split("_")[4:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
         #attach the initial phase for each DM
         DM.phase_init = DM_phase_init[i]
@@ -136,7 +263,8 @@ def create_interaction_matrix(testbed: Testbed,
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(DM.basis_size)
 
-        fileDirectMatrix = headfile + basis_str + '_dimEstim' + str(dimEstim) + string_testbed_without_DMS
+        fileDirectMatrix = headfile + basis_str + '_dimEstim' + str(
+            dimEstim) + string_testbed_without_DMS + '_wl' + str(int(wavelength * 1e9))
 
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch
@@ -167,7 +295,8 @@ def create_interaction_matrix(testbed: Testbed,
                 print("")
                 print("The matrix " + fileDirectMatrix + " does not exists")
 
-            print("Start interaction Matrix " + DM_name + ' (wait a few 10s of seconds)')
+            print("Start interaction Matrix " + DM_name + ' at ' + str(int(wavelength * 1e9)) +
+                  'nm (wait a few 10s of seconds)')
 
             # we measure the phases of the Basis we will apply on the DM.
             # In the case of the Fourier Basis, this is a bit long so we load an existing .fits file
@@ -226,7 +355,8 @@ def create_interaction_matrix(testbed: Testbed,
                         save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
 
                 else:
-                    wavefrontupstream = OpticSysbefore.EF_through(entrance_EF=wavefrontupstream)
+                    wavefrontupstream = OpticSysbefore.EF_through(entrance_EF=wavefrontupstream,
+                                                                  wavelength=wavelength)
 
                 if dir_save_all_planes is not None:
                     # save PP plane after this subsystem
@@ -239,7 +369,7 @@ def create_interaction_matrix(testbed: Testbed,
             if DM.z_position != 0:
 
                 wavefrontupstreaminDM = crop_or_pad_image(
-                    prop.prop_angular_spectrum(wavefrontupstream, DM.wavelength_0, DM.z_position,
+                    prop.prop_angular_spectrum(wavefrontupstream, wavelength, DM.z_position,
                                                DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
 
             if visu:
@@ -257,8 +387,8 @@ def create_interaction_matrix(testbed: Testbed,
                 if MatrixType == 'perfect':
                     if DM.z_position == 0:
 
-                        wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(phase_abb=phasesBasis[i] +
-                                                                                  DM.phase_init)
+                        wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(
+                            phase_abb=phasesBasis[i] + DM.phase_init, wavelengths=wavelength)
 
                         if dir_save_all_planes is not None:
                             name_plane = 'Phase_on_' + DM_name + f'_wl{int(wavelength * 1e9)}'
@@ -268,9 +398,9 @@ def create_interaction_matrix(testbed: Testbed,
 
                         wavefront = crop_or_pad_image(
                             prop.prop_angular_spectrum(
-                                wavefrontupstreaminDM *
-                                DM.EF_from_phase_and_ampl(phase_abb=phasesBasis[i] + DM.phase_init),
-                                DM.wavelength_0, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad),
+                                wavefrontupstreaminDM * DM.EF_from_phase_and_ampl(
+                                    phase_abb=phasesBasis[i] + DM.phase_init, wavelengths=wavelength),
+                                wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad),
                             DM.dim_overpad_pupil)
 
                 if MatrixType == 'smallphase':
@@ -278,14 +408,15 @@ def create_interaction_matrix(testbed: Testbed,
                     # removed. Need to be tested with and without on the testbed
                     if DM.z_position == 0:
                         wavefront = (1 + 1j * phasesBasis[i]) * wavefrontupstream * DM.EF_from_phase_and_ampl(
-                            phase_abb=DM.phase_init)
+                            phase_abb=DM.phase_init, wavelengths=wavelength)
                     else:
 
                         wavefront = crop_or_pad_image(
                             prop.prop_angular_spectrum(
                                 wavefrontupstreaminDM * (1 + 1j * phasesBasis[i]) *
-                                DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init), DM.wavelength_0,
-                                -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
+                                DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init, wavelengths=wavelength),
+                                wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad),
+                            DM.dim_overpad_pupil)
 
                 if dir_save_all_planes is not None:
                     name_plane = 'EF_PP_after_' + DM_name + f'_wl{int(wavelength * 1e9)}'
@@ -311,7 +442,7 @@ def create_interaction_matrix(testbed: Testbed,
                                 save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysAfter.phase_init)
 
                         else:
-                            wavefront = OpticSysAfter.EF_through(entrance_EF=wavefront)
+                            wavefront = OpticSysAfter.EF_through(entrance_EF=wavefront, wavelength=wavelength)
 
                         if dir_save_all_planes is not None:
                             name_plane = 'EF_PP_after_' + osname + f'_wl{int(wavelength * 1e9)}'
@@ -327,7 +458,8 @@ def create_interaction_matrix(testbed: Testbed,
                         # wavelength for the whole testbed. This is the same normalization as G0.
 
                         Gvector = resizing(
-                            OpticSysAfter.todetector(entrance_EF=wavefront, in_contrast=False) /
+                            OpticSysAfter.todetector(
+                                entrance_EF=wavefront, wavelength=wavelength, in_contrast=False) /
                             normalisation_testbed_EF_contrast, dimEstim)
 
                         if dir_save_all_planes is not None:
@@ -396,17 +528,24 @@ def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.nd
         matrix only inside the DH. first half is real part, second half is imag part
 
     """
-    size_full_matrix = FullInteractionMatrix.shape[0]
 
-    size_DH_matrix = 2 * int(np.sum(mask))
+    number_wl_matrix = len(FullInteractionMatrix)
+    twice_size_FP_pix = FullInteractionMatrix[0].shape[0]
+    number_actu = FullInteractionMatrix[0].shape[1]
+
+    size_DH_pix = int(np.sum(mask))
     where_mask_flatten = np.where(mask.flatten() == 1.)
-    DHInteractionMatrix = np.zeros((size_DH_matrix, FullInteractionMatrix.shape[1]), dtype=float)
+    DHInteractionMatrix = np.zeros((2 * size_DH_pix * number_wl_matrix, number_actu), dtype=float)
 
-    for i in range(FullInteractionMatrix.shape[1]):
-        DHInteractionMatrix[:int(size_DH_matrix / 2), i] = FullInteractionMatrix[:int(size_full_matrix / 2),
-                                                                                 i][where_mask_flatten]
-        DHInteractionMatrix[int(size_DH_matrix / 2):, i] = FullInteractionMatrix[int(size_full_matrix / 2):,
-                                                                                 i][where_mask_flatten]
+    for i in range(number_actu):
+        for j_wave in range(number_wl_matrix):
+
+            DHInteractionMatrix[2 * j_wave * int(size_DH_pix):(2 * j_wave + 1) * int(size_DH_pix),
+                                i] = FullInteractionMatrix[j_wave][:int(twice_size_FP_pix) // 2,
+                                                                   i][where_mask_flatten]
+            DHInteractionMatrix[(2 * j_wave + 1) * int(size_DH_pix):(2 * j_wave + 2) * int(size_DH_pix),
+                                i] = FullInteractionMatrix[j_wave][int(twice_size_FP_pix) // 2:,
+                                                                   i][where_mask_flatten]
 
     return DHInteractionMatrix
 
@@ -423,8 +562,10 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
     mask:   2D Binary mask 
         dark hole region
 
-    Result_Estimate:    2D array 
-        can be complex, focal plane electric field
+    Result_Estimate:  list of 2D complex array 
+        list is the number of wl in the estimation, usually 1 or testbed.nb_wav
+        Each arrays are of size of sixe [dimEstim, dimEstim]. 
+        estimation of focal plane EF
 
     inversed_jacobian:  2D array
         inverse of the jacobian matrix linking the
@@ -439,11 +580,15 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
                     voltage to apply on each deformable mirror actuator
 
     """
+    EF_vector = np.zeros(2 * int(np.sum(mask)) * len(Result_Estimate))
 
-    EF_vector = np.zeros(2 * int(np.sum(mask)))
-    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
-    EF_vector[0:int(np.sum(mask))] = np.real(Resultat_cropdh).flatten()
-    EF_vector[int(np.sum(mask)):] = np.imag(Resultat_cropdh).flatten()
+    for i_wave, estimate_at_this_wave in enumerate(Result_Estimate):
+        Resultat_cropdh = estimate_at_this_wave[np.where(mask == 1)]
+        EF_vector[i_wave * 2 * int(np.sum(mask)):(i_wave * 2 + 1) *
+                  int(np.sum(mask))] = np.real(Resultat_cropdh).flatten()
+        EF_vector[(i_wave * 2 + 1) * int(np.sum(mask)):(i_wave * 2 + 2) *
+                  int(np.sum(mask))] = np.imag(Resultat_cropdh).flatten()
+
     produit_mat = np.dot(inversed_jacobian, EF_vector)
 
     return testbed.basis_vector_to_act_vector(produit_mat)
@@ -461,8 +606,10 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
     mask:               Binary mask
              corresponding to the dark hole region
 
-    Result_Estimate:    2D array
-             can be complex, focal plane electric field
+    Result_Estimate: list of 2D complex array 
+        list is the number of wl in the estimation, usually 1 or testbed.nb_wav
+        Each arrays are of size of sixe [dimEstim, dimEstim]. 
+        estimation of focal plane EF
 
     Hessian_Matrix:     2D array 
             Hessian matrix of the DH energy
@@ -480,9 +627,11 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
         voltage to apply on each deformable mirror actuator
 
     """
+    if len(Result_Estimate) > 1:
+        raise ValueError("EM correction is not working in polychromatic mode.")
 
     # With notations from Potier PhD eq 4.74 p78:
-    Eab = Result_Estimate[np.where(mask == 1)]
+    Eab = Result_Estimate[0][np.where(mask == 1)]
     realb0 = np.real(np.dot(np.transpose(np.conjugate(Jacobian)), Eab)).flatten()
     produit_mat = np.dot(Hessian_Matrix, realb0)
 
@@ -503,8 +652,10 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
     mask:               Binary mask
              corresponding to the dark hole region
 
-    Result_Estimate:    2D array
-             can be complex, focal plane electric field
+    Result_Estimate: list of 2D complex array 
+        list is the number of wl in the estimation, usually 1 or testbed.nb_wav
+        Each arrays are of size of sixe [dimEstim, dimEstim]. 
+        estimation of focal plane EF
 
     Jacob_trans_Jacob:     2D array 
             Jabobian.Transpose(Jabobian) matrix
@@ -535,12 +686,14 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
     pixel_in_mask = np.sum(mask)
 
     # With notations from Potier PhD eq 4.74 p78:
-    Eab = Result_Estimate[np.where(mask == 1)]
+    Eab = np.zeros(int(np.sum(mask)) * len(Result_Estimate), dtype=complex)
+    for i_wave, estimate_at_this_wave in enumerate(Result_Estimate):
+        Eab[i_wave * int(np.sum(mask)):(i_wave + 1) *
+            int(np.sum(mask))] = estimate_at_this_wave[np.where(mask == 1)]
 
     d0 = np.sum(np.abs(Eab)**2) / pixel_in_mask
     M0 = Jacob_trans_Jacob / pixel_in_mask
     realb0 = np.real(np.dot(np.transpose(np.conjugate(Jacobian)), Eab)).flatten() / pixel_in_mask
-
     Identity_M0size = np.identity(M0.shape[0])
 
     # we put this keyword to True to do at least 1 try
@@ -611,8 +764,10 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
     ----------
     mask: Binary mask 
         corresponding to the dark hole region
-    Result_Estimate: 2D array 
-        can be complex, focal plane electric field
+    Result_Estimate: list of 2D complex array 
+        list is the number of wl in the estimation, usually 1 or testbed.nb_wav
+        Each arrays are of size of sixe [dimEstim, dimEstim]. 
+        estimation of focal plane EF
     Hessian_Matrix: 2D array 
          Hessian matrix of the DH energy
     
@@ -628,9 +783,11 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
          voltage to apply on each deformable mirror actuator
    
     """
+    if len(Result_Estimate) > 1:
+        raise ValueError("Steepest correction is not working in polychromatic mode.")
 
     Eab = np.zeros(int(np.sum(mask)))
-    Resultat_cropdh = Result_Estimate[np.where(mask == 1)]
+    Resultat_cropdh = Result_Estimate[0][np.where(mask == 1)]
     Eab = np.real(np.dot(np.transpose(np.conjugate(Jacobian)), Resultat_cropdh)).flatten()
     pas = 2e3
     solution = pas * 2 * Eab

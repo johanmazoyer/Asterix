@@ -457,7 +457,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         return vortex
 
-    def WrappedVortex(self, offset=0, cen_shift=(0,0)):
+    def WrappedVortex(self, offset=0, cen_shift=(0, 0)):
         """
         Create a wrapped vortex coronagraph.
 
@@ -483,8 +483,11 @@ class Coronagraph(optsy.OpticalSystem):
         phval = np.array([3, 0, 1, 2, 1]) * np.pi
         jump = np.array([2, 2, 2, 2]) * np.pi
         _, phase_wrapped_vortex = create_wrapped_vortex_mask(dim=maxdimension_array_fpm,
-                                                             thval=thval, phval=phval, jump=jump,
-                                                             offset=offset, cen_shift=cen_shift)
+                                                             thval=thval,
+                                                             phval=phval,
+                                                             jump=jump,
+                                                             offset=offset,
+                                                             cen_shift=cen_shift)
 
         wrapped_vortex = list()
         for i, wav in enumerate(self.wav_vec):
@@ -613,8 +616,7 @@ def fqpm_mask(dim):
     fqpm_thick : array
         Array holding the phase mask, in radians.
     """
-    xx, yy = np.meshgrid(np.arange(dim) - dim / 2,
-                         np.arange(dim) - dim / 2)
+    xx, yy = np.meshgrid(np.arange(dim) - dim / 2, np.arange(dim) - dim / 2)
 
     fqpm_thick_vert = np.zeros((dim, dim))
     fqpm_thick_vert[np.where(xx < 0)] = 1
@@ -625,7 +627,14 @@ def fqpm_mask(dim):
     return fqpm_thick
 
 
-def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0,0)):
+def create_wrapped_vortex_mask(dim,
+                               thval,
+                               phval,
+                               jump,
+                               return_1d=False,
+                               piperiodic=True,
+                               offset=0,
+                               cen_shift=(0, 0)):
     """
     Create a wrapped vortex phase mask.
 
@@ -692,11 +701,12 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
 
     if return_1d:
         # Create a continuous 1D phase ramp from 0 to pi, including an offset.
-        theta = (np.arange(dim) / (dim-1) * (np.max(thval)-np.min(thval)) + np.min(thval) + offset) % np.pi
+        theta = (np.arange(dim) / (dim - 1) *
+                 (np.max(thval) - np.min(thval)) + np.min(thval) + offset) % np.pi
     else:
         # Define the 2D theta array
-        ty = (np.arange(dim) - dim/2 - cen_shift[0] + 0.5)
-        tx = (np.arange(dim) - dim/2 - cen_shift[1] + 0.5)
+        ty = (np.arange(dim) - dim / 2 - cen_shift[0] + 0.5)
+        tx = (np.arange(dim) - dim / 2 - cen_shift[1] + 0.5)
         xx, yy = np.meshgrid(ty, tx)
         theta = (-(np.arctan2(yy, xx) - np.pi) + offset) % (2 * np.pi)
 
@@ -704,22 +714,24 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
     phase = np.zeros_like(theta)
 
     # Find the angles between thval[k] and thval[k+1].
-    for k in range(thval.shape[0]-1):
-        section = np.where((theta >= thval[k]) & (theta <= thval[k+1]))
+    for k in range(thval.shape[0] - 1):
+        section = np.where((theta >= thval[k]) & (theta <= thval[k + 1]))
 
         # If such angles exist then:
         if section[0].shape[0] != 0:
 
             # 1st step (k=0): Create phase mask section going from phval[k] to phval[k+1].
             if k == 0:
-                phase[section] = phval[k] + (theta[section]-thval[k]) / (thval[k+1]-thval[k]) * (phval[k+1]-phval[k])
+                phase[section] = phval[k] + (theta[section] -
+                                             thval[k]) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
             # All other steps, do the same thing but add the phase shift jump[k-1] first.
             else:
-                phase[section] = phval[k] + jump[k-1] + (theta[section]-thval[k]) / (thval[k+1]-thval[k]) * (phval[k+1]-phval[k]-jump[k-1])
+                phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k]) / (
+                    thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
 
     if return_1d:
         # Define the angle in radians.
-        theta = np.arange(dim) / (dim-1) * (np.max(thval)-np.min(thval)) + np.min(thval)
+        theta = np.arange(dim) / (dim - 1) * (np.max(thval) - np.min(thval)) + np.min(thval)
 
         # If piperiodic is True, then assume max(thval) is pi and make phase pi-periodic.
         if piperiodic:
@@ -732,19 +744,20 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
         # If piperiodic is True, then assume max(thval) is pi and make phase pi-periodic.
         if piperiodic:
             # Find the angles between thval(k)+pi and thval(k+1)+pi.
-            for k in range(thval.shape[0]-1):
-                section = np.where((theta >= (thval[k] + np.pi)) & (theta <= (thval[k+1] + np.pi)))
+            for k in range(thval.shape[0] - 1):
+                section = np.where((theta >= (thval[k] + np.pi)) & (theta <= (thval[k + 1] + np.pi)))
 
                 # If such elements exist then:
                 if section[0].shape[0] != 0:
 
                     # 1st step [k=1]: Create phase mask section going from phval[k] to phval[k+1].
                     if k == 0:
-                        phase[section] = phval[k] + (theta[section] - thval[k] - np.pi) / (thval[k+1] - thval[k]) * (phval[k+1] - phval[k])
+                        phase[section] = phval[k] + (theta[section] - thval[k] - np.pi) / (
+                            thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
                     # All other steps, do the same thing but add the phase shift jump[k-1] first.
                     else:
-                        phase[section] = phval[k] + jump[k-1] + (theta[section] - thval[k] - np.pi) / (
-                                    thval[k+1] - thval[k]) * (phval[k+1] - phval[k] - jump[k-1])
+                        phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k] - np.pi) / (
+                            thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
 
         angles = theta
         phase_mask = phase
@@ -780,6 +793,6 @@ def butterworth_circle(dim, sizebut, order=5, xshift=0, yshift=0):
     tx = (np.arange(dim) - xshift - dim / 2)
     xx, yy = np.meshgrid(ty, tx)
 
-    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx ** 2 + yy ** 2) / np.abs(sizebut) * 2) ** (2. * order))
+    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx**2 + yy**2) / np.abs(sizebut) * 2)**(2. * order))
 
     return butterworth

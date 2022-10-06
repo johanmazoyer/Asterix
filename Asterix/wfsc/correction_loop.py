@@ -25,7 +25,7 @@ def correction_loop(testbed: Testbed,
                     mask_dh: maskDH.MaskDH,
                     Loopconfig,
                     SIMUconfig,
-                    input_wavefront=0,
+                    input_wavefront=1.,
                     initial_DM_voltage=0.,
                     silence=False,
                     **kwargs):
@@ -98,8 +98,8 @@ def correction_loop(testbed: Testbed,
         if not Linesearch:
             Nbmode_corr = list(Loopconfig["Nbmode_corr"])
             if len(Nbiter_corr) != len(Nbmode_corr):
-                raise Exception("""In this correction mode and if Linesearch = False, 
-                the length of Nbmode_corr must match the length of Nbiter_corr""")
+                raise Exception(("In this correction mode and if Linesearch = False, "
+                "the length of Nbmode_corr must match the length of Nbiter_corr"))
 
     else:
         Linesearch = None
@@ -308,7 +308,6 @@ def correction_loop_1matrix(testbed: Testbed,
         resultatestimation = estimator.estimate(testbed,
                                                 voltage_vector=thisloop_voltages_DMs[-1],
                                                 entrance_EF=input_wavefront,
-                                                wavelength=testbed.wavelength_0,
                                                 perfect_estimation=Search_best_Mode,
                                                 **kwargs)
 
@@ -459,10 +458,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     plt.figure()
 
     for j, DM_name in enumerate(testbed.name_of_DMs):
-        fits.writeto(os.path.join(result_dir, f"{DM_name}_phases.fits"),
-                     DM_phases[j],
-                     header,
-                     overwrite=True)
+        fits.writeto(os.path.join(result_dir, f"{DM_name}_phases.fits"), DM_phases[j], header, overwrite=True)
 
         fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"),
                      DMstrokes[j],
@@ -474,7 +470,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                                                  DM.number_act]
         indice_acum_number_act += DM.number_act
 
-        fits.writeto(os.path.join(result_dir,  f"{DM_name}_voltages.fits"),
+        fits.writeto(os.path.join(result_dir, f"{DM_name}_voltages.fits"),
                      voltage_DMs_tosave,
                      header,
                      overwrite=True)

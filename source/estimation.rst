@@ -72,7 +72,7 @@ this estimation can be also done wihtout initialization or if another estimation
     # re-initializing the estimator
 
 The perfect estimation is exactly equivalent to propagate the light throught the testbed and then
-resized to the ``Estim_sampling``: 
+resized by the ``Estim_bin_factor``: 
 
 .. code-block:: python
 
@@ -97,14 +97,36 @@ Interaction_Matrices directory. This is the map of the inverse singular values f
 pixels and it shows if all of the part of the DH are covered by the estimation (see Fig. 4 in Potier et al. 2020).
 
 
+Polychromatic Estimation
++++++++++++++++++++++++
+.. _polychromaticestim-label:
+
+We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` correction wavelengths evenly 
+spaced in ``Delta_wav``, centered on ``wavelength_0``. Polychromatic estimation and correction are linked so they are 
+both driven by a single parameter in the ``[Estimationconfig]`` section, ``polychromatic``:
+* 'centralwl': only the central wavelength is used for estimation / correction. Probes and matrices are measured at the central wavelength. 
+This parameter allows you to test the results of a monochromatic correction, applied to polychromatic light. 
+* 'broadband_pwprobes': This is mostly like the previous case, but probes images used for PW are broadband (of bandwidth ``Delta_wav``). 
+Matrices are at central wavelength. This is what is currently done in `Potier et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.136P/abstract>`_  
+on SPHERE on sky for example. This mode is only relevantt for PW estimation and will raise an error if use with perfect estimation.
+* 'multiwl': ``nb_wav`` estimations are performed at different wavelengths spanning the bandwidth of correction.
+There are ``nb_wav`` matrices for estimation / correction. The bandwidth of the correction is still parametrized 
+in [modelconfig] right now. We use ``nb_wav`` correction wavelengths evenly spaced in ``Delta_wav``, centered on 
+``wavelength_0``. At some point, we might want to do smarter things like having separate parameters to choose
+the wavelength of estimation / correction from the one used to simulate the polychromatic images in [modelconfig], like in 
+Falco (see `here <https://www.dropbox.com/s/xn2s04tung43sp5/doc_FALCO_bandpasses_wavelengths.pdf?dl=0>`_), but this is 
+slightly more difficult because the contrast normalization is currently available only at the specific wavelengths defined
+in [modelconfig].
+
+If monochromatic images (``nb_wav = 1`` or ``Delta_wav = 0``), all these options are equivalent.
+    
+
+
+
 COFFEE Estimation
 +++++++++++++++++++++++
 Currenlty not available
 
 SCC Estimation
-+++++++++++++++++++++++
-Currenlty not available
-
-Polychromatic Estimation
 +++++++++++++++++++++++
 Currenlty not available

@@ -75,9 +75,8 @@ class OpticalSystem:
             self.wav_vec = np.array([self.wavelength_0])
             self.nb_wav = 1
 
-        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + '_wl' + str(
-            int(self.wavelength_0 * 1e9)) + "_resFP" + str(round(self.Science_sampling, 2)) + "_dimFP" + str(
-                int(self.dimScience))
+        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_resFP" + str(
+            round(self.Science_sampling, 2)) + "_dimFP" + str(int(self.dimScience))
 
     #We define functions that all OpticalSystem object can use.
     # These can be overwritten for a subclass if need be
@@ -254,9 +253,9 @@ class OpticalSystem:
         """
 
         if 'wavelength' in kwargs:
-            raise Exception("""todetector_intensity() function is polychromatic, 
-                do not use wavelength keyword.
-                Use wavelengths keyword even for monochromatic intensity""")
+            raise Exception(("todetector_intensity() function is polychromatic, "
+                             "do not use wavelength keyword. "
+                             "Use wavelengths keyword even for monochromatic intensity"))
 
         if wavelengths is None:
             wavelength_vec = self.wav_vec
@@ -275,9 +274,10 @@ class OpticalSystem:
         elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil):
             pass
         else:
-            raise Exception(""""entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars or a
-                        2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) or a 3D array of size
-                        (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)""")
+            raise Exception(
+                ("entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars "
+                 "or a2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) "
+                 "or a 3D array of size (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"))
 
         focal_plane_Intensity = np.zeros((self.dimScience, self.dimScience))
 
@@ -292,13 +292,13 @@ class OpticalSystem:
 
         if in_contrast:
             if (wavelength_vec != self.wav_vec).all():
-                raise Exception("""Careful: contrast normalization in todetector_intensity assumes
-                     it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1
-                     and you want only one BW with the good contrast normalization, use
-                     np.abs(to_detector(wavelength = wavelength))**2... If you want a specific
-                     normalization for a subset of  wavelengths, use in_contrast=False and
-                     measure the PSF to normalize.
-                """)
+                raise Exception(
+                    ("Careful: contrast normalization in todetector_intensity assumes "
+                     "it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1 "
+                     "and you want only one BW with the good contrast normalization, use "
+                     "np.abs(to_detector(wavelength = wavelength))**2... If you want a specific"
+                     "normalization for a subset of  wavelengths, use in_contrast=False and "
+                     "measure the PSF to normalize."))
 
             focal_plane_Intensity /= self.norm_polychrom
 
