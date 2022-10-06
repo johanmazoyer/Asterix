@@ -1,5 +1,4 @@
 import os
-import datetime
 import numpy as np
 import matplotlib
 from IPython import get_ipython
@@ -37,9 +36,9 @@ def correction_loop(testbed: Testbed,
     ----------
     testbed: OpticalSystem.Testbed
         Object which describes your testbed.
-    estimator: Estimator 
+    estimator: Estimator
         Estimator object containing all information about the WF estimation.
-    corrector: Corrector. 
+    corrector: Corrector.
         Corrector object containing all information about the WF correction.
     mask_dh: 2d numpy array
         Binary array of size [dimScience, dimScience], the dark-hole mask.
@@ -96,7 +95,7 @@ def correction_loop(testbed: Testbed,
             Nbmode_corr = list(Loopconfig["Nbmode_corr"])
             if len(Nbiter_corr) != len(Nbmode_corr):
                 raise Exception(("In this correction mode and if Linesearch = False, "
-                "the length of Nbmode_corr must match the length of Nbiter_corr"))
+                                 "the length of Nbmode_corr must match the length of Nbiter_corr"))
 
     else:
         Linesearch = None
@@ -163,9 +162,9 @@ def correction_loop_1matrix(testbed: Testbed,
     ----------
     testbed: OpticalSystem.Testbed
         object which describes your testbed
-    estimator: Estimator 
+    estimator: Estimator
         This contains all information about the estimation
-    corrector: Corrector. 
+    corrector: Corrector
         This contains all information about the correction
     mask_dh: 2d numpy array
         binary array of size [dimScience, dimScience] : dark hole mask
@@ -178,11 +177,11 @@ def correction_loop_1matrix(testbed: Testbed,
         Control gain of the loop in EFC mode.
     Nbmode_corr: int or list of int
         Of same size as Nbiter_corr; SVD modes for each iteration.
-    Linesearch: bool, default False. 
+    Linesearch: bool, default False
         If True, the function correction_loop_1matrix()
         will call itself at each iteration with Search_best_Mode=True to find
         the best SVD inversion mode among a few Linesearch modes.
-    Search_best_Mode: bool, default False. 
+    Search_best_Mode: bool, default False
         If true, the algorithm does not return the
         loop information, just the best mode and best contrast.
         This mode is used in Linesearch mode.
@@ -205,7 +204,6 @@ def correction_loop_1matrix(testbed: Testbed,
     ------
     if Search_best_Mode == True, return [bestMode, bestContrast]
     else return CorrectionLoopResult dictionary updated with the results from this loop
-    
     """
 
     if Search_best_Mode:
@@ -381,11 +379,11 @@ def correction_loop_1matrix(testbed: Testbed,
 def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir):
     """
     Save the results from a correction loop into the directory 'result_dir'.
-    
+
     All fits files have all parameters in their header. The configfile is also saved, to an .ini file.
 
     AUTHOR : Johan Mazoyer
-    
+
     Parameters
     ----------
     CorrectionLoopResult : dict
