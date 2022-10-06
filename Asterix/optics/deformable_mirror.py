@@ -35,18 +35,14 @@ class DeformableMirror(optsy.OpticalSystem):
         ----------
         modelconfig : dict
                 general configuration parameters (sizes and dimensions)
-
         DMconfig : dict
                 DM configuration parameters dictionary
-
         Name_DM : string
                 the name of the DM, which allows to find it in the parameter file
                 we measure and save the pushact functions
-
         Model_local_dir : string
                 path directory to save things you can measure yourself
                     and can save to save time
-        
         """
 
         # Initialize the OpticalSystem class and inherit properties

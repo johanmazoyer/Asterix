@@ -79,7 +79,7 @@ def plot_contrast_curves(reduced_data,
 
     filename: string, default ''
         Filename prefix for pdf files of the plots saved to disk.
-    
+
     legend_labels: string array of the same number of images in the first cube, default None
         Name of the legend labels,
         If None and if the array is of dimension 2, no legend
