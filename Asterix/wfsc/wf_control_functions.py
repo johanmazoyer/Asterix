@@ -25,58 +25,58 @@ def create_interaction_matrix(testbed: Testbed,
                               visu=False):
     """
     Create the jacobian matrix for Electric Field Conjugation. The Matrix is not
-    limited to the DH size but to the whole FP [dimEstim, dimEstim]. 
+    limited to the DH size but to the whole FP [dimEstim, dimEstim].
     First half is real part, second half is imag part.
 
     The matrix size is therefore [total(DM.basis_size), 2*dimEstim^2]
 
-    We save the matrix in .fits independently for each DMs, only if the initial 
+    We save the matrix in .fits independently for each DMs, only if the initial
     wavefront and DMs are flat.
 
-    This code works for all testbeds without prior assumption (if we have at 
-    least 1 DM of course). We have optimized the code to only do once the optical 
+    This code works for all testbeds without prior assumption (if we have at
+    least 1 DM of course). We have optimized the code to only do once the optical
     elements before the DM movement and repeat only what is after the DMS
-    
+
     AUTHOR : Johan Mazoyer
 
-    Sept 2022 : created 
+    Sept 2022 : created
 
     Parameters
     ----------
 
-    testbed: Testbed Optical_element
+    testbed : Testbed Optical_element
         testbed structure with at least 1 DM
-    
-    dimEstim: int
+
+    dimEstim : int
         size of the output image in teh estimator
-    
-    amplitudeEFC: float
+
+    amplitudeEFC : float
         amplitude of the EFC probe on the DM
-    
-    matrix_dir : string. 
+
+    matrix_dir : string
         path to directory to save all the matrices here
-    
-    MatrixType: string
-        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
+
+    MatrixType : string
+        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi)
         or 'perfect' (we keep exp(i phi)).
-        in both case, if the DMs are not initially flat (non zero initial_DM_voltage), 
+        in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
-    
-    polychrom: string
-        For polychromatic estimation and correction : 
+
+    polychrom : string
+        For polychromatic estimation and correction:
         - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
         - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     initial_DM_voltage: 1D-array real
         initial DM voltage for all DMs
-    
+
     input_wavefront: complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
-        Input wavefront in pupil plane    
-    
-    dir_save_all_planes : default None. 
+        Input wavefront in pupil plane
+
+    dir_save_all_planes : default None
         If not None, directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution
-    
+
     visu : bool default false
         if true show the focal plane intensity in 2D for each mode
 
@@ -148,18 +148,18 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                        visu=False):
     """
     Create the jacobian matrix for Electric Field Conjugation for one wavelength. The Matrix is not
-    limited to the DH size but to the whole FP [dimEstim, dimEstim]. 
+    limited to the DH size but to the whole FP [dimEstim, dimEstim].
     First half is real part, second half is imag part.
 
     The matrix size is therefore [total(DM.basis_size), 2*dimEstim^2]
 
-    We save the matrix in .fits independently for each DMs, only if the initial 
+    We save the matrix in .fits independently for each DMs, only if the initial
     wavefront and DMs are flat.
 
-    This code works for all testbeds without prior assumption (if we have at 
-    least 1 DM of course). We have optimized the code to only do once the optical 
+    This code works for all testbeds without prior assumption (if we have at
+    least 1 DM of course). We have optimized the code to only do once the optical
     elements before the DM movement and repeat only what is after the DMS
-    
+
     AUTHOR : Axel Potier and Johan Mazoyer
 
     Parameters
@@ -167,35 +167,35 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
     testbed: Testbed Optical_element
         testbed structure with at least 1 DM
-    
+
     dimEstim: int
         size of the output image in teh estimator
-    
+
     amplitudeEFC: float
         amplitude of the EFC probe on the DM
-    
+
     wavelength : float
         wavelength in m.
-    
-    matrix_dir : string. 
+
+    matrix_dir : string
         path to directory to save all the matrices here
-    
+
     MatrixType: string
-        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi) 
+        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi)
         or 'perfect' (we keep exp(i phi)).
-        in both case, if the DMs are not initially flat (non zero initial_DM_voltage), 
+        in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
 
     initial_DM_voltage: 1D-array real
         initial DM voltage for all DMs
-    
+
     input_wavefront: 2D complex array or complex scalar. Default is 1 (flat WF)
-        Input wavefront in pupil plane   
-    
-    dir_save_all_planes : string, default None. 
+        Input wavefront in pupil plane
+
+    dir_save_all_planes : string, default None
         If not None, path to directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution
-    
+
     visu : bool default false
         if true show the focal plane intensity in 2D for each mode
 
@@ -229,7 +229,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[4:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
-        #attach the initial phase for each DM
+        # attach the initial phase for each DM
         DM.phase_init = DM_phase_init[i]
 
     # remove to save memory
@@ -519,7 +519,7 @@ def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.nd
     mask : 2D numpy array
         a binary mask to delimitate the DH
 
-    Returns 
+    Returns
     ------
     DHInteractionMatrix: 2D numpy array
         matrix only inside the DH. first half is real part, second half is imag part
@@ -551,17 +551,17 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
     """
     Voltages to apply on the deformable mirrors in order to minimize the speckle
     intensity in the dark hole region
-    
+
     AUTHOR : Axel Potier
 
     Parameters
     ----------
-    mask:   2D Binary mask 
+    mask : 2D Binary mask
         dark hole region
 
-    Result_Estimate:  list of 2D complex array 
+    Result_Estimate:  list of 2D complex array
         list is the number of wl in the estimation, usually 1 or testbed.nb_wav
-        Each arrays are of size of sixe [dimEstim, dimEstim]. 
+        Each arrays are of size of sixe [dimEstim, dimEstim].
         estimation of focal plane EF
 
     inversed_jacobian:  2D array
@@ -595,7 +595,7 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
     """
     Voltage to apply on the deformable mirror in order to minimize the speckle
     intensity in the dark hole region
-    
+
     AUTHOR : Axel Potier
 
     Parameters
@@ -603,15 +603,15 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
     mask:               Binary mask
              corresponding to the dark hole region
 
-    Result_Estimate: list of 2D complex array 
+    Result_Estimate: list of 2D complex array
         list is the number of wl in the estimation, usually 1 or testbed.nb_wav
-        Each arrays are of size of sixe [dimEstim, dimEstim]. 
+        Each arrays are of size of sixe [dimEstim, dimEstim].
         estimation of focal plane EF
 
-    Hessian_Matrix:     2D array 
+    Hessian_Matrix : 2D array
             Hessian matrix of the DH energy
 
-    Jacobian:           2D array 
+    Jacobian : 2D array
             jacobian matrix created linking the
                                     estimation to the basis coefficient
 
@@ -646,20 +646,20 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
 
     Parameters
     ----------
-    mask:               Binary mask
-             corresponding to the dark hole region
+    mask : Binary mask
+        corresponding to the dark hole region
 
-    Result_Estimate: list of 2D complex array 
+    Result_Estimate : list of 2D complex array
         list is the number of wl in the estimation, usually 1 or testbed.nb_wav
-        Each arrays are of size of sixe [dimEstim, dimEstim]. 
+        Each arrays are of size of sixe [dimEstim, dimEstim].
         estimation of focal plane EF
 
-    Jacob_trans_Jacob:     2D array 
-            Jabobian.Transpose(Jabobian) matrix
+    Jacob_trans_Jacob : 2D array
+        Jabobian.Transpose(Jabobian) matrix
 
-    Jacobian: 2D array
-                    jacobian matrix created linking the
-                    estimation to the basis coefficient
+    Jacobian : 2D array
+        jacobian matrix created linking the
+        estimation to the basis coefficient
 
     DesiredContrast : float
         the contrast value we wish to achieve
@@ -699,10 +699,10 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
 
     while TestSMfailed:
 
-        step_alpha = 1.3  #hard coded but can maybe be changed
+        step_alpha = 1.3  # hard coded but can maybe be changed
         alpha = last_best_alpha * step_alpha**2
 
-        #eq 4.79 Potier Phd
+        # eq 4.79 Potier Phd
         DMSurfaceCoeff = np.dot(np.linalg.inv(M0 + alpha * Identity_M0size), realb0)
 
         ResidualEnergy = np.dot(DMSurfaceCoeff, np.dot(
@@ -759,26 +759,23 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
 
     Parameters
     ----------
-    mask: Binary mask 
+    mask : Binary mask
         corresponding to the dark hole region
-    Result_Estimate: list of 2D complex array 
+    Result_Estimate : list of 2D complex array
         list is the number of wl in the estimation, usually 1 or testbed.nb_wav
-        Each arrays are of size of sixe [dimEstim, dimEstim]. 
+        Each arrays are of size of sixe [dimEstim, dimEstim].
         estimation of focal plane EF
-    Hessian_Matrix: 2D array 
+    Hessian_Matrix : 2D array
          Hessian matrix of the DH energy
-    
-    Jacobian: 2D array
-        inverse of the jacobian matrix linking the
-                                    estimation to the basis coefficient
-    testbed: Testbed Optical_element
+    Jacobian : 2D array
+        Inverse of the jacobian matrix linking the estimation to the basis coefficient.
+    testbed : Testbed Optical_element
             a testbed with one or more DM
 
     Returns
     ------
     solution: 1D array
          voltage to apply on each deformable mirror actuator
-   
     """
     if len(Result_Estimate) > 1:
         raise ValueError("Steepest correction is not working in polychromatic mode.")
