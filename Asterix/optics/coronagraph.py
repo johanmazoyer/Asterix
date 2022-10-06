@@ -27,11 +27,8 @@ class Coronagraph(optsy.OpticalSystem):
             general configuration parameters (sizes and dimensions)
         coroconfig : : dict
             coronagraph parameters
-
         Model_local_dir: string, default None
-            directory to save things you can measure yourself
-            and can save to save times      
-        
+            directory to save things you can measure yourself and can save to save times
         """
 
         # Initialize the OpticalSystem class and inherit properties
@@ -83,7 +80,7 @@ class Coronagraph(optsy.OpticalSystem):
             # we oversample the center in babinet's mode because we can
             # hard coded for now, this is very internal cooking
 
-            self.Lyot_fpm_sampling = 20.  #self.Science_sampling
+            self.Lyot_fpm_sampling = 20.  # self.Science_sampling
             rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
             self.dim_fpm = 2 * int(2.2 * rad_LyotFP_pix / 2)
 
@@ -197,7 +194,6 @@ class Coronagraph(optsy.OpticalSystem):
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
-        
         """
 
         # call the OpticalSystem super function to check and format the variable entrance_EF
@@ -266,7 +262,7 @@ class Coronagraph(optsy.OpticalSystem):
                                                           norm='ortho')
 
         elif self.prop_apod2lyot == "mft-babinet":
-            #Apod plane to focal plane
+            # Apod plane to focal plane
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
                                           int(2 * self.prad),
@@ -449,7 +445,7 @@ class Coronagraph(optsy.OpticalSystem):
                 dim_fp = self.dimScience
 
             phasevortex_cut = crop_or_pad_image(phase_vortex,
-                                                dim_fp)  #*phase_ampl.roundpupil(dim_fp, dim_fp/2)
+                                                dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
             vortex.append(np.exp(1j * phasevortex_cut))
 
         return vortex
@@ -624,14 +620,7 @@ def fqpm_mask(dim):
     return fqpm_thick
 
 
-def create_wrapped_vortex_mask(dim,
-                               thval,
-                               phval,
-                               jump,
-                               return_1d=False,
-                               piperiodic=True,
-                               offset=0,
-                               cen_shift=(0, 0)):
+def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0, 0)):
     """
     Create a wrapped vortex phase mask.
 
@@ -698,8 +687,7 @@ def create_wrapped_vortex_mask(dim,
 
     if return_1d:
         # Create a continuous 1D phase ramp from 0 to pi, including an offset.
-        theta = (np.arange(dim) / (dim - 1) *
-                 (np.max(thval) - np.min(thval)) + np.min(thval) + offset) % np.pi
+        theta = (np.arange(dim) / (dim - 1) * (np.max(thval) - np.min(thval)) + np.min(thval) + offset) % np.pi
     else:
         # Define the 2D theta array
         ty = (np.arange(dim) - dim / 2 - cen_shift[0] + 0.5)
@@ -719,12 +707,10 @@ def create_wrapped_vortex_mask(dim,
 
             # 1st step (k=0): Create phase mask section going from phval[k] to phval[k+1].
             if k == 0:
-                phase[section] = phval[k] + (theta[section] -
-                                             thval[k]) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
+                phase[section] = phval[k] + (theta[section] - thval[k]) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
             # All other steps, do the same thing but add the phase shift jump[k-1] first.
             else:
-                phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k]) / (
-                    thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
+                phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k]) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
 
     if return_1d:
         # Define the angle in radians.
@@ -749,12 +735,11 @@ def create_wrapped_vortex_mask(dim,
 
                     # 1st step [k=1]: Create phase mask section going from phval[k] to phval[k+1].
                     if k == 0:
-                        phase[section] = phval[k] + (theta[section] - thval[k] - np.pi) / (
-                            thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
+                        phase[section] = phval[k] + (theta[section] - thval[k] - np.pi) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
                     # All other steps, do the same thing but add the phase shift jump[k-1] first.
                     else:
                         phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k] - np.pi) / (
-                            thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
+                                    thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
 
         angles = theta
         phase_mask = phase
@@ -768,7 +753,7 @@ def butterworth_circle(dim, sizebut, order=5, xshift=0, yshift=0):
 
     AUTHOR: Raphaël Galicher (in IDL)
             ILa (to Python)
-    
+
     Parameters
     ----------
     dim : int

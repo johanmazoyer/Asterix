@@ -37,7 +37,7 @@ class DeformableMirror(optsy.OpticalSystem):
                 general configuration parameters (sizes and dimensions)
 
         DMconfig : dict
-                DM configuration parameters dictionary 
+                DM configuration parameters dictionary
 
         Name_DM : string
                 the name of the DM, which allows to find it in the parameter file
@@ -136,7 +136,7 @@ class DeformableMirror(optsy.OpticalSystem):
             CAREFUL !! If the DM is part of a testbed. this variable name is changed
             to DMXXphase (DMXX: name of the DM) to avoid confusion
 
-        dir_save_all_planes : default None. 
+        dir_save_all_planes : default None
             if not None, directory to save all planes in fits for debugging purposes.
             This can generate a lot of fits especially if in a loop, use with caution
 
@@ -201,12 +201,12 @@ class DeformableMirror(optsy.OpticalSystem):
         Parameters
         ----------
         DMconfig : dict
-            DM configuration parameters dictionary 
+            DM configuration parameters dictionary
 
         Returns
         ------
-        pushact : 3D numpy array 
-                    of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]  
+        pushact : 3D numpy array
+                    of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]
                     contains all the DM OPD map induced in the DM plane for each actuator.
 
         """
@@ -245,7 +245,7 @@ class DeformableMirror(optsy.OpticalSystem):
         filename_actu_infl_fct = DMconfig[self.Name_DM + "_filename_actu_infl_fct"]
 
         if not DMconfig[self.Name_DM + "_Generic"]:
-            #Measured positions for each actuator in pixel with (0,0) = center of pupil
+            # Measured positions for each actuator in pixel with (0,0) = center of pupil
             simu_grid = fits.getdata(os.path.join(
                 model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"])) * diam_pup_in_pix + dim_array / 2
             # the DM pitchs are read in the header
@@ -343,7 +343,7 @@ class DeformableMirror(optsy.OpticalSystem):
     def id_in_pupil_actuators(self):
         """
         Create a vector with the index of all the actuators located in the entrance pupil
-        
+
         AUTHOR: Johan Mazoyer
 
         Parameters
@@ -404,7 +404,7 @@ class DeformableMirror(optsy.OpticalSystem):
         """
         Propagate the field towards an out-of-pupil plane ,
         add the DM phase, and propagate to the next pupil plane
-        
+
         AUTHOR : Raphaël Galicher, Johan Mazoyer
 
         REVISION HISTORY :
@@ -422,7 +422,7 @@ class DeformableMirror(optsy.OpticalSystem):
         wavelength : float
             wavelength in m
 
-        dir_save_all_planes : default None. 
+        dir_save_all_planes : default None
             If not None, directory to save all planes in fits for debugging purposes.
             This can generate a lot of fits especially if in a loop, use with caution
 
@@ -470,22 +470,21 @@ class DeformableMirror(optsy.OpticalSystem):
         Parameters
         ----------
         actu_vect : 1D array
-                    values of the amplitudes for each actuator
+            values of the amplitudes for each actuator
         einstein_sum : boolean, default false
-                        Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
-                        gives the same results as normal sum. Seems ot be faster for unique actuator
-                        but slower for more complex phases
+            Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
+            gives the same results as normal sum. Seems ot be faster for unique actuator
+            but slower for more complex phases
 
         Returns
         ------
-            DM_phase: 2D array
-                        phase map in the same unit as actu_vect * DM_pushact)
-        
+        DM_phase: 2D array
+            phase map in the same unit as actu_vect * DM_pushact)
         """
 
         where_non_zero_voltage = np.where(actu_vect != 0)
 
-        #opd is in nanometer
+        # opd is in nanometer
         # DM_pushact is in opd nanometer
         opd_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
 
@@ -508,12 +507,12 @@ class DeformableMirror(optsy.OpticalSystem):
 
         Parameters
         ----------
-        basis_type: string, default 'actuator' 
+        basis_type: string, default 'actuator'
             the type of basis. 'fourier' or 'actuator'
 
         Returns
         ------
-        basis: 2d numpy array 
+        basis: 2d numpy array
             basis [Size basis, Number of active act in the DM]
 
         """
@@ -570,33 +569,31 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     Create a grid of position of actuators for generic  DM.
     The DM will then be automatically defined as squared with Nact1D x Nact1D actuators
     and the pupil centered on this DM.
-    
+
     We need N_act1D > diam_pup_in_m / DM_pitch, so that the DM is larger than the pupil.
 
-    at the end compare to the result of actuator_position in case of DM3, it 
-    should be relatively close. If we can, we should try that actu 0 is 
+    at the end compare to the result of actuator_position in case of DM3, it
+    should be relatively close. If we can, we should try that actu 0 is
     relatively at the same pos. Test with huge DM pitch (2 actus in the pup)
 
-
     AUTHOR: Johan Mazoyer
-    
+
     Parameters
     ----------
-    Nact1D : int 
-            Numnber of actuators of a square DM in one of the principal direction
+    Nact1D : int
+            Number of actuators of a square DM in one of the principal direction
     pitchDM: float
             Pitch of the DM (distance between actuators),in meter
     diam_pup_in_m : float
             Diameter of the pupil in meter
-    diam_pup_in_pix : int 
+    diam_pup_in_pix : int
             Diameter of the pupil in pixel
-    
+
     Returns
     ------
-    simu_grid : 2D array 
+    simu_grid : 2D array
                 Array of shape is 2 x Nb_actuator
                 x and y positions of each actuator for simulation
-    
     """
 
     if Nact1D * pitchDM < diam_pup_in_m:
@@ -632,7 +629,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
 
     else:
 
-        #if Nact1D is even, the center of the DM is in between 4 actuators
+        # if Nact1D is even, the center of the DM is in between 4 actuators
         # (Nact1D -2) //2 * (Nact1D) +  Nact1D//2 -1    is in (-1/2 act, -1/2 act)
         # (Nact1D -2) //2 * (Nact1D) +  Nact1D//2       is in (-1/2 act, +1/2 act)
 
