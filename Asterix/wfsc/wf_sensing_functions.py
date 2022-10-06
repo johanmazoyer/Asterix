@@ -8,14 +8,13 @@ from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
-def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom,
-                     **kwargs):
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom, **kwargs):
     """
     Build the nbwl times interaction matrix for pair-wise probing.
 
     AUTHOR : Johan Mazoyer
 
-    Sept 2022 : created 
+    Sept 2022 : created
 
     Parameters
     ----------
@@ -32,7 +31,7 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, m
     matrix_dir : string
         path to directory to save all the matrices here
     polychrom: string
-        For polychromatic estimation and correction : 
+        For polychromatic estimation and correction:
         - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
         - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
@@ -113,7 +112,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
             cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + '_wl' + str(
                 int(wavelength * 1e9))
 
-    ####Calculating and Saving PW matrix
+    # Calculating and Saving PW matrix
     print("")
     filePW = "MatPW_" + string_dims_PWMatrix
     if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
@@ -160,7 +159,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
 
         k = k + 1
 
-    l = 0
+    l_ind = 0
     for i in np.arange(dimEstim):
         for j in np.arange(dimEstim):
             matrix[:, 0] = np.real(deltapsik[:, i, j])
@@ -169,12 +168,12 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
             try:
                 inversion = invert_svd(matrix, cutsvd, visu=False)
                 SVD[:, i, j] = inversion[0]
-                PWMatrix[l] = inversion[2]
-            except:
-                print("Careful: Error in invert_svd()! for l=" + str(l))
+                PWMatrix[l_ind] = inversion[2]
+            except Exception:
+                print("Careful: Error in invert_svd()! for l_ind=" + str(l_ind))
                 SVD[:, i, j] = np.zeros(2)
-                PWMatrix[l] = np.zeros((2, numprobe))
-            l = l + 1
+                PWMatrix[l_ind] = np.zeros((2, numprobe))
+            l_ind = l_ind + 1
     fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix))
     visuPWMap = "EigenPW_" + string_dims_PWMatrix
     fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]))
@@ -198,10 +197,10 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, **
     Vectorprobes: 2D array
         model probe matrix for the same probe as for difference
 
-    dir_save_all_planes : default None. 
+    dir_save_all_planes : default None
         If not None, directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution
-                               
+
     Returns
     ------
     Difference: 3D array
@@ -214,14 +213,14 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, **
     numprobe = len(Vectorprobes[0, 0])
     Differenceij = np.zeros((numprobe))
     Resultat = np.zeros((dimimages, dimimages), dtype=complex)
-    l = 0
+    l_ind = 0
     for i in np.arange(dimimages):
         for j in np.arange(dimimages):
             Differenceij[:] = Difference[:, i, j]
-            Resultatbis = np.dot(Vectorprobes[l], Differenceij)
+            Resultatbis = np.dot(Vectorprobes[l_ind], Differenceij)
             Resultat[i, j] = Resultatbis[0] + 1j * Resultatbis[1]
 
-            l = l + 1
+            l_ind = l_ind + 1
 
     if dir_save_all_planes is not None:
         name_plane = 'PW_Estimate'
@@ -240,40 +239,38 @@ def simulate_pw_difference(input_wavefront,
                            **kwargs):
     """
     Simulate the acquisition of probe images using Pair-wise
-    and calculate the difference of images [I(+probe) - I(-probe)]. 
-    we use testbed.name_DM_to_probe_in_PW to do the probes. 
-    
+    and calculate the difference of images [I(+probe) - I(-probe)].
+    we use testbed.name_DM_to_probe_in_PW to do the probes.
+
     AUTHOR : Axel Potier
 
     Parameters
     ----------
     input_wavefront: complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
-        Input wavefront in pupil plane   
-    
+        Input wavefront in pupil plane
+
     testbed: Testbed Optical_element
             a testbed with one or more DM
-    
+
     posprobes : 1D-array
         Index of the actuators to push and pull for pair-wise probing
-    
+
     dimimages : int
         Size of the output image after resizing in pixels
 
     amplitudePW: float
         PW probes amplitude in nm
-    
+
     voltage_vector : 1D float array, default 0
             vector of voltages vectors for each DMs arounf which we do the difference
 
     wavelengths  :  float default None,
             wavelength of the estimation in m
-         
-    
+
     Returns
     ------
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
-
     """
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
