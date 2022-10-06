@@ -10,7 +10,7 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
     """
     Invert a matrix after a Singular Value Decomposition
     https://en.wikipedia.org/wiki/Singular_value_decomposition
-    The inversion can be regularized. We return the inverse, the singular values, 
+    The inversion can be regularized. We return the inverse, the singular values,
     their inverse and the pseudo inverse.
 
     AUTHOR : Axel Potier
@@ -20,7 +20,7 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
 
     matrix_to_invert : numpy array
                         The matrix to invert
-    cut : int 
+    cut : int
          threshold to cut the singular values
     goal : string, default 'e'
             if 'e': the cut set the inverse singular value not to exceed
@@ -39,14 +39,14 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
     ------
     np.diag(InvS) : 2D numpy array
         Inverse eigenvalues of the input matrix in a diagonal matrix
-    np.diag(InvS_truncated) : 2D numpy array 
+    np.diag(InvS_truncated) : 2D numpy array
         Inverse eigenvalues of the input matrix after regularization in a diagonal matrix
     pseudoinverse :  2D numpy array
         Regularized inverse of the input matrix
 
     """
     U, s, V = np.linalg.svd(matrix_to_invert, full_matrices=False)
-    #print(np.max(np.abs(U @ np.diag(s) @ V)))
+    # print(np.max(np.abs(U @ np.diag(s) @ V)))
 
     S = np.diag(s)
     InvS = np.linalg.inv(S)

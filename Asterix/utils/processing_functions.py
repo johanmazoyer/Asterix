@@ -156,7 +156,7 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
             dim1 x dim2 array with dim1 and dim2 are divisible by factor
     new_dim : int
          Dimension of output image. new_dim must be smaller than dim of the entrance image
-    center_on_pixel :bool (optional, default: False). 
+    center_on_pixel :bool (optional, default: False)
         If False the PSf is shifted before binning.
 
     Returns
@@ -200,7 +200,7 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
 
     Parameters
     ----------
-    image : 2D numpy array 
+    image : 2D numpy array
             Initial image to be shifted.
     xshift : float
             Amount of desired shift in X direction.
@@ -220,7 +220,7 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
             If 'ortho' 1/sqrt(N) normalisation is done in both directions.
             Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane.
             The default is 'backward' to be consistent with numpy.fft.fft2() and numpy.fft.ifft2().
-               
+
     Returns
     ------
     shifted_image : 2D numpy array
@@ -267,22 +267,22 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
 def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_size):
     """
     This function returns the best sizes (best_size_large, best_size_small) so that
-    best_size_small / init_size_large are closest to factor_zoomout with 
+    best_size_small / init_size_large are closest to factor_zoomout with
     best_size_small and init_size_large even integers
 
     AUTHORS: J Mazoyer
 
     05/09/2022 : Introduction in Asterix
-    
+
     Parameters
     ----------
     init_size_large : int
         initial size
     factor_zoomout : float
         factor to be zoomed out (final_image size / init_image size). factor_zoomout < 1
-    max_allowed_fft_size : int 
+    max_allowed_fft_size : int
         the maximum size to check
-    
+
     Returns
     ------
     dimensions : tuple of 2 floats
@@ -316,8 +316,8 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
 def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size=2000):
     """
     This function returns an image zoomed out with Fourier-domain computation. The array is padded
-    until max_allowed_fft_size and takes the best size so that factor_zoomout*size_padded is the closest 
-    to an integer. 
+    until max_allowed_fft_size and takes the best size so that factor_zoomout*size_padded is the closest
+    to an integer.
 
     BE CAREFUL WITH THE CENTERING, IT IS HARD TO FIND A GOOD RULE FOR ALL CASES (ODD OR EVEN DIMENSION IN OUTPUT AND INPUT)
     SO IT IS WHAT IT IS AND USERS ARE ENCOURAGED TO CHECK IF THIS IS WHAT THEY WANT.
@@ -332,7 +332,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
         Initial array, must be square .
     factor_zoomout : float
         Factor to be zoomed out by (final_image size / init_image size). factor_zoomout < 1
-    complex_image : bool(optional input, default False) 
+    complex_image : bool(optional input, default False)
         If this keyword is "False", then the output array will be
         assumed to be real. If you want to shift a complex array, use complex_image=True.
     max_allowed_fft_size : int (optional input, default 2000)
