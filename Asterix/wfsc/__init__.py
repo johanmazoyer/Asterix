@@ -10,3 +10,5 @@ from .corrector import *
 from .maskDH import *
 from .thd_quick_invert import *
 from .correction_loop import *
+from .wf_control_functions import *
+from .wf_sensing_functions import *
