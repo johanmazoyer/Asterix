@@ -38,7 +38,7 @@ def mft(image,
         Example: real_dim_input = image.shape if there is no padding.
     dim_output : int or tuple of int of dim 2
         Dimension of the output in pixels (square if int, rectangular if (int, int)).
-    nbres: float or tuple of 2 floats
+    nbres : float or tuple of 2 floats
         Number of spatial resolution elements across the total field of view in the images plane (same in both
         directions if float).
     inverse : bool, default False
@@ -519,14 +519,12 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, f
                            nbres=nbres[0], inverse=True)
 
     # From inner to outer part of FPM
+    const_but = butterworth_circle(dim, dim / alpha, filter_order, xshift=-0.5, yshift=-0.5)
     for k in range(nbres.shape[0] - 1):
         # Butterworth filter in each layer
         sizebut_here = dim / alpha * nbres[k] / nbres[k + 1]
-        but = (1 - butterworth_circle(dim, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * butterworth_circle(dim,
-                                                                                                        dim / alpha,
-                                                                                                        filter_order,
-                                                                                                        xshift=-0.5,
-                                                                                                        yshift=-0.5)
+        but = (1 - butterworth_circle(dim, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
+
         ef_pre_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres[k + 1])
         ef_pre_ls = mft(ef_pre_fpm * fpm * but, real_dim_input=dim, dim_output=dim, nbres=nbres[k + 1], inverse=True)
 
