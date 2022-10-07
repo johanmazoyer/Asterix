@@ -1,5 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
 import errno
 import sys
 import os
@@ -19,23 +17,19 @@ from Asterix import Asterix_root
 
 def save_plane_in_fits(dir_save_fits, name_plane, image):
     """
-        Function to quickly save a real or complex file in fits.
+    Function to quickly save a real or complex file in fits.
 
-        Parameters
-        ----------
-
-        dir_save_fits: string
-            path to directory to save the fits
-        
-        name_plane : string
-            name of the plane.
-            final name is
-            - current_time_str + '_' + name_plane + '_RE_and_IM.fits' if complex
-            - current_time_str + '_' + name_plane + '_RE.fits' if real
-        
-        image : numpy array 
-            to save. Can be of any dimension
-
+    Parameters
+    ----------
+    dir_save_fits: string
+        path to directory to save the fits
+    name_plane : string
+        name of the plane.
+        final name is
+        - current_time_str + '_' + name_plane + '_RE_and_IM.fits' if complex
+        - current_time_str + '_' + name_plane + '_RE.fits' if real
+    image : numpy array
+        to save. Can be of any dimension
     """
     current_time_str = datetime.datetime.today().strftime('%H_%M_%S_%f')[:-3]
     name_fits = current_time_str + '_' + name_plane
@@ -143,7 +137,7 @@ def progress(count, total, status=''):
 
     Parameters
     ----------
-    count: int 
+    count: int
         counter in the for loop
 
     total: int
@@ -170,7 +164,7 @@ def read_parameter_file(parameter_file,
                         NewSIMUconfig={}):
     """
     Check existence of the given parameter file, read it and check validity.
-    
+
     AUTHOR: Johan Mazoyer
 
     Parameters

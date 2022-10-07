@@ -1,6 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
-
 import numpy as np
 from Asterix.utils import crop_or_pad_image
 
@@ -20,7 +17,7 @@ def mft(image,
     (cf. Soummer et al. 2007, OSA)
         - Return the Matrix Direct Fourier transform (MFT) of a 2D image
         - Can deal with any size, any position of the 0-frequency...
-    
+
     AUTHORS: Baudoz, Galicher, Mazoyer
 
     REVISION HISTORY :
@@ -59,15 +56,15 @@ def mft(image,
                 position of the 0-frequency pixel in x for the entrance
                 image with respect to the center of the entrance image (real position
                 of the 0-frequency pixel on dim_input_x/2+x0)
-        Y_offset_input : float default 0 
+        Y_offset_input : float default 0
                 position of the 0-frequency pixel in Y for the entrance
                 image with respect to the center of the entrance image (real position
                 of the 0-frequency pixel on dim_input_y/2+y0)
-        X_offset_output : float default 0 
+        X_offset_output : float default 0
                 position of the 0-frequency pixel in x for the output
                 image with respect to the center of the output image (real position
                 of the 0-frequency pixel on dim_output_x/2+x1)
-        Y_offset_output : float default 0 
+        Y_offset_output : float default 0
                 position of the 0-frequency pixel in Y for the output
                 image with respect to the center of the output image (real position
                 of the 0-frequency pixel on dim_output_y/2+y1)
@@ -144,10 +141,10 @@ def mft(image,
     Y1 = Y_offset_output
 
     # image0 = dcomplex(image)
-    xx0 = ((np.arange(dim_input_x) - X0 + 1 / 2) / dim_input_x)  #Entrance image
-    xx1 = ((np.arange(dim_input_y) - Y0 + 1 / 2) / dim_input_y)  #Entrance image
-    uu0 = ((np.arange(dim_output_x) - X1 + 1 / 2) / dim_output_x - 1 / 2) * nbresx  #Fourier plane
-    uu1 = ((np.arange(dim_output_y) - Y1 + 1 / 2) / dim_output_y - 1 / 2) * nbresy  #Fourier plane
+    xx0 = ((np.arange(dim_input_x) - X0 + 1 / 2) / dim_input_x)  # Entrance image
+    xx1 = ((np.arange(dim_input_y) - Y0 + 1 / 2) / dim_input_y)  # Entrance image
+    uu0 = ((np.arange(dim_output_x) - X1 + 1 / 2) / dim_output_x - 1 / 2) * nbresx  # Fourier plane
+    uu1 = ((np.arange(dim_output_y) - Y1 + 1 / 2) / dim_output_y - 1 / 2) * nbresy  # Fourier plane
 
     norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
     if not inverse:
@@ -240,7 +237,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         dxout = np.abs(lam * z / (dx * dim))
         inverse_mft = False
     # Zoom factor to get the same spatial scale in the input and output array
-    #fac = dx/dxout
+    # fac = dx/dxout
     else:
         sign = -1
         # Sampling in the output dim x dim array if FFT
@@ -249,7 +246,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         dx = np.abs(lam * z / (dxout * dim))
         inverse_mft = True
     # Zoom factor to get the same spatial scale in the input and output array
-    #fac = dxout/dx
+    # fac = dxout/dx
 
     if retscale != 0:
         return dx, dxout
@@ -304,7 +301,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     prad : float
         entrance beam radius in pixel
     gamma : int >=2
-        factor of oversizing in the fourrier plane in diameter of the pupil 
+        factor of oversizing in the fourier plane in diameter of the pupil
         (gamma*2*prad is the output dim)
         optional: default = 2
 
@@ -340,7 +337,7 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
 
     AUTHORS: L.Mugnier, M.Kourdourli, J. Mazoyer
 
-    07/09/2022 : Introduction in asterix (Kourdourli's version. Based on fftshift2.pro from ONERA's 
+    07/09/2022 : Introduction in asterix (Kourdourli's version. Based on fftshift2.pro from ONERA's
                 IDL library by Laurent Mugnier
     07/09/2022 : works for non square array / non even dimensions array Mazoyer
 
@@ -357,11 +354,11 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
                       the origin center in direct and fourier spaces when
                       manipulating centered arrays.
                        Direct space             Fourier space
-               pp     Central pix              Central pix 
+               pp     Central pix              Central pix
                pb     Central pix              Between 4 central pix
                bp     Between 4 central pix    Central pix
                bb     Between 4 central pix    Between 4 central pix
-               if dim_i (i = x or y) is even or odd : 
+               if dim_i (i = x or y) is even or odd :
                     Central pix = dim_i // 2
                     Between 4 central pix: between dim_i // 2 - 1 and dim_i // 2
                 with // the euclidian division.
@@ -373,7 +370,7 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
                 if 'ortho' 1/sqrt(N) normalisation is done in both directions.
                 Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
                 The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
-        
+
     Returns
     ------
     FFT_array : 2D numpy array

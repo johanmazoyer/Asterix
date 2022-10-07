@@ -1,6 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
-
 import os
 import warnings
 
@@ -41,48 +38,48 @@ def plot_contrast_curves(reduced_data,
 
     AUTHOR: J. Mazoyer
     16/03/2022
-    
+
     Parameters
     ----------
     reduced_data: array [dim, dim] or [nb_iter, dim, dim]
         array containing the reduced data. Assume to be already in contrast unit (divided by max of PSF)
-        if the array is of dimension 3, the first dimension is assumed to be the number of iter and a 
+        if the array is of dimension 3, the first dimension is assumed to be the number of iter and a
         contrast curve will be plotted for each
-    
+
     xcen: float, default None (reduced_data.shape[0]/2 - 1/2)
         pixel, position x of the star
-    
+
     ycen: float, default None (reduced_data.shape[1]/2 - 1/2)
         pixel, position y of the star
-    
+
     delta_raddii: default 3
         pixel, width of the small concentric rings
-    
+
     type_of_contrast: string default 'mean'
-        can be  'mean' : mean contrast on the rings 
+        can be  'mean' : mean contrast on the rings
                 'stddev_1sig' : 1 sigma standard deviation on the rings
                 'stddev_5sig' : 5 sigma standard deviation on the rings
 
     numberofpix_per_loD: float, defaut None
         resolution of the focal plane in # of pixel per lambda/D (useful for testbed)
-        If set the absciss unit will be in lambda/D 
+        If set the absciss unit will be in lambda/D
 
     numberofmas_per_pix: float, default None
         resolution of the focal plane in # of mas per pixel  (useful for real instruments)
         If set the absciss unit will be in mas
-        
+
         If none of these keywords are set, the absciss unit will be in pixels
         If both are set, it will raise an error
-    
+
     mask_DH : 2d binary Array  default is all focal plane
         mask delimiting the DH
-    
+
     path: string, default ''
         path where to save the pdf plot file
-    
+
     filename: string, default ''
         Filename prefix for pdf files of the plots saved to disk.
-    
+
     legend_labels: string array of the same number of images in the first cube, default None
         Name of the legend labels,
         If None and if the array is of dimension 2, no legend
@@ -125,7 +122,6 @@ def plot_contrast_curves(reduced_data,
                                           type_of_contrast=type_of_contrast,
                                           mask_DH=mask_DH)
         absice = np.arange(len(contrast1dcurve)) * absicemultiplicationfactor
-        iwa = np.nanmin(absice[~np.isnan(contrast1dcurve)])
         owa = np.nanmax(absice[~np.isnan(contrast1dcurve)])
 
         plt.plot(absice, contrast1dcurve)
@@ -150,7 +146,6 @@ def plot_contrast_curves(reduced_data,
                                               mask_DH=mask_DH)
             if i == 0:
                 absice = np.arange(len(contrast1dcurve)) * absicemultiplicationfactor
-                iwa = np.nanmin(absice[~np.isnan(contrast1dcurve)])
                 owa = np.nanmax(absice[~np.isnan(contrast1dcurve)])
 
             plt.plot(absice, contrast1dcurve, label=legend_labels[i])
@@ -202,33 +197,33 @@ def contrast_curves(reduced_data,
                     delta_raddii=3,
                     type_of_contrast='mean',
                     mask_DH=None):
-    """  
+    """
     create a contrast curve from a image using concentric rings
     You can chooose the center, the size of the rings, the type of contrast (mean or std)
     The DH is set using a binary mask (1s where the DH is, 0 elsewhere)
 
     AUTHOR: J. Mazoyer
     16/03/2022
-    
+
     Parameters
-    ---------- 
+    ----------
     reduced_data: array
         [dim dim] array containing the reduced data
-    
-    xcen: float, default None (reduced_data.shape[0]/2 -1/2) 
+
+    xcen: float, default None (reduced_data.shape[0]/2 -1/2)
         pixel, position x of the star
-    
-    ycen: float, default None (reduced_data.shape[1]/2 -1/2) 
+
+    ycen: float, default None (reduced_data.shape[1]/2 -1/2)
         pixel, position y of the star
-    
+
     delta_raddii: default 3
         pixel, width of the small concentric rings
-    
+
     type_of_contrast: string default 'mean'
-        can be  'mean' : mean contrast on the rings 
+        can be  'mean' : mean contrast on the rings
                 'stddev_1sig' : 1 sigma standard deviation on the rings
                 'stddev_5sig' : 5 sigma standard deviation on the rings
-    
+
     mask_DH : 2d binary Array  default is all focal plane
         mask delimiting the DH
 

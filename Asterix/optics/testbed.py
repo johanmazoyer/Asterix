@@ -1,6 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
-
 import inspect
 import copy
 import numpy as np
@@ -11,7 +8,6 @@ import Asterix.optics.deformable_mirror as deformable_mirror
 
 class Testbed(optsy.OpticalSystem):
     """
-    
     Initialize and describe the behavior of a testbed.
     This is a particular subclass of Optical System, because we do not know what is inside
     It can only be initialized by giving a list of Optical Systems and it will create a
@@ -19,15 +15,14 @@ class Testbed(optsy.OpticalSystem):
     correct normlaization
 
     AUTHOR : Johan Mazoyer
-
     """
 
     def __init__(self, list_os, list_os_names):
         """
         This function allows you to concatenate OpticalSystem objects to create a testbed
-        
+
         AUTHOR : Johan Mazoyer
-        
+
         Parameters
         ----------
         list_os:    list of OpticalSystem instances
@@ -36,8 +31,8 @@ class Testbed(optsy.OpticalSystem):
             The list order is form the first optics system to the last in the
             path of the light (so usually from entrance pupil to Lyot pupil)
 
-        list_os_names:  list of string of the same size as list_os 
-            Name of the optical systems. 
+        list_os_names:  list of string of the same size as list_os
+            Name of the optical systems.
             Then can then be accessed inside the Testbed object by os_#i = Testbed.list_os_names[i]
 
         Returns
@@ -90,7 +85,7 @@ class Testbed(optsy.OpticalSystem):
 
             if isinstance(list_os[num_optical_sys], deformable_mirror.DeformableMirror):
 
-                #this function is to replace the DMphase variable by a XXphase variable
+                # this function is to replace the DMphase variable by a XXphase variable
                 # where XX is the name of the DM
                 list_os[num_optical_sys].EF_through = _swap_DMphase_name(
                     list_os[num_optical_sys].EF_through, list_os_names[num_optical_sys] + "phase")
@@ -139,7 +134,7 @@ class Testbed(optsy.OpticalSystem):
 
         self.EF_through = _clean_EF_through(self.EF_through, known_keywords)
 
-        #initialize the max and sum of PSFs for the normalization to contrast
+        # initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
 
     def voltage_to_phases(self, actu_vect, einstein_sum=False):
@@ -194,16 +189,15 @@ class Testbed(optsy.OpticalSystem):
 
         Parameters
         ----------
-        vector_basis_voltage: 1D-array real : 
+        vector_basis_voltage : 1D-array real
             vector of voltages of size (total(basisDM sizes)) on the mode of the basis for all
             DMs by order of the light path
 
         Returns
         ------
-        vector_actuator_voltage: 1D-array real : 
+        vector_actuator_voltage : 1D-array real
             vector of base coefficients for all actuators of the DMs by order of the light path
             size (total(DM actuators))
-        
         """
 
         indice_acum_basis_size = 0
@@ -237,21 +231,20 @@ class Testbed(optsy.OpticalSystem):
 def _swap_DMphase_name(DM_EF_through_function, name_var):
     """
     A function to rename the DMphase parameter to another name (usually DMXXphase)
-        
+
     AUTHOR : Johan Mazoyer
 
     Parameters:
     ------
     DM_EF_through_function : function
         the function of which we want to change the params
-    name_var : string 
+    name_var : string
         the name of the  new name variable
 
     Returns
     ------
     the_new_function: function
         with name_var as a param
-
     """
 
     def wrapper(**kwargs):
@@ -276,7 +269,7 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
     ------
     outer_fun: function
         x -> outer_fun(x)
-    inner_fun: function 
+    inner_fun: function
         x -> inner_fun(x)
 
     Returns
@@ -312,7 +305,6 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
     ------
     cleaned_testbed_EF_through: function
         a function where only known keywords are allowed
-        
     """
 
     def wrapper(**kwargs):
@@ -347,7 +339,7 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
     ------
     DM_EF_through_function : function
         the function of which we want to change the params
-    name_var : string 
+    name_var : string
         the name of the  new name variable
 
     Returns

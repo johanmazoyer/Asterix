@@ -1,6 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
-
 import numpy as np
 from Asterix.optics.propagation_functions import mft
 from Asterix.utils import crop_or_pad_image, rebin
@@ -64,7 +61,7 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     """
     Create a phase ramp of size (dim_pp,dim_pp) that can be used as follow
     to shift one image by (a,b) pixels : shift_im = real(fft(ifft(im)*exp(i phase ramp)))
-    
+
     AUTHOR: Axel Potier
 
     Parameters
@@ -120,7 +117,6 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     ------
     phase : 2D array
         Static random phase map (or OPD) generated
-    
     """
 
     # create a circular pupil of the same radius of the given pupil
@@ -142,26 +138,25 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
 def sine_cosine_basis(Nact1D):
     """
-    For a given number of actuator accross the DM, create coefficients for the sin/cos basis
+    For a given number of actuator across the DM, create coefficients for the sin/cos basis
 
     TODO Check with Pierre that this is equivalent to what is done on the testbed
     TODO Ask Pierre what he thinks: is it possible to do the basis only for the actuators in the pup
         in which case, the important number would be the number of act in the pup ?
-    
+
     AUTHOR: Johan Mazoyer
-    
+
     Parameters
     ----------
     Nact1D : float
         Numnber of actuators of a square DM in one of the principal direction
-    
+
     Returns
     ------
     SinCos : 3D array
         Coefficient to apply to DMs to obtain sine and cosine phases.
         size :[(Nact1D)^2,Nact1D,Nact1D] if even
         size :[(Nact1D)^2 -1 ,Nact1D,Nact1D] if odd (to remove piston)
-    
     """
 
     TFCoeffs = np.zeros((Nact1D**2, Nact1D, Nact1D), dtype=complex)

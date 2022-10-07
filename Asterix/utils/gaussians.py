@@ -1,6 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
-
 import numpy as np
 import scipy.optimize as opt
 
@@ -13,7 +10,7 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=Tru
 
     Parameters
     ----------
-    xy: Tuple object (2,dim1,dim2)  
+    xy: Tuple object (2,dim1,dim2)
         which can be created with:
         x, y = np.mgrid[0:dim1, 0:dim2]
         xy=(x,y)

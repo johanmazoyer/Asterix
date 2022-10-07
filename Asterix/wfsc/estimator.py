@@ -1,6 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=trailing-whitespace
-
 import os
 import numpy as np
 from astropy.io import fits
@@ -66,13 +63,13 @@ class Estimator:
         testbed :  OpticalSystem.Testbed
                 Testbed object which describe your testbed
 
-        matrix_dir: string 
+        matrix_dir : string
             path to directory. save all the matrix files here
 
-        save_for_bench. bool default: false
+        save_for_bench : bool, default false
                 should we save for the real testbed in realtestbed_dir
 
-        realtestbed_dir: string 
+        realtestbed_dir : string
             path to directory to save all the files the real thd2 testbed need to run your code
 
         """
@@ -91,7 +88,7 @@ class Estimator:
         if self.Estim_sampling < 3:
             raise Exception("Estim_sampling must be > 3, please decrease Estim_bin_factor parameter")
 
-        #image size after binning. This is the size of the estimation !
+        # image size after binning. This is the size of the estimation !
         # we round and make it so we're always even size and slightly smaller than the ideal size
         self.dimEstim = int(
             np.floor(self.Estim_sampling / testbed.Science_sampling * testbed.dimScience / 2) * 2)
@@ -162,7 +159,7 @@ class Estimator:
         """
         Run an estimation from a testbed, with a given input wavefront
         and a state of the DMs
-        
+
         AUTHOR : Johan Mazoyer
 
         Parameters
@@ -176,19 +173,18 @@ class Estimator:
         voltage_vector : 1D float array
             vector of voltages vectors for each DMs
 
-        perfect_estimation: bool, default = False. 
-                    if true This is equivalent to have self.technique = "perfect" 
-                    but even if we are using another technique, we sometimes 
-                    need a perfect estimation and it avoid re-initialization of 
+        perfect_estimation: bool, default = False
+                    if true This is equivalent to have self.technique = "perfect"
+                    but even if we are using another technique, we sometimes
+                    need a perfect estimation and it avoid re-initialization of
                     the estimation.
-                                            
+
         Returns
         ------
-        estimation : list of 2D array 
+        estimation : list of 2D array
                 list is the number of wl in the estimation, usually 1 or testbed.nb_wav
-                Each arrays are of size of sixe [dimEstim, dimEstim]. 
+                Each arrays are of size of sixe [dimEstim, dimEstim].
                 estimation of the Electrical field
-
         """
 
         if 'wavelength' in kwargs:
@@ -281,22 +277,20 @@ class Estimator:
 
     def find_DM_to_probe(self, testbed: Testbed):
         """
-            function to find which DM to use for the PW probes
+        Find which DM to use for the PW probes.
 
-            AUTHOR : Johan Mazoyer
+        AUTHOR : Johan Mazoyer
 
-            Parameters
-            ----------
-            testbed :  OpticalSystem.Testbed
-                Testbed object which describe your testbed
-            
-            Returns
-            ----------
-            name_DM_to_probe_in_PW: string
-                name of the DM to probe in PW
+        Parameters
+        ----------
+        testbed :  OpticalSystem.Testbed
+            Testbed object which describe your testbed
 
-
-            """
+        Returns
+        ----------
+        name_DM_to_probe_in_PW: string
+            name of the DM to probe in PW
+        """
 
         # we chose it already. We only check its existence
         if hasattr(testbed, 'name_DM_to_probe_in_PW'):
@@ -310,11 +304,11 @@ class Estimator:
         # this is only done once.
         if len(testbed.name_of_DMs) == 0:
             raise Exception("you need at least one activated DM to do PW")
-        #If only one DM, we use this one, independenlty of its position
+        # If only one DM, we use this one, independenlty of its position
         elif len(testbed.name_of_DMs) == 1:
             name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
         else:
-            #If several DMs we check if there is at least one in PP
+            # If several DMs we check if there is at least one in PP
             number_DMs_in_PP = 0
             for DM_name in testbed.name_of_DMs:
                 DM = vars(testbed)[DM_name]  # type: DeformableMirror
@@ -322,12 +316,12 @@ class Estimator:
                     number_DMs_in_PP += 1
                     name_DM_to_probe_in_PW = DM_name
 
-            #If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
+            # If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
             if number_DMs_in_PP > 1:
                 raise Exception(
                     "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
                 )
-            #Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
+            # Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
             if number_DMs_in_PP == 0:
                 raise Exception(
                     "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
