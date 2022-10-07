@@ -1,4 +1,6 @@
+import platform
 import numpy as np
+from PIL import Image, ImageDraw, ImageFont
 from Asterix.utils import save_plane_in_fits
 
 
@@ -30,13 +32,12 @@ class MaskDH:
         elif self.DH_shape == "circle":
             self.DH_side = Correctionconfig["DH_side"].lower()
             self.Sep_Min_Max = [float(i) for i in Correctionconfig["Sep_Min_Max"]]
-
             self.circ_offset = Correctionconfig["circ_offset"]
             self.circ_angle = Correctionconfig["circ_angle"]
-        elif self.DH_shape == "nodh":
+        elif self.DH_shape in ["nodh", "custom"]:
             pass
         else:
-            raise Exception("Not valid DH Shape")
+            raise ValueError(f"'{self.DH_shape}' is not a valid DH shape.")
 
         self.string_mask = self.tostring()
 
@@ -61,23 +62,33 @@ class MaskDH:
         maskDH: 2D array
             binary mask delimiting the DH
         """
-
         maskDH = np.ones((dimFP, dimFP))
-
-        xx, yy = np.meshgrid(np.arange(dimFP) - (dimFP) / 2, np.arange(dimFP) - (dimFP) / 2)
+        xx, yy = np.meshgrid(np.arange(dimFP) - dimFP / 2, np.arange(dimFP) - dimFP / 2)
         rr = np.hypot(yy, xx)
 
         if self.DH_shape == "nodh":
             return maskDH
 
-        if self.DH_shape == "square":
+        elif self.DH_shape == "custom":
+            your_os = platform.system()
+            img = Image.new(mode="L", size=(dimFP, dimFP))
+            if your_os == "Darwin":
+                fnt = ImageFont.truetype('/Library/Fonts/Arial Bold.ttf', size=int(dimFP / 4))
+            elif your_os == "Linux":
+                fnt = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSerif.ttf', size=int(dimFP / 4))
+            else:
+                raise OSError("The path to fonts is not implemented for your OS yet.")
+            d = ImageDraw.Draw(img)
+            d.text((int(dimFP / 4), int(dimFP / 4)), "C N \nR S", font=fnt, fill=1)
+            maskDH = np.flipud(np.asarray(img, dtype=float))
 
+        elif self.DH_shape == "square":
             maskDH[xx < self.corner_pos[0] * FP_sampling] = 0
             maskDH[xx > self.corner_pos[1] * FP_sampling] = 0
             maskDH[yy < self.corner_pos[2] * FP_sampling] = 0
             maskDH[yy > self.corner_pos[3] * FP_sampling] = 0
 
-        if self.DH_shape == "circle":
+        elif self.DH_shape == "circle":
             maskDH[rr >= self.Sep_Min_Max[1] * FP_sampling] = 0
             maskDH[rr < self.Sep_Min_Max[0] * FP_sampling] = 0
             if self.DH_side == "right":
@@ -121,14 +132,15 @@ class MaskDH:
 
         if self.DH_shape == "square":
             stringdh = "MaskDH_square_" + "_".join(map(str, self.corner_pos))
-        if self.DH_shape == "circle":
+        elif self.DH_shape == "circle":
             stringdh = "_circle_rad" + "_".join(map(str, self.Sep_Min_Max)) + "_" + str(self.DH_side)
             if self.DH_side != 'full':
                 stringdh = stringdh + '_ang' + str(int(self.circ_angle))
                 if self.circ_offset > 0.:
                     stringdh = stringdh + '_off' + str(self.circ_offset)
-
-        if self.DH_shape == "nodh":
+        elif self.DH_shape == "custom":
+            stringdh = "CustomDHmask"
+        elif self.DH_shape == "nodh":
             stringdh = "FullDH"
 
         return stringdh

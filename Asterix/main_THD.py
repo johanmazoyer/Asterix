@@ -87,7 +87,7 @@ def runthd2(parameter_file,
     # Concatenate into the full testbed optical system
     thd2 = Testbed([entrance_pupil, DM1, DM3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
 
-    # The following line can be used to change the DM which aplpies PW probes. This could be used to use the DM out of
+    # The following line can be used to change the DM which applies PW probes. This could be used to use the DM out of
     # the pupil plane.
     # This is an unusual option so not in the param file and not well documented.
     # thd2.name_DM_to_probe_in_PW = "DM1"
