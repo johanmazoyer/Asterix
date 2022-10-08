@@ -49,7 +49,6 @@ class Coronagraph(optsy.OpticalSystem):
 
         # Define coronagraph focal plane mask type
         self.corona_type = coroconfig["corona_type"].lower()
-
         self.string_os += '_' + self.corona_type
 
         # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
@@ -114,7 +113,7 @@ class Coronagraph(optsy.OpticalSystem):
             self.perfect_coro = True
 
         else:
-            raise Exception(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
+            raise ValueError(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
 
         self.lyot_pup = pupil.Pupil(modelconfig,
                                     prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
@@ -377,7 +376,7 @@ class Coronagraph(optsy.OpticalSystem):
                          only_mat_mult=True), self.dim_overpad_pupil)
 
         else:
-            raise Exception(self.prop_apod2lyot + " is not a known prop_apod2lyot propagation mehtod")
+            raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
 
         if dir_save_all_planes is not None:
             name_plane = 'EF_PP_before_LS' + f'_wl{int(wavelength * 1e9)}'
@@ -386,13 +385,13 @@ class Coronagraph(optsy.OpticalSystem):
         # we add the downstream aberrations if we need them
         lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
 
-        # crop to the dim_overpad_pupil expeted size
+        # crop to the dim_overpad_pupil expected size
         lyotplane_before_lyot_crop = crop_or_pad_image(lyotplane_before_lyot, self.dim_overpad_pupil)
 
         # Field after filtering by Lyot stop
         lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
 
-        if (self.perfect_coro) & (not noFPM):
+        if self.perfect_coro & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(
                 wavelength)]
 
@@ -467,8 +466,8 @@ class Coronagraph(optsy.OpticalSystem):
             maxdimension_array_fpm = self.dimScience
 
         xx, yy = np.meshgrid(
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1 / 2,
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1 / 2)
+            np.arange(maxdimension_array_fpm) - maxdimension_array_fpm / 2 + 1 / 2,
+            np.arange(maxdimension_array_fpm) - maxdimension_array_fpm / 2 + 1 / 2)
 
         phase_vortex = vortex_charge * np.angle(xx + 1j * yy)
 
