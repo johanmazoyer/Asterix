@@ -76,7 +76,6 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     ------
     masktot : 2D array
         Phase ramp
-
     """
     if (shift_x == 0) & (shift_y == 0):
         ramp = 1
@@ -90,32 +89,29 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
 
 def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     """
-    Create a random phase map, whose PSD decrease in f^(-slope)
-    average is null and stadard deviation is phaserms
+    Create a random phase map, whose PSD decreases qw f^(-slope).
+
+    The average is null and the standard deviation is 'phaserms'.
 
     AUTHOR: Axel Potier
 
     Parameters
     ----------
     pupil_rad: float
-        radius of the pupil on which the phaserms will be measured
-
+        Radius of the pupil on which the phase rms will be measured.
     dim_image: int
-        size of the output (can be different than 2*pupil_rad)
-
+        Size of the output (can be different from 2*pupil_rad).
     phaserms : float
-        standard deviation of aberration
-
+        Standard deviation of the aberration.
     rhoc : float
-        See Borde et Traub 2006
-
+        See Borde et Traub 2006.
     slope : float
-        Slope of the PSD. See Borde et Traub 2006
+        Slope of the PSD. See Borde et Traub 2006.
 
     Returns
     ------
     phase : 2D array
-        Static random phase map (or OPD) generated
+        Static random phase map (or OPD)
     """
 
     # create a circular pupil of the same radius of the given pupil
@@ -137,7 +133,7 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
 def sine_cosine_basis(Nact1D):
     """
-    For a given number of actuator across the DM, create coefficients for the sin/cos basis
+    For a given number of actuator across the DM, create coefficients for the sin/cos basis.
 
     TODO Check with Pierre that this is equivalent to what is done on the testbed
     TODO Ask Pierre what he thinks: is it possible to do the basis only for the actuators in the pup
@@ -148,8 +144,8 @@ def sine_cosine_basis(Nact1D):
     Parameters
     ----------
     Nact1D : float
-        Numnber of actuators of a square DM in one of the principal direction
-
+        Number of actuators of a square DM in one of the principal directions.
+    
     Returns
     ------
     SinCos : 3D array

@@ -206,12 +206,12 @@ class Pupil(optsy.OpticalSystem):
 
         elif len(self.pup.shape) == 3:
             if self.pup.shape != self.nb_wav:
-                raise Exception("I'm confused, your pupil seem to be polychromatic" +
+                raise Exception("I'm confused, your pupil seems to be polychromatic" +
                                 f"(pup.shape=3) but the # of WL (pup.shape[0]={self.pup.shape[0]}) " +
                                 f"is different from the system # of WL (nb_wav={self.nb_wav})")
             exit_EF = entrance_EF * self.pup[self.wav_vec.tolist().index(wavelength)]
         else:
-            raise Exception("pupil dimension are not acceptable")
+            raise ValueError("pupil dimension are not acceptable")
 
         if dir_save_all_planes is not None:
             name_plane = f'EF_PP_after_pupil_wl{int(wavelength * 1e9)}'

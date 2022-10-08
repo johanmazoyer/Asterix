@@ -108,7 +108,7 @@ class OpticalSystem:
 
         if not isinstance(entrance_EF, (float, np.float, np.ndarray)):
             print(entrance_EF)
-            raise Exception("entrance_EF should be a float of a numpy array of floats")
+            raise TypeError("entrance_EF should be a float of a numpy array of floats")
 
         exit_EF = entrance_EF
         return exit_EF
