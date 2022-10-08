@@ -225,7 +225,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]; or float
+        entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]; or float
             Can also be a float scalar in which case entrance_EF is constant; default=1.
             Electric field in the pupil plane at the entrance of the system.
         wavelength : float
@@ -242,7 +242,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Electric field in the pupil plane a the exit of the system
+            Electric field in the pupil plane at the exit of the system
         """
 
         # call the OpticalSystem super function to check and format the variable entrance_EF
@@ -308,7 +308,6 @@ class Coronagraph(optsy.OpticalSystem):
 
         elif self.prop_apod2lyot == "mft-babinet":
             # Apod plane to focal plane
-
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
                                           AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
                                           BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
@@ -347,7 +346,6 @@ class Coronagraph(optsy.OpticalSystem):
 
         elif self.prop_apod2lyot == "mft":
             # Apod plane to focal plane
-
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
                                           AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
                                           BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
@@ -460,7 +458,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         vortex : list of 2D numpy array
-            The FP mask at all wavelengths.
+            The complex FP mask at all wavelengths.
         """
 
         if self.prop_apod2lyot == "fft":
@@ -499,7 +497,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         -------
         wrapped_vortex : list of 2D numpy array
-            The FP masks at all wavelengths.
+            The complex FP masks at all wavelengths.
         """
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)

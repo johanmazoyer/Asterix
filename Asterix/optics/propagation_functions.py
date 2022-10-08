@@ -573,7 +573,7 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
 
 def prop_fpm_regional_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, filter_order=15, alpha=1.5):
     """
-    Calculate the coronagraphic electric field in th Lyot plane by using varying sampling in different parts of the FPM.
+    Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
 
     Starting from the electric field in an input pupil plane, propagate through a phase-mask coronagraph with
     different sampling values in different rings around the FPM center. Each propagation goes from the pupil to the FPM

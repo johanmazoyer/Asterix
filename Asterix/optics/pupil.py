@@ -206,7 +206,7 @@ class Pupil(optsy.OpticalSystem):
                                 f"is different from the system # of WL (nb_wav={self.nb_wav})")
             exit_EF = entrance_EF * self.pup[self.wav_vec.tolist().index(wavelength)]
         else:
-            raise Exception("pupil dimension are not acceptable")
+            raise ValueError("pupil dimension are not acceptable")
 
         if dir_save_all_planes is not None:
             name_plane = f'EF_PP_after_pupil_wl{int(wavelength * 1e9)}'
