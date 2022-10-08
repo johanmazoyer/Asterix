@@ -157,7 +157,6 @@ class OpticalSystem:
             Electric field in the focal plane.
             the lambda / D is defined with the entrance pupil diameter, such as:
             self.wavelength_0 /  (2*self.prad) = self.Science_sampling pixels
-
         """
         if center_on_pixel:
             Psf_offset = (0.5, 0.5)
@@ -242,7 +241,7 @@ class OpticalSystem:
 
         Returns
         ------
-        focal_plane_Intensity : 2D array of size [self.dimScience, self.dimScience]
+        focal_plane_intensity : 2D array of size [self.dimScience, self.dimScience]
             Intensity in the focal plane. the lambda / D is defined with
             the entrance pupil diameter, such as:
             self.wavelength_0 /  (2*self.prad) = self.Science_sampling pixels
@@ -275,10 +274,10 @@ class OpticalSystem:
                  "or a2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) "
                  "or a 3D array of size (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"))
 
-        focal_plane_Intensity = np.zeros((self.dimScience, self.dimScience))
+        focal_plane_intensity = np.zeros((self.dimScience, self.dimScience))
 
         for i, wav in enumerate(wavelength_vec):
-            focal_plane_Intensity += np.abs(
+            focal_plane_intensity += np.abs(
                 self.todetector(entrance_EF=entrance_EF[i],
                                 wavelength=wav,
                                 in_contrast=False,
@@ -296,25 +295,25 @@ class OpticalSystem:
                      "normalization for a subset of  wavelengths, use in_contrast=False and "
                      "measure the PSF to normalize."))
 
-            focal_plane_Intensity /= self.norm_polychrom
+            focal_plane_intensity /= self.norm_polychrom
 
         if photon_noise:
-            focal_plane_Intensity = np.random.poisson(
-                focal_plane_Intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
+            focal_plane_intensity = np.random.poisson(
+                focal_plane_intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
 
         if dir_save_all_planes is not None:
             who_called_me = self.__class__.__name__
             name_plane = 'Int_FP_after_' + who_called_me + '_obj'
-            save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_Intensity)
+            save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_intensity)
 
-        return focal_plane_Intensity
+        return focal_plane_intensity
 
     def transmission(self, noFPM=True, **kwargs):
         """
         measure ratio of photons lost when
         crossing the system compared to a clear round aperture of radius self.prad
 
-        By default transmission is done at the reference WL, and there is
+        By default, transmission is done at the reference WL, and there is
         no reason to depend heavily on the WL.
 
         AUTHOR : Johan Mazoyer
@@ -329,7 +328,7 @@ class OpticalSystem:
 
         Returns
         ------
-        transimssion : float
+        throughput : float
             ratio exit flux  / clear entrance pupil flux
 
         """
@@ -361,7 +360,6 @@ class OpticalSystem:
                 Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
 
         AUTHOR : Johan Mazoyer
-
         """
 
         PSF_bw = np.zeros((self.dimScience, self.dimScience))
@@ -402,8 +400,7 @@ class OpticalSystem:
         Returns
         ------
         return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            phase abberation at the reference wavelength
-
+            phase aberration at the reference wavelength
         """
         if Model_local_dir is None:
             pass
