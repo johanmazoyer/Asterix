@@ -107,10 +107,10 @@ class Coronagraph(optsy.OpticalSystem):
             self.perfect_coro = True
 
         elif self.corona_type == "wrapped_vortex":
-            self.prop_apod2lyot = 'mft'
+            self.prop_apod2lyot = 'regional-sampling'
             self.string_os += '2020'
             self.FPmsk = self.WrappedVortex()
-            self.perfect_coro = True
+            self.perfect_coro = False
 
         else:
             raise ValueError(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
@@ -374,6 +374,15 @@ class Coronagraph(optsy.OpticalSystem):
                          BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
                          norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
                          only_mat_mult=True), self.dim_overpad_pupil)
+
+        elif self.prop_apod2lyot == "regional-sampling":
+            # Apod plane to Lyot plane
+            if noFPM:
+                fpm_array = np.ones((self.dimScience, self.dimScience))
+            else:
+                fpm_array = FPmsk
+            lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod, fpm_array,
+                                                                    nbres=np.array([0.1, 5, 50, 100]))
 
         else:
             raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")

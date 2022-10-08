@@ -587,7 +587,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, f
     Parameters
     ----------
     pup : 2D array
-        Input mage array containing the entrance pupil of the optical system.
+        Input mage array containing the wavefront at the entrance pupil of the optical system.
     fpm : 2D array
         Complex electric field in the focal plane of the focal-plane mask.
     nbres : 1D array or list
@@ -604,37 +604,40 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.arange(1, 11), samp_outer=2, f
     -------
     array : E-field before the Lyot stop.
     """
-    dim = pup.shape[0]
+    dim_pup = pup.shape[0]
+    dim_fpm = fpm.shape[0]
 
     # Innermost part of the focal plane
-    but_inner = butterworth_circle(dim, dim / alpha, filter_order, -0.5, -0.5)
-    efield_before_fpm_inner = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres[0])
-    efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner, real_dim_input=dim, dim_output=dim,
+    but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, -0.5, -0.5)
+    efield_before_fpm_inner = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0])
+    efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner, real_dim_input=dim_fpm, dim_output=dim_fpm,
                            nbres=nbres[0], inverse=True)
 
     # From inner to outer part of FPM
-    const_but = butterworth_circle(dim, dim / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+    const_but = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
     for k in range(nbres.shape[0] - 1):
         # Butterworth filter in each layer
-        sizebut_here = dim / alpha * nbres[k] / nbres[k + 1]
-        but = (1 - butterworth_circle(dim, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
+        sizebut_here = dim_fpm / alpha * nbres[k] / nbres[k + 1]
+        but = (1 - butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
 
-        ef_pre_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres[k + 1])
-        ef_pre_ls = mft(ef_pre_fpm * fpm * but, real_dim_input=dim, dim_output=dim, nbres=nbres[k + 1], inverse=True)
+        ef_pre_fpm = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k + 1])
+        ef_pre_ls = mft(ef_pre_fpm * fpm * but, real_dim_input=dim_fpm, dim_output=dim_fpm, nbres=nbres[k + 1],
+                        inverse=True)
 
         # Sum up E-field contributions before the LS
         efield_before_ls += ef_pre_ls
 
     # Outer part of the FPM
-    nbres_outer = dim / samp_outer
-    sizebut_outer = dim / alpha * nbres[-1] / nbres_outer
-    but_outer = 1 - butterworth_circle(dim, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
+    nbres_outer = dim_fpm / samp_outer
+    sizebut_outer = dim_fpm / alpha * nbres[-1] / nbres_outer
+    but_outer = 1 - butterworth_circle(dim_fpm, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
 
-    ef_pre_fpm_outer = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres_outer, inverse=True)
-    ef_pre_ls_outer = mft(ef_pre_fpm_outer * fpm * but_outer, real_dim_input=dim, dim_output=dim, nbres=nbres_outer,
-                          inverse=True)
+    ef_pre_fpm_outer = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres_outer, inverse=True)
+    ef_pre_ls_outer = mft(ef_pre_fpm_outer * fpm * but_outer, real_dim_input=dim_fpm, dim_output=dim_fpm,
+                          nbres=nbres_outer, inverse=True)
 
     # Total E-field before the LS
     efield_before_ls += ef_pre_ls_outer
+    efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup)
 
     return efield_before_ls
