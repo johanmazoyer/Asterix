@@ -40,7 +40,7 @@ class OpticalSystem:
 
         # All pupils in the code must have this dimension, so that the OS systems can
         # be easily switched.
-        # dim_overpad_pupil is set to an even numer and the pupil is centered in
+        # dim_overpad_pupil is set to an even number and the pupil is centered in
         # between 4 pixels
         self.dim_overpad_pupil = int(
             round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2)
@@ -346,9 +346,9 @@ class OpticalSystem:
         """
         Functions must me used at the end of all Optical Systems initalization
 
-        Measure 3 differents values to normalize the data:
+        Measure 3 different values to normalize the data:
             - self.norm_monochrom. Array of size len(self.wav_vec)
-                        the PSF per WL, use to nomrmalize to_detector
+                        the PSF per WL, use to normalize to_detector
             - self.norm_polychrom. float
                         the polychromatic PSF use to nomrmalize to_detector_Intensity
             - self.normPupto1, which is used to measure the photon noise

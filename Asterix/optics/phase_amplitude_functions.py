@@ -145,7 +145,7 @@ def sine_cosine_basis(Nact1D):
     ----------
     Nact1D : float
         Number of actuators of a square DM in one of the principal directions.
-    
+
     Returns
     ------
     SinCos : 3D array
