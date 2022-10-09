@@ -441,7 +441,7 @@ class Coronagraph(optsy.OpticalSystem):
 
             phase4q = np.zeros((dim_fp, dim_fp))
             fqpm_thick_cut = crop_or_pad_image(phase_fqpm, dim_fp)
-            phase4q[np.where(fqpm_thick_cut != 0)] += self.err_fqpm
+            phase4q[np.where(fqpm_thick_cut != 0)] = np.pi + self.err_fqpm
 
             if self.achrom_fqpm:
                 # If we want to do an achromatic_fqpm, we do not include a variation
