@@ -88,7 +88,7 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
 
 def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
     """
-    Create a random phase map, whose PSD decreases qw f^(-slope).
+    Create a random phase map, whose PSD decreases as f^(-slope).
 
     The average is null and the standard deviation is 'phaserms'.
 

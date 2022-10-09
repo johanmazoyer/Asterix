@@ -540,25 +540,17 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     siz = 100
     rad = int(siz / 2)
 
-    bfilter1 = butterworth_circle(siz, rad, order=1, xshift=-0.5, yshift=-0.5)
-    bfilter2 = butterworth_circle(siz, rad, order=2, xshift=-0.5, yshift=-0.5)
     bfilter3 = butterworth_circle(siz, rad, order=3, xshift=-0.5, yshift=-0.5)
-    bfilter4 = butterworth_circle(siz, rad, order=4, xshift=-0.5, yshift=-0.5)
     bfilter5 = butterworth_circle(siz, rad, order=5, xshift=-0.5, yshift=-0.5)
-    bfilter6 = butterworth_circle(siz, rad, order=6, xshift=-0.5, yshift=-0.5)
 
-    plt.figure(figsize=(16,8))
+    plt.figure(figsize=(16, 8))
     plt.subplot(1,2,1)
     plt.imshow(bfilter5, cmap='Greys_r', origin='lower')
     plt.title("Order = 5")
     plt.colorbar()
     plt.subplot(1,2,2)
-    plt.plot(bfilter1[rad], label="order=1")
-    plt.plot(bfilter2[rad], label="order=2")
     plt.plot(bfilter3[rad], label="order=3")
-    plt.plot(bfilter4[rad], label="order=4")
     plt.plot(bfilter5[rad], label="order=5")
-    plt.plot(bfilter6[rad], label="order=6")
     plt.legend()
     plt.show()
     """
