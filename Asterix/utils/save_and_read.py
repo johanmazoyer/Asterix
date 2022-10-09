@@ -4,9 +4,7 @@ import os
 import time
 
 import datetime
-import random
 import numpy as np
-import matplotlib.pyplot as plt
 
 from astropy.io import fits
 from configobj import ConfigObj
@@ -37,7 +35,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     if not os.path.exists(dir_save_fits):
         raise Exception("Please define an existing directory for dir_save_fits keyword or None")
 
-    # sometime the image can be a single float (0 for phase or 1 for EF).
+    # sometimes the image can be a single float (0 for phase or 1 for EF).
     if isinstance(image, (int, float, np.float)):
         print(name_plane + " is a constant, not save in fits")
         return
@@ -49,22 +47,6 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
         fits.writeto(os.path.join(dir_save_fits, name_fits + '_RE_and_IM.fits'), tofits_array, overwrite=True)
     else:
         fits.writeto(os.path.join(dir_save_fits, name_fits + '_RE.fits'), image, overwrite=True)
-
-
-def quickshow(tab):
-    """
-    Function to quickly show an array.
-    tab: array to be shown
-
-    Johan's quick function
-    """
-
-    tmp = np.copy(tab)
-    # tmp = tmp.T
-    plt.axis('off')
-    plt.imshow(tmp, origin='lower', cmap='gray')
-    plt.show()
-    plt.close()
 
 
 def quickfits(tab, folder='', name='tmp'):
@@ -95,40 +77,6 @@ def quickfits(tab, folder='', name='tmp'):
         current_time_str = datetime.datetime.today().strftime('_%H_%M_%S_%f')[:-3]
         name = name + current_time_str
     fits.writeto(os.path.join(folder, name + '.fits'), tab, overwrite=True)
-
-
-def quickpng(tab, folder='', name='tmp'):
-    """
-    Function to quickly save in .png.
-    By default, it will save on the desktop with a random name
-
-    tab: array to be saved
-    folder (optional): directory where to save the .png
-    name (optional): name of the .png.  By defaut tmpXX.png where xx is a random number
-
-    Johan's quick function
-    """
-    if folder == '':
-        desktop = os.path.join(os.path.join(os.path.expanduser('~')), 'Desktop')
-        bureau = os.path.join(os.path.join(os.path.expanduser('~')), 'Bureau')
-        if os.path.exists(desktop):
-            folder = desktop
-        elif os.path.exists(bureau):
-            # of you are french are you ?
-            folder = bureau
-        else:
-            raise Exception("I cannot find your desktop, please give me a folder to save the .png")
-
-    plt.figure(figsize=(10, 10))
-    tmp = tab
-    # tmp = tmp.T
-    plt.axis('off')
-    plt.imshow(tmp, origin='lower', cmap='gray')
-    if name == 'toto':
-        name = name + str(int(random.random() * 100))
-    plt.tight_layout()
-    plt.savefig(os.path.join(folder, name + '.png'), dpi=300)
-    plt.close()
 
 
 def progress(count, total, status=''):
