@@ -75,7 +75,8 @@ class MaskDH:
             if your_os == "Darwin":
                 fnt = ImageFont.truetype('/Library/Fonts/Arial Bold.ttf', size=int(dimFP / 4))
             elif your_os == "Linux":
-                fnt = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSerif.ttf', size=int(dimFP / 4))
+                fnt = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSerif.ttf',
+                                         size=int(dimFP / 4))
             else:
                 raise OSError("The path to fonts is not implemented for your OS yet.")
             d = ImageDraw.Draw(img)
