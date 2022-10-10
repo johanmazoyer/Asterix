@@ -35,6 +35,9 @@ class OpticalSystem:
 
         """
 
+        if (modelconfig["diam_pup_in_pix"] % 2 == 1) :
+                raise ValueError("please set diam_pup_in_pix parameter to an even number")
+        
         # pupil in pixel
         self.prad = modelconfig["diam_pup_in_pix"] / 2
 
