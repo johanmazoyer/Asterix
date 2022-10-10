@@ -154,12 +154,12 @@ class Pupil(optsy.OpticalSystem):
                 # Rescale to the pupil size
                 find_divisors = []
                 for i in range(60, pup_fits.shape[0] + 1):
-                    if pup_fits.shape[0] % i == 0:
+                    if (pup_fits.shape[0] % i) == 0 and (i % 2 == 0):
                         find_divisors.append(i)
 
                 if int(2 * self.prad) not in find_divisors:
                     raise Exception(
-                        f"Choose a divisor of the .fits file size ({pup_fits.shape[0]}) for diam_pup_in_pix parameter: {find_divisors}"
+                        f"Choose an even divisor of the .fits file size ({pup_fits.shape[0]}) for diam_pup_in_pix parameter: {find_divisors}"
                     )
 
                 pup_fits_right_size = rebin(pup_fits,
