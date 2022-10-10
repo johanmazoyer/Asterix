@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.ndimage.interpolation as interp
 
 def sphereApodizerRadialProfile(x):
@@ -9,7 +8,13 @@ def sphereApodizerRadialProfile(x):
     Args :
         x (float or np.array) [fraction of radius] : normalized radius
     """
-    return 0.82643863329121814 - 1.0832754796465451*x + 7.8209268813952804*x**2 - 12.605171876362874*x**3 + 5.3598137841072457*x**4
+    a = 0.16329229667014913
+    b = 4.789900916663095
+    c = -11.928993634750901
+    d = 7.510133546534877
+    e = -1.0284249458007801
+    f = 0.8227342681613615
+    return a*x**5 + b*x**4 + c*x**3 + d*x**2 + e*x + f
 
 def makeVLTpup(pupdiam, cobs, t_spiders, pupangle, spiders = True):
     """ Return VLT pup, based on make_VLT function from shesha/shesha/util/make_pupil.py
@@ -43,13 +48,15 @@ def makeVLTpup(pupdiam, cobs, t_spiders, pupangle, spiders = True):
         pup = pup * spiders_map  
     return pup
 
-def makeSphereApodizer(pupdiam, cobs):
-    """ Return the SPHERE APLC apodizer
+def makeSphereApodizer(pupdiam, cobs, radialProfile = sphereApodizerRadialProfile):
+    """ Return the SPHERE APLC apodizer.
 
     Args :
         pupdiam (float) [pixel] : pupil diameter
         
         cobs (float) [fraction of diameter] : central obtruction diameter
+
+        radialProfile (function, optional) : apodizer radial transmission. Default is SPHERE APLC apodizer.
     """
     # creating VLT pup without spiders
     pup = makeVLTpup(pupdiam, cobs, t_spiders = 0, pupangle = 0, spiders = False)
@@ -57,7 +64,7 @@ def makeSphereApodizer(pupdiam, cobs):
     # applying apodizer radial profile
     X = np.tile(np.linspace(-1, 1, pupdiam, dtype=np.float32), (pupdiam, 1))
     R = np.sqrt(X**2 + (X.T)**2)
-    apodizer = pup*sphereApodizerRadialProfile(R)
+    apodizer = pup*radialProfile(R)
     return apodizer
 
 def makeSphereLyotStop(pupdiam, cobs, t_spiders, pupangle, addCentralObs = 2*14/384, addSpiderObs = 2*5.5/384, lyotOuterEdgeObs = 7/384):
