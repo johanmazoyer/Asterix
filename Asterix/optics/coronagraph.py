@@ -620,7 +620,14 @@ def fqpm_mask(dim):
     return fqpm_thick
 
 
-def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0, 0)):
+def create_wrapped_vortex_mask(dim,
+                               thval,
+                               phval,
+                               jump,
+                               return_1d=False,
+                               piperiodic=True,
+                               offset=0,
+                               cen_shift=(0, 0)):
     """
     Create a wrapped vortex phase mask.
 
@@ -687,7 +694,8 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
 
     if return_1d:
         # Create a continuous 1D phase ramp from 0 to pi, including an offset.
-        theta = (np.arange(dim) / (dim - 1) * (np.max(thval) - np.min(thval)) + np.min(thval) + offset) % np.pi
+        theta = (np.arange(dim) / (dim - 1) *
+                 (np.max(thval) - np.min(thval)) + np.min(thval) + offset) % np.pi
     else:
         # Define the 2D theta array
         ty = (np.arange(dim) - dim / 2 - cen_shift[0] + 0.5)
@@ -707,10 +715,12 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
 
             # 1st step (k=0): Create phase mask section going from phval[k] to phval[k+1].
             if k == 0:
-                phase[section] = phval[k] + (theta[section] - thval[k]) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
+                phase[section] = phval[k] + (theta[section] -
+                                             thval[k]) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
             # All other steps, do the same thing but add the phase shift jump[k-1] first.
             else:
-                phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k]) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
+                phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k]) / (
+                    thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
 
     if return_1d:
         # Define the angle in radians.
@@ -735,11 +745,12 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
 
                     # 1st step [k=1]: Create phase mask section going from phval[k] to phval[k+1].
                     if k == 0:
-                        phase[section] = phval[k] + (theta[section] - thval[k] - np.pi) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
+                        phase[section] = phval[k] + (theta[section] - thval[k] - np.pi) / (
+                            thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
                     # All other steps, do the same thing but add the phase shift jump[k-1] first.
                     else:
                         phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k] - np.pi) / (
-                                    thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
+                            thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
 
         angles = theta
         phase_mask = phase
