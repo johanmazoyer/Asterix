@@ -8,7 +8,8 @@ from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
-def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom, **kwargs):
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom,
+                     **kwargs):
     """
     Build the nbwl times interaction matrix for pair-wise probing.
 
