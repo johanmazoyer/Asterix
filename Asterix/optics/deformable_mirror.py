@@ -552,7 +552,7 @@ class DeformableMirror(optsy.OpticalSystem):
                 fits.writeto(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits'),
                              phasesFourrier)
                 print("")
-                print("Time for " + Name_FourrierBasis_fits, time.time() - start_time)
+                print("Time for " + Name_FourrierBasis_fits + " (s):", round(time.time() - start_time))
 
         else:
             raise Exception(basis_type + " is is not a valid basis_type")

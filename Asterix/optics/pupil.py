@@ -205,7 +205,7 @@ class Pupil(optsy.OpticalSystem):
             exit_EF = entrance_EF * self.pup
 
         elif len(self.pup.shape) == 3:
-            if self.pup.shape != self.nb_wav:
+            if self.pup.shape[0] != len(self.nb_wav):
                 raise Exception("I'm confused, your pupil seem to be polychromatic" +
                                 f"(pup.shape=3) but the # of WL (pup.shape[0]={self.pup.shape[0]}) " +
                                 f"is different from the system # of WL (nb_wav={self.nb_wav})")
