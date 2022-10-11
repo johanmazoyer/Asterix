@@ -132,7 +132,7 @@ def mft(image,
         else:
             AA, BB, norm0 : complex 2D array, complex 2D array, float
                 terms used in MFT mtrix multiplication norm0 * ((AA @ image) @ BB).
-        
+
     """
 
     if only_mat_mult:
@@ -240,14 +240,14 @@ def mat_mult_mft(image, AA, BB, norm0):
     Perform Matrix multiplication for MFT.
     It is be done separatly in to allowed to be sped up by GPU (maybe). 
     I tried using numba for this function to save time but no improvements.
-    
+
     complex64 type is not mandatory but helps greatly speed up the code. I
     realized that previously (before 2022-10-11) image was float64/complex64, while AA and BB where complex128.
     Therefore the results of the MFT was artificially extended to complex128.
 
     AUTHOR : Johan Mazoyer
         2022-10-11 Creation from MFT
-    
+
     Parameters
     ----------
     image : 2D numpy array (complex64)
