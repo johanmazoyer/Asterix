@@ -11,7 +11,7 @@ def mft(image,
         Y_offset_input=0,
         X_offset_output=0,
         Y_offset_output=0,
-        just_mat_mult=False,
+        only_mat_mult=False,
         AA=None,
         BB=None,
         norm0=None,
@@ -21,6 +21,34 @@ def mft(image,
     (cf. Soummer et al. 2007, OSA)
         - Return the Matrix Direct Fourier transform (MFT) of a 2D image
         - Can deal with any size, any position of the 0-frequency...
+
+    This function measures 2 matrices AA and BB, and the norm norm0. The MFT itself is
+    the matrix multiplication norm0 * ((AA @ image) @ BB) (@ is matrix multiplication)
+
+    Can be used in a classical way:
+    ZeMFT = mft(image,
+                real_dim_input=real_dim_input, 
+                dim_output=dim_output, 
+                nbres=nbres, 
+                only_mat_mult=False,
+                returnAABB=False) 
+
+    or you can measure AA, BB, and norm0 and / or only do the matrix multiplication:
+    AA,BB,norm0 = mft(image,
+                      real_dim_input=real_dim_input, 
+                      dim_output=dim_output, 
+                      nbres=nbres, 
+                      only_mat_mult=False,
+                      returnAABB=True) 
+    ZeMFT = mft(image,
+                AA=AA,
+                BB=BB,
+                norm0 = norm0, 
+                only_mat_mult=True,
+                returnAABB=False) 
+
+    By separating those 2 steps you can save a lot of time if you are doing a lot of MFT with the same
+    input and output dimension parameters. Only the second one need to be repeated. 
 
     AUTHORS: Baudoz, Galicher, Mazoyer
 
@@ -32,17 +60,21 @@ def mft(image,
                                         coherent. Made better parameter format check
         -Revision 5.0  2022-03-09 J. Mazoyer. 1/2 pixel error in xx0, xx1, uu0 and uu1. Now MFT of clear
                                         pup if fully real.
+        -Revision 6.0  2022-10-11 J. Mazoyer. Introduced the option to do only the measurement of AA and BB
+                                        and the option to do only the matrix multiplication. Matrix multiplication
+                                        itself is be done separatly in mat_mult_mft which allowed GPU maybe. 
+                                        I tried using numba here to save so time but no improvement
 
     Parameters
     ----------
         image : 2D array
             Entrance image (entrance size in x and y can be different)
-        real_dim_input : int or tuple of ints of dim 2
+        real_dim_input : int or tuple of ints of dim 2, default 4
             Diameter of the support in pup (can differ from image.shape)
             Example: real_dim_input = diameter of the pupil in pixel for a padded pupil
-        dim_output : int or tuple of int of dim 2
+        dim_output : int or tuple of int of dim 2, default 4
             Dimension of the output in pixels (square if int, rectangular if (int, int).
-        nbres: float or tuple of float of dim 2
+        nbres: float or tuple of float of dim 2, default 1
             Number of spatial resolution elements (same in both directions if float).
         inverse : bool, default False
             Direction of the MFT.
@@ -51,8 +83,10 @@ def mft(image,
         norm : string default 'backward'
                 'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
                 https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
-                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse = True)
-                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse = True)
+                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is 
+                done in MFT(inverse = True)
+                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is 
+                done in MFT(inverse = True)
                 if 'ortho' 1/sqrt(N) normalisation is done in both directions.
                 Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
                 The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
@@ -72,16 +106,36 @@ def mft(image,
                 position of the 0-frequency pixel in Y for the output
                 image with respect to the center of the output image (real position
                 of the 0-frequency pixel on dim_output_y/2+y1)
+        only_mat_mult: boolean, default False
+                if True, we only do the matrix multiplication, but we need AA, BB and norm0 to be provided. 
+                    in that case all other parameters are not used. Careful, in this mode, it is assumed that 
+                    the user is 'expert' and no specific error message will be thrown if parameters are wrong.
+                    e.g. it will crash if image, AA and BB dimensions are not compatibles
+                if False : classical MFT, AA, BB and norm0 parameters are not used
+        AA: complex numpy array, default None
+                Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
+        BB: complex numpy array, default None
+                Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
+        norm0: float, default
+                Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB). 
+                This parameter is only used if only_mat_mult = True
+        returnAABB: boolean, default False
+                if False, the normal MFT(image is returned)
+                if True, we return AA, BB, norm0 used to do norm0 * ((AA @ image) @ BB). 
+
 
     Returns
     ------
-        result : complex 2D array
-            Output is a complex array dimft x dimft with the position of the
-            0-frequency in between the 4 pixel (dim_output_x/2+x1,dim_output_y/2+y1) and (dim_output_x/2+x1 +1,dim_output_y/2+y1+1)
-            if x1 and y1 are integer
+        if returnAABB is False:
+            MFT of the image : complex 2D array.
+
+        else:
+            AA, BB, norm0 : complex 2D array, complex 2D array, float
+                terms used in MFT mtrix multiplication norm0 * ((AA @ image) @ BB).
+        
     """
 
-    if just_mat_mult:
+    if only_mat_mult:
         return mat_mult_mft(image.astype('complex64'), AA, BB, norm0)
 
     # check dimensions and type of real_dim_input
@@ -182,6 +236,35 @@ def mft(image,
 
 
 def mat_mult_mft(image, AA, BB, norm0):
+    """
+    Perform Matrix multiplication for MFT.
+    It is be done separatly in to allowed to be sped up by GPU (maybe). 
+    I tried using numba for this function to save time but no improvements.
+    
+    complex64 type is not mandatory but helps greatly speed up the code. I
+    realized that previously (before 2022-10-11) image was float64/complex64, while AA and BB where complex128.
+    Therefore the results of the MFT was artificially extended to complex128.
+
+    AUTHOR : Johan Mazoyer
+        2022-10-11 Creation from MFT
+    
+    Parameters
+    ----------
+    image : 2D numpy array (complex64)
+            Entrance image
+    AA: 2D numpy array (complex64)
+            Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
+    BB: 2D numpy array (complex64)
+            Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
+    norm0: float, default
+            Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB). 
+            This parameter is only used if only_mat_mult = True
+
+    Returns
+    ------
+    norm0 * ((AA @ image) @ BB) :  2D numpy array (complex64)
+    """
+
     return norm0 * ((AA @ image) @ BB)
 
 
