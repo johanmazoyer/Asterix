@@ -28,28 +28,28 @@ def mft(image,
 
     Can be used in a classical way:
     ZeMFT = mft(image,
-                real_dim_input=real_dim_input, 
-                dim_output=dim_output, 
-                nbres=nbres, 
+                real_dim_input=real_dim_input,
+                dim_output=dim_output,
+                nbres=nbres,
                 only_mat_mult=False,
-                returnAABB=False) 
+                returnAABB=False)
 
     or you can measure AA, BB, and norm0 and / or only do the matrix multiplication:
     AA,BB,norm0 = mft(image,
-                      real_dim_input=real_dim_input, 
-                      dim_output=dim_output, 
-                      nbres=nbres, 
+                      real_dim_input=real_dim_input,
+                      dim_output=dim_output,
+                      nbres=nbres,
                       only_mat_mult=False,
-                      returnAABB=True) 
+                      returnAABB=True)
     ZeMFT = mft(image,
                 AA=AA,
                 BB=BB,
-                norm0 = norm0, 
+                norm0 = norm0,
                 only_mat_mult=True,
-                returnAABB=False) 
+                returnAABB=False)
 
     By separating those 2 steps you can save a lot of time if you are doing a lot of MFT with the same
-    input and output dimension parameters. Only the second one need to be repeated. 
+    input and output dimension parameters. Only the second one need to be repeated.
 
     AUTHORS: Baudoz, Galicher, Mazoyer
 
@@ -63,7 +63,7 @@ def mft(image,
                                         pup if fully real.
         -Revision 6.0  2022-10-11 J. Mazoyer. Introduced the option to do only the measurement of AA and BB
                                         and the option to do only the matrix multiplication. Matrix multiplication
-                                        itself is be done separatly in mat_mult_mft which allowed GPU maybe. 
+                                        itself is be done separatly in mat_mult_mft which allowed GPU maybe.
                                         I tried using numba here to save so time but no improvement
 
     Parameters
@@ -108,8 +108,8 @@ def mft(image,
                 image with respect to the center of the output image (real position
                 of the 0-frequency pixel on dim_output_y/2+y1)
         only_mat_mult: boolean, default False
-                if True, we only do the matrix multiplication, but we need AA, BB and norm0 to be provided. 
-                    in that case all other parameters are not used. Careful, in this mode, it is assumed that 
+                if True, we only do the matrix multiplication, but we need AA, BB and norm0 to be provided.
+                    in that case all other parameters are not used. Careful, in this mode, it is assumed that
                     the user is 'expert' and no specific error message will be thrown if parameters are wrong.
                     e.g. it will crash if image, AA and BB dimensions are not compatibles
                 if False : classical MFT, AA, BB and norm0 parameters are not used
@@ -118,12 +118,11 @@ def mft(image,
         BB: complex numpy array, default None
                 Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
         norm0: float, default
-                Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB). 
+                Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
                 This parameter is only used if only_mat_mult = True
         returnAABB: boolean, default False
                 if False, the normal MFT(image is returned)
-                if True, we return AA, BB, norm0 used to do norm0 * ((AA @ image) @ BB). 
-
+                if True, we return AA, BB, norm0 used to do norm0 * ((AA @ image) @ BB).
 
     Returns
     ------
