@@ -1,7 +1,5 @@
 import numpy as np
 from Asterix.utils import crop_or_pad_image
-from numba import njit
-
 
 def mft(image,
         real_dim_input=4,
@@ -183,7 +181,6 @@ def mft(image,
     return mat_mult_mft(image.astype('complex64'), AA, BB, norm0)
 
 
-# @njit
 def mat_mult_mft(image, AA, BB, norm0):
     return norm0 * ((AA @ image) @ BB)
 
