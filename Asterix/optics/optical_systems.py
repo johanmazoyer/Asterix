@@ -83,6 +83,8 @@ class OpticalSystem:
         # TODO in practice, those will be remeasured each time we initialize an OpticalSystem
         # I am not sure this is a problem because we only do it a few times (~10 in thd2)
         # Maybe there is a possibility to do it only once ?
+        # we can maybe pass AA,BB and norm0 as parameter in case of very internal definition
+        # when we just create a clear pupil we need for example
 
         self.AA_direct_final = list()
         self.BB_direct_final = list()
