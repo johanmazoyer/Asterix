@@ -80,11 +80,9 @@ class OpticalSystem:
             round(self.Science_sampling, 2)) + "_dimFP" + str(int(self.dimScience))
 
         # we measure the AA and BB matrix and norm0 for all MFTs used to go to final focal plane
-        # TODO in practice, those will be remeasure each time we initialize an OpticalSystem
+        # TODO in practice, those will be remeasured each time we initialize an OpticalSystem
         # I am not sure this is a problem because we only do it a few times (~10 in thd2)
         # Maybe there is a possibility to do it only once ?
-
-        print("ici je suis passe et j'ai vu")
 
         self.AA_direct_final = list()
         self.BB_direct_final = list()
