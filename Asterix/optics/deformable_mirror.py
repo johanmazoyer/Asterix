@@ -66,8 +66,8 @@ class DeformableMirror(optsy.OpticalSystem):
         else:
             # first thing we do is to open filename_grid_actu to check the number of
             # actuator of this DM. We need the number of act to read and load pushact .fits
-            self.total_act = fits.getdata(
-                os.path.join(model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"])).shape[1]
+            self.total_act = fits.getdata(os.path.join(model_dir,
+                                                       DMconfig[self.Name_DM + "_filename_grid_actu"])).shape[1]
 
             if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
                 self.active_actuators = fits.getdata(
@@ -208,8 +208,8 @@ class DeformableMirror(optsy.OpticalSystem):
         Name_pushact_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
-        if (not self.misregistration) and (os.path.exists(
-                os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
+        if (not self.misregistration) and (os.path.exists(os.path.join(self.Model_local_dir,
+                                                                       Name_pushact_fits + '.fits'))):
             pushact3d = fits.getdata(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
             print("Load " + Name_pushact_fits)
             return pushact3d
@@ -238,17 +238,16 @@ class DeformableMirror(optsy.OpticalSystem):
             simu_grid = fits.getdata(os.path.join(
                 model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"])) * diam_pup_in_pix + dim_array / 2
             # the DM pitchs are read in the header
-            pitchDMX = fits.getheader(os.path.join(
-                model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"]))["PitchV"] * 1e-6
-            pitchDMY = fits.getheader(os.path.join(
-                model_dir, DMconfig[self.Name_DM + "_filename_grid_actu"]))["PitchH"] * 1e-6
+            pitchDMX = fits.getheader(os.path.join(model_dir,
+                                                   DMconfig[self.Name_DM + "_filename_grid_actu"]))["PitchV"] * 1e-6
+            pitchDMY = fits.getheader(os.path.join(model_dir,
+                                                   DMconfig[self.Name_DM + "_filename_grid_actu"]))["PitchH"] * 1e-6
         else:
             # in this case we have a generic Nact1DxNact1D DM in which the pupil is centered
             # the pitch is read in the parameter file
             Nact1D = DMconfig[self.Name_DM + "_Nact1D"]
             pitchDM = DMconfig[self.Name_DM + "_pitch"]
-            simu_grid = generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m,
-                                                  diam_pup_in_pix) + dim_array / 2
+            simu_grid = generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix) + dim_array / 2
             pitchDMX = pitchDMY = pitchDM
 
         # Influence function and the pitch in pixels
@@ -289,10 +288,12 @@ class DeformableMirror(optsy.OpticalSystem):
 
             # Add an error on the orientation of the grid
             if angerror != 0:
-                simu_grid[1, i] = simu_grid[1, i] * np.cos(np.radians(angerror)) - simu_grid[0, i] * np.sin(
-                    np.radians(angerror))
-                simu_grid[0, i] = simu_grid[1, i] * np.sin(np.radians(angerror)) + simu_grid[0, i] * np.cos(
-                    np.radians(angerror))
+                simu_grid[
+                    1,
+                    i] = simu_grid[1, i] * np.cos(np.radians(angerror)) - simu_grid[0, i] * np.sin(np.radians(angerror))
+                simu_grid[
+                    0,
+                    i] = simu_grid[1, i] * np.sin(np.radians(angerror)) + simu_grid[0, i] * np.cos(np.radians(angerror))
 
             Psivector = ft_subpixel_shift(ft_actu,
                                           xshift=simu_grid[1, i] - xycenttmp + xerror * pitch_actshape,
@@ -352,9 +353,8 @@ class DeformableMirror(optsy.OpticalSystem):
         if self.DMconfig[self.Name_DM + "_Generic"]:
             Name_WhichInPup_fits += "Gen"
 
-        Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(
-            int(self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(
-                self.WhichInPup_threshold)
+        Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
+            self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(self.WhichInPup_threshold)
 
         if os.path.exists(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits')):
             print("Load " + Name_WhichInPup_fits)
@@ -363,8 +363,8 @@ class DeformableMirror(optsy.OpticalSystem):
         if self.z_position != 0:
 
             Pup_inDMplane = crop_or_pad_image(
-                prop.prop_angular_spectrum(self.clearpup.pup, self.wavelength_0, self.z_position,
-                                           self.diam_pup_in_m / 2, self.prad), self.dim_overpad_pupil)
+                prop.prop_angular_spectrum(self.clearpup.pup, self.wavelength_0, self.z_position, self.diam_pup_in_m / 2,
+                                           self.prad), self.dim_overpad_pupil)
         else:
             Pup_inDMplane = self.clearpup.pup
 
@@ -381,9 +381,7 @@ class DeformableMirror(optsy.OpticalSystem):
 
         WhichInPupil = np.array(WhichInPupil)
 
-        fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'),
-                     WhichInPupil,
-                     overwrite=True)
+        fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'), WhichInPupil, overwrite=True)
         print("Time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time))
 
         return WhichInPupil
@@ -420,16 +418,15 @@ class DeformableMirror(optsy.OpticalSystem):
         """
 
         EF_inDMplane = crop_or_pad_image(
-            prop.prop_angular_spectrum(entrance_EF, wavelength, self.z_position, self.diam_pup_in_m / 2.,
-                                       self.prad), self.dim_overpad_pupil)
+            prop.prop_angular_spectrum(entrance_EF, wavelength, self.z_position, self.diam_pup_in_m / 2., self.prad),
+            self.dim_overpad_pupil)
 
         if dir_save_all_planes is not None:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + f'plane_wl{int(wavelength * 1e9)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, EF_inDMplane)
 
         # Add DM phase at the right WL
-        EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(phase_abb=phase_DM,
-                                                                           wavelengths=wavelength)
+        EF_inDMplane_after_DM = EF_inDMplane * self.EF_from_phase_and_ampl(phase_abb=phase_DM, wavelengths=wavelength)
 
         if dir_save_all_planes is not None:
             name_plane = 'EF_after_DM_in_' + self.Name_DM + f'plane_wl{int(wavelength * 1e9)}'
@@ -438,8 +435,8 @@ class DeformableMirror(optsy.OpticalSystem):
         # and propagate to next pupil plane
 
         EF_back_in_pup_plane = crop_or_pad_image(
-            prop.prop_angular_spectrum(EF_inDMplane_after_DM, wavelength, -self.z_position,
-                                       self.diam_pup_in_m / 2., self.prad), self.dim_overpad_pupil)
+            prop.prop_angular_spectrum(EF_inDMplane_after_DM, wavelength, -self.z_position, self.diam_pup_in_m / 2.,
+                                       self.prad), self.dim_overpad_pupil)
 
         return EF_back_in_pup_plane
 
@@ -535,8 +532,7 @@ class DeformableMirror(optsy.OpticalSystem):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
                         progress(i, basis_size, status='')
-                fits.writeto(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits'),
-                             phasesFourrier)
+                fits.writeto(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits'), phasesFourrier)
                 print("")
                 print("Time for " + Name_FourrierBasis_fits + " (s):", round(time.time() - start_time))
 
@@ -638,8 +634,6 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
         center_pup = np.array([0.5, 0.5])
 
         for i in range(Nact1D**2):
-            pos_actu_in_pix[:,
-                            i] = pos_actu_in_pix[:,
-                                                 i] - pos_actuhalfactfromcenter + halfactfromcenter + center_pup
+            pos_actu_in_pix[:, i] = pos_actu_in_pix[:, i] - pos_actuhalfactfromcenter + halfactfromcenter + center_pup
             pos_actu_in_pix[0, i] *= -1
     return pos_actu_in_pix

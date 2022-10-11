@@ -205,8 +205,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         initial_DM_voltage = np.zeros(testbed.number_act) + float(initial_DM_voltage)
 
     # wavelength = testbed.wavelength_0
-    normalisation_testbed_EF_contrast = np.sqrt(
-        testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelength)])
+    normalisation_testbed_EF_contrast = np.sqrt(testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelength)])
 
     # This is for the case we take a non zero DM vectors already, we need to calculate
     # the initial phase for each DM
@@ -256,16 +255,15 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(DM.basis_size)
 
-        fileDirectMatrix = headfile + basis_str + '_dimEstim' + str(
-            dimEstim) + string_testbed_without_DMS + '_wl' + str(int(wavelength * 1e9))
+        fileDirectMatrix = headfile + basis_str + '_dimEstim' + str(dimEstim) + string_testbed_without_DMS + '_wl' + str(
+            int(wavelength * 1e9))
 
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch
         # For 1DM test / 2DM test
         # Matrix is saved/loaded for all the FP and then crop at the good size later
 
-        if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage
-                                                                                     == 0.).all():
+        if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage == 0.).all():
             print("The matrix " + fileDirectMatrix + " already exists")
 
             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(
@@ -297,8 +295,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 sqrtnbract = int(np.sqrt(DM.total_act))
                 Name_FourrierBasis_fits = "Fourier_basis_" + DM.Name_DM + '_prad' + str(
                     DM.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
-                phasesBasis = fits.getdata(os.path.join(DM.Model_local_dir,
-                                                        Name_FourrierBasis_fits + '.fits'))
+                phasesBasis = fits.getdata(os.path.join(DM.Model_local_dir, Name_FourrierBasis_fits + '.fits'))
 
             else:
                 phasesBasis = np.zeros((DM.basis_size, DM.dim_overpad_pupil, DM.dim_overpad_pupil))
@@ -339,8 +336,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                         wavefrontupstream = wavefrontupstream * OpticSysbefore.EF_from_phase_and_ampl(
                             phase_abb=OpticSysbefore.phase_init, wavelengths=wavelength)
                     else:
-                        wavefrontupstream = OpticSysbefore.prop_pup_to_DM_and_back(
-                            wavefrontupstream, OpticSysbefore.phase_init, wavelength)
+                        wavefrontupstream = OpticSysbefore.prop_pup_to_DM_and_back(wavefrontupstream,
+                                                                                   OpticSysbefore.phase_init, wavelength)
 
                     if dir_save_all_planes is not None:
                         # save phase on this DM
@@ -348,8 +345,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                         save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
 
                 else:
-                    wavefrontupstream = OpticSysbefore.EF_through(entrance_EF=wavefrontupstream,
-                                                                  wavelength=wavelength)
+                    wavefrontupstream = OpticSysbefore.EF_through(entrance_EF=wavefrontupstream, wavelength=wavelength)
 
                 if dir_save_all_planes is not None:
                     # save PP plane after this subsystem
@@ -362,8 +358,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             if DM.z_position != 0:
 
                 wavefrontupstreaminDM = crop_or_pad_image(
-                    prop.prop_angular_spectrum(wavefrontupstream, wavelength, DM.z_position,
-                                               DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
+                    prop.prop_angular_spectrum(wavefrontupstream, wavelength, DM.z_position, DM.diam_pup_in_m / 2,
+                                               DM.prad), DM.dim_overpad_pupil)
 
             if visu:
                 plt.ion()
@@ -392,9 +388,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                         wavefront = crop_or_pad_image(
                             prop.prop_angular_spectrum(
                                 wavefrontupstreaminDM * DM.EF_from_phase_and_ampl(
-                                    phase_abb=phasesBasis[i] + DM.phase_init, wavelengths=wavelength),
-                                wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad),
-                            DM.dim_overpad_pupil)
+                                    phase_abb=phasesBasis[i] + DM.phase_init, wavelengths=wavelength), wavelength,
+                                -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
 
                 if MatrixType == 'smallphase':
                     # TODO we added a 1+ which was initially in Axel's code and that was
@@ -407,9 +402,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                         wavefront = crop_or_pad_image(
                             prop.prop_angular_spectrum(
                                 wavefrontupstreaminDM * (1 + 1j * phasesBasis[i]) *
-                                DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init, wavelengths=wavelength),
-                                wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad),
-                            DM.dim_overpad_pupil)
+                                DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init, wavelengths=wavelength), wavelength,
+                                -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
 
                 if dir_save_all_planes is not None:
                     name_plane = 'EF_PP_after_' + DM_name + f'_wl{int(wavelength * 1e9)}'
@@ -427,8 +421,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                 wavefront = wavefront * OpticSysAfter.EF_from_phase_and_ampl(
                                     phase_abb=OpticSysAfter.phase_init, wavelengths=wavelength)
                             else:
-                                wavefront = OpticSysAfter.prop_pup_to_DM_and_back(
-                                    wavefront, OpticSysAfter.phase_init, wavelength)
+                                wavefront = OpticSysAfter.prop_pup_to_DM_and_back(wavefront, OpticSysAfter.phase_init,
+                                                                                  wavelength)
 
                             if dir_save_all_planes is not None:
                                 name_plane = 'Phase_init_on_' + osname + f'_wl{int(wavelength * 1e9)}'
@@ -451,8 +445,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                         # wavelength for the whole testbed. This is the same normalization as G0.
 
                         Gvector = resizing(
-                            OpticSysAfter.todetector(
-                                entrance_EF=wavefront, wavelength=wavelength, in_contrast=False) /
+                            OpticSysAfter.todetector(entrance_EF=wavefront, wavelength=wavelength, in_contrast=False) /
                             normalisation_testbed_EF_contrast, dimEstim)
 
                         if dir_save_all_planes is not None:
@@ -534,11 +527,9 @@ def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.nd
         for j_wave in range(number_wl_matrix):
 
             DHInteractionMatrix[2 * j_wave * int(size_DH_pix):(2 * j_wave + 1) * int(size_DH_pix),
-                                i] = FullInteractionMatrix[j_wave][:int(twice_size_FP_pix) // 2,
-                                                                   i][where_mask_flatten]
+                                i] = FullInteractionMatrix[j_wave][:int(twice_size_FP_pix) // 2, i][where_mask_flatten]
             DHInteractionMatrix[(2 * j_wave + 1) * int(size_DH_pix):(2 * j_wave + 2) * int(size_DH_pix),
-                                i] = FullInteractionMatrix[j_wave][int(twice_size_FP_pix) // 2:,
-                                                                   i][where_mask_flatten]
+                                i] = FullInteractionMatrix[j_wave][int(twice_size_FP_pix) // 2:, i][where_mask_flatten]
 
     return DHInteractionMatrix
 
@@ -627,8 +618,8 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
     return testbed.basis_vector_to_act_vector(produit_mat)
 
 
-def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast,
-                            last_best_alpha, testbed: Testbed):
+def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast, last_best_alpha,
+                            testbed: Testbed):
     """Voltage to apply on the deformable mirror in order to minimize the
     speckle intensity in the dark hole region in the stroke min solution See
     Axel Potier Phd for notation and Mazoyer et al. 2018a for alpha search
@@ -676,8 +667,7 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
     # With notations from Potier PhD eq 4.74 p78:
     Eab = np.zeros(int(np.sum(mask)) * len(Result_Estimate), dtype=complex)
     for i_wave, estimate_at_this_wave in enumerate(Result_Estimate):
-        Eab[i_wave * int(np.sum(mask)):(i_wave + 1) *
-            int(np.sum(mask))] = estimate_at_this_wave[np.where(mask == 1)]
+        Eab[i_wave * int(np.sum(mask)):(i_wave + 1) * int(np.sum(mask))] = estimate_at_this_wave[np.where(mask == 1)]
 
     d0 = np.sum(np.abs(Eab)**2) / pixel_in_mask
     M0 = Jacob_trans_Jacob / pixel_in_mask
@@ -696,8 +686,7 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
         # eq 4.79 Potier Phd
         DMSurfaceCoeff = np.dot(np.linalg.inv(M0 + alpha * Identity_M0size), realb0)
 
-        ResidualEnergy = np.dot(DMSurfaceCoeff, np.dot(
-            M0, DMSurfaceCoeff)) - 2 * np.dot(realb0, DMSurfaceCoeff) + d0
+        ResidualEnergy = np.dot(DMSurfaceCoeff, np.dot(M0, DMSurfaceCoeff)) - 2 * np.dot(realb0, DMSurfaceCoeff) + d0
         CurrentContrast = ResidualEnergy
         iteralpha = 0
 
@@ -711,8 +700,7 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
             # LastDMSurfaceCoeff = DMSurfaceCoeff
 
             DMSurfaceCoeff = np.dot(np.linalg.inv(M0 + alpha * Identity_M0size), realb0)
-            ResidualEnergy = np.dot(DMSurfaceCoeff, np.dot(
-                M0, DMSurfaceCoeff)) - 2 * np.dot(realb0, DMSurfaceCoeff) + d0
+            ResidualEnergy = np.dot(DMSurfaceCoeff, np.dot(M0, DMSurfaceCoeff)) - 2 * np.dot(realb0, DMSurfaceCoeff) + d0
 
             LastCurrentContrast = CurrentContrast
             CurrentContrast = ResidualEnergy

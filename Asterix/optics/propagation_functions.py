@@ -457,8 +457,10 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     norm : string default 'backward'
                 'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
                 https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
-                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse = True)
-                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse = True)
+                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N
+                is done in MFT(inverse = True)
+                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation
+                is done in MFT(inverse = True)
                 if 'ortho' 1/sqrt(N) normalisation is done in both directions.
                 Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
                 The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
@@ -493,12 +495,10 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
 
     # shift in Fourier space, i.e. multiplication in direct space, and computation of FFT
     if not inverse:
-        farray = np.fft.fft2(image * np.exp(
-            (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
+        farray = np.fft.fft2(image * np.exp((-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
                              norm=norm)
     else:
-        farray = np.fft.ifft2(image * np.exp(
-            (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
+        farray = np.fft.ifft2(image * np.exp((-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
                               norm=norm)
 
     # shift in direct space, i.e. multiplication in fourier space, and computation of FFT

@@ -85,8 +85,8 @@ class Testbed(optsy.OpticalSystem):
 
                 # this function is to replace the DMphase variable by a XXphase variable
                 # where XX is the name of the DM
-                list_os[num_optical_sys].EF_through = _swap_DMphase_name(
-                    list_os[num_optical_sys].EF_through, list_os_names[num_optical_sys] + "phase")
+                list_os[num_optical_sys].EF_through = _swap_DMphase_name(list_os[num_optical_sys].EF_through,
+                                                                         list_os_names[num_optical_sys] + "phase")
                 known_keywords.append(list_os_names[num_optical_sys] + "phase")
 
                 if not list_os[num_optical_sys].active:
@@ -307,8 +307,7 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
                 raise Exception('DMphase is an ambiguous argument if you have several DMs.' +
                                 ' Please use XXphase with XX = nameDM')
             if passed_arg not in known_keywords:
-                raise Exception(passed_arg + 'is not a EF_through valid argument. Valid args are ' +
-                                str(known_keywords))
+                raise Exception(passed_arg + 'is not a EF_through valid argument. Valid args are ' + str(known_keywords))
 
         return testbed_EF_through(**kwargs)
 

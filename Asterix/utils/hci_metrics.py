@@ -189,12 +189,7 @@ def plot_contrast_curves(reduced_data,
     plt.close()
 
 
-def contrast_curves(reduced_data,
-                    xcen=None,
-                    ycen=None,
-                    delta_raddii=3,
-                    type_of_contrast='mean',
-                    mask_DH=None):
+def contrast_curves(reduced_data, xcen=None, ycen=None, delta_raddii=3, type_of_contrast='mean', mask_DH=None):
     """create a contrast curve from a image using concentric rings You can
     chooose the center, the size of the rings, the type of contrast (mean or
     std) The DH is set using a binary mask (1s where the DH is, 0 elsewhere)

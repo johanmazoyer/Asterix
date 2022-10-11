@@ -34,12 +34,7 @@ class Estimator:
     AUTHOR : Johan Mazoyer
     """
 
-    def __init__(self,
-                 Estimationconfig,
-                 testbed: Testbed,
-                 matrix_dir='',
-                 save_for_bench=False,
-                 realtestbed_dir=''):
+    def __init__(self, Estimationconfig, testbed: Testbed, matrix_dir='', save_for_bench=False, realtestbed_dir=''):
         """Initialize the estimator. This is where you define the pw matrix,
         the modified Lyot stop or the COFFEE gradiant...
 
@@ -85,8 +80,7 @@ class Estimator:
 
         # image size after binning. This is the size of the estimation !
         # we round and make it so we're always even size and slightly smaller than the ideal size
-        self.dimEstim = int(
-            np.floor(self.Estim_sampling / testbed.Science_sampling * testbed.dimScience / 2) * 2)
+        self.dimEstim = int(np.floor(self.Estim_sampling / testbed.Science_sampling * testbed.dimScience / 2) * 2)
 
         if self.technique == "perfect":
             self.is_focal_plane = True
@@ -104,8 +98,8 @@ class Estimator:
 
             testbed.name_DM_to_probe_in_PW = self.find_DM_to_probe(testbed)
 
-            self.PWMatrix = wfs.create_pw_matrix(testbed, self.amplitudePW, self.posprobes, self.dimEstim,
-                                                 cutsvdPW, matrix_dir, self.polychrom)
+            self.PWMatrix = wfs.create_pw_matrix(testbed, self.amplitudePW, self.posprobes, self.dimEstim, cutsvdPW,
+                                                 matrix_dir, self.polychrom)
 
             # Saving PW matrix in Labview directory
             if save_for_bench:
@@ -121,8 +115,7 @@ class Estimator:
 
                 for k, wave_k in enumerate(wl_in_pw_matrix):
                     probes = np.zeros((len(self.posprobes), testbed.DM3.number_act), dtype=np.float32)
-                    vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(self.posprobes)),
-                                        dtype=np.float32)
+                    vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(self.posprobes)), dtype=np.float32)
 
                     for i in np.arange(len(self.posprobes)):
                         # TODO WTH is the hardcoded 17. @Raphael @Axel
@@ -145,12 +138,7 @@ class Estimator:
         else:
             raise Exception("This estimation algorithm is not yet implemented")
 
-    def estimate(self,
-                 testbed: Testbed,
-                 entrance_EF=1.,
-                 voltage_vector=0.,
-                 perfect_estimation=False,
-                 **kwargs):
+    def estimate(self, testbed: Testbed, entrance_EF=1., voltage_vector=0., perfect_estimation=False, **kwargs):
         """Run an estimation from a testbed, with a given input wavefront and a
         state of the DMs.
 
@@ -198,8 +186,7 @@ class Estimator:
             raise TypeError(
                 ("entrance_EFs must be scalar (same for all WLs), or a testbed.nb_wav scalars "
                  "or a2D array of size (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil) "
-                 "or a 3D array of size(testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil)"
-                 ))
+                 "or a 3D array of size(testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil)"))
 
         if (self.technique == "perfect") or (perfect_estimation):
             # If polychromatic, assume a perfect estimation at one wavelength
@@ -213,10 +200,10 @@ class Estimator:
                                                             wavelength=wavei)
                     result_estim.append(resizing(resultatestimation, self.dimEstim))
             elif self.polychrom == 'centralwl':
-                resultatestimation = testbed.todetector(
-                    entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(testbed.wavelength_0)],
-                    voltage_vector=voltage_vector,
-                    wavelength=testbed.wavelength_0)
+                resultatestimation = testbed.todetector(entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(
+                    testbed.wavelength_0)],
+                                                        voltage_vector=voltage_vector,
+                                                        wavelength=testbed.wavelength_0)
                 result_estim.append(resizing(resultatestimation, self.dimEstim))
             elif self.polychrom == 'broadband_pwprobes':
                 raise ValueError("cannot use polychrom='broadband_pwprobes' in perfect mode")
@@ -312,11 +299,9 @@ class Estimator:
             # If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
             if number_DMs_in_PP > 1:
                 raise Exception(
-                    "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
-                )
+                    "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW")
             # Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
             if number_DMs_in_PP == 0:
                 raise Exception(
-                    "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW"
-                )
+                    "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW")
         return name_DM_to_probe_in_PW

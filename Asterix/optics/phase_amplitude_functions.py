@@ -187,8 +187,7 @@ def sine_cosine_basis(Nact1D):
             Coeffs[Nact1D - i - 1, Nact1D - j - 1] = -1 / (2 * 1j)
         TFCoeffs[Coeff_SinCos] = Coeffs
 
-        SinCos[Coeff_SinCos] = np.real(
-            mft(TFCoeffs[Coeff_SinCos], AA=AA, BB=BB, norm0=norm0, only_mat_mult=True))
+        SinCos[Coeff_SinCos] = np.real(mft(TFCoeffs[Coeff_SinCos], AA=AA, BB=BB, norm0=norm0, only_mat_mult=True))
 
     if Nact1D % 2 == 1:
         # in the odd case the last one is a piston
