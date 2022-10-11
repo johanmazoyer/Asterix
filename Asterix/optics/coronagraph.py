@@ -133,7 +133,7 @@ class Coronagraph(optsy.OpticalSystem):
             if self.prop_apod2lyot == 'mft_babinet':
                 dim_science_here = self.dim_fpm
                 fpm_sampling_here = self.Lyot_fpm_sampling
-            
+
             self.AA_direct = list()
             self.BB_direct = list()
             self.norm0_direct = list()
@@ -145,29 +145,26 @@ class Coronagraph(optsy.OpticalSystem):
             for wave_i in self.wav_vec:
 
                 lambda_ratio = wave_i / self.wavelength_0
-                
-                a,b,c = prop.mft(
-                    np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
-                    real_dim_input=int(2 * self.prad),
-                    dim_output=dim_science_here,
-                    nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
-                    inverse=False,
-                    norm='ortho',
-                    returnAABB=True)
+
+                a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
+                                   real_dim_input=int(2 * self.prad),
+                                   dim_output=dim_science_here,
+                                   nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                                   inverse=False,
+                                   norm='ortho',
+                                   returnAABB=True)
                 self.AA_direct.append(a)
                 self.BB_direct.append(b)
                 self.norm0_direct.append(c)
 
+                a, b, c = prop.mft(np.zeros((dim_science_here, dim_science_here)),
+                                   real_dim_input=dim_science_here,
+                                   dim_output=int(2 * self.prad),
+                                   nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                                   inverse=True,
+                                   norm='ortho',
+                                   returnAABB=True)
 
-                a,b,c = prop.mft(
-                    np.zeros((dim_science_here, dim_science_here)),
-                    real_dim_input=dim_science_here,
-                    dim_output=int(2 * self.prad),
-                    nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
-                    inverse=True,
-                    norm='ortho',
-                    returnAABB=True)
-                
                 self.AA_inverse.append(a)
                 self.BB_inverse.append(b)
                 self.norm0_inverse.append(c)
