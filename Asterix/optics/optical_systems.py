@@ -79,6 +79,26 @@ class OpticalSystem:
         self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_resFP" + str(
             round(self.Science_sampling, 2)) + "_dimFP" + str(int(self.dimScience))
 
+        self.AA_direct_final = list()
+        self.BB_direct_final = list()
+        self.norm0_direct_final = list()
+
+        for wave_i in self.wav_vec:
+
+            lambda_ratio = wave_i / self.wavelength_0
+
+            a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
+                               real_dim_input=int(2 * self.prad),
+                               dim_output=self.dimScience,
+                               nbres=self.dimScience / self.Science_sampling * lambda_ratio,
+                               inverse=False,
+                               norm='ortho',
+                               returnAABB=True)
+
+            self.AA_direct_final.append(a)
+            self.BB_direct_final.append(b)
+            self.norm0_direct_final.append(c)
+
     # We define functions that all OpticalSystem object can use.
     # These can be overwritten for a subclass if need be
 
@@ -162,10 +182,6 @@ class OpticalSystem:
             self.wavelength_0 /  (2*self.prad) = self.Science_sampling pixels
 
         """
-        if center_on_pixel:
-            Psf_offset = (0.5, 0.5)
-        else:
-            Psf_offset = (0, 0)
 
         if wavelength is None:
             wavelength = self.wavelength_0
@@ -177,14 +193,25 @@ class OpticalSystem:
                                   dir_save_all_planes=dir_save_all_planes,
                                   **kwargs)
 
-        focal_plane_EF = prop.mft(exit_EF,
-                                  int(self.prad * 2),
-                                  self.dimScience,
-                                  self.dimScience / self.Science_sampling * lambda_ratio,
-                                  X_offset_output=Psf_offset[0],
-                                  Y_offset_output=Psf_offset[1],
-                                  inverse=False,
-                                  norm='ortho')
+        if center_on_pixel:
+            # if we need center on pixel, lets remeasure the whole mft but this is quite rare
+            Psf_offset = (0.5, 0.5)
+            focal_plane_EF = prop.mft(exit_EF,
+                                      real_dim_input=int(self.prad * 2),
+                                      dim_output=self.dimScience,
+                                      nbres=self.dimScience / self.Science_sampling * lambda_ratio,
+                                      X_offset_output=Psf_offset[0],
+                                      Y_offset_output=Psf_offset[1],
+                                      inverse=False,
+                                      norm='ortho')
+        else:
+            # most often we center in between 4 pixels. In this case we used the AA and BB already measured
+            # and only do the multiplication matrix
+            focal_plane_EF = prop.mft(exit_EF,
+                                      AA=self.AA_direct_final[self.wav_vec.tolist().index(wavelength)],
+                                      BB=self.BB_direct_final[self.wav_vec.tolist().index(wavelength)],
+                                      norm0=self.norm0_direct_final[self.wav_vec.tolist().index(wavelength)],
+                                      just_mat_mult=True)
 
         if in_contrast:
             focal_plane_EF /= np.sqrt(self.norm_monochrom[self.wav_vec.tolist().index(wavelength)])

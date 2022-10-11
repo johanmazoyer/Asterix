@@ -126,6 +126,52 @@ class Coronagraph(optsy.OpticalSystem):
 
         self.string_os += '_LS' + self.lyot_pup.string_os
 
+        if self.prop_apod2lyot in ['mft', 'mft_babinet']:
+            if self.prop_apod2lyot == 'mft':
+                dim_science_here = self.dimScience
+                fpm_sampling_here = self.Science_sampling
+            if self.prop_apod2lyot == 'mft_babinet':
+                dim_science_here = self.dim_fpm
+                fpm_sampling_here = self.Lyot_fpm_sampling
+            
+            self.AA_direct = list()
+            self.BB_direct = list()
+            self.norm0_direct = list()
+
+            self.AA_inverse = list()
+            self.BB_inverse = list()
+            self.norm0_inverse = list()
+
+            for wave_i in self.wav_vec:
+
+                lambda_ratio = wave_i / self.wavelength_0
+                
+                a,b,c = prop.mft(
+                    np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
+                    real_dim_input=int(2 * self.prad),
+                    dim_output=dim_science_here,
+                    nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                    inverse=False,
+                    norm='ortho',
+                    returnAABB=True)
+                self.AA_direct.append(a)
+                self.BB_direct.append(b)
+                self.norm0_direct.append(c)
+
+
+                a,b,c = prop.mft(
+                    np.zeros((dim_science_here, dim_science_here)),
+                    real_dim_input=dim_science_here,
+                    dim_output=int(2 * self.prad),
+                    nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                    inverse=True,
+                    norm='ortho',
+                    returnAABB=True)
+                
+                self.AA_inverse.append(a)
+                self.BB_inverse.append(b)
+                self.norm0_inverse.append(c)
+
         if "bool_overwrite_perfect_coro" in coroconfig:
             if coroconfig["bool_overwrite_perfect_coro"]:
                 self.perfect_coro = True
@@ -265,11 +311,10 @@ class Coronagraph(optsy.OpticalSystem):
             # Apod plane to focal plane
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          int(2 * self.prad),
-                                          self.dim_fpm,
-                                          self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                                          inverse=False,
-                                          norm='ortho')
+                                          AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
+                                          BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
+                                          norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
+                                          just_mat_mult=True)
 
             if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
@@ -294,24 +339,21 @@ class Coronagraph(optsy.OpticalSystem):
             # Babinet's trick:
             lyotplane_before_lyot_central_part = crop_or_pad_image(
                 prop.mft(corono_focal_plane * (1 - FPmsk),
-                         self.dim_fpm,
-                         int(2 * self.prad),
-                         self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                         inverse=True,
-                         norm='ortho'), self.dim_overpad_pupil)
+                         AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
+                         BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
+                         norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
+                         just_mat_mult=True), self.dim_overpad_pupil)
 
-            # Babinet's trick
             lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
 
         elif self.prop_apod2lyot == "mft":
             # Apod plane to focal plane
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          int(2 * self.prad),
-                                          self.dimScience,
-                                          self.dimScience / self.Science_sampling * lambda_ratio,
-                                          inverse=False,
-                                          norm='ortho')
+                                          AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
+                                          BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
+                                          norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
+                                          just_mat_mult=True)
 
             if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
@@ -332,11 +374,10 @@ class Coronagraph(optsy.OpticalSystem):
             # Focal plane to Lyot plane
             lyotplane_before_lyot = crop_or_pad_image(
                 prop.mft(corono_focal_plane * FPmsk,
-                         self.dimScience,
-                         int(2 * self.prad),
-                         self.dimScience / self.Science_sampling * lambda_ratio,
-                         inverse=True,
-                         norm='ortho'), self.dim_overpad_pupil)
+                         AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
+                         BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
+                         norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
+                         just_mat_mult=True), self.dim_overpad_pupil)
 
         else:
             raise Exception(self.prop_apod2lyot + " is not a known prop_apod2lyot propagation mehtod")

@@ -162,6 +162,14 @@ def sine_cosine_basis(Nact1D):
     TFCoeffs = np.zeros((Nact1D**2, Nact1D, Nact1D), dtype=complex)
     SinCos = np.zeros((Nact1D**2, Nact1D, Nact1D))
 
+    AA, BB, norm0 = mft(TFCoeffs[0],
+                        real_dim_input=Nact1D,
+                        dim_output=Nact1D,
+                        nbres=Nact1D,
+                        inverse=False,
+                        norm='backward',
+                        returnAABB=True)
+
     for Coeff_SinCos in range(Nact1D**2):
         Coeffs = np.zeros((Nact1D, Nact1D), dtype=complex)
         #  the First half of basis are cosine and the second half are sines
@@ -181,7 +189,8 @@ def sine_cosine_basis(Nact1D):
             Coeffs[Nact1D - i - 1, Nact1D - j - 1] = -1 / (2 * 1j)
         TFCoeffs[Coeff_SinCos] = Coeffs
 
-        SinCos[Coeff_SinCos] = np.real(mft(TFCoeffs[Coeff_SinCos], Nact1D, Nact1D, Nact1D))
+        SinCos[Coeff_SinCos] = np.real(
+            mft(TFCoeffs[Coeff_SinCos], AA=AA, BB=BB, norm0=norm0, just_mat_mult=True))
 
     if Nact1D % 2 == 1:
         # in the odd case the last one is a piston

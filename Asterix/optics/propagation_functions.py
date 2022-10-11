@@ -1,17 +1,23 @@
 import numpy as np
 from Asterix.utils import crop_or_pad_image
+from numba import njit
 
 
 def mft(image,
-        real_dim_input,
-        dim_output,
-        nbres,
+        real_dim_input=4,
+        dim_output=4,
+        nbres=1,
         inverse=False,
         norm='backward',
         X_offset_input=0,
         Y_offset_input=0,
         X_offset_output=0,
-        Y_offset_output=0):
+        Y_offset_output=0,
+        just_mat_mult=False,
+        AA=None,
+        BB=None,
+        norm0=None,
+        returnAABB=False):
     """
     Based on Matrix Direct Fourier transform (MFT) from R. Galicher
     (cf. Soummer et al. 2007, OSA)
@@ -76,6 +82,9 @@ def mft(image,
             0-frequency in between the 4 pixel (dim_output_x/2+x1,dim_output_y/2+y1) and (dim_output_x/2+x1 +1,dim_output_y/2+y1+1)
             if x1 and y1 are integer
     """
+
+    if just_mat_mult:
+        return mat_mult_mft(image.astype('complex64'), AA, BB, norm0)
 
     # check dimensions and type of real_dim_input
     error_string_real_dim_input = "'dimpup' must be an int (square input pupil) or tuple of ints of dimension 2"
@@ -165,11 +174,18 @@ def mft(image,
             norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
         sign_exponential = 1
 
-    AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0))
-    BB = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(xx1, uu1))
-    result = norm0 * np.matmul(np.matmul(AA, image), BB)
+    AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0)).astype('complex64')
+    BB = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(xx1, uu1)).astype('complex64')
 
-    return result
+    if returnAABB:
+        return AA, BB, norm0
+
+    return mat_mult_mft(image.astype('complex64'), AA, BB, norm0)
+
+
+# @njit
+def mat_mult_mft(image, AA, BB, norm0):
+    return norm0 * ((AA @ image) @ BB)
 
 
 def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
@@ -266,7 +282,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         return -1
 
     # Fourier transform using MFT
-    result = mft(pup * H, 2 * prad, dim, 2 * prad * fac, inverse=inverse_mft)
+    result = mft(pup * H, real_dim_input=2 * prad, dim_output=dim, nbres=2 * prad * fac, inverse=inverse_mft)
 
     # Fresnel factor that applies after Fourier transform
     result = result * np.exp(1j * sign * np.pi * rho**2 / dim * dxout / dx)
