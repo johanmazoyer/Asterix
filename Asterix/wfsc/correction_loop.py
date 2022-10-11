@@ -25,8 +25,7 @@ def correction_loop(testbed: Testbed,
                     initial_DM_voltage=0.,
                     silence=False,
                     **kwargs):
-    """
-    Run a full loop for several matrices.
+    """Run a full loop for several matrices.
 
     In each new iteration, we update the matrix and run correction_loop_1matrix() anew.
 
@@ -153,8 +152,7 @@ def correction_loop_1matrix(testbed: Testbed,
                             initial_DM_voltage=0.,
                             silence=False,
                             **kwargs):
-    """
-    Run a loop for a given interaction matrix.
+    """Run a loop for a given interaction matrix.
 
     AUTHOR : Johan Mazoyer
 
@@ -377,8 +375,7 @@ def correction_loop_1matrix(testbed: Testbed,
 
 
 def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir):
-    """
-    Save the results from a correction loop into the directory 'result_dir'.
+    """Save the results from a correction loop into the directory 'result_dir'.
 
     All fits files have all parameters in their header. The configfile is also saved, to an .ini file.
 

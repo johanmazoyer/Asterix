@@ -15,19 +15,14 @@ import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 
 class DeformableMirror(optsy.OpticalSystem):
-    """
-    initialize and describe the behavior of a deformable mirror
-    (in pupil plane or out of pupil plane)
-    coronagraph is a sub class of OpticalSystem.
-
+    """Initialize and describe the behavior of a deformable mirror (in pupil
+    plane or out of pupil plane) coronagraph is a sub class of OpticalSystem.
 
     AUTHOR : Johan Mazoyer
-
     """
 
     def __init__(self, modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=None):
-        """
-        Initialize a deformable mirror object
+        """Initialize a deformable mirror object.
 
         AUTHOR : Johan Mazoyer
 
@@ -180,8 +175,7 @@ class DeformableMirror(optsy.OpticalSystem):
         return EF_after_DM
 
     def creatingpushact(self, DMconfig):
-        """
-        OPD map induced in the DM plane for each actuator.
+        """OPD map induced in the DM plane for each actuator.
 
         This large array is initialized at the beginning and will be use
         to transorm a voltage into a phase for each DM. This is saved
@@ -204,7 +198,6 @@ class DeformableMirror(optsy.OpticalSystem):
         pushact : 3D numpy array
                     of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]
                     contains all the DM OPD map induced in the DM plane for each actuator.
-
         """
         start_time = time.time()
         Name_pushact_fits = "PushAct_" + self.Name_DM
@@ -337,8 +330,8 @@ class DeformableMirror(optsy.OpticalSystem):
         return pushact3d
 
     def id_in_pupil_actuators(self):
-        """
-        Create a vector with the index of all the actuators located in the entrance pupil
+        """Create a vector with the index of all the actuators located in the
+        entrance pupil.
 
         AUTHOR: Johan Mazoyer
 
@@ -352,7 +345,6 @@ class DeformableMirror(optsy.OpticalSystem):
         ------
         WhichInPupil: 1D array
                 index of all the actuators located inside the pupil
-
         """
         start_time = time.time()
         Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
@@ -397,9 +389,8 @@ class DeformableMirror(optsy.OpticalSystem):
         return WhichInPupil
 
     def prop_pup_to_DM_and_back(self, entrance_EF, phase_DM, wavelength, dir_save_all_planes=None):
-        """
-        Propagate the field towards an out-of-pupil plane ,
-        add the DM phase, and propagate to the next pupil plane
+        """Propagate the field towards an out-of-pupil plane , add the DM
+        phase, and propagate to the next pupil plane.
 
         AUTHOR : Raphaël Galicher, Johan Mazoyer
 
@@ -426,7 +417,6 @@ class DeformableMirror(optsy.OpticalSystem):
         ------
         EF_back_in_pup_plane : 2D array (complex)
             Wavefront in the pupil plane following the DM
-
         """
 
         EF_inDMplane = crop_or_pad_image(
@@ -454,10 +444,9 @@ class DeformableMirror(optsy.OpticalSystem):
         return EF_back_in_pup_plane
 
     def voltage_to_phase(self, actu_vect, einstein_sum=False):
-        """
-        Generate the phase applied on one DM for a give vector of actuator amplitude
-        We decided to do it without matrix multiplication to save time because a
-        lot of the time we have lot of zeros in it
+        """Generate the phase applied on one DM for a give vector of actuator
+        amplitude We decided to do it without matrix multiplication to save
+        time because a lot of the time we have lot of zeros in it.
 
         The phase is define at the reference wl and multiply by wl_ratio in DM.EF_through
 
@@ -495,9 +484,7 @@ class DeformableMirror(optsy.OpticalSystem):
         return phase_on_DM
 
     def create_DM_basis(self, basis_type='actuator'):
-        """
-        Create a DM basis.
-        TODO do a zernike basis ?
+        """Create a DM basis. TODO do a zernike basis ?
 
         AUTHOR: Johan Mazoyer
 
@@ -510,7 +497,6 @@ class DeformableMirror(optsy.OpticalSystem):
         ------
         basis: 2d numpy array
             basis [Size basis, Number of active act in the DM]
-
         """
         if basis_type == 'actuator':
             # no need to remove the inactive actuators,
@@ -561,10 +547,9 @@ class DeformableMirror(optsy.OpticalSystem):
 
 
 def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
-    """
-    Create a grid of position of actuators for generic  DM.
-    The DM will then be automatically defined as squared with Nact1D x Nact1D actuators
-    and the pupil centered on this DM.
+    """Create a grid of position of actuators for generic  DM. The DM will then
+    be automatically defined as squared with Nact1D x Nact1D actuators and the
+    pupil centered on this DM.
 
     We need N_act1D > diam_pup_in_m / DM_pitch, so that the DM is larger than the pupil.
 

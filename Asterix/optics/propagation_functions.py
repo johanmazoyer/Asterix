@@ -17,9 +17,9 @@ def mft(image,
         BB=None,
         norm0=None,
         returnAABB=False):
-    """
-    Based on Matrix Direct Fourier transform (MFT) from R. Galicher
-    (cf. Soummer et al. 2007, OSA)
+    """Based on Matrix Direct Fourier transform (MFT) from R. Galicher (cf.
+    Soummer et al. 2007, OSA).
+
         - Return the Matrix Direct Fourier transform (MFT) of a 2D image
         - Can deal with any size, any position of the 0-frequency...
 
@@ -84,9 +84,9 @@ def mft(image,
         norm : string default 'backward'
                 'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
                 https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
-                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is 
+                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is
                 done in MFT(inverse = True)
-                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is 
+                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is
                 done in MFT(inverse = True)
                 if 'ortho' 1/sqrt(N) normalisation is done in both directions.
                 Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
@@ -132,7 +132,6 @@ def mft(image,
         else:
             AA, BB, norm0 : complex 2D array, complex 2D array, float
                 terms used in MFT mtrix multiplication norm0 * ((AA @ image) @ BB).
-
     """
 
     if only_mat_mult:
@@ -236,10 +235,9 @@ def mft(image,
 
 
 def mat_mult_mft(image, AA, BB, norm0):
-    """
-    Perform Matrix multiplication for MFT.
-    It is be done separatly in to allowed to be sped up by GPU (maybe). 
-    I tried using numba for this function to save time but no improvements.
+    """Perform Matrix multiplication for MFT. It is be done separatly in to
+    allowed to be sped up by GPU (maybe). I tried using numba for this function
+    to save time but no improvements.
 
     complex64 type is not mandatory but helps greatly speed up the code. I
     realized that previously (before 2022-10-11) image was float64/complex64, while AA and BB where complex128.
@@ -257,7 +255,7 @@ def mat_mult_mft(image, AA, BB, norm0):
     BB: 2D numpy array (complex64)
             Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
     norm0: float, default
-            Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB). 
+            Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
             This parameter is only used if only_mat_mult = True
 
     Returns
@@ -269,9 +267,8 @@ def mat_mult_mft(image, AA, BB, norm0):
 
 
 def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
-    """
-    Fresnel propagation of electric field along a distance z
-    in a collimated beam and in Free space
+    """Fresnel propagation of electric field along a distance z in a collimated
+    beam and in Free space.
 
     AUTHOR : Raphael Galicher
 
@@ -373,9 +370,8 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
 
 
 def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
-    """
-    Angular spectrum propagation of electric field along a distance z
-    in a collimated beam and in Free space in close field (small z).
+    """Angular spectrum propagation of electric field along a distance z in a
+    collimated beam and in Free space in close field (small z).
 
     AUTHOR : Johan Mazoyer
 
@@ -424,12 +420,12 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
 
 
 def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
-    """
-    FFT Computation. IDL "FFT" routine uses coordinates origin at pixel [0,0].
-             This routine FFTSHIFT2 uses a coordinate origin at any pixel [k,l],
-             thanks to multiplication by adequate array before using numpy routine "FFT".
-             Keywords allow convenient origins either at central pixel ('p') or between
-             the 4 central pixels ('b')
+    """FFT Computation. IDL "FFT" routine uses coordinates origin at pixel.
+
+    [0,0]. This routine FFTSHIFT2 uses a coordinate origin at any pixel [k,l],
+    thanks to multiplication by adequate array before using numpy routine
+    "FFT". Keywords allow convenient origins either at central pixel ('p') or
+    between the 4 central pixels ('b')
 
     AUTHORS: L.Mugnier, M.Kourdourli, J. Mazoyer
 

@@ -27,8 +27,7 @@ def plot_contrast_curves(reduced_data,
                          yrange=None,
                          path='',
                          filename=''):
-    """
-    Plot contrast curves from image or image cube as pdf file to disk.
+    """Plot contrast curves from image or image cube as pdf file to disk.
 
     Plot and contrast curves from an image or a cube of images (assumed to be
     several iterations of a loop) using concentric rings.
@@ -84,7 +83,6 @@ def plot_contrast_curves(reduced_data,
         Name of the legend labels,
         If None and if the array is of dimension 2, no legend
         If None and if the array is of dimension 3, we assume these are iterations
-
     """
     if filename != '':
         filename += '_ContrastCurve_DH'
@@ -197,10 +195,9 @@ def contrast_curves(reduced_data,
                     delta_raddii=3,
                     type_of_contrast='mean',
                     mask_DH=None):
-    """
-    create a contrast curve from a image using concentric rings
-    You can chooose the center, the size of the rings, the type of contrast (mean or std)
-    The DH is set using a binary mask (1s where the DH is, 0 elsewhere)
+    """create a contrast curve from a image using concentric rings You can
+    chooose the center, the size of the rings, the type of contrast (mean or
+    std) The DH is set using a binary mask (1s where the DH is, 0 elsewhere)
 
     AUTHOR: J. Mazoyer
     16/03/2022
@@ -232,8 +229,7 @@ def contrast_curves(reduced_data,
     contrast_curve: 1d numpy array
         array with the contrast on concentric rings measure with different metrics.
         Values outside of the mask are nan
-
-     """
+    """
     if xcen is None:
         xcen = reduced_data.shape[0] / 2 - 1 / 2
 

@@ -10,9 +10,8 @@ from Asterix.utils import save_plane_in_fits, crop_or_pad_image, rebin
 
 
 class Pupil(optsy.OpticalSystem):
-    """
-    initialize and describe the behavior of single pupil
-    pupil is a sub class of OpticalSystem.
+    """Initialize and describe the behavior of single pupil pupil is a sub
+    class of OpticalSystem.
 
     Obviously you can define your pupil
     without that with 2d arrray multiplication (this is a fairly simple object).
@@ -22,7 +21,6 @@ class Pupil(optsy.OpticalSystem):
     and concatenate them with other elements
 
     AUTHOR : Johan Mazoyer
-
     """
 
     def __init__(self, modelconfig, prad=0., PupType=None, angle_rotation=0, Model_local_dir=None):
@@ -221,8 +219,7 @@ class Pupil(optsy.OpticalSystem):
 
 
 def grey_pupil(dim, rad, rad_inner=None, fac=10):
-    """
-    Create a round grey-scale pupil in a square array.
+    """Create a round grey-scale pupil in a square array.
 
     Creates a round pupil with radius 'rad' in a square array of dimensions 'dim' x 'dim'. Optionally adds a central
     obscuration with radius 'rad_inner'. This pupil will be overscaled by a te factor 'fac' and then binned back down

@@ -9,15 +9,14 @@ import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 
 class Coronagraph(optsy.OpticalSystem):
-    """
-    Initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane).
+    """Initialize and describe the behavior of a coronagraph system (from apod
+    plane to the Lyot plane).
 
     AUTHOR : Johan Mazoyer
     """
 
     def __init__(self, modelconfig, coroconfig, Model_local_dir=None):
-        """
-        Initialize a coronagraph object.
+        """Initialize a coronagraph object.
 
         AUTHOR : Johan Mazoyer
 
@@ -220,9 +219,8 @@ class Coronagraph(optsy.OpticalSystem):
                    EF_aberrations_introduced_in_LS=1.,
                    dir_save_all_planes=None,
                    **kwargs):
-        """
-        Propagate the electric field from the apodizer plane before the apodizer pupil to the Lyot plane after the
-        Lyot pupil.
+        """Propagate the electric field from the apodizer plane before the
+        apodizer pupil to the Lyot plane after the Lyot pupil.
 
         AUTHOR : Johan Mazoyer
 
@@ -416,8 +414,7 @@ class Coronagraph(optsy.OpticalSystem):
         return lyotplane_after_lyot
 
     def FQPM(self):
-        """
-        Create a Four Quadrant Phase Mask coronagraph.
+        """Create a Four Quadrant Phase Mask coronagraph.
 
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
@@ -457,8 +454,7 @@ class Coronagraph(optsy.OpticalSystem):
         return fqpm
 
     def Vortex(self, vortex_charge=2):
-        """
-        Create a vortex coronagraph with charge 'vortex_charge'.
+        """Create a vortex coronagraph with charge 'vortex_charge'.
 
         AUTHOR : Johan Mazoyer
 
@@ -498,8 +494,7 @@ class Coronagraph(optsy.OpticalSystem):
         return vortex
 
     def WrappedVortex(self, offset=0, cen_shift=(0, 0)):
-        """
-        Create a wrapped vortex coronagraph.
+        """Create a wrapped vortex coronagraph.
 
         Parameters
         ----------
@@ -543,8 +538,7 @@ class Coronagraph(optsy.OpticalSystem):
         return wrapped_vortex
 
     def KnifeEdgeCoro(self):
-        """
-        Create a Knife edge coronagraph of size (dimScience,dimScience).
+        """Create a Knife edge coronagraph of size (dimScience,dimScience).
 
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
@@ -553,7 +547,6 @@ class Coronagraph(optsy.OpticalSystem):
         ------
         knife_allwl : list of len(self.wav_vec) 2D arrays
             Complex transmission of the knife-edge coronagraph mask at all wavelengths.
-
         """
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
@@ -589,8 +582,7 @@ class Coronagraph(optsy.OpticalSystem):
         return knife_allwl
 
     def ClassicalLyot(self):
-        """
-        Create a classical Lyot coronagraph of radius rad_LyotFP.
+        """Create a classical Lyot coronagraph of radius rad_LyotFP.
 
         AUTHOR : Johan Mazoyer
 
@@ -610,8 +602,7 @@ class Coronagraph(optsy.OpticalSystem):
         return ClassicalLyotFPM_allwl
 
     def HLC(self):
-        """
-        Create an HLC of radius rad_LyotFP.
+        """Create an HLC of radius rad_LyotFP.
 
         AUTHOR : Johan Mazoyer
 
@@ -641,8 +632,7 @@ class Coronagraph(optsy.OpticalSystem):
 
 
 def fqpm_mask(dim):
-    """
-    Create a FQPM phase mask.
+    """Create a FQPM phase mask.
 
     AUTHOR: Axel Potier
 
@@ -675,8 +665,7 @@ def create_wrapped_vortex_mask(dim,
                                piperiodic=True,
                                offset=0,
                                cen_shift=(0, 0)):
-    """
-    Create a wrapped vortex phase mask.
+    """Create a wrapped vortex phase mask.
 
     Analytical calculation of this phase mask coronagraph see [Galicher2020]_.
 
@@ -806,8 +795,7 @@ def create_wrapped_vortex_mask(dim,
 
 
 def butterworth_circle(dim, sizebut, order=5, xshift=0, yshift=0):
-    """
-    Return a circular Butterworth filter.
+    """Return a circular Butterworth filter.
 
     AUTHOR: Raphaël Galicher (in IDL)
             ILa (to Python)

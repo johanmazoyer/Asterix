@@ -9,8 +9,7 @@ import Asterix.wfsc.wf_sensing_functions as wfs
 
 
 class Estimator:
-    """
-    Estimator Class allows you to define a WF estimator.
+    """Estimator Class allows you to define a WF estimator.
 
         It must contains 2 functions at least:
         - an initialization (e.g. PW matrix) Estimator.__init__()
@@ -33,7 +32,6 @@ class Estimator:
         estim + correc.
 
     AUTHOR : Johan Mazoyer
-
     """
 
     def __init__(self,
@@ -42,10 +40,8 @@ class Estimator:
                  matrix_dir='',
                  save_for_bench=False,
                  realtestbed_dir=''):
-        """
-        Initialize the estimator.
-        This is where you define the pw matrix, the modified Lyot stop
-        or the COFFEE gradiant...
+        """Initialize the estimator. This is where you define the pw matrix,
+        the modified Lyot stop or the COFFEE gradiant...
 
         For all large files you should use a method of "save to fits" if
         it does not exist "load from fits" if it does, in matrix_dir
@@ -71,7 +67,6 @@ class Estimator:
 
         realtestbed_dir : string
             path to directory to save all the files the real thd2 testbed need to run your code
-
         """
         if not os.path.exists(matrix_dir):
             print("Creating directory " + matrix_dir)
@@ -156,9 +151,8 @@ class Estimator:
                  voltage_vector=0.,
                  perfect_estimation=False,
                  **kwargs):
-        """
-        Run an estimation from a testbed, with a given input wavefront
-        and a state of the DMs
+        """Run an estimation from a testbed, with a given input wavefront and a
+        state of the DMs.
 
         AUTHOR : Johan Mazoyer
 
@@ -276,8 +270,7 @@ class Estimator:
             raise Exception("This estimation algorithm is not yet implemented")
 
     def find_DM_to_probe(self, testbed: Testbed):
-        """
-        Find which DM to use for the PW probes.
+        """Find which DM to use for the PW probes.
 
         AUTHOR : Johan Mazoyer
 

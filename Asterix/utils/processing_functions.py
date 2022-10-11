@@ -2,8 +2,7 @@ import numpy as np
 
 
 def resizing(image, new):
-    """
-    Resample the focal plane image to create a 2D array with new dimensions.
+    """Resample the focal plane image to create a 2D array with new dimensions.
 
     - v1.0 2020 A. Potier
     - v2.0 19/03/21 J Mazoyer clean names + if image is real, result is real.
@@ -37,8 +36,7 @@ def resizing(image, new):
 
 
 def cropimage(img, ctr_x, ctr_y, newsizeimg):
-    """
-    Crop an image to create a 2D array with smaller dimensions.
+    """Crop an image to create a 2D array with smaller dimensions.
 
     AUTHOR: Axel Potier
 
@@ -63,8 +61,8 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
 
 
 def crop_or_pad_image(image, dimout):
-    """
-    Crop or padd with zero to a 2D image depending on:
+    """Crop or padd with zero to a 2D image depending on:
+
         - if dimout < dim : cropped image around pixel (dim/2,dim/2)
         - if dimout > dim : image around pixel (dim/2,dim/2) surrounded by 0
 
@@ -80,7 +78,6 @@ def crop_or_pad_image(image, dimout):
     ------
     im_out : 2D array (float)
         resized image
-
     """
     if float(dimout) < image.shape[0]:
         im_out = np.zeros((image.shape[0], image.shape[1]), dtype=image.dtype)
@@ -96,9 +93,9 @@ def crop_or_pad_image(image, dimout):
 
 
 def rebin(image, factor=4, center_on_pixel=False):
-    """
-    Bin the image by a give factor. The dimensions of the image MUST be divisible by 'factor'
-    or teh function. will raise an error. It this is not the case, use function resize_crop_bin().
+    """Bin the image by a give factor. The dimensions of the image MUST be
+    divisible by 'factor' or teh function. will raise an error. It this is not
+    the case, use function resize_crop_bin().
 
     We add a 'center_on_pixel' option. If false, we shift the image to put the 0-frequency in the corner
     before binning and then shift it back to the center.
@@ -184,8 +181,8 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
 
 
 def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False, norm="backward"):
-    """
-    This function returns an image shifted by a non-integer amount via a Fourier-domain computation.
+    """This function returns an image shifted by a non-integer amount via a
+    Fourier-domain computation.
 
     (Based on subpixel_shift.pro from ONERA's IDL library by Laurent Mugnier)
     Renamed into ft_subpixel_shift to be clear on its purpose
@@ -265,10 +262,9 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
 
 
 def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_size):
-    """
-    This function returns the best sizes (best_size_large, best_size_small) so that
-    best_size_small / init_size_large are closest to factor_zoomout with
-    best_size_small and init_size_large even integers
+    """This function returns the best sizes (best_size_large, best_size_small)
+    so that best_size_small / init_size_large are closest to factor_zoomout
+    with best_size_small and init_size_large even integers.
 
     AUTHORS: J Mazoyer
 
@@ -314,10 +310,9 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
 
 
 def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size=2000):
-    """
-    This function returns an image zoomed out with Fourier-domain computation. The array is padded
-    until max_allowed_fft_size and takes the best size so that factor_zoomout*size_padded is the closest
-    to an integer.
+    """This function returns an image zoomed out with Fourier-domain
+    computation. The array is padded until max_allowed_fft_size and takes the
+    best size so that factor_zoomout*size_padded is the closest to an integer.
 
     BE CAREFUL WITH THE CENTERING, IT IS HARD TO FIND A GOOD RULE FOR ALL CASES (ODD OR EVEN DIMENSION IN OUTPUT AND INPUT)
     SO IT IS WHAT IT IS AND USERS ARE ENCOURAGED TO CHECK IF THIS IS WHAT THEY WANT.

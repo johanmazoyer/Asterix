@@ -11,9 +11,8 @@ import Asterix.wfsc.wf_control_functions as wfc
 
 
 class Corrector:
-    """
-    Corrector Class allows you to define a corrector with
-    different algorithms.
+    """Corrector Class allows you to define a corrector with different
+    algorithms.
 
     Corrector is a class which takes as parameter:
         - the testbed structure
@@ -31,7 +30,6 @@ class Corrector:
         It returns the DM Voltage. In all generality, it can one or 2 DMs. Depending on the testbed
 
     AUTHOR : Johan Mazoyer
-
     """
 
     def __init__(self,
@@ -42,11 +40,9 @@ class Corrector:
                  matrix_dir=None,
                  save_for_bench=False,
                  realtestbed_dir=''):
-        """
-        Initialize the corrector.
-        This is where you define the EFC matrix
-        For all large files you should use a method of "save to fits" if
-        it does not exist "load from fits" if it does, in matrix_dir
+        """Initialize the corrector. This is where you define the EFC matrix
+        For all large files you should use a method of "save to fits" if it
+        does not exist "load from fits" if it does, in matrix_dir.
 
         Store in the structure only what you need for estimation. Everything not
         used in self.estimate should not be stored
@@ -190,9 +186,9 @@ class Corrector:
                         estimator: estimator_mod.Estimator,
                         initial_DM_voltage=0.,
                         input_wavefront=1.):
-        """
-        Measure the interaction matrices needed for the correction
-        Is launch once in the Correction initialization and then once each time we update the matrix
+        """Measure the interaction matrices needed for the correction Is launch
+        once in the Correction initialization and then once each time we update
+        the matrix.
 
         AUTHOR : Johan Mazoyer
 
@@ -247,8 +243,8 @@ class Corrector:
             raise Exception("This correction algorithm is not yet implemented")
 
     def toDM_voltage(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., **kwargs):
-        """
-        Run a correction from a estimate, and return the DM voltage compatible with the testbed
+        """Run a correction from a estimate, and return the DM voltage
+        compatible with the testbed.
 
         AUTHOR : Johan Mazoyer
 

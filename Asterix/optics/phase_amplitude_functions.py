@@ -4,8 +4,7 @@ from Asterix.utils import crop_or_pad_image, rebin
 
 
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
-    """
-    Create a circular pupil.
+    """Create a circular pupil.
 
     With no_pixel=True, this is a way to create a very oversampled pupil that is then rescaled using rebin.
     See also Asterix.optics.pupil.grey_pupil().
@@ -90,9 +89,8 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
 
 
 def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
-    """
-    Create a random phase map, whose PSD decrease in f^(-slope)
-    average is null and stadard deviation is phaserms
+    """Create a random phase map, whose PSD decrease in f^(-slope) average is
+    null and stadard deviation is phaserms.
 
     AUTHOR: Axel Potier
 
@@ -137,8 +135,8 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
 
 def sine_cosine_basis(Nact1D):
-    """
-    For a given number of actuator across the DM, create coefficients for the sin/cos basis
+    """For a given number of actuator across the DM, create coefficients for
+    the sin/cos basis.
 
     TODO Check with Pierre that this is equivalent to what is done on the testbed
     TODO Ask Pierre what he thinks: is it possible to do the basis only for the actuators in the pup

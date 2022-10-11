@@ -2,8 +2,7 @@ import json
 
 
 def write_test_results_to_file(results_in, fname):
-    """
-    Dump partial WFS&C loop results into txt file.
+    """Dump partial WFS&C loop results into txt file.
 
     This function is useful when you have results from a new benchmark regression test that you would like to
     write new tests for. Saves the items 'nb_total_iter', 'Nb_iter_per_mat' and 'MeanDHContrast'.
@@ -26,8 +25,7 @@ def write_test_results_to_file(results_in, fname):
 
 
 def read_test_results_from_file(fname):
-    """
-    Read regression test results from file.
+    """Read regression test results from file.
 
     Read test results 'nb_total_iter', 'Nb_iter_per_mat', 'MeanDHContrast' from a file they have previously been saved
     to with write_test_results_to_file(). Used for writing new regression tests for the WFS&C loops.
@@ -42,7 +40,6 @@ def read_test_results_from_file(fname):
     results : dict
         A slimmed down dictionarry as returned by Asterix.main_THD.runthd2(),containing only the items with keys
         'nb_total_iter', 'Nb_iter_per_mat' and 'MeanDHContrast'.
-
     """
     with open(fname, 'r') as f:
         results = json.load(f)

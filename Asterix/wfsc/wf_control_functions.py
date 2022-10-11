@@ -23,10 +23,9 @@ def create_interaction_matrix(testbed: Testbed,
                               polychrom='centralwl',
                               dir_save_all_planes=None,
                               visu=False):
-    """
-    Create the jacobian matrix for Electric Field Conjugation. The Matrix is not
-    limited to the DH size but to the whole FP [dimEstim, dimEstim].
-    First half is real part, second half is imag part.
+    """Create the jacobian matrix for Electric Field Conjugation. The Matrix is
+    not limited to the DH size but to the whole FP [dimEstim, dimEstim]. First
+    half is real part, second half is imag part.
 
     The matrix size is therefore [total(DM.basis_size), 2*dimEstim^2]
 
@@ -84,7 +83,6 @@ def create_interaction_matrix(testbed: Testbed,
     ------
     InterMat: 2D array of size [total(DM.basis_size), 2*dimEstim^2]
         jacobian matrix for Electric Field Conjugation.
-
     """
 
     ## careful here if we do not want the matrix done exactly at the same wl as the testbed
@@ -146,10 +144,9 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                        MatrixType='',
                                        dir_save_all_planes=None,
                                        visu=False):
-    """
-    Create the jacobian matrix for Electric Field Conjugation for one wavelength. The Matrix is not
-    limited to the DH size but to the whole FP [dimEstim, dimEstim].
-    First half is real part, second half is imag part.
+    """Create the jacobian matrix for Electric Field Conjugation for one
+    wavelength. The Matrix is not limited to the DH size but to the whole FP
+    [dimEstim, dimEstim]. First half is real part, second half is imag part.
 
     The matrix size is therefore [total(DM.basis_size), 2*dimEstim^2]
 
@@ -203,7 +200,6 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     ------
     InterMat: 2D array of size [total(DM.basis_size), 2*dimEstim^2]
         jacobian matrix for Electric Field Conjugation.
-
     """
     if isinstance(initial_DM_voltage, (int, float)):
         initial_DM_voltage = np.zeros(testbed.number_act) + float(initial_DM_voltage)
@@ -548,9 +544,8 @@ def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.nd
 
 
 def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed):
-    """
-    Voltages to apply on the deformable mirrors in order to minimize the speckle
-    intensity in the dark hole region
+    """Voltages to apply on the deformable mirrors in order to minimize the
+    speckle intensity in the dark hole region.
 
     AUTHOR : Axel Potier
 
@@ -575,7 +570,6 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
     ------
     solution:   1D array
                     voltage to apply on each deformable mirror actuator
-
     """
     EF_vector = np.zeros(2 * int(np.sum(mask)) * len(Result_Estimate))
 
@@ -592,9 +586,8 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
 
 
 def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: Testbed):
-    """
-    Voltage to apply on the deformable mirror in order to minimize the speckle
-    intensity in the dark hole region
+    """Voltage to apply on the deformable mirror in order to minimize the
+    speckle intensity in the dark hole region.
 
     AUTHOR : Axel Potier
 
@@ -622,7 +615,6 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
     ------
     solution: 1D array
         voltage to apply on each deformable mirror actuator
-
     """
     if len(Result_Estimate) > 1:
         raise ValueError("EM correction is not working in polychromatic mode.")
@@ -637,10 +629,10 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
 
 def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast,
                             last_best_alpha, testbed: Testbed):
-    """
-    Voltage to apply on the deformable mirror in order to minimize the speckle
-    intensity in the dark hole region in the stroke min solution
-    See Axel Potier Phd for notation and Mazoyer et al. 2018a for alpha search improvement
+    """Voltage to apply on the deformable mirror in order to minimize the
+    speckle intensity in the dark hole region in the stroke min solution See
+    Axel Potier Phd for notation and Mazoyer et al. 2018a for alpha search
+    improvement.
 
     AUTHOR : Johan Mazoyer
 
@@ -677,7 +669,6 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
     lasbestalpha : float
             we return the last best alpha. This avoid to recalculate the best alpha from scratch
                         at each iteration since it's often a very close value
-
     """
 
     pixel_in_mask = np.sum(mask)
@@ -751,9 +742,8 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
 
 
 def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: Testbed):
-    """
-    Voltage to apply on the deformable mirror in order to minimize
-    the speckle intensity in the dark hole region
+    """Voltage to apply on the deformable mirror in order to minimize the
+    speckle intensity in the dark hole region.
 
     AUTHOR : Axel Potier
 
