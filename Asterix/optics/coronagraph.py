@@ -265,8 +265,6 @@ class Coronagraph(optsy.OpticalSystem):
         else:
             FPmsk = self.FPmsk[self.wav_vec.tolist().index(wavelength)]
 
-        lambda_ratio = wavelength / self.wavelength_0
-
         input_wavefront_after_apod = self.apod_pup.EF_through(entrance_EF=entrance_EF, wavelength=wavelength)
 
         if dir_save_all_planes is not None:
