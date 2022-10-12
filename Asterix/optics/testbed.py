@@ -7,19 +7,18 @@ import Asterix.optics.deformable_mirror as deformable_mirror
 
 
 class Testbed(optsy.OpticalSystem):
-    """
-    Initialize and describe the behavior of a testbed.
-    This is a particular subclass of Optical System, because we do not know what is inside
-    It can only be initialized by giving a list of Optical Systems and it will create a
-    "testbed" with contains all the Optical Systems and associated EF_through functions and
-    correct normlaization
+    """Initialize and describe the behavior of a testbed. This is a particular
+    subclass of Optical System, because we do not know what is inside It can
+    only be initialized by giving a list of Optical Systems and it will create
+    a "testbed" with contains all the Optical Systems and associated EF_through
+    functions and correct normlaization.
 
     AUTHOR : Johan Mazoyer
     """
 
     def __init__(self, list_os, list_os_names):
-        """
-        This function allows you to concatenate OpticalSystem objects to create a testbed
+        """This function allows you to concatenate OpticalSystem objects to
+        create a testbed.
 
         AUTHOR : Johan Mazoyer
 
@@ -39,7 +38,6 @@ class Testbed(optsy.OpticalSystem):
         ------
         testbed : Asterix.optics.testbed.Tesbed
             an optical system which is the concatenation of all the optical systems
-
         """
         if len(list_os) != len(list_os_names):
             print("")
@@ -87,8 +85,8 @@ class Testbed(optsy.OpticalSystem):
 
                 # this function is to replace the DMphase variable by a XXphase variable
                 # where XX is the name of the DM
-                list_os[num_optical_sys].EF_through = _swap_DMphase_name(
-                    list_os[num_optical_sys].EF_through, list_os_names[num_optical_sys] + "phase")
+                list_os[num_optical_sys].EF_through = _swap_DMphase_name(list_os[num_optical_sys].EF_through,
+                                                                         list_os_names[num_optical_sys] + "phase")
                 known_keywords.append(list_os_names[num_optical_sys] + "phase")
 
                 if not list_os[num_optical_sys].active:
@@ -138,10 +136,9 @@ class Testbed(optsy.OpticalSystem):
         self.measure_normalization()
 
     def voltage_to_phases(self, actu_vect, einstein_sum=False):
-        """
-        Generate the phase applied on each DMs of the testbed from a given vector of
-        actuator amplitude. I split theactu_vect and  then for each DM, it uses
-        DM.voltage_to_phase (no s)
+        """Generate the phase applied on each DMs of the testbed from a given
+        vector of actuator amplitude. I split theactu_vect and  then for each
+        DM, it uses DM.voltage_to_phase (no s)
 
         AUTHOR : Johan Mazoyer
 
@@ -158,7 +155,6 @@ class Testbed(optsy.OpticalSystem):
         ------
         phases: 3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
             phase maps for each DMs by order of light path in the same unit as actu_vect * DM_pushact
-
         """
         DMphases = np.zeros((self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
         indice_acum_number_act = 0
@@ -181,9 +177,8 @@ class Testbed(optsy.OpticalSystem):
         return DMphases
 
     def basis_vector_to_act_vector(self, vector_basis_voltage):
-        """
-        transform a vector of voltages on the mode of a basis in a  vector of
-        voltages of the actuators of the DMs of the system
+        """transform a vector of voltages on the mode of a basis in a  vector
+        of voltages of the actuators of the DMs of the system.
 
         AUTHOR : Johan Mazoyer
 
@@ -229,8 +224,8 @@ class Testbed(optsy.OpticalSystem):
 
 # Some internal functions to properly concatenate the EF_through functions
 def _swap_DMphase_name(DM_EF_through_function, name_var):
-    """
-    A function to rename the DMphase parameter to another name (usually DMXXphase)
+    """A function to rename the DMphase parameter to another name (usually
+    DMXXphase)
 
     AUTHOR : Johan Mazoyer
 
@@ -290,9 +285,8 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
 
 
 def _clean_EF_through(testbed_EF_through, known_keywords):
-    """
-    a functions to check that we do not set unknown keyword in
-    the testbed EF through function. Maybe not necessary.
+    """a functions to check that we do not set unknown keyword in the testbed
+    EF through function. Maybe not necessary.
 
     AUTHOR : Johan Mazoyer
 
@@ -313,8 +307,7 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
                 raise Exception('DMphase is an ambiguous argument if you have several DMs.' +
                                 ' Please use XXphase with XX = nameDM')
             if passed_arg not in known_keywords:
-                raise Exception(passed_arg + 'is not a EF_through valid argument. Valid args are ' +
-                                str(known_keywords))
+                raise Exception(passed_arg + 'is not a EF_through valid argument. Valid args are ' + str(known_keywords))
 
         return testbed_EF_through(**kwargs)
 
@@ -322,10 +315,10 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
 
 
 def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
-    """
-    A function to go from a testbed_EF_through with several DMXX_phase
+    """A function to go from a testbed_EF_through with several DMXX_phase
     parameters (one for each DM), to a testbed_EF_through with a unique
-    voltage_vector parameter of size testbed.number_act (or a single float, like 0.)
+    voltage_vector parameter of size testbed.number_act (or a single float,
+    like 0.)
 
     the problem with DMXX_phase parameters is that it cannot be automated since it requires
     to know the name/number of the DMs in advance.
@@ -346,7 +339,6 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
     ------
     the_new_function: function
         with name_var as a param
-
     """
 
     def wrapper(**kwargs):

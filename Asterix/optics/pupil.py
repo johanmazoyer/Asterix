@@ -10,9 +10,8 @@ from Asterix.utils import save_plane_in_fits, crop_or_pad_image, rebin
 
 
 class Pupil(optsy.OpticalSystem):
-    """
-    initialize and describe the behavior of single pupil
-    pupil is a sub class of OpticalSystem.
+    """Initialize and describe the behavior of single pupil pupil is a sub
+    class of OpticalSystem.
 
     Obviously you can define your pupil
     without that with 2d arrray multiplication (this is a fairly simple object).
@@ -22,7 +21,6 @@ class Pupil(optsy.OpticalSystem):
     and concatenate them with other elements
 
     AUTHOR : Johan Mazoyer
-
     """
 
     def __init__(self, modelconfig, prad=0., PupType=None, angle_rotation=0, Model_local_dir=None):
@@ -142,8 +140,7 @@ class Pupil(optsy.OpticalSystem):
                 pup_fits = skimage.transform.rotate(pup_fits, angle_rotation, preserve_range=True)
                 self.string_os += 'Rot' + str(int(angle_rotation))
 
-                fits.writeto(os.path.join(Model_local_dir,
-                                          PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),
+                fits.writeto(os.path.join(Model_local_dir, PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),
                              pup_fits,
                              overwrite=True)
 
@@ -162,9 +159,7 @@ class Pupil(optsy.OpticalSystem):
                         f"Choose an even divisor of the .fits file size ({pup_fits.shape[0]}) for diam_pup_in_pix parameter: {find_divisors}"
                     )
 
-                pup_fits_right_size = rebin(pup_fits,
-                                            int(pup_fits.shape[0] / (2 * self.prad)),
-                                            center_on_pixel=False)
+                pup_fits_right_size = rebin(pup_fits, int(pup_fits.shape[0] / (2 * self.prad)), center_on_pixel=False)
 
             self.pup = crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 
@@ -221,8 +216,7 @@ class Pupil(optsy.OpticalSystem):
 
 
 def grey_pupil(dim, rad, rad_inner=None, fac=10):
-    """
-    Create a round grey-scale pupil in a square array.
+    """Create a round grey-scale pupil in a square array.
 
     Creates a round pupil with radius 'rad' in a square array of dimensions 'dim' x 'dim'. Optionally adds a central
     obscuration with radius 'rad_inner'. This pupil will be overscaled by a te factor 'fac' and then binned back down

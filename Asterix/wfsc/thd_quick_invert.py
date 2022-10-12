@@ -8,72 +8,68 @@ from Asterix.utils import invert_svd
 
 
 def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, number_wl_in_matrix=1):
+    """This code invert the matrix just in the case of THD testbed The goal is
+    to be able to invert the matrix directly on the RTC to be able to do it
+    during correction.
+
+    Need the following fits (automatically created in corrector.py is onbench = True):
+        if DM1 only is active:
+            - Base_Matrix_DM1.fits
+            - Direct_Matrix_DM1only.fits
+        if DM3 only is active:
+            -Base_Matrix_DM3.fits
+            - Direct_Matrix_DM3only.fits
+        if both DM1 and DM3 are active:
+            - Base_Matrix_DM1.fits
+            - Base_Matrix_DM1.fits
+            - Direct_Matrix_2DM.fits
+
+    Save the following fits (that can be read by the testbed):
+        if DM1 only is active:
+            - Matrix_control_EFC_DM1.fits
+        if DM3 only is active:
+            -Matrix_control_EFC_DM3.fits
+        if both DM1 and DM3 are active:
+            - Matrix_control_EFC_DM1.fits
+            - Matrix_control_EFC_DM3.fits
+
+    AUTHOR : Johan Mazoyer
+
+    Parameters
+    ----------
+
+    Nbmodes: int
+        threshold to cut the singular values
+
+    name_active_DM : int
+        Simple code to identify which DMs are active
+        1, 3 or 13 depending on the DM you want to access
+
+    matrix_directory : str
+                    Directory where Direct matrices are read and Inverse matrices are saved
+                    Careful Windows and MacOS do not write path the same way
+
+    regularization : string, default 'truncation'
+        if 'truncation': when goal is set to 'c', the modes with the highest inverse
+                        singular values are truncated
+        if 'tikhonov': when goal is set to 'c', the modes with the highest inverse
+                        singular values are smoothed (low pass filter)
+
+    number_wl_in_matrix : int, default 1
+        number of wavelength in the direct matrix
     """
-        This code invert the matrix just in the case of THD testbed
-        The goal is to be able to invert the matrix directly on the RTC to be
-        able to do it during correction
-
-        Need the following fits (automatically created in corrector.py is onbench = True):
-            if DM1 only is active:
-                - Base_Matrix_DM1.fits
-                - Direct_Matrix_DM1only.fits
-            if DM3 only is active:
-                -Base_Matrix_DM3.fits
-                - Direct_Matrix_DM3only.fits
-            if both DM1 and DM3 are active:
-                - Base_Matrix_DM1.fits
-                - Base_Matrix_DM1.fits
-                - Direct_Matrix_2DM.fits
-
-        Save the following fits (that can be read by the testbed):
-            if DM1 only is active:
-                - Matrix_control_EFC_DM1.fits
-            if DM3 only is active:
-                -Matrix_control_EFC_DM3.fits
-            if both DM1 and DM3 are active:
-                - Matrix_control_EFC_DM1.fits
-                - Matrix_control_EFC_DM3.fits
-
-        AUTHOR : Johan Mazoyer
-
-        Parameters
-        ----------
-
-        Nbmodes: int
-            threshold to cut the singular values
-
-        name_active_DM : int
-            Simple code to identify which DMs are active
-            1, 3 or 13 depending on the DM you want to access
-
-        matrix_directory : str
-                        Directory where Direct matrices are read and Inverse matrices are saved
-                        Careful Windows and MacOS do not write path the same way
-
-        regularization : string, default 'truncation'
-            if 'truncation': when goal is set to 'c', the modes with the highest inverse
-                            singular values are truncated
-            if 'tikhonov': when goal is set to 'c', the modes with the highest inverse
-                            singular values are smoothed (low pass filter)
-
-        number_wl_in_matrix : int, default 1
-            number of wavelength in the direct matrix
-        """
 
     if name_active_DM in (13, 31):
-        Gmatrix = fits.getdata(
-            os.path.join(matrix_directory, f"Direct_Matrix_2DM_wl{number_wl_in_matrix}.fits"))
+        Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_2DM_wl{number_wl_in_matrix}.fits"))
         DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     elif name_active_DM == 1:
-        Gmatrix = fits.getdata(
-            os.path.join(matrix_directory, f"Direct_Matrix_DM1only_wl{number_wl_in_matrix}.fits"))
+        Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_DM1only_wl{number_wl_in_matrix}.fits"))
         DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
 
     elif name_active_DM == 3:
-        Gmatrix = fits.getdata(
-            os.path.join(matrix_directory, f"Direct_Matrix_DM3only_wl{number_wl_in_matrix}.fits"))
+        Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_DM3only_wl{number_wl_in_matrix}.fits"))
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     else:
@@ -84,8 +80,7 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
                                  goal="c",
                                  regul=regularization,
                                  visu=True,
-                                 filename_visu=os.path.join(matrix_directory,
-                                                            "SVD_Modes" + str(Nbmodes) + ".png"))
+                                 filename_visu=os.path.join(matrix_directory, "SVD_Modes" + str(Nbmodes) + ".png"))
 
     if name_active_DM in (13, 31):
         DM1_basis_size = DM1_basis.shape[0]
