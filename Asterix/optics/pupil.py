@@ -140,8 +140,7 @@ class Pupil(optsy.OpticalSystem):
                 pup_fits = skimage.transform.rotate(pup_fits, angle_rotation, preserve_range=True)
                 self.string_os += 'Rot' + str(int(angle_rotation))
 
-                fits.writeto(os.path.join(Model_local_dir,
-                                          PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),
+                fits.writeto(os.path.join(Model_local_dir, PupType + 'Rot' + str(int(angle_rotation)) + '.fits'),
                              pup_fits,
                              overwrite=True)
 
@@ -160,9 +159,7 @@ class Pupil(optsy.OpticalSystem):
                         f"Choose an even divisor of the .fits file size ({pup_fits.shape[0]}) for diam_pup_in_pix parameter: {find_divisors}"
                     )
 
-                pup_fits_right_size = rebin(pup_fits,
-                                            int(pup_fits.shape[0] / (2 * self.prad)),
-                                            center_on_pixel=False)
+                pup_fits_right_size = rebin(pup_fits, int(pup_fits.shape[0] / (2 * self.prad)), center_on_pixel=False)
 
             self.pup = crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 

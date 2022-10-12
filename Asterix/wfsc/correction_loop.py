@@ -218,9 +218,7 @@ def correction_loop_1matrix(testbed: Testbed,
             for i in np.arange(len(Nbiter_corr)):
                 modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
-    initialFP = testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                             voltage_vector=initial_DM_voltage,
-                                             **kwargs)
+    initialFP = testbed.todetector_intensity(entrance_EF=input_wavefront, voltage_vector=initial_DM_voltage, **kwargs)
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
     thisloop_voltages_DMs = []
@@ -253,27 +251,25 @@ def correction_loop_1matrix(testbed: Testbed,
             if Linesearch:
 
                 # we search the best cutoff mode among 10 different ones evenly separated
-                Linesearchmodes = 10 * (np.arange(0.2, 0.6, 0.03) * corrector.total_number_modes /
-                                        10).astype(int)
+                Linesearchmodes = 10 * (np.arange(0.2, 0.6, 0.03) * corrector.total_number_modes / 10).astype(int)
 
                 print("Search Best Mode among ", Linesearchmodes)
                 # if we are just trying to find the best mode, we just call the function itself
                 # on the Linesearchmodes but without updating the results.
                 # this is elegant but must be carefully done if we want to avoid infinite loop.
-                bestcontrast, bestmode = correction_loop_1matrix(
-                    testbed,
-                    estimator,
-                    corrector,
-                    mask_dh,
-                    np.ones(len(Linesearchmodes), dtype=int),
-                    dict(),
-                    gain=gain,
-                    Nbmode_corr=Linesearchmodes,
-                    Search_best_Mode=True,
-                    input_wavefront=input_wavefront,
-                    initial_DM_voltage=thisloop_voltages_DMs[iteration],
-                    silence=silence,
-                    **kwargs)
+                bestcontrast, bestmode = correction_loop_1matrix(testbed,
+                                                                 estimator,
+                                                                 corrector,
+                                                                 mask_dh,
+                                                                 np.ones(len(Linesearchmodes), dtype=int),
+                                                                 dict(),
+                                                                 gain=gain,
+                                                                 Nbmode_corr=Linesearchmodes,
+                                                                 Search_best_Mode=True,
+                                                                 input_wavefront=input_wavefront,
+                                                                 initial_DM_voltage=thisloop_voltages_DMs[iteration],
+                                                                 silence=silence,
+                                                                 **kwargs)
 
                 print("Best Mode is ", bestmode, " with contrast: ", bestcontrast)
                 mode = bestmode
@@ -292,8 +288,8 @@ def correction_loop_1matrix(testbed: Testbed,
 
         if not silence:
             if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
-                print("Iteration number " + corrector.correction_algorithm + ": ", iteration + 1,
-                      " SVD truncation: ", mode)
+                print("Iteration number " + corrector.correction_algorithm + ": ", iteration + 1, " SVD truncation: ",
+                      mode)
             else:
                 print("Iteration number " + corrector.correction_algorithm + ": ", iteration + 1)
 
@@ -413,25 +409,15 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                  header,
                  overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, "Mean_Contrast_DH.fits"),
-                 np.array(meancontrast),
-                 header,
-                 overwrite=True)
+    fits.writeto(os.path.join(result_dir, "Mean_Contrast_DH.fits"), np.array(meancontrast), header, overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, "estimationFP_RE.fits"),
-                 np.real(np.array(EF_estim)),
-                 header,
-                 overwrite=True)
+    fits.writeto(os.path.join(result_dir, "estimationFP_RE.fits"), np.real(np.array(EF_estim)), header, overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, "estimationFP_IM.fits"),
-                 np.imag(np.array(EF_estim)),
-                 header,
-                 overwrite=True)
+    fits.writeto(os.path.join(result_dir, "estimationFP_IM.fits"), np.imag(np.array(EF_estim)), header, overwrite=True)
 
     voltage_DMs_nparray = np.zeros((nb_total_iter, testbed.number_act))
 
-    DM_phases = np.zeros(
-        (len(testbed.name_of_DMs), nb_total_iter, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
+    DM_phases = np.zeros((len(testbed.name_of_DMs), nb_total_iter, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
 
     for i in range(len(voltage_DMs)):
         allDMphases = testbed.voltage_to_phases(voltage_DMs[i])
@@ -452,20 +438,13 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     for j, DM_name in enumerate(testbed.name_of_DMs):
         fits.writeto(os.path.join(result_dir, f"{DM_name}_phases.fits"), DM_phases[j], header, overwrite=True)
 
-        fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"),
-                     DMstrokes[j],
-                     header,
-                     overwrite=True)
+        fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"), DMstrokes[j], header, overwrite=True)
 
         DM = vars(testbed)[DM_name]  # type: DeformableMirror
-        voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:indice_acum_number_act +
-                                                 DM.number_act]
+        voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:indice_acum_number_act + DM.number_act]
         indice_acum_number_act += DM.number_act
 
-        fits.writeto(os.path.join(result_dir, f"{DM_name}_voltages.fits"),
-                     voltage_DMs_tosave,
-                     header,
-                     overwrite=True)
+        fits.writeto(os.path.join(result_dir, f"{DM_name}_voltages.fits"), voltage_DMs_tosave, header, overwrite=True)
 
         plt.plot(np.std(DMstrokes[j], axis=(1, 2)), label=DM_name + " RMS")
         plt.plot(np.max(DMstrokes[j], axis=(1, 2)) - np.min(DMstrokes[j], axis=(1, 2)), label=DM_name + " PV")

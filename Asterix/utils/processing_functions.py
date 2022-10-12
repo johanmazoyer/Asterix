@@ -346,8 +346,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
         if factor_zoomout > 1:
             raise Exception("factor_zoomout must be <=1")
         # in that case we have the exact same size before and after in both directions
-        best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout,
-                                                                       max_allowed_fft_size)
+        best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout, max_allowed_fft_size)
         best_size_largey = best_size_largex
         best_size_smally = best_size_smallx
         factor_zoomoutx = factor_zoomouty = factor_zoomout
@@ -356,10 +355,8 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
             if factor_zoomout > 1:
                 raise Exception("factor_zoomout must be <=1")
             # differnt size initially but same factor
-            best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout,
-                                                                           max_allowed_fft_size)
-            best_size_largey, best_size_smally = find_sizes_closest2factor(2 * NL, factor_zoomout,
-                                                                           max_allowed_fft_size)
+            best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout, max_allowed_fft_size)
+            best_size_largey, best_size_smally = find_sizes_closest2factor(2 * NL, factor_zoomout, max_allowed_fft_size)
             factor_zoomoutx = factor_zoomouty = factor_zoomout
         else:
             # different factors
@@ -377,8 +374,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
 
     new_image = np.zeros((best_size_largex, best_size_largey), dtype=image.dtype)
     new_image[int((best_size_largex - image.shape[0]) / 2):int((best_size_largex + image.shape[0]) / 2),
-              int((best_size_largey - image.shape[1]) / 2):int((best_size_largey + image.shape[1]) /
-                                                               2)] = image
+              int((best_size_largey - image.shape[1]) / 2):int((best_size_largey + image.shape[1]) / 2)] = image
 
     ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(new_image)))
 
@@ -389,11 +385,10 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
 
     smaller_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image_cropped)))
 
-    smaller_image_cropped = smaller_image[
-        int((smaller_image.shape[0] - int(np.ceil(factor_zoomoutx * NP))) /
-            2):int((smaller_image.shape[0] + int(np.ceil(factor_zoomoutx * NP))) / 2),
-        int((smaller_image.shape[1] - int(np.ceil(factor_zoomouty * NL))) /
-            2):int((smaller_image.shape[1] + int(np.ceil(factor_zoomouty * NL))) / 2)]
+    smaller_image_cropped = smaller_image[int((smaller_image.shape[0] - int(np.ceil(factor_zoomoutx * NP))) /
+                                              2):int((smaller_image.shape[0] + int(np.ceil(factor_zoomoutx * NP))) / 2),
+                                          int((smaller_image.shape[1] - int(np.ceil(factor_zoomouty * NL))) /
+                                              2):int((smaller_image.shape[1] + int(np.ceil(factor_zoomouty * NL))) / 2)]
 
     # if the initial data is real, we take the real part
     if not complex_image:

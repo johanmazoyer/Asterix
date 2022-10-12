@@ -42,8 +42,7 @@ class OpticalSystem:
         # be easily switched.
         # dim_overpad_pupil is set to an even numer and the pupil is centered in
         # between 4 pixels
-        self.dim_overpad_pupil = int(
-            round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2)
+        self.dim_overpad_pupil = int(round(self.prad * float(modelconfig["overpadding_pupilplane_factor"])) * 2)
 
         # Lambda over D in pixels in the focal plane
         # at the reference wavelength
@@ -73,8 +72,8 @@ class OpticalSystem:
             self.wav_vec = np.array([self.wavelength_0])
             self.nb_wav = 1
 
-        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_resFP" + str(
-            round(self.Science_sampling, 2)) + "_dimFP" + str(int(self.dimScience))
+        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_resFP" + str(round(
+            self.Science_sampling, 2)) + "_dimFP" + str(int(self.dimScience))
 
         # we measure the AA and BB matrix and norm0 for all MFTs used to go to final focal plane
         # TODO in practice, those will be remeasured each time we initialize an OpticalSystem
@@ -300,10 +299,9 @@ class OpticalSystem:
         elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil):
             pass
         else:
-            raise Exception(
-                ("entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars "
-                 "or a2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) "
-                 "or a 3D array of size (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"))
+            raise Exception(("entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars "
+                             "or a2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) "
+                             "or a 3D array of size (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"))
 
         focal_plane_Intensity = np.zeros((self.dimScience, self.dimScience))
 
@@ -318,13 +316,12 @@ class OpticalSystem:
 
         if in_contrast:
             if (wavelength_vec != self.wav_vec).all():
-                raise Exception(
-                    ("Careful: contrast normalization in todetector_intensity assumes "
-                     "it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1 "
-                     "and you want only one BW with the good contrast normalization, use "
-                     "np.abs(to_detector(wavelength = wavelength))**2... If you want a specific"
-                     "normalization for a subset of  wavelengths, use in_contrast=False and "
-                     "measure the PSF to normalize."))
+                raise Exception(("Careful: contrast normalization in todetector_intensity assumes "
+                                 "it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1 "
+                                 "and you want only one BW with the good contrast normalization, use "
+                                 "np.abs(to_detector(wavelength = wavelength))**2... If you want a specific"
+                                 "normalization for a subset of  wavelengths, use in_contrast=False and "
+                                 "measure the PSF to normalize."))
 
             focal_plane_Intensity /= self.norm_polychrom
 
@@ -396,8 +393,7 @@ class OpticalSystem:
         self.sum_monochrom = np.zeros((len(self.wav_vec)))
 
         for i, wav in enumerate(self.wav_vec):
-            PSF_wl = np.abs(
-                self.todetector(wavelength=wav, noFPM=True, center_on_pixel=True, in_contrast=False))**2
+            PSF_wl = np.abs(self.todetector(wavelength=wav, noFPM=True, center_on_pixel=True, in_contrast=False))**2
 
             self.norm_monochrom[i] = np.max(PSF_wl)
             PSF_bw += PSF_wl
@@ -466,12 +462,10 @@ class OpticalSystem:
         else:
             phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
 
-            return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms,
-                                                       phase_rhoc, phase_slope)
+            return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms, phase_rhoc,
+                                                       phase_slope)
             if Model_local_dir is not None:
-                fits.writeto(os.path.join(Model_local_dir, phase_abb_filename + ".fits"),
-                             return_phase,
-                             overwrite=True)
+                fits.writeto(os.path.join(Model_local_dir, phase_abb_filename + ".fits"), return_phase, overwrite=True)
         return return_phase
 
     def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None):
@@ -518,12 +512,10 @@ class OpticalSystem:
                         return fits.getdata(os.path.join(Model_local_dir, ampl_abb_filename))
 
                     else:
-                        return_ampl = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil,
-                                                                  ampl_rms / 100, ampl_rhoc, ampl_slope)
+                        return_ampl = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, ampl_rms / 100,
+                                                                  ampl_rhoc, ampl_slope)
 
-                        fits.writeto(os.path.join(Model_local_dir, ampl_abb_filename),
-                                     return_ampl,
-                                     overwrite=True)
+                        fits.writeto(os.path.join(Model_local_dir, ampl_abb_filename), return_ampl, overwrite=True)
 
                         return return_ampl
 
@@ -531,8 +523,7 @@ class OpticalSystem:
                     # in this case, the user wants the THD2 amplitude aberration
                     if ampl_abb_filename == 'Amplitude_THD2':
                         testbedampl = fits.getdata(os.path.join(model_dir, ampl_abb_filename + '.fits'))
-                        testbedampl_header = fits.getheader(
-                            os.path.join(model_dir, ampl_abb_filename + '.fits'))
+                        testbedampl_header = fits.getheader(os.path.join(model_dir, ampl_abb_filename + '.fits'))
                         # in this case we know it's already well centered
 
                     else:
@@ -541,8 +532,7 @@ class OpticalSystem:
                         #  have centerX, centerY and RESPUP keyword in header.
 
                         if not os.path.exists(ampl_abb_filename):
-                            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT),
-                                                    ampl_abb_filename)
+                            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), ampl_abb_filename)
 
                         print(f"Opening {ampl_abb_filename} file for testbed aberrations.")
                         print("This file should have centerX, centerY and RESPUP keyword in header")
@@ -575,8 +565,8 @@ class OpticalSystem:
             else:
                 ampl_abb_filename = f"ampl_{int(ampl_rms):d}percentrms_spd{int(ampl_slope):d}_rhoc{ampl_rhoc:.1f}_rad{self.prad:d}.fits"
 
-                return_ampl = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, ampl_rms / 100,
-                                                          ampl_rhoc, ampl_slope)
+                return_ampl = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, ampl_rms / 100, ampl_rhoc,
+                                                          ampl_slope)
 
                 fits.writeto(os.path.join(Model_local_dir, ampl_abb_filename), return_ampl, overwrite=True)
 
@@ -620,8 +610,9 @@ class OpticalSystem:
         if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
             raise Exception("phase_abb and ampl_abb must be real arrays or float, not complex")
 
-        if (isinstance(phase_abb, (float, int))) and (phase_abb == 0.) and (isinstance(
-                ampl_abb, (float, int))) and (ampl_abb == 0.):
+        if (isinstance(phase_abb,
+                       (float, int))) and (phase_abb == 0.) and (isinstance(ampl_abb,
+                                                                            (float, int))) and (ampl_abb == 0.):
             return 1.
 
         elif isinstance(wavelengths, (float, int)):
