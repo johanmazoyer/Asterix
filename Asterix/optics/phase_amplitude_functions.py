@@ -3,6 +3,7 @@ from Asterix.optics.propagation_functions import mft
 from Asterix.utils import crop_or_pad_image, rebin
 import scipy.ndimage.interpolation as interp
 
+from Asterix.utils.save_and_read import quickfits
 
 def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
     """Create a circular pupil.
@@ -240,40 +241,6 @@ def sphereApodizerRadialProfile(x):
     return profile
 
 
-def makeVLTpup(pupdiam, cobs, t_spiders, pupangle, spiders=True):
-    """ Return VLT pup, based on make_VLT function from shesha/shesha/util/make_pupil.py
-
-    Args :
-        pupdiam (float) [pixel] : pupil diameter
-        
-        cobs (float) [fraction of diameter] : central obtruction diameter
-
-        t_spiders (float) [fraction of diameter] : spider diameter
-
-        pupangle (float) [deg] : pupil rotation angle
-
-        spiders (bool, optional) : if False, return the VLT pupil without spiders
-
-    Returns :
-        VLTpupil (2D array) : VLT transmission pupil of shape (pupdiam, pupdiam), filled with 0 and 1
-    """
-    range = (0.5 * (1) - 0.25 / pupdiam)
-    X = np.tile(np.linspace(-range, range, pupdiam, dtype=np.float32), (pupdiam, 1))
-    R = np.sqrt(X**2 + (X.T)**2)
-    VLTpupil = ((R < 0.5) & (R > (cobs / 2))).astype(np.float32)
-
-    if spiders:
-        angle = 50.5 * np.pi / 180.  # 50.5 degrees angle between spiders
-        spiders_map = ((X.T > (X - cobs / 2 + t_spiders / np.sin(angle)) * np.tan(angle)) +
-                       (X.T < (X - cobs / 2) * np.tan(angle))) * (X > 0) * (X.T > 0)
-        spiders_map += np.fliplr(spiders_map)
-        spiders_map += np.flipud(spiders_map)
-        spiders_map = interp.rotate(spiders_map, pupangle, order=0, reshape=False)
-
-        VLTpupil = VLTpupil * spiders_map
-    return VLTpupil
-
-
 def makeSphereApodizer(pupdiam, cobs, radialProfile=sphereApodizerRadialProfile):
     """ Return the SPHERE APLC apodizer.
 
@@ -297,50 +264,232 @@ def makeSphereApodizer(pupdiam, cobs, radialProfile=sphereApodizerRadialProfile)
     return apodizer
 
 
-def makeSphereLyotStop(pupdiam,
-                       cobs,
-                       t_spiders,
-                       pupangle,
-                       addCentralObs=2 * 14 / 384,
-                       addSpiderObs=2 * 5.5 / 384,
-                       lyotOuterEdgeObs=7 / 384):
-    """ Return the SPHERE Lyot stop
-
-    Args :
-        pupdiam (float) [pixel] : pupil diameter
-        
-        cobs (float) [fraction of diameter] : central obtruction diameter
-
-        t_spiders (float) [fraction of diameter] : spider diameter
-
-        pupangle (float) [deg] : pupil rotation angle
-
-        addCentralObs (float) [fraction of diameter] : additional diameter of central obstruction
-        
-        addSpiderObs (float) [fraction of diameter] : additional diameter of spiders obstruction
-        
-        lyotOuterEdgeObs (float) [fraction of diameter] : outer edge obstruction size
+def make_spider(dim_pp, starting_point, finishing_point, w_spiders, center_pos='b'):
+    """ make a unique spider from starting_point to finishing point, of width w_spiders
     
-    Returns :
-        lyotStop (2D array) : Sphere lyot Stop transmission pupil of shape (pupdiam, pupdiam), filled with 0 and 1
+    AUTHORS : Johan Mazoyer, heavily inspired by Emiel Por in HCIpy
+
+    Parameters
+    ----------
+    dim_pp : int
+        Size of the pupil plane (in pixels)
+    starting_point: tupple of float
+        (x0,y0) the starting point of the spider in pixel
+    finishing_point: tupple of float
+        (x0,y0) the finishing point of the spider in pixel
+    w_spiders: float
+        width of the spider in pixel
+    center_pos : string (optional, default 'b')
+        Option for the center pixel.
+        If 'p', center on the pixel dim_pp//2.
+        If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
+
+    Returns
+    ------
+    spider_map : 2D bool array
+        spider boolean array
+
     """
-    lyotCentralObs = cobs + addCentralObs
 
-    range = 0.5
-    X = np.tile(np.linspace(-range, range, pupdiam, dtype=np.float32), (pupdiam, 1))
-    R = np.sqrt(X**2 + (X.T)**2)
-    lyotCentralMap = ((R < 0.5) & (R > (lyotCentralObs / 2))).astype(np.float32)
+    delta = np.array(finishing_point) - np.array(starting_point)
+    shift = delta / 2 + np.array(starting_point)
 
-    angle = 50.5 * np.pi / 180.  # 50.5 degrees angle between spiders
-    lyotSpidersMap = ((X.T > (X - cobs / 2 + (t_spiders + addSpiderObs / 2) / np.sin(angle)) * np.tan(angle)) +
-                      (X.T < (X - cobs / 2 - addSpiderObs / 2 / np.sin(angle)) * np.tan(angle))) * (X > 0) * (X.T > 0)
-    lyotSpidersMap += np.fliplr(lyotSpidersMap)
-    lyotSpidersMap += np.flipud(lyotSpidersMap)
-    lyotSpidersMap = interp.rotate(lyotSpidersMap, pupangle, order=0, reshape=False)
+    spider_angle = np.arctan2(delta[1], delta[0])
+    spider_length = np.sqrt(delta[0]**2 + delta[1]**2)
 
-    X = np.tile(np.linspace(-range, range, pupdiam, dtype=np.float32), (pupdiam, 1))
-    R = np.sqrt(X**2 + (X.T)**2)
-    lyotOuterEdge = (R < 0.5 - lyotOuterEdgeObs)
+    xx, yy = np.meshgrid(np.arange(dim_pp) - dim_pp // 2, np.arange(dim_pp) - dim_pp // 2)
 
-    lyotStop = lyotCentralMap * lyotSpidersMap * lyotOuterEdge
-    return lyotStop
+    if center_pos.lower() == 'b':
+        xx = xx + 1 / 2 - shift[0]
+        yy = yy + 1 / 2 - shift[1]
+    elif center_pos.lower() == 'p':
+        xx = xx - shift[0]
+        yy = yy - shift[1]
+    else:
+        raise Exception("center_pos can only be 'p' or 'b'")
+
+    xx_rot = xx * np.cos(spider_angle) + yy * np.sin(spider_angle)
+    yy_rot = yy * np.cos(spider_angle) - xx * np.sin(spider_angle)
+
+    spider_map = xx_rot <= (spider_length / 2)
+    spider_map *= xx_rot >= (-spider_length / 2)
+    spider_map *= yy_rot <= (w_spiders / 2)
+    spider_map *= yy_rot >= (-w_spiders / 2)
+
+    return spider_map
+
+
+def makeVLTpup(dim_pp,
+               prad,
+               pupangle=0,
+               spiders=True,
+               center_pos='b',
+               no_pixel=False,
+               reduce_outer_radius=0,
+               add_central_obs=0,
+               add_spider_thickness=0):
+    """ Return VLT pup, heavily inspired by HCIpy
+    
+    AUTHORS : Johan Mazoyer, heavily inspired by Emiel Por in HCIpy and help from C. Goulas
+    I used the number in a slide given by Anthony available here:
+    https://www.dropbox.com/s/so0wpq58wh5i5o2/pupil_VLT.pdf?dl=1
+
+    Parameters
+    ----------
+    dim_pp : int
+        Size of the pupil plane (in pixels)
+    prad : float
+        Size of the pupil radius (in pixels)
+    pupangle : float
+        pupil rotation angle in deg
+    spiders : bool, (default True)
+        if False, return the VLT pupil without spiders
+    center_pos : string (optional, default 'b')
+        Option for the center pixel.
+        If 'p', center on the pixel dim_pp//2.
+        If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
+    no_pixel : boolean (default False).
+        If true, the pupil is first defined at a very large
+        scale (prad = 10*prad or 9*prad) and then rescaled to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated the pupil has to be perfectly centered on the array:
+            -if center_pos is 'p', dimpp must be odd
+            -if center_pos is 'b', dimpp must be even
+        See also Asterix.optics.pupil.grey_pupil().
+    
+    reduce_outer_radius : float (default 0) 
+        reduced diameter of outer radius in fraction of the diameter
+    
+    add_central_obs : float (default 0) 
+        additional diameter of central obstruction in fraction of the diameter
+    
+    add_spider_thickness : float (default 0)  
+    additional spiders width in fraction of the diameter
+    
+    Returns
+    ------
+    VLTpupil : 2D numpy array
+        VLT transmission pupil of shape (pupdiam, pupdiam), filled with 0 and 1
+    """
+    if no_pixel:
+        # we add valueError conditions because it is very hard to maintain the same centering after the
+        # rebin in all conditions
+        if dim_pp % 2 == 0:
+            if center_pos.lower() == 'p':
+                raise ValueError("no_pixel=True, only for pupils centered: if center is 'p', dimpp must be odd")
+            factor_bin = int(4)
+            dimpp_pup_large = (2 * prad) * factor_bin
+            center_on_pixel = False
+        else:
+            if center_pos.lower() == 'b':
+                raise ValueError("no_pixel=True, only for pupils centered: if center is 'b', dimpp must be even")
+            factor_bin = int(5)
+            dimpp_pup_large = (2 * prad + 1) * factor_bin
+            center_on_pixel = True
+
+        pup_large = makeVLTpup(dimpp_pup_large,
+                               factor_bin * prad,
+                               pupangle=pupangle,
+                               no_pixel=False,
+                               spiders=spiders,
+                               center_pos=center_pos)
+        return crop_or_pad_image(rebin(pup_large, factor=factor_bin, center_on_pixel=center_on_pixel), dim_pp)
+
+    pupil_diameter = 8.0 # meter
+    central_obscuration_diam = (1.1 / pupil_diameter  + add_central_obs) * 2 * prad  # pix
+
+    spider_width = (0.040 / pupil_diameter  + add_spider_thickness) * 2 * prad  # pix
+    spider_offset = 0.4045 / pupil_diameter * 2 * prad  # pix
+    spider_outer_radius = 4.2197 / pupil_diameter * 2 * prad  # pix
+    angle_between_spiders = 101  # degrees
+
+    VLTpupil = np.zeros((dim_pp, dim_pp))
+
+    pup_map = roundpupil(dim_pp, prad * (1 - reduce_outer_radius/2), center_pos=center_pos) == 1
+    VLTpupil[pup_map] = 1
+    central_obs_map = 1 - roundpupil(dim_pp, central_obscuration_diam / 2, center_pos=center_pos) == 0
+    VLTpupil[central_obs_map] = 0
+
+    if spiders:
+        pupangle_rad = np.deg2rad(pupangle)
+
+        spider_inner_radius = spider_offset / np.cos(np.radians(45 - (angle_between_spiders - 90) / 2))
+
+        spider_start_1 = -spider_inner_radius * np.array(
+            [np.cos(np.pi / 4 + pupangle_rad), np.sin(np.pi / 4 + pupangle_rad)])
+        spider_end_1 = spider_outer_radius * np.array([np.cos(np.pi + pupangle_rad), np.sin(np.pi + pupangle_rad)])
+
+        spider_start_2 = -spider_inner_radius * np.array(
+            [np.cos(np.pi / 4 + pupangle_rad), np.sin(np.pi / 4 + pupangle_rad)])
+        spider_end_2 = spider_outer_radius * np.array(
+            [np.cos(-np.pi / 2 + pupangle_rad), np.sin(-np.pi / 2 + pupangle_rad)])
+
+        spider_start_3 = spider_inner_radius * np.array(
+            [np.cos(np.pi / 4 + pupangle_rad), np.sin(np.pi / 4 + pupangle_rad)])
+        spider_end_3 = spider_outer_radius * np.array([np.cos(0 + pupangle_rad), np.sin(0 + pupangle_rad)])
+
+        spider_start_4 = spider_inner_radius * np.array(
+            [np.cos(np.pi / 4 + pupangle_rad), np.sin(np.pi / 4 + pupangle_rad)])
+        spider_end_4 = spider_outer_radius * np.array(
+            [np.cos(np.pi / 2 + pupangle_rad), np.sin(np.pi / 2 + pupangle_rad)])
+
+        spider_map1 = make_spider(dim_pp, spider_start_1, spider_end_1, spider_width)
+        spider_map2 = make_spider(dim_pp, spider_start_2, spider_end_2, spider_width)
+        spider_map3 = make_spider(dim_pp, spider_start_3, spider_end_3, spider_width)
+        spider_map4 = make_spider(dim_pp, spider_start_4, spider_end_4, spider_width)
+
+        VLTpupil[spider_map1] = 0
+        VLTpupil[spider_map2] = 0
+        VLTpupil[spider_map3] = 0
+        VLTpupil[spider_map4] = 0
+
+    return VLTpupil
+
+
+def makeSphereLyotStop(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', no_pixel=False):
+    """ Return SPHERE Lyot
+    
+    AUTHORS : Johan Mazoyer from C. Goulas
+
+    Parameters
+    ----------
+    dim_pp : int
+        Size of the pupil plane (in pixels)
+    prad : float
+        Size of the pupil radius (in pixels)
+    pupangle : float
+        pupil rotation angle in deg
+    spiders : bool, (default True)
+        if False, return the VLT pupil without spiders
+    center_pos : string (optional, default 'b')
+        Option for the center pixel.
+        If 'p', center on the pixel dim_pp//2.
+        If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
+    no_pixel : boolean (default False).
+        If true, the pupil is first defined at a very large
+        scale (prad = 10*prad or 9*prad) and then rescaled to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated the pupil has to be perfectly centered on the array:
+            -if center_pos is 'p', dimpp must be odd
+            -if center_pos is 'b', dimpp must be even
+        See also Asterix.optics.pupil.grey_pupil().
+    
+    Returns
+    ------
+    SPHERELyotStop : 2D numpy array
+        SPHERE Lyot Stop transmission pupil of shape (dim_pp, dim_pp), filled with 0 and 1
+    """
+
+    addCentralObs = 2 * 14 / 384
+    addSpiderObs = 2 * 5.5 / 384
+    lyotOuterEdgeObs = 7 / 384
+
+    return makeVLTpup(dim_pp,
+                      prad,
+                      pupangle=pupangle,
+                      spiders=spiders,
+                      center_pos=center_pos,
+                      no_pixel=no_pixel,
+                      reduce_outer_radius=lyotOuterEdgeObs,
+                      add_central_obs=addCentralObs,
+                      add_spider_thickness=addSpiderObs)
