@@ -236,11 +236,11 @@ def sphereApodizerRadialProfile(x):
     d = 7.510133546534877
     e = -1.0284249458007801
     f = 0.8227342681613615
-    profile = a*x**5 + b*x**4 + c*x**3 + d*x**2 + e*x + f
+    profile = a * x**5 + b * x**4 + c * x**3 + d * x**2 + e * x + f
     return profile
 
 
-def makeVLTpup(pupdiam, cobs, t_spiders, pupangle, spiders = True):
+def makeVLTpup(pupdiam, cobs, t_spiders, pupangle, spiders=True):
     """ Return VLT pup, based on make_VLT function from shesha/shesha/util/make_pupil.py
 
     Args :
@@ -264,19 +264,17 @@ def makeVLTpup(pupdiam, cobs, t_spiders, pupangle, spiders = True):
 
     if spiders:
         angle = 50.5 * np.pi / 180.  # 50.5 degrees angle between spiders
-        spiders_map = (
-                (X.T >
-                (X - cobs / 2 + t_spiders / np.sin(angle)) * np.tan(angle)) +
-                (X.T < (X - cobs / 2) * np.tan(angle))) * (X > 0) * (X.T > 0)
+        spiders_map = ((X.T > (X - cobs / 2 + t_spiders / np.sin(angle)) * np.tan(angle)) +
+                       (X.T < (X - cobs / 2) * np.tan(angle))) * (X > 0) * (X.T > 0)
         spiders_map += np.fliplr(spiders_map)
         spiders_map += np.flipud(spiders_map)
         spiders_map = interp.rotate(spiders_map, pupangle, order=0, reshape=False)
 
-        VLTpupil = VLTpupil * spiders_map  
+        VLTpupil = VLTpupil * spiders_map
     return VLTpupil
 
 
-def makeSphereApodizer(pupdiam, cobs, radialProfile = sphereApodizerRadialProfile):
+def makeSphereApodizer(pupdiam, cobs, radialProfile=sphereApodizerRadialProfile):
     """ Return the SPHERE APLC apodizer.
 
     Args :
@@ -290,16 +288,22 @@ def makeSphereApodizer(pupdiam, cobs, radialProfile = sphereApodizerRadialProfil
         apodizer (2D array) : apodizer transmission pupil
     """
     # creating VLT pup without spiders
-    pup = makeVLTpup(pupdiam, cobs, t_spiders = 0, pupangle = 0, spiders = False)
+    pup = makeVLTpup(pupdiam, cobs, t_spiders=0, pupangle=0, spiders=False)
 
     # applying apodizer radial profile
     X = np.tile(np.linspace(-1, 1, pupdiam, dtype=np.float32), (pupdiam, 1))
     R = np.sqrt(X**2 + (X.T)**2)
-    apodizer = pup*radialProfile(R)
+    apodizer = pup * radialProfile(R)
     return apodizer
 
 
-def makeSphereLyotStop(pupdiam, cobs, t_spiders, pupangle, addCentralObs = 2*14/384, addSpiderObs = 2*5.5/384, lyotOuterEdgeObs = 7/384):
+def makeSphereLyotStop(pupdiam,
+                       cobs,
+                       t_spiders,
+                       pupangle,
+                       addCentralObs=2 * 14 / 384,
+                       addSpiderObs=2 * 5.5 / 384,
+                       lyotOuterEdgeObs=7 / 384):
     """ Return the SPHERE Lyot stop
 
     Args :
@@ -328,10 +332,8 @@ def makeSphereLyotStop(pupdiam, cobs, t_spiders, pupangle, addCentralObs = 2*14/
     lyotCentralMap = ((R < 0.5) & (R > (lyotCentralObs / 2))).astype(np.float32)
 
     angle = 50.5 * np.pi / 180.  # 50.5 degrees angle between spiders
-    lyotSpidersMap = (
-            (X.T > (X - cobs / 2 + (t_spiders + addSpiderObs / 2) / np.sin(angle)) * np.tan(angle)) +
-            (X.T < (X - cobs / 2 - addSpiderObs / 2 / np.sin(angle)) * np.tan(angle))
-            ) * (X > 0) * (X.T > 0)
+    lyotSpidersMap = ((X.T > (X - cobs / 2 + (t_spiders + addSpiderObs / 2) / np.sin(angle)) * np.tan(angle)) +
+                      (X.T < (X - cobs / 2 - addSpiderObs / 2 / np.sin(angle)) * np.tan(angle))) * (X > 0) * (X.T > 0)
     lyotSpidersMap += np.fliplr(lyotSpidersMap)
     lyotSpidersMap += np.flipud(lyotSpidersMap)
     lyotSpidersMap = interp.rotate(lyotSpidersMap, pupangle, order=0, reshape=False)
@@ -339,6 +341,6 @@ def makeSphereLyotStop(pupdiam, cobs, t_spiders, pupangle, addCentralObs = 2*14/
     X = np.tile(np.linspace(-range, range, pupdiam, dtype=np.float32), (pupdiam, 1))
     R = np.sqrt(X**2 + (X.T)**2)
     lyotOuterEdge = (R < 0.5 - lyotOuterEdgeObs)
-    
-    lyotStop = lyotCentralMap*lyotSpidersMap*lyotOuterEdge
+
+    lyotStop = lyotCentralMap * lyotSpidersMap * lyotOuterEdge
     return lyotStop
