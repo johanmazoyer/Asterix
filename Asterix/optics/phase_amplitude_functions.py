@@ -227,6 +227,8 @@ def sine_cosine_basis(Nact1D):
 def sphereApodizerRadialProfile(x):
     """ compute the transmission radial profile of the SPHERE APLC apodizer
         x = 0 at the center of the pupil and x = 1 on the outer edge
+        
+        Johan : doc is not with the right format. careful also function names should avoid caps
 
     Args :
         x (float or array) [fraction of radius] : normalized radius
@@ -244,9 +246,23 @@ def sphereApodizerRadialProfile(x):
 def makeSphereApodizer(pupdiam, cobs, radialProfile=sphereApodizerRadialProfile):
     """ Return the SPHERE APLC apodizer.
 
+        Johan : This is not a function for sphere apodizer, this is a function for any given apodizer
+        if you give parameters like cobs, radialProfile in entrance. Same thing for cobs.
+        Also need to be careful with the centering (pixel /in between pixel).
+        See how I did it with other pupils.
+        Finally, I'd prefer you do not multiply by VLT pup.
+        careful also function names should avoid caps
+
+        I'd like you to do a generic apodizer function (which would propably look like this one)
+        and with no central obs : make_radial_apodiser
+        and a makeSphereApodizer which is applying this function to the radial prof you measured
+        and add the central obscuration. Like the function I did for makeVLTpup there must be very
+        little parameters because the Sphere apodizer parameter are fixed. The only
+        parameters are size of pupil dim_pp and prad
+
     Args :
         pupdiam (float) [pixel] : pupil diameter
-        
+
         cobs (float) [fraction of diameter] : central obtruction diameter
 
         radialProfile (function, optional) : apodizer radial transmission. Default is SPHERE APLC apodizer.
@@ -255,7 +271,7 @@ def makeSphereApodizer(pupdiam, cobs, radialProfile=sphereApodizerRadialProfile)
         apodizer (2D array) : apodizer transmission pupil
     """
     # creating VLT pup without spiders
-    pup = makeVLTpup(pupdiam, cobs, t_spiders=0, pupangle=0, spiders=False)
+    pup = make_VLT_pup(pupdiam, cobs, t_spiders=0, pupangle=0, spiders=False)
 
     # applying apodizer radial profile
     X = np.tile(np.linspace(-1, 1, pupdiam, dtype=np.float32), (pupdiam, 1))
@@ -319,19 +335,19 @@ def make_spider(dim_pp, starting_point, finishing_point, w_spiders, center_pos='
     return spider_map
 
 
-def makeVLTpup(dim_pp,
-               prad,
-               pupangle=0,
-               spiders=True,
-               center_pos='b',
-               no_pixel=False,
-               reduce_outer_radius=0,
-               add_central_obs=0,
-               add_spider_thickness=0):
+def make_VLT_pup(dim_pp,
+                 prad,
+                 pupangle=0,
+                 spiders=True,
+                 center_pos='b',
+                 no_pixel=False,
+                 reduce_outer_radius=0,
+                 add_central_obs=0,
+                 add_spider_thickness=0):
     """
     Return VLT pup, heavily inspired by HCIpy.
 
-    AUTHORS : Johan Mazoyer, heavily inspired by Emiel Por in HCIpy and help from C. Goulas
+    AUTHORS : Johan Mazoyer, heavily inspired by Emiel Por in HCIpy and with help from C. Goulas
     I used the number in a slide given by Anthony available here:
     https://www.dropbox.com/s/so0wpq58wh5i5o2/pupil_VLT.pdf?dl=1
 
@@ -385,13 +401,15 @@ def makeVLTpup(dim_pp,
             dimpp_pup_large = (2 * prad + 1) * factor_bin
             center_on_pixel = True
 
-        pup_large = makeVLTpup(dimpp_pup_large,
+        return crop_or_pad_image(
+            rebin(make_VLT_pup(dimpp_pup_large,
                                factor_bin * prad,
                                pupangle=pupangle,
                                no_pixel=False,
                                spiders=spiders,
-                               center_pos=center_pos)
-        return crop_or_pad_image(rebin(pup_large, factor=factor_bin, center_on_pixel=center_on_pixel), dim_pp)
+                               center_pos=center_pos),
+                  factor=factor_bin,
+                  center_on_pixel=center_on_pixel), dim_pp)
 
     pupil_diameter = 8.0  # meter
     central_obscuration_diam = (1.1 / pupil_diameter + add_central_obs) * 2 * prad  # pix
@@ -444,7 +462,7 @@ def makeVLTpup(dim_pp,
     return VLTpupil
 
 
-def makeSphereLyotStop(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', no_pixel=False):
+def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', no_pixel=False):
     """ 
     Return SPHERE Lyot stop aperture
 
@@ -455,7 +473,8 @@ def makeSphereLyotStop(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', n
     dim_pp : int
         Size of the pupil plane (in pixels)
     prad : float
-        Size of the pupil radius (in pixels)
+        Size of the pupil radius (in pixels). Careful this is not the radius of the lyot, 
+        but the pupil associated to this Lyot.
     pupangle : float
         pupil rotation angle in deg
     spiders : bool, (default True)
@@ -466,7 +485,7 @@ def makeSphereLyotStop(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', n
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
     no_pixel : boolean (default False).
         If true, the pupil is first defined at a very large
-        scale (prad = 10*prad or 9*prad) and then rescaled to the given parameter 'prad'.
+        scale (prad = 4*prad or 5*prad) and then rescaled to the given parameter 'prad'.
         This limits the pixel crenellation in the pupil for small pupils.
         If this option is activated the pupil has to be perfectly centered on the array:
             -if center_pos is 'p', dimpp must be odd
@@ -483,12 +502,12 @@ def makeSphereLyotStop(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', n
     addSpiderObs = 2 * 5.5 / 384
     lyotOuterEdgeObs = 7 / 384
 
-    return makeVLTpup(dim_pp,
-                      prad,
-                      pupangle=pupangle,
-                      spiders=spiders,
-                      center_pos=center_pos,
-                      no_pixel=no_pixel,
-                      reduce_outer_radius=lyotOuterEdgeObs,
-                      add_central_obs=addCentralObs,
-                      add_spider_thickness=addSpiderObs)
+    return make_VLT_pup(dim_pp,
+                        prad,
+                        pupangle=pupangle,
+                        spiders=spiders,
+                        center_pos=center_pos,
+                        no_pixel=no_pixel,
+                        reduce_outer_radius=lyotOuterEdgeObs,
+                        add_central_obs=addCentralObs,
+                        add_spider_thickness=addSpiderObs)
