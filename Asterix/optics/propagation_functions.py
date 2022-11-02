@@ -18,7 +18,7 @@ def mft(image,
         norm0=None,
         returnAABB=False):
     """Return the Matrix Direct Fourier transform (MFT) of a 2D image.
-    
+
     Based on Matrix Direct Fourier transform (MFT) from R. Galicher (cf.Soummer et al. 2007, OSA).
     Can deal with any size, any position of the 0-frequency...
 
@@ -235,7 +235,7 @@ def mft(image,
 
 def mat_mult_mft(image, AA, BB, norm0):
     """Perform only the Matrix multiplication for the MFT.
-    
+
     It is be done separately in to allow this single line function to be sped up.
     I tried using the numba compiler on this function (https://numba.pydata.org/)
     to optimize it, but no improvements. This can probably be optimized with GPU here.
