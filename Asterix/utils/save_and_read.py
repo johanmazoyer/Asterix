@@ -32,7 +32,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
     name_fits = current_time_str + '_' + name_plane
 
     if not os.path.exists(dir_save_fits):
-        raise Exception("Please define an existing directory for dir_save_fits keyword or None")
+        raise FileNotFoundError("Please define an existing directory for dir_save_fits keyword or None")
 
     # sometimes the image can be a single float (0 for phase or 1 for EF).
     if isinstance(image, (int, float, np.float)):
@@ -69,7 +69,7 @@ def quickfits(tab, folder='', name='tmp'):
             # of you are french are you ?
             folder = bureau
         else:
-            raise Exception("I cannot find your desktop, please give me a folder to save the .fits")
+            raise FileNotFoundError("I cannot find your desktop, please give me a folder to save the .fits file")
 
     if name == 'tmp':
         current_time_str = datetime.datetime.today().strftime('_%H_%M_%S_%f')[:-3]

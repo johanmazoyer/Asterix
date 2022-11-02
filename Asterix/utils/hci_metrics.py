@@ -102,12 +102,12 @@ def plot_contrast_curves(reduced_data,
         filename += '_unitmas'
 
     elif numberofpix_per_loD is None and numberofmas_per_pix is None:
-        # absice is in pixel
+        # abscissa is in pixels
         absicemultiplicationfactor = delta_raddii
         abscise_String_unit = '(pix)'
         filename += '_unitpix'
     else:
-        raise Exception("either numberofpix_per_loD or numberofmas_per_pix need to be filled, not both")
+        raise ValueError("either numberofpix_per_loD or numberofmas_per_pix need to be filled, not both")
 
     plt.figure()
 
@@ -133,7 +133,7 @@ def plot_contrast_curves(reduced_data,
                 legend_labels.append(f"iter #{i}")
         else:
             if len(legend_labels) != reduced_data.shape[0]:
-                raise Exception("legend_labels must be a string list of size as reduced_data.shape[0]")
+                raise ValueError("legend_labels must be a string list of size as reduced_data.shape[0]")
 
         for i, frame in enumerate(reduced_data):
             contrast1dcurve = contrast_curves(frame,
@@ -262,7 +262,7 @@ def contrast_curves(reduced_data, xcen=None, ycen=None, delta_raddii=3, type_of_
         elif type_of_contrast == 'stddev_5sig':
             contrast_curve.append(5 * np.nanstd(masked_data[wh_rings]))
         else:
-            raise Exception("This type of contrast curve does not exists: ", type_of_contrast)
+            raise ValueError("This type of contrast curve does not exists: ", type_of_contrast)
     contrast_curve = np.asarray(contrast_curve)
     contrast_curve[np.where(contrast_curve == 0)] = np.nan
     return contrast_curve

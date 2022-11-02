@@ -71,7 +71,7 @@ class Corrector:
             os.makedirs(matrix_dir)
 
         if not isinstance(testbed, OpticalSystem):
-            raise Exception("testbed must be an OpticalSystem object")
+            raise TypeError("testbed must be an OpticalSystem object")
 
         basis_type = Correctionconfig["DM_basis"].lower()
         self.total_number_modes = 0
@@ -130,16 +130,16 @@ class Corrector:
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, overwrite=True)
                 number_Active_testbeds = 3
             else:
-                raise Exception("No active DMs")
+                raise ValueError("No active DMs")
 
             if testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] < 500:
-                    raise Exception(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
-                                    " in inversion for THD is probably too low for 2DM")
+                    raise ValueError(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+                                     " in inversion for THD is probably too low for 2DM")
             if not testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] > 500:
-                    raise Exception(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
-                                    " in inversion for THD is probably too high for 1DM")
+                    raise ValueError(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+                                     " in inversion for THD is probably too high for 1DM")
 
             thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],
                                               number_Active_testbeds,
@@ -230,7 +230,7 @@ class Corrector:
                 self.M0 = np.real(np.dot(transposecomplexG, self.G))
                 self.Gmatrix = 0.
         else:
-            raise Exception("This correction algorithm is not yet implemented")
+            raise NotImplementedError("This correction algorithm is not yet implemented")
 
     def toDM_voltage(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., **kwargs):
         """Run a correction from a estimate, and return the DM voltage
@@ -360,4 +360,4 @@ class Corrector:
 
             return -self.amplitudeEFC * wfc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
-            raise Exception("This correction algorithm is not yet implemented")
+            raise NotImplementedError("This correction algorithm is not yet implemented")

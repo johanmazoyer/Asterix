@@ -537,7 +537,7 @@ class DeformableMirror(optsy.OpticalSystem):
                 print("Time for " + Name_FourrierBasis_fits + " (s):", round(time.time() - start_time))
 
         else:
-            raise Exception(basis_type + " is is not a valid basis_type")
+            raise ValueError(basis_type + " is is not a valid basis_type")
 
         return basis
 
@@ -574,7 +574,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     """
 
     if Nact1D * pitchDM < diam_pup_in_m:
-        raise Exception("Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil")
+        raise ValueError("Nact1D*pitchDM < diam_pup_in_m: The DM is smaller than the pupil")
 
     pitchDM_in_pix = pitchDM * diam_pup_in_pix / diam_pup_in_m
 

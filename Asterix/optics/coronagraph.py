@@ -549,7 +549,7 @@ class Coronagraph(optsy.OpticalSystem):
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
             if len(self.wav_vec) > 1:
-                raise Exception("knife currently not coded in polychromatic fft")
+                raise NotImplementedError("knife currently not coded in polychromatic fft")
         else:
             maxdimension_array_fpm = self.dimScience
 
