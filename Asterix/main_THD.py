@@ -58,19 +58,19 @@ def runthd2(parameter_file,
                                  NewLoopconfig=NewLoopconfig,
                                  NewSIMUconfig=NewSIMUconfig)
 
-    Data_dir = get_data_dir(config_in=config["Data_dir"])
+    data_dir = get_data_dir(config_in=config["Data_dir"])
     onbench = config["onbench"]
     Estimationconfig = config["Estimationconfig"]
     Correctionconfig = config["Correctionconfig"]
     Loopconfig = config["Loopconfig"]
     SIMUconfig = config["SIMUconfig"]
-    Name_Experiment = create_experiment_dir(append=SIMUconfig["Name_Experiment"])
+    name_experiment = create_experiment_dir(append=SIMUconfig["Name_Experiment"])
 
     # Initialize all directories
-    model_local_dir = os.path.join(Data_dir, "Model_local")
-    matrix_dir = os.path.join(Data_dir, "Interaction_Matrices")
-    result_dir = os.path.join(Data_dir, "Results", Name_Experiment)
-    labview_dir = os.path.join(Data_dir, "Labview")
+    model_local_dir = os.path.join(data_dir, "Model_local")
+    matrix_dir = os.path.join(data_dir, "Interaction_Matrices")
+    result_dir = os.path.join(data_dir, "Results", name_experiment)
+    labview_dir = os.path.join(data_dir, "Labview")
 
     # Concatenate into the full testbed optical system
     thd2 = THD2(parameter_file, NewMODELconfig, NewDMconfig, NewCoronaconfig)
