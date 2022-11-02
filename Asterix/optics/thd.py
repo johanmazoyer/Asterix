@@ -13,10 +13,6 @@ class THD2(Testbed):
     ----------
     config : dict
         A read-in .ini parameter file.
-    entrance_pupil : Pupil
-    dm1 : DeformableMirror
-    dm3 : DeformableMirror
-    corono : Coronagraph
     """
 
     def __init__(self,
@@ -50,13 +46,13 @@ class THD2(Testbed):
         model_local_dir = os.path.join(get_data_dir(config_in=self.config["Data_dir"]), "Model_local")
 
         # Create all optical elements of the THD
-        self.entrance_pupil = Pupil(model_config,
-                                    PupType=model_config["filename_instr_pup"],
-                                    angle_rotation=model_config["entrance_pup_rotation"],
-                                    Model_local_dir=model_local_dir)
-        self.dm1 = DeformableMirror(model_config, dm_config, Name_DM="DM1", Model_local_dir=model_local_dir)
-        self.dm3 = DeformableMirror(model_config, dm_config, Name_DM="DM3", Model_local_dir=model_local_dir)
-        self.corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir)
+        entrance_pupil = Pupil(model_config,
+                               PupType=model_config["filename_instr_pup"],
+                               angle_rotation=model_config["entrance_pup_rotation"],
+                               Model_local_dir=model_local_dir)
+        dm1 = DeformableMirror(model_config, dm_config, Name_DM="DM1", Model_local_dir=model_local_dir)
+        dm3 = DeformableMirror(model_config, dm_config, Name_DM="DM3", Model_local_dir=model_local_dir)
+        corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir)
 
         # Concatenate into the full testbed optical system
-        super().__init__([self.entrance_pupil, self.dm1, self.dm3, self.corono], ["entrancepupil", "DM1", "DM3", "corono"])
+        super().__init__([entrance_pupil, dm1, dm3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
