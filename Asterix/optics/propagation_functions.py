@@ -23,7 +23,7 @@ def mft(image,
         - Return the Matrix Direct Fourier transform (MFT) of a 2D image
         - Can deal with any size, any position of the 0-frequency...
 
-    This function measures 2 matrices AA and BB, and the norm norm0. The MFT itself is
+    This function measures 2 matrices AA and BB, and the normalization factor 'norm0'. The MFT itself is
     the matrix multiplication norm0 * ((AA @ image) @ BB) (@ is matrix multiplication)
 
     Can be used in a classical way:
@@ -251,12 +251,11 @@ def mat_mult_mft(image, AA, BB, norm0):
     image : 2D numpy array (complex64)
             Entrance image
     AA: 2D numpy array (complex64)
-            Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
+            Matrix multiplied in norm0 * ((AA @ image) @ BB).
     BB: 2D numpy array (complex64)
-            Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
+            Matrix multiplied in norm0 * ((AA @ image) @ BB).
     norm0: float, default
             Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
-            This parameter is only used if only_mat_mult = True
 
     Returns
     ------
@@ -268,7 +267,7 @@ def mat_mult_mft(image, AA, BB, norm0):
 
 def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     """Fresnel propagation of electric field along a distance z in a collimated
-    beam and in Free space.
+    beam and in free space.
 
     AUTHOR : Raphael Galicher
 
@@ -371,7 +370,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
 
 def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     """Angular spectrum propagation of electric field along a distance z in a
-    collimated beam and in Free space in close field (small z).
+    collimated beam and in free space in close field (small z).
 
     AUTHOR : Johan Mazoyer
 
@@ -422,7 +421,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
 def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     """FFT Computation. IDL "FFT" routine uses coordinates origin at pixel.
 
-    [0,0]. This routine FFTSHIFT2 uses a coordinate origin at any pixel [k,l],
+    This function uses a coordinate origin at any pixel [k,l],
     thanks to multiplication by adequate array before using numpy routine
     "FFT". Keywords allow convenient origins either at central pixel ('p') or
     between the 4 central pixels ('b')
