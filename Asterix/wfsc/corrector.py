@@ -132,14 +132,14 @@ class Corrector:
             else:
                 raise ValueError("No active DMs")
 
-            if testbed.DM1.active & testbed.DM3.active:
-                if Correctionconfig["Nbmodes_OnTestbed"] < 500:
-                    raise ValueError(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
-                                     " in inversion for THD is probably too low for 2DM")
-            if not testbed.DM1.active & testbed.DM3.active:
-                if Correctionconfig["Nbmodes_OnTestbed"] > 500:
-                    raise ValueError(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
-                                     " in inversion for THD is probably too high for 1DM")
+#            if testbed.DM1.active & testbed.DM3.active:
+#                if Correctionconfig["Nbmodes_OnTestbed"] < 500:
+#                    raise Exception(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+#                                    " in inversion for THD is probably too low for 2DM")
+#            if not testbed.DM1.active & testbed.DM3.active:
+#                if Correctionconfig["Nbmodes_OnTestbed"] > 500:
+#                    raise Exception(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+#                                    " in inversion for THD is probably too high for 1DM")
 
             thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],
                                               number_Active_testbeds,
