@@ -127,7 +127,6 @@ class Coronagraph(optsy.OpticalSystem):
         if self.prop_apod2lyot in ['mft', 'mft-babinet']:
 
             # we measure the AA and BB matrix and norm0 for all MFTs used in coronagraphy
-            # TODO : in practice, MFT direct in case self.AA_directdirect is the same one than self.AA_direct_final
             if self.prop_apod2lyot == 'mft':
                 dim_science_here = self.dimScience
                 fpm_sampling_here = self.Science_sampling
@@ -135,13 +134,13 @@ class Coronagraph(optsy.OpticalSystem):
                 dim_science_here = self.dim_fpm
                 fpm_sampling_here = self.Lyot_fpm_sampling
 
-            self.AA_direct = list()
-            self.BB_direct = list()
-            self.norm0_direct = list()
+            self.AA_direct = []
+            self.BB_direct = []
+            self.norm0_direct = []
 
-            self.AA_inverse = list()
-            self.BB_inverse = list()
-            self.norm0_inverse = list()
+            self.AA_inverse = []
+            self.BB_inverse = []
+            self.norm0_inverse = []
 
             for i, wave_i in enumerate(self.wav_vec):
 

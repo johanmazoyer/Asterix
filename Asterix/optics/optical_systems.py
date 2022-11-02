@@ -82,9 +82,9 @@ class OpticalSystem:
         # we can maybe pass AA,BB and norm0 as parameter in case of very internal definition
         # when we just create a clear pupil we need for example
 
-        self.AA_direct_final = list()
-        self.BB_direct_final = list()
-        self.norm0_direct_final = list()
+        self.AA_direct_final = []
+        self.BB_direct_final = []
+        self.norm0_direct_final = []
 
         for wave_i in self.wav_vec:
 
