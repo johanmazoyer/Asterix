@@ -5,17 +5,15 @@ from Asterix.utils import save_plane_in_fits
 
 
 class MaskDH:
-    """
-    A very small class to do all the mask related stuff: retrieve parameters and
-    combined them measure the mask and measure the string to save matrices.
-    They're fast to measure so we do not need to save except in 'onbench' case
+    """A very small class to do all the mask related stuff: retrieve parameters
+    and combined them measure the mask and measure the string to save matrices.
+    They're fast to measure so we do not need to save except in 'onbench' case.
 
     AUTHOR : Johan Mazoyer
     """
 
     def __init__(self, Correctionconfig):
-        """
-        initialize the mask object
+        """initialize the mask object.
 
         AUTHOR : Johan Mazoyer
 
@@ -42,8 +40,7 @@ class MaskDH:
         self.string_mask = self.tostring()
 
     def creatingMaskDH(self, dimFP, FP_sampling, dir_save_all_planes=None, **kwargs):
-        """
-        Create a binary mask.
+        """Create a binary mask.
 
         AUTHOR : Johan Mazoyer
 
@@ -75,8 +72,7 @@ class MaskDH:
             if your_os == "Darwin":
                 fnt = ImageFont.truetype('/Library/Fonts/Arial Bold.ttf', size=int(dimFP / 4))
             elif your_os == "Linux":
-                fnt = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSerif.ttf',
-                                         size=int(dimFP / 4))
+                fnt = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSerif.ttf', size=int(dimFP / 4))
             else:
                 raise OSError("The path to fonts is not implemented for your OS yet.")
             d = ImageDraw.Draw(img)
@@ -120,15 +116,15 @@ class MaskDH:
         return maskDH
 
     def tostring(self):
-        """ create a mask String to be used to save .fits files.
-            directly update self.stringdh
+        """create a mask String to be used to save .fits files. directly update
+        self.stringdh.
 
-            AUTHOR : Johan Mazoyer
+        AUTHOR : Johan Mazoyer
 
-            Returns
-            ------
-            stringdh: str
-                mask String to save .fits files
+        Returns
+        ------
+        stringdh: str
+            mask String to save .fits files
         """
 
         if self.DH_shape == "square":

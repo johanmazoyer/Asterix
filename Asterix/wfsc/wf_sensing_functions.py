@@ -8,10 +8,8 @@ from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
-def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom,
-                     **kwargs):
-    """
-    Build the nbwl times interaction matrix for pair-wise probing.
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom, **kwargs):
+    """Build the nbwl times interaction matrix for pair-wise probing.
 
     AUTHOR : Johan Mazoyer
 
@@ -74,10 +72,9 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, m
     return return_matrix
 
 
-def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir,
-                              wavelength, **kwargs):
-    """
-    Build the interaction matrix for pair-wise probing at 1 WL
+def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, wavelength,
+                              **kwargs):
+    """Build the interaction matrix for pair-wise probing at 1 WL.
 
     AUTHOR : Axel Potier
     Modified by Johan Mazoyer
@@ -108,10 +105,9 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
                 matrix in order to retrieve the focal plane electric field
     """
 
-    string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(
-        str, posprobes)) + "_PWampl" + str(int(amplitude)) + "_cut" + str(int(
-            cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + '_wl' + str(
-                int(wavelength * 1e9))
+    string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
+        int(amplitude)) + "_cut" + str(int(
+            cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + '_wl' + str(int(wavelength * 1e9))
 
     # Calculating and Saving PW matrix
     print("")
@@ -155,8 +151,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
         # **kwarg is here to send dir_save_all_planes
 
         deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, **kwargs) - psi0,
-            dimEstim)
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, **kwargs) - psi0, dimEstim)
 
         k = k + 1
 
@@ -184,8 +179,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
 
 
 def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, **kwargs):
-    """
-    Calculate the focal plane electric field from the probe image
+    """Calculate the focal plane electric field from the probe image
     differences and the modeled probe matrix.
 
     AUTHOR : Axel Potier
@@ -207,7 +201,6 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, **
     Difference: 3D array
         cube with image difference for each probes.
         Used for pair-wise probing
-
     """
 
     dimimages = len(Difference[0])
@@ -238,8 +231,8 @@ def simulate_pw_difference(input_wavefront,
                            voltage_vector=0.,
                            wavelengths=None,
                            **kwargs):
-    """
-    Simulate the acquisition of probe images using Pair-wise
+    """Simulate the acquisition of probe images using Pair-wise.
+
     and calculate the difference of images [I(+probe) - I(-probe)].
     we use testbed.name_DM_to_probe_in_PW to do the probes.
 
@@ -287,8 +280,7 @@ def simulate_pw_difference(input_wavefront,
             if DM_name == testbed.name_DM_to_probe_in_PW:
                 Voltage_probeDMprobe = np.zeros(DM.number_act)
                 Voltage_probeDMprobe[num_probe] = amplitudePW
-                Voltage_probe[indice_acum_number_act:indice_acum_number_act +
-                              DM.number_act] = Voltage_probeDMprobe
+                Voltage_probe[indice_acum_number_act:indice_acum_number_act + DM.number_act] = Voltage_probeDMprobe
 
             indice_acum_number_act += DM.number_act
 
@@ -332,9 +324,8 @@ def simulate_pw_difference(input_wavefront,
                                                   **kwargs)
 
         else:
-            raise ValueError(
-                ("You are trying to do a pw_difference with wavelength parameters I don't understand."
-                 " Code it yourself in simulate_pw_difference and be careful with the normalization"))
+            raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand."
+                              " Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
         Difference[count] = resizing(Ikplus - Ikmoins, dimimages)
 

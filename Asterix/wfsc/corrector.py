@@ -11,9 +11,8 @@ import Asterix.wfsc.wf_control_functions as wfc
 
 
 class Corrector:
-    """
-    Corrector Class allows you to define a corrector with
-    different algorithms.
+    """Corrector Class allows you to define a corrector with different
+    algorithms.
 
     Corrector is a class which takes as parameter:
         - the testbed structure
@@ -31,7 +30,6 @@ class Corrector:
         It returns the DM Voltage. In all generality, it can one or 2 DMs. Depending on the testbed
 
     AUTHOR : Johan Mazoyer
-
     """
 
     def __init__(self,
@@ -42,11 +40,9 @@ class Corrector:
                  matrix_dir=None,
                  save_for_bench=False,
                  realtestbed_dir=''):
-        """
-        Initialize the corrector.
-        This is where you define the EFC matrix
-        For all large files you should use a method of "save to fits" if
-        it does not exist "load from fits" if it does, in matrix_dir
+        """Initialize the corrector. This is where you define the EFC matrix
+        For all large files you should use a method of "save to fits" if it
+        does not exist "load from fits" if it does, in matrix_dir.
 
         Store in the structure only what you need for estimation. Everything not
         used in self.estimate should not be stored
@@ -117,31 +113,21 @@ class Corrector:
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_wl{number_wl_in_matrix}.fits"),
                              self.Gmatrix,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
-                             testbed.DM1.basis,
-                             overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
-                             testbed.DM3.basis,
-                             overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, overwrite=True)
                 number_Active_testbeds = 13
 
             elif testbed.DM1.active:
-                fits.writeto(os.path.join(realtestbed_dir,
-                                          f"Direct_Matrix_DM1only_wl{number_wl_in_matrix}.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM1only_wl{number_wl_in_matrix}.fits"),
                              self.Gmatrix,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
-                             testbed.DM1.basis,
-                             overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
                 number_Active_testbeds = 1
             elif testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir,
-                                          f"Direct_Matrix_DM3only_wl{number_wl_in_matrix}.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM3only_wl{number_wl_in_matrix}.fits"),
                              self.Gmatrix,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
-                             testbed.DM3.basis,
-                             overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, overwrite=True)
                 number_Active_testbeds = 3
             else:
                 raise Exception("No active DMs")
@@ -190,9 +176,9 @@ class Corrector:
                         estimator: estimator_mod.Estimator,
                         initial_DM_voltage=0.,
                         input_wavefront=1.):
-        """
-        Measure the interaction matrices needed for the correction
-        Is launch once in the Correction initialization and then once each time we update the matrix
+        """Measure the interaction matrices needed for the correction Is launch
+        once in the Correction initialization and then once each time we update
+        the matrix.
 
         AUTHOR : Johan Mazoyer
 
@@ -247,8 +233,8 @@ class Corrector:
             raise Exception("This correction algorithm is not yet implemented")
 
     def toDM_voltage(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., **kwargs):
-        """
-        Run a correction from a estimate, and return the DM voltage compatible with the testbed
+        """Run a correction from a estimate, and return the DM voltage
+        compatible with the testbed.
 
         AUTHOR : Johan Mazoyer
 
@@ -279,11 +265,7 @@ class Corrector:
             if mode != self.previousmode:
                 self.previousmode = mode
                 # we only re-invert the matrix if it is different from last time
-                _, _, self.invertGDH = invert_svd(self.Gmatrix,
-                                                  mode,
-                                                  goal="c",
-                                                  visu=False,
-                                                  regul=self.regularization)
+                _, _, self.invertGDH = invert_svd(self.Gmatrix, mode, goal="c", visu=False, regul=self.regularization)
 
             solutionefc = wfc.calc_efc_solution(self.MaskEstim, estimate, self.invertGDH, testbed)
 
@@ -333,12 +315,12 @@ class Corrector:
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
-            solutionSM, self.last_best_alpha = wfc.calc_strokemin_solution(self.MaskEstim, estimate, self.M0,
-                                                                           self.G, DesiredContrast,
-                                                                           self.last_best_alpha, testbed)
+            solutionSM, self.last_best_alpha = wfc.calc_strokemin_solution(self.MaskEstim, estimate, self.M0, self.G,
+                                                                           DesiredContrast, self.last_best_alpha,
+                                                                           testbed)
 
-            if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (
-                    isinstance(solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
+            if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (isinstance(
+                    solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
                 self.times_we_lowered_gain += 1
                 self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast) / 3
                 self.count_since_last_best = 0
@@ -370,18 +352,12 @@ class Corrector:
 
             if mode != self.previousmode:
                 self.previousmode = mode
-                _, _, self.invertM0 = invert_svd(self.M0,
-                                                 mode,
-                                                 goal="c",
-                                                 visu=False,
-                                                 regul=self.regularization)
+                _, _, self.invertM0 = invert_svd(self.M0, mode, goal="c", visu=False, regul=self.regularization)
 
-            return -self.amplitudeEFC * wfc.calc_em_solution(self.MaskEstim, estimate, self.invertM0, self.G,
-                                                             testbed)
+            return -self.amplitudeEFC * wfc.calc_em_solution(self.MaskEstim, estimate, self.invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return -self.amplitudeEFC * wfc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G,
-                                                                   testbed)
+            return -self.amplitudeEFC * wfc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
             raise Exception("This correction algorithm is not yet implemented")

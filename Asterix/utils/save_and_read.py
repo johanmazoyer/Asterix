@@ -16,8 +16,7 @@ from Asterix import Asterix_root
 
 
 def save_plane_in_fits(dir_save_fits, name_plane, image):
-    """
-    Function to quickly save a real or complex file in fits.
+    """Function to quickly save a real or complex file in fits.
 
     Parameters
     ----------
@@ -68,8 +67,7 @@ def quickshow(tab):
 
 
 def quickfits(tab, folder='', name='tmp'):
-    """
-    Johan's quick function
+    """Johan's quick function.
 
     Function to quickly save in fits.
     By default, it will save on the desktop with a random name to avoid overwriting.
@@ -98,9 +96,8 @@ def quickfits(tab, folder='', name='tmp'):
 
 
 def quickpng(tab, folder='', name='tmp'):
-    """
-    Function to quickly save in .png.
-    By default, it will save on the desktop with a random name
+    """Function to quickly save in .png. By default, it will save on the
+    desktop with a random name.
 
     tab: array to be saved
     folder (optional): directory where to save the .png
@@ -132,8 +129,7 @@ def quickpng(tab, folder='', name='tmp'):
 
 
 def progress(count, total, status=''):
-    """
-    print a progress bar for a for loop
+    """print a progress bar for a for loop.
 
     Parameters
     ----------
@@ -142,7 +138,6 @@ def progress(count, total, status=''):
 
     total: int
         number of iterations in the for loop
-
     """
     bar_len = 60
     filled_len = int(round(bar_len * count / float(total)))
@@ -162,8 +157,7 @@ def read_parameter_file(parameter_file,
                         NewCorrectionconfig={},
                         NewLoopconfig={},
                         NewSIMUconfig={}):
-    """
-    Check existence of the given parameter file, read it and check validity.
+    """Check existence of the given parameter file, read it and check validity.
 
     AUTHOR: Johan Mazoyer
 
@@ -247,8 +241,7 @@ def from_param_to_header(config):
 
 
 def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="asterix_data"):
-    """
-    Create a path to the local data directory.
+    """Create a path to the local data directory.
 
     If the environment variable `env_var_name` exists, this is returned as the full data path and the input 'datadir'
         is ignored. You can set this individually on your OS.
@@ -288,8 +281,7 @@ def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="aste
 
 
 def create_experiment_dir(append=''):
-    """
-    Create the name for an experiment directory.
+    """Create the name for an experiment directory.
 
     Create a timestamp including current year, month and day, as well as hour, minute and second. Add the passed
     suffix 'append' before returning it.

@@ -9,15 +9,14 @@ import Asterix.optics.phase_amplitude_functions as phase_ampl
 
 
 class Coronagraph(optsy.OpticalSystem):
-    """
-    Initialize and describe the behavior of a coronagraph system (from apod plane to the Lyot plane).
+    """Initialize and describe the behavior of a coronagraph system (from apod
+    plane to the Lyot plane).
 
     AUTHOR : Johan Mazoyer
     """
 
     def __init__(self, modelconfig, coroconfig, Model_local_dir=None):
-        """
-        Initialize a coronagraph object.
+        """Initialize a coronagraph object.
 
         AUTHOR : Johan Mazoyer
 
@@ -57,8 +56,7 @@ class Coronagraph(optsy.OpticalSystem):
         self.corono_fpm_sampling = self.Science_sampling
         self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
         for i, wav in enumerate(self.wav_vec):
-            self.dim_fp_fft[i] = int(np.ceil(
-                self.prad * self.corono_fpm_sampling * self.wavelength_0 / wav)) * 2
+            self.dim_fp_fft[i] = int(np.ceil(self.prad * self.corono_fpm_sampling * self.wavelength_0 / wav)) * 2
             # we take the ceil to be sure that we measure at least the good resolution
             # We do not need to be exact, the mft in science_focal_plane will be
 
@@ -126,6 +124,59 @@ class Coronagraph(optsy.OpticalSystem):
 
         self.string_os += '_LS' + self.lyot_pup.string_os
 
+        if self.prop_apod2lyot in ['mft', 'mft-babinet']:
+
+            # we measure the AA and BB matrix and norm0 for all MFTs used in coronagraphy
+            if self.prop_apod2lyot == 'mft':
+                dim_science_here = self.dimScience
+                fpm_sampling_here = self.Science_sampling
+            if self.prop_apod2lyot == 'mft-babinet':
+                dim_science_here = self.dim_fpm
+                fpm_sampling_here = self.Lyot_fpm_sampling
+
+            self.AA_direct = []
+            self.BB_direct = []
+            self.norm0_direct = []
+
+            self.AA_inverse = []
+            self.BB_inverse = []
+            self.norm0_inverse = []
+
+            for i, wave_i in enumerate(self.wav_vec):
+
+                lambda_ratio = wave_i / self.wavelength_0
+
+                if self.prop_apod2lyot == 'mft':
+                    # in practice in MFT mode, the final MFT is identical to the
+                    # one in the corono so we save a bit of time / memory here
+                    self.AA_direct.append(self.AA_direct_final[i])
+                    self.BB_direct.append(self.BB_direct_final[i])
+                    self.norm0_direct.append(self.norm0_direct_final[i])
+
+                else:
+                    a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
+                                       real_dim_input=int(2 * self.prad),
+                                       dim_output=dim_science_here,
+                                       nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                                       inverse=False,
+                                       norm='ortho',
+                                       returnAABB=True)
+                    self.AA_direct.append(a)
+                    self.BB_direct.append(b)
+                    self.norm0_direct.append(c)
+
+                a, b, c = prop.mft(np.zeros((dim_science_here, dim_science_here)),
+                                   real_dim_input=dim_science_here,
+                                   dim_output=int(2 * self.prad),
+                                   nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                                   inverse=True,
+                                   norm='ortho',
+                                   returnAABB=True)
+
+                self.AA_inverse.append(a)
+                self.BB_inverse.append(b)
+                self.norm0_inverse.append(c)
+
         if "bool_overwrite_perfect_coro" in coroconfig:
             if coroconfig["bool_overwrite_perfect_coro"]:
                 self.perfect_coro = True
@@ -146,8 +197,7 @@ class Coronagraph(optsy.OpticalSystem):
                 self.perfect_Lyot_pupil = [0] * self.nb_wav
                 for i, wave_here in enumerate(self.wav_vec):
                     self.perfect_Lyot_pupil[i] = self.EF_through(
-                        entrance_EF=pup_for_perfect_coro.EF_through(wavelength=wave_here),
-                        wavelength=wave_here)
+                        entrance_EF=pup_for_perfect_coro.EF_through(wavelength=wave_here), wavelength=wave_here)
             else:
                 # In this case we have a coronagraph entrance pupil.
                 # Do a propagation once with self.perfect_Lyot_pupil = 0 to
@@ -166,9 +216,8 @@ class Coronagraph(optsy.OpticalSystem):
                    EF_aberrations_introduced_in_LS=1.,
                    dir_save_all_planes=None,
                    **kwargs):
-        """
-        Propagate the electric field from the apodizer plane before the apodizer pupil to the Lyot plane after the
-        Lyot pupil.
+        """Propagate the electric field from the apodizer plane before the
+        apodizer pupil to the Lyot plane after the Lyot pupil.
 
         AUTHOR : Johan Mazoyer
 
@@ -211,8 +260,6 @@ class Coronagraph(optsy.OpticalSystem):
         else:
             FPmsk = self.FPmsk[self.wav_vec.tolist().index(wavelength)]
 
-        lambda_ratio = wavelength / self.wavelength_0
-
         input_wavefront_after_apod = self.apod_pup.EF_through(entrance_EF=entrance_EF, wavelength=wavelength)
 
         if dir_save_all_planes is not None:
@@ -239,8 +286,7 @@ class Coronagraph(optsy.OpticalSystem):
                 save_plane_in_fits(dir_save_all_planes, name_plane, np.fft.fftshift(corono_focal_plane))
 
                 name_plane = 'PSF EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
-                save_plane_in_fits(dir_save_all_planes, name_plane,
-                                   np.fft.fftshift(np.abs(corono_focal_plane)**2))
+                save_plane_in_fits(dir_save_all_planes, name_plane, np.fft.fftshift(np.abs(corono_focal_plane)**2))
                 if not noFPM:
                     name_plane = 'FPM' + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
@@ -252,8 +298,7 @@ class Coronagraph(optsy.OpticalSystem):
                     save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
 
                 name_plane = 'EF_FP_after_FPM' + f'_wl{int(wavelength * 1e9)}'
-                save_plane_in_fits(dir_save_all_planes, name_plane,
-                                   np.fft.fftshift(corono_focal_plane * FPmsk))
+                save_plane_in_fits(dir_save_all_planes, name_plane, np.fft.fftshift(corono_focal_plane * FPmsk))
 
             # Focal plane to Lyot plane
             lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk,
@@ -265,11 +310,10 @@ class Coronagraph(optsy.OpticalSystem):
             # Apod plane to focal plane
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          int(2 * self.prad),
-                                          self.dim_fpm,
-                                          self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                                          inverse=False,
-                                          norm='ortho')
+                                          AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
+                                          BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
+                                          norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
+                                          only_mat_mult=True)
 
             if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
@@ -294,24 +338,21 @@ class Coronagraph(optsy.OpticalSystem):
             # Babinet's trick:
             lyotplane_before_lyot_central_part = crop_or_pad_image(
                 prop.mft(corono_focal_plane * (1 - FPmsk),
-                         self.dim_fpm,
-                         int(2 * self.prad),
-                         self.dim_fpm / self.Lyot_fpm_sampling * lambda_ratio,
-                         inverse=True,
-                         norm='ortho'), self.dim_overpad_pupil)
+                         AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
+                         BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
+                         norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
+                         only_mat_mult=True), self.dim_overpad_pupil)
 
-            # Babinet's trick
             lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
 
         elif self.prop_apod2lyot == "mft":
             # Apod plane to focal plane
 
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          int(2 * self.prad),
-                                          self.dimScience,
-                                          self.dimScience / self.Science_sampling * lambda_ratio,
-                                          inverse=False,
-                                          norm='ortho')
+                                          AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
+                                          BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
+                                          norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
+                                          only_mat_mult=True)
 
             if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
@@ -332,11 +373,10 @@ class Coronagraph(optsy.OpticalSystem):
             # Focal plane to Lyot plane
             lyotplane_before_lyot = crop_or_pad_image(
                 prop.mft(corono_focal_plane * FPmsk,
-                         self.dimScience,
-                         int(2 * self.prad),
-                         self.dimScience / self.Science_sampling * lambda_ratio,
-                         inverse=True,
-                         norm='ortho'), self.dim_overpad_pupil)
+                         AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
+                         BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
+                         norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
+                         only_mat_mult=True), self.dim_overpad_pupil)
 
         else:
             raise Exception(self.prop_apod2lyot + " is not a known prop_apod2lyot propagation mehtod")
@@ -352,8 +392,7 @@ class Coronagraph(optsy.OpticalSystem):
         lyotplane_before_lyot_crop = crop_or_pad_image(lyotplane_before_lyot, self.dim_overpad_pupil)
 
         # Field after filtering by Lyot stop
-        lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot_crop,
-                                                        wavelength=wavelength)
+        lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
 
         if (self.perfect_coro) & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(
@@ -369,8 +408,7 @@ class Coronagraph(optsy.OpticalSystem):
         return lyotplane_after_lyot
 
     def FQPM(self):
-        """
-        Create a Four Quadrant Phase Mask coronagraph.
+        """Create a Four Quadrant Phase Mask coronagraph.
 
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
@@ -410,8 +448,7 @@ class Coronagraph(optsy.OpticalSystem):
         return fqpm
 
     def Vortex(self, vortex_charge=2):
-        """
-        Create a vortex coronagraph with charge 'vortex_charge'.
+        """Create a vortex coronagraph with charge 'vortex_charge'.
 
         AUTHOR : Johan Mazoyer
 
@@ -444,15 +481,13 @@ class Coronagraph(optsy.OpticalSystem):
             else:
                 dim_fp = self.dimScience
 
-            phasevortex_cut = crop_or_pad_image(phase_vortex,
-                                                dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
+            phasevortex_cut = crop_or_pad_image(phase_vortex, dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
             vortex.append(np.exp(1j * phasevortex_cut))
 
         return vortex
 
     def WrappedVortex(self, offset=0, cen_shift=(0, 0)):
-        """
-        Create a wrapped vortex coronagraph.
+        """Create a wrapped vortex coronagraph.
 
         Parameters
         ----------
@@ -489,15 +524,13 @@ class Coronagraph(optsy.OpticalSystem):
             else:
                 dim_fp = self.dimScience
 
-            phasevortex_cut = crop_or_pad_image(phase_wrapped_vortex,
-                                                dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
+            phasevortex_cut = crop_or_pad_image(phase_wrapped_vortex, dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
             wrapped_vortex.append(np.exp(1j * phasevortex_cut))
 
         return wrapped_vortex
 
     def KnifeEdgeCoro(self):
-        """
-        Create a Knife edge coronagraph of size (dimScience,dimScience).
+        """Create a Knife edge coronagraph of size (dimScience,dimScience).
 
         AUTHOR : Axel Potier
         Modified by Johan Mazoyer
@@ -506,7 +539,6 @@ class Coronagraph(optsy.OpticalSystem):
         ------
         knife_allwl : list of len(self.wav_vec) 2D arrays
             Complex transmission of the knife-edge coronagraph mask at all wavelengths.
-
         """
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
@@ -523,17 +555,13 @@ class Coronagraph(optsy.OpticalSystem):
 
         Knife = np.zeros((maxdimension_array_fpm, maxdimension_array_fpm))
         if self.coro_position == "right":
-            Knife[np.where(
-                xx > (maxdimension_array_fpm / 2 + self.knife_coro_offset * self.Science_sampling))] = 1
+            Knife[np.where(xx > (maxdimension_array_fpm / 2 + self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "left":
-            Knife[np.where(
-                xx < (maxdimension_array_fpm / 2 - self.knife_coro_offset * self.Science_sampling))] = 1
+            Knife[np.where(xx < (maxdimension_array_fpm / 2 - self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "bottom":
-            Knife[np.where(
-                yy > (maxdimension_array_fpm / 2 + self.knife_coro_offset * self.Science_sampling))] = 1
+            Knife[np.where(yy > (maxdimension_array_fpm / 2 + self.knife_coro_offset * self.Science_sampling))] = 1
         if self.coro_position == "top":
-            Knife[np.where(
-                yy < (maxdimension_array_fpm / 2 - self.knife_coro_offset * self.Science_sampling))] = 1
+            Knife[np.where(yy < (maxdimension_array_fpm / 2 - self.knife_coro_offset * self.Science_sampling))] = 1
 
         knife_allwl = []
         for i in range(len(self.wav_vec)):
@@ -542,8 +570,7 @@ class Coronagraph(optsy.OpticalSystem):
         return knife_allwl
 
     def ClassicalLyot(self):
-        """
-        Create a classical Lyot coronagraph of radius rad_LyotFP.
+        """Create a classical Lyot coronagraph of radius rad_LyotFP.
 
         AUTHOR : Johan Mazoyer
 
@@ -563,8 +590,7 @@ class Coronagraph(optsy.OpticalSystem):
         return ClassicalLyotFPM_allwl
 
     def HLC(self):
-        """
-        Create an HLC of radius rad_LyotFP.
+        """Create an HLC of radius rad_LyotFP.
 
         AUTHOR : Johan Mazoyer
 
@@ -587,15 +613,13 @@ class Coronagraph(optsy.OpticalSystem):
 
         hlc_all_wl = []
         for wav in self.wav_vec:
-            hlc_all_wl.append(
-                self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
+            hlc_all_wl.append(self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
 
         return hlc_all_wl
 
 
 def fqpm_mask(dim):
-    """
-    Create a FQPM phase mask.
+    """Create a FQPM phase mask.
 
     AUTHOR: Axel Potier
 
@@ -620,16 +644,8 @@ def fqpm_mask(dim):
     return fqpm_thick
 
 
-def create_wrapped_vortex_mask(dim,
-                               thval,
-                               phval,
-                               jump,
-                               return_1d=False,
-                               piperiodic=True,
-                               offset=0,
-                               cen_shift=(0, 0)):
-    """
-    Create a wrapped vortex phase mask.
+def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0, 0)):
+    """Create a wrapped vortex phase mask.
 
     Analytical calculation of this phase mask coronagraph see [Galicher2020]_.
 
@@ -694,8 +710,7 @@ def create_wrapped_vortex_mask(dim,
 
     if return_1d:
         # Create a continuous 1D phase ramp from 0 to pi, including an offset.
-        theta = (np.arange(dim) / (dim - 1) *
-                 (np.max(thval) - np.min(thval)) + np.min(thval) + offset) % np.pi
+        theta = (np.arange(dim) / (dim - 1) * (np.max(thval) - np.min(thval)) + np.min(thval) + offset) % np.pi
     else:
         # Define the 2D theta array
         ty = (np.arange(dim) - dim / 2 - cen_shift[0] + 0.5)
@@ -715,12 +730,12 @@ def create_wrapped_vortex_mask(dim,
 
             # 1st step (k=0): Create phase mask section going from phval[k] to phval[k+1].
             if k == 0:
-                phase[section] = phval[k] + (theta[section] -
-                                             thval[k]) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
+                phase[section] = phval[k] + (theta[section] - thval[k]) / (thval[k + 1] - thval[k]) * (phval[k + 1] -
+                                                                                                       phval[k])
             # All other steps, do the same thing but add the phase shift jump[k-1] first.
             else:
-                phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k]) / (
-                    thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k] - jump[k - 1])
+                phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k]) / (thval[k + 1] - thval[k]) * (
+                    phval[k + 1] - phval[k] - jump[k - 1])
 
     if return_1d:
         # Define the angle in radians.
@@ -745,8 +760,8 @@ def create_wrapped_vortex_mask(dim,
 
                     # 1st step [k=1]: Create phase mask section going from phval[k] to phval[k+1].
                     if k == 0:
-                        phase[section] = phval[k] + (theta[section] - thval[k] - np.pi) / (
-                            thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
+                        phase[section] = phval[k] + (theta[section] - thval[k] -
+                                                     np.pi) / (thval[k + 1] - thval[k]) * (phval[k + 1] - phval[k])
                     # All other steps, do the same thing but add the phase shift jump[k-1] first.
                     else:
                         phase[section] = phval[k] + jump[k - 1] + (theta[section] - thval[k] - np.pi) / (
@@ -759,8 +774,7 @@ def create_wrapped_vortex_mask(dim,
 
 
 def butterworth_circle(dim, sizebut, order=5, xshift=0, yshift=0):
-    """
-    Return a circular Butterworth filter.
+    """Return a circular Butterworth filter.
 
     AUTHOR: Raphaël Galicher (in IDL)
             ILa (to Python)

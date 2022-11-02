@@ -4,8 +4,7 @@ from Asterix.utils import crop_or_pad_image, rebin
 
 
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
-    """
-    Create a circular pupil.
+    """Create a circular pupil.
 
     With no_pixel=True, this is a way to create a very oversampled pupil that is then rescaled using rebin.
     See also Asterix.optics.pupil.grey_pupil().
@@ -90,9 +89,8 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
 
 
 def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
-    """
-    Create a random phase map, whose PSD decrease in f^(-slope)
-    average is null and stadard deviation is phaserms
+    """Create a random phase map, whose PSD decrease in f^(-slope) average is
+    null and stadard deviation is phaserms.
 
     AUTHOR: Axel Potier
 
@@ -137,8 +135,8 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
 
 def sine_cosine_basis(Nact1D):
-    """
-    For a given number of actuator across the DM, create coefficients for the sin/cos basis
+    """For a given number of actuator across the DM, create coefficients for
+    the sin/cos basis.
 
     TODO Check with Pierre that this is equivalent to what is done on the testbed
     TODO Ask Pierre what he thinks: is it possible to do the basis only for the actuators in the pup
@@ -162,6 +160,14 @@ def sine_cosine_basis(Nact1D):
     TFCoeffs = np.zeros((Nact1D**2, Nact1D, Nact1D), dtype=complex)
     SinCos = np.zeros((Nact1D**2, Nact1D, Nact1D))
 
+    AA, BB, norm0 = mft(TFCoeffs[0],
+                        real_dim_input=Nact1D,
+                        dim_output=Nact1D,
+                        nbres=Nact1D,
+                        inverse=False,
+                        norm='backward',
+                        returnAABB=True)
+
     for Coeff_SinCos in range(Nact1D**2):
         Coeffs = np.zeros((Nact1D, Nact1D), dtype=complex)
         #  the First half of basis are cosine and the second half are sines
@@ -181,7 +187,7 @@ def sine_cosine_basis(Nact1D):
             Coeffs[Nact1D - i - 1, Nact1D - j - 1] = -1 / (2 * 1j)
         TFCoeffs[Coeff_SinCos] = Coeffs
 
-        SinCos[Coeff_SinCos] = np.real(mft(TFCoeffs[Coeff_SinCos], Nact1D, Nact1D, Nact1D))
+        SinCos[Coeff_SinCos] = np.real(mft(TFCoeffs[Coeff_SinCos], AA=AA, BB=BB, norm0=norm0, only_mat_mult=True))
 
     if Nact1D % 2 == 1:
         # in the odd case the last one is a piston
