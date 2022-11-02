@@ -17,14 +17,13 @@ def mft(image,
         BB=None,
         norm0=None,
         returnAABB=False):
-    """Based on Matrix Direct Fourier transform (MFT) from R. Galicher (cf.
-    Soummer et al. 2007, OSA).
-
-        - Return the Matrix Direct Fourier transform (MFT) of a 2D image
-        - Can deal with any size, any position of the 0-frequency...
+    """Return the Matrix Direct Fourier transform (MFT) of a 2D image.
+    
+    Based on Matrix Direct Fourier transform (MFT) from R. Galicher (cf.Soummer et al. 2007, OSA).
+    Can deal with any size, any position of the 0-frequency...
 
     This function measures 2 matrices AA and BB, and the normalization factor 'norm0'. The MFT itself is
-    the matrix multiplication norm0 * ((AA @ image) @ BB) (@ is matrix multiplication)
+    the matrix multiplication norm0 * ((AA @ image) @ BB) (where @ is a matrix multiplication)
 
     Can be used in a classical way:
     ZeMFT = mft(image,
@@ -48,8 +47,8 @@ def mft(image,
                 only_mat_mult=True,
                 returnAABB=False)
 
-    By separating those 2 steps you can save a lot of time if you are doing a lot of MFT with the same
-    input and output dimension parameters. Only the second one need to be repeated.
+    By separating those 2 steps you can save a lot of time. If you are doing a lot of MFTs with the same
+    input and output dimension parameters, only the second step (with only_mat_mult=True) need to be done.
 
     AUTHORS: Baudoz, Galicher, Mazoyer
 
@@ -63,7 +62,7 @@ def mft(image,
                                         pup if fully real.
         -Revision 6.0  2022-10-11 J. Mazoyer. Introduced the option to do only the measurement of AA and BB
                                         and the option to do only the matrix multiplication. Matrix multiplication
-                                        itself is be done separatly in mat_mult_mft which allowed GPU maybe.
+                                        itself is be done separately in mat_mult_mft which allowed GPU maybe.
                                         I tried using numba here to save so time but no improvement
 
     Parameters
@@ -117,7 +116,7 @@ def mft(image,
                 Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
         BB: complex numpy array, default None
                 Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
-        norm0: float, default
+        norm0: float, default None
                 Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
                 This parameter is only used if only_mat_mult = True
         returnAABB: boolean, default False
@@ -131,7 +130,7 @@ def mft(image,
 
         else:
             AA, BB, norm0 : complex 2D array, complex 2D array, float
-                terms used in MFT mtrix multiplication norm0 * ((AA @ image) @ BB).
+                terms used in MFT matrix multiplication norm0 * ((AA @ image) @ BB).
     """
 
     if only_mat_mult:
@@ -235,9 +234,11 @@ def mft(image,
 
 
 def mat_mult_mft(image, AA, BB, norm0):
-    """Perform Matrix multiplication for MFT. It is be done separatly in to
-    allowed to be sped up by GPU (maybe). I tried using numba for this function
-    to save time but no improvements.
+    """Perform only the Matrix multiplication for the MFT.
+    
+    It is be done separately in to allow this single line function to be sped up.
+    I tried using the numba compiler on this function (https://numba.pydata.org/)
+    to optimize it, but no improvements. This can probably be optimized with GPU here.
 
     complex64 type is not mandatory but helps greatly speed up the code. I
     realized that previously (before 2022-10-11) image was float64/complex64, while AA and BB where complex128.
@@ -254,7 +255,7 @@ def mat_mult_mft(image, AA, BB, norm0):
             Matrix multiplied in norm0 * ((AA @ image) @ BB).
     BB: 2D numpy array (complex64)
             Matrix multiplied in norm0 * ((AA @ image) @ BB).
-    norm0: float, default
+    norm0: float
             Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
 
     Returns
