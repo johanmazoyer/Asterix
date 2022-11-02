@@ -24,7 +24,7 @@ class Coronagraph(optsy.OpticalSystem):
         ----------
         modelconfig : dict
             general configuration parameters (sizes and dimensions)
-        coroconfig : : dict
+        coroconfig : dict
             coronagraph parameters
         Model_local_dir: string, default None
             directory to save things you can measure yourself and can save to save times
@@ -49,7 +49,6 @@ class Coronagraph(optsy.OpticalSystem):
 
         # Define coronagraph focal plane mask type
         self.corona_type = coroconfig["corona_type"].lower()
-
         self.string_os += '_' + self.corona_type
 
         # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
@@ -108,13 +107,13 @@ class Coronagraph(optsy.OpticalSystem):
             self.perfect_coro = True
 
         elif self.corona_type == "wrapped_vortex":
-            self.prop_apod2lyot = 'mft'
+            self.prop_apod2lyot = 'regional-sampling'
             self.string_os += '2020'
             self.FPmsk = self.WrappedVortex()
-            self.perfect_coro = True
+            self.perfect_coro = False
 
         else:
-            raise Exception(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
+            raise ValueError(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
 
         self.lyot_pup = pupil.Pupil(modelconfig,
                                     prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
@@ -225,7 +224,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]; or float
+        entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]; or float
             Can also be a float scalar in which case entrance_EF is constant; default=1.
             Electric field in the pupil plane at the entrance of the system.
         wavelength : float
@@ -242,7 +241,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-            Electric field in the pupil plane a the exit of the system
+            Electric field in the pupil plane at the exit of the system
         """
 
         # call the OpticalSystem super function to check and format the variable entrance_EF
@@ -308,7 +307,6 @@ class Coronagraph(optsy.OpticalSystem):
 
         elif self.prop_apod2lyot == "mft-babinet":
             # Apod plane to focal plane
-
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
                                           AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
                                           BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
@@ -347,7 +345,6 @@ class Coronagraph(optsy.OpticalSystem):
 
         elif self.prop_apod2lyot == "mft":
             # Apod plane to focal plane
-
             corono_focal_plane = prop.mft(input_wavefront_after_apod,
                                           AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
                                           BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
@@ -378,8 +375,17 @@ class Coronagraph(optsy.OpticalSystem):
                          norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
                          only_mat_mult=True), self.dim_overpad_pupil)
 
+        elif self.prop_apod2lyot == "regional-sampling":
+            # Apod plane to Lyot plane
+            if noFPM:
+                fpm_array = np.ones((self.dimScience, self.dimScience))
+            else:
+                fpm_array = FPmsk
+            lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod, fpm_array,
+                                                                    nbres=np.array([0.1, 5, 50, 100]))
+
         else:
-            raise Exception(self.prop_apod2lyot + " is not a known prop_apod2lyot propagation mehtod")
+            raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
 
         if dir_save_all_planes is not None:
             name_plane = 'EF_PP_before_LS' + f'_wl{int(wavelength * 1e9)}'
@@ -388,13 +394,13 @@ class Coronagraph(optsy.OpticalSystem):
         # we add the downstream aberrations if we need them
         lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
 
-        # crop to the dim_overpad_pupil expeted size
+        # crop to the dim_overpad_pupil expected size
         lyotplane_before_lyot_crop = crop_or_pad_image(lyotplane_before_lyot, self.dim_overpad_pupil)
 
         # Field after filtering by Lyot stop
         lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
 
-        if (self.perfect_coro) & (not noFPM):
+        if self.perfect_coro & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(
                 wavelength)]
 
@@ -435,7 +441,7 @@ class Coronagraph(optsy.OpticalSystem):
 
             phase4q = np.zeros((dim_fp, dim_fp))
             fqpm_thick_cut = crop_or_pad_image(phase_fqpm, dim_fp)
-            phase4q[np.where(fqpm_thick_cut != 0)] = (np.pi + self.err_fqpm)
+            phase4q[np.where(fqpm_thick_cut != 0)] = np.pi + self.err_fqpm
 
             if self.achrom_fqpm:
                 # If we want to do an achromatic_fqpm, we do not include a variation
@@ -460,7 +466,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         ------
         vortex : list of 2D numpy array
-            The FP mask at all wavelengths.
+            The complex FP mask at all wavelengths.
         """
 
         if self.prop_apod2lyot == "fft":
@@ -469,8 +475,8 @@ class Coronagraph(optsy.OpticalSystem):
             maxdimension_array_fpm = self.dimScience
 
         xx, yy = np.meshgrid(
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1 / 2,
-            np.arange(maxdimension_array_fpm) - (maxdimension_array_fpm) / 2 + 1 / 2)
+            np.arange(maxdimension_array_fpm) - maxdimension_array_fpm / 2 + 1 / 2,
+            np.arange(maxdimension_array_fpm) - maxdimension_array_fpm / 2 + 1 / 2)
 
         phase_vortex = vortex_charge * np.angle(xx + 1j * yy)
 
@@ -499,7 +505,7 @@ class Coronagraph(optsy.OpticalSystem):
         Returns
         -------
         wrapped_vortex : list of 2D numpy array
-            The FP masks at all wavelengths.
+            The complex FP masks at all wavelengths.
         """
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
@@ -640,6 +646,7 @@ def fqpm_mask(dim):
     fqpm_thick_hor = np.zeros((dim, dim))
     fqpm_thick_hor[np.where(yy >= 0)] = 1
     fqpm_thick = fqpm_thick_vert - fqpm_thick_hor
+    fqpm_thick[np.where(fqpm_thick != 0)] = np.pi
 
     return fqpm_thick
 
@@ -771,35 +778,3 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
         phase_mask = phase
 
     return angles, phase_mask
-
-
-def butterworth_circle(dim, sizebut, order=5, xshift=0, yshift=0):
-    """Return a circular Butterworth filter.
-
-    AUTHOR: Raphaël Galicher (in IDL)
-            ILa (to Python)
-
-    Parameters
-    ----------
-    dim : int
-        Dimension of 2D output array in pixels.
-    sizebut : int
-
-    order : int
-        Order of the filter.
-    xshift : int
-        Shift in x direction in pixels.
-    yshift : int
-        Shift in y direction in pixels.
-
-    Returns
-    -------
-    butterworth : array
-    """
-    ty = (np.arange(dim) - yshift - dim / 2)
-    tx = (np.arange(dim) - xshift - dim / 2)
-    xx, yy = np.meshgrid(ty, tx)
-
-    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx**2 + yy**2) / np.abs(sizebut) * 2)**(2. * order))
-
-    return butterworth

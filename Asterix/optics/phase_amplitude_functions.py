@@ -6,8 +6,8 @@ from Asterix.utils import crop_or_pad_image, rebin
 def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     """Create a circular pupil.
 
-    With no_pixel=True, this is a way to create a very oversampled pupil that is then rescaled using rebin.
-    See also Asterix.optics.pupil.grey_pupil().
+    With no_pixel=True, this is a way to create a 10x oversampled pupil that is then rescaled to the requested size
+    using rebin().
 
     AUTHORS : Axel Pottier, Johan Mazoyer
     7/9/22 Modified by J Mazoyer to remove the pixel crenellation with rebin and add a better center option
@@ -15,14 +15,13 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
     Parameters
     ----------
     dim_pp : int
-        Size of the image (in pixels)
+        Size of the image array (in pixels).
     prad : float
-        Size of the pupil radius (in pixels)
+        Pupil radius within the image array (in pixels).
     no_pixel : boolean (default False).
         If true, the pupil is first defined at a very large
         scale (prad = 10*prad) and then rescaled to the given parameter 'prad'.
         This limits the pixel crenellation in the pupil for small pupils.
-        See also Asterix.optics.pupil.grey_pupil().
     center_pos : string (optional, default 'b')
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
@@ -76,7 +75,6 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
     ------
     masktot : 2D array
         Phase ramp
-
     """
     if (shift_x == 0) & (shift_y == 0):
         ramp = 1
@@ -89,32 +87,30 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
 
 
 def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
-    """Create a random phase map, whose PSD decrease in f^(-slope) average is
-    null and stadard deviation is phaserms.
+    """
+    Create a random phase map, whose PSD decreases as f^(-slope).
+
+    The average is null and the standard deviation is 'phaserms'.
 
     AUTHOR: Axel Potier
 
     Parameters
     ----------
     pupil_rad: float
-        radius of the pupil on which the phaserms will be measured
-
+        Radius of the pupil on which the phase rms will be measured.
     dim_image: int
-        size of the output (can be different than 2*pupil_rad)
-
+        Size of the output (can be different from 2*pupil_rad).
     phaserms : float
-        standard deviation of aberration
-
+        Standard deviation of the aberration.
     rhoc : float
-        See Borde et Traub 2006
-
+        See Borde et Traub 2006.
     slope : float
-        Slope of the PSD. See Borde et Traub 2006
+        Slope of the PSD. See Borde et Traub 2006.
 
     Returns
     ------
     phase : 2D array
-        Static random phase map (or OPD) generated
+        Static random phase map (or OPD)
     """
 
     # create a circular pupil of the same radius of the given pupil
@@ -135,8 +131,8 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
 
 def sine_cosine_basis(Nact1D):
-    """For a given number of actuator across the DM, create coefficients for
-    the sin/cos basis.
+    """
+    For a given number of actuator across the DM, create coefficients for the sin/cos basis.
 
     TODO Check with Pierre that this is equivalent to what is done on the testbed
     TODO Ask Pierre what he thinks: is it possible to do the basis only for the actuators in the pup
@@ -147,7 +143,7 @@ def sine_cosine_basis(Nact1D):
     Parameters
     ----------
     Nact1D : float
-        Numnber of actuators of a square DM in one of the principal direction
+        Number of actuators of a square DM in one of the principal directions.
 
     Returns
     ------

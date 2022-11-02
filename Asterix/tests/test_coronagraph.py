@@ -3,7 +3,7 @@ import numpy as np
 
 from Asterix import Asterix_root
 from Asterix.utils import read_parameter_file
-from Asterix.optics import Coronagraph, create_wrapped_vortex_mask
+from Asterix.optics import Coronagraph, create_wrapped_vortex_mask, fqpm_mask
 
 
 def test_default_coronagraph():
@@ -47,3 +47,20 @@ def test_wrapped_vortex_phase_mask():
                                                                      return_1d=False,
                                                                      cen_shift=(10, 10))
     assert np.sum(phase_2d - phase_2d_shifted) != 0., "Shifting of phase mask does not work."
+
+
+def test_fqpm_phase_mask():
+    size = 1000
+
+    fqpm = fqpm_mask(size)
+    assert np.max(fqpm) == np.pi, "FQPM max is not pi."
+    assert np.min(fqpm) == 0, "FQPM min is not 0."
+    assert np.sum(np.cos(fqpm)) == 0
+
+    dim = fqpm.shape[0]
+    hsize = int(dim / 2)
+    qsize = int(hsize / 2)
+    assert fqpm[qsize, qsize] == np.pi, "Expected pi-quadrant is not pi."
+    assert fqpm[-qsize, -qsize] == np.pi, "Expected pi-quadrant is not pi."
+    assert fqpm[-qsize, qsize] == 0, "Expected zero-quadrant is not zero."
+    assert fqpm[qsize, -qsize] == 0, "Expected zero-quadrant is not zero."

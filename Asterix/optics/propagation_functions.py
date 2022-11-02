@@ -381,9 +381,9 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     Parameters
     ----------
     pup : 2D array (complex or real)
-            electric field at z=0
-            CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
-            where 'dimpup' is the pup array dimension
+        electric field at z=0
+        CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
+        where 'dimpup' is the pup array dimension
     lam : float
          wavelength in meter
     z : float
@@ -400,8 +400,8 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     Returns
     ------
     pup_z : 2D array (complex) of size [2*gamma*prad,2*gamma*prad]
-            electric field after propagating in free space along
-            a distance z
+        electric field after propagating in free space along
+        a distance z
     """
 
     diam_pup_in_m = 2 * rad
@@ -479,7 +479,7 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
         sens = -1
 
     if center_pos.lower() not in ['pp', 'pb', 'bp', 'bb']:
-        raise Exception("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
+        raise ValueError("center_pos parameter must be 'pp', 'pb', 'bp', or 'bb' only")
 
     if center_pos.lower()[0] == 'p':
         direct = np.array([Nx // 2, Ny // 2])
@@ -508,3 +508,127 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     farray *= np.exp(sens * (2. * 1j * np.pi / np.sqrt(Nx * Ny)) * np.sum(direct * fourier))
 
     return farray
+
+
+def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
+    """
+    Return a circular Butterworth filter.
+
+    AUTHOR: Raphaël Galicher (in IDL)
+            ILa (to Python)
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of 2D output array in pixels. If even, filter will be centered on a pixel, but can be shifted to
+        between pixels by using xshift=-0.5 and yshift=-0.5. If uneven, filter will be centered between pixels.
+    size_filter : int
+        Inverse size of the filter.
+    order : int
+        Order of the filter.
+    xshift : float
+        Shift of filter with respect to its array in the x direction, in pixels.
+    yshift : float
+        Shift of filter with respect to its array in the y direction, in pixels.
+
+    Returns
+    -------
+    2D array
+
+    Example
+    --------
+    siz = 100
+    rad = int(siz / 2)
+
+    bfilter3 = butterworth_circle(siz, rad, order=3, xshift=-0.5, yshift=-0.5)
+    bfilter5 = butterworth_circle(siz, rad, order=5, xshift=-0.5, yshift=-0.5)
+
+    plt.figure(figsize=(16, 8))
+    plt.subplot(1,2,1)
+    plt.imshow(bfilter5, cmap='Greys_r', origin='lower')
+    plt.title("Order = 5")
+    plt.colorbar()
+    plt.subplot(1,2,2)
+    plt.plot(bfilter3[rad], label="order=3")
+    plt.plot(bfilter5[rad], label="order=5")
+    plt.legend()
+    plt.show()
+    """
+    ty = (np.arange(dim) - yshift - dim / 2)
+    tx = (np.arange(dim) - xshift - dim / 2)
+    xx, yy = np.meshgrid(ty, tx)
+
+    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx ** 2 + yy ** 2) / np.abs(size_filter) * 2) ** (2. * order))
+
+    return butterworth
+
+
+def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp_outer=2, filter_order=15, alpha=1.5):
+    """
+    Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
+
+    Starting from the electric field in an input pupil plane, propagate through a phase-mask coronagraph with
+    different sampling values in different rings around the FPM center. Each propagation goes from the pupil to the FPM
+    and then to the Lyot plane (without Lyot stop applied), using MFTs, while a (combination of) Butterworth filters
+    marks annular regions around the FPM center that are considered in the propagation in each step. The electric field
+    contribution from each step is then summed up to yield the total electric field in the Lyot plane (before the LS).
+
+    AUTHOR: R. Galicher (in IDL)
+            ILa (to Python)
+
+    Parameters
+    ----------
+    pup : 2D array
+        Input mage array containing the wavefront at the entrance pupil of the optical system.
+    fpm : 2D array
+        Complex electric field in the focal plane of the focal-plane mask.
+    nbres : 1D array or list
+        List of the number of resolution elements in the total image plane for all propagation layers.
+    samp_outer : float
+        Sampling in the outermost layer of propagations.
+    filter_order : int
+        Order of the Butterworth filter.
+    alpha : float
+        Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
+        input array.
+
+    Returns
+    -------
+    array : E-field before the Lyot stop.
+    """
+    dim_pup = pup.shape[0]
+    dim_fpm = fpm.shape[0]
+
+    # Innermost part of the focal plane
+    but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, -0.5, -0.5)
+    efield_before_fpm_inner = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0])
+    efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner, real_dim_input=dim_fpm, dim_output=dim_fpm,
+                           nbres=nbres[0], inverse=True)
+
+    # From inner to outer part of FPM
+    const_but = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+    for k in range(nbres.shape[0] - 1):
+        # Butterworth filter in each layer
+        sizebut_here = dim_fpm / alpha * nbres[k] / nbres[k + 1]
+        but = (1 - butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
+
+        ef_pre_fpm = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k + 1])
+        ef_pre_ls = mft(ef_pre_fpm * fpm * but, real_dim_input=dim_fpm, dim_output=dim_fpm, nbres=nbres[k + 1],
+                        inverse=True)
+
+        # Sum up E-field contributions before the LS
+        efield_before_ls += ef_pre_ls
+
+    # Outer part of the FPM
+    nbres_outer = dim_fpm / samp_outer
+    sizebut_outer = dim_fpm / alpha * nbres[-1] / nbres_outer
+    but_outer = 1 - butterworth_circle(dim_fpm, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
+
+    ef_pre_fpm_outer = crop_or_pad_image(fft_choosecenter(pup, inverse=True), dim_fpm)
+    ef_pre_ls_outer = crop_or_pad_image(fft_choosecenter(ef_pre_fpm_outer * fpm * but_outer, inverse=True), dim_fpm)
+
+    # Total E-field before the LS
+    efield_before_ls += ef_pre_ls_outer
+    efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup)
+
+    return efield_before_ls
