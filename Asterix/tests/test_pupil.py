@@ -4,7 +4,7 @@ from Asterix.optics import roundpupil
 def test_roundpupil():
     dim = 10
     rad = int(dim/2)
-    pupil = roundpupil(dim, rad, no_pixel=False)
+    pupil = roundpupil(dim, rad, grey_pup_bin_factor = 10)
 
     zeros_left = (pupil[0, 0] == 0) and (pupil[0, 1] == 0) and (pupil[0, 2] == 0)
     center = (pupil[0, 3] == 1) and (pupil[0, 4] == 1) and (pupil[0, 5] == 1) and (pupil[0, 6] == 1)

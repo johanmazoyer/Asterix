@@ -12,9 +12,11 @@ def test_mft_centering():
 
     samp = 4
     efield = mft(pup, real_dim_input=pdim, dim_output=pdim, nbres=samp)
-    img = np.abs(efield) ** 2
+    img = np.abs(efield)**2
 
-    four_equal_pixels = (img[3,3] == img[3,4]) and (img[3,3] == img[4,3]) and (img[4,3] == img[4,3]) and (img[4,4] == img[4,4])
+    four_equal_pixels = (img[3, 3] == img[3, 4]) and (img[3, 3] == img[4, 3]) and (img[4, 3]
+                                                                                   == img[4, 3]) and (img[4, 4]
+                                                                                                      == img[4, 4])
     assert four_equal_pixels, "PSF from MFT is not symmetric in four center pixels."
 
 
@@ -61,11 +63,11 @@ def test_prop_area_sampling():
     samp_outer = 4
     nbres_direct = dim / samp_outer
 
-    pup = roundpupil(dim, rad, no_pixel=True)
-    lyot_stop = roundpupil(dim, rad * 0.95, no_pixel=False)
+    pup = roundpupil(dim, rad, grey_pup_bin_factor=10)
+    lyot_stop = roundpupil(dim, rad * 0.95, grey_pup_bin_factor=1)
     fpm = fqpm_mask(dim)
 
-    direct_ef = mft(pup*lyot_stop, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
+    direct_ef = mft(pup * lyot_stop, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
     direct_psf = np.abs(direct_ef)**2
     norm = direct_psf.max()
 
@@ -75,7 +77,7 @@ def test_prop_area_sampling():
     post_ls_areas = pre_ls_areas * lyot_stop
 
     coro_ef_areas = mft(post_ls_areas, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
-    coro_psf_areas = np.abs(coro_ef_areas) ** 2 / norm
+    coro_psf_areas = np.abs(coro_ef_areas)**2 / norm
 
     # Uniform-sampling propagation
     pre_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
@@ -84,7 +86,7 @@ def test_prop_area_sampling():
     post_ls_uniform = pre_ls_uniform * lyot_stop
 
     coro_ef_uniform = mft(post_ls_uniform, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
-    coro_psf_uniform = np.abs(coro_ef_uniform) ** 2 / norm
+    coro_psf_uniform = np.abs(coro_ef_uniform)**2 / norm
 
     # Comparison
     assert np.sum(np.abs(post_ls_areas)**2) < np.sum(np.abs(post_ls_uniform)**2)
