@@ -1,7 +1,7 @@
 import os
 
 from Asterix.utils import create_experiment_dir, get_data_dir, read_parameter_file
-from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
+from Asterix.optics import THD2
 from Asterix.wfsc import Estimator, Corrector, MaskDH, correction_loop, save_loop_results
 
 
@@ -60,9 +60,6 @@ def runthd2(parameter_file,
 
     Data_dir = get_data_dir(config_in=config["Data_dir"])
     onbench = config["onbench"]
-    modelconfig = config["modelconfig"]
-    DMconfig = config["DMconfig"]
-    Coronaconfig = config["Coronaconfig"]
     Estimationconfig = config["Estimationconfig"]
     Correctionconfig = config["Correctionconfig"]
     Loopconfig = config["Loopconfig"]
@@ -75,17 +72,8 @@ def runthd2(parameter_file,
     result_dir = os.path.join(Data_dir, "Results", Name_Experiment)
     labview_dir = os.path.join(Data_dir, "Labview")
 
-    # Create all optical elements of the THD
-    entrance_pupil = Pupil(modelconfig,
-                           PupType=modelconfig['filename_instr_pup'],
-                           angle_rotation=modelconfig['entrance_pup_rotation'],
-                           Model_local_dir=model_local_dir)
-    DM1 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=model_local_dir)
-    DM3 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=model_local_dir)
-    corono = Coronagraph(modelconfig, Coronaconfig, Model_local_dir=model_local_dir)
-
     # Concatenate into the full testbed optical system
-    thd2 = Testbed([entrance_pupil, DM1, DM3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
+    thd2 = THD2(parameter_file, NewMODELconfig, NewDMconfig, NewCoronaconfig)
 
     # The following line can be used to change the DM which applies PW probes. This could be used to use the DM out of
     # the pupil plane.
