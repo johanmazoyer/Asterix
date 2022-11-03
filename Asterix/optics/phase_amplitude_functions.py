@@ -70,7 +70,7 @@ def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
         elif center_pos.lower() == 'p':
             pass
         else:
-            raise Exception("center_pos can only be 'p' or 'b'")
+            raise ValueError("center_pos can only be 'p' or 'b'")
         rr = np.hypot(yy, xx)
 
         pupilnormal = np.zeros((dim_pp, dim_pp))

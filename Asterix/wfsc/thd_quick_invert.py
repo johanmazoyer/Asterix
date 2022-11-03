@@ -73,7 +73,7 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     else:
-        raise Exception("No active DMs")
+        raise ValueError("No active DMs")
 
     _, _, invertGDH = invert_svd(Gmatrix,
                                  Nbmodes,
@@ -109,7 +109,7 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
                      EFCmatrix_DM3.astype(np.float32),
                      overwrite=True)
     else:
-        raise Exception("No active DMs")
+        raise ValueError("No active DMs")
 
 
 if __name__ == '__main__':

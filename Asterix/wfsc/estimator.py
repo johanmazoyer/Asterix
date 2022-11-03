@@ -68,7 +68,7 @@ class Estimator:
             os.makedirs(matrix_dir)
 
         if not isinstance(testbed, OpticalSystem):
-            raise Exception("testbed must be an OpticalSystem object")
+            raise TypeError("testbed must be an OpticalSystem object")
 
         self.technique = Estimationconfig["estimation"].lower()
         self.polychrom = Estimationconfig["polychromatic"].lower()
@@ -76,7 +76,7 @@ class Estimator:
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 
         if self.Estim_sampling < 3:
-            raise Exception("Estim_sampling must be > 3, please decrease Estim_bin_factor parameter")
+            raise ValueError("Estim_sampling must be > 3, please decrease Estim_bin_factor parameter")
 
         # image size after binning. This is the size of the estimation !
         # we round and make it so we're always even size and slightly smaller than the ideal size
@@ -136,7 +136,7 @@ class Estimator:
             pass
 
         else:
-            raise Exception("This estimation algorithm is not yet implemented")
+            raise NotImplementedError("This estimation algorithm is not yet implemented")
 
     def estimate(self, testbed: Testbed, entrance_EF=1., voltage_vector=0., perfect_estimation=False, **kwargs):
         """Run an estimation from a testbed, with a given input wavefront and a
@@ -170,9 +170,9 @@ class Estimator:
         """
 
         if 'wavelength' in kwargs:
-            raise Exception(("estimate() function is polychromatic, "
-                             "do not use wavelength keyword. "
-                             "Use 'wavelengths' keyword even for monochromatic intensity"))
+            raise ValueError(("estimate() function is polychromatic, "
+                              "do not use wavelength keyword. "
+                              "Use 'wavelengths' keyword even for monochromatic intensity"))
 
         if isinstance(entrance_EF, (float, int)):
             entrance_EF = np.repeat(entrance_EF, testbed.nb_wav)
@@ -254,7 +254,7 @@ class Estimator:
             return np.zeros((self.dimEstim, self.dimEstim))
 
         else:
-            raise Exception("This estimation algorithm is not yet implemented")
+            raise NotImplementedError("This estimation algorithm is not yet implemented")
 
     def find_DM_to_probe(self, testbed: Testbed):
         """Find which DM to use for the PW probes.
@@ -283,7 +283,7 @@ class Estimator:
         # automatically check which DM to use to probe in this case
         # this is only done once.
         if len(testbed.name_of_DMs) == 0:
-            raise Exception("you need at least one activated DM to do PW")
+            raise ValueError("you need at least one activated DM to do PW")
         # If only one DM, we use this one, independenlty of its position
         elif len(testbed.name_of_DMs) == 1:
             name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
@@ -298,10 +298,10 @@ class Estimator:
 
             # If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
             if number_DMs_in_PP > 1:
-                raise Exception(
+                raise ValueError(
                     "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW")
             # Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
             if number_DMs_in_PP == 0:
-                raise Exception(
+                raise ValueError(
                     "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW")
         return name_DM_to_probe_in_PW

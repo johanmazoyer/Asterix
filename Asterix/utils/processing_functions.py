@@ -123,7 +123,7 @@ def rebin(image, factor=4, center_on_pixel=False):
     dim1, dim2 = image.shape
 
     if (dim1 % factor != 0) or (dim2 % factor != 0):
-        raise Exception("Image in Bin function must be divisible by factor of bin")
+        raise ValueError("Image in Bin function must be divisible by factor of bin")
 
     shape = (dim1 // factor, factor, dim2 // factor, factor)
 
@@ -165,7 +165,7 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
     dim1, dim2 = image.shape
 
     if (dim1 < new_dim) or (dim2 < new_dim):
-        raise Exception("new_dim must be samller than dimensions of the entrance image")
+        raise ValueError("new_dim must be smaller than dimensions of the entrance image")
 
     # check closest multiplicative factor
     dim_smaller = min(dim1, dim2)
@@ -344,7 +344,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
 
     if NL == NP and isinstance(factor_zoomout, (float, int)):
         if factor_zoomout > 1:
-            raise Exception("factor_zoomout must be <=1")
+            raise ValueError("factor_zoomout must be <=1")
         # in that case we have the exact same size before and after in both directions
         best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout, max_allowed_fft_size)
         best_size_largey = best_size_largex
@@ -353,7 +353,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
     else:
         if isinstance(factor_zoomout, (float, int)):
             if factor_zoomout > 1:
-                raise Exception("factor_zoomout must be <=1")
+                raise ValueError("factor_zoomout must be <=1")
             # differnt size initially but same factor
             best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout, max_allowed_fft_size)
             best_size_largey, best_size_smally = find_sizes_closest2factor(2 * NL, factor_zoomout, max_allowed_fft_size)
@@ -363,7 +363,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
             factor_zoomoutx = factor_zoomout[0]
             factor_zoomouty = factor_zoomout[1]
             if factor_zoomoutx > 1 or factor_zoomouty > 1:
-                raise Exception("factor_zoomout must be <=1")
+                raise ValueError("factor_zoomout must be <=1")
 
             best_size_largex, best_size_smallx = find_sizes_closest2factor(2 * NP, factor_zoomout[0],
                                                                            max_allowed_fft_size)
