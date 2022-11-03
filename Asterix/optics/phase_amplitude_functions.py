@@ -3,25 +3,29 @@ from Asterix.optics.propagation_functions import mft
 from Asterix.utils import crop_or_pad_image, rebin
 
 
-def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
+def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
     """Create a circular pupil.
 
-    With no_pixel=True, this is a way to create a 10x oversampled pupil that is then rescaled to the requested size
-    using rebin().
+    With grey_pup_bin_factor >1, this creates an oversized pupil that is then rescaled using rebin to dim_pp
 
     AUTHORS : Axel Pottier, Johan Mazoyer
     7/9/22 Modified by J Mazoyer to remove the pixel crenellation with rebin and add a better center option
+    2/10/22 Modified by J Mazoyer to enhance pixel grey_pup_bin_factor factor
 
     Parameters
     ----------
     dim_pp : int
-        Size of the image array (in pixels).
+        Size of the image (in pixels)
     prad : float
-        Pupil radius within the image array (in pixels).
-    no_pixel : boolean (default False).
-        If true, the pupil is first defined at a very large
-        scale (prad = 10*prad) and then rescaled to the given parameter 'prad'.
+       Pupil radius within the image array (in pixels)
+    grey_pup_bin_factor : int (default, 1)
+        If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
+        (prad = grey_pup_bin_factor*prad) and then rebinned to the given parameter 'prad'.
         This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated (grey_pup_bin_factor>1) the pupil has to be perfectly centered on
+        the array because binning while keeping the centering is tricky:
+            -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
+            -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
     center_pos : string (optional, default 'b')
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
@@ -33,22 +37,42 @@ def roundpupil(dim_pp, prad, no_pixel=False, center_pos='b'):
         Output circular pupil
     """
 
-    if no_pixel:
-        factor_bin = int(10)
-        pup_large = roundpupil(int(2 * prad) * factor_bin, factor_bin * prad, no_pixel=False)
-        return crop_or_pad_image(rebin(pup_large, factor=factor_bin, center_on_pixel=False), dim_pp)
+    if grey_pup_bin_factor > 1:
+        if not isinstance(grey_pup_bin_factor, int):
+            raise ValueError(f"grey_pup_bin_factor must be an integer, currently it is {grey_pup_bin_factor}")
+
+        if center_pos.lower() == 'p' and (dim_pp % 2 == 0 or grey_pup_bin_factor % 2 == 0):
+            raise ValueError(("if grey_pup_bin_factor>1, the pupil has to be perfectly centered:",
+                              "if center is 'p', dimpp and grey_pup_bin_factor must be odd"))
+
+        if center_pos.lower() == 'b' and (dim_pp % 2 == 1 or grey_pup_bin_factor % 2 == 1):
+            raise ValueError(("if grey_pup_bin_factor>1, the pupil has to be perfectly centered:",
+                              "if center is 'b', dimpp and grey_pup_bin_factor must be even"))
+
+        # we add valueError conditions because it is very hard to maintain the same centering after the
+        # rebin in all conditions
+        if dim_pp % 2 == 0:
+            dimpp_pup_large = (2 * prad) * grey_pup_bin_factor
+            center_on_pixel = False
+        else:
+            dimpp_pup_large = (2 * prad + 1) * grey_pup_bin_factor
+            center_on_pixel = True
+
+        pup_large = roundpupil(dimpp_pup_large, grey_pup_bin_factor * prad, grey_pup_bin_factor=1, center_pos=center_pos)
+        return crop_or_pad_image(rebin(pup_large, factor=grey_pup_bin_factor, center_on_pixel=center_on_pixel), dim_pp)
 
     else:
         xx, yy = np.meshgrid(np.arange(dim_pp) - dim_pp // 2, np.arange(dim_pp) - dim_pp // 2)
 
         if center_pos.lower() == 'b':
-            offset = 1 / 2
+            xx = xx + 1 / 2
+            yy = yy + 1 / 2
         elif center_pos.lower() == 'p':
-            offset = 0
+            pass
         else:
             raise Exception("center_pos can only be 'p' or 'b'")
+        rr = np.hypot(yy, xx)
 
-        rr = np.hypot(yy + offset, xx + offset)
         pupilnormal = np.zeros((dim_pp, dim_pp))
         pupilnormal[rr <= prad] = 1.0
 
