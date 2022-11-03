@@ -53,7 +53,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
         self.corono_fpm_sampling = self.Science_sampling
-        self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=np.int)
+        self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=int)
         for i, wav in enumerate(self.wav_vec):
             self.dim_fp_fft[i] = int(np.ceil(self.prad * self.corono_fpm_sampling * self.wavelength_0 / wav)) * 2
             # we take the ceil to be sure that we measure at least the good resolution
