@@ -355,7 +355,7 @@ class OpticalSystem:
 
         Returns
         ------
-        throughput : float
+        transmission : float
             ratio exit flux  / clear entrance pupil flux
         """
         clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
@@ -364,9 +364,9 @@ class OpticalSystem:
         # we pass noFPM = True and noentrance Field by default
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
-        throughput = np.sum(np.abs(exit_EF)**2) / np.sum(np.abs(clear_entrance_pupil)**2)
+        transmission = np.sum(np.abs(exit_EF)**2) / np.sum(np.abs(clear_entrance_pupil)**2)
 
-        return throughput
+        return transmission
 
     def measure_normalization(self):
         """Functions must me used at the end of all Optical Systems
