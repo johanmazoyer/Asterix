@@ -4,10 +4,9 @@ from Asterix.utils import crop_or_pad_image, rebin
 
 
 def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
-    """
-    Create a circular pupil.
+    """Create a circular pupil.
 
-    With grey_pup_bin_factor >1, this create am oversized pupil that is then rescaled using rebin to dim_pp
+    With grey_pup_bin_factor >1, this creates an oversized pupil that is then rescaled using rebin to dim_pp
 
     AUTHORS : Axel Pottier, Johan Mazoyer
     7/9/22 Modified by J Mazoyer to remove the pixel crenellation with rebin and add a better center option
@@ -18,19 +17,19 @@ def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
     dim_pp : int
         Size of the image (in pixels)
     prad : float
-        Size of the pupil radius (in pixels)
+       Pupil radius within the image array (in pixels)
+    grey_pup_bin_factor : int (default, 1)
+        If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
+        (prad = grey_pup_bin_factor*prad) and then rebinned to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated (grey_pup_bin_factor>1) the pupil has to be perfectly centered on
+        the array because binning while keeping the centering is tricky:
+            -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
+            -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
     center_pos : string (optional, default 'b')
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
-    grey_pup_bin_factor : int (default, 1)
-        If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
-        (prad = grey_pup_bin_factor*prad) and then rebined to the given parameter 'prad'.
-        This limits the pixel crenellation in the pupil for small pupils.
-        If this option is activated (grey_pup_bin_factor>1) the pupil has to be perfectly centered on
-        the array because binning and while keeping the centering is tricky:
-            -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
-            -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
 
     Returns
     ------
@@ -39,8 +38,8 @@ def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
     """
 
     if grey_pup_bin_factor > 1:
-        if grey_pup_bin_factor != int(grey_pup_bin_factor):
-            raise ValueError("grey_pup_bin_factor must be an integer")
+        if not isinstance(grey_pup_bin_factor, int):
+            raise ValueError(f"grey_pup_bin_factor must be an integer, currently it is {grey_pup_bin_factor}")
 
         if center_pos.lower() == 'p' and (dim_pp % 2 == 0 or grey_pup_bin_factor % 2 == 0):
             raise ValueError(("if grey_pup_bin_factor>1, the pupil has to be perfectly centered:",
