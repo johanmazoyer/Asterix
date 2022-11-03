@@ -1,12 +1,17 @@
 from Asterix.optics import roundpupil
+import numpy as np
 
 
 def test_roundpupil():
     dim = 10
-    rad = int(dim / 2)
-    pupil = roundpupil(dim, rad, grey_pup_bin_factor=10)
+    rad = 4
 
-    zeros_left = (pupil[0, 0] == 0) and (pupil[0, 1] == 0) and (pupil[0, 2] == 0)
-    center = (pupil[0, 3] == 1) and (pupil[0, 4] == 1) and (pupil[0, 5] == 1) and (pupil[0, 6] == 1)
-    zeros_right = (pupil[0, 7] == 0) and (pupil[0, 8] == 0) and (pupil[0, 9] == 0)
-    assert zeros_left and center and zeros_right, f"{dim}-pixel pupil is not centered between pixels, in center of array."
+    pupil = roundpupil(dim, rad, grey_pup_bin_factor=2, center_pos='b')
+    centerb = (pupil == np.transpose(pupil)).all() and (pupil == np.flip(pupil, axis=0)).all() and (pupil == np.flip(
+        pupil, axis=1)).all()
+
+    pupil = roundpupil(dim + 1, rad, grey_pup_bin_factor=3, center_pos='p')
+    centerp = (pupil == np.transpose(pupil)).all() and (pupil == np.flip(pupil, axis=0)).all() and (pupil == np.flip(
+        pupil, axis=1)).all()
+
+    assert centerb and centerp, f"{dim}-pixel pupil is not centered between pixels, in center of array."
