@@ -129,10 +129,10 @@ class Pupil(optsy.OpticalSystem):
                 pup_fits = fits.getdata(PupType)
 
                 if len(pup_fits.shape) != 2:
-                    raise Exception("file " + PupType + " should be a 2D array")
+                    raise TypeError("file " + PupType + " should be a 2D array")
 
                 if pup_fits.shape[0] != pup_fits.shape[1]:
-                    raise Exception("file " + PupType + " appears to be not square")
+                    raise ValueError("file " + PupType + " appears to be not square")
 
                 self.string_os += '_Fits'
 
@@ -155,7 +155,7 @@ class Pupil(optsy.OpticalSystem):
                         find_divisors.append(i)
 
                 if int(2 * self.prad) not in find_divisors:
-                    raise Exception(
+                    raise ValueError(
                         f"Choose an even divisor of the .fits file size ({pup_fits.shape[0]}) for diam_pup_in_pix parameter: {find_divisors}"
                     )
 
@@ -201,9 +201,9 @@ class Pupil(optsy.OpticalSystem):
 
         elif len(self.pup.shape) == 3:
             if self.pup.shape[0] != len(self.nb_wav):
-                raise Exception("I'm confused, your pupil seem to be polychromatic" +
-                                f"(pup.shape=3) but the # of WL (pup.shape[0]={self.pup.shape[0]}) " +
-                                f"is different from the system # of WL (nb_wav={self.nb_wav})")
+                raise ValueError("I'm confused, your pupil seem to be polychromatic" +
+                                 f"(pup.shape=3) but the # of WL (pup.shape[0]={self.pup.shape[0]}) " +
+                                 f"is different from the system # of WL (nb_wav={self.nb_wav})")
             exit_EF = entrance_EF * self.pup[self.wav_vec.tolist().index(wavelength)]
         else:
             raise ValueError("pupil dimension are not acceptable")

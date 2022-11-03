@@ -62,7 +62,7 @@ class OpticalSystem:
 
         if self.Delta_wav != 0:
             if (self.nb_wav % 2 == 0) or self.nb_wav < 2:
-                raise Exception("please set nb_wav parameter to an odd number > 1")
+                raise ValueError("please set nb_wav parameter to an odd number > 1")
 
             delta_wav_interval = self.Delta_wav / self.nb_wav
             self.wav_vec = self.wavelength_0 + (np.arange(self.nb_wav) - self.nb_wav // 2) * delta_wav_interval
@@ -277,9 +277,9 @@ class OpticalSystem:
         """
 
         if 'wavelength' in kwargs:
-            raise Exception(("todetector_intensity() function is polychromatic, "
-                             "do not use wavelength keyword. "
-                             "Use wavelengths keyword even for monochromatic intensity"))
+            raise ValueError(("todetector_intensity() function is polychromatic, "
+                              "do not use wavelength keyword. "
+                              "Use wavelengths keyword even for monochromatic intensity"))
 
         if wavelengths is None:
             wavelength_vec = self.wav_vec
@@ -298,7 +298,7 @@ class OpticalSystem:
         elif entrance_EF.shape == (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil):
             pass
         else:
-            raise Exception(("entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars "
+            raise TypeError(("entrance_EFs must be scalar (same for all WL), or a self.nb_wav scalars "
                              "or a2D array of size (self.dim_overpad_pupil, self.dim_overpad_pupil) "
                              "or a 3D array of size (self.nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil)"))
 
@@ -315,12 +315,12 @@ class OpticalSystem:
 
         if in_contrast:
             if (wavelength_vec != self.wav_vec).all():
-                raise Exception(("Careful: contrast normalization in todetector_intensity assumes "
-                                 "it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1 "
-                                 "and you want only one BW with the good contrast normalization, use "
-                                 "np.abs(to_detector(wavelength = wavelength))**2... If you want a specific"
-                                 "normalization for a subset of  wavelengths, use in_contrast=False and "
-                                 "measure the PSF to normalize."))
+                raise ValueError(("Careful: contrast normalization in todetector_intensity assumes "
+                                  "it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1 "
+                                  "and you want only one BW with the good contrast normalization, use "
+                                  "np.abs(to_detector(wavelength = wavelength))**2... If you want a specific"
+                                  "normalization for a subset of  wavelengths, use in_contrast=False and "
+                                  "measure the PSF to normalize."))
 
             focal_plane_intensity /= self.norm_polychrom
 
@@ -354,7 +354,7 @@ class OpticalSystem:
 
         Returns
         ------
-        throughput : float
+        transmission : float
             ratio exit flux  / clear entrance pupil flux
         """
         clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
@@ -363,9 +363,9 @@ class OpticalSystem:
         # we pass noFPM = True and noentrance Field by default
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
 
-        throughput = np.sum(np.abs(exit_EF)**2) / np.sum(np.abs(clear_entrance_pupil)**2)
+        transmission = np.sum(np.abs(exit_EF)**2) / np.sum(np.abs(clear_entrance_pupil)**2)
 
-        return throughput
+        return transmission
 
     def measure_normalization(self):
         """Functions must me used at the end of all Optical Systems
@@ -607,7 +607,7 @@ class OpticalSystem:
         """
 
         if np.iscomplexobj(phase_abb) or np.iscomplexobj(ampl_abb):
-            raise Exception("phase_abb and ampl_abb must be real arrays or float, not complex")
+            raise TypeError("phase_abb and ampl_abb must be real arrays or float, not complex")
 
         if (isinstance(phase_abb,
                        (float, int))) and (phase_abb == 0.) and (isinstance(ampl_abb,

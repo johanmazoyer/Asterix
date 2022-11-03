@@ -41,7 +41,7 @@ class Testbed(optsy.OpticalSystem):
         """
         if len(list_os) != len(list_os_names):
             print("")
-            raise Exception("list of systems and list of names need to be of the same size")
+            raise ValueError("list of systems and list of names need to be of the same size")
 
         # Initialize the OpticalSystem class and inherit properties
         super().__init__(list_os[0].modelconfig)
@@ -69,11 +69,11 @@ class Testbed(optsy.OpticalSystem):
             # we first check that all variables in the list are optical systems
             # defined the same way.
             if not isinstance(list_os[num_optical_sys], optsy.OpticalSystem):
-                raise Exception("list_os[" + str(num_optical_sys) + "] is not an optical system")
+                raise TypeError("list_os[" + str(num_optical_sys) + "] is not an optical system")
 
             if list_os[num_optical_sys].modelconfig != self.modelconfig:
                 print("")
-                raise Exception("All optical systems need to be defined with the same initial modelconfig!")
+                raise ValueError("All optical systems need to be defined with the same initial modelconfig!")
 
             # if the os is a DM we increase the number of DM counter and
             # store the number of act and its name
@@ -163,8 +163,8 @@ class Testbed(optsy.OpticalSystem):
             return np.zeros(self.number_DMs) + float(actu_vect)
 
         if len(actu_vect) != self.number_act:
-            raise Exception("voltage vector must be 0 or array of dimension testbed.number_act," +
-                            "sum of all DM.number_act")
+            raise ValueError("voltage vector must be 0 or array of dimension testbed.number_act," +
+                             "sum of all DM.number_act")
 
         for i, DM_name in enumerate(self.name_of_DMs):
 
@@ -304,10 +304,10 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
     def wrapper(**kwargs):
         for passed_arg in kwargs.keys():
             if passed_arg == 'DMphase':
-                raise Exception('DMphase is an ambiguous argument if you have several DMs.' +
-                                ' Please use XXphase with XX = nameDM')
+                raise ValueError('DMphase is an ambiguous argument if you have several DMs.' +
+                                 ' Please use XXphase with XX = nameDM')
             if passed_arg not in known_keywords:
-                raise Exception(passed_arg + 'is not a EF_through valid argument. Valid args are ' + str(known_keywords))
+                raise ValueError(passed_arg + 'is not a EF_through valid argument. Valid args are ' + str(known_keywords))
 
         return testbed_EF_through(**kwargs)
 

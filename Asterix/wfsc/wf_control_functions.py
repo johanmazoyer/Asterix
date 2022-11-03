@@ -236,14 +236,14 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     elif MatrixType == 'smallphase':
         headfile = "DirectMatrixSP"
     else:
-        raise Exception("This Matrix type does not exist")
+        raise ValueError("This Matrix type does not exist")
 
     if DM.basis_type == 'fourier':
         pass
     elif DM.basis_type == 'actuator':
         headfile += "_EFCampl" + str(amplitudeEFC)
     else:
-        raise Exception("This Basis type does not exist")
+        raise ValueError("This Basis type does not exist")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
