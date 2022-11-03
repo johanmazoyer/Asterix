@@ -131,7 +131,7 @@ class OpticalSystem:
             Electric field in the pupil plane a the exit of the system
         """
 
-        if not isinstance(entrance_EF, (float, np.float, np.ndarray)):
+        if not isinstance(entrance_EF, (float, np.ndarray)):
             print(entrance_EF)
             raise TypeError("entrance_EF should be a float of a numpy array of floats")
 
