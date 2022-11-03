@@ -48,15 +48,17 @@ def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
         if center_pos.lower() == 'b' and (dim_pp % 2 == 1 or grey_pup_bin_factor % 2 == 1):
             raise ValueError(("if grey_pup_bin_factor>1, the pupil has to be perfectly centered:",
                               "if center is 'b', dimpp and grey_pup_bin_factor must be even"))
-
         # we add valueError conditions because it is very hard to maintain the same centering after the
         # rebin in all conditions
-        if dim_pp % 2 == 0:
-            dimpp_pup_large = (2 * prad) * grey_pup_bin_factor
+
+        if center_pos.lower() == 'b':
+            dimpp_pup_large = (2 * int(np.ceil(prad))) * grey_pup_bin_factor
             center_on_pixel = False
-        else:
-            dimpp_pup_large = (2 * prad + 1) * grey_pup_bin_factor
+        elif center_pos.lower() == 'p':
+            dimpp_pup_large = (2 * int(np.ceil(prad)) + 1) * grey_pup_bin_factor
             center_on_pixel = True
+        else:
+            raise ValueError("center_pos must be 'p' (centered on pixel) or 'b' (centered in between 4 pixels)")
 
         pup_large = roundpupil(dimpp_pup_large, grey_pup_bin_factor * prad, grey_pup_bin_factor=1, center_pos=center_pos)
         return crop_or_pad_image(rebin(pup_large, factor=grey_pup_bin_factor, center_on_pixel=center_on_pixel), dim_pp)
@@ -70,7 +72,7 @@ def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
         elif center_pos.lower() == 'p':
             pass
         else:
-            raise ValueError("center_pos can only be 'p' or 'b'")
+            raise ValueError("center_pos must be 'p' (centered on pixel) or 'b' (centered in between 4 pixels)")
         rr = np.hypot(yy, xx)
 
         pupilnormal = np.zeros((dim_pp, dim_pp))
