@@ -35,7 +35,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
         raise FileNotFoundError("Please define an existing directory for dir_save_fits keyword or None")
 
     # sometimes the image can be a single float (0 for phase or 1 for EF).
-    if isinstance(image, (int, float, np.float)):
+    if isinstance(image, (int, float)):
         print(name_plane + " is a constant, not save in fits")
         return
 

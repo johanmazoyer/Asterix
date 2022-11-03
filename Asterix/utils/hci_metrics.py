@@ -234,8 +234,8 @@ def contrast_curves(reduced_data, xcen=None, ycen=None, delta_raddii=3, type_of_
     dim = reduced_data.shape[1]
 
     # create rho2D for the rings
-    x = np.arange(dim, dtype=np.float)[None, :] - xcen
-    y = np.arange(dim, dtype=np.float)[:, None] - ycen
+    x = np.arange(dim, dtype=float)[None, :] - xcen
+    y = np.arange(dim, dtype=float)[:, None] - ycen
     rho2d = np.sqrt(x**2 + y**2)
 
     contrast_curve = []
