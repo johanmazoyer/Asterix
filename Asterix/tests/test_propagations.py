@@ -14,11 +14,6 @@ def test_mft_centering():
     efield = mft(pup, real_dim_input=pdim, dim_output=pdim, nbres=samp, dtype_complex='complex128')
     img = np.abs(efield)**2
 
-    # four_equal_pixels = (img[3, 3] == img[3, 4]) and (img[3, 3] == img[4, 3]) and (img[4, 3]
-    #                                                                                == img[4, 3]) and (img[4, 4]
-    #                                                                                                   == img[4, 4])
-    # assert four_equal_pixels, "PSF from MFT is not symmetric in four center pixels."
-
     assert np.allclose(img, np.transpose(img), rtol=0, atol=1e-10,
                        equal_nan=True), "PSF from MFT is not symmetric (transpose PSF != PSF)"
     assert np.allclose(img, np.flip(img, axis=0), rtol=0, atol=1e-10,
