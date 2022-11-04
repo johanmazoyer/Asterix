@@ -601,14 +601,14 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
     array : E-field before the Lyot stop.
     """
     dim_pup = pup.shape[0]
-    dim_fpm = dim_pup  # fpm.shape[0]  # TODO: come back and test this
+    dim_fpm = fpm.shape[0]
 
     # Innermost part of the focal plane
     but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, -0.5, -0.5)
     efield_before_fpm_inner = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0])
     efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner,
                            real_dim_input=dim_fpm,
-                           dim_output=dim_fpm,
+                           dim_output=dim_pup,
                            nbres=nbres[0],
                            inverse=True)
 
@@ -622,7 +622,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
         ef_pre_fpm = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k + 1])
         ef_pre_ls = mft(ef_pre_fpm * fpm * but,
                         real_dim_input=dim_fpm,
-                        dim_output=dim_fpm,
+                        dim_output=dim_pup,
                         nbres=nbres[k + 1],
                         inverse=True)
 
@@ -634,8 +634,9 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
     sizebut_outer = dim_fpm / alpha * nbres[-1] / nbres_outer
     but_outer = 1 - butterworth_circle(dim_fpm, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
 
-    ef_pre_fpm_outer = crop_or_pad_image(fft_choosecenter(pup, inverse=True), dim_fpm)
-    ef_pre_ls_outer = crop_or_pad_image(fft_choosecenter(ef_pre_fpm_outer * fpm * but_outer, inverse=True), dim_fpm)
+    ef_pre_fpm_outer = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres_outer)
+    ef_pre_ls_outer = mft(ef_pre_fpm_outer * fpm * but_outer, real_dim_input=dim_fpm, dim_output=dim_pup,
+                          nbres=nbres_outer, inverse=True)
 
     # Total E-field before the LS
     efield_before_ls += ef_pre_ls_outer
