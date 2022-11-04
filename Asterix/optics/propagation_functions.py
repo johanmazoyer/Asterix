@@ -600,6 +600,12 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
     -------
     array : E-field before the Lyot stop.
     """
+    if samp_outer != 2:
+        raise ValueError(f"samp_outer' needs to be 2, otherwise we cut off the high-spatial frequencies and the"
+                         f"simulation turns out bad. This can become a variable parameter in the future if we allow"
+                         f"the array sizes to be adapted in this function as well, in order to retain the original"
+                         f"spatial frequency content in the outer sampling layer.")
+
     dim_pup = pup.shape[0]
     dim_fpm = fpm.shape[0]
 
