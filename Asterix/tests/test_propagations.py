@@ -90,4 +90,4 @@ def test_prop_area_sampling():
 
     # Comparison
     assert np.sum(np.abs(post_ls_areas)**2) < np.sum(np.abs(post_ls_uniform)**2)
-    assert (np.max(coro_psf_areas) / np.max(coro_psf_uniform)) < 3e-2
+    assert (np.max(coro_psf_areas) / np.max(coro_psf_uniform)) < 9e-4
