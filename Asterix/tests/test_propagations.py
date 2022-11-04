@@ -60,7 +60,7 @@ def test_butterworth():
 def test_prop_area_sampling():
     dim = 512
     rad = dim / 2
-    samp_outer = 4
+    samp_outer = 2
     nbres_direct = dim / samp_outer
 
     pup = roundpupil(dim, rad, grey_pup_bin_factor=10)
