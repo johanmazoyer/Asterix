@@ -10,8 +10,10 @@ def test_roundpupil():
     centerb = (pupil == np.transpose(pupil)).all() and (pupil == np.flip(pupil, axis=0)).all() and (pupil == np.flip(
         pupil, axis=1)).all()
 
+    assert centerb, f"{dim}-pixel pupil with center_pos='b' is not centered."
+
     pupil = roundpupil(dim + 1, rad, grey_pup_bin_factor=3, center_pos='p')
     centerp = (pupil == np.transpose(pupil)).all() and (pupil == np.flip(pupil, axis=0)).all() and (pupil == np.flip(
         pupil, axis=1)).all()
 
-    assert centerb and centerp, f"{dim}-pixel pupil is not centered between pixels, in center of array."
+    assert centerp, f"{dim}-pixel pupil with center_pos='p' is not centered."
