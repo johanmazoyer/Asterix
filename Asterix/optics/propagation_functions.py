@@ -138,7 +138,7 @@ def mft(image,
                 terms used in MFT matrix multiplication norm0 * ((AA @ image) @ BB).
     """
 
-    if not dtype_complex in ['complex64', 'complex128']:
+    if dtype_complex not in ['complex64', 'complex128']:
         raise ValueError("dtype_complex must be 'complex64' or 'complex128'")
 
     if only_mat_mult:
