@@ -145,7 +145,7 @@ class DeformableMirror(optsy.OpticalSystem):
         if wavelength is None:
             wavelength = self.wavelength_0
 
-        if isinstance(DMphase, (int, float, np.float)):
+        if isinstance(DMphase, (int, float)):
             DMphase = np.full((self.dim_overpad_pupil, self.dim_overpad_pupil), np.float(DMphase))
 
         if dir_save_all_planes is not None:

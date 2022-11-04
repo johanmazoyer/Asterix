@@ -16,7 +16,8 @@ def mft(image,
         AA=None,
         BB=None,
         norm0=None,
-        returnAABB=False):
+        returnAABB=False,
+        dtype_complex='complex128'):
     """Return the Matrix Direct Fourier transform (MFT) of a 2D image.
 
     Based on Matrix Direct Fourier transform (MFT) from R. Galicher (cf.Soummer et al. 2007, OSA).
@@ -122,6 +123,10 @@ def mft(image,
         returnAABB: boolean, default False
                 if False, the normal MFT(image is returned)
                 if True, we return AA, BB, norm0 used to do norm0 * ((AA @ image) @ BB).
+        dtype_complex: string, default complex128
+                bit number for the complex arrays in the MFT matrices.
+                Can be complex128 or complex64. The latter increases the speed of the mft but at the
+                cost of lower precision.
 
     Returns
     ------
@@ -133,8 +138,11 @@ def mft(image,
                 terms used in MFT matrix multiplication norm0 * ((AA @ image) @ BB).
     """
 
+    if dtype_complex not in ['complex64', 'complex128']:
+        raise ValueError("dtype_complex must be 'complex64' or 'complex128'")
+
     if only_mat_mult:
-        return mat_mult_mft(image.astype('complex64'), AA, BB, norm0)
+        return mat_mult_mft(image.astype(dtype_complex), AA, BB, norm0)
 
     # check dimensions and type of real_dim_input
     error_string_real_dim_input = "'dimpup' must be an int (square input pupil) or tuple of ints of dimension 2"
@@ -224,13 +232,13 @@ def mft(image,
             norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
         sign_exponential = 1
 
-    AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0)).astype('complex64')
-    BB = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(xx1, uu1)).astype('complex64')
+    AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0)).astype(dtype_complex)
+    BB = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(xx1, uu1)).astype(dtype_complex)
 
     if returnAABB:
         return AA, BB, norm0
 
-    return mat_mult_mft(image.astype('complex64'), AA, BB, norm0)
+    return mat_mult_mft(image.astype(dtype_complex), AA, BB, norm0)
 
 
 def mat_mult_mft(image, AA, BB, norm0):
@@ -240,27 +248,23 @@ def mat_mult_mft(image, AA, BB, norm0):
     I tried using the numba compiler on this function (https://numba.pydata.org/)
     to optimize it, but no improvements. This can probably be optimized with GPU here.
 
-    complex64 type is not mandatory but helps greatly speed up the code. I
-    realized that previously (before 2022-10-11) image was float64/complex64, while AA and BB where complex128.
-    Therefore the results of the MFT was artificially extended to complex128.
-
     AUTHOR : Johan Mazoyer
         2022-10-11 Creation from MFT
 
     Parameters
     ----------
-    image : 2D numpy array (complex64)
+    image : 2D numpy array (complex)
             Entrance image
-    AA: 2D numpy array (complex64)
+    AA: 2D numpy array (complex)
             Matrix multiplied in norm0 * ((AA @ image) @ BB).
-    BB: 2D numpy array (complex64)
+    BB: 2D numpy array (complex)
             Matrix multiplied in norm0 * ((AA @ image) @ BB).
     norm0: float
             Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
 
     Returns
     ------
-    norm0 * ((AA @ image) @ BB) :  2D numpy array (complex64)
+    norm0 * ((AA @ image) @ BB) :  2D numpy array (complex)
     """
 
     return norm0 * ((AA @ image) @ BB)
@@ -558,7 +562,7 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     tx = (np.arange(dim) - xshift - dim / 2)
     xx, yy = np.meshgrid(ty, tx)
 
-    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx ** 2 + yy ** 2) / np.abs(size_filter) * 2) ** (2. * order))
+    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx**2 + yy**2) / np.abs(size_filter) * 2)**(2. * order))
 
     return butterworth
 
@@ -597,13 +601,16 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
     array : E-field before the Lyot stop.
     """
     dim_pup = pup.shape[0]
-    dim_fpm = fpm.shape[0]
+    dim_fpm = dim_pup  # fpm.shape[0]  # TODO: come back and test this
 
     # Innermost part of the focal plane
     but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, -0.5, -0.5)
     efield_before_fpm_inner = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0])
-    efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner, real_dim_input=dim_fpm, dim_output=dim_fpm,
-                           nbres=nbres[0], inverse=True)
+    efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner,
+                           real_dim_input=dim_fpm,
+                           dim_output=dim_fpm,
+                           nbres=nbres[0],
+                           inverse=True)
 
     # From inner to outer part of FPM
     const_but = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
@@ -613,7 +620,10 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
         but = (1 - butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
 
         ef_pre_fpm = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k + 1])
-        ef_pre_ls = mft(ef_pre_fpm * fpm * but, real_dim_input=dim_fpm, dim_output=dim_fpm, nbres=nbres[k + 1],
+        ef_pre_ls = mft(ef_pre_fpm * fpm * but,
+                        real_dim_input=dim_fpm,
+                        dim_output=dim_fpm,
+                        nbres=nbres[k + 1],
                         inverse=True)
 
         # Sum up E-field contributions before the LS
