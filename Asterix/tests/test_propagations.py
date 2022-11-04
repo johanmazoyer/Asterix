@@ -19,15 +19,10 @@ def test_mft_centering():
     #                                                                                                   == img[4, 4])
     # assert four_equal_pixels, "PSF from MFT is not symmetric in four center pixels."
 
-    np.testing.assert_array_almost_equal(img,
-                                         np.transpose(img),
-                                         decimal=10,
-                                         err_msg="PSF from MFT is not symmetric (transpose PSF != PSF)")
-
-    np.testing.assert_array_almost_equal(img,
-                                         np.flip(img, axis=0),
-                                         decimal=10,
-                                         err_msg="PSF from MFT is not symmetric (flip PSF != PSF)")
+    assert np.allclose(img, np.transpose(img), rtol=0, atol=1e-10,
+                       equal_nan=True), "PSF from MFT is not symmetric (transpose PSF != PSF)"
+    assert np.allclose(img, np.flip(img, axis=0), rtol=0, atol=1e-10,
+                       equal_nan=True), "PSF from MFT is not symmetric (flip PSF != PSF)"
 
 
 def test_butterworth():
