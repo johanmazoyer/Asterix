@@ -11,7 +11,7 @@ def test_mft_centering():
     pup = roundpupil(pdim, rad, center_pos='b')
 
     samp = 4
-    efield = mft(pup, real_dim_input=pdim, dim_output=pdim, nbres=samp)
+    efield = mft(pup, real_dim_input=pdim, dim_output=pdim, nbres=samp, dtype_complex='complex128')
     img = np.abs(efield)**2
 
     four_equal_pixels = (img[3, 3] == img[3, 4]) and (img[3, 3] == img[4, 3]) and (img[4, 3]
@@ -19,14 +19,14 @@ def test_mft_centering():
                                                                                                       == img[4, 4])
     assert four_equal_pixels, "PSF from MFT is not symmetric in four center pixels."
 
-    # im_and_trans = np.abs(img - np.transpose(img))
-    # im_and_flipx = np.abs(img - np.flip(img, axis=0))
-    # im_and_flipy = np.abs(img - np.flip(img, axis=1))
+    im_and_trans = np.abs(img - np.transpose(img))
+    im_and_flipx = np.abs(img - np.flip(img, axis=0))
+    im_and_flipy = np.abs(img - np.flip(img, axis=1))
 
-    # centered = (np.max(im_and_trans / img) < 1e-6) and (np.max(im_and_flipx / img) < 1e-6) and (np.max(
-    #     im_and_flipy / img) < 1e-6)
+    centered = (np.max(im_and_trans / img) < 1e-8) and (np.max(im_and_flipx / img) < 1e-8) and (np.max(
+        im_and_flipy / img) < 1e-8)
 
-    # assert centered, "PSF from MFT is not symmetric"
+    assert centered, "PSF from MFT is not symmetric"
 
 
 def test_butterworth():
