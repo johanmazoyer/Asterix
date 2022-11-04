@@ -601,7 +601,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
     array : E-field before the Lyot stop.
     """
     dim_pup = pup.shape[0]
-    dim_fpm = fpm.shape[0]
+    dim_fpm = dim_pup  # fpm.shape[0]  # TODO: come back and test this
 
     # Innermost part of the focal plane
     but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, -0.5, -0.5)

@@ -56,6 +56,7 @@ def test_fqpm_phase_mask():
     assert np.max(fqpm) == np.pi, "FQPM max is not pi."
     assert np.min(fqpm) == 0, "FQPM min is not 0."
     assert np.sum(np.cos(fqpm)) == 0
+    assert np.real(np.sum(np.exp(1j * fqpm))) == 0
 
     dim = fqpm.shape[0]
     hsize = int(dim / 2)
