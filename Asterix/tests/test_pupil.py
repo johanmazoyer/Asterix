@@ -7,11 +7,9 @@ def test_roundpupil():
     rad = 4.3
 
     pupil = roundpupil(dim, rad, grey_pup_bin_factor=2, center_pos='b')
-    centerb = (pupil == np.transpose(pupil)).all() and (pupil == np.flip(pupil, axis=0)).all()
-
-    assert centerb, f"{dim}-pixel pupil with center_pos='b' is not centered."
+    assert (pupil == np.transpose(pupil)).all(), f"{dim}-pixel pupil with center_pos='b' is not centered."
+    assert (pupil == np.flip(pupil, axis=0)).all(), f"{dim}-pixel pupil with center_pos='b' is not centered."
 
     pupil = roundpupil(dim + 1, rad, grey_pup_bin_factor=3, center_pos='p')
-    centerp = (pupil == np.transpose(pupil)).all() and (pupil == np.flip(pupil, axis=0)).all()
-
-    assert centerp, f"{dim}-pixel pupil with center_pos='p' is not centered."
+    assert (pupil == np.transpose(pupil)).all(), f"{dim}-pixel pupil with center_pos='p' is not centered."
+    assert (pupil == np.flip(pupil, axis=0)).all(), f"{dim}-pixel pupil with center_pos='p' is not centered."
