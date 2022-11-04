@@ -168,7 +168,7 @@ class Pupil(optsy.OpticalSystem):
 
             self.pup = crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 
-        if self.grey_pup_bin_factor > 1:
+        if self.grey_pup_bin_factor > 1 and (not PupType == "Clear"):
             self.string_os += 'grey'
 
         # initialize the max and sum of PSFs for the normalization to contrast
