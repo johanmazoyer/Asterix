@@ -1,6 +1,5 @@
 import numpy as np
 from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil, fft_choosecenter, crop_or_pad_image
-from Asterix.utils import quickfits
 
 
 def test_mft_fft():
