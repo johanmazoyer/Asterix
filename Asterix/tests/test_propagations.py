@@ -1,5 +1,45 @@
 import numpy as np
-from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil
+from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil, fft_choosecenter
+from Asterix.utils import quickfits
+
+
+def test_mft_fft():
+    """
+    Test that MFT and FFTs give similar results to the numerical noise level
+    """
+    # normal pupil
+    radpup = 10
+    pup = roundpupil(radpup * 4, radpup, grey_pup_bin_factor=4, center_pos='b')
+
+    # measure the FFT PSF
+    fftpup = np.abs(fft_choosecenter(pup, center_pos='bb')**2)
+
+    # measure the MFT PSF with the same resolution
+    mftpup128_same_sizeffft = np.abs(mft(pup, radpup * 2, radpup * 4, radpup * 2, dtype_complex='complex128')**2)
+
+    assert np.allclose(fftpup, mftpup128_same_sizeffft, rtol=0, atol=3e-10,
+                       equal_nan=True), "PSF from MFT is not equal to PSF from FFT ('centered between pixel' case)"
+
+    # normal pupil
+    radpup = 10
+
+    pup = roundpupil(radpup * 4, radpup, grey_pup_bin_factor=4, center_pos='b')
+
+    # measure the FFT PSF
+    fftpup = np.abs(fft_choosecenter(pup, center_pos='bp')**2)
+
+    # measure the MFT PSF with the same resolution
+    mftpup128_same_sizeffft = np.abs(
+        mft(pup,
+            radpup * 2,
+            radpup * 4,
+            radpup * 2,
+            X_offset_output=0.5,
+            Y_offset_output=0.5,
+            dtype_complex='complex128')**2)
+
+    assert np.allclose(fftpup, mftpup128_same_sizeffft, rtol=0, atol=3e-10,
+                       equal_nan=True), "PSF from MFT is not equal to PSF from FFT ('centered on pixel' case)"
 
 
 def test_mft_centering():
@@ -10,8 +50,8 @@ def test_mft_centering():
     rad = pdim / 2
     pup = roundpupil(pdim, rad, center_pos='b')
 
-    samp = 4
-    efield = mft(pup, real_dim_input=pdim, dim_output=pdim, nbres=samp, dtype_complex='complex128')
+    num = 4
+    efield = mft(pup, real_dim_input=pdim, dim_output=pdim, nbres=num, dtype_complex='complex128')
     img = np.abs(efield)**2
 
     assert np.allclose(img, np.transpose(img), rtol=0, atol=1e-10,
