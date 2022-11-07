@@ -60,7 +60,7 @@ def test_butterworth():
 def test_prop_area_sampling():
     dim = 512
     rad = dim / 2
-    samp_outer = 4
+    samp_outer = 2
     nbres_direct = dim / samp_outer
 
     pup = roundpupil(dim, rad, grey_pup_bin_factor=10)
@@ -90,4 +90,4 @@ def test_prop_area_sampling():
 
     # Comparison
     assert np.sum(np.abs(post_ls_areas)**2) < np.sum(np.abs(post_ls_uniform)**2)
-    assert (np.max(coro_psf_areas) / np.max(coro_psf_uniform)) < 3e-2
+    assert (np.max(coro_psf_areas) / np.max(coro_psf_uniform)) < 9e-4
