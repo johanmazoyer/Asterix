@@ -1,5 +1,5 @@
 import numpy as np
-from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil, fft_choosecenter
+from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil, fft_choosecenter, crop_or_pad_image
 from Asterix.utils import quickfits
 
 
@@ -44,7 +44,8 @@ def test_mft_fft():
 
 def test_mft_centering():
     """
-    Test default centering of MFT, which in Asterix is defined to be from in between pixels to in between pixels.
+    Test default centering of MFT, which in Asterix is defined to be from in between
+    pixels to in between pixels by default.
     """
     pdim = 8
     rad = pdim / 2
@@ -58,6 +59,27 @@ def test_mft_centering():
                        equal_nan=True), "PSF from MFT is not symmetric (transpose PSF != PSF)"
     assert np.allclose(img, np.flip(img, axis=0), rtol=0, atol=1e-10,
                        equal_nan=True), "PSF from MFT is not symmetric (flip PSF != PSF)"
+
+
+def test_mft_back_and_forth():
+    """
+    Test that 
+    """
+
+    radpup = 10
+    pup = roundpupil(radpup * 2, radpup, grey_pup_bin_factor=4, center_pos='b')
+
+    efield = mft(pup, radpup * 2, radpup * 4, radpup * 2, dtype_complex='complex128', inverse=False)
+
+    pup_back = mft(efield,
+                   real_dim_input=radpup * 4,
+                   dim_output=radpup * 2,
+                   nbres=radpup * 2,
+                   dtype_complex='complex128',
+                   inverse=True)
+
+    assert np.allclose(pup, np.transpose(np.real(pup_back)), rtol=0, atol=1e-12,
+                       equal_nan=True), "MFT-1[MFT[Pupil]] is not equal to Pupil, something is wrong with MFT"
 
 
 def test_butterworth():
