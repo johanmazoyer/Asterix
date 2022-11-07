@@ -75,6 +75,12 @@ class OpticalSystem:
         self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_resFP" + str(round(
             self.Science_sampling, 2)) + "_dimFP" + str(int(self.dimScience))
 
+        grey_pup_bool = modelconfig["grey_pupils"]
+        if grey_pup_bool:
+            self.grey_pup_bin_factor = 10  # this is hardcoded here, as it is internal cooking
+        else:
+            self.grey_pup_bin_factor = 1
+
         # we measure the AA and BB matrix and norm0 for all MFTs used to go to final focal plane
         # TODO in practice, those will be remeasured each time we initialize an OpticalSystem
         # I am not sure this is a problem because we only do it a few times (~10 in thd2)
@@ -358,7 +364,9 @@ class OpticalSystem:
         transmission : float
             ratio exit flux  / clear entrance pupil flux
         """
-        clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
+        clear_entrance_pupil = phase_ampl.roundpupil(self.dim_overpad_pupil,
+                                                     self.prad,
+                                                     grey_pup_bin_factor=self.grey_pup_bin_factor)
 
         # all parameter can be passed here, but in the case there is a coronagraph,
         # we pass noFPM = True and noentrance Field by default
@@ -557,7 +565,9 @@ class OpticalSystem:
                         self.dim_overpad_pupil)
 
                     # Set the average to 0 inside entrancepupil
-                    pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
+                    pup_here = phase_ampl.roundpupil(self.dim_overpad_pupil,
+                                                     self.prad,
+                                                     grey_pup_bin_factor=self.grey_pup_bin_factor)
                     testbedampl = (testbedampl - np.mean(testbedampl[np.where(pup_here != 0)])) * pup_here
                     testbedampl = testbedampl / np.std(testbedampl[np.where(pup_here == 1.)]) * 0.1
                     return testbedampl
