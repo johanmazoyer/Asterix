@@ -67,9 +67,6 @@ class OpticalSystem:
             delta_wav_interval = self.Delta_wav / self.nb_wav
             self.wav_vec = self.wavelength_0 + (np.arange(self.nb_wav) - self.nb_wav // 2) * delta_wav_interval
 
-            delta_wav_interval = self.Delta_wav / self.nb_wav
-            self.wav_vec = self.wavelength_0 + (np.arange(self.nb_wav) - self.nb_wav // 2) * delta_wav_interval
-
         else:
             self.wav_vec = np.array([self.wavelength_0])
             self.nb_wav = 1
