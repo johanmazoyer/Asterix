@@ -99,6 +99,33 @@ class Estimator:
                 raise ValueError((f"{wavei} is not in testbed.wav_vec. 'nb_wav_estim' parameter",
                                   "must be equal or a divisor of 'nb_wav' parameter (both must be odd)"))
 
+        if self.polychrom == 'centralwl':
+            # For now estimation BW and testbed BW are the same can be easily changed
+            self.delta_wave_estim = testbed.Delta_wav
+            # same for the central bandwidth, we can imagine we go wild and correct for offseted BW
+            wavelength_0_estim = testbed.wavelength_0
+
+            self.nb_wav_estim = Estimationconfig["nb_wav_estim"]
+
+            # we measure the WL for each individual monochromatic channels
+            # there are a lot of room for improvement, see the stuff they do on FALCO
+            if self.delta_wave_estim != 0:
+                if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
+                    raise Exception("please set nb_wav_estim parameter to an odd number > 1")
+
+                delta_wav_interval = self.Delta_wav / self.nb_wav
+                self.wav_vec = self.wavelength_0 + (np.arange(self.nb_wav) - self.nb_wav // 2) * delta_wav_interval
+            else:
+                self.wav_vec_estim = np.array([wavelength_0_estim])
+                self.nb_wav_estim = 1
+
+            for wavei in self.wav_vec_estim:
+                if wavei not in testbed.wav_vec:
+                    raise ValueError((f"{wavei} is not in testbed.wav_vec. 'nb_wav_estim' parameter",
+                                      "must be equal or a divisor of 'nb_wav' parameter (both must be odd)"))
+
+            _, _, self.norm_monochrom_estim, _ = testbed.individual_normalizations(self.wav_vec_estim)
+
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 
         if self.Estim_sampling < 3:
