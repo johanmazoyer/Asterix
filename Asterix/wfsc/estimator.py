@@ -113,8 +113,9 @@ class Estimator:
                 if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
                     raise Exception("please set nb_wav_estim parameter to an odd number > 1")
 
-                delta_wav_interval = self.Delta_wav / self.nb_wav
-                self.wav_vec = self.wavelength_0 + (np.arange(self.nb_wav) - self.nb_wav // 2) * delta_wav_interval
+                delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
+                self.wav_vec_estim = wavelength_0_estim + (np.arange(self.nb_wav_estim) -
+                                                           self.nb_wav_estim // 2) * delta_wav_estim_interval
             else:
                 self.wav_vec_estim = np.array([wavelength_0_estim])
                 self.nb_wav_estim = 1
