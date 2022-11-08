@@ -493,7 +493,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         return vortex
 
-    def WrappedVortex(self, offset=0, cen_shift=(0, 0), inclination_x=None, inclination_y=None):
+    def WrappedVortex(self, offset=0, cen_shift=(0, 0), inclination_x=0, inclination_y=0):
         """Create a wrapped vortex coronagraph.
 
         Parameters
@@ -502,9 +502,9 @@ class Coronagraph(optsy.OpticalSystem):
             General offset to the whole ramp; default 0.
         cen_shift : tuple of floats
             x- and y-shift of the center of the mask with respect to the center of the array; default (0,0).
-        inclination_x : float, default None
+        inclination_x : float, default 0
             Inclination of the phase mask around the x-axis in degrees.
-        inclination_y : float, default None
+        inclination_y : float, default 0
             Inclination of the phase mask around the y-axis in degrees.
 
         Returns
@@ -659,7 +659,7 @@ def fqpm_mask(dim):
 
 
 def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0, 0),
-                               inclination_x=None, inclination_y=None):
+                               inclination_x=0, inclination_y=0):
     """Create a wrapped vortex phase mask.
 
     Analytical calculation of this phase mask coronagraph see [Galicher2020]_.
@@ -689,9 +689,9 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
     cen_shift : tuple of floats
         x- and y-shift of the center of the mask with respect to the center of the array, which is between pixels as
         long as 'dim' is even; default (0,0).
-    inclination_x : float, default None
+    inclination_x : float, default 0
         Inclination of the phase mask around the x-axis in degrees.
-    inclination_y : float, default None
+    inclination_y : float, default 0
         Inclination of the phase mask around the y-axis in degrees.
 
     Returns
@@ -735,9 +735,11 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
         ty = (np.arange(dim) - dim / 2 - cen_shift[0] + 0.5)
         tx = (np.arange(dim) - dim / 2 - cen_shift[1] + 0.5)
 
-        if inclination_x is not None:
+        if np.abs(inclination_x > 90) and np.abs(inclination_y > 90):
+            raise ValueError("Inclination angles should be between -90 and 90 degrees.")
+        if inclination_x != 0:
             tx /= np.cos(np.deg2rad(inclination_x))
-        if inclination_y is not None:
+        if inclination_y != 0:
             ty /= np.cos(np.deg2rad(inclination_y))
 
         xx, yy = np.meshgrid(ty, tx)
