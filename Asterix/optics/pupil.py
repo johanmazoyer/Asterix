@@ -77,7 +77,7 @@ class Pupil(optsy.OpticalSystem):
         # known cases, with known responses
         # default case: round pupil
         if (PupType is None) or (PupType == "RoundPup"):
-            self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad)
+            self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad, grey_pup_bin_factor=self.grey_pup_bin_factor)
             angle_rotation = 0
             if isinstance(prad, int) or prad.is_integer():
                 self.string_os += '_RoundPup' + str(int(prad))
@@ -161,7 +161,15 @@ class Pupil(optsy.OpticalSystem):
 
                 pup_fits_right_size = rebin(pup_fits, int(pup_fits.shape[0] / (2 * self.prad)), center_on_pixel=False)
 
+                if self.grey_pup_bin_factor == 1:
+                    # grey_pupils parameter is false, so we make the pupil binary
+                    pup_fits_right_size[np.where(pup_fits_right_size >= 0.5)] = 1
+                    pup_fits_right_size[np.where(pup_fits_right_size < 0.5)] = 0
+
             self.pup = crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
+
+        if self.grey_pup_bin_factor > 1 and (not PupType == "Clear"):
+            self.string_os += 'grey'
 
         # initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
