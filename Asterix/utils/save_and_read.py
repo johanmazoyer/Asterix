@@ -49,15 +49,21 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
 
 
 def quickfits(tab, folder='', name='tmp'):
-    """Johan's quick function.
+    """Quickly save an image to a fits file.
 
-    Function to quickly save in fits.
     By default, it will save on the desktop with a random name to avoid overwriting.
-    Not sure the default saving on Desktop works for windows OS, but it work on mac and linux
+    Not sure if the default saving on Desktop works for Windows, but it works fine on MacOS and Linux.
 
-    tab: array to be saved
-    folder (optional): directory where to save the .fits. by default the Desktop.
-    name (optional): name of the .fits. By defaut tmp_currenttimeinms.fits
+    AUTHOR: Johan Mazoyer
+
+    Parameters
+    ----------
+    tab : ndarray
+        Image to be saved to disk.
+    folder : string
+        Path to save file location.
+    name : string
+        File name of images to save to disk.
     """
 
     if folder == '':
@@ -69,12 +75,12 @@ def quickfits(tab, folder='', name='tmp'):
             # of you are french are you ?
             folder = bureau
         else:
-            raise FileNotFoundError("I cannot find your desktop, please give me a folder to save the .fits file")
+            raise FileNotFoundError("I cannot find your desktop, please give me a folder to save the fits file to.")
 
     if name == 'tmp':
         current_time_str = datetime.datetime.today().strftime('_%H_%M_%S_%f')[:-3]
         name = name + current_time_str
-    fits.writeto(os.path.join(folder, name + '.fits'), tab, overwrite=True)
+    fits.writeto(os.path.join(folder, f'{name}.fits'), tab, overwrite=True)
 
 
 def progress(count, total, status=''):
