@@ -381,7 +381,8 @@ class Coronagraph(optsy.OpticalSystem):
                 fpm_array = np.ones((self.dimScience, self.dimScience))
             else:
                 fpm_array = FPmsk
-            lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod, fpm_array,
+            lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod,
+                                                                    fpm_array,
                                                                     nbres=np.array([0.1, 5, 50, 100]))
 
         else:
@@ -587,7 +588,7 @@ class Coronagraph(optsy.OpticalSystem):
         """
 
         rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
-        ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm, rad_LyotFP_pix)
+        ClassicalLyotFPM = 1. - phase_ampl.roundpupil(self.dim_fpm, rad_LyotFP_pix, grey_pup_bin_factor=1)
 
         ClassicalLyotFPM_allwl = []
         for wav in self.wav_vec:
