@@ -1,34 +1,26 @@
 import numpy as np
-from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil, fft_choosecenter, crop_or_pad_image
+from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil, fft_choosecenter
 
 
-def test_mft_fft():
-    """
-    Test that MFT and FFTs give similar results to the numerical noise level
-    """
-    # normal pupil
+def test_mft_fft_comparison():
+    """Test that MFT and FFT give similar results to the numerical noise level"""
     radpup = 10
     pup = roundpupil(radpup * 4, radpup, grey_pup_bin_factor=4, center_pos='b')
 
-    # measure the FFT PSF
+    # PSF from FFT, both planes centered between pixels
     fftpup = np.abs(fft_choosecenter(pup, center_pos='bb')**2)
 
-    # measure the MFT PSF with the same resolution
-    mftpup128_same_sizeffft = np.abs(mft(pup, radpup * 2, radpup * 4, radpup * 2, dtype_complex='complex128')**2)
+    # PSF from MFT with the same resolution like FFT
+    mftpup = np.abs(mft(pup, radpup * 2, radpup * 4, radpup * 2, dtype_complex='complex128')**2)
 
-    assert np.allclose(fftpup, mftpup128_same_sizeffft, rtol=0, atol=3e-10,
-                       equal_nan=True), "PSF from MFT is not equal to PSF from FFT ('centered between pixel' case)"
+    assert np.allclose(fftpup, mftpup, rtol=0, atol=3e-10, equal_nan=True),\
+        "PSF from MFT is not equal to PSF from FFT ('centered between pixel' case)"
 
-    # normal pupil
-    radpup = 10
-
-    pup = roundpupil(radpup * 4, radpup, grey_pup_bin_factor=4, center_pos='b')
-
-    # measure the FFT PSF
+    # PSF from FFT, from a plane centered between pixels to a plane centered on a pixel
     fftpup = np.abs(fft_choosecenter(pup, center_pos='bp')**2)
 
-    # measure the MFT PSF with the same resolution
-    mftpup128_same_sizeffft = np.abs(
+    # PSF from FFT with the same resolution like FFT and output plane shifted wrt input plane
+    mftpup = np.abs(
         mft(pup,
             radpup * 2,
             radpup * 4,
@@ -37,13 +29,12 @@ def test_mft_fft():
             Y_offset_output=0.5,
             dtype_complex='complex128')**2)
 
-    assert np.allclose(fftpup, mftpup128_same_sizeffft, rtol=0, atol=3e-10,
-                       equal_nan=True), "PSF from MFT is not equal to PSF from FFT ('centered on pixel' case)"
+    assert np.allclose(fftpup, mftpup, rtol=0, atol=3e-10, equal_nan=True),\
+        "PSF from MFT is not equal to PSF from FFT ('centered on pixel' case)"
 
 
 def test_mft_centering():
-    """
-    Test default centering of MFT, which in Asterix is defined to be from in between
+    """Test default centering of MFT, which in Asterix is defined to be from in between
     pixels to in between pixels by default.
     """
     pdim = 8
@@ -61,24 +52,21 @@ def test_mft_centering():
 
 
 def test_mft_back_and_forth():
-    """
-    Test that 
-    """
+    """Test that the inverse MFT of an MFT yields the original result."""
 
     radpup = 10
     pup = roundpupil(radpup * 2, radpup, grey_pup_bin_factor=4, center_pos='b')
 
     efield = mft(pup, radpup * 2, radpup * 4, radpup * 2, dtype_complex='complex128', inverse=False)
+    efield_back = mft(efield,
+                      real_dim_input=radpup * 4,
+                      dim_output=radpup * 2,
+                      nbres=radpup * 2,
+                      dtype_complex='complex128',
+                      inverse=True)
 
-    pup_back = mft(efield,
-                   real_dim_input=radpup * 4,
-                   dim_output=radpup * 2,
-                   nbres=radpup * 2,
-                   dtype_complex='complex128',
-                   inverse=True)
-
-    assert np.allclose(pup, np.transpose(np.real(pup_back)), rtol=0, atol=1e-12,
-                       equal_nan=True), "MFT-1[MFT[Pupil]] is not equal to Pupil, something is wrong with MFT"
+    assert np.allclose(pup, np.transpose(np.real(efield_back)), rtol=0, atol=1e-12, equal_nan=True),\
+        "MFT-1[MFT[Pupil]] is not equal to Pupil, something is wrong with MFT"
 
 
 def test_butterworth():
