@@ -493,7 +493,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         return vortex
 
-    def WrappedVortex(self, offset=0, cen_shift=(0, 0)):
+    def WrappedVortex(self, offset=0, cen_shift=(0, 0), inclination_x=None, inclination_y=None):
         """Create a wrapped vortex coronagraph.
 
         Parameters
@@ -502,6 +502,10 @@ class Coronagraph(optsy.OpticalSystem):
             General offset to the whole ramp; default 0.
         cen_shift : tuple of floats
             x- and y-shift of the center of the mask with respect to the center of the array; default (0,0).
+        inclination_x : float, default None
+            Inclination of the phase mask around the x-axis in degrees.
+        inclination_y : float, default None
+            Inclination of the phase mask around the y-axis in degrees.
 
         Returns
         -------
@@ -522,7 +526,9 @@ class Coronagraph(optsy.OpticalSystem):
                                                              phval=phval,
                                                              jump=jump,
                                                              offset=offset,
-                                                             cen_shift=cen_shift)
+                                                             cen_shift=cen_shift,
+                                                             inclination_x=inclination_x,
+                                                             inclination_y=inclination_y)
 
         wrapped_vortex = list()
         for i, wav in enumerate(self.wav_vec):
@@ -652,7 +658,8 @@ def fqpm_mask(dim):
     return fqpm_thick
 
 
-def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0, 0)):
+def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0, 0),
+                               inclination_x=None, inclination_y=None):
     """Create a wrapped vortex phase mask.
 
     Analytical calculation of this phase mask coronagraph see [Galicher2020]_.
@@ -682,6 +689,10 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
     cen_shift : tuple of floats
         x- and y-shift of the center of the mask with respect to the center of the array, which is between pixels as
         long as 'dim' is even; default (0,0).
+    inclination_x : float, default None
+        Inclination of the phase mask around the x-axis in degrees.
+    inclination_y : float, default None
+        Inclination of the phase mask around the y-axis in degrees.
 
     Returns
     -------
@@ -723,6 +734,12 @@ def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperio
         # Define the 2D theta array
         ty = (np.arange(dim) - dim / 2 - cen_shift[0] + 0.5)
         tx = (np.arange(dim) - dim / 2 - cen_shift[1] + 0.5)
+
+        if inclination_x is not None:
+            tx /= np.cos(np.deg2rad(inclination_x))
+        if inclination_y is not None:
+            ty /= np.cos(np.deg2rad(inclination_y))
+
         xx, yy = np.meshgrid(ty, tx)
         theta = (-(np.arctan2(yy, xx) - np.pi) + offset) % (2 * np.pi)
 
