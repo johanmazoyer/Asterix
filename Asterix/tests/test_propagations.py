@@ -1,23 +1,72 @@
 import numpy as np
-from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil
+from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil, fft_choosecenter
+
+
+def test_mft_fft_comparison():
+    """Test that MFT and FFT give similar results to the numerical noise level"""
+    radpup = 10
+    pup = roundpupil(radpup * 4, radpup, grey_pup_bin_factor=4, center_pos='b')
+
+    # PSF from FFT, both planes centered between pixels
+    fftpup = np.abs(fft_choosecenter(pup, center_pos='bb')**2)
+
+    # PSF from MFT with the same resolution like FFT
+    mftpup = np.abs(mft(pup, radpup * 2, radpup * 4, radpup * 2, dtype_complex='complex128')**2)
+
+    assert np.allclose(fftpup, mftpup, rtol=0, atol=3e-10, equal_nan=True),\
+        "PSF from MFT is not equal to PSF from FFT ('centered between pixel' case)"
+
+    # PSF from FFT, from a plane centered between pixels to a plane centered on a pixel
+    fftpup = np.abs(fft_choosecenter(pup, center_pos='bp')**2)
+
+    # PSF from FFT with the same resolution like FFT and output plane shifted wrt input plane
+    mftpup = np.abs(
+        mft(pup,
+            radpup * 2,
+            radpup * 4,
+            radpup * 2,
+            X_offset_output=0.5,
+            Y_offset_output=0.5,
+            dtype_complex='complex128')**2)
+
+    assert np.allclose(fftpup, mftpup, rtol=0, atol=3e-10, equal_nan=True),\
+        "PSF from MFT is not equal to PSF from FFT ('centered on pixel' case)"
 
 
 def test_mft_centering():
-    """
-    Test default centering of MFT, which in Asterix is defined to be from in between pixels to in between pixels.
+    """Test default centering of MFT, which in Asterix is defined to be from in between
+    pixels to in between pixels by default.
     """
     pdim = 8
     rad = pdim / 2
     pup = roundpupil(pdim, rad, center_pos='b')
 
-    samp = 4
-    efield = mft(pup, real_dim_input=pdim, dim_output=pdim, nbres=samp, dtype_complex='complex128')
+    num = 4
+    efield = mft(pup, real_dim_input=pdim, dim_output=pdim, nbres=num, dtype_complex='complex128')
     img = np.abs(efield)**2
 
     assert np.allclose(img, np.transpose(img), rtol=0, atol=1e-10,
                        equal_nan=True), "PSF from MFT is not symmetric (transpose PSF != PSF)"
     assert np.allclose(img, np.flip(img, axis=0), rtol=0, atol=1e-10,
                        equal_nan=True), "PSF from MFT is not symmetric (flip PSF != PSF)"
+
+
+def test_mft_back_and_forth():
+    """Test that the inverse MFT of an MFT yields the original result."""
+
+    radpup = 10
+    pup = roundpupil(radpup * 2, radpup, grey_pup_bin_factor=4, center_pos='b')
+
+    efield = mft(pup, radpup * 2, radpup * 4, radpup * 2, dtype_complex='complex128', inverse=False)
+    efield_back = mft(efield,
+                      real_dim_input=radpup * 4,
+                      dim_output=radpup * 2,
+                      nbres=radpup * 2,
+                      dtype_complex='complex128',
+                      inverse=True)
+
+    assert np.allclose(pup, np.transpose(np.real(efield_back)), rtol=0, atol=1e-12, equal_nan=True),\
+        "MFT-1[MFT[Pupil]] is not equal to Pupil, something is wrong with MFT"
 
 
 def test_butterworth():
