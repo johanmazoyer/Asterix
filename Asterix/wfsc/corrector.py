@@ -205,13 +205,12 @@ class Corrector:
             self.FirstIterNewMat = True
 
             interMat = wfc.create_interaction_matrix(testbed,
-                                                     estimator.dimEstim,
+                                                     estimator,
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
                                                      initial_DM_voltage=initial_DM_voltage,
                                                      input_wavefront=input_wavefront,
                                                      MatrixType=self.MatrixType,
-                                                     polychrom=estimator.polychrom,
                                                      dir_save_all_planes=None,
                                                      visu=False)
 
