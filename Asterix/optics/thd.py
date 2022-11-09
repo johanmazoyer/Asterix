@@ -7,7 +7,7 @@ from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
 class THD2(Testbed):
     """Testbed object configured for THD2, from input configfile.
 
-    AUTHOR : ILa
+    AUTHOR : ILa, Nov 2022
 
     Attributes
     ----------
