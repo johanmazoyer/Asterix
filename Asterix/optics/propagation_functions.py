@@ -618,6 +618,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
     phase_ramp = shift_phase_ramp(dim_pup, shift[0], shift[1])
     inverted_phase_ramp = shift_phase_ramp(dim_pup, -shift[0], -shift[1])
 
+    pup = np.array(pup, copy=True, dtype='complex128')
     pup *= phase_ramp
 
     # Innermost part of the focal plane
