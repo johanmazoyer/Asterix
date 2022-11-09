@@ -99,33 +99,6 @@ class Estimator:
                 raise ValueError((f"{wavei} is not in testbed.wav_vec. 'nb_wav_estim' parameter",
                                   "must be equal or a divisor of 'nb_wav' parameter (both must be odd)"))
 
-        # For now estimation central wl and simu central wl are the same
-        wavelength_0_estim = testbed.wavelength_0
-
-        if self.polychrom == 'multiwl' and self.nb_wav_estim > 1:
-            # For now estimation BW and testbed BW are the same can be easily changed
-            self.delta_wave_estim = testbed.Delta_wav
-
-            self.nb_wav_estim = Estimationconfig["nb_wav_estim"]
-
-            # we measure the WL for each individual monochromatic channels
-            if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
-                raise Exception("please set nb_wav_estim parameter to an odd number > 1")
-
-            delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
-            self.wav_vec_estim = wavelength_0_estim + (np.arange(self.nb_wav_estim) -
-                                                       self.nb_wav_estim // 2) * delta_wav_estim_interval
-        else:
-            self.wav_vec_estim = np.array([wavelength_0_estim])
-            self.nb_wav_estim = 1
-
-        for wavei in self.wav_vec_estim:
-            if wavei not in testbed.wav_vec:
-                raise ValueError((f"{wavei} is not in testbed.wav_vec. 'nb_wav_estim' parameter",
-                                  "must be equal or a divisor of 'nb_wav' parameter (both must be odd)"))
-
-        _, _, self.norm_monochrom_estim, _ = testbed.individual_normalizations(self.wav_vec_estim)
-
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 
         if self.Estim_sampling < 3:
@@ -271,13 +244,10 @@ class Estimator:
             # photon_noise parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
             # case, we reduce it to self.delta_wav_estim_individual bandwidth
             if self.polychrom == 'multiwl':
-<<<<<<< HEAD
                 if 'photon_noise' in kwargs.keys() and 'nb_photons' in kwargs.keys():
                     if kwargs['photon_noise']:
                         kwargs['nb_photons'] = kwargs['nb_photons'] / testbed.Delta_wav * self.delta_wav_estim_individual
 
-=======
->>>>>>> now working for multi wl correction
                 for i, wavei in enumerate(self.wav_vec_estim):
                     Difference = wfs.simulate_pw_difference(entrance_EF[i],
                                                             testbed,
