@@ -1,4 +1,5 @@
 import numpy as np
+from Asterix.optics import shift_phase_ramp
 from Asterix.utils import crop_or_pad_image
 
 
@@ -567,7 +568,8 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     return butterworth
 
 
-def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp_outer=2, filter_order=15, alpha=1.5):
+def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shift=(0, 0), samp_outer=2, filter_order=15,
+                               alpha=1.5):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
 
@@ -588,6 +590,9 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
         Complex electric field in the focal plane of the focal-plane mask.
     nbres : 1D array or list
         List of the number of resolution elements in the total image plane for all propagation layers.
+    shift : tuple, default (0, 0)
+        Shift of FPM with respect to opcial axis in pixels. This is done by introducing a tip/tilt on the input
+        wavefront in the pupil that is subsequently taken out in the Lyot plane after the full propagation.
     samp_outer : float
         Sampling in the outermost layer of propagations.
     filter_order : int
@@ -608,6 +613,12 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
 
     dim_pup = pup.shape[0]
     dim_fpm = fpm.shape[0]
+
+    # Add tip-tilt to in pupil wavefront to simulate FPM offsets
+    phase_ramp = shift_phase_ramp(dim_pup, shift[0], shift[1])
+    inverted_phase_ramp = shift_phase_ramp(dim_pup, -shift[0], -shift[1])
+
+    pup *= phase_ramp
 
     # Innermost part of the focal plane
     but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, -0.5, -0.5)
@@ -646,6 +657,6 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), samp
 
     # Total E-field before the LS
     efield_before_ls += ef_pre_ls_outer
-    efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup)
+    efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup) * inverted_phase_ramp
 
     return efield_before_ls
