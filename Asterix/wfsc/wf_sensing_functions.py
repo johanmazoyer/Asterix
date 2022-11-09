@@ -8,7 +8,7 @@ from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
-def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom, **kwargs):
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom, wav_vec_estim, **kwargs):
     """Build the nbwl times interaction matrix for pair-wise probing.
 
     AUTHOR : Johan Mazoyer
@@ -34,6 +34,8 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, m
         - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
         - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
+    wav_vec_estim: list of float
+        list of wavelength to do the estimation used in the case of polychrom == 'multiwl'
 
     Returns
     ------
@@ -56,7 +58,7 @@ def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, m
                                       **kwargs))
 
     elif polychrom == 'multiwl':
-        for wave_i in testbed.wav_vec:
+        for wave_i in wav_vec_estim:
             return_matrix.append(
                 create_singlewl_pw_matrix(testbed,
                                           amplitude,
@@ -132,8 +134,6 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
     #### TODO Careful. right now, you can only do estimation at the wl that are in
     ### the testbed.wav_vec vector. If you're not, you'll run into a bug in
     ### testbed.todetector(wavelength=wavelength)
-    ### if we want to do AJ'trick where we optimize the wl to estimate for a given BW
-    ### we have to change a bit the normalization
     psi0 = testbed.todetector(wavelength=wavelength)
 
     k = 0

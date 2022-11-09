@@ -73,33 +73,32 @@ class Estimator:
         self.technique = Estimationconfig["estimation"].lower()
         self.polychrom = Estimationconfig["polychromatic"].lower()
 
-        if self.polychrom == 'centralwl':
+        # For now estimation central wl and simu central wl are the same
+        wavelength_0_estim = testbed.wavelength_0
+
+        if self.polychrom == 'multiwl' and self.nb_wav_estim > 1:
             # For now estimation BW and testbed BW are the same can be easily changed
             self.delta_wave_estim = testbed.Delta_wav
-            # same for the central bandwidth, we can imagine we go wild and correct for offseted BW
-            wavelength_0_estim = testbed.wavelength_0
 
             self.nb_wav_estim = Estimationconfig["nb_wav_estim"]
 
             # we measure the WL for each individual monochromatic channels
-            # there are a lot of room for improvement, see the stuff they do on FALCO
-            if self.delta_wave_estim != 0:
-                if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
-                    raise Exception("please set nb_wav_estim parameter to an odd number > 1")
+            if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
+                raise Exception("please set nb_wav_estim parameter to an odd number > 1")
 
-                delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
-                self.wav_vec_estim = wavelength_0_estim + (np.arange(self.nb_wav_estim) -
-                                                           self.nb_wav_estim // 2) * delta_wav_estim_interval
-            else:
-                self.wav_vec_estim = np.array([wavelength_0_estim])
-                self.nb_wav_estim = 1
+            delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
+            self.wav_vec_estim = wavelength_0_estim + (np.arange(self.nb_wav_estim) -
+                                                       self.nb_wav_estim // 2) * delta_wav_estim_interval
+        else:
+            self.wav_vec_estim = np.array([wavelength_0_estim])
+            self.nb_wav_estim = 1
 
-            for wavei in self.wav_vec_estim:
-                if wavei not in testbed.wav_vec:
-                    raise ValueError((f"{wavei} is not in testbed.wav_vec. 'nb_wav_estim' parameter",
-                                      "must be equal or a divisor of 'nb_wav' parameter (both must be odd)"))
+        for wavei in self.wav_vec_estim:
+            if wavei not in testbed.wav_vec:
+                raise ValueError((f"{wavei} is not in testbed.wav_vec. 'nb_wav_estim' parameter",
+                                  "must be equal or a divisor of 'nb_wav' parameter (both must be odd)"))
 
-            _, _, self.norm_monochrom_estim, _ = testbed.individual_normalizations(self.wav_vec_estim)
+        _, _, self.norm_monochrom_estim, _ = testbed.individual_normalizations(self.wav_vec_estim)
 
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 
@@ -127,7 +126,7 @@ class Estimator:
             testbed.name_DM_to_probe_in_PW = self.find_DM_to_probe(testbed)
 
             self.PWMatrix = wfs.create_pw_matrix(testbed, self.amplitudePW, self.posprobes, self.dimEstim, cutsvdPW,
-                                                 matrix_dir, self.polychrom)
+                                                 matrix_dir, self.polychrom, self.wav_vec_estim)
 
             # Saving PW matrix in Labview directory
             if save_for_bench:
@@ -139,7 +138,7 @@ class Estimator:
                 if self.polychrom in ['centralwl', 'broadband_pwprobes']:
                     wl_in_pw_matrix = [testbed.wavelength_0]
                 else:
-                    wl_in_pw_matrix = testbed.wav_vec
+                    wl_in_pw_matrix = self.wav_vec_estim
 
                 for k, wave_k in enumerate(wl_in_pw_matrix):
                     probes = np.zeros((len(self.posprobes), testbed.DM3.number_act), dtype=np.float32)
@@ -244,7 +243,7 @@ class Estimator:
             result_estim = []
 
             if self.polychrom == 'multiwl':
-                for i, wavei in enumerate(testbed.wav_vec):
+                for i, wavei in enumerate(self.wav_vec_estim):
                     Difference = wfs.simulate_pw_difference(entrance_EF[i],
                                                             testbed,
                                                             self.posprobes,
