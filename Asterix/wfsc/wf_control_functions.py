@@ -15,12 +15,14 @@ from Asterix.wfsc.estimator import Estimator
 
 
 def create_interaction_matrix(testbed: Testbed,
-                              estimator: Estimator,
+                              dimEstim,
                               amplitudeEFC,
                               matrix_dir,
                               initial_DM_voltage=0.,
                               input_wavefront=1.,
                               MatrixType='',
+                              polychrom='centralwl',
+                              wav_vec_estim=None,
                               dir_save_all_planes=None,
                               visu=False):
     """Create the jacobian matrix for Electric Field Conjugation. The Matrix is
@@ -46,8 +48,8 @@ def create_interaction_matrix(testbed: Testbed,
     testbed : Testbed Optical_element
         testbed structure with at least 1 DM
 
-    estimator: Estimator
-        Estimator object containing all information about the WF estimation.
+    dimEstim : int
+        size of the output image in teh estimator
 
     amplitudeEFC : float
         amplitude of the EFC probe on the DM
@@ -61,6 +63,11 @@ def create_interaction_matrix(testbed: Testbed,
         in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
 
+    polychrom : string
+        For polychromatic estimation and correction:
+        - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
+        - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
+        - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     initial_DM_voltage: 1D-array real
         initial DM voltage for all DMs
 
@@ -94,12 +101,15 @@ def create_interaction_matrix(testbed: Testbed,
                          "2D array of size (dim_overpad_pupil, dim_overpad_pupil) or a 3D array of size "
                          "(nb_wav, dim_overpad_pupil, dim_overpad_pupil)"))
 
+    if wav_vec_estim is None:
+        wav_vec_estim = testbed.wav_vec
+
     return_matrix = []
 
-    if estimator.polychrom in ['centralwl', 'broadband_pwprobes']:
+    if polychrom in ['centralwl', 'broadband_pwprobes']:
         return_matrix.append(
             create_singlewl_interaction_matrix(testbed,
-                                               estimator.dimEstim,
+                                               dimEstim,
                                                amplitudeEFC,
                                                testbed.wavelength_0,
                                                matrix_dir,
@@ -110,12 +120,12 @@ def create_interaction_matrix(testbed: Testbed,
                                                dir_save_all_planes=dir_save_all_planes,
                                                visu=visu))
 
-    elif estimator.polychrom == 'multiwl':
+    elif polychrom == 'multiwl':
 
-        for i, wave_i in enumerate(estimator.wav_vec_estim):
+        for i, wave_i in enumerate(wav_vec_estim):
             return_matrix.append(
                 create_singlewl_interaction_matrix(testbed,
-                                                   estimator.dimEstim,
+                                                   dimEstim,
                                                    amplitudeEFC,
                                                    wave_i,
                                                    matrix_dir,
@@ -125,7 +135,7 @@ def create_interaction_matrix(testbed: Testbed,
                                                    dir_save_all_planes=dir_save_all_planes,
                                                    visu=visu))
     else:
-        raise ValueError(estimator.polychrom + " is not a valid polychromatic estimation/correction mode")
+        raise ValueError(polychrom + " is not a valid polychromatic estimation/correction mode")
 
     return return_matrix
 
