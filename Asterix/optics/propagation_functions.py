@@ -591,7 +591,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
     nbres : 1D array or list
         List of the number of resolution elements in the total image plane for all propagation layers.
     shift : tuple, default (0, 0)
-        Shift of FPM with respect to opcial axis in pixels. This is done by introducing a tip/tilt on the input
+        Shift of FPM with respect to optcial axis in pixels. This is done by introducing a tip/tilt on the input
         wavefront in the pupil that is subsequently taken out in the Lyot plane after the full propagation.
     samp_outer : float
         Sampling in the outermost layer of propagations.
