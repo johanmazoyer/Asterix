@@ -8,6 +8,7 @@ from Asterix.utils import resizing, invert_svd, save_plane_in_fits
 from Asterix.optics import DeformableMirror, Testbed
 
 
+<<<<<<< HEAD
 def create_pw_matrix(testbed: Testbed,
                      amplitude,
                      posprobes,
@@ -17,6 +18,9 @@ def create_pw_matrix(testbed: Testbed,
                      polychrom,
                      wav_vec_estim=None,
                      **kwargs):
+=======
+def create_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, polychrom, wav_vec_estim, **kwargs):
+>>>>>>> now working for multi wl correction
     """Build the nbwl times interaction matrix for pair-wise probing.
 
     AUTHOR : Johan Mazoyer
@@ -42,7 +46,11 @@ def create_pw_matrix(testbed: Testbed,
         - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
         - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
+<<<<<<< HEAD
     wav_vec_estim: list of float, default None
+=======
+    wav_vec_estim: list of float
+>>>>>>> now working for multi wl correction
         list of wavelength to do the estimation used in the case of polychrom == 'multiwl'
 
     Returns

@@ -205,14 +205,17 @@ class Corrector:
             self.FirstIterNewMat = True
 
             interMat = wfc.create_interaction_matrix(testbed,
-                                                     estimator.dimEstim,
+                                                     estimator,
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
                                                      initial_DM_voltage=initial_DM_voltage,
                                                      input_wavefront=input_wavefront,
                                                      MatrixType=self.MatrixType,
+<<<<<<< HEAD
                                                      polychrom=estimator.polychrom,
                                                      wav_vec_estim=estimator.wav_vec_estim,
+=======
+>>>>>>> now working for multi wl correction
                                                      dir_save_all_planes=None,
                                                      visu=False)
 

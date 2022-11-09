@@ -15,14 +15,17 @@ from Asterix.wfsc.estimator import Estimator
 
 
 def create_interaction_matrix(testbed: Testbed,
-                              dimEstim,
+                              estimator: Estimator,
                               amplitudeEFC,
                               matrix_dir,
                               initial_DM_voltage=0.,
                               input_wavefront=1.,
                               MatrixType='',
+<<<<<<< HEAD
                               polychrom='centralwl',
                               wav_vec_estim=None,
+=======
+>>>>>>> now working for multi wl correction
                               dir_save_all_planes=None,
                               visu=False):
     """Create the jacobian matrix for Electric Field Conjugation. The Matrix is
@@ -48,8 +51,8 @@ def create_interaction_matrix(testbed: Testbed,
     testbed : Testbed Optical_element
         testbed structure with at least 1 DM
 
-    dimEstim : int
-        size of the output image in teh estimator
+    estimator: Estimator
+        Estimator object containing all information about the WF estimation.
 
     amplitudeEFC : float
         amplitude of the EFC probe on the DM
@@ -63,11 +66,6 @@ def create_interaction_matrix(testbed: Testbed,
         in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
 
-    polychrom : string
-        For polychromatic estimation and correction:
-        - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
-        - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
-        - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     initial_DM_voltage: 1D-array real
         initial DM voltage for all DMs
 
@@ -106,10 +104,10 @@ def create_interaction_matrix(testbed: Testbed,
 
     return_matrix = []
 
-    if polychrom in ['centralwl', 'broadband_pwprobes']:
+    if estimator.polychrom in ['centralwl', 'broadband_pwprobes']:
         return_matrix.append(
             create_singlewl_interaction_matrix(testbed,
-                                               dimEstim,
+                                               estimator.dimEstim,
                                                amplitudeEFC,
                                                testbed.wavelength_0,
                                                matrix_dir,
@@ -120,12 +118,18 @@ def create_interaction_matrix(testbed: Testbed,
                                                dir_save_all_planes=dir_save_all_planes,
                                                visu=visu))
 
+<<<<<<< HEAD
     elif polychrom == 'multiwl':
 
         for i, wave_i in enumerate(wav_vec_estim):
+=======
+    elif estimator.polychrom == 'multiwl':
+
+        for i, wave_i in enumerate(estimator.wav_vec_estim):
+>>>>>>> now working for multi wl correction
             return_matrix.append(
                 create_singlewl_interaction_matrix(testbed,
-                                                   dimEstim,
+                                                   estimator.dimEstim,
                                                    amplitudeEFC,
                                                    wave_i,
                                                    matrix_dir,
@@ -135,7 +139,7 @@ def create_interaction_matrix(testbed: Testbed,
                                                    dir_save_all_planes=dir_save_all_planes,
                                                    visu=visu))
     else:
-        raise ValueError(polychrom + " is not a valid polychromatic estimation/correction mode")
+        raise ValueError(estimator.polychrom + " is not a valid polychromatic estimation/correction mode")
 
     return return_matrix
 
