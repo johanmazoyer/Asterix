@@ -72,6 +72,7 @@ class Estimator:
 
         self.technique = Estimationconfig["estimation"].lower()
         self.polychrom = Estimationconfig["polychromatic"].lower()
+        self.nb_wav_estim = Estimationconfig["nb_wav_estim"]
 
         # For now estimation central wl and simu central wl are the same
         wavelength_0_estim = testbed.wavelength_0
@@ -80,7 +81,7 @@ class Estimator:
             # For now estimation BW and testbed BW are the same can be easily changed
             self.delta_wave_estim = testbed.Delta_wav
 
-            self.nb_wav_estim = Estimationconfig["nb_wav_estim"]
+            self.delta_wav_estim_individual = Estimationconfig["delta_wav_estim_individual"]
 
             # we measure the WL for each individual monochromatic channels
             if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
@@ -97,8 +98,6 @@ class Estimator:
             if wavei not in testbed.wav_vec:
                 raise ValueError((f"{wavei} is not in testbed.wav_vec. 'nb_wav_estim' parameter",
                                   "must be equal or a divisor of 'nb_wav' parameter (both must be odd)"))
-
-        _, _, self.norm_monochrom_estim, _ = testbed.individual_normalizations(self.wav_vec_estim)
 
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 
@@ -242,7 +241,13 @@ class Estimator:
 
             result_estim = []
 
+            # photon_noise parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
+            # case, we reduce it to self.delta_wav_estim_individual bandwidth
             if self.polychrom == 'multiwl':
+                if 'photon_noise' in kwargs.keys() and 'nb_photons' in kwargs.keys():
+                    if kwargs['photon_noise']:
+                        kwargs['nb_photons'] = kwargs['nb_photons'] / testbed.Delta_wav * self.delta_wav_estim_individual
+
                 for i, wavei in enumerate(self.wav_vec_estim):
                     Difference = wfs.simulate_pw_difference(entrance_EF[i],
                                                             testbed,
@@ -250,7 +255,8 @@ class Estimator:
                                                             self.dimEstim,
                                                             self.amplitudePW,
                                                             voltage_vector=voltage_vector,
-                                                            wavelengths=wavei)
+                                                            wavelengths=wavei,
+                                                            **kwargs)
 
                     result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[i], **kwargs))
 
@@ -261,7 +267,8 @@ class Estimator:
                                                         self.dimEstim,
                                                         self.amplitudePW,
                                                         voltage_vector=voltage_vector,
-                                                        wavelengths=testbed.wavelength_0)
+                                                        wavelengths=testbed.wavelength_0,
+                                                        **kwargs)
 
                 result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0], **kwargs))
             elif self.polychrom == 'broadband_pwprobes':
@@ -271,7 +278,8 @@ class Estimator:
                                                         self.dimEstim,
                                                         self.amplitudePW,
                                                         voltage_vector=voltage_vector,
-                                                        wavelengths=testbed.wav_vec)
+                                                        wavelengths=testbed.wav_vec,
+                                                        **kwargs)
                 result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0], **kwargs))
             else:
                 raise ValueError(self.polychrom + " is not a valid polychromatic estimation/correction mode")
