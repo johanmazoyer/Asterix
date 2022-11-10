@@ -322,11 +322,9 @@ class OpticalSystem:
         if in_contrast:
             if (wavelength_vec != self.wav_vec).all():
                 raise ValueError(("Careful: contrast normalization in todetector_intensity assumes "
-                                  "it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1 "
-                                  "and you want only one BW with the good contrast normalization, use "
-                                  "np.abs(to_detector(wavelength = wavelength))**2... If you want a specific"
-                                  "normalization for a subset of  wavelengths, use in_contrast=False and "
-                                  "measure the PSF to normalize."))
+                                  "it is done in all possible BWs (wavelengths = self.wav_vec). If "
+                                  "you want a specific normalization for a subset of  wavelengths, "
+                                  "use in_contrast=False and measure the PSF to normalize."))
 
             focal_plane_intensity /= self.norm_polychrom
 
