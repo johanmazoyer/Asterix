@@ -188,7 +188,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
     return PWMatrix
 
 
-def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, **kwargs):
+def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None):
     """Calculate the focal plane electric field from the probe image
     differences and the modeled probe matrix.
 
