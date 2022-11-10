@@ -325,9 +325,7 @@ class OpticalSystem:
             focal_plane_intensity /= self.norm_polychrom
 
         if nb_photons > 0:
-            if not in_contrast:
-                raise ValueError("Only measure photon noise for images in contrast.")
-            focal_plane_intensity = self.add_photon_noise(focal_plane_intensity, nb_photons)
+            focal_plane_intensity = self.add_photon_noise(focal_plane_intensity, nb_photons, in_contrast=in_contrast)
 
         if dir_save_all_planes is not None:
             who_called_me = self.__class__.__name__
@@ -336,7 +334,7 @@ class OpticalSystem:
 
         return focal_plane_intensity
 
-    def add_photon_noise(self, focal_plane_intensity, nb_photons=0):
+    def add_photon_noise(self, focal_plane_intensity, nb_photons, in_contrast=True):
         """Add photon noise to an image in contrast. This is only applied to images for which the normalization
         factors have been measured (for wavelength in self.wave_vec). You need to have measured the normalization
         previously (running self.measure_normalization). Making it separate allow us to run the propagation only
@@ -349,8 +347,11 @@ class OpticalSystem:
         focal_plane_intensity : numpy array of shape (self.dimScience,self.dimScience)
             the focal plane intensity, normalized in contrast
 
-        nb_photons : float, optional, default 0
-            Number of photons entering the pupil. If 0, no photon noise.
+        nb_photons : float
+            Number of photons entering the pupil.
+
+        in_contrast : bool, default True. 
+            If True, the data are normalized in contrast
 
         Returns
         ------
@@ -358,8 +359,12 @@ class OpticalSystem:
             the focal plane intensity, with photon noise, normalized in contrast
         """
         if nb_photons > 0:
-            return np.random.poisson(
-                focal_plane_intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
+            if in_contrast:
+                return np.random.poisson(
+                    focal_plane_intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
+            else:
+                return np.random.poisson(focal_plane_intensity * self.normPupto1_nocontrast *
+                                         nb_photons) / (self.normPupto1_nocontrast * nb_photons)
         else:
             return focal_plane_intensity
 
@@ -420,6 +425,7 @@ class OpticalSystem:
         self.norm_polychrom, sum_polychrom, self.norm_monochrom, _ = self.individual_normalizations(self.wav_vec)
 
         self.normPupto1 = self.transmission() * self.norm_polychrom / sum_polychrom
+        self.normPupto1_nocontrast = self.normPupto1 / self.norm_polychrom
 
     def individual_normalizations(self, wavelengths=None):
         """
