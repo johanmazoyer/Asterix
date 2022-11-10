@@ -117,7 +117,7 @@ parts of the simulated wavelength because a lot of wavelength specific tools are
 For this reason ``nb_wav_estim`` must be an odd integer, divisor of ``nb_wav`` (see Figure)
 
 .. figure:: source_images/wl_estim.pdf
-    :scale: 20%
+    :scale: 80%
     :align: center
 
     Determination of estimation wavelengths ``estimation.wav_vec_estim``

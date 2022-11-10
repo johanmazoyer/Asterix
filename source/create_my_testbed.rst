@@ -85,7 +85,7 @@ Using these 3 parameter, we split the BW in small bandwidths of equal ``Delta_wa
 we take the centers of each of these small bandwidths. Next Figure shows this in the case of ``nb_wav`` = 5.
 
 .. figure:: source_images/wl_simu.pdf
-    :scale: 20%
+    :scale: 80%
     :align: center
 
     Determination of simulation wavelengths ``OpticalSystem.wav_vec``
