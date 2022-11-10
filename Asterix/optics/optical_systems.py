@@ -325,8 +325,9 @@ class OpticalSystem:
             focal_plane_intensity /= self.norm_polychrom
 
         if nb_photons > 0:
-            focal_plane_intensity = np.random.poisson(
-                focal_plane_intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
+            if not in_contrast:
+                raise ValueError("Only measure photon noise for images in contrast.")
+            focal_plane_intensity = self.add_photon_noise(focal_plane_intensity, nb_photons)
 
         if dir_save_all_planes is not None:
             who_called_me = self.__class__.__name__
@@ -334,6 +335,33 @@ class OpticalSystem:
             save_plane_in_fits(dir_save_all_planes, name_plane, focal_plane_intensity)
 
         return focal_plane_intensity
+
+    def add_photon_noise(self, focal_plane_intensity, nb_photons=0):
+        """Add photon noise to an image in contrast. This is only applied to images for which the normalization
+        factors have been measured (for wavelength in self.wave_vec). You need to have measured the normalization
+        previously (running self.measure_normalization). Making it separate allow us to run the propagation only
+        once in cases where we want both the image with and without photon noise.
+
+        AUTHOR : Johan Mazoyer
+
+        Parameters
+        ------
+        focal_plane_intensity : numpy array of shape (self.dimScience,self.dimScience)
+            the focal plane intensity, normalized in contrast
+
+        nb_photons : float, optional, default 0
+            Number of photons entering the pupil. If 0, no photon noise.
+
+        Returns
+        ------
+        focal_plane_intensity : numpy array of shape (self.dimScience,self.dimScience)
+            the focal plane intensity, with photon noise, normalized in contrast
+        """
+        if nb_photons > 0:
+            return np.random.poisson(
+                focal_plane_intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
+        else:
+            return focal_plane_intensity
 
     def transmission(self, noFPM=True, **kwargs):
         """measure ratio of photons lost when crossing the system compared to a
