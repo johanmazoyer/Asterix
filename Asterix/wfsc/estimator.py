@@ -244,8 +244,8 @@ class Estimator:
             # photon_noise parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
             # case, we reduce it to self.delta_wav_estim_individual bandwidth
             if self.polychrom == 'multiwl':
-                if 'photon_noise' in kwargs.keys() and 'nb_photons' in kwargs.keys():
-                    if kwargs['photon_noise']:
+                if 'nb_photons' in kwargs.keys():
+                    if kwargs['nb_photons'] > 0:
                         kwargs['nb_photons'] = kwargs['nb_photons'] / testbed.Delta_wav * self.delta_wav_estim_individual
 
                 for i, wavei in enumerate(self.wav_vec_estim):
@@ -258,7 +258,7 @@ class Estimator:
                                                             wavelengths=wavei,
                                                             **kwargs)
 
-                    result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[i], **kwargs))
+                    result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[i]))
 
             elif self.polychrom == 'centralwl':
                 Difference = wfs.simulate_pw_difference(entrance_EF,
@@ -270,7 +270,8 @@ class Estimator:
                                                         wavelengths=testbed.wavelength_0,
                                                         **kwargs)
 
-                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0], **kwargs))
+                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0]))
+
             elif self.polychrom == 'broadband_pwprobes':
                 Difference = wfs.simulate_pw_difference(entrance_EF,
                                                         testbed,
@@ -280,7 +281,8 @@ class Estimator:
                                                         voltage_vector=voltage_vector,
                                                         wavelengths=testbed.wav_vec,
                                                         **kwargs)
-                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0], **kwargs))
+
+                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0]))
             else:
                 raise ValueError(self.polychrom + " is not a valid polychromatic estimation/correction mode")
             return result_estim

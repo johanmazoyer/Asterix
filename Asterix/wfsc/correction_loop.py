@@ -226,8 +226,6 @@ def correction_loop_1matrix(testbed: Testbed,
                                              voltage_vector=initial_DM_voltage,
                                              nb_photons=0,
                                              **kwargs)
-    if nb_photons > 1:
-        initialFP_phot = testbed.add_photon_noise(initialFP, nb_photons)
 
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
@@ -240,8 +238,11 @@ def correction_loop_1matrix(testbed: Testbed,
 
     thisloop_voltages_DMs.append(initial_DM_voltage)
     thisloop_FP_Intensities.append(initialFP)
-    thisloop_FP_Intensities_phot.append(initialFP_phot)
     thisloop_MeanDHContrast.append(initialFP_contrast)
+
+    if nb_photons > 1:
+        initialFP_phot = testbed.add_photon_noise(initialFP, nb_photons)
+        thisloop_FP_Intensities_phot.append(initialFP_phot)
 
     if not silence:
         print("Initial contrast in DH: ", initialFP_contrast)
@@ -311,7 +312,7 @@ def correction_loop_1matrix(testbed: Testbed,
                                                 voltage_vector=thisloop_voltages_DMs[-1],
                                                 entrance_EF=input_wavefront,
                                                 perfect_estimation=Search_best_Mode,
-                                                nb_photons = nb_photons,
+                                                nb_photons=nb_photons,
                                                 **kwargs)
 
         solution = corrector.toDM_voltage(testbed,
