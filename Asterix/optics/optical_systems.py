@@ -394,8 +394,7 @@ class OpticalSystem:
 
         """
 
-        self.norm_polychrom, sum_polychrom, self.norm_monochrom, _ = self.individual_normalizations(
-            self.wav_vec)
+        self.norm_polychrom, sum_polychrom, self.norm_monochrom, _ = self.individual_normalizations(self.wav_vec)
 
         self.normPupto1 = self.transmission() * self.norm_polychrom / sum_polychrom
 
@@ -438,8 +437,7 @@ class OpticalSystem:
         sum_monochrom = np.zeros((len(wavelength_vec)))
 
         for i, wav in enumerate(wavelength_vec):
-            PSF_wl = np.abs(
-                self.todetector(wavelength=wav, noFPM=True, center_on_pixel=True, in_contrast=False))**2
+            PSF_wl = np.abs(self.todetector(wavelength=wav, noFPM=True, center_on_pixel=True, in_contrast=False))**2
 
             norm_monochrom[i] = np.max(PSF_wl)
             sum_monochrom[i] = np.sum(PSF_wl)
