@@ -42,11 +42,7 @@ def create_pw_matrix(testbed: Testbed,
         - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
         - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
-<<<<<<< HEAD
     wav_vec_estim: list of float, default None
-=======
-    wav_vec_estim: list of float
->>>>>>> now working for multi wl correction
         list of wavelength to do the estimation used in the case of polychrom == 'multiwl'
 
     Returns
