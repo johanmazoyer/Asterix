@@ -317,7 +317,6 @@ if set_DOrandom_phase = True:
 
 Photon Noise:
 
-    - photon_noise: bool, if true, add photon noise using nb_photons 
-    - nb_photons : bool, number of photon entering the telescope
+    - nb_photons : float, number of photon entering the telescope. If 0, no photon noise
 
 

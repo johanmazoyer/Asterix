@@ -79,7 +79,6 @@ def correction_loop(testbed: Testbed,
     CorrectionLoopResult["SVDmodes"] = []
 
     # reading the simulation parameter files
-    photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
 
     # reading the loop parameter files
@@ -120,7 +119,6 @@ def correction_loop(testbed: Testbed,
                                                             Linesearch=Linesearch,
                                                             input_wavefront=input_wavefront,
                                                             initial_DM_voltage=initial_DM_voltage,
-                                                            photon_noise=photon_noise,
                                                             nb_photons=nb_photons,
                                                             silence=silence,
                                                             **kwargs)
@@ -266,6 +264,7 @@ def correction_loop_1matrix(testbed: Testbed,
                                                                  gain=gain,
                                                                  Nbmode_corr=Linesearchmodes,
                                                                  Search_best_Mode=True,
+                                                                 nb_photons=0,
                                                                  input_wavefront=input_wavefront,
                                                                  initial_DM_voltage=thisloop_voltages_DMs[iteration],
                                                                  silence=silence,

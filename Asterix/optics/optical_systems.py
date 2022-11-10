@@ -233,8 +233,7 @@ class OpticalSystem:
                              wavelengths=None,
                              in_contrast=True,
                              center_on_pixel=False,
-                             photon_noise=False,
-                             nb_photons=1e30,
+                             nb_photons=0,
                              dir_save_all_planes=None,
                              **kwargs):
         """Propagate the electric field from entrance plane through the system,
@@ -265,11 +264,8 @@ class OpticalSystem:
             If not None, directory to save all planes in fits for debugging purposes.
             This can generate a lot of fits especially if in a loop, use with caution
 
-        noise : boolean, optional
-            If True, add photon noise to the image
-
-        nb_photons : int, optional
-            Number of photons entering the pupil
+        nb_photons : float, optional, default 0
+            Number of photons entering the pupil. If 0, no photon noise.
 
         **kwargs:
             Other kw parameters can be passed direclty to self.EF_through function
@@ -328,7 +324,7 @@ class OpticalSystem:
 
             focal_plane_intensity /= self.norm_polychrom
 
-        if photon_noise:
+        if nb_photons > 0:
             focal_plane_intensity = np.random.poisson(
                 focal_plane_intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
 
