@@ -350,7 +350,7 @@ class OpticalSystem:
         nb_photons : float
             Number of photons entering the pupil.
 
-        in_contrast : bool, default True. 
+        in_contrast : bool, default True.
             If True, the data are normalized in contrast
 
         Returns
