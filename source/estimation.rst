@@ -111,15 +111,18 @@ Matrices are at central wavelength. This is what is currently done in `Potier et
 on SPHERE on sky for example. This mode is only relevantt for PW estimation and will raise an error if use with perfect estimation.
 * 'multiwl': ``nb_wav`` estimations are performed at different wavelengths spanning the bandwidth of correction.
 There are ``nb_wav`` matrices for estimation / correction. The bandwidth of the correction is still parametrized 
-in [modelconfig] right now. We use ``nb_wav`` correction wavelengths evenly spaced in ``Delta_wav``, centered on 
-``wavelength_0``. At some point, we might want to do smarter things like having separate parameters to choose
-the wavelength of estimation / correction from the one used to simulate the polychromatic images in [modelconfig], like in 
-Falco (see `here <https://www.dropbox.com/s/xn2s04tung43sp5/doc_FALCO_bandpasses_wavelengths.pdf?dl=0>`_), but this is 
-slightly more difficult because the contrast normalization is currently available only at the specific wavelengths defined
-in [modelconfig].
+in [modelconfig] right now. We use ``nb_wav_estim`` correction wavelengths evenly spaced in ``Delta_wav``, centered on 
+``wavelength_0``, the same way that the ``nb_wav`` simulation wavelengths are defined. These wavelength must be sub 
+parts of the simulated wavelength because a lot of wavelength specific tools are defined during ``OpticalSystem`` initialization. 
+For this reason ``nb_wav_estim`` must be an odd integer, divisor of ``nb_wav`` (see Figure)
 
-If monochromatic images (``nb_wav = 1`` or ``Delta_wav = 0``), all these options are equivalent.
-    
+.. figure:: source_images/wl_estim.pdf
+    :scale: 20%
+    :align: center
+
+    Determination of estimation wavelengths ``estimation.wav_vec_estim``
+
+If monochromatic images (``nb_wav = 1`` or ``Delta_wav = 0``), all ``polychromatic`` options are equivalent.
 
 
 
