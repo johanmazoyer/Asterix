@@ -343,7 +343,7 @@ def correction_loop_1matrix(testbed: Testbed,
         thisloop_EF_estim.append(resultatestimation)
 
         # the contrast cannot be measured on a photon noise image, because at some point a lot of values
-        # are at 0 and it will artificially lower the contrast. Photon noise is only used for the pw images
+        # are at 0 and it will artificially lower the contrast. Photon noise is only used for the pw images.
         thisloop_MeanDHContrast.append(np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))
 
         if not Search_best_Mode:
