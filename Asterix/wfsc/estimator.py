@@ -77,6 +77,9 @@ class Estimator:
         # For now estimation central wl and simu central wl are the same
         wavelength_0_estim = testbed.wavelength_0
 
+        if len(testbed.wav_vec) == 1:
+            self.polychrom == "centralwl"
+
         if self.polychrom == 'multiwl' and self.nb_wav_estim > 1:
             # For now estimation BW and testbed BW are the same and can be easily changed.
             self.delta_wave_estim = testbed.Delta_wav
