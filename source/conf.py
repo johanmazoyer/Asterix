@@ -15,6 +15,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.append('/Users/jmazoyer/GitProjects/my_projects/Asterix/Asterix/')
+os.system('pip install pyan3')
 
 # -- Project information -----------------------------------------------------
 
