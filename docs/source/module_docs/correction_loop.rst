@@ -1,3 +1,6 @@
+Correction loop
+=====================================
+
 .. currentmodule:: Asterix.wfsc.correction_loop
 
 .. automodapi:: Asterix.wfsc.correction_loop
