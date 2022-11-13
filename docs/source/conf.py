@@ -37,7 +37,7 @@ release = 'v2.4'  # change version 24/09/22
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx_automodapi.automodapi', 'numpydoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon',
+    'sphinx.ext.autodoc', 'sphinx_automodapi.automodapi', 'sphinx.ext.coverage', 'sphinx.ext.napoleon',
     "sphinx.ext.graphviz", 'sphinx_rtd_theme', "pyan.sphinx"
 ]
 
