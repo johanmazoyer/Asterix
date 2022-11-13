@@ -1,5 +1,5 @@
 
-Asterix : Simulate your High-Contrast Instruments
+Asterix: Simulate your High-Contrast Instruments
 ===================================
 
 Asterix is a python based library for simulating high contrast instruments and testbeds with a strong
@@ -18,7 +18,7 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 1
     :caption: Basic Usage
 
     run_asterix
@@ -29,7 +29,7 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 
 ---------------------------------
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 1
     :caption: Ideas for Asterix improvements
     todo
 
