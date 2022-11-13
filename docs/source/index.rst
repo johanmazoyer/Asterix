@@ -30,6 +30,7 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 .. toctree::
     :maxdepth: 1
     :caption: Ideas for Asterix improvements
+    
     todo
 
 
