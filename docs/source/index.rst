@@ -37,8 +37,8 @@ and Raphaël Galicher from LESIA (Paris Observatory)
    :maxdepth: 1
    :caption: Asterix Package
 
-   modules_docs/main_thd
-   modules_docs/correction_loop
+   module_docs/main_thd
+   module_docs/correction_loop
 
 
 
