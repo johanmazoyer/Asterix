@@ -1,1 +1,2 @@
 pyan3
+sphinx-automodapi
