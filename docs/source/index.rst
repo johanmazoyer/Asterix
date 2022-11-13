@@ -33,26 +33,18 @@ and Raphaël Galicher from LESIA (Paris Observatory)
     
     todo
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Asterix Package
 
-Annex: Asterix Functions
-==================
+   modules_docs/main_thd
+   modules_docs/correction_loop
 
 
-Main_THD
------------------
-.. automodule:: Asterix.main_THD
-    :members:
 
 Correction loop
 -----------------
-.. automodule:: Asterix.wfsc.correction_loop
-    :members:
-    :show-inheritance:
 
-.. callgraph:: Asterix.wfsc.correction_loop.correction_loop
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
 
 HCI metric plots
 -----------------
