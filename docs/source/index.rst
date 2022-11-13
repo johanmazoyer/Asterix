@@ -28,12 +28,6 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 
 
 .. toctree::
-    :maxdepth: 1
-    :caption: Ideas for Asterix improvements
-    
-    todo
-
-.. toctree::
    :maxdepth: 1
    :caption: Asterix Package
 
@@ -179,6 +173,12 @@ Utils: Save and read
     :maxdepth: 2
     :caption: Contents:
 
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Ideas for Asterix improvements
+    
+    todo
 
 
 Indices and tables
