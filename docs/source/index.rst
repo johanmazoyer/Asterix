@@ -15,6 +15,7 @@ and Raphaël Galicher from LESIA (Paris Observatory)
     :caption: Getting Started
 
     install
+    module_docs/correction_loop
 
 
 .. toctree::
