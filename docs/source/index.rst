@@ -37,154 +37,154 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 
 
 
-Correction loop
------------------
+.. Correction loop
+.. -----------------
 
 
-HCI metric plots
------------------
-.. automodule:: Asterix.utils.hci_metrics
-    :members:
-    :show-inheritance:
+.. HCI metric plots
+.. -----------------
+.. .. automodule:: Asterix.utils.hci_metrics
+..     :members:
+..     :show-inheritance:
 
 
-Coronagraphis instrument simulation
-------------------------------------
+.. Coronagraphis instrument simulation
+.. ------------------------------------
 
-OpticalSystem: main class
-++++++++++++++++++++++++++
-.. _os-label:
-.. autoclass:: Asterix.optics.OpticalSystem
-    :members:
-    :show-inheritance:
-
-
-OpticalSystem: pupil subclass
-++++++++++++++++++++++++++++++
-.. _pupil-label:
-.. autoclass:: Asterix.optics.Pupil
-    :members:
-    :show-inheritance:
-
-OpticalSystem: coronagraph subclass
-+++++++++++++++++++++++++++++++++++++
-.. _coronagraph-label:
-.. autoclass:: Asterix.optics.Coronagraph
-    :members:
-    :show-inheritance:
-
-.. callgraph:: Asterix.optics.coronagraph.Coronagraph.__init__
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
-
-OpticalSystem: DeformableMirror subclass
-++++++++++++++++++++++++++++++++++++++++++
-.. _deformable-mirror-label:
-.. autoclass:: Asterix.optics.DeformableMirror
-    :members:
-    :show-inheritance:
-
-.. callgraph:: Asterix.optics.deformable_mirror.DeformableMirror.__init__
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
-
-OpticalSystem: Testbed subclass
-+++++++++++++++++++++++++++++++++
-.. _testbed-label:
-.. autoclass:: Asterix.optics.Testbed
-    :members:
-    :show-inheritance:
+.. OpticalSystem: main class
+.. ++++++++++++++++++++++++++
+.. .. _os-label:
+.. .. autoclass:: Asterix.optics.OpticalSystem
+..     :members:
+..     :show-inheritance:
 
 
-Propagation functions
-++++++++++++++++++++++++++
-.. automodule:: Asterix.optics.propagation_functions
-    :members:
+.. OpticalSystem: pupil subclass
+.. ++++++++++++++++++++++++++++++
+.. .. _pupil-label:
+.. .. autoclass:: Asterix.optics.Pupil
+..     :members:
+..     :show-inheritance:
 
-Phase and amplitude functions
-+++++++++++++++++++++++++++++++++
-.. automodule:: Asterix.optics.phase_amplitude_functions
-    :members:
+.. OpticalSystem: coronagraph subclass
+.. +++++++++++++++++++++++++++++++++++++
+.. .. _coronagraph-label:
+.. .. autoclass:: Asterix.optics.Coronagraph
+..     :members:
+..     :show-inheritance:
 
+.. .. callgraph:: Asterix.optics.coronagraph.Coronagraph.__init__
+..     :toctree: api
+..     :zoomable:
+..     :direction: horizontal
 
-WF Estimation
------------------
-.. _estimationfiles-label:
-.. automodule:: Asterix.wfsc.estimator
-    :members:
+.. OpticalSystem: DeformableMirror subclass
+.. ++++++++++++++++++++++++++++++++++++++++++
+.. .. _deformable-mirror-label:
+.. .. autoclass:: Asterix.optics.DeformableMirror
+..     :members:
+..     :show-inheritance:
 
-.. automodule:: Asterix.wfsc.wf_sensing_functions
-    :members:
+.. .. callgraph:: Asterix.optics.deformable_mirror.DeformableMirror.__init__
+..     :toctree: api
+..     :zoomable:
+..     :direction: horizontal
 
-.. callgraph:: Asterix.wfsc.estimator.Estimator.__init__
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
-
-.. callgraph:: Asterix.wfsc.estimator.Estimator.estimate
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
-
-
-WF Correction
------------------
-.. _correctionfiles-label:
-.. automodule:: Asterix.wfsc.corrector
-    :members:
-
-.. automodule:: Asterix.wfsc.wf_control_functions
-    :members:
-
-.. automodule:: Asterix.wfsc.thd_quick_invert
-    :members:
-
-.. callgraph:: Asterix.wfsc.corrector.Corrector.update_matrices 
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
-
-.. callgraph:: Asterix.wfsc.corrector.Corrector.toDM_voltage
-    :toctree: api
-    :zoomable:
-    :direction: horizontal
+.. OpticalSystem: Testbed subclass
+.. +++++++++++++++++++++++++++++++++
+.. .. _testbed-label:
+.. .. autoclass:: Asterix.optics.Testbed
+..     :members:
+..     :show-inheritance:
 
 
-DH Mask
---------
-.. automodule:: Asterix.wfsc.MaskDH
-    :members:
+.. Propagation functions
+.. ++++++++++++++++++++++++++
+.. .. automodule:: Asterix.optics.propagation_functions
+..     :members:
 
-Utils: processing
-------------------
-.. automodule:: Asterix.utils.processing_functions
-    :members:
-
-
-Utils: Save and read
-----------------------
-.. automodule:: Asterix.utils.save_and_read
-    :members:
+.. Phase and amplitude functions
+.. +++++++++++++++++++++++++++++++++
+.. .. automodule:: Asterix.optics.phase_amplitude_functions
+..     :members:
 
 
+.. WF Estimation
+.. -----------------
+.. .. _estimationfiles-label:
+.. .. automodule:: Asterix.wfsc.estimator
+..     :members:
 
-.. toctree::
-    :maxdepth: 2
-    :caption: Contents:
+.. .. automodule:: Asterix.wfsc.wf_sensing_functions
+..     :members:
+
+.. .. callgraph:: Asterix.wfsc.estimator.Estimator.__init__
+..     :toctree: api
+..     :zoomable:
+..     :direction: horizontal
+
+.. .. callgraph:: Asterix.wfsc.estimator.Estimator.estimate
+..     :toctree: api
+..     :zoomable:
+..     :direction: horizontal
 
 
-.. toctree::
-    :maxdepth: 1
-    :caption: Ideas for Asterix improvements
+.. WF Correction
+.. -----------------
+.. .. _correctionfiles-label:
+.. .. automodule:: Asterix.wfsc.corrector
+..     :members:
+
+.. .. automodule:: Asterix.wfsc.wf_control_functions
+..     :members:
+
+.. .. automodule:: Asterix.wfsc.thd_quick_invert
+..     :members:
+
+.. .. callgraph:: Asterix.wfsc.corrector.Corrector.update_matrices 
+..     :toctree: api
+..     :zoomable:
+..     :direction: horizontal
+
+.. .. callgraph:: Asterix.wfsc.corrector.Corrector.toDM_voltage
+..     :toctree: api
+..     :zoomable:
+..     :direction: horizontal
+
+
+.. DH Mask
+.. --------
+.. .. automodule:: Asterix.wfsc.MaskDH
+..     :members:
+
+.. Utils: processing
+.. ------------------
+.. .. automodule:: Asterix.utils.processing_functions
+..     :members:
+
+
+.. Utils: Save and read
+.. ----------------------
+.. .. automodule:: Asterix.utils.save_and_read
+..     :members:
+
+
+
+.. .. toctree::
+..     :maxdepth: 2
+..     :caption: Contents:
+
+
+.. .. toctree::
+..     :maxdepth: 1
+..     :caption: Ideas for Asterix improvements
     
-    todo
+..     todo
 
 
-Indices and tables
-==================
+.. Indices and tables
+.. ==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
