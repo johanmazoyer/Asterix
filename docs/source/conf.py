@@ -16,6 +16,8 @@ import sys
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.append('/Users/jmazoyer/GitProjects/my_projects/Asterix/Asterix/')
 sys.path.append('pip install pyan3')
+sys.path.append('pip install sphinx-automodapi')
+
 
 # -- Project information -----------------------------------------------------
 
