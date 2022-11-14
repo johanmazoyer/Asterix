@@ -223,7 +223,7 @@ def sine_cosine_basis(Nact1D):
     return SinCos
 
 
-def make_apodizer(dim_pp, prad, apodizer_profile, no_pixel=False, center_pos='b'):
+def make_apodizer(dim_pp, prad, apodizer_profile, grey_pup_bin_factor=1, center_pos='b'):
     """
     Return a generic apodizer, by apllying a given transmission profil on the round pupil.
     The transmission profile must be a fonction of the radial coordinate.
@@ -232,46 +232,61 @@ def make_apodizer(dim_pp, prad, apodizer_profile, no_pixel=False, center_pos='b'
     Parameters
     ----------
     dim_pp : int
-        Size of the pupil plane (in pixels).
+        Size of the image (in pixels)
     prad : float
-        Size of the pupil radius (in pixels).
+       Pupil radius within the image array (in pixels)
     apodizer_profile : function.
         Apodizer radial transmission. It is a function of the radial coordinate.
+    grey_pup_bin_factor : int (default, 1)
+        If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
+        (prad = grey_pup_bin_factor*prad) and then rebinned to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated (grey_pup_bin_factor>1) the pupil has to be perfectly centered on
+        the array because binning while keeping the centering is tricky:
+            -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
+            -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
     center_pos : string (optional, default 'b')
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
-    no_pixel : boolean (default False).
-        If true, the pupil is first defined at a very large
-        scale (prad = 9*prad or 10*prad) and then rescaled to the given parameter 'prad'.
-        This limits the pixel crenellation in the pupil for small pupils.
-        If this option is activated the pupil has to be perfectly centered on the array:
-            -if center_pos is 'p', dimpp must be odd
-            -if center_pos is 'b', dimpp must be even
-        See also Asterix.optics.pupil.grey_pupil().
+
     Returns
     ------
         apodizer_pupil : 2D array.
             Apodizer pupil
     """
-    if no_pixel:
+    if grey_pup_bin_factor > 1:
+        if not isinstance(grey_pup_bin_factor, int):
+            raise ValueError(f"grey_pup_bin_factor must be an integer, currently it is {grey_pup_bin_factor}")
+
+        if center_pos.lower() == 'p' and (dim_pp % 2 == 0 or grey_pup_bin_factor % 2 == 0):
+            raise ValueError(("if grey_pup_bin_factor>1, the pupil has to be perfectly centered:",
+                              "if center is 'p', dimpp and grey_pup_bin_factor must be odd"))
+
+        if center_pos.lower() == 'b' and (dim_pp % 2 == 1 or grey_pup_bin_factor % 2 == 1):
+            raise ValueError(("if grey_pup_bin_factor>1, the pupil has to be perfectly centered:",
+                              "if center is 'b', dimpp and grey_pup_bin_factor must be even"))
         # we add valueError conditions because it is very hard to maintain the same centering after the
         # rebin in all conditions
-        if dim_pp % 2 == 0:
-            if center_pos.lower() == 'p':
-                raise ValueError("no_pixel=True, only for pupils centered: if center is 'p', dimpp must be odd")
-            factor_bin = int(10)
-            dimpp_pup_large = (2 * prad) * factor_bin
-            center_on_pixel = False
-        else:
-            if center_pos.lower() == 'b':
-                raise ValueError("no_pixel=True, only for pupils centered: if center is 'b', dimpp must be even")
-            factor_bin = int(9)
-            dimpp_pup_large = (2 * prad + 1) * factor_bin
-            center_on_pixel = True
 
-        apodizer_pupil_large = make_apodizer(dimpp_pup_large, factor_bin * prad, apodizer_profile, no_pixel=False, center_pos=center_pos)
-        return crop_or_pad_image(rebin(apodizer_pupil_large, factor=factor_bin, center_on_pixel=center_on_pixel), dim_pp)
+        if center_pos.lower() == 'b':
+            dimpp_pup_large = (2 * int(np.ceil(prad))) * grey_pup_bin_factor
+            center_on_pixel = False
+        elif center_pos.lower() == 'p':
+            dimpp_pup_large = (2 * int(np.ceil(prad)) + 1) * grey_pup_bin_factor
+            center_on_pixel = True
+        else:
+            raise ValueError("center_pos must be 'p' (centered on pixel) or 'b' (centered in between 4 pixels)")
+
+        apodizer_pupil_large = make_apodizer(dimpp_pup_large,
+                                             grey_pup_bin_factor * prad,
+                                             apodizer_profile,
+                                             grey_pup_bin_factor=1,
+                                             center_pos=center_pos)
+        return crop_or_pad_image(rebin(apodizer_pupil_large,
+                                       factor=grey_pup_bin_factor,
+                                       center_on_pixel=center_on_pixel),
+                                       dim_pp)
 
     else:
         xx, yy = np.meshgrid(np.arange(dim_pp) - dim_pp // 2, np.arange(dim_pp) - dim_pp // 2)
@@ -282,7 +297,7 @@ def make_apodizer(dim_pp, prad, apodizer_profile, no_pixel=False, center_pos='b'
         elif center_pos.lower() == 'p':
             pass
         else:
-            raise Exception("center_pos can only be 'p' or 'b'")
+            raise ValueError("center_pos must be 'p' (centered on pixel) or 'b' (centered in between 4 pixels)")
         rr = np.hypot(yy, xx)
 
         apodizer_pupil = np.zeros((dim_pp, dim_pp))
@@ -350,8 +365,8 @@ def make_VLT_pup(dim_pp,
                  prad,
                  pupangle=0,
                  spiders=True,
+                 grey_pup_bin_factor=1,
                  center_pos='b',
-                 no_pixel=False,
                  reduce_outer_radius=0,
                  add_central_obs=0,
                  add_spider_thickness=0):
@@ -365,25 +380,25 @@ def make_VLT_pup(dim_pp,
     Parameters
     ----------
     dim_pp : int
-        Size of the pupil plane (in pixels)
+        Size of the image (in pixels)
     prad : float
-        Size of the pupil radius (in pixels)
+       Pupil radius within the image array (in pixels)
     pupangle : float
         pupil rotation angle in deg
     spiders : bool, (default True)
         if False, return the VLT pupil without spiders
+    grey_pup_bin_factor : int (default, 1)
+        If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
+        (prad = grey_pup_bin_factor*prad) and then rebinned to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated (grey_pup_bin_factor>1) the pupil has to be perfectly centered on
+        the array because binning while keeping the centering is tricky:
+            -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
+            -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
     center_pos : string (optional, default 'b')
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
-    no_pixel : boolean (default False).
-        If true, the pupil is first defined at a very large
-        scale (prad = 4*prad or 5*prad) and then rescaled to the given parameter 'prad'.
-        This limits the pixel crenellation in the pupil for small pupils.
-        If this option is activated the pupil has to be perfectly centered on the array:
-            -if center_pos is 'p', dimpp must be odd
-            -if center_pos is 'b', dimpp must be even
-        See also Asterix.optics.pupil.grey_pupil().
     reduce_outer_radius : float (default 0)
         reduced diameter of outer radius in fraction of the diameter
     add_central_obs : float (default 0)
@@ -396,30 +411,41 @@ def make_VLT_pup(dim_pp,
     VLTpupil : 2D numpy array
         VLT transmission pupil of shape (pupdiam, pupdiam), filled with 0 and 1
     """
-    if no_pixel:
+
+    if grey_pup_bin_factor > 1:
+        if not isinstance(grey_pup_bin_factor, int):
+            raise ValueError(f"grey_pup_bin_factor must be an integer, currently it is {grey_pup_bin_factor}")
+
+        if center_pos.lower() == 'p' and (dim_pp % 2 == 0 or grey_pup_bin_factor % 2 == 0):
+            raise ValueError(("if grey_pup_bin_factor>1, the pupil has to be perfectly centered:",
+                              "if center is 'p', dimpp and grey_pup_bin_factor must be odd"))
+
+        if center_pos.lower() == 'b' and (dim_pp % 2 == 1 or grey_pup_bin_factor % 2 == 1):
+            raise ValueError(("if grey_pup_bin_factor>1, the pupil has to be perfectly centered:",
+                              "if center is 'b', dimpp and grey_pup_bin_factor must be even"))
         # we add valueError conditions because it is very hard to maintain the same centering after the
         # rebin in all conditions
-        if dim_pp % 2 == 0:
-            if center_pos.lower() == 'p':
-                raise ValueError("no_pixel=True, only for pupils centered: if center is 'p', dimpp must be odd")
-            factor_bin = int(4)
-            dimpp_pup_large = (2 * prad) * factor_bin
+
+        if center_pos.lower() == 'b':
+            dimpp_pup_large = (2 * int(np.ceil(prad))) * grey_pup_bin_factor
             center_on_pixel = False
-        else:
-            if center_pos.lower() == 'b':
-                raise ValueError("no_pixel=True, only for pupils centered: if center is 'b', dimpp must be even")
-            factor_bin = int(5)
-            dimpp_pup_large = (2 * prad + 1) * factor_bin
+        elif center_pos.lower() == 'p':
+            dimpp_pup_large = (2 * int(np.ceil(prad)) + 1) * grey_pup_bin_factor
             center_on_pixel = True
+        else:
+            raise ValueError("center_pos must be 'p' (centered on pixel) or 'b' (centered in between 4 pixels)")
 
         return crop_or_pad_image(
             rebin(make_VLT_pup(dimpp_pup_large,
-                               factor_bin * prad,
+                               grey_pup_bin_factor * prad,
                                pupangle=pupangle,
-                               no_pixel=False,
                                spiders=spiders,
-                               center_pos=center_pos),
-                  factor=factor_bin,
+                               grey_pup_bin_factor=1,
+                               center_pos=center_pos,
+                               reduce_outer_radius=reduce_outer_radius,
+                               add_central_obs=add_central_obs,
+                               add_spider_thickness=add_spider_thickness),
+                  factor=grey_pup_bin_factor,
                   center_on_pixel=center_on_pixel), dim_pp)
 
     pupil_diameter = 8.0  # meter
@@ -502,7 +528,7 @@ def sphere_apodizer_radial_profile(x):
     return profile
 
 
-def make_sphere_apodizer(dim_pp, prad, no_pixel=False, center_pos='b'):
+def make_sphere_apodizer(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
     """
     Return the SPHERE APO1 apodizer pupil.
 
@@ -511,19 +537,19 @@ def make_sphere_apodizer(dim_pp, prad, no_pixel=False, center_pos='b'):
     dim_pp : int
         Size of the image (in pixels)
     prad : float
-        Size of the pupil radius (in pixels)
+       Pupil radius within the image array (in pixels)
+    grey_pup_bin_factor : int (default, 1)
+        If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
+        (prad = grey_pup_bin_factor*prad) and then rebinned to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated (grey_pup_bin_factor>1) the pupil has to be perfectly centered on
+        the array because binning while keeping the centering is tricky:
+            -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
+            -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
     center_pos : string (optional, default 'b')
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
-    no_pixel : boolean (default False).
-        If true, the pupil is first defined at a very large
-        scale (prad = 10*prad or 9*prad) and then rescaled to the given parameter 'prad'.
-        This limits the pixel crenellation in the pupil for small pupils.
-        If this option is activated the pupil has to be perfectly centered on the array:
-            -if center_pos is 'p', dimpp must be odd
-            -if center_pos is 'b', dimpp must be even
-        See also Asterix.optics.pupil.grey_pupil().
 
     Returns
     ------
@@ -531,12 +557,21 @@ def make_sphere_apodizer(dim_pp, prad, no_pixel=False, center_pos='b'):
         sphere APO1 apodizer pupil
     """
 
-    sphere_apodizer = make_apodizer(dim_pp, prad, sphere_apodizer_radial_profile, no_pixel=no_pixel, center_pos=center_pos)
-    sphere_apodizer *= make_VLT_pup(dim_pp, prad, pupangle=0, spiders=False, center_pos=center_pos, no_pixel=no_pixel)
+    sphere_apodizer = make_apodizer(dim_pp,
+                                    prad,
+                                    sphere_apodizer_radial_profile,
+                                    grey_pup_bin_factor=grey_pup_bin_factor,
+                                    center_pos=center_pos)
+    sphere_apodizer *= make_VLT_pup(dim_pp,
+                                    prad,
+                                    pupangle=0,
+                                    spiders=False,
+                                    grey_pup_bin_factor=grey_pup_bin_factor,
+                                    center_pos=center_pos)
     return sphere_apodizer
 
 
-def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', no_pixel=False):
+def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, grey_pup_bin_factor=1, center_pos='b'):
     """ 
     Return SPHERE Lyot stop aperture
 
@@ -549,26 +584,26 @@ def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', no_
     Parameters
     ----------
     dim_pp : int
-        Size of the pupil plane (in pixels)
+        Size of the image (in pixels)
     prad : float
-        Size of the pupil radius (in pixels). Careful this is not the radius of the lyot, 
+       Pupil radius within the image array (in pixels). Careful this is not the radius of the lyot, 
         but the pupil associated to this Lyot.
     pupangle : float
         pupil rotation angle in deg
     spiders : bool, (default True)
         if False, return the VLT pupil without spiders
+    grey_pup_bin_factor : int (default, 1)
+        If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
+        (prad = grey_pup_bin_factor*prad) and then rebinned to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated (grey_pup_bin_factor>1) the pupil has to be perfectly centered on
+        the array because binning while keeping the centering is tricky:
+            -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
+            -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
     center_pos : string (optional, default 'b')
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
-    no_pixel : boolean (default False).
-        If true, the pupil is first defined at a very large
-        scale (prad = 4*prad or 5*prad) and then rescaled to the given parameter 'prad'.
-        This limits the pixel crenellation in the pupil for small pupils.
-        If this option is activated the pupil has to be perfectly centered on the array:
-            -if center_pos is 'p', dimpp must be odd
-            -if center_pos is 'b', dimpp must be even
-        See also Asterix.optics.pupil.grey_pupil().
 
     Returns
     ------
@@ -584,8 +619,8 @@ def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', no_
                         prad,
                         pupangle=pupangle,
                         spiders=spiders,
+                        grey_pup_bin_factor=grey_pup_bin_factor,
                         center_pos=center_pos,
-                        no_pixel=no_pixel,
                         reduce_outer_radius=lyotOuterEdgeObs,
                         add_central_obs=addCentralObs,
                         add_spider_thickness=addSpiderObs)
