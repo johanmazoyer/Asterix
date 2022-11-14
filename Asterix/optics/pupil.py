@@ -97,7 +97,7 @@ class Pupil(optsy.OpticalSystem):
             self.pup = phase_ampl.make_sphere_lyot(self.dim_overpad_pupil, prad, pupangle=angle_rotation, spiders=True)
             self.string_os += '_SphereLyot'
         elif PupType == "SphereApod":
-            self.pup = phase_ampl.makeSphereApodizer(self.dim_overpad_pupil, prad, pupangle=angle_rotation, spiders=True)
+            self.pup = phase_ampl.make_sphere_apodizer(self.dim_overpad_pupil, prad)
             self.string_os += '_SphereApod'
         else:
             # In those cases, we are using a fits to create the pupil

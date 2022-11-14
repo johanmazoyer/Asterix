@@ -1,7 +1,6 @@
 import numpy as np
 from Asterix.optics.propagation_functions import mft
 from Asterix.utils import crop_or_pad_image, rebin
-import scipy.ndimage.interpolation as interp
 
 from Asterix.utils.save_and_read import quickfits
 
@@ -224,60 +223,72 @@ def sine_cosine_basis(Nact1D):
     return SinCos
 
 
-def sphereApodizerRadialProfile(x):
-    """ compute the transmission radial profile of the SPHERE APLC apodizer
-        x = 0 at the center of the pupil and x = 1 on the outer edge
-        
-        Johan : doc is not with the right format. careful also function names should avoid caps
-
-    Args :
-        x (float or array) [fraction of radius] : normalized radius
+def make_apodizer(dim_pp, prad, apodizer_profile, no_pixel=False, center_pos='b'):
     """
-    a = 0.16329229667014913
-    b = 4.789900916663095
-    c = -11.928993634750901
-    d = 7.510133546534877
-    e = -1.0284249458007801
-    f = 0.8227342681613615
-    profile = a * x**5 + b * x**4 + c * x**3 + d * x**2 + e * x + f
-    return profile
+    Return a generic apodizer, by apllying a given transmission profil on the round pupil.
+    The transmission profile must be a fonction of the radial coordinate.
+    The radial coordinate is 0 at the center and 1 on the outer edge, namely at prad.
 
-
-def makeSphereApodizer(pupdiam, cobs, radialProfile=sphereApodizerRadialProfile):
-    """ Return the SPHERE APLC apodizer.
-
-        Johan : This is not a function for sphere apodizer, this is a function for any given apodizer
-        if you give parameters like cobs, radialProfile in entrance. Same thing for cobs.
-        Also need to be careful with the centering (pixel /in between pixel).
-        See how I did it with other pupils.
-        Finally, I'd prefer you do not multiply by VLT pup.
-        careful also function names should avoid caps
-
-        I'd like you to do a generic apodizer function (which would propably look like this one)
-        and with no central obs : make_radial_apodiser
-        and a makeSphereApodizer which is applying this function to the radial prof you measured
-        and add the central obscuration. Like the function I did for makeVLTpup there must be very
-        little parameters because the Sphere apodizer parameter are fixed. The only
-        parameters are size of pupil dim_pp and prad
-
-    Args :
-        pupdiam (float) [pixel] : pupil diameter
-
-        cobs (float) [fraction of diameter] : central obtruction diameter
-
-        radialProfile (function, optional) : apodizer radial transmission. Default is SPHERE APLC apodizer.
-
-    Returns :
-        apodizer (2D array) : apodizer transmission pupil
+    Parameters
+    ----------
+    dim_pp : int
+        Size of the pupil plane (in pixels).
+    prad : float
+        Size of the pupil radius (in pixels).
+    apodizer_profile : function.
+        Apodizer radial transmission. It is a function of the radial coordinate.
+    center_pos : string (optional, default 'b')
+        Option for the center pixel.
+        If 'p', center on the pixel dim_pp//2.
+        If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
+    no_pixel : boolean (default False).
+        If true, the pupil is first defined at a very large
+        scale (prad = 9*prad or 10*prad) and then rescaled to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated the pupil has to be perfectly centered on the array:
+            -if center_pos is 'p', dimpp must be odd
+            -if center_pos is 'b', dimpp must be even
+        See also Asterix.optics.pupil.grey_pupil().
+    Returns
+    ------
+        apodizer_pupil : 2D array.
+            Apodizer pupil
     """
-    # creating VLT pup without spiders
-    pup = make_VLT_pup(pupdiam, cobs, t_spiders=0, pupangle=0, spiders=False)
+    if no_pixel:
+        # we add valueError conditions because it is very hard to maintain the same centering after the
+        # rebin in all conditions
+        if dim_pp % 2 == 0:
+            if center_pos.lower() == 'p':
+                raise ValueError("no_pixel=True, only for pupils centered: if center is 'p', dimpp must be odd")
+            factor_bin = int(10)
+            dimpp_pup_large = (2 * prad) * factor_bin
+            center_on_pixel = False
+        else:
+            if center_pos.lower() == 'b':
+                raise ValueError("no_pixel=True, only for pupils centered: if center is 'b', dimpp must be even")
+            factor_bin = int(9)
+            dimpp_pup_large = (2 * prad + 1) * factor_bin
+            center_on_pixel = True
 
-    # applying apodizer radial profile
-    X = np.tile(np.linspace(-1, 1, pupdiam, dtype=np.float32), (pupdiam, 1))
-    R = np.sqrt(X**2 + (X.T)**2)
-    apodizer = pup * radialProfile(R)
-    return apodizer
+        apodizer_pupil_large = make_apodizer(dimpp_pup_large, factor_bin * prad, apodizer_profile, no_pixel=False, center_pos=center_pos)
+        return crop_or_pad_image(rebin(apodizer_pupil_large, factor=factor_bin, center_on_pixel=center_on_pixel), dim_pp)
+
+    else:
+        xx, yy = np.meshgrid(np.arange(dim_pp) - dim_pp // 2, np.arange(dim_pp) - dim_pp // 2)
+
+        if center_pos.lower() == 'b':
+            xx = xx + 1 / 2
+            yy = yy + 1 / 2
+        elif center_pos.lower() == 'p':
+            pass
+        else:
+            raise Exception("center_pos can only be 'p' or 'b'")
+        rr = np.hypot(yy, xx)
+
+        apodizer_pupil = np.zeros((dim_pp, dim_pp))
+        apodizer_pupil[rr <= prad] = apodizer_profile(rr[rr <= prad] / prad)
+
+        return apodizer_pupil
 
 
 def make_spider(dim_pp, starting_point, finishing_point, w_spiders, center_pos='b'):
@@ -462,9 +473,76 @@ def make_VLT_pup(dim_pp,
     return VLTpupil
 
 
+def sphere_apodizer_radial_profile(x):
+    """
+    Compute the transmission radial profile of the SPHERE APO1 apodizer.
+    x is the radial coordinate inside the pupil
+    x = 0 at the center of the pupil and x = 1 on the outer edge
+    This profile has been estimated with a five order polynomial fit.
+    Don't go inside the central obstruction, namely x < 0.14,
+    as the fit is no longer reliable.
+
+    Parameters
+    ----------
+    x : float or array
+        distance to the pupil center, in fraction of the pupil radius
+
+    Returns
+    ------
+    profile : float or array
+        corresponding transmission
+    """
+    a = 0.16544446129778326
+    b = 4.840243632913415
+    c = -12.02291052479871
+    d = 7.549499000031292
+    e = -1.031115714037546
+    f = 0.8227341447351052
+    profile = a * x**5 + b * x**4 + c * x**3 + d * x**2 + e * x + f
+    return profile
+
+
+def make_sphere_apodizer(dim_pp, prad, no_pixel=False, center_pos='b'):
+    """
+    Return the SPHERE APO1 apodizer pupil.
+
+    Parameters
+    ----------
+    dim_pp : int
+        Size of the image (in pixels)
+    prad : float
+        Size of the pupil radius (in pixels)
+    center_pos : string (optional, default 'b')
+        Option for the center pixel.
+        If 'p', center on the pixel dim_pp//2.
+        If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
+    no_pixel : boolean (default False).
+        If true, the pupil is first defined at a very large
+        scale (prad = 10*prad or 9*prad) and then rescaled to the given parameter 'prad'.
+        This limits the pixel crenellation in the pupil for small pupils.
+        If this option is activated the pupil has to be perfectly centered on the array:
+            -if center_pos is 'p', dimpp must be odd
+            -if center_pos is 'b', dimpp must be even
+        See also Asterix.optics.pupil.grey_pupil().
+
+    Returns
+    ------
+    sphere_apodizer : 2D array
+        sphere APO1 apodizer pupil
+    """
+
+    sphere_apodizer = make_apodizer(dim_pp, prad, sphere_apodizer_radial_profile, no_pixel=no_pixel, center_pos=center_pos)
+    sphere_apodizer *= make_VLT_pup(dim_pp, prad, pupangle=0, spiders=False, center_pos=center_pos, no_pixel=no_pixel)
+    return sphere_apodizer
+
+
 def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', no_pixel=False):
     """ 
     Return SPHERE Lyot stop aperture
+
+    values of additional central obstruction, spiders size and
+    outer edge obstruction have been estimated by eye on the real lyot stop
+    warning : this lyot stop does not feature the dead actuators patches
 
     AUTHORS : Johan Mazoyer from C. Goulas
 
@@ -498,9 +576,9 @@ def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, center_pos='b', no_
         SPHERE Lyot Stop transmission pupil of shape (dim_pp, dim_pp), filled with 0 and 1
     """
 
-    addCentralObs = 2 * 14 / 384
-    addSpiderObs = 2 * 5.5 / 384
-    lyotOuterEdgeObs = 7 / 384
+    addCentralObs = 7.3 / 100
+    addSpiderObs = 3.12 / 100
+    lyotOuterEdgeObs = 1.8 / 100
 
     return make_VLT_pup(dim_pp,
                         prad,
