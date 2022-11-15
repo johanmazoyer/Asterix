@@ -230,6 +230,8 @@ def make_apodizer(dim_pp, prad, apodizer_profile, grey_pup_bin_factor=1, center_
     The transmission profile must be a fonction of the radial coordinate.
     The radial coordinate is 0 at the center and 1 on the outer edge, namely at prad.
 
+    AUTHOR : Charles Goulas
+
     Parameters
     ----------
     dim_pp : int
@@ -507,6 +509,8 @@ def sphere_apodizer_radial_profile(x):
     Don't go inside the central obstruction, namely x < 0.14,
     as the fit is no longer reliable.
 
+    AUTHOR : Charles Goulas
+
     Parameters
     ----------
     x : float or array
@@ -530,6 +534,8 @@ def sphere_apodizer_radial_profile(x):
 def make_sphere_apodizer(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
     """
     Return the SPHERE APO1 apodizer pupil.
+
+    AUTHOR : Charles Goulas
 
     Parameters
     ----------
