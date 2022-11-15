@@ -60,11 +60,11 @@ Finally, for all optical system, you can use generic functions like to creaet an
     PSF = generic_os.todetector_intensity(entrance_EF = input_wavefront)
 
 ``todetector_intensity``'s keyword "in_contrast" can be used to normalized the PSF in contrast or not. 
-``center_on_pixel`` can be used to center the PSF in the center or not (False by default).
+``center_on_pixel`` can be used to center the PSF in the center of a pixel or not (False by default).
 
-In the later sections, we will present the existing ``OpticalSystem`` (``Pupil``,
+In the later sections, we will present the existing ``OpticalSystem`` subclasses (``Pupil``,
 ``Coronagraph``, ``DeformableMirror``) and the
-way to concatenate them easily to create an ``Testbed``.
+way to concatenate them easily to create a ``Testbed``.
 
 Finally, ``OpticalSystem`` have been set up with a mode where each optical plane is save to .fits for debugging purposes.
 This can generate a lot of fits especially if in a loop so be careful. 
@@ -75,14 +75,14 @@ Function documentation can be found in Section :ref:`os-label`.
 Polychromatic images
 +++++++++++++++++++++++
 
-To define the wavelengths, 3 parameters are used:
+To define the wavelengths of simulation, 3 parameters are used:
 - ``wavelength_0`` the central wavelength (in meters)
 - ``Delta_wav`` the width of Spectral band (in meters), centered on ``wavelength_0``
 - ``nb_wav`` Number of monochromatic images in the spectral band (must be odd integer)
 ``nb_wav`` is ignored if ``Delta_wav`` = 0 and ``Delta_wav`` is ignored if ``nb_wav`` = 1
 
-Using these 3 parameter, we split the BW in small bandwidths of equal ``Delta_wav`` / ``nb_wav`` and 
-we take the centers of each of these small bandwidths. Next Figure shows this in the case of ``nb_wav`` = 5.
+Using these 3 parameters, we split the BW in small bandwidths of equal ``Delta_wav`` / ``nb_wav`` and 
+we take the centers of each of these small bandwidths. The next Figure shows this in the case of ``nb_wav`` = 5.
 
 .. figure:: source_images/wl_simu.pdf
     :scale: 80%
@@ -95,8 +95,8 @@ If  ``Delta_wav`` > 0 and ``nb_wav`` > 1, Asterix is automatically in polychroma
 .. code-block:: python
     PSF = generic_os.todetector_intensity(entrance_EF = input_wavefront)
 
-will return a polychromatic PSF. By default. it is done in all possible simulated wavelengths 
-(``wavelengths = OpticalSystem.wav_vec``). There is also a ``wavelengths`` parameter to select 
+will return a polychromatic PSF. By default, it is done in all possible simulated wavelengths
+(``wavelengths = OpticalSystem.wav_vec``). There is also a ``wavelengths`` parameter to select
 other wavelengths. These wavelength must be sub parts of the simulated wavelength because a lot
 of wavelength specific tools are defined during ``OpticalSystem`` initialization. Finally, the normalization in contrast
 is by default for the whole bandwidth. If you want other wavelengths, 

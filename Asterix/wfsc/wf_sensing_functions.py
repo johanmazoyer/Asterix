@@ -37,13 +37,13 @@ def create_pw_matrix(testbed: Testbed,
         value not to exceed for the inverse eigeinvalues at each pixels
     matrix_dir : string
         path to directory to save all the matrices here
-    polychrom: string
+    polychrom : string
         For polychromatic estimation and correction:
         - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
         - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
-    wav_vec_estim: list of float, default None
-        list of wavelength to do the estimation used in the case of polychrom == 'multiwl'
+    wav_vec_estim : list of float, default None
+        list of wavelengths to do the estimation, used in the case of polychrom == 'multiwl'
 
     Returns
     ------
