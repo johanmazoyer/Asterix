@@ -1,7 +1,6 @@
 import numpy as np
 from Asterix.optics.propagation_functions import mft
 from Asterix.utils import crop_or_pad_image, rebin
-
 from Asterix.utils.save_and_read import quickfits
 
 
