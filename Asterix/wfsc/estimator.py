@@ -78,14 +78,14 @@ class Estimator:
         wavelength_0_estim = testbed.wavelength_0
 
         if self.polychrom == 'multiwl' and self.nb_wav_estim > 1:
-            # For now estimation BW and testbed BW are the same can be easily changed
+            # For now estimation BW and testbed BW are the same and can be easily changed.
             self.delta_wave_estim = testbed.Delta_wav
 
             self.delta_wav_estim_individual = Estimationconfig["delta_wav_estim_individual"]
 
-            # we measure the WL for each individual monochromatic channels
+            # we measure the WL for each individual monochromatic channel.
             if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
-                raise Exception("please set nb_wav_estim parameter to an odd number > 1")
+                raise ValueError("Please set nb_wav_estim parameter to an odd number > 1")
 
             delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
             self.wav_vec_estim = wavelength_0_estim + (np.arange(self.nb_wav_estim) -
@@ -97,7 +97,7 @@ class Estimator:
         for wavei in self.wav_vec_estim:
             if wavei not in testbed.wav_vec:
                 raise ValueError((f"{wavei} is not in testbed.wav_vec. 'nb_wav_estim' parameter",
-                                  "must be equal or a divisor of 'nb_wav' parameter (both must be odd)"))
+                                  "must be equal to, or a divisor, of 'nb_wav' parameter (both must be odd)"))
 
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 

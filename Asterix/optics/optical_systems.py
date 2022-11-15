@@ -353,7 +353,7 @@ class OpticalSystem:
         noFPM : bool, defaut True
             if the optical transfert function EF_through has a noFPM parameter
 
-        **kwargs:
+        **kwargs :
             other kw parameters can be passed direclty to self.EF_through function
 
         Returns
@@ -375,9 +375,9 @@ class OpticalSystem:
 
     def measure_normalization(self):
         """
-        Function must me used at the end of all Optical Systems initalization
+        Function must be used at the end of all Optical Systems initalization
 
-        Measure 3 important values to normalize the data:
+        Measure 3 values to normalize the data:
             - self.norm_monochrom. Array of size len(self.wav_vec)
                         the PSF per WL, use to normalize to_detector
             - self.norm_polychrom. float
@@ -391,7 +391,6 @@ class OpticalSystem:
                 Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
 
         AUTHOR : Johan Mazoyer
-
         """
 
         self.norm_polychrom, sum_polychrom, self.norm_monochrom, _ = self.individual_normalizations(self.wav_vec)
@@ -400,7 +399,7 @@ class OpticalSystem:
 
     def individual_normalizations(self, wavelengths=None):
         """
-        For a given wavelength vector, this function is used to measure maximum
+        For a given wavelength list, this function is used to measure the maximum
         and total energy for each wavelength and then for the whole bandwidth.
 
         AUTHOR : Johan Mazoyer
@@ -413,16 +412,15 @@ class OpticalSystem:
 
         Returns
         ------
-        norm_polychrom: float
+        norm_polychrom : float
             Maximum value of the PSF in polychrom light. Used to normalize to_detector_intensity().
-        sum_polychrom:
+        sum_polychrom : float
             Sum of the PSF in polychrom light. Used to normalize for photon noise.
-        norm_monochrom: numpy array of length wavelengths
-            Norm of PSFs at each wavelength. Can be used for individually normalized
-            the PSF in monochromatic light.
-        sum_monochrom: numpy array of length wavelengths
+        norm_monochrom : numpy array of the same length as wavelengths
+            Norm of PSFs at each wavelength. Can be used to individually normalize
+            PSFs in monochromatic light.
+        sum_monochrom : numpy array of the same length as wavelengths
             Sum of PSFs at each wavelength. Not sure if useful at all but comes for free here.
-
         """
 
         if wavelengths is None:

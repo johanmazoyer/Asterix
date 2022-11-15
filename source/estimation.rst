@@ -101,20 +101,23 @@ Polychromatic Estimation
 +++++++++++++++++++++++
 .. _polychromaticestim-label:
 
-We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` correction wavelengths evenly 
-spaced in ``Delta_wav``, centered on ``wavelength_0``. Polychromatic estimation and correction are linked so they are 
+We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` simulation wavelengths evenly 
+spaced in ``Delta_wav``, centered on ``wavelength_0``. 
+
+Polychromatic estimation and correction are linked so they are 
 both driven by a single parameter in the ``[Estimationconfig]`` section, ``polychromatic``:
 * 'centralwl': only the central wavelength is used for estimation / correction. Probes and matrices are measured at the central wavelength. 
 This parameter allows you to test the results of a monochromatic correction, applied to polychromatic light. 
 * 'broadband_pwprobes': This is mostly like the previous case, but probes images used for PW are broadband (of bandwidth ``Delta_wav``). 
 Matrices are at central wavelength. This is what is currently done in `Potier et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.136P/abstract>`_  
-on SPHERE on sky for example. This mode is only relevantt for PW estimation and will raise an error if use with perfect estimation.
-* 'multiwl': ``nb_wav`` estimations are performed at different wavelengths spanning the bandwidth of correction.
-There are ``nb_wav`` matrices for estimation / correction. The bandwidth of the correction is still parametrized 
-in [modelconfig] right now. We use ``nb_wav_estim`` correction wavelengths evenly spaced in ``Delta_wav``, centered on 
+on SPHERE on sky for example. This mode is only relevant for PW estimation and will raise an error if use with perfect estimation.
+* 'multiwl': ``nb_wav_estim`` estimations are performed at different wavelengths spanning the bandwidth of correction.
+There are ``nb_wav_estim`` matrices for estimation / correction. The bandwidth of the correction is still parametrized 
+in [modelconfig] right now. We use ``nb_wav_estim`` estimation / correction wavelengths evenly spaced in ``Delta_wav``, centered on 
 ``wavelength_0``, the same way that the ``nb_wav`` simulation wavelengths are defined. These wavelength must be sub 
-parts of the simulated wavelength because a lot of wavelength specific tools are defined during ``OpticalSystem`` initialization. 
-For this reason ``nb_wav_estim`` must be an odd integer, divisor of ``nb_wav`` (see Figure, ``nb_wav=9`` and ``nb_wav_estim=3``).
+parts of the simulated wavelengths because a lot of wavelength specific tools are defined during ``OpticalSystem`` initialization. 
+For this reason ``nb_wav_estim`` must be an odd integer, divisor of ``nb_wav``. The next figure shows ``nb_wav = 9`` for the wavelength 
+of simulation in blue and ``nb_wav_estim = 3`` for the wavelengths of estimation / correction in red.
 
 .. figure:: source_images/wl_estim.pdf
     :scale: 80%
