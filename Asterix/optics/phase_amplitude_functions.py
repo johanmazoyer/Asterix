@@ -4,6 +4,7 @@ from Asterix.utils import crop_or_pad_image, rebin
 
 from Asterix.utils.save_and_read import quickfits
 
+
 def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
     """Create a circular pupil.
 
@@ -283,10 +284,8 @@ def make_apodizer(dim_pp, prad, apodizer_profile, grey_pup_bin_factor=1, center_
                                              apodizer_profile,
                                              grey_pup_bin_factor=1,
                                              center_pos=center_pos)
-        return crop_or_pad_image(rebin(apodizer_pupil_large,
-                                       factor=grey_pup_bin_factor,
-                                       center_on_pixel=center_on_pixel),
-                                       dim_pp)
+        return crop_or_pad_image(
+            rebin(apodizer_pupil_large, factor=grey_pup_bin_factor, center_on_pixel=center_on_pixel), dim_pp)
 
     else:
         xx, yy = np.meshgrid(np.arange(dim_pp) - dim_pp // 2, np.arange(dim_pp) - dim_pp // 2)
@@ -572,7 +571,7 @@ def make_sphere_apodizer(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
 
 
 def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, grey_pup_bin_factor=1, center_pos='b'):
-    """ 
+    """
     Return SPHERE Lyot stop aperture
 
     values of additional central obstruction, spiders size and
@@ -586,8 +585,8 @@ def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, grey_pup_bin_factor
     dim_pp : int
         Size of the image (in pixels)
     prad : float
-       Pupil radius within the image array (in pixels). Careful this is not the radius of the lyot, 
-        but the pupil associated to this Lyot.
+       Pupil radius within the image array (in pixels). Careful this is not the radius of the lyot,
+       but the pupil associated to this Lyot.
     pupangle : float
         pupil rotation angle in deg
     spiders : bool, (default True)
