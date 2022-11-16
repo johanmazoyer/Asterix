@@ -122,14 +122,6 @@ of simulation in blue and ``nb_wav_estim = 3`` for the wavelengths of estimation
 .. figure:: source_images/wl_estim.pdf
     :scale: 80%
     :align: center
-in [modelconfig] right now. We use ``nb_wav_estim`` correction wavelengths evenly spaced in ``Delta_wav``, centered on 
-``wavelength_0``, the same way that the ``nb_wav`` simulation wavelengths are defined. These wavelength must be sub 
-parts of the simulated wavelength because a lot of wavelength specific tools are defined during ``OpticalSystem`` initialization. 
-For this reason ``nb_wav_estim`` must be an odd integer, divisor of ``nb_wav`` (see Figure, ``nb_wav=9`` and ``nb_wav_estim=3``).
-
-.. figure:: source_images/wl_estim.pdf
-    :scale: 80%
-    :align: center
 
     Determination of estimation wavelengths ``estimation.wav_vec_estim``
 
