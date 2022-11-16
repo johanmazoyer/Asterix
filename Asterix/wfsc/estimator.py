@@ -244,7 +244,7 @@ class Estimator:
 
             result_estim = []
 
-            # photon_noise parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
+            # nb_photons parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
             # case, we reduce it to self.delta_wav_estim_individual bandwidth
             if self.polychrom == 'multiwl':
                 if 'nb_photons' in kwargs.keys():
