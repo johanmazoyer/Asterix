@@ -11,8 +11,6 @@ from astropy.io import fits
 from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress
 import Asterix.optics.propagation_functions as prop
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
-from Asterix.wfsc.estimator import Estimator
-
 
 def create_interaction_matrix(testbed: Testbed,
                               dimEstim,
