@@ -111,7 +111,6 @@ class Testbed(optsy.OpticalSystem):
         # noFPM so that it does not break when we run transmission and max_sum_PSFs
         # which pass this keyword by default
         known_keywords.append('noFPM')
-        known_keywords.append('photon_noise')
         known_keywords.append('nb_photons')
         known_keywords.append('in_contrast')
 
@@ -307,7 +306,8 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
                 raise ValueError('DMphase is an ambiguous argument if you have several DMs.' +
                                  ' Please use XXphase with XX = nameDM')
             if passed_arg not in known_keywords:
-                raise ValueError(passed_arg + 'is not a EF_through valid argument. Valid args are ' + str(known_keywords))
+                raise ValueError(passed_arg + 'is not a EF_through valid argument. Valid args are ' +
+                                 str(known_keywords))
 
         return testbed_EF_through(**kwargs)
 

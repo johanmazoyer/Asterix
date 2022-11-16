@@ -297,8 +297,21 @@ def simulate_pw_difference(input_wavefront,
         # If we are in a polychromatic mode but we need monochromatic instensity
         # we have to be careful with the normalization, because
         # todetector_intensity is normalizing to polychromatic PSF by default
+        if np.all(wavelengths == testbed.wav_vec):
+            # easy case: we are monochromatic or polychromatic both for images and probes
+            # It's either a monochromatic correction, or a polychromatic correction with
+            # case polychromatic = 'broadband_pwprobes'
+            Ikmoins = testbed.todetector_intensity(entrance_EF=input_wavefront,
+                                                   voltage_vector=voltage_vector - Voltage_probe,
+                                                   wavelengths=wavelengths,
+                                                   **kwargs)
 
-        if isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
+            Ikplus = testbed.todetector_intensity(entrance_EF=input_wavefront,
+                                                  voltage_vector=voltage_vector + Voltage_probe,
+                                                  wavelengths=wavelengths,
+                                                  **kwargs)
+
+        elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
             # case polychromatic = 'centralwl' or polychromatic = 'multiwl'
             Ikmoins = testbed.todetector_intensity(
@@ -314,20 +327,6 @@ def simulate_pw_difference(input_wavefront,
                 wavelengths=wavelengths,
                 in_contrast=False,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
-
-        elif np.all(wavelengths == testbed.wav_vec):
-            # easy case: we are monochromatic or polychromatic both for images and probes
-            # It's either a monochromatic correction or a polychromatic correction with
-            # case polychromatic = 'broadband_pwprobes'
-            Ikmoins = testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                                   voltage_vector=voltage_vector - Voltage_probe,
-                                                   wavelengths=wavelengths,
-                                                   **kwargs)
-
-            Ikplus = testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                                  voltage_vector=voltage_vector + Voltage_probe,
-                                                  wavelengths=wavelengths,
-                                                  **kwargs)
 
         else:
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand."

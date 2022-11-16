@@ -79,8 +79,10 @@ def correction_loop(testbed: Testbed,
     CorrectionLoopResult["SVDmodes"] = []
 
     # reading the simulation parameter files
-    photon_noise = SIMUconfig["photon_noise"]
     nb_photons = SIMUconfig["nb_photons"]
+
+    if nb_photons > 1:
+        CorrectionLoopResult["FP_Intensities_phot"] = []
 
     # reading the loop parameter files
     Nbiter_corr = list(Loopconfig["Nbiter_corr"])
@@ -120,7 +122,6 @@ def correction_loop(testbed: Testbed,
                                                             Linesearch=Linesearch,
                                                             input_wavefront=input_wavefront,
                                                             initial_DM_voltage=initial_DM_voltage,
-                                                            photon_noise=photon_noise,
                                                             nb_photons=nb_photons,
                                                             silence=silence,
                                                             **kwargs)
@@ -150,6 +151,7 @@ def correction_loop_1matrix(testbed: Testbed,
                             Search_best_Mode=False,
                             input_wavefront=1.,
                             initial_DM_voltage=0.,
+                            nb_photons=0,
                             silence=False,
                             **kwargs):
     """Run a loop for a given interaction matrix.
@@ -195,6 +197,8 @@ def correction_loop_1matrix(testbed: Testbed,
         Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
+    nb_photons : float, optional, default 0
+        Number of photons entering the pupil. If 0, no photon noise.
     silence: Boolean, default False
         If False, print and plot results as the loop runs.
 
@@ -218,11 +222,16 @@ def correction_loop_1matrix(testbed: Testbed,
             for i in np.arange(len(Nbiter_corr)):
                 modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
-    initialFP = testbed.todetector_intensity(entrance_EF=input_wavefront, voltage_vector=initial_DM_voltage, **kwargs)
+    initialFP = testbed.todetector_intensity(entrance_EF=input_wavefront,
+                                             voltage_vector=initial_DM_voltage,
+                                             nb_photons=0,
+                                             **kwargs)
+
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
     thisloop_voltages_DMs = []
     thisloop_FP_Intensities = []
+    thisloop_FP_Intensities_phot = []
     thisloop_MeanDHContrast = []
     thisloop_EF_estim = []
     thisloop_actual_modes = []
@@ -230,6 +239,10 @@ def correction_loop_1matrix(testbed: Testbed,
     thisloop_voltages_DMs.append(initial_DM_voltage)
     thisloop_FP_Intensities.append(initialFP)
     thisloop_MeanDHContrast.append(initialFP_contrast)
+
+    if nb_photons > 1:
+        initialFP_phot = testbed.add_photon_noise(initialFP, nb_photons)
+        thisloop_FP_Intensities_phot.append(initialFP_phot)
 
     if not silence:
         print("Initial contrast in DH: ", initialFP_contrast)
@@ -266,6 +279,7 @@ def correction_loop_1matrix(testbed: Testbed,
                                                                  gain=gain,
                                                                  Nbmode_corr=Linesearchmodes,
                                                                  Search_best_Mode=True,
+                                                                 nb_photons=0,
                                                                  input_wavefront=input_wavefront,
                                                                  initial_DM_voltage=thisloop_voltages_DMs[iteration],
                                                                  silence=silence,
@@ -298,6 +312,7 @@ def correction_loop_1matrix(testbed: Testbed,
                                                 voltage_vector=thisloop_voltages_DMs[-1],
                                                 entrance_EF=input_wavefront,
                                                 perfect_estimation=Search_best_Mode,
+                                                nb_photons=nb_photons,
                                                 **kwargs)
 
         solution = corrector.toDM_voltage(testbed,
@@ -322,8 +337,13 @@ def correction_loop_1matrix(testbed: Testbed,
             new_voltage = thisloop_voltages_DMs[-1] + gain * solution
 
         thisloop_FP_Intensities.append(
-            testbed.todetector_intensity(entrance_EF=input_wavefront, voltage_vector=new_voltage, **kwargs))
+            testbed.todetector_intensity(entrance_EF=input_wavefront, voltage_vector=new_voltage, nb_photons=0,
+                                         **kwargs))
+        thisloop_FP_Intensities_phot.append(testbed.add_photon_noise(thisloop_FP_Intensities[-1], nb_photons))
         thisloop_EF_estim.append(resultatestimation)
+
+        # the contrast cannot be measured on a photon noise image, because at some point a lot of values
+        # are at 0 and it will artificially lower the contrast. Photon noise is only used for the pw images.
         thisloop_MeanDHContrast.append(np.mean(thisloop_FP_Intensities[-1][np.where(mask_dh != 0)]))
 
         if not Search_best_Mode:
@@ -355,6 +375,8 @@ def correction_loop_1matrix(testbed: Testbed,
 
         CorrectionLoopResult["voltage_DMs"].extend(thisloop_voltages_DMs)
         CorrectionLoopResult["FP_Intensities"].extend(thisloop_FP_Intensities)
+        if nb_photons > 1:
+            CorrectionLoopResult["FP_Intensities_phot"].extend(thisloop_FP_Intensities_phot)
         CorrectionLoopResult["EF_estim"].extend(thisloop_EF_estim)
         CorrectionLoopResult["MeanDHContrast"].extend(thisloop_MeanDHContrast)
 
@@ -409,6 +431,13 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                  header,
                  overwrite=True)
 
+    if config["SIMUconfig"]["nb_photons"] > 1:
+        FP_Intensities_phot = CorrectionLoopResult["FP_Intensities_phot"]
+        fits.writeto(os.path.join(result_dir, "FocalPlane_Intensities_photnoise.fits"),
+                     np.array(FP_Intensities_phot),
+                     header,
+                     overwrite=True)
+
     fits.writeto(os.path.join(result_dir, "Mean_Contrast_DH.fits"), np.array(meancontrast), header, overwrite=True)
 
     fits.writeto(os.path.join(result_dir, "estimationFP_RE.fits"), np.real(np.array(EF_estim)), header, overwrite=True)
@@ -454,20 +483,6 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     plt.legend()
     plt.savefig(os.path.join(result_dir, "DM_Strokes" + ".pdf"))
     plt.close()
-    # TODO Now FP_Intensities are save with photon noise if it's on
-    # We need to do them without just to save in the results
-
-    # if config["SIMUconfig"]["photon_noise"] == True:
-    #     FP_Intensities_photonnoise = np.array(FP_Intensities) * 0.
-    #     for i in range(nb_total_iter):
-    #         FP_Intensities_photonnoise[i] = np.random.poisson(
-    #             FP_Intensities[i] * testbed.normPupto1 *
-    #             config["SIMUconfig"]["nb_photons"])
-
-    #     fits.writeto(os.path.join(result_dir, "NoPhoton_noise" + ".fits"),
-    #                  FP_Intensities_photonnoise,
-    #                  header,
-    #                  overwrite=True)
 
     config.filename = os.path.join(result_dir, "Simulation_parameters.ini")
     config.write()
