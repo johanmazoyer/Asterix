@@ -5,6 +5,60 @@ from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
 from Asterix.wfsc import Estimator, Corrector, MaskDH, correction_loop, save_loop_results
 
 
+class THD2(Testbed):
+    """Testbed object configured for THD2, from input configfile.
+
+    AUTHOR : ILa, Nov 2022
+
+    Attributes
+    ----------
+    config : dict
+        A read-in .ini parameter file.
+    """
+
+    def __init__(self,
+                 parameter_file,
+                 new_model_config={},
+                 new_dm_config={},
+                 new_corona_config={},
+                 ):
+        """
+        Parameters
+        ----------
+        parameter_file : string
+            Absolute path to an .ini parameter file.
+        new_model_config : dict, optional
+            Can be used to directly change a parameter in the MODELconfig section of the input parameter file.
+        new_dm_config : dict, optional
+            Can be used to directly change a parameter in the DMconfig section of the input parameter file.
+        new_corona_config : dict, optional
+            Can be used to directly change a parameter in the Coronaconfig section of the input parameter file.
+        """
+
+        # Load configuration file
+        self.config = read_parameter_file(parameter_file,
+                                          NewMODELconfig=new_model_config,
+                                          NewDMconfig=new_dm_config,
+                                          NewCoronaconfig=new_corona_config)
+
+        model_config = self.config["modelconfig"]
+        dm_config = self.config["DMconfig"]
+        corona_config = self.config["Coronaconfig"]
+        model_local_dir = os.path.join(get_data_dir(config_in=self.config["Data_dir"]), "Model_local")
+
+        # Create all optical elements of the THD
+        entrance_pupil = Pupil(model_config,
+                               PupType=model_config["filename_instr_pup"],
+                               angle_rotation=model_config["entrance_pup_rotation"],
+                               Model_local_dir=model_local_dir)
+        dm1 = DeformableMirror(model_config, dm_config, Name_DM="DM1", Model_local_dir=model_local_dir)
+        dm3 = DeformableMirror(model_config, dm_config, Name_DM="DM3", Model_local_dir=model_local_dir)
+        corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir)
+
+        # Concatenate into the full testbed optical system
+        super().__init__([entrance_pupil, dm1, dm3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
+
+
 def runthd2(parameter_file,
             NewMODELconfig={},
             NewDMconfig={},
@@ -58,34 +112,22 @@ def runthd2(parameter_file,
                                  NewLoopconfig=NewLoopconfig,
                                  NewSIMUconfig=NewSIMUconfig)
 
-    Data_dir = get_data_dir(config_in=config["Data_dir"])
+    data_dir = get_data_dir(config_in=config["Data_dir"])
     onbench = config["onbench"]
-    modelconfig = config["modelconfig"]
-    DMconfig = config["DMconfig"]
-    Coronaconfig = config["Coronaconfig"]
     Estimationconfig = config["Estimationconfig"]
     Correctionconfig = config["Correctionconfig"]
     Loopconfig = config["Loopconfig"]
     SIMUconfig = config["SIMUconfig"]
-    Name_Experiment = create_experiment_dir(append=SIMUconfig["Name_Experiment"])
+    name_experiment = create_experiment_dir(append=SIMUconfig["Name_Experiment"])
 
     # Initialize all directories
-    model_local_dir = os.path.join(Data_dir, "Model_local")
-    matrix_dir = os.path.join(Data_dir, "Interaction_Matrices")
-    result_dir = os.path.join(Data_dir, "Results", Name_Experiment)
-    labview_dir = os.path.join(Data_dir, "Labview")
-
-    # Create all optical elements of the THD
-    entrance_pupil = Pupil(modelconfig,
-                           PupType=modelconfig['filename_instr_pup'],
-                           angle_rotation=modelconfig['entrance_pup_rotation'],
-                           Model_local_dir=model_local_dir)
-    DM1 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM1', Model_local_dir=model_local_dir)
-    DM3 = DeformableMirror(modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=model_local_dir)
-    corono = Coronagraph(modelconfig, Coronaconfig, Model_local_dir=model_local_dir)
+    model_local_dir = os.path.join(data_dir, "Model_local")
+    matrix_dir = os.path.join(data_dir, "Interaction_Matrices")
+    result_dir = os.path.join(data_dir, "Results", name_experiment)
+    labview_dir = os.path.join(data_dir, "Labview")
 
     # Concatenate into the full testbed optical system
-    thd2 = Testbed([entrance_pupil, DM1, DM3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
+    thd2 = THD2(parameter_file, NewMODELconfig, NewDMconfig, NewCoronaconfig)
 
     # The following line can be used to change the DM which applies PW probes. This could be used to use the DM out of
     # the pupil plane.
