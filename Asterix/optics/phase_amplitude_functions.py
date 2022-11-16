@@ -1,7 +1,6 @@
 import numpy as np
 from Asterix.optics.propagation_functions import mft
 from Asterix.utils import crop_or_pad_image, rebin
-from Asterix.utils.save_and_read import quickfits
 
 
 def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
@@ -33,7 +32,7 @@ def roundpupil(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
 
     Returns
-    ------
+    -------
     pupilnormal : 2D array
         Output circular pupil
     """
@@ -99,7 +98,7 @@ def shift_phase_ramp(dim_pp, shift_x, shift_y):
         Shift desired in the y direction (in pixels)
 
     Returns
-    ------
+    -------
     masktot : 2D array
         Phase ramp
     """
@@ -135,7 +134,7 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
         Slope of the PSD. See Borde et Traub 2006.
 
     Returns
-    ------
+    -------
     phase : 2D array
         Static random phase map (or OPD)
     """
@@ -177,7 +176,7 @@ def sine_cosine_basis(Nact1D):
         Number of actuators of a square DM in one of the principal directions.
 
     Returns
-    ------
+    -------
     SinCos : 3D array
         Coefficient to apply to DMs to obtain sine and cosine phases.
         size :[(Nact1D)^2,Nact1D,Nact1D] if even
@@ -253,7 +252,7 @@ def make_apodizer(dim_pp, prad, apodizer_profile, grey_pup_bin_factor=1, center_
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
 
     Returns
-    ------
+    -------
         apodizer_pupil : 2D array.
             Apodizer pupil
     """
@@ -310,7 +309,10 @@ def make_spider(dim_pp, starting_point, finishing_point, w_spiders, center_pos='
     """
     Make a unique spider from starting_point to finishing point, of width w_spiders
 
-    AUTHORS : Johan Mazoyer, heavily inspired by Emiel Por in HCIpy
+    AUTHORS : Johan Mazoyer, heavily inspired by Emiel Por in HCIpy [Por2018]_.
+
+    .. [Por2018] Por et al. 2018, "High Contrast Imaging for Python (HCIPy):
+    an open-source adaptive optics and coronagraph simulator"
 
     Parameters
     ----------
@@ -328,7 +330,7 @@ def make_spider(dim_pp, starting_point, finishing_point, w_spiders, center_pos='
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
 
     Returns
-    ------
+    -------
     spider_map : 2D bool array
         spider boolean array
     """
@@ -348,7 +350,7 @@ def make_spider(dim_pp, starting_point, finishing_point, w_spiders, center_pos='
         xx = xx - shift[0]
         yy = yy - shift[1]
     else:
-        raise Exception("center_pos can only be 'p' or 'b'")
+        raise ValueError("center_pos can only be 'p' or 'b'")
 
     xx_rot = xx * np.cos(spider_angle) + yy * np.sin(spider_angle)
     yy_rot = yy * np.cos(spider_angle) - xx * np.sin(spider_angle)
@@ -407,7 +409,7 @@ def make_VLT_pup(dim_pp,
     additional spiders width in fraction of the diameter
 
     Returns
-    ------
+    -------
     VLTpupil : 2D numpy array
         VLT transmission pupil of shape (pupdiam, pupdiam), filled with 0 and 1
     """
@@ -516,7 +518,7 @@ def sphere_apodizer_radial_profile(x):
         distance to the pupil center, in fraction of the pupil radius
 
     Returns
-    ------
+    -------
     profile : float or array
         corresponding transmission
     """
@@ -556,7 +558,7 @@ def make_sphere_apodizer(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
 
     Returns
-    ------
+    -------
     sphere_apodizer : 2D array
         sphere APO1 apodizer pupil
     """
@@ -610,7 +612,7 @@ def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, grey_pup_bin_factor
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
 
     Returns
-    ------
+    -------
     SPHERELyotStop : 2D numpy array
         SPHERE Lyot Stop transmission pupil of shape (dim_pp, dim_pp), filled with 0 and 1
     """
