@@ -101,25 +101,31 @@ Polychromatic Estimation
 +++++++++++++++++++++++
 .. _polychromaticestim-label:
 
-We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` correction wavelengths evenly 
-spaced in ``Delta_wav``, centered on ``wavelength_0``. Polychromatic estimation and correction are linked so they are 
+We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` simulation wavelengths evenly 
+spaced in ``Delta_wav``, centered on ``wavelength_0``. 
+
+Polychromatic estimation and correction are linked so they are 
 both driven by a single parameter in the ``[Estimationconfig]`` section, ``polychromatic``:
 * 'centralwl': only the central wavelength is used for estimation / correction. Probes and matrices are measured at the central wavelength. 
 This parameter allows you to test the results of a monochromatic correction, applied to polychromatic light. 
 * 'broadband_pwprobes': This is mostly like the previous case, but probes images used for PW are broadband (of bandwidth ``Delta_wav``). 
 Matrices are at central wavelength. This is what is currently done in `Potier et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.136P/abstract>`_  
-on SPHERE on sky for example. This mode is only relevantt for PW estimation and will raise an error if use with perfect estimation.
-* 'multiwl': ``nb_wav`` estimations are performed at different wavelengths spanning the bandwidth of correction.
-There are ``nb_wav`` matrices for estimation / correction. The bandwidth of the correction is still parametrized 
-in [modelconfig] right now. We use ``nb_wav`` correction wavelengths evenly spaced in ``Delta_wav``, centered on 
-``wavelength_0``. At some point, we might want to do smarter things like having separate parameters to choose
-the wavelength of estimation / correction from the one used to simulate the polychromatic images in [modelconfig], like in 
-Falco (see `here <https://www.dropbox.com/s/xn2s04tung43sp5/doc_FALCO_bandpasses_wavelengths.pdf?dl=0>`_), but this is 
-slightly more difficult because the contrast normalization is currently available only at the specific wavelengths defined
-in [modelconfig].
+on SPHERE on sky for example. This mode is only relevant for PW estimation and will raise an error if use with perfect estimation.
+* 'multiwl': ``nb_wav_estim`` estimations are performed at different wavelengths spanning the bandwidth of correction.
+There are ``nb_wav_estim`` matrices for estimation / correction. The bandwidth of the correction is still parametrized 
+in [modelconfig] right now. We use ``nb_wav_estim`` estimation / correction wavelengths evenly spaced in ``Delta_wav``, centered on 
+``wavelength_0``, the same way that the ``nb_wav`` simulation wavelengths are defined. These wavelength must be sub 
+parts of the simulated wavelengths because a lot of wavelength specific tools are defined during ``OpticalSystem`` initialization. 
+For this reason ``nb_wav_estim`` must be an odd integer, divisor of ``nb_wav``. The next figure shows ``nb_wav = 9`` for the wavelength 
+of simulation in blue and ``nb_wav_estim = 3`` for the wavelengths of estimation / correction in red.
 
-If monochromatic images (``nb_wav = 1`` or ``Delta_wav = 0``), all these options are equivalent.
-    
+.. figure:: source_images/wl_estim.pdf
+    :scale: 80%
+    :align: center
+
+    Determination of estimation wavelengths ``estimation.wav_vec_estim``
+
+If monochromatic images (``nb_wav = 1`` or ``Delta_wav = 0``), all ``polychromatic`` options are equivalent.
 
 
 

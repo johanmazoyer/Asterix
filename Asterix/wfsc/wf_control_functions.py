@@ -12,7 +12,6 @@ from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progr
 import Asterix.optics.propagation_functions as prop
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
-
 def create_interaction_matrix(testbed: Testbed,
                               dimEstim,
                               amplitudeEFC,
@@ -21,6 +20,7 @@ def create_interaction_matrix(testbed: Testbed,
                               input_wavefront=1.,
                               MatrixType='',
                               polychrom='centralwl',
+                              wav_vec_estim=None,
                               dir_save_all_planes=None,
                               visu=False):
     """Create the jacobian matrix for Electric Field Conjugation. The Matrix is
@@ -99,6 +99,9 @@ def create_interaction_matrix(testbed: Testbed,
                          "2D array of size (dim_overpad_pupil, dim_overpad_pupil) or a 3D array of size "
                          "(nb_wav, dim_overpad_pupil, dim_overpad_pupil)"))
 
+    if wav_vec_estim is None:
+        wav_vec_estim = testbed.wav_vec
+
     return_matrix = []
 
     if polychrom in ['centralwl', 'broadband_pwprobes']:
@@ -116,7 +119,8 @@ def create_interaction_matrix(testbed: Testbed,
                                                visu=visu))
 
     elif polychrom == 'multiwl':
-        for i, wave_i in enumerate(testbed.wav_vec):
+
+        for i, wave_i in enumerate(wav_vec_estim):
             return_matrix.append(
                 create_singlewl_interaction_matrix(testbed,
                                                    dimEstim,

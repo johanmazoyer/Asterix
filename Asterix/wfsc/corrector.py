@@ -212,6 +212,7 @@ class Corrector:
                                                      input_wavefront=input_wavefront,
                                                      MatrixType=self.MatrixType,
                                                      polychrom=estimator.polychrom,
+                                                     wav_vec_estim=estimator.wav_vec_estim,
                                                      dir_save_all_planes=None,
                                                      visu=False)
 

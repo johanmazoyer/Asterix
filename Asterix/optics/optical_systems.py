@@ -322,11 +322,9 @@ class OpticalSystem:
         if in_contrast:
             if (wavelength_vec != self.wav_vec).all():
                 raise ValueError(("Careful: contrast normalization in todetector_intensity assumes "
-                                  "it is done in all possible BWs (wavelengths = self.wav_vec). If self.nb_wav > 1 "
-                                  "and you want only one BW with the good contrast normalization, use "
-                                  "np.abs(to_detector(wavelength = wavelength))**2... If you want a specific"
-                                  "normalization for a subset of  wavelengths, use in_contrast=False and "
-                                  "measure the PSF to normalize."))
+                                  "it is done in all possible BWs (wavelengths = self.wav_vec). If "
+                                  "you want a specific normalization for a subset of  wavelengths, "
+                                  "use in_contrast=False and measure the PSF to normalize."))
 
             focal_plane_intensity /= self.norm_polychrom
 
@@ -355,7 +353,7 @@ class OpticalSystem:
         noFPM : bool, defaut True
             if the optical transfert function EF_through has a noFPM parameter
 
-        **kwargs:
+        **kwargs :
             other kw parameters can be passed direclty to self.EF_through function
 
         Returns
@@ -376,14 +374,14 @@ class OpticalSystem:
         return transmission
 
     def measure_normalization(self):
-        """Functions must me used at the end of all Optical Systems
-        initalization.
+        """
+        Function must be used at the end of all Optical Systems initalization
 
-        Measure 3 different values to normalize the data:
+        Measure 3 values to normalize the data:
             - self.norm_monochrom. Array of size len(self.wav_vec)
                         the PSF per WL, use to normalize to_detector
             - self.norm_polychrom. float
-                        the polychromatic PSF use to nomrmalize to_detector_Intensity
+                        the polychromatic PSF used to normalize to_detector_Intensity
             - self.normPupto1, which is used to measure the photon noise
                 This is the factor that we use to measure photon noise.
                 From an image in contrast, we now normalize by the total amount of
@@ -395,20 +393,58 @@ class OpticalSystem:
         AUTHOR : Johan Mazoyer
         """
 
-        PSF_bw = np.zeros((self.dimScience, self.dimScience))
-        self.norm_monochrom = np.zeros((len(self.wav_vec)))
-        self.sum_monochrom = np.zeros((len(self.wav_vec)))
+        self.norm_polychrom, sum_polychrom, self.norm_monochrom, _ = self.individual_normalizations(self.wav_vec)
 
-        for i, wav in enumerate(self.wav_vec):
+        self.normPupto1 = self.transmission() * self.norm_polychrom / sum_polychrom
+
+    def individual_normalizations(self, wavelengths=None):
+        """
+        For a given wavelength list, this function is used to measure the maximum
+        and total energy for each wavelength and then for the whole bandwidth.
+
+        AUTHOR : Johan Mazoyer
+
+        Parameters
+        ----------
+        wavelengths : float or list of floats.
+            Default is all the wl of the testbed self.wav_vec
+            wavelengths in m.
+
+        Returns
+        ------
+        norm_polychrom : float
+            Maximum value of the PSF in polychrom light. Used to normalize to_detector_intensity().
+        sum_polychrom : float
+            Sum of the PSF in polychrom light. Used to normalize for photon noise.
+        norm_monochrom : numpy array of the same length as wavelengths
+            Norm of PSFs at each wavelength. Can be used to individually normalize
+            PSFs in monochromatic light.
+        sum_monochrom : numpy array of the same length as wavelengths
+            Sum of PSFs at each wavelength. Not sure if useful at all but comes for free here.
+        """
+
+        if wavelengths is None:
+            wavelength_vec = self.wav_vec
+        elif isinstance(wavelengths, (float, int)):
+            wavelength_vec = [wavelengths]
+        else:
+            wavelength_vec = wavelengths
+
+        PSF_bw = np.zeros((self.dimScience, self.dimScience))
+        norm_monochrom = np.zeros((len(wavelength_vec)))
+        sum_monochrom = np.zeros((len(wavelength_vec)))
+
+        for i, wav in enumerate(wavelength_vec):
             PSF_wl = np.abs(self.todetector(wavelength=wav, noFPM=True, center_on_pixel=True, in_contrast=False))**2
 
-            self.norm_monochrom[i] = np.max(PSF_wl)
+            norm_monochrom[i] = np.max(PSF_wl)
+            sum_monochrom[i] = np.sum(PSF_wl)
             PSF_bw += PSF_wl
 
-        self.norm_polychrom = np.max(PSF_bw)
-        self.sum_polychrom = np.sum(PSF_bw)
+        norm_polychrom = np.max(PSF_bw)
+        sum_polychrom = np.sum(PSF_bw)
 
-        self.normPupto1 = self.transmission() * self.norm_polychrom / self.sum_polychrom
+        return norm_polychrom, sum_polychrom, norm_monochrom, sum_monochrom
 
     def generate_phase_aberr(self, SIMUconfig, up_or_down='up', Model_local_dir=None):
         """Generate and save  phase aberrations.
