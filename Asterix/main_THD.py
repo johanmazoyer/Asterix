@@ -16,16 +16,17 @@ class THD2(Testbed):
         A read-in .ini parameter file.
     """
 
-    def __init__(self,
-                 parameter_file,
-                 new_model_config={},
-                 new_dm_config={},
-                 new_corona_config={},
-                 ):
+    def __init__(
+        self,
+        parameter_file_path,
+        new_model_config={},
+        new_dm_config={},
+        new_corona_config={},
+    ):
         """
         Parameters
         ----------
-        parameter_file : string
+        parameter_file_path : string
             Absolute path to an .ini parameter file.
         new_model_config : dict, optional
             Can be used to directly change a parameter in the MODELconfig section of the input parameter file.
@@ -36,7 +37,7 @@ class THD2(Testbed):
         """
 
         # Load configuration file
-        self.config = read_parameter_file(parameter_file,
+        self.config = read_parameter_file(parameter_file_path,
                                           NewMODELconfig=new_model_config,
                                           NewDMconfig=new_dm_config,
                                           NewCoronaconfig=new_corona_config)
@@ -59,7 +60,7 @@ class THD2(Testbed):
         super().__init__([entrance_pupil, dm1, dm3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
 
 
-def runthd2(parameter_file,
+def runthd2(parameter_file_path,
             NewMODELconfig={},
             NewDMconfig={},
             NewCoronaconfig={},
@@ -72,7 +73,7 @@ def runthd2(parameter_file,
     """
     Run a simulation of a correction loop for the THD2 testbed.
 
-    Initialize the THD2 testbed, the estimation method, the correction method from parameter_file.
+    Initialize the THD2 testbed, the estimation method, the correction method from parameter_file_path.
     Run the loop and save the results.
 
     All NewXXXconfig input variables can be used to update a single parameter in one of
@@ -84,7 +85,7 @@ def runthd2(parameter_file,
 
     Parameters
     ----------
-    parameter_file: string
+    parameter_file_path: string
         Absolute path to a .ini parameter file
     NewMODELconfig: dict, optional
         Can be used to directly change a parameter in the MODELconfig section of the input parameter file.
@@ -103,7 +104,7 @@ def runthd2(parameter_file,
     """
 
     # Load configuration file
-    config = read_parameter_file(parameter_file,
+    config = read_parameter_file(parameter_file_path,
                                  NewMODELconfig=NewMODELconfig,
                                  NewDMconfig=NewDMconfig,
                                  NewCoronaconfig=NewCoronaconfig,
@@ -127,7 +128,7 @@ def runthd2(parameter_file,
     labview_dir = os.path.join(data_dir, "Labview")
 
     # Concatenate into the full testbed optical system
-    thd2 = THD2(parameter_file, NewMODELconfig, NewDMconfig, NewCoronaconfig)
+    thd2 = THD2(parameter_file_path, NewMODELconfig, NewDMconfig, NewCoronaconfig)
 
     # The following line can be used to change the DM which applies PW probes. This could be used to use the DM out of
     # the pupil plane.
