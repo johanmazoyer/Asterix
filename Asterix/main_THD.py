@@ -16,13 +16,7 @@ class THD2(Testbed):
         A read-in .ini parameter file.
     """
 
-    def __init__(
-        self,
-        parameter_file_path,
-        new_model_config={},
-        new_dm_config={},
-        new_corona_config={},
-    ):
+    def __init__(self, parameter_file_path, new_model_config={}, new_dm_config={}, new_corona_config={}):
         """
         Parameters
         ----------
