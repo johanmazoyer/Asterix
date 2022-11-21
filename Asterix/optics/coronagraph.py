@@ -659,8 +659,16 @@ def fqpm_mask(dim):
     return fqpm_thick
 
 
-def create_wrapped_vortex_mask(dim, thval, phval, jump, return_1d=False, piperiodic=True, offset=0, cen_shift=(0, 0),
-                               inclination_x=0, inclination_y=0):
+def create_wrapped_vortex_mask(dim,
+                               thval,
+                               phval,
+                               jump,
+                               return_1d=False,
+                               piperiodic=True,
+                               offset=0,
+                               cen_shift=(0, 0),
+                               inclination_x=0,
+                               inclination_y=0):
     """Create a wrapped vortex phase mask.
 
     Analytical calculation of this phase mask coronagraph see [Galicher2020]_.
