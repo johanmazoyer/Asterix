@@ -591,8 +591,8 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
     nbres : 1D array or list
         List of the number of resolution elements in the total image plane for all propagation layers.
     shift : tuple, default (0, 0)
-        Shift of FPM with respect to optcial axis in pixels. This is done by introducing a tip/tilt on the input
-        wavefront in the pupil that is subsequently taken out in the Lyot plane after the full propagation.
+        Shift of FPM with respect to optical axis in units of lambda/D. This is done by introducing a tip/tilt on the
+        input wavefront in the pupil that is subsequently taken out in the Lyot plane after each propagation layer.
     samp_outer : float
         Sampling in the outermost layer of propagations.
     filter_order : int
@@ -613,22 +613,20 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
 
     dim_pup = pup.shape[0]
     dim_fpm = fpm.shape[0]
+    pup0 = np.array(pup, copy=True, dtype='complex128')
 
     # Add tip-tilt to in pupil wavefront to simulate FPM offsets
     phase_ramp = shift_phase_ramp(dim_pup, shift[0], shift[1])
     inverted_phase_ramp = shift_phase_ramp(dim_pup, -shift[0], -shift[1])
 
-    pup = np.array(pup, copy=True, dtype='complex128')
-    pup *= phase_ramp
-
     # Innermost part of the focal plane
     but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, -0.5, -0.5)
-    efield_before_fpm_inner = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0])
+    efield_before_fpm_inner = mft(pup0 * phase_ramp, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0])
     efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner,
                            real_dim_input=dim_fpm,
                            dim_output=dim_pup,
                            nbres=nbres[0],
-                           inverse=True)
+                           inverse=True) * inverted_phase_ramp
 
     # From inner to outer part of FPM
     const_but = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
@@ -637,12 +635,12 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
         sizebut_here = dim_fpm / alpha * nbres[k] / nbres[k + 1]
         but = (1 - butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
 
-        ef_pre_fpm = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k + 1])
+        ef_pre_fpm = mft(pup0 * phase_ramp, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k + 1])
         ef_pre_ls = mft(ef_pre_fpm * fpm * but,
                         real_dim_input=dim_fpm,
                         dim_output=dim_pup,
                         nbres=nbres[k + 1],
-                        inverse=True)
+                        inverse=True) * inverted_phase_ramp
 
         # Sum up E-field contributions before the LS
         efield_before_ls += ef_pre_ls
@@ -652,12 +650,12 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
     sizebut_outer = dim_fpm / alpha * nbres[-1] / nbres_outer
     but_outer = 1 - butterworth_circle(dim_fpm, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
 
-    ef_pre_fpm_outer = mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres_outer)
+    ef_pre_fpm_outer = mft(pup0 * phase_ramp, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres_outer)
     ef_pre_ls_outer = mft(ef_pre_fpm_outer * fpm * but_outer, real_dim_input=dim_fpm, dim_output=dim_pup,
-                          nbres=nbres_outer, inverse=True)
+                          nbres=nbres_outer, inverse=True) * inverted_phase_ramp
 
     # Total E-field before the LS
     efield_before_ls += ef_pre_ls_outer
-    efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup) * inverted_phase_ramp
+    efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup)
 
     return efield_before_ls
