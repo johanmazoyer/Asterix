@@ -6,7 +6,7 @@ from Asterix.utils import read_parameter_file
 from Asterix.optics import Coronagraph, create_wrapped_vortex_mask, fqpm_mask
 
 
-def test_default_coronagraph():
+def test_fqpm_coronagraph():
     # Load the example parameter file
     parameter_file_ex = os.path.join(Asterix_root, "Example_param_file.ini")
     config = read_parameter_file(parameter_file_ex)
@@ -15,16 +15,19 @@ def test_default_coronagraph():
     modelconfig = config["modelconfig"]
     Coronaconfig = config["Coronaconfig"]
 
+    # Set coronagraph to be tested
+    Coronaconfig.update({"corona_type": "fqpm"})
+
     # Update the pixels across the pupil
     modelconfig.update({'diam_pup_in_pix': 80})
     # Define a round pupil in the apodization plane
-    Coronaconfig.update({'filename_instr_apod': "RoundPup"})
+    Coronaconfig.update({"filename_instr_apod": "RoundPup"})
 
     # Create the coronagraph
     corono = Coronagraph(modelconfig, Coronaconfig)
-    coro_psf = corono.todetector_intensity(center_on_pixel=True)
+    coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
 
-    assert np.max(coro_psf) == 0.0, "A perfect coronagraph should return an empty array."
+    assert np.max(coro_psf) < 1e-6
 
 
 def test_wrapped_vortex_phase_mask():
