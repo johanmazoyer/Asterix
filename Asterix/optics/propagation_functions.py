@@ -1,5 +1,4 @@
 import numpy as np
-from Asterix.optics import shift_phase_ramp
 from Asterix.utils import crop_or_pad_image
 
 
@@ -605,6 +604,8 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
     -------
     array : E-field before the Lyot stop.
     """
+    from Asterix.optics import shift_phase_ramp
+
     if samp_outer != 2:
         raise ValueError(f"samp_outer' needs to be 2, otherwise we cut off the high-spatial frequencies and the"
                          f"simulation turns out bad. This can become a variable parameter in the future if we allow"
