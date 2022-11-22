@@ -6,7 +6,7 @@ from Asterix.utils import read_parameter_file
 from Asterix.optics import Coronagraph, create_wrapped_vortex_mask, fqpm_mask
 
 
-def test_fqpm_coronagraph():
+def test_all_coronagraphs():
     # Load the example parameter file
     parameter_file_ex = os.path.join(Asterix_root, "Example_param_file.ini")
     config = read_parameter_file(parameter_file_ex)
@@ -16,18 +16,22 @@ def test_fqpm_coronagraph():
     Coronaconfig = config["Coronaconfig"]
 
     # Set coronagraph to be tested
-    Coronaconfig.update({"corona_type": "fqpm"})
+    coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc"]#, "vortex]  # Vortex is only non-perfect coronagraph left.
+    expected_attenuation = [1e-6, 1e-6, 1e-2, 1e-1, 1e-2]  # Note that these are for the 80 px pupil below
 
-    # Update the pixels across the pupil
-    modelconfig.update({'diam_pup_in_pix': 80})
-    # Define a round pupil in the apodization plane
-    Coronaconfig.update({"filename_instr_apod": "RoundPup"})
+    for i, coro in enumerate(coros_to_test):
+        Coronaconfig.update({"corona_type": coro})
 
-    # Create the coronagraph
-    corono = Coronagraph(modelconfig, Coronaconfig)
-    coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
+        # Update the pixels across the pupil
+        modelconfig.update({'diam_pup_in_pix': 80})
+        # Define a round pupil in the apodization plane
+        Coronaconfig.update({"filename_instr_apod": "RoundPup"})
 
-    assert np.max(coro_psf) < 1e-6
+        # Create the coronagraph
+        corono = Coronagraph(modelconfig, Coronaconfig)
+        coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
+
+        assert np.max(coro_psf) < expected_attenuation[i], f"Attenuation of '{coro}' not below expected {expected_attenuation[i]}."
 
 
 def test_wrapped_vortex_phase_mask():
