@@ -502,8 +502,8 @@ class Coronagraph(optsy.OpticalSystem):
         offset : float
             General offset to the whole ramp; default 0.
         cen_shift : tuple of floats
-            x- and y-shift of the center of the mask with respect to the center of the array, which is between pixels as
-            long as 'dim' is even; default (0,0).
+            x- and y-shift of the center of the mask with respect to the center of the array in pixels, which is
+            between pixels as long as 'dim' is even; default (0,0).
         inclination_x : float, default 0
             Inclination of the phase mask around the x-axis in degrees.
         inclination_y : float, default 0
@@ -697,8 +697,8 @@ def create_wrapped_vortex_mask(dim,
     offset : float
         General offset to the whole ramp; default 0.
     cen_shift : tuple of floats
-        x- and y-shift of the center of the mask with respect to the center of the array, which is between pixels as
-        long as 'dim' is even; default (0,0).
+        x- and y-shift of the center of the mask in pixels with respect to the center of the array, which is between
+        pixels as long as 'dim' is even; default (0,0).
     inclination_x : float, default 0
         Inclination of the phase mask around the x-axis in degrees.
     inclination_y : float, default 0
