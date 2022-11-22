@@ -60,7 +60,7 @@ class Coronagraph(optsy.OpticalSystem):
             # We do not need to be exact, the mft in science_focal_plane will be
 
         if self.corona_type == "fqpm":
-            self.prop_apod2lyot = 'mft'
+            self.prop_apod2lyot = 'regional-sampling'
             self.err_fqpm = coroconfig["err_fqpm"]
             self.achrom_fqpm = coroconfig["achrom_fqpm"]
             self.FPmsk = self.FQPM()
@@ -69,7 +69,7 @@ class Coronagraph(optsy.OpticalSystem):
             else:
                 str_achrom = "nonachrom"
             self.string_os += '_' + str_achrom
-            self.perfect_coro = True
+            self.perfect_coro = False
 
         elif self.corona_type in ("classiclyot", "hlc"):
             self.prop_apod2lyot = 'mft-babinet'
