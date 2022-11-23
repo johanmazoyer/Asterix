@@ -567,7 +567,12 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     return butterworth
 
 
-def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shift=(0, 0), samp_outer=2, filter_order=15,
+def prop_fpm_regional_sampling(pup,
+                               fpm,
+                               nbres=np.array([0.1, 5, 50, 100]),
+                               shift=(0, 0),
+                               samp_outer=2,
+                               filter_order=15,
                                alpha=1.5):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
