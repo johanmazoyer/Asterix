@@ -111,9 +111,9 @@ class MaskDH:
             else:
                 raise ValueError(f"Circle DH_side can only be 'top', 'bottom', 'left', 'right', not {self.DH_side}")
 
-        else: 
+        else:
             raise ValueError(f"DH_shape can only be 'circle', 'square', 'nodh', 'custom', not {self.DH_shape}")
-            
+
         if dir_save_all_planes is not None:
             name_plane = 'DH_mask'
             save_plane_in_fits(dir_save_all_planes, name_plane, maskDH)
