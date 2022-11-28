@@ -139,7 +139,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
     PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
 
-    DM_probe = vars(testbed)[testbed.name_DM_to_probe_in_PW]  # type: DeformableMirror
+    DM_probe: DeformableMirror = vars(testbed)[testbed.name_DM_to_probe_in_PW]
 
     #### TODO Careful. right now, you can only do estimation at the wl that are in
     ### the testbed.wav_vec vector. If you're not, you'll run into a bug in
@@ -285,7 +285,7 @@ def simulate_pw_difference(input_wavefront,
         indice_acum_number_act = 0
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]  # type: DeformableMirror
+            DM: DeformableMirror = vars(testbed)[DM_name]
 
             if DM_name == testbed.name_DM_to_probe_in_PW:
                 Voltage_probeDMprobe = np.zeros(DM.number_act)
