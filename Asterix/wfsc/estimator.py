@@ -331,7 +331,7 @@ class Estimator:
             # If several DMs we check if there is at least one in PP
             number_DMs_in_PP = 0
             for DM_name in testbed.name_of_DMs:
-                DM = vars(testbed)[DM_name]  # type: DeformableMirror
+                DM = vars(testbed)[DM_name]
                 if DM.z_position == 0.:
                     number_DMs_in_PP += 1
                     name_DM_to_probe_in_PW = DM_name

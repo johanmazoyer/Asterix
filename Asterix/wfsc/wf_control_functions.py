@@ -224,7 +224,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
     for i, DM_name in enumerate(testbed.name_of_DMs):
 
-        DM = vars(testbed)[DM_name]  # type: DeformableMirror
+        DM = vars(testbed)[DM_name]
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[4:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
@@ -254,7 +254,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
     for DM_name in testbed.name_of_DMs:
 
-        DM = vars(testbed)[DM_name]  # type: DeformableMirror
+        DM = vars(testbed)[DM_name]
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(DM.basis_size)
@@ -494,7 +494,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
     # clean to save memory
     for i, DM_name in enumerate(testbed.name_of_DMs):
-        DM = vars(testbed)[DM_name]  # type: DeformableMirror
+        DM = vars(testbed)[DM_name]
         DM.phase_init = 0
 
     return InterMat
