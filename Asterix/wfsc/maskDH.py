@@ -93,21 +93,26 @@ class MaskDH:
                 if self.circ_angle != 0:
                     maskDH[yy - xx / np.tan(self.circ_angle * np.pi / 180) > 0] = 0
                     maskDH[yy + xx / np.tan(self.circ_angle * np.pi / 180) < 0] = 0
-            if self.DH_side == "left":
+            elif self.DH_side == "left":
                 maskDH[xx > -np.abs(self.circ_offset) * FP_sampling] = 0
                 if self.circ_angle != 0:
                     maskDH[yy - xx / np.tan(self.circ_angle * np.pi / 180) < 0] = 0
                     maskDH[yy + xx / np.tan(self.circ_angle * np.pi / 180) > 0] = 0
-            if self.DH_side == "bottom":
+            elif self.DH_side == "bottom":
                 maskDH[yy > -np.abs(self.circ_offset) * FP_sampling] = 0
                 if self.circ_angle != 0:
                     maskDH[yy - xx * np.tan(self.circ_angle * np.pi / 180) > 0] = 0
                     maskDH[yy + xx * np.tan(self.circ_angle * np.pi / 180) > 0] = 0
-            if self.DH_side == "top":
+            elif self.DH_side == "top":
                 maskDH[yy < np.abs(self.circ_offset) * FP_sampling] = 0
                 if self.circ_angle != 0:
                     maskDH[yy - xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
                     maskDH[yy + xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
+            else:
+                raise ValueError(f"Circle DH_side can only be 'top', 'bottom', 'left', 'right', not {self.DH_side}")
+
+        else:
+            raise ValueError(f"DH_shape can only be 'circle', 'square', 'nodh', 'custom', not {self.DH_shape}")
 
         if dir_save_all_planes is not None:
             name_plane = 'DH_mask'
