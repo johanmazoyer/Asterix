@@ -3,7 +3,7 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix.utils import resizing
-from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
+from Asterix.optics import OpticalSystem, Testbed
 
 import Asterix.wfsc.wf_sensing_functions as wfs
 

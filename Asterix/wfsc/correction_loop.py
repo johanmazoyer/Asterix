@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 
 from Asterix.utils import plot_contrast_curves, from_param_to_header
-from Asterix.optics import DeformableMirror, Testbed
+from Asterix.optics import Testbed
 
 import Asterix.wfsc.corrector as corrector_mod
 import Asterix.wfsc.estimator as estimator_mod

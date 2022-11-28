@@ -5,7 +5,7 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix.utils import resizing, invert_svd, save_plane_in_fits
-from Asterix.optics import DeformableMirror, Testbed
+from Asterix.optics import Testbed
 
 
 def create_pw_matrix(testbed: Testbed,
