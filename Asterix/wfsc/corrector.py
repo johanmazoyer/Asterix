@@ -77,7 +77,7 @@ class Corrector:
         self.total_number_modes = 0
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]  # type: DeformableMirror
+            DM: DeformableMirror = vars(testbed)[DM_name]
             DM.basis = DM.create_DM_basis(basis_type=basis_type)
             DM.basis_size = DM.basis.shape[0]
             self.total_number_modes += DM.basis_size
@@ -162,7 +162,7 @@ class Corrector:
         # DM for a given voltage when using DM.voltage_to_phase
 
         for DM_name in testbed.name_of_DMs:
-            DM = vars(testbed)[DM_name]  # type: DeformableMirror
+            DM: DeformableMirror = vars(testbed)[DM_name]
             if DM.misregistration:
                 print(DM_name + " Misregistration!")
                 DM.DM_pushact = DM.creatingpushact(DM.DMconfig)
@@ -280,7 +280,7 @@ class Corrector:
             # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
 
             #     # we access each DM object individually
-            #     DM = vars(testbed)[DM_name]  # type: DeformableMirror
+            #     DM: DeformableMirror = vars(testbed)[DM_name]
 
             #     # we multpily each DM by a specific DM gain
             #     solutionefc[
@@ -340,7 +340,7 @@ class Corrector:
             # for num_DM, DM_name in enumerate(testbed.name_of_DMs):
 
             #     # we access each DM object individually
-            #     DM = vars(testbed)[DM_name]  # type: DeformableMirror
+            #     DM: DeformableMirror = vars(testbed)[DM_name]
 
             #     # we multpily each DM by a specific DM gain
             #     solutionSM[

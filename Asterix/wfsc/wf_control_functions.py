@@ -12,6 +12,7 @@ from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progr
 import Asterix.optics.propagation_functions as prop
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
+
 def create_interaction_matrix(testbed: Testbed,
                               dimEstim,
                               amplitudeEFC,
@@ -224,7 +225,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
     for i, DM_name in enumerate(testbed.name_of_DMs):
 
-        DM = vars(testbed)[DM_name]  # type: DeformableMirror
+        DM: DeformableMirror = vars(testbed)[DM_name]
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[4:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
@@ -254,7 +255,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
     for DM_name in testbed.name_of_DMs:
 
-        DM = vars(testbed)[DM_name]  # type: DeformableMirror
+        DM: DeformableMirror = vars(testbed)[DM_name]
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
 
         basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(DM.basis_size)
@@ -327,7 +328,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             wavefrontupstream = input_wavefront
 
             for osname in OpticSysNameBefore:
-                OpticSysbefore = vars(testbed)[osname]  # type: OpticalSystem
+                OpticSysbefore: OpticalSystem = vars(testbed)[osname]
 
                 if dir_save_all_planes is not None:
                     # save PP plane before this subsystem
@@ -415,7 +416,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 # and finally we go through the subsystems after the DMs we want to actuate
                 # (other DMs, coronagraph, etc). These ones we have to go through for each phase of the Basis
                 for osname in OpticSysNameAfter:
-                    OpticSysAfter = vars(testbed)[osname]  # type: OpticalSystem
+                    OpticSysAfter: OpticalSystem = vars(testbed)[osname]
                     if osname != OpticSysNameAfter[-1]:
 
                         if isinstance(OpticSysAfter, DeformableMirror) and OpticSysAfter.active:
@@ -494,7 +495,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
     # clean to save memory
     for i, DM_name in enumerate(testbed.name_of_DMs):
-        DM = vars(testbed)[DM_name]  # type: DeformableMirror
+        DM: DeformableMirror = vars(testbed)[DM_name]
         DM.phase_init = 0
 
     return InterMat
