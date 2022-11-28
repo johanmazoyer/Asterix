@@ -469,7 +469,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
 
         fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"), DMstrokes[j], header, overwrite=True)
 
-        DM = vars(testbed)[DM_name]  # type: DeformableMirror
+        DM: DeformableMirror = vars(testbed)[DM_name]
         voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:indice_acum_number_act + DM.number_act]
         indice_acum_number_act += DM.number_act
 

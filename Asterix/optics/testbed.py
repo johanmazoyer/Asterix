@@ -167,7 +167,7 @@ class Testbed(optsy.OpticalSystem):
 
         for i, DM_name in enumerate(self.name_of_DMs):
 
-            DM = vars(self)[DM_name]  # type: deformable_mirror.DeformableMirror
+            DM: deformable_mirror.DeformableMirror = vars(self)[DM_name]
             actu_vect_DM = actu_vect[indice_acum_number_act:indice_acum_number_act + DM.number_act]
             DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
 
@@ -201,7 +201,7 @@ class Testbed(optsy.OpticalSystem):
         for DM_name in self.name_of_DMs:
 
             # we access each DM object individually
-            DM = vars(self)[DM_name]  # type: deformable_mirror.DeformableMirror
+            DM: deformable_mirror.DeformableMirror = vars(self)[DM_name]
 
             # we extract the voltages for this one
             # this voltages are in the DM basis

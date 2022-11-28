@@ -383,7 +383,8 @@ class Coronagraph(optsy.OpticalSystem):
                 fpm_array = FPmsk
             lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod,
                                                                     fpm_array,
-                                                                    nbres=np.array([0.1, 5, 50, 100]))
+                                                                    nbres=np.array([0.1, 5, 50, 100]),
+                                                                    shift=(0, 0))
 
         else:
             raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
@@ -501,8 +502,8 @@ class Coronagraph(optsy.OpticalSystem):
         offset : float
             General offset to the whole ramp; default 0.
         cen_shift : tuple of floats
-            x- and y-shift of the center of the mask with respect to the center of the array, which is between pixels as
-            long as 'dim' is even; default (0,0).
+            x- and y-shift of the center of the mask with respect to the center of the array in pixels, which is
+            between pixels as long as 'dim' is even; default (0,0).
         inclination_x : float, default 0
             Inclination of the phase mask around the x-axis in degrees.
         inclination_y : float, default 0
@@ -696,8 +697,8 @@ def create_wrapped_vortex_mask(dim,
     offset : float
         General offset to the whole ramp; default 0.
     cen_shift : tuple of floats
-        x- and y-shift of the center of the mask with respect to the center of the array, which is between pixels as
-        long as 'dim' is even; default (0,0).
+        x- and y-shift of the center of the mask in pixels with respect to the center of the array, which is between
+        pixels as long as 'dim' is even; default (0,0).
     inclination_x : float, default 0
         Inclination of the phase mask around the x-axis in degrees.
     inclination_y : float, default 0
