@@ -25,7 +25,7 @@ class THD2(Testbed):
         Model_local_dir: string
                 path directory to save things you can measure yourself and can save to save time
         """
-        
+
         model_config = config["modelconfig"]
         dm_config = config["DMconfig"]
         corona_config = config["Coronaconfig"]
