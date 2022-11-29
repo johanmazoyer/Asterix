@@ -251,8 +251,6 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(
                 os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
 
-            pos_in_matrix += DM.basis_size
-
         else:
             start_time = time.time()
 
@@ -345,14 +343,11 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     prop.prop_angular_spectrum(wavefrontupstream, wavelength, DM.z_position, DM.diam_pup_in_m / 2,
                                                DM.prad), DM.dim_overpad_pupil)
 
-            # We define the "downstream" testbed 
-
             if visu:
                 plt.ion()
                 plt.figure()
 
             # now we go throught the DM basis
-            init_pos_in_matrix = pos_in_matrix  # where we store the next vect in the matrix
 
             for i, phase_in_basis in enumerate(phasesBasis):
                 # for i in range(DM.basis_size):
@@ -460,12 +455,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     plt.colorbar()
                     plt.pause(0.01)
                 # We fill the interaction matrix:
-                InterMat[:dimEstim**2, pos_in_matrix] = np.real(Gvector).flatten()
-                InterMat[dimEstim**2:, pos_in_matrix] = np.imag(Gvector).flatten()
+                InterMat[:dimEstim**2, pos_in_matrix + i] = np.real(Gvector).flatten()
+                InterMat[dimEstim**2:, pos_in_matrix + i] = np.imag(Gvector).flatten()
                 # Note that we do not crop to DH. This is done after so that we can change DH more easily
                 # without changeing the matrix
-
-                pos_in_matrix += 1
 
             if visu:
                 plt.close()
@@ -473,10 +466,13 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
                 fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
-                             InterMat[:, init_pos_in_matrix:init_pos_in_matrix + DM.basis_size])
+                             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size])
+
             print("")
             print("Time for interaction Matrix " + DM_name + " (s):", round(time.time() - start_time))
             print("")
+
+        pos_in_matrix += DM.basis_size
 
     return InterMat
 
