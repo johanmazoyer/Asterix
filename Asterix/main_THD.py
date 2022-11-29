@@ -16,7 +16,7 @@ class THD2(Testbed):
         A read-in .ini parameter file.
     """
 
-    def __init__(self, parameter_file_path, new_model_config={}, new_dm_config={}, new_corona_config={}):
+    def __init__(self, model_config, dm_config, corona_config, model_local_dir):
         """
         Parameters
         ----------
@@ -31,14 +31,11 @@ class THD2(Testbed):
         """
 
         # Load configuration file
-        self.config = read_parameter_file(parameter_file_path,
-                                          NewMODELconfig=new_model_config,
-                                          NewDMconfig=new_dm_config,
-                                          NewCoronaconfig=new_corona_config)
+        # self.config = read_parameter_file(parameter_file_path,
+        #                                   NewMODELconfig=new_model_config,
+        #                                   NewDMconfig=new_dm_config,
+        #                                   NewCoronaconfig=new_corona_config)
 
-        model_config = self.config["modelconfig"]
-        dm_config = self.config["DMconfig"]
-        corona_config = self.config["Coronaconfig"]
         model_local_dir = os.path.join(get_data_dir(config_in=self.config["Data_dir"]), "Model_local")
 
         # Create all optical elements of the THD
@@ -109,6 +106,9 @@ def runthd2(parameter_file_path,
 
     data_dir = get_data_dir(config_in=config["Data_dir"])
     onbench = config["onbench"]
+    model_config = config["modelconfig"]
+    dm_config = config["DMconfig"]
+    corona_config = config["Coronaconfig"]
     Estimationconfig = config["Estimationconfig"]
     Correctionconfig = config["Correctionconfig"]
     Loopconfig = config["Loopconfig"]
@@ -122,7 +122,7 @@ def runthd2(parameter_file_path,
     labview_dir = os.path.join(data_dir, "Labview")
 
     # Concatenate into the full testbed optical system
-    thd2 = THD2(parameter_file_path, NewMODELconfig, NewDMconfig, NewCoronaconfig)
+    thd2 = THD2(model_config, dm_config, corona_config, model_local_dir)
 
     # The following line can be used to change the DM which applies PW probes. This could be used to use the DM out of
     # the pupil plane.
