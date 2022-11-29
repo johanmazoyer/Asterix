@@ -11,12 +11,13 @@ from Asterix.optics import Testbed as Bench
 def test_def_thd():
 
     parameter_file_test = os.path.join(Asterix_root, 'tests', "param_file_tests.ini")
+    test_dir = get_data_dir(datadir="asterix_test_dir")
 
-    model_local_dir = os.path.join(get_data_dir(), "Model_local")
+    model_local_dir = os.path.join(test_dir, "Model_local")
 
     # Load configuration file
     config = read_parameter_file(parameter_file_test)
-    
+
     # wrapped vortex coronagraph
     model_config = config["modelconfig"]
     dm_config = config["DMconfig"]
@@ -40,7 +41,5 @@ def test_def_thd():
     testbed_psf = optical_bench.todetector_intensity()
     assert np.max(testbed_psf) < 5e-6, "PSF after wrapped vortex without aberrration should be better than 1e-6"
 
-    assert np.allclose(
-        testbed_psf, np.transpose(testbed_psf), rtol=0, atol=1e-10,
-        equal_nan=True), "PSF after testbed with no aberrration is not symmetric (transpose PSF != PSF)"
-
+    assert np.allclose(testbed_psf, np.transpose(testbed_psf), rtol=0, atol=1e-10,
+                       equal_nan=True), "PSF after testbed with no aberrration is not symmetric (transpose PSF != PSF)"

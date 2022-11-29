@@ -1,14 +1,14 @@
 import os
+import shutil
 import numpy as np
 
 from Asterix.main_THD import THD2
 from Asterix import Asterix_root
-from Asterix.utils import create_experiment_dir, get_data_dir, read_parameter_file
-from Asterix.wfsc import Estimator, Corrector, MaskDH, correction_loop, save_loop_results
+from Asterix.utils import get_data_dir, read_parameter_file
+from Asterix.wfsc import Estimator, Corrector, MaskDH, correction_loop
 
 
-def quick_run_no_save(config):
-    data_dir = get_data_dir(config_in=config["Data_dir"])
+def quick_run_no_save(config, data_dir):
     Estimationconfig = config["Estimationconfig"]
     Correctionconfig = config["Correctionconfig"]
     Loopconfig = config["Loopconfig"]
@@ -74,7 +74,11 @@ def test_1dm_correction():
                                      'Nbiter_corr': [5],
                                      "Nbmode_corr": [320]
                                  })
-    best_contrast_1DM = quick_run_no_save(config)
+
+    # we create a specific test_dir because we want the matrices to be redone everytime in testing
+    test_dir = get_data_dir(datadir="asterix_test_dir")
+
+    best_contrast_1DM = quick_run_no_save(config, test_dir)
     assert best_contrast_1DM < 1e-8, "best contrast 1DM should be < 1e-8"
 
     # Load configuration file
@@ -90,6 +94,9 @@ def test_1dm_correction():
                                      'Nbiter_corr': [5],
                                      'Nbmode_corr': [250]
                                  })
-    best_contrast_2DM = quick_run_no_save(config)
+    best_contrast_2DM = quick_run_no_save(config, test_dir)
 
     assert best_contrast_2DM < 1e-8, "best contrast 2DM should be < 1e-8"
+
+    # we clear the directory because we want the matrices to be redone everytime in testing
+    shutil.rmtree(test_dir, ignore_errors=True)
