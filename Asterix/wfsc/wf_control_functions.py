@@ -345,6 +345,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     prop.prop_angular_spectrum(wavefrontupstream, wavelength, DM.z_position, DM.diam_pup_in_m / 2,
                                                DM.prad), DM.dim_overpad_pupil)
 
+            # We define the "downstream" testbed 
+
             if visu:
                 plt.ion()
                 plt.figure()
@@ -352,7 +354,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             # now we go throught the DM basis
             init_pos_in_matrix = pos_in_matrix  # where we store the next vect in the matrix
 
-            for i in range(DM.basis_size):
+            for i, phase_in_basis in enumerate(phasesBasis):
+                # for i in range(DM.basis_size):
 
                 if i % 10:
                     progress(i, DM.basis_size, status='')
@@ -361,7 +364,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     if DM.z_position == 0:
 
                         wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(
-                            phase_abb=phasesBasis[i] + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+                            phase_abb=phase_in_basis + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
                             wavelengths=wavelength)
 
                         if dir_save_all_planes is not None:
@@ -374,7 +377,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                         wavefront = crop_or_pad_image(
                             prop.prop_angular_spectrum(
                                 wavefrontupstreaminDM * DM.EF_from_phase_and_ampl(
-                                    phase_abb=phasesBasis[i] + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+                                    phase_abb=phase_in_basis + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
                                     wavelengths=wavelength), wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad),
                             DM.dim_overpad_pupil)
 
@@ -382,13 +385,13 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     # TODO we added a 1+ which was initially in Axel's code and that was
                     # removed. Need to be tested with and without on the testbed
                     if DM.z_position == 0:
-                        wavefront = (1 + 1j * phasesBasis[i]) * wavefrontupstream * DM.EF_from_phase_and_ampl(
+                        wavefront = (1 + 1j * phase_in_basis) * wavefrontupstream * DM.EF_from_phase_and_ampl(
                             phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)], wavelengths=wavelength)
                     else:
 
                         wavefront = crop_or_pad_image(
                             prop.prop_angular_spectrum(
-                                wavefrontupstreaminDM * (1 + 1j * phasesBasis[i]) * DM.EF_from_phase_and_ampl(
+                                wavefrontupstreaminDM * (1 + 1j * phase_in_basis) * DM.EF_from_phase_and_ampl(
                                     phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)], wavelengths=wavelength),
                                 wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
 
