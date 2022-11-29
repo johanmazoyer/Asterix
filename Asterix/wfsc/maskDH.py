@@ -108,8 +108,10 @@ class MaskDH:
                 if self.circ_angle != 0:
                     maskDH[yy - xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
                     maskDH[yy + xx * np.tan(self.circ_angle * np.pi / 180) < 0] = 0
+            elif self.DH_side == "full":
+                pass
             else:
-                raise ValueError(f"Circle DH_side can only be 'top', 'bottom', 'left', 'right', not {self.DH_side}")
+                raise ValueError(f"Circle DH_side can only be 'top', 'bottom', 'left', 'right' and 'full', not {self.DH_side}")
 
         else:
             raise ValueError(f"DH_shape can only be 'circle', 'square', 'nodh', 'custom', not {self.DH_shape}")
