@@ -329,16 +329,16 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
     AUTHOR : Johan Mazoyer
 
     Parameters:
-    --------
-    DM_EF_through_function : function
-        the function of which we want to change the params
-    name_var : string
-        the name of the  new name variable
+    ------
+            Testbed object which describe your testbed
+    testbed :  OpticalSystem.Testbed
+    testbed_EF_through : function
+        the EF_through function with DMXX_phase functions
 
     Returns
     --------
-    the_new_function : function
-        with name_var as a param
+    the_new_function: function
+        the EF_through function with voltage_vector as a parameters
     """
 
     def wrapper(**kwargs):
