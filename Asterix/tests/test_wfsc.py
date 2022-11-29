@@ -87,7 +87,7 @@ def test_1dm_correction():
                                      'Nbmodes_OnTestbed': 600
                                  },
                                  NewLoopconfig={
-                                     'Nbiter_corr': [20],
+                                     'Nbiter_corr': [5],
                                      'Nbmode_corr': [250]
                                  })
     best_contrast_2DM = quick_run_no_save(config)
