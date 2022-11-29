@@ -111,7 +111,8 @@ class MaskDH:
             elif self.DH_side == "full":
                 pass
             else:
-                raise ValueError(f"Circle DH_side can only be 'top', 'bottom', 'left', 'right' and 'full', not {self.DH_side}")
+                raise ValueError(
+                    f"Circle DH_side can only be 'top', 'bottom', 'left', 'right' and 'full', not {self.DH_side}")
 
         else:
             raise ValueError(f"DH_shape can only be 'circle', 'square', 'nodh', 'custom', not {self.DH_shape}")
