@@ -7,9 +7,9 @@ from Asterix.optics import Coronagraph, create_wrapped_vortex_mask, fqpm_mask
 
 
 def test_all_coronagraphs():
-    # Load the example parameter file
-    parameter_file_ex = os.path.join(Asterix_root, "Example_param_file.ini")
-    config = read_parameter_file(parameter_file_ex)
+    # Load the test parameter file
+    parameter_file_test = os.path.join(Asterix_root, 'tests', "param_file_tests.ini")
+    config = read_parameter_file(parameter_file_test)
 
     # Reassign the parameter groups to variables
     modelconfig = config["modelconfig"]
