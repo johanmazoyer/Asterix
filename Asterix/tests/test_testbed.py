@@ -1,6 +1,7 @@
 import os
+import numpy as np
 from Asterix import Asterix_root
-from Asterix.utils import get_data_dir, read_parameter_file
+from Asterix.utils import get_data_dir, read_parameter_file, quickfits
 from Asterix.optics import Pupil, Coronagraph, DeformableMirror
 from Asterix.optics import Testbed as Bench
 # we renamed Testbed here because pytest automatically assumes this class is a
@@ -9,17 +10,21 @@ from Asterix.optics import Testbed as Bench
 
 def test_def_thd():
 
-    parameter_file_path = os.path.join(Asterix_root, 'Example_param_file.ini')
+    parameter_file_test = os.path.join(Asterix_root, 'tests', "param_file_tests.ini")
 
     model_local_dir = os.path.join(get_data_dir(), "Model_local")
 
     # Load configuration file
-    config = read_parameter_file(parameter_file_path)
-
+    config = read_parameter_file(parameter_file_test)
+    
+    # wrapped vortex coronagraph
     model_config = config["modelconfig"]
     dm_config = config["DMconfig"]
     corona_config = config["Coronaconfig"]
     dm_config['DM3_active'] = True
+
+    # wrapped vortex coronagraph
+    corona_config["corona_type"] = 'wrapped_vortex'
 
     # Create all optical elements of the THD
     entrance_pupil = Pupil(model_config,
@@ -32,4 +37,10 @@ def test_def_thd():
     # Concatenate into the full testbed optical system
     optical_bench = Bench([entrance_pupil, dm3, corono], ["entrancepupil", "DM3", "corono"])
 
-    optical_bench.todetector_intensity()
+    testbed_psf = optical_bench.todetector_intensity()
+    assert np.max(testbed_psf) < 5e-6, "PSF after wrapped vortex without aberrration should be better than 1e-6"
+
+    assert np.allclose(
+        testbed_psf, np.transpose(testbed_psf), rtol=0, atol=1e-10,
+        equal_nan=True), "PSF after testbed with no aberrration is not symmetric (transpose PSF != PSF)"
+
