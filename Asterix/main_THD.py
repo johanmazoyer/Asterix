@@ -16,27 +16,19 @@ class THD2(Testbed):
         A read-in .ini parameter file.
     """
 
-    def __init__(self, model_config, dm_config, corona_config, model_local_dir):
+    def __init__(self, config, model_local_dir):
         """
         Parameters
         ----------
-        parameter_file_path : string
-            Absolute path to an .ini parameter file.
-        new_model_config : dict, optional
-            Can be used to directly change a parameter in the MODELconfig section of the input parameter file.
-        new_dm_config : dict, optional
-            Can be used to directly change a parameter in the DMconfig section of the input parameter file.
-        new_corona_config : dict, optional
-            Can be used to directly change a parameter in the Coronaconfig section of the input parameter file.
+        config: dict
+            Parameter dictionary. Must at least contains parameter for Entrance Pupil, Coronagraphs and DM(s).
+        Model_local_dir: string
+                path directory to save things you can measure yourself and can save to save time
         """
-
-        # Load configuration file
-        # self.config = read_parameter_file(parameter_file_path,
-        #                                   NewMODELconfig=new_model_config,
-        #                                   NewDMconfig=new_dm_config,
-        #                                   NewCoronaconfig=new_corona_config)
-
-        model_local_dir = os.path.join(get_data_dir(config_in=self.config["Data_dir"]), "Model_local")
+        
+        model_config = config["modelconfig"]
+        dm_config = config["DMconfig"]
+        corona_config = config["Coronaconfig"]
 
         # Create all optical elements of the THD
         entrance_pupil = Pupil(model_config,
@@ -106,9 +98,6 @@ def runthd2(parameter_file_path,
 
     data_dir = get_data_dir(config_in=config["Data_dir"])
     onbench = config["onbench"]
-    model_config = config["modelconfig"]
-    dm_config = config["DMconfig"]
-    corona_config = config["Coronaconfig"]
     Estimationconfig = config["Estimationconfig"]
     Correctionconfig = config["Correctionconfig"]
     Loopconfig = config["Loopconfig"]
@@ -122,7 +111,7 @@ def runthd2(parameter_file_path,
     labview_dir = os.path.join(data_dir, "Labview")
 
     # Concatenate into the full testbed optical system
-    thd2 = THD2(model_config, dm_config, corona_config, model_local_dir)
+    thd2 = THD2(config, model_local_dir)
 
     # The following line can be used to change the DM which applies PW probes. This could be used to use the DM out of
     # the pupil plane.
