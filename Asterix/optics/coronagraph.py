@@ -381,6 +381,17 @@ class Coronagraph(optsy.OpticalSystem):
                 fpm_array = np.ones((self.dimScience, self.dimScience))
             else:
                 fpm_array = FPmsk
+
+                if dir_save_all_planes is not None:
+                    name_plane = 'FPM' + f'_wl{int(wavelength * 1e9)}'
+                    save_plane_in_fits(dir_save_all_planes, name_plane, FPmsk)
+
+                    name_plane = 'FPMphase' + f'_wl{int(wavelength * 1e9)}'
+                    save_plane_in_fits(dir_save_all_planes, name_plane, np.angle(FPmsk))
+
+                    name_plane = 'FPMmod' + f'_wl{int(wavelength * 1e9)}'
+                    save_plane_in_fits(dir_save_all_planes, name_plane, np.abs(FPmsk))
+
             lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod,
                                                                     fpm_array,
                                                                     nbres=np.array([0.1, 5, 50, 100]),
