@@ -21,9 +21,10 @@ class THD2(Testbed):
         Parameters
         ----------
         config: dict
-            Parameter dictionary. Must at least contains parameter for Entrance Pupil, Coronagraphs and DM(s).
+            Parameter dictionary. Must at least contain parameters for general model [modelconfig],
+            coronagraph ([Coronaconfig]) and DM(s) ([DMconfig]).
         Model_local_dir: string
-                path directory to save things you can measure yourself and can save to save time
+            Directory output path for model-related files created on the file for later reuse.
         """
 
         model_config = config["modelconfig"]
