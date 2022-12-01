@@ -296,12 +296,98 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             OpticSysNameBefore = testbed.subsystems[:positioonDMintestbed]
             OpticSysNameAfter = testbed.subsystems[positioonDMintestbed + 1:]
 
+            # OpticSysbefore = []
+            # for osname in OpticSysNameBefore:
+            #     OpticSysbefore.append(vars(testbed)[osname])
+            # testbed_upstream = Testbed(OpticSysbefore, OpticSysNameBefore)
+
+            # OpticSysafter = []
+            # for osname in OpticSysNameAfter:
+            #     OpticSysafter.append(vars(testbed)[osname])
+            # testbed_downstream = Testbed(OpticSysafter, OpticSysNameAfter)
+
+            # # we go through all subsystems of the testbed
+
+            # # First before the DM we want to actuate (aperture, other DMs, etc).
+            # # This ones, we only do once !
+            # wavefrontupstream = input_wavefront
+
+            # wavefrontupstream = testbed_upstream.EF_through(entrance_EF=wavefrontupstream, wavelength=wavelength)
+
+            # if DM.z_position != 0:
+
+            #     wavefrontupstreaminDM = crop_or_pad_image(
+            #         prop.prop_angular_spectrum(wavefrontupstream, wavelength, DM.z_position, DM.diam_pup_in_m / 2,
+            #                                    DM.prad), DM.dim_overpad_pupil)
+
+            # if MatrixType == 'perfect':
+            #     if DM.z_position == 0:
+
+            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
+            #             map(
+            #                 concat_flat_real_imag(
+            #                     resizing(
+            #                         testbed_downstream.todetector(
+            #                             entrance_EF=wavefrontupstream * DM.EF_from_phase_and_ampl(
+            #                                 phase_abb=phase_in_basis + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+            #                                 wavelengths=wavelength),
+            #                             wavelength=wavelength,
+            #                             in_contrast=False) / normalisation_testbed_EF_contrast, dimEstim) - G0),
+            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
+            #     else:
+            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
+            #             map(
+            #                 concat_flat_real_imag(
+            #                     resizing(
+            #                         testbed_downstream.todetector(entrance_EF=crop_or_pad_image(
+            #                             prop.prop_angular_spectrum(
+            #                                 wavefrontupstreaminDM *
+            #                                 DM.EF_from_phase_and_ampl(phase_abb=phase_in_basis +
+            #                                                           DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+            #                                                           wavelengths=wavelength), wavelength,
+            #                                 -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil),
+            #                                                       wavelength=wavelength,
+            #                                                       in_contrast=False) /
+            #                         normalisation_testbed_EF_contrast, dimEstim) - G0),
+            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
+
+            # if MatrixType == 'smallphase':
+            #     if DM.z_position == 0:
+            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
+            #             map(
+            #                 concat_flat_real_imag(
+            #                     resizing(
+            #                         testbed_downstream.todetector(entrance_EF=(
+            #                             1 + 1j * phase_in_basis) * wavefrontupstream * DM.EF_from_phase_and_ampl(
+            #                                 phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+            #                                 wavelengths=wavelength),
+            #                                                       wavelength=wavelength,
+            #                                                       in_contrast=False) /
+            #                         normalisation_testbed_EF_contrast, dimEstim) - G0),
+            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
+
+            #     else:
+            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
+            #             map(
+            #                 concat_flat_real_imag(
+            #                     resizing(
+            #                         testbed_downstream.todetector(entrance_EF=crop_or_pad_image(
+            #                             prop.prop_angular_spectrum(
+            #                                 wavefrontupstreaminDM *
+            #                                 (1 + 1j * phase_in_basis) * DM.EF_from_phase_and_ampl(
+            #                                     phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+            #                                     wavelengths=wavelength), wavelength, -DM.z_position, DM.diam_pup_in_m /
+            #                                 2, DM.prad), DM.dim_overpad_pupil),
+            #                                                       wavelength=wavelength,
+            #                                                       in_contrast=False) /
+            #                         normalisation_testbed_EF_contrast, dimEstim) - G0),
+            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
+
             # we go through all subsystems of the testbed
 
             # First before the DM we want to actuate (aperture, other DMs, etc).
             # This ones, we only do once !
             wavefrontupstream = input_wavefront
-
             for osname in OpticSysNameBefore:
                 OpticSysbefore: OpticalSystem = vars(testbed)[osname]
 
@@ -729,3 +815,7 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
     solution = pas * 2 * Eab
 
     return testbed.basis_vector_to_act_vector(solution)
+
+
+def concat_flat_real_imag(complex_arr):
+    return np.concatenate((np.real(complex_arr).flatten(), np.imag(complex_arr).flatten()))
