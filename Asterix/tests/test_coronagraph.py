@@ -16,8 +16,9 @@ def test_all_coronagraphs():
     Coronaconfig = config["Coronaconfig"]
 
     # Set coronagraph to be tested
-    coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc"]#, "vortex]  # Vortex is only non-perfect coronagraph left.
-    expected_attenuation = [1e-20, 1e-5, 1e-2, 1e-1, 1e-2]  # Note that these are for the 80 px pupil below
+    coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
+    expected_attenuation = [1e-20, 1e-5, 1e-2, 1e-1, 1e-2, 1e-20]  # Note that these are for the 80 px pupil below
+    atols = [0, 2e-19, 3e-18, np.nan, 3e-18, 0]   # zeros are for perfect coronagraphs
 
     for i, coro in enumerate(coros_to_test):
         Coronaconfig.update({"corona_type": coro})
@@ -32,6 +33,9 @@ def test_all_coronagraphs():
         coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
 
         assert np.max(coro_psf) < expected_attenuation[i], f"Attenuation of '{coro}' not below expected {expected_attenuation[i]}."
+        if coro != 'knife':
+            assert np.allclose(coro_psf, np.transpose(coro_psf), atol=atols[i],
+                               rtol=0), f"Coronagraphic image is not symmetric in transpose for '{coro}'."
 
 
 def test_wrapped_vortex_phase_mask():
