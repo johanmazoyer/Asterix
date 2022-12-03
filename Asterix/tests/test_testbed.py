@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from Asterix import Asterix_root
-from Asterix.utils import get_data_dir, read_parameter_file, quickfits
+from Asterix.utils import get_data_dir, read_parameter_file
 from Asterix.optics import Pupil, Coronagraph, DeformableMirror
 from Asterix.optics import Testbed as Bench
 # we renamed Testbed here because pytest automatically assumes this class is a
