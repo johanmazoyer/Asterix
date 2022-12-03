@@ -34,12 +34,12 @@ def test_all_coronagraphs():
 
     # add test polychromatic. We do not add any performance tests because most coronagraphs aren't great 
     # in polychromatic, but it should at least run. 
-    Coronaconfig.update({"Delta_wav": 30e-9})
+    modelconfig.update({"Delta_wav": 30e-9})
+    modelconfig.update({"nb_wav": 3})
     for i, coro in enumerate(coros_to_test):
         
         # Create the coronagraph
         corono = Coronagraph(modelconfig, Coronaconfig)
-
         try:
             coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
         except:
