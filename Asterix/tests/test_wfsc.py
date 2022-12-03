@@ -1,5 +1,6 @@
 import os
 import shutil
+import pytest
 import numpy as np
 
 from Asterix.main_THD import THD2
@@ -74,12 +75,15 @@ def test_1dm_correction():
                                      'Nbiter_corr': [5],
                                      "Nbmode_corr": [320]
                                  })
-
-    # we create a specific test_dir because we want the matrices to be redone everytime in testing
+    
     test_dir = get_data_dir(datadir="asterix_test_dir")
 
     best_contrast_1DM = quick_run_no_save(config, test_dir)
     assert best_contrast_1DM < 1e-8, "best contrast 1DM should be < 1e-8"
+
+def test_2dm_correction():
+    # Load the test parameter file
+    parameter_file_test = os.path.join(Asterix_root, 'tests', "param_file_tests.ini")
 
     # Load configuration file
     config = read_parameter_file(parameter_file_test,
@@ -94,9 +98,21 @@ def test_1dm_correction():
                                      'Nbiter_corr': [5],
                                      'Nbmode_corr': [250]
                                  })
+
+    # we create a specific test_dir because we want the matrices to be redone everytime in testing
+    test_dir = get_data_dir(datadir="asterix_test_dir")
     best_contrast_2DM = quick_run_no_save(config, test_dir)
 
     assert best_contrast_2DM < 1e-8, "best contrast 2DM should be < 1e-8"
 
-    # we clear the directory because we want the matrices to be redone everytime in testing
-    shutil.rmtree(test_dir, ignore_errors=True)
+    
+@pytest.fixture(scope="session", autouse=True)
+def cleanup(request):
+    """Cleanup a testing directory once we are finished,  because we want the matrices 
+    to be redone everytime in testing.
+    Found here https://stackoverflow.com/a/52873379
+    """
+    test_dir = get_data_dir(datadir="asterix_test_dir")
+    def remove_test_dir():
+        shutil.rmtree(test_dir, ignore_errors=True)
+    request.addfinalizer(remove_test_dir)
