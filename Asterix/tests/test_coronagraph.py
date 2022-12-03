@@ -23,11 +23,6 @@ def test_all_coronagraphs():
     for i, coro in enumerate(coros_to_test):
         Coronaconfig.update({"corona_type": coro})
 
-        # Update the pixels across the pupil
-        modelconfig.update({'diam_pup_in_pix': 80})
-        # Define a round pupil in the apodization plane
-        Coronaconfig.update({"filename_instr_apod": "RoundPup"})
-
         # Create the coronagraph
         corono = Coronagraph(modelconfig, Coronaconfig)
         coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
@@ -36,6 +31,19 @@ def test_all_coronagraphs():
         if coro != 'knife':
             assert np.allclose(coro_psf, np.transpose(coro_psf), atol=atols[i],
                                rtol=0), f"Coronagraphic image is not symmetric in transpose for '{coro}'."
+
+    # add test polychromatic. We do not add any performance tests because most coronagraphs aren't great 
+    # in polychromatic, but it should at least run. 
+    Coronaconfig.update({"Delta_wav": 30e-9})
+    for i, coro in enumerate(coros_to_test):
+        
+        # Create the coronagraph
+        corono = Coronagraph(modelconfig, Coronaconfig)
+
+        try:
+            coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
+        except:
+            assert False, f"Coronagraph '{coro}' does not work in polychromatic light."
 
 
 def test_wrapped_vortex_phase_mask():
