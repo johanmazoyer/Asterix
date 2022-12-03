@@ -1,5 +1,5 @@
 import numpy as np
-from Asterix.optics import butterworth_circle, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil, fft_choosecenter
+from Asterix.optics import butterworth_circle, create_wrapped_vortex_mask, fqpm_mask, mft, prop_fpm_regional_sampling, roundpupil, fft_choosecenter
 
 
 def test_mft_fft_comparison():
@@ -112,9 +112,15 @@ def test_prop_area_sampling():
     samp_outer = 2
     nbres_direct = dim / samp_outer
 
+    # Create phase masks for FQPM and for wrapped vortex coronagraph
+    fqpm = fqpm_mask(dim)
+    thval = np.array([0, 3, 4, 5, 8]) * np.pi / 8
+    phval = np.array([3, 0, 1, 2, 1]) * np.pi
+    jump = np.array([2, 2, 2, 2]) * np.pi
+    _, wrapped_vortex = create_wrapped_vortex_mask(dim=dim, thval=thval, phval=phval, jump=jump, return_1d=False)
+
     pup = roundpupil(dim, rad, grey_pup_bin_factor=10)
     lyot_stop = roundpupil(dim, rad * 0.95, grey_pup_bin_factor=1)
-    fpm = fqpm_mask(dim)
 
     direct_ef = mft(pup * lyot_stop, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
     direct_psf = np.abs(direct_ef)**2
@@ -122,21 +128,24 @@ def test_prop_area_sampling():
 
     # Propagation with different sampling in FPM areas
     res_list = np.array([0.1, 1, 10, 100])
-    pre_ls_areas = prop_fpm_regional_sampling(pup, np.exp(1j * fpm), nbres=res_list, samp_outer=samp_outer)
-    post_ls_areas = pre_ls_areas * lyot_stop
+    expected_attenuation = [9e-4, 2e-7]
 
-    coro_ef_areas = mft(post_ls_areas, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
-    coro_psf_areas = np.abs(coro_ef_areas)**2 / norm
+    for i, fpm in enumerate([fqpm, wrapped_vortex]):
+        pre_ls_areas = prop_fpm_regional_sampling(pup, np.exp(1j * fpm), nbres=res_list, samp_outer=samp_outer)
+        post_ls_areas = pre_ls_areas * lyot_stop
 
-    # Uniform-sampling propagation
-    pre_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
-    post_fpm = pre_fpm * np.exp(1j * fpm)
-    pre_ls_uniform = mft(post_fpm, real_dim_input=dim, dim_output=dim, nbres=nbres_direct, inverse=True)
-    post_ls_uniform = pre_ls_uniform * lyot_stop
+        coro_ef_areas = mft(post_ls_areas, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
+        coro_psf_areas = np.abs(coro_ef_areas)**2 / norm
 
-    coro_ef_uniform = mft(post_ls_uniform, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
-    coro_psf_uniform = np.abs(coro_ef_uniform)**2 / norm
+        # Uniform-sampling propagation
+        pre_fpm = mft(pup, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
+        post_fpm = pre_fpm * np.exp(1j * fpm)
+        pre_ls_uniform = mft(post_fpm, real_dim_input=dim, dim_output=dim, nbres=nbres_direct, inverse=True)
+        post_ls_uniform = pre_ls_uniform * lyot_stop
 
-    # Comparison
-    assert np.sum(np.abs(post_ls_areas)**2) < np.sum(np.abs(post_ls_uniform)**2)
-    assert (np.max(coro_psf_areas) / np.max(coro_psf_uniform)) < 9e-4
+        coro_ef_uniform = mft(post_ls_uniform, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
+        coro_psf_uniform = np.abs(coro_ef_uniform)**2 / norm
+
+        # Comparison
+        assert np.sum(np.abs(post_ls_areas)**2) < np.sum(np.abs(post_ls_uniform)**2)
+        assert (np.max(coro_psf_areas) / np.max(coro_psf_uniform)) < expected_attenuation[i]

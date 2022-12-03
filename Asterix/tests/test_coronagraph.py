@@ -6,7 +6,7 @@ from Asterix.utils import read_parameter_file
 from Asterix.optics import Coronagraph, create_wrapped_vortex_mask, fqpm_mask
 
 
-def test_default_coronagraph():
+def test_all_coronagraphs():
     # Load the example parameter file
     parameter_file_ex = os.path.join(Asterix_root, "Example_param_file.ini")
     config = read_parameter_file(parameter_file_ex)
@@ -15,16 +15,27 @@ def test_default_coronagraph():
     modelconfig = config["modelconfig"]
     Coronaconfig = config["Coronaconfig"]
 
-    # Update the pixels across the pupil
-    modelconfig.update({'diam_pup_in_pix': 80})
-    # Define a round pupil in the apodization plane
-    Coronaconfig.update({'filename_instr_apod': "RoundPup"})
+    # Set coronagraph to be tested
+    coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
+    expected_attenuation = [1e-20, 1e-5, 1e-2, 1e-1, 1e-2, 1e-20]  # Note that these are for the 80 px pupil below
+    atols = [0, 2e-19, 3e-18, np.nan, 3e-18, 0]   # zeros are for perfect coronagraphs
 
-    # Create the coronagraph
-    corono = Coronagraph(modelconfig, Coronaconfig)
-    coro_psf = corono.todetector_intensity(center_on_pixel=True)
+    for i, coro in enumerate(coros_to_test):
+        Coronaconfig.update({"corona_type": coro})
 
-    assert np.max(coro_psf) == 0.0, "A perfect coronagraph should return an empty array."
+        # Update the pixels across the pupil
+        modelconfig.update({'diam_pup_in_pix': 80})
+        # Define a round pupil in the apodization plane
+        Coronaconfig.update({"filename_instr_apod": "RoundPup"})
+
+        # Create the coronagraph
+        corono = Coronagraph(modelconfig, Coronaconfig)
+        coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
+
+        assert np.max(coro_psf) < expected_attenuation[i], f"Attenuation of '{coro}' not below expected {expected_attenuation[i]}."
+        if coro != 'knife':
+            assert np.allclose(coro_psf, np.transpose(coro_psf), atol=atols[i],
+                               rtol=0), f"Coronagraphic image is not symmetric in transpose for '{coro}'."
 
 
 def test_wrapped_vortex_phase_mask():
