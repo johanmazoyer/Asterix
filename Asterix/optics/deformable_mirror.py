@@ -336,12 +336,6 @@ class DeformableMirror(optsy.OpticalSystem):
 
         AUTHOR: Johan Mazoyer
 
-        Parameters
-        ----------
-        cutinpupil: float
-                    minimum surface of an actuator inside the pupil to be taken into account
-                    (between 0 and 1, ratio of an actuator perfectly centered in the entrance pupil)
-
         Returns
         ------
         WhichInPupil: 1D array
