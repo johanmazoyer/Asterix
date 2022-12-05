@@ -237,18 +237,20 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
     # Some string manips to name the matrix if we save it
     if MatrixType == 'perfect':
-        headfile = "DirectMatrixPerf"
+        headfile = "DirectMatPerf"
     elif MatrixType == 'smallphase':
-        headfile = "DirectMatrixSP"
+        headfile = "DirectMatSP"
     else:
         raise ValueError("This Matrix type does not exist")
 
     if DM.basis_type == 'fourier':
+        basis_type_str = 'Four'
         pass
     elif DM.basis_type == 'actuator':
+        basis_type_str = 'Actu'
         headfile += "_EFCampl" + str(amplitudeEFC)
     else:
-        raise ValueError("This Basis type does not exist")
+        raise ValueError("This basis type does not exist")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
@@ -258,10 +260,9 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         DM: DeformableMirror = vars(testbed)[DM_name]
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
 
-        basis_str = DM_small_str + "_" + DM.basis_type + "Basis" + str(DM.basis_size)
-
-        fileDirectMatrix = headfile + basis_str + '_dimEstim' + str(dimEstim) + string_testbed_without_DMS + '_wl' + str(
-            int(wavelength * 1e9))
+        basis_str = DM_small_str + "_" + basis_type_str + "Basis" + str(DM.basis_size)
+        fileDirectMatrix = headfile + basis_str + '_binEstim' + str(int(np.round(
+            testbed.dimScience / dimEstim))) + string_testbed_without_DMS + '_wl' + str(int(wavelength * 1e9))
 
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch
@@ -730,7 +731,7 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
         else:
             TestSMfailed = False
 
-    print(f"Number of iteration in this stroke min (number of tested alpha): {iteralpha:d}")
+    print(f"Number of iterations in this stroke min (number of tested alpha): {iteralpha:d}")
     return testbed.basis_vector_to_act_vector(DMSurfaceCoeff), alpha
 
 
