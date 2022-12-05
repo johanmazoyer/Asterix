@@ -17,8 +17,8 @@ def test_all_coronagraphs():
 
     # Set coronagraph to be tested
     coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
-    expected_attenuation = [5e-20, 5e-5, 5e-2, 5e-1, 5e-2, 5e-20]  # Note that these are for the 80 px pupil below
-    atols = [0, 2e-19, 3e-18, np.nan, 3e-18, 0]  # zeros are for perfect coronagraphs
+    expected_attenuation = [1e-20, 1e-5, 1e-2, 1e-1, 1e-2, 1e-20]  # Note that these are for the 80 px pupil below
+    atols = [0, 1e-14, 1e-14, np.nan, 1e-14, 0]  # zeros are for perfect coronagraphs
 
     for i, coro in enumerate(coros_to_test):
         Coronaconfig.update({"corona_type": coro})
