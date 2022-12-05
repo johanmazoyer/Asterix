@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from Asterix import Asterix_root
-from Asterix.utils import read_parameter_file
+from Asterix.utils import read_parameter_file, quickfits
 from Asterix.optics import Coronagraph, create_wrapped_vortex_mask, fqpm_mask
 
 
@@ -17,8 +17,8 @@ def test_all_coronagraphs():
 
     # Set coronagraph to be tested
     coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
-    expected_attenuation = [1e-20, 1e-5, 1e-2, 1e-1, 1e-2, 1e-20]  # Note that these are for the 80 px pupil below
-    atols = [0, 2e-19, 3e-18, np.nan, 3e-18, 0]   # zeros are for perfect coronagraphs
+    expected_attenuation = [5e-20, 5e-5, 5e-2, 5e-1, 5e-2, 5e-20]  # Note that these are for the 80 px pupil below
+    atols = [0, 2e-19, 3e-18, np.nan, 3e-18, 0]  # zeros are for perfect coronagraphs
 
     for i, coro in enumerate(coros_to_test):
         Coronaconfig.update({"corona_type": coro})
@@ -27,23 +27,37 @@ def test_all_coronagraphs():
         corono = Coronagraph(modelconfig, Coronaconfig)
         coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
 
-        assert np.max(coro_psf) < expected_attenuation[i], f"Attenuation of '{coro}' not below expected {expected_attenuation[i]}."
+        assert np.max(
+            coro_psf) < expected_attenuation[i], f"Attenuation of '{coro}' not below expected {expected_attenuation[i]}."
         if coro != 'knife':
             assert np.allclose(coro_psf, np.transpose(coro_psf), atol=atols[i],
                                rtol=0), f"Coronagraphic image is not symmetric in transpose for '{coro}'."
 
-    # add test polychromatic. We do not add any performance tests because most coronagraphs aren't great 
-    # in polychromatic, but it should at least run. 
-    modelconfig.update({"Delta_wav": 30e-9})
-    modelconfig.update({"nb_wav": 3})
-    for i, coro in enumerate(coros_to_test):
-        
+
+def test_all_coronagraphs_polychromatic():
+    # Load the test parameter file
+    parameter_file_test = os.path.join(Asterix_root, 'tests', "param_file_tests.ini")
+    config = read_parameter_file(parameter_file_test)
+
+    config["modelconfig"]["Delta_wav"] = 30e-9
+    config["modelconfig"]["nb_wav"] = 3
+
+    # Reassign the parameter groups to variables
+    modelconfig = config["modelconfig"]
+    Coronaconfig = config["Coronaconfig"]
+
+    # Set coronagraph to be tested
+    coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
+
+    # We do not add any performance tests because most coronagraphs aren't great
+    # in polychromatic, but it should at least run.
+    for coro in coros_to_test:
+        Coronaconfig.update({"corona_type": coro})
+
         # Create the coronagraph
         corono = Coronagraph(modelconfig, Coronaconfig)
-        try:
-            coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
-        except:
-            assert False, f"Coronagraph '{coro}' does not work in polychromatic light."
+        coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
+        quickfits(coro_psf, name=coro)
 
 
 def test_wrapped_vortex_phase_mask():
