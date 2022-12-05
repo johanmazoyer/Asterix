@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from Asterix import Asterix_root
-from Asterix.utils import read_parameter_file
+from Asterix.utils import read_parameter_file, quickfits
 from Asterix.optics import Coronagraph, create_wrapped_vortex_mask, fqpm_mask
 
 
@@ -17,7 +17,7 @@ def test_all_coronagraphs():
 
     # Set coronagraph to be tested
     coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
-    expected_attenuation = [1e-20, 1e-5, 1e-2, 1e-1, 1e-2, 1e-20]  # Note that these are for the 80 px pupil below
+    expected_attenuation = [1e-20, 1e-6, 5e-3, 1e-2, 1e-3, 1e-20]  # Note that these are for the 80 px pupil below
     atols = [0, 1e-14, 1e-14, np.nan, 1e-14, 0]  # zeros are for perfect coronagraphs
 
     for i, coro in enumerate(coros_to_test):
@@ -25,7 +25,8 @@ def test_all_coronagraphs():
 
         # Create the coronagraph
         corono = Coronagraph(modelconfig, Coronaconfig)
-        coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
+        coro_psf = corono.todetector_intensity(in_contrast=True)
+        quickfits(coro_psf, name=coro)
 
         assert np.max(
             coro_psf) < expected_attenuation[i], f"Attenuation of '{coro}' not below expected {expected_attenuation[i]}."
@@ -56,7 +57,7 @@ def test_all_coronagraphs_polychromatic():
 
         # Create the coronagraph
         corono = Coronagraph(modelconfig, Coronaconfig)
-        coro_psf = corono.todetector_intensity(center_on_pixel=True, in_contrast=True)
+        coro_psf = corono.todetector_intensity(in_contrast=True)
 
 def test_wrapped_vortex_phase_mask():
     size = 1000
