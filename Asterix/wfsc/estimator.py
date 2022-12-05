@@ -223,10 +223,11 @@ class Estimator:
             result_estim = []
 
             if self.polychrom == 'multiwl':
-                for i, wavei in enumerate(testbed.wav_vec):
-                    resultatestimation = testbed.todetector(entrance_EF=entrance_EF[i],
-                                                            voltage_vector=voltage_vector,
-                                                            wavelength=wavei)
+                for i, wavei in enumerate(self.wav_vec_estim):
+                    resultatestimation = testbed.todetector(
+                        entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(wavei)],
+                        voltage_vector=voltage_vector,
+                        wavelength=wavei)
                     result_estim.append(resizing(resultatestimation, self.dimEstim))
             elif self.polychrom == 'centralwl':
                 resultatestimation = testbed.todetector(entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(
