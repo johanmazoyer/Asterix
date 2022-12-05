@@ -107,7 +107,7 @@ class Corrector:
             if estimator.polychrom in ['centralwl', 'broadband_pwprobes']:
                 number_wl_in_matrix = 1
             else:
-                number_wl_in_matrix = 3
+                number_wl_in_matrix = estimator.nb_wav_estim
 
             if testbed.DM1.active & testbed.DM3.active:
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_wl{number_wl_in_matrix}.fits"),

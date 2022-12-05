@@ -78,7 +78,7 @@ class Estimator:
         wavelength_0_estim = testbed.wavelength_0
 
         if len(testbed.wav_vec) == 1:
-            self.polychrom == "centralwl"
+            self.polychrom = "centralwl"
 
         if self.polychrom == 'multiwl' and self.nb_wav_estim > 1:
             # For now estimation BW and testbed BW are the same and can be easily changed.
