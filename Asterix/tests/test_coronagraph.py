@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from Asterix import Asterix_root
-from Asterix.utils import read_parameter_file, quickfits
+from Asterix.utils import read_parameter_file
 from Asterix.optics import Coronagraph, create_wrapped_vortex_mask, fqpm_mask
 
 
@@ -26,7 +26,6 @@ def test_all_coronagraphs():
         # Create the coronagraph
         corono = Coronagraph(modelconfig, Coronaconfig)
         coro_psf = corono.todetector_intensity(in_contrast=True)
-        quickfits(coro_psf, name=coro)
 
         assert np.max(
             coro_psf) < expected_attenuation[i], f"Attenuation of '{coro}' not below expected {expected_attenuation[i]}."
@@ -58,6 +57,7 @@ def test_all_coronagraphs_polychromatic():
         # Create the coronagraph
         corono = Coronagraph(modelconfig, Coronaconfig)
         coro_psf = corono.todetector_intensity(in_contrast=True)
+
 
 def test_wrapped_vortex_phase_mask():
     size = 1000
