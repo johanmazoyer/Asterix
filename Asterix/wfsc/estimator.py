@@ -78,7 +78,7 @@ class Estimator:
         wavelength_0_estim = testbed.wavelength_0
 
         if len(testbed.wav_vec) == 1:
-            self.polychrom == "centralwl"
+            self.polychrom = "centralwl"
 
         if self.polychrom == 'multiwl' and self.nb_wav_estim > 1:
             # For now estimation BW and testbed BW are the same and can be easily changed.
@@ -223,10 +223,11 @@ class Estimator:
             result_estim = []
 
             if self.polychrom == 'multiwl':
-                for i, wavei in enumerate(testbed.wav_vec):
-                    resultatestimation = testbed.todetector(entrance_EF=entrance_EF[i],
-                                                            voltage_vector=voltage_vector,
-                                                            wavelength=wavei)
+                for i, wavei in enumerate(self.wav_vec_estim):
+                    resultatestimation = testbed.todetector(
+                        entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(wavei)],
+                        voltage_vector=voltage_vector,
+                        wavelength=wavei)
                     result_estim.append(resizing(resultatestimation, self.dimEstim))
             elif self.polychrom == 'centralwl':
                 resultatestimation = testbed.todetector(entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(
