@@ -30,5 +30,23 @@ setup(
     ],
     keywords='Exoplanets imaging high-contrast coronagraphy',
     install_requires=[
-        'astropy', 'configobj', 'flake8', 'jupyter', 'matplotlib', 'numpy', 'pytest', 'scikit-image', 'scipy'
-    ])
+		"numpy",
+		"scipy",
+		"matplotlib",
+		"astropy",
+		"scikit-image",
+		"configobj",
+	],
+	extras_require={
+		"dev": [
+			"pytest",
+            "jupyter",
+			"flake8"],
+		"doc": [
+			"numpydoc",
+			"sphinx_rtd_theme",
+			"pyan3",
+			"jupyter_client",
+			"ipykernel",
+			"sphinx-automodapi"]}
+    )
