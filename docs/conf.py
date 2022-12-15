@@ -39,7 +39,10 @@ extensions = [
     "sphinx.ext.graphviz", 'sphinx_rtd_theme', "pyan.sphinx"
 ]
 
-root_doc = 'index.rst'
+source_suffix = '.rst'
+
+# The master toctree document.
+root_doc = 'index'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
