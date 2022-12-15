@@ -2,11 +2,13 @@ name: asterix
 dependencies:
   - astropy
   - configobj
-  - flake8
-  - jupyter
   - matplotlib
   - numpy
-  - pytest
   - python=>3.8
   - scikit-image
   - scipy
+  - IPython
+  - flake8
+  - jupyter
+  - pytest
+
