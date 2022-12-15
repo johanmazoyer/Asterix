@@ -84,7 +84,7 @@ To define the wavelengths of simulation, 3 parameters are used:
 Using these 3 parameters, we split the BW in small bandwidths of equal ``Delta_wav`` / ``nb_wav`` and 
 we take the centers of each of these small bandwidths. The next Figure shows this in the case of ``nb_wav`` = 5.
 
-.. figure:: source_images/wl_simu.pdf
+.. figure:: source_images/wl_simu.png
     :scale: 80%
     :align: center
 

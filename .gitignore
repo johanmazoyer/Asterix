@@ -1,7 +1,6 @@
 #2021
 #ignore file extension
 *.pyc
-*.png
 *.ipynb_checkpoints
 
 # to avoid that people sync their own param file in the git dir

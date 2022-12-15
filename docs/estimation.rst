@@ -119,7 +119,7 @@ parts of the simulated wavelengths because a lot of wavelength specific tools ar
 For this reason ``nb_wav_estim`` must be an odd integer, divisor of ``nb_wav``. The next figure shows ``nb_wav = 9`` for the wavelength 
 of simulation in blue and ``nb_wav_estim = 3`` for the wavelengths of estimation / correction in red.
 
-.. figure:: source_images/wl_estim.pdf
+.. figure:: source_images/wl_estim.png
     :scale: 80%
     :align: center
 
