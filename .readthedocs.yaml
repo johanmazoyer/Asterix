@@ -11,6 +11,11 @@ build:
   tools:
     python: "3.8"
     
+# Build documentation in the docs/ directory with Sphinx
+sphinx:
+   configuration: docs/conf.py
+
+# Install Asterix with required package to build the docs
 python:
   version: "3.8"
   install:
@@ -18,12 +23,3 @@ python:
       path: .
       extra_requirements:
         - docs
-        
-# Build documentation in the docs/ directory with Sphinx
-sphinx:
-   configuration: docs/conf.py
-
-# If using Sphinx, optionally build your docs in additional formats such as PDF
-# formats:
-#    - pdf
-
