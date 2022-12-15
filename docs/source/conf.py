@@ -39,6 +39,8 @@ extensions = [
     "sphinx.ext.graphviz", 'sphinx_rtd_theme', "pyan.sphinx"
 ]
 
+master_doc = 'index'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -73,5 +75,3 @@ html_static_path = ['_static']
 graphviz_output_format = "svg"
 
 autodoc_member_order = 'bysource'
-
-master_doc = 'index'
