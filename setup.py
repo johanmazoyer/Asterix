@@ -37,4 +37,7 @@ setup(
         "scikit-image",
         "configobj",
     ],
-    extras_require={"dev": ["pytest", "jupyter", "flake8"]})
+    extras_require={
+        "dev": ["pytest", "jupyter", "flake8"],
+        "doc": ["numpydoc", "sphinx_rtd_theme", "pyan3","sphinx-automodapi"]
+    })
