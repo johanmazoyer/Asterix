@@ -21,7 +21,7 @@ sys.path.append('pip install sphinx-automodapi')
 # -- Project information -----------------------------------------------------
 
 project = 'Asterix'
-copyright = '2021, Johan Mazoyer, Axel Potier, Raphaël Galicher'
+copyright = '2021, Johan Mazoyer, Iva Laginja, Axel Potier, Raphaël Galicher'
 author = 'Johan Mazoyer, Iva Laginja, Axel Potier, Raphaël Galicher'
 
 # The full version, including alpha/beta/rc tags

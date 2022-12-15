@@ -1,5 +1,9 @@
 Main THD
 =====================================
 
-.. automodule:: Asterix.main_THD
-    :members:
+.. currentmodule:: Asterix.main_THD
+
+.. automodapi:: Asterix.main_THD
+    :no-inheritance-diagram:
+    :include-all-objects:
+    :no-heading:
