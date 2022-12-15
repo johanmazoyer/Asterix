@@ -109,7 +109,7 @@ def runthd2(parameter_file_path,
     model_local_dir = os.path.join(data_dir, "Model_local")
     matrix_dir = os.path.join(data_dir, "Interaction_Matrices")
     result_dir = os.path.join(data_dir, "Results", name_experiment)
-    labview_dir = os.path.join(data_dir, "Labview")
+    labview_dir = os.path.join(data_dir, "Labview", create_experiment_dir(append=config["Coronaconfig"]["corona_type"]))
 
     # Concatenate into the full testbed optical system
     thd2 = THD2(config, model_local_dir)
