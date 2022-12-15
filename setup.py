@@ -36,6 +36,7 @@ setup(
         "astropy",
         "scikit-image",
         "configobj",
+        "IPython",
     ],
     extras_require={
         "dev": ["pytest", "jupyter", "flake8"],
