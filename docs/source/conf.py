@@ -73,3 +73,5 @@ html_static_path = ['_static']
 graphviz_output_format = "svg"
 
 autodoc_member_order = 'bysource'
+
+master_doc = 'index'

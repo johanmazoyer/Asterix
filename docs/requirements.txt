@@ -1,6 +1,0 @@
-
-# pyan3
-# sphinx-automodapi
-# numpydoc
-# sphinx_rtd_theme
-# sphinx-automodapi
