@@ -32,6 +32,7 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 
    module_docs/main_thd
    module_docs/correction_loop
+   module_docs/coronagraph
 
 
 
