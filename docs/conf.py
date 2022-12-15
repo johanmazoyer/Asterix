@@ -38,7 +38,7 @@ release = 'v2.5'  # change version 15/12/22
 # ones.
 extensions = [
     'sphinx.ext.autodoc', 'sphinx_automodapi.automodapi', 'numpydoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon',
-    "sphinx.ext.graphviz", 'sphinx_rtd_theme', "pyan.sphinx"
+    "sphinx.ext.graphviz", 'sphinx_rtd_theme', "pyan.sphinx", "sphinx.ext.inheritance_diagram",
 ]
 
 source_suffix = '.rst'
@@ -71,12 +71,18 @@ exclude_patterns = []
 # html_theme = 'alabaster'
 html_theme = "sphinx_rtd_theme"
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
 
 # add graphviz options
 graphviz_output_format = "svg"
 
 autodoc_member_order = 'bysource'
+
+
+def patch_automodapi(app):
+    """Monkey-patch the automodapi extension to exclude imported members"""
+    from sphinx_automodapi import automodsumm
+    from sphinx_automodapi.utils import find_mod_objs
+    automodsumm.find_mod_objs = lambda *args: find_mod_objs(args[0], onlylocals=True)
+
+def setup(app):
+    app.connect("builder-inited", patch_automodapi)

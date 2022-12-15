@@ -1,6 +1,6 @@
 
 Asterix: Simulate your High-Contrast Instruments
-===================================
+=======================================================
 
 Asterix is a python based library for simulating high contrast instruments and testbeds with a strong
 focus on focal plane wavefront sensing and correction algorithms. 

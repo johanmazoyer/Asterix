@@ -1,14 +1,14 @@
 .. _run-asterix-label:
 
 Basic Asterix Tutorial with THD2 model
---------------------------------------
+-----------------------------------------------
 
 This sections is if you want to use the code as it currently set up, in the THD2 configuration.
 To run Asterix you first need a parameter .ini file describing all the testbed configuration and a python file to call the main. 
 An example of these files are provided in the packages : Example_param_file.ini and example_run_asterix.py
 
 Run Asterix in THD2 mode
-+++++++++++++++++++++++
++++++++++++++++++++++++++++++++++
 
 If you wish to run a correction with this example configuration 
 with the THD2 testbed, just run:
@@ -74,7 +74,7 @@ What is not saved by default, but can be easily done by setting up the keyword `
 
 
 Description of the parameter file
-+++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++
 
 General configuration
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -167,7 +167,8 @@ The [Coronaconfig] section contains the coronagraph parameter.
                                 - "Clear" for no apodizer at all (clear plane): this is the case in THD2
                                 - "RoundPup" for a round pupil of radius diam_pup_in_m
                                 - "RomanPup" for HLC Roman Pupil on THD
-                                - "RomanPupTHD2" for HLC Roman Pupil on THD (rotated by -0.9 degrees))
+                                - "RomanPupTHD2" for HLC Roman Pupil on THD (rotated by -0.9 degrees)
+
     or you can use this parameter to put an existing full path .fits name that will be used to define the pupil (e.g. filename_instr_pup = "/myfullpath/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file are assumed to be at the dimesion of the pupil (no overpadding) and will automatically be rescaled at prad. If you want this pupil to be smaller than the entrance pupil you have to overpad your .fits file.
     
     - apod_pup_rotation : float, if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory. 
@@ -178,6 +179,7 @@ The [Coronaconfig] section contains the coronagraph parameter.
                                 - "RoundPup" for a round pupil of radius diam_pup_in_m
                                 - "RomanLyot" for HLC Roman Pupil
                                 - "RomanLyotTHD2" for HLC Roman Lyot on THD (rescaled because of the lyot plane dezoom and rotated by -0.9 degrees)
+                                
     or you can use this parameter to put an existing full path .fits name that will be used to define the pupil (e.g. filename_instr_pup = "/myfullpath/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file are assumed to be at the dimesion of the pupil (no overpadding) and will automatically be rescaled at the pupil radius. If you want this pupil to be smaller than the entrance pupil you have to overpad your .fits file.
     
     - lyot_pup_rotation : float, if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory. 
