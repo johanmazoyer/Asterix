@@ -39,7 +39,7 @@ extensions = [
     "sphinx.ext.graphviz", 'sphinx_rtd_theme', "pyan.sphinx"
 ]
 
-root_doc = 'index'
+root_doc = 'index.rst'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
