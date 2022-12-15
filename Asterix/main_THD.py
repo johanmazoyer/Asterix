@@ -1,6 +1,6 @@
 import os
 
-from Asterix.utils import create_experiment_dir, get_data_dir, read_parameter_file
+from Asterix.utils import create_experiment_dir, get_data_dir, get_git_description, read_parameter_file
 from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
 from Asterix.wfsc import Estimator, Corrector, MaskDH, correction_loop, save_loop_results
 
@@ -87,6 +87,9 @@ def runthd2(parameter_file_path,
         Whether to silence correction loop outputs; default False.
     """
 
+    # Get git commit hash
+    commit = get_git_description()
+
     # Load configuration file
     config = read_parameter_file(parameter_file_path,
                                  NewMODELconfig=NewMODELconfig,
@@ -109,7 +112,8 @@ def runthd2(parameter_file_path,
     model_local_dir = os.path.join(data_dir, "Model_local")
     matrix_dir = os.path.join(data_dir, "Interaction_Matrices")
     result_dir = os.path.join(data_dir, "Results", name_experiment)
-    labview_dir = os.path.join(data_dir, "Labview", create_experiment_dir(append=config["Coronaconfig"]["corona_type"]))
+    labview_dir = os.path.join(data_dir, "Labview",
+                               create_experiment_dir(append=config["Coronaconfig"]["corona_type"]) + f"_{commit}")
 
     # Concatenate into the full testbed optical system
     thd2 = THD2(config, model_local_dir)
