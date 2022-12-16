@@ -32,7 +32,7 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 
    module_docs/main_thd
    module_docs/correction_loop
-   module_docs/coronagraph
+   module_docs/optical_system
 
 
 
@@ -47,54 +47,6 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 ..     :show-inheritance:
 
 
-.. Coronagraphis instrument simulation
-.. ------------------------------------
-
-.. OpticalSystem: main class
-.. ++++++++++++++++++++++++++
-.. .. _os-label:
-.. .. autoclass:: Asterix.optics.OpticalSystem
-..     :members:
-..     :show-inheritance:
-
-
-.. OpticalSystem: pupil subclass
-.. ++++++++++++++++++++++++++++++
-.. .. _pupil-label:
-.. .. autoclass:: Asterix.optics.Pupil
-..     :members:
-..     :show-inheritance:
-
-.. OpticalSystem: coronagraph subclass
-.. +++++++++++++++++++++++++++++++++++++
-.. .. _coronagraph-label:
-.. .. autoclass:: Asterix.optics.Coronagraph
-..     :members:
-..     :show-inheritance:
-
-.. .. callgraph:: Asterix.optics.coronagraph.Coronagraph.__init__
-..     :toctree: api
-..     :zoomable:
-..     :direction: horizontal
-
-.. OpticalSystem: DeformableMirror subclass
-.. ++++++++++++++++++++++++++++++++++++++++++
-.. .. _deformable-mirror-label:
-.. .. autoclass:: Asterix.optics.DeformableMirror
-..     :members:
-..     :show-inheritance:
-
-.. .. callgraph:: Asterix.optics.deformable_mirror.DeformableMirror.__init__
-..     :toctree: api
-..     :zoomable:
-..     :direction: horizontal
-
-.. OpticalSystem: Testbed subclass
-.. +++++++++++++++++++++++++++++++++
-.. .. _testbed-label:
-.. .. autoclass:: Asterix.optics.Testbed
-..     :members:
-..     :show-inheritance:
 
 
 .. Propagation functions

@@ -77,6 +77,7 @@ graphviz_output_format = "svg"
 
 autodoc_member_order = 'bysource'
 
+autodoc_default_options = {"members": True, "inherited-members": True, "show-inheritance":True}
 
 def patch_automodapi(app):
     """Monkey-patch the automodapi extension to exclude imported members"""
