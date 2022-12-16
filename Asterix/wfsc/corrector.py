@@ -51,7 +51,7 @@ class Corrector:
         ----------
         Correctionconfig : dict
             general correction parameters
-        testbed :  OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
         MaskDH : 2d numpy array
             binary array of size [dimEstim, dimEstim] : dark hole mask
@@ -184,7 +184,7 @@ class Corrector:
 
         Parameters
         ----------
-        testbed :  OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
         estimator : Estimator
             an estimator object. This contains all information about the estimation
@@ -241,18 +241,18 @@ class Corrector:
 
         Parameters
         ----------
-        testbed :  OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
-        estimate: list of 2D complex array
+        estimate : list of 2D complex array
             list is the number of wl in the estimation, usually 1 or testbed.nb_wav
             Each arrays are of size of sixe [dimEstim, dimEstim].
             This is the result of Estimator.estimate, from which this function
             send a command to the DM
-        mode: int, defaut 1
+        mode : int, defaut 1
             Use in EFC, EM, and Steepest, this is the mode we use in the SVD inversion
             if the mode is the same than the previous iteration, we store the inverted
             matrix to avoid inverted it again
-        ActualCurrentContrast: float, defau,t 1.
+        ActualCurrentContrast : float, defau,t 1.
             Use in StrokeMin to find a target contrast
             Contrast at the current iteration of the loop
 

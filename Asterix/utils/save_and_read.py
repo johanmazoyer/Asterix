@@ -91,10 +91,10 @@ def progress(count, total, status=''):
     Parameters
     ----------
     count: int
-        counter in the for loop
+        Counter in the for loop.
 
     total: int
-        number of iterations in the for loop
+        Number of iterations in the for loop.
     """
     bar_len = 60
     filled_len = int(round(bar_len * count / float(total)))
@@ -122,23 +122,23 @@ def read_parameter_file(parameter_file,
     ----------
     parameter_file: string
         Absolute path to a .ini parameter file.
-    NewMODELconfig: dict, optional
+    NewMODELconfig : dict, optional
         Can be used to directly change a parameter in the MODELconfig section of the input parameter file.
-    NewDMconfig: dict, optional
+    NewDMconfig : dict, optional
         Can be used to directly change a parameter in the DMconfig section of the input parameter file.
-    NewCoronaconfig: dict, optional
+    NewCoronaconfig : dict, optional
         Can be used to directly change a parameter in the Coronaconfig section of the input parameter file.
-    NewEstimationconfig: dict, optional
+    NewEstimationconfig : dict, optional
         Can be used to directly change a parameter in the Estimationconfig section of the input parameter file.
-    NewCorrectionconfig: dict, optional
+    NewCorrectionconfig : dict, optional
         Can be used to directly change a parameter in the Correctionconfig section of the input parameter file.
-    NewSIMUconfig: dict, optional
+    NewSIMUconfig : dict, optional
         Can be used to directly change a parameter in the SIMUconfig section of the input parameter file.
 
     Returns
     --------
-    config: dict
-        Parameter dictionary
+    config : dict
+        Parameter dictionary.
     """
 
     if not os.path.exists(parameter_file):
@@ -180,13 +180,13 @@ def from_param_to_header(config):
 
     Parameters
     ----------
-    config: dict
-        config obj
+    config : dict
+        Config object.
 
     Returns
     --------
     header : dict
-        list of parameters
+        List of parameters.
 
     """
     header = fits.Header()
@@ -219,7 +219,8 @@ def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="aste
 
     Returns
     ---------
-    Absolute path to top-level data directory.
+    data_dir : string
+        Absolute path to top-level data directory.
     """
     try:
         ret_path = os.environ[env_var_name]
@@ -247,6 +248,12 @@ def create_experiment_dir(append=''):
     ----------
     append : string
         Filename suffix to add to timestamp, default is ''.
+    
+    Returns
+    ---------
+    experiment_dir: string
+        Absolute path to top-level data directory.
+
     """
     time_stamp = time.time()
     date_time_string = datetime.datetime.fromtimestamp(time_stamp).strftime("%Y%m%d_%H-%M-%S")

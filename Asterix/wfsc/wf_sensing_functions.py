@@ -25,15 +25,15 @@ def create_pw_matrix(testbed: Testbed,
 
     Parameters
     ----------
-    testbed: Testbed Optical_element
+    testbed : Testbed Optical_element
         a testbed with one or more DM
-    amplitude:  float
+    amplitude : float
         amplitude of the actuator pokes for pair(wise probing in nm
-    posprobes:  1D-array
+    posprobes : 1D-array
         index of the actuators to push and pull for pair-wise probing
-    dimEstim:  int
+    dimEstim :  int
         size of the output image after resizing in pixels
-    cutsvd:     float
+    cutsvd : float
         value not to exceed for the inverse eigeinvalues at each pixels
     matrix_dir : string
         path to directory to save all the matrices here
@@ -47,7 +47,7 @@ def create_pw_matrix(testbed: Testbed,
 
     Returns
     --------
-    PWVector :   list of 2D array
+    PWVector : list of 2D array
                 vector probe to be multiplied by the image difference
                 matrix in order to retrieve the focal plane electric field
     """
@@ -95,15 +95,15 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
 
     Parameters
     ----------
-    testbed: Testbed Optical_element
+    testbed : Testbed Optical_element
         a testbed with one or more DM
-    amplitude:  float
+    amplitude : float
         amplitude of the actuator pokes for pair(wise probing in nm
-    posprobes:  1D-array
+    posprobes : 1D-array
         index of the actuators to push and pull for pair-wise probing
-    dimEstim:  int
+    dimEstim : int
         size of the output image after resizing in pixels
-    cutsvd:     float
+    cutsvd : float
         value not to exceed for the inverse eigeinvalues at each pixels
     matrix_dir : string
         path to directory to save all the matrices here
@@ -112,9 +112,9 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
 
     Returns
     --------
-    PWVector :   2D array
-                vector probe to be multiplied by the image difference
-                matrix in order to retrieve the focal plane electric field
+    PWVector : 2D array
+        vector probe to be multiplied by the image difference
+        matrix in order to retrieve the focal plane electric field
     """
 
     string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
@@ -196,21 +196,19 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None):
 
     Parameters
     ----------
-    Difference: 3D array
-        cube with image difference for each probes
-
-    Vectorprobes: 2D array
-        model probe matrix for the same probe as for difference
-
-    dir_save_all_planes : default None
-        If not None, directory to save all planes in fits for debugging purposes.
-        This can generate a lot of fits especially if in a loop, use with caution
+    Difference : 3D array
+        Cube with image difference for each probes.
+    Vectorprobes : 2D array
+        Model probe matrix for the same probe as for difference.
+    dir_save_all_planes : string or None, default None
+        If not None, absolute directory to save all planes in fits for debugging purposes.
+        This can generate a lot of fits especially if in a loop, use with caution.
 
     Returns
     --------
-    Difference: 3D array
-        cube with image difference for each probes.
-        Used for pair-wise probing
+    Difference : 3D array
+        Cube with image difference for each probes.
+        Used for pair-wise probing.
     """
 
     dimimages = len(Difference[0])
@@ -250,31 +248,25 @@ def simulate_pw_difference(input_wavefront,
 
     Parameters
     ----------
-    input_wavefront: complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
-        Input wavefront in pupil plane
-
-    testbed: Testbed Optical_element
-            a testbed with one or more DM
-
+    input_wavefront : complex scalar or 2d complex array or 3d complex array, default is 1 (flat WF)
+        Input wavefront in pupil plane.
+    testbed : Testbed Optical_element
+        Testbed with one or more DM.
     posprobes : 1D-array
-        Index of the actuators to push and pull for pair-wise probing
-
+        Index of the actuators to push and pull for pair-wise probing.
     dimimages : int
-        Size of the output image after resizing in pixels
-
-    amplitudePW: float
-        PW probes amplitude in nm
-
-    voltage_vector : 1D float array, default 0
-            vector of voltages vectors for each DMs arounf which we do the difference
-
-    wavelengths  :  float default None,
-            wavelength of the estimation in m
+        Size of the output image after resizing in pixels.
+    amplitudePW : float
+        PW probes amplitude in nm.
+    voltage_vector : 1D float array or float, default 0
+        Vector of voltages vectors for each DMs arounf which we do the difference.
+    wavelengths : float, default None
+        Wavelength of the estimation in m.
 
     Returns
     --------
     Difference : 3D array
-        Cube with image difference for each probes. Use for pair-wise probing
+        Cube with image difference for each probes. Use for pair-wise probing.
     """
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))

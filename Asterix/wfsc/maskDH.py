@@ -19,7 +19,7 @@ class MaskDH:
 
         Parameters
         ----------
-        Correctionconfig: dict
+        Correctionconfig : dict
                 general correction file which contains mask parameters
         """
 
@@ -46,17 +46,17 @@ class MaskDH:
 
         Parameters
         ----------
-        dimFP: int
+        dimFP : int
             size of the output FP mask
-        FP_sampling: float
+        FP_sampling : float
             resolution of focal plane pixel  per lambda / D
-        dir_save_all_planes : default None.
-            If not None, directory to save all planes in fits for debugging purposes.
-            This can generate a lot of fits especially if in a loop, use with caution
+        dir_save_all_planes : string or None, default None.
+            If not None, absolute directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution.
 
         Returns
         --------
-        maskDH: 2D array
+        maskDH : 2D array
             binary mask delimiting the DH
         """
         maskDH = np.ones((dimFP, dimFP))
@@ -131,7 +131,7 @@ class MaskDH:
 
         Returns
         --------
-        stringdh: str
+        stringdh : str
             mask String to save .fits files
         """
 

@@ -46,16 +46,12 @@ class Estimator:
         ----------
         Estimationconfig : dict
                 general estimation parameters
-
-        testbed :  OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
                 Testbed object which describe your testbed
-
         matrix_dir : string
             path to directory. save all the matrix files here
-
         save_for_bench : bool, default false
                 should we save for the real testbed in realtestbed_dir
-
         realtestbed_dir : string
             path to directory to save all the files the real thd2 testbed need to run your code
         """
@@ -171,27 +167,24 @@ class Estimator:
 
         Parameters
         ----------
-        testbed :  OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
                 Testbed object which describe your testbed
-
-        entrance_EF :    complex float or 2D array, default 1.
+        entrance_EF : complex float or 2D array, default 1.
             initial EF field
-
         voltage_vector : 1D float array
             vector of voltages vectors for each DMs
-
         perfect_estimation : bool, default = False
-                    if true This is equivalent to have self.technique = "perfect"
-                    but even if we are using another technique, we sometimes
-                    need a perfect estimation and it avoid re-initialization of
-                    the estimation.
+            if true This is equivalent to have self.technique = "perfect"
+            but even if we are using another technique, we sometimes
+            need a perfect estimation and it avoid re-initialization of
+            the estimation.
 
         Returns
         --------
         estimation : list of 2D array
-                list is the number of wl in the estimation, usually 1 or testbed.nb_wav
-                Each arrays are of size of sixe [dimEstim, dimEstim].
-                estimation of the Electrical field
+            list is the number of wl in the estimation, usually 1 or testbed.nb_wav
+            Each arrays are of size of sixe [dimEstim, dimEstim].
+            estimation of the Electrical field
         """
 
         if 'wavelength' in kwargs:
@@ -300,12 +293,12 @@ class Estimator:
 
         Parameters
         ----------
-        testbed :  OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
 
         Returns
         ------------
-        name_DM_to_probe_in_PW: string
+        name_DM_to_probe_in_PW : string
             name of the DM to probe in PW
         """
 

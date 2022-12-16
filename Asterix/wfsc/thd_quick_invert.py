@@ -36,13 +36,14 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
 
     Parameters
     ----------
-    Nbmodes : int
+    Nbmodes: int
         threshold to cut the singular values
     name_active_DM : int
         Simple code to identify which DMs are active
         1, 3 or 13 depending on the DM you want to access
     matrix_directory : str
-        Directory where Direct matrices are read from and Inverse matrices are saved to.
+        Directory where Direct matrices are read and Inverse matrices are saved
+        Careful Windows and MacOS do not write path the same way
     regularization : string, default 'truncation'
         if 'truncation': when goal is set to 'c', the modes with the highest inverse
                         singular values are truncated

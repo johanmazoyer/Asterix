@@ -12,15 +12,15 @@ def resizing(image, new):
 
     Parameters
     ----------
-    image: 2D array
-        input image
-    new: int
-        Size of the output image after resizing, in pixels
+    image : 2D array
+        Input image.
+    new : int
+        Size of the output image after resizing, in pixels.
 
     Returns
     --------
     Gvector : 2D array
-        image resampled into new dimensions
+        Image resampled into new dimensions.
     """
 
     dimScience = len(image)
@@ -42,19 +42,19 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
 
     Parameters
     ----------
-    img: 2D array
-        input image, can be non squared
-    ctr_x: float
-        Center of the input image in the x direction around which you make the cut
-    ctr_y: float
-        Center of the input image in the y direction around which you make the cut
-    newsizeimg: int
-        Size of the new image
+    img : 2D array
+        Input image, can be non squared.
+    ctr_x : float
+        Center of the input image in the x direction around which you make the cut.
+    ctr_y : float
+        Center of the input image in the y direction around which you make the cut.
+    newsizeimg : int
+        Size of the new image.
 
     Returns
     --------
     Gvector : 2D array
-        squared image cropped into new dimensions
+        Squared image cropped into new dimensions.
     """
     newimgs2 = newsizeimg / 2
     return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2), int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]
@@ -71,13 +71,13 @@ def crop_or_pad_image(image, dimout):
     Parameters
     ----------
     image : 2D array (float, double or complex)
-        dim x dim array to crop or pad
+        Dim x dim array to crop or pad.
     dimout : int
-         dimension of the output array
+        Dimension of the output array.
     Returns
     --------
     im_out : 2D array (float)
-        resized image
+        Resized image.
     """
     if float(dimout) < image.shape[0]:
         im_out = np.zeros((image.shape[0], image.shape[1]), dtype=image.dtype)
@@ -108,16 +108,16 @@ def rebin(image, factor=4, center_on_pixel=False):
     Parameters
     ----------
     image : 2D array (float, double or complex)
-            dim1 x dim2 array with dim1 and dim2 are divisible by 'factor'
+        dim1 x dim2 array with dim1 and dim2 are divisible by 'factor'.
     factor : int
-         factor of bin init_image size / final_image size
-    center_on_pixel : bool (optional, default: False).
-            If False the PSF is shifted before binning.
+        Factor of bin init_image size / final_image size.
+    center_on_pixel : bool, default: False
+        If False the PSF is shifted before binning.
 
     Returns
     --------
     im_out : 2D array (float)
-        resized image of size dim1 // 4 x dim2//4
+        Resized image of size dim1 // 4 x dim2//4.
     """
 
     dim1, dim2 = image.shape
@@ -150,16 +150,16 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
     Parameters
     ----------
     image : 2D array (float, double or complex)
-            dim1 x dim2 array with dim1 and dim2 are divisible by factor
+        dim1 x dim2 array with dim1 and dim2 are divisible by factor.
     new_dim : int
-         Dimension of output image. new_dim must be smaller than dim of the entrance image
-    center_on_pixel :bool (optional, default: False)
+        Dimension of output image. new_dim must be smaller than dim of the entrance image.
+    center_on_pixel : bool, default: False
         If False the PSf is shifted before binning.
 
     Returns
     --------
     return_image : 2D array (float)
-        resized image of size new_dim x new_dim
+        Resized image of size new_dim x new_dim.
     """
 
     dim1, dim2 = image.shape
@@ -198,30 +198,30 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
     Parameters
     ----------
     image : 2D numpy array
-            Initial image to be shifted.
+        Initial image to be shifted.
     xshift : float
-            Amount of desired shift in X direction.
+        Amount of desired shift in X direction.
     yshift : float
-            Amount of desired shift in Y direction.
+        Amount of desired shift in Y direction.
     fourier : bool (optional, default False)
-            If True, then the input image is assumed to be already Fourier
-            transformed, i.e. the input is FFT^-1(image).
+        If True, then the input image is assumed to be already Fourier
+        transformed, i.e. the input is FFT^-1(image).
     complex_image : bool (optional, default False)
-            If "False", then the output array will be
-            assumed to be real. If you want to shift a complex array, use complex_image = True.
+        If "False", then the output array will be
+        assumed to be real. If you want to shift a complex array, use complex_image = True.
     norm : string default 'backward'
-            'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
-            https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
-            If 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse=True).
-            If 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse=True).
-            If 'ortho' 1/sqrt(N) normalisation is done in both directions.
-            Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane.
-            The default is 'backward' to be consistent with numpy.fft.fft2() and numpy.fft.ifft2().
+        'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
+        https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
+        If 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is done in MFT(inverse=True).
+        If 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is done in MFT(inverse=True).
+        If 'ortho' 1/sqrt(N) normalisation is done in both directions.
+        Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane.
+        The default is 'backward' to be consistent with numpy.fft.fft2() and numpy.fft.ifft2().
 
     Returns
     --------
     shifted_image : 2D numpy array
-            shifted array with respect to the xshift and yshift used as input.
+        Shifted array with respect to the xshift and yshift used as input.
     """
     sz = np.shape(image)
     NP = sz[0]
@@ -324,7 +324,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
     Parameters
     ----------
     image : 2D numpy array
-        Initial array, must be square .
+        Initial array, must be square.
     factor_zoomout : float
         Factor to be zoomed out by (final_image size / init_image size). factor_zoomout < 1
     complex_image : bool(optional input, default False)

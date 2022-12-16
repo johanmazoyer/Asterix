@@ -20,7 +20,7 @@ class THD2(Testbed):
         """
         Parameters
         ----------
-        config: dict
+        config : dict
             Parameter dictionary. Must at least contain parameters for general model [modelconfig],
             coronagraph ([Coronaconfig]) and DM(s) ([DMconfig]).
         Model_local_dir : string
@@ -71,17 +71,17 @@ def runthd2(parameter_file_path,
     ----------
     parameter_file_path: string
         Absolute path to a .ini parameter file
-    NewMODELconfig: dict, optional
+    NewMODELconfig : dict, optional
         Can be used to directly change a parameter in the MODELconfig section of the input parameter file.
-    NewDMconfig: dict, optional
+    NewDMconfig : dict, optional
         Can be used to directly change a parameter in the DMconfig section of the input parameter file.
-    NewCoronaconfig: dict, optional
+    NewCoronaconfig : dict, optional
         Can be used to directly change a parameter in the Coronaconfig section of the input parameter file.
-    NewEstimationconfig: dict, optional
+    NewEstimationconfig : dict, optional
         Can be used to directly change a parameter in the Estimationconfig section of the input parameter file.
-    NewCorrectionconfig: dict, optional
+    NewCorrectionconfig : dict, optional
         Can be used to directly change a parameter in the Correctionconfig section of the input parameter file.
-    NewSIMUconfig: dict, optional
+    NewSIMUconfig : dict, optional
         Can be used to directly change a parameter in the SIMUconfig section of the input parameter file.
     silence : boolean
         Whether to silence correction loop outputs; default False.

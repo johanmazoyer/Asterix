@@ -26,8 +26,8 @@ class Coronagraph(optsy.OpticalSystem):
             general configuration parameters (sizes and dimensions)
         coroconfig : dict
             coronagraph parameters
-        Model_local_dir : string, default None
-            directory to save things you can measure yourself and can save to save times
+        Model_local_dir : string or None, default None
+            Directory output path for model-related files created on the file for later reuse.
         """
 
         # Initialize the OpticalSystem class and inherit properties
@@ -462,7 +462,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         Parameters
         --------
-        vortex_charge : int, default=2
+        vortex_charge : int, default 2
             Charge of the vortex. Usually a positive, even number (2, 4, 6). Default is charge 2.
 
         Returns
