@@ -1,6 +1,6 @@
 .. _todo-label:
 
-Wanna help ?
+Open issues
 ---------------
 
 These are future improvements to Asterix currenly envisionned (not particularly by order of priority):

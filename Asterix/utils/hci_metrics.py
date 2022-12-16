@@ -188,7 +188,7 @@ def contrast_curves(reduced_data, xcen=None, ycen=None, delta_raddii=3, type_of_
 
     Parameters
     ----------
-    reduced_data : [dim dim] array
+    reduced_data : [dim, dim] array
         Coronagraphic reduced data.
     xcen : float, default None (reduced_data.shape[0]/2 -1/2)
         Pixel, position x of the star.
@@ -205,7 +205,7 @@ def contrast_curves(reduced_data, xcen=None, ycen=None, delta_raddii=3, type_of_
 
     Returns
     --------
-    contrast_curve: 1d numpy array
+    contrast_curve : 1d numpy array
         array with the contrast on concentric rings measure with different metrics.
         Values outside of the mask are nan
     """
