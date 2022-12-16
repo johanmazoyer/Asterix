@@ -23,7 +23,7 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
             - Base_Matrix_DM1.fits
             - Direct_Matrix_2DM.fits
 
-    Save the following fits files (that can be read by the testbed controls):
+    Save the following fits files (that can be read by the testbed RTC):
         if DM1 only is active:
             - Matrix_control_EFC_DM1.fits
         if DM3 only is active:
