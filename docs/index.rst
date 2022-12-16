@@ -31,20 +31,13 @@ and Raphaël Galicher from LESIA (Paris Observatory)
    :caption: Asterix Package
 
    module_docs/main_thd
-   module_docs/correction_loop
    module_docs/optical_system
+   module_docs/correction_loop
+   module_docs/hci_metrics
 
 
 
-.. Correction loop
-.. -----------------
 
-
-.. HCI metric plots
-.. -----------------
-.. .. automodule:: Asterix.utils.hci_metrics
-..     :members:
-..     :show-inheritance:
 
 
 
