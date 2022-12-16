@@ -16,7 +16,6 @@ Optical Systems
 
 .. callgraph:: Asterix.optics.coronagraph.Coronagraph.__init__
     :toctree: api
-    :zoomable:
     :direction: horizontal
 
 
@@ -25,7 +24,6 @@ Optical Systems
 
 .. callgraph:: Asterix.optics.deformable_mirror.DeformableMirror.__init__
     :toctree: api
-    :zoomable:
     :direction: horizontal
 
 .. _testbed-label:
@@ -34,5 +32,4 @@ Optical Systems
 
 .. callgraph:: Asterix.optics.testbed.Testbed.__init__
     :toctree: api
-    :zoomable:
     :direction: horizontal

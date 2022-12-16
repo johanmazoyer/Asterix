@@ -10,12 +10,10 @@ WF Correction
 
 .. callgraph:: Asterix.wfsc.corrector.Corrector.update_matrices 
     :toctree: api
-    :zoomable:
     :direction: horizontal
 
 .. callgraph:: Asterix.wfsc.corrector.Corrector.toDM_voltage
     :toctree: api
-    :zoomable:
     :direction: horizontal
 
 

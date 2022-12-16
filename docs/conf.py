@@ -84,6 +84,7 @@ autodoc_member_order = 'bysource'
 
 autodoc_default_options = {"members": True, "inherited-members": True, "show-inheritance": True}
 
+# os.system("pyan3 ../Asterix/optics/coronagraph.py --uses --no-defines --colored --grouped --annotated --svg > ./source_images/coronagraph.svg")
 
 def patch_automodapi(app):
     """Monkey-patch the automodapi extension to exclude imported members"""

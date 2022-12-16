@@ -8,11 +8,9 @@ WF Estimation
 
 .. callgraph:: Asterix.wfsc.estimator.Estimator.__init__
     :toctree: api
-    :zoomable:
     :direction: horizontal
 
 .. callgraph:: Asterix.wfsc.estimator.Estimator.estimate
     :toctree: api
-    :zoomable:
     :direction: horizontal
 
