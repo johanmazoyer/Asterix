@@ -291,8 +291,7 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
     Parameters:
     --------
     testbed_EF_through : function
-    
-    known_keywords: list of strings 
+    known_keywords: list of strings
         List of known keywords.
 
     Returns

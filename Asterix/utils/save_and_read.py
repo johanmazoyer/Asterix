@@ -248,7 +248,7 @@ def create_experiment_dir(append=''):
     ----------
     append : string
         Filename suffix to add to timestamp, default is ''.
-    
+
     Returns
     ---------
     experiment_dir: string

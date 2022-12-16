@@ -607,7 +607,7 @@ def prop_fpm_regional_sampling(pup,
 
     Returns
     -------
-    EF_before_LS : 2D array (complex) 
+    EF_before_LS : 2D array (complex)
         E-field before the Lyot stop.
     """
     from Asterix.optics import shift_phase_ramp

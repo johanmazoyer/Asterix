@@ -182,7 +182,7 @@ class Pupil(optsy.OpticalSystem):
         Parameters
         ----------
         entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or complex/float scalar (entrance_EF is constant)
-            Electric field in the pupil plane a the entrance of the system. Default is 1. 
+            Electric field in the pupil plane a the entrance of the system. Default is 1.
         wavelength : float
             Current wavelength in m.
             Default is self.wavelength_0 the reference wavelength
