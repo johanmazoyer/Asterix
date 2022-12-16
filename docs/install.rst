@@ -50,15 +50,8 @@ Run the setup file to install Asterix:
 
 Dependencies
 -------------
-The installation of Asterix requires the following packages, which are useful for most astronomical data analysis. They will be automatically 
-installed in the setup. 
-
-* numpy
-* scipy
-* scikit-image
-* astropy
-* matplotlib
-* configobj
+The installation of Asterix requires the commmon python packages, documented in the setup.py file, which are useful for most astronomical 
+data analysis. They will be automatically installed in the setup. 
 
 We recommend you use a version of Python > 3.10 to use Asterix. As Asterix can be computationally expensive, we recommend a 
 powerful computer to optimize the correction. This will depend on specific test you want to perform (number of deformable mirrors, 
