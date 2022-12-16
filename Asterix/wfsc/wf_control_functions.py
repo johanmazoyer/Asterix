@@ -556,7 +556,7 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
         Each arrays are of size of sixe [dimEstim, dimEstim].
         estimation of focal plane EF
 
-    inversed_jacobian:  2D array
+    inversed_jacobian :  2D array
         inverse of the jacobian matrix linking the
                                     estimation to the basis coefficient
 
@@ -565,7 +565,7 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
 
     Returns
     --------
-    solution:   1D array
+    solution :   1D array
                     voltage to apply on each deformable mirror actuator
     """
     EF_vector = np.zeros(2 * int(np.sum(mask)) * len(Result_Estimate))
@@ -610,7 +610,7 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
 
     Returns
     --------
-    solution: 1D array
+    solution : 1D array
         voltage to apply on each deformable mirror actuator
     """
     if len(Result_Estimate) > 1:
@@ -661,7 +661,7 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
 
     Returns
     --------
-    solution: 1D array
+    solution : 1D array
         voltage to apply on each deformable mirror actuator
     lasbestalpha : float
             we return the last best alpha. This avoid to recalculate the best alpha from scratch
@@ -758,7 +758,7 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
 
     Returns
     --------
-    solution: 1D array
+    solution : 1D array
          voltage to apply on each deformable mirror actuator
     """
     if len(Result_Estimate) > 1:

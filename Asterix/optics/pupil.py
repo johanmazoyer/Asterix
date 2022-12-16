@@ -56,11 +56,11 @@ class Pupil(optsy.OpticalSystem):
             This is a bit dangerous because your .fits file might must be defined
             the right way so be careful
 
-        angle_rotation: float (default 0)
+        angle_rotation : float (default 0)
             angle of rotation of the pupil in degrees in counter-clockwise direction.
             this is only used if the pupil is not clear or empty
 
-        Model_local_dir: string, default None
+        Model_local_dir : string, default None
                     directory to save things you can measure yourself
                     and can save to save time
         """

@@ -185,7 +185,7 @@ def from_param_to_header(config):
 
     Returns
     --------
-    header: dict
+    header : dict
         list of parameters
 
     """

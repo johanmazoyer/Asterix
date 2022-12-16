@@ -47,7 +47,7 @@ def create_pw_matrix(testbed: Testbed,
 
     Returns
     --------
-    PWVector:   list of 2D array
+    PWVector :   list of 2D array
                 vector probe to be multiplied by the image difference
                 matrix in order to retrieve the focal plane electric field
     """
@@ -112,7 +112,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
 
     Returns
     --------
-    PWVector:   2D array
+    PWVector :   2D array
                 vector probe to be multiplied by the image difference
                 matrix in order to retrieve the focal plane electric field
     """

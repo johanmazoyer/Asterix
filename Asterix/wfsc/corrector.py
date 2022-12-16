@@ -186,7 +186,7 @@ class Corrector:
         ----------
         testbed :  OpticalSystem.Testbed
             Testbed object which describe your testbed
-        estimator: Estimator
+        estimator : Estimator
             an estimator object. This contains all information about the estimation
         initial_DM_voltage : float or 1d numpy array, default 0.
             initial DM voltages to measure the Matrix
@@ -258,7 +258,7 @@ class Corrector:
 
         Return
         ----------
-        solution: 1d numpy real float array
+        solution : 1d numpy real float array
             a voltage vector to be applied to the testbed
         """
 

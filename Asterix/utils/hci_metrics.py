@@ -45,10 +45,10 @@ def plot_contrast_curves(reduced_data,
         if the array is of dimension 3, the first dimension is assumed to be the number of iter and a
         contrast curve will be plotted for each
 
-    xcen: float, default None (reduced_data.shape[0]/2 - 1/2)
+    xcen : float, default None (reduced_data.shape[0]/2 - 1/2)
         pixel, position x of the star
 
-    ycen: float, default None (reduced_data.shape[1]/2 - 1/2)
+    ycen : float, default None (reduced_data.shape[1]/2 - 1/2)
         pixel, position y of the star
 
     delta_raddii: default 3
@@ -202,10 +202,10 @@ def contrast_curves(reduced_data, xcen=None, ycen=None, delta_raddii=3, type_of_
     reduced_data: array
         [dim dim] array containing the reduced data
 
-    xcen: float, default None (reduced_data.shape[0]/2 -1/2)
+    xcen : float, default None (reduced_data.shape[0]/2 -1/2)
         pixel, position x of the star
 
-    ycen: float, default None (reduced_data.shape[1]/2 -1/2)
+    ycen : float, default None (reduced_data.shape[1]/2 -1/2)
         pixel, position y of the star
 
     delta_raddii: default 3

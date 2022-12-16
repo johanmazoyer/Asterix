@@ -237,7 +237,7 @@ def _swap_DMphase_name(DM_EF_through_function, name_var):
 
     Returns
     --------
-    the_new_function: function
+    the_new_function : function
         with name_var as a param
     """
 
@@ -261,14 +261,14 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
 
     Parameters:
     --------
-    outer_fun: function
+    outer_fun : function
         x -> outer_fun(x)
-    inner_fun: function
+    inner_fun : function
         x -> inner_fun(x)
 
     Returns
     --------
-    the concatenated function: function
+    the concatenated function : function
         x -> outer_fun(inner_fun(x))
 
     """
@@ -337,7 +337,7 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
 
     Returns
     --------
-    the_new_function: function
+    the_new_function : function
         with name_var as a param
     """
 

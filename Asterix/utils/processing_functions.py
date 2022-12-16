@@ -19,7 +19,7 @@ def resizing(image, new):
 
     Returns
     --------
-    Gvector: 2D array
+    Gvector : 2D array
         image resampled into new dimensions
     """
 
@@ -53,7 +53,7 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
 
     Returns
     --------
-    Gvector: 2D array
+    Gvector : 2D array
         squared image cropped into new dimensions
     """
     newimgs2 = newsizeimg / 2

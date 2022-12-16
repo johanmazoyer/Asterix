@@ -26,7 +26,7 @@ class Coronagraph(optsy.OpticalSystem):
             general configuration parameters (sizes and dimensions)
         coroconfig : dict
             coronagraph parameters
-        Model_local_dir: string, default None
+        Model_local_dir : string, default None
             directory to save things you can measure yourself and can save to save times
         """
 
@@ -641,7 +641,7 @@ def fqpm_mask(dim):
     Parameters
     ----------
     dim : int
-       Number of pixels for the resulting phase mask.
+        Number of pixels for the resulting phase mask.
 
     Returns
     -------

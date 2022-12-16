@@ -35,9 +35,9 @@ def correction_loop(testbed: Testbed,
     ----------
     testbed: OpticalSystem.Testbed
         Object which describes your testbed.
-    estimator: Estimator
+    estimator : Estimator
         Estimator object containing all information about the WF estimation.
-    corrector: Corrector.
+    corrector : Corrector.
         Corrector object containing all information about the WF correction.
     mask_dh: 2d numpy array
         Binary array of size [dimScience, dimScience], the dark-hole mask.
@@ -162,20 +162,20 @@ def correction_loop_1matrix(testbed: Testbed,
     ----------
     testbed: OpticalSystem.Testbed
         object which describes your testbed
-    estimator: Estimator
+    estimator : Estimator
         This contains all information about the estimation
-    corrector: Corrector
+    corrector : Corrector
         This contains all information about the correction
     mask_dh: 2d numpy array
         binary array of size [dimScience, dimScience] : dark hole mask
-    Nbiter_corr: int or list of int
+    Nbiter_corr : int or list of int
         number of iterations in the loop
     CorrectionLoopResult: dict
         Dictionary containing the result of the previous loop.
         This will be updated with the result of the current loop.
-    gain:  float between 0 and 1, default 0.1
+    gain :  float between 0 and 1, default 0.1
         Control gain of the loop in EFC mode.
-    Nbmode_corr: int or list of int
+    Nbmode_corr : int or list of int
         Of same size as Nbiter_corr; SVD modes for each iteration.
     Linesearch: bool, default False
         If True, the function correction_loop_1matrix()

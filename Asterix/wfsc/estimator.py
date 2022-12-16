@@ -180,7 +180,7 @@ class Estimator:
         voltage_vector : 1D float array
             vector of voltages vectors for each DMs
 
-        perfect_estimation: bool, default = False
+        perfect_estimation : bool, default = False
                     if true This is equivalent to have self.technique = "perfect"
                     but even if we are using another technique, we sometimes
                     need a perfect estimation and it avoid re-initialization of

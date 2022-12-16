@@ -495,7 +495,7 @@ class OpticalSystem:
             'up' or 'do', use to access the right parameters in the parameter file for
             upstream (entrance pupil) or downstream (Lyot plane) aberrations
 
-        Model_local_dir: string, default None
+        Model_local_dir : string, default None
             directory to save things you can measure yourself and can save to save time
             In this case the phase aberrations is saved if Model_local_dir is not None
 
@@ -556,7 +556,7 @@ class OpticalSystem:
         SIMUconfig : dict
             Parameter of this simualtion (describing the amplitude)
 
-        Model_local_dir: string, default None
+        Model_local_dir : string, default None
             Directory to save things you can measure yourself and can save to save time
 
 

@@ -23,7 +23,7 @@ class THD2(Testbed):
         config: dict
             Parameter dictionary. Must at least contain parameters for general model [modelconfig],
             coronagraph ([Coronaconfig]) and DM(s) ([DMconfig]).
-        Model_local_dir: string
+        Model_local_dir : string
             Directory output path for model-related files created on the file for later reuse.
         """
 
