@@ -35,7 +35,7 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
                             before regularization
 
     Returns
-    ------
+    --------
     np.diag(InvS) : 2D numpy array
         Inverse eigenvalues of the input matrix in a diagonal matrix
     np.diag(InvS_truncated) : 2D numpy array

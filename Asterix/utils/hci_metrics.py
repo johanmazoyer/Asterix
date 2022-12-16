@@ -220,7 +220,7 @@ def contrast_curves(reduced_data, xcen=None, ycen=None, delta_raddii=3, type_of_
         mask delimiting the DH
 
     Returns
-    ------
+    --------
     contrast_curve: 1d numpy array
         array with the contrast on concentric rings measure with different metrics.
         Values outside of the mask are nan

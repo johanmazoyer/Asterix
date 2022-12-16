@@ -46,7 +46,7 @@ def create_pw_matrix(testbed: Testbed,
         list of wavelengths to do the estimation, used in the case of polychrom == 'multiwl'
 
     Returns
-    ------
+    --------
     PWVector:   list of 2D array
                 vector probe to be multiplied by the image difference
                 matrix in order to retrieve the focal plane electric field
@@ -111,7 +111,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
         wavelength in m.
 
     Returns
-    ------
+    --------
     PWVector:   2D array
                 vector probe to be multiplied by the image difference
                 matrix in order to retrieve the focal plane electric field
@@ -207,7 +207,7 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None):
         This can generate a lot of fits especially if in a loop, use with caution
 
     Returns
-    ------
+    --------
     Difference: 3D array
         cube with image difference for each probes.
         Used for pair-wise probing
@@ -272,7 +272,7 @@ def simulate_pw_difference(input_wavefront,
             wavelength of the estimation in m
 
     Returns
-    ------
+    --------
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing
     """

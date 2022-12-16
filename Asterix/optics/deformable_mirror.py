@@ -132,7 +132,7 @@ class DeformableMirror(optsy.OpticalSystem):
             This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
-        ------
+        --------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
 
@@ -194,7 +194,7 @@ class DeformableMirror(optsy.OpticalSystem):
             DM configuration parameters dictionary
 
         Returns
-        ------
+        --------
         pushact : 3D numpy array
                     of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]
                     contains all the DM OPD map induced in the DM plane for each actuator.
@@ -337,7 +337,7 @@ class DeformableMirror(optsy.OpticalSystem):
         AUTHOR: Johan Mazoyer
 
         Returns
-        ------
+        --------
         WhichInPupil: 1D array
                 index of all the actuators located inside the pupil
         """
@@ -406,7 +406,7 @@ class DeformableMirror(optsy.OpticalSystem):
             This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
-        ------
+        --------
         EF_back_in_pup_plane : 2D array (complex)
             Wavefront in the pupil plane following the DM
         """
@@ -453,7 +453,7 @@ class DeformableMirror(optsy.OpticalSystem):
             but slower for more complex phases
 
         Returns
-        ------
+        --------
         DM_phase: 2D array
             phase map in the same unit as actu_vect * DM_pushact)
         """
@@ -485,7 +485,7 @@ class DeformableMirror(optsy.OpticalSystem):
             the type of basis. 'fourier' or 'actuator'
 
         Returns
-        ------
+        --------
         basis: 2d numpy array
             basis [Size basis, Number of active act in the DM]
         """
@@ -561,7 +561,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
             Diameter of the pupil in pixel
 
     Returns
-    ------
+    --------
     simu_grid : 2D array
                 Array of shape is 2 x Nb_actuator
                 x and y positions of each actuator for simulation

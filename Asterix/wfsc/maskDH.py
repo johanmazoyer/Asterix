@@ -55,7 +55,7 @@ class MaskDH:
             This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
-        ------
+        --------
         maskDH: 2D array
             binary mask delimiting the DH
         """
@@ -130,7 +130,7 @@ class MaskDH:
         AUTHOR : Johan Mazoyer
 
         Returns
-        ------
+        --------
         stringdh: str
             mask String to save .fits files
         """

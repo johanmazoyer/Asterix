@@ -129,7 +129,7 @@ def mft(image,
                 cost of lower precision.
 
     Returns
-    ------
+    --------
         if returnAABB is False:
             MFT of the image : complex 2D array.
 
@@ -263,7 +263,7 @@ def mat_mult_mft(image, AA, BB, norm0):
             Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
 
     Returns
-    ------
+    --------
     norm0 * ((AA @ image) @ BB) :  2D numpy array (complex)
     """
 
@@ -305,7 +305,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         electric field (see Returns)
 
     Returns
-    ------
+    --------
     if retscale is 0:
         pup_z : 2D array (complex)
                 electric field after propagating in free space along
@@ -402,7 +402,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
         optional: default = 2
 
     Returns
-    ------
+    --------
     pup_z : 2D array (complex) of size [2*gamma*prad,2*gamma*prad]
         electric field after propagating in free space along
         a distance z
@@ -470,7 +470,7 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
                 The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
 
     Returns
-    ------
+    --------
     FFT_array : 2D numpy array
         FFT of input array with respect to the input centering parameters.
     """

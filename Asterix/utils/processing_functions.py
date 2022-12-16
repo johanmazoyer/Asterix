@@ -18,7 +18,7 @@ def resizing(image, new):
         Size of the output image after resizing, in pixels
 
     Returns
-    ------
+    --------
     Gvector: 2D array
         image resampled into new dimensions
     """
@@ -52,7 +52,7 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
         Size of the new image
 
     Returns
-    ------
+    --------
     Gvector: 2D array
         squared image cropped into new dimensions
     """
@@ -75,7 +75,7 @@ def crop_or_pad_image(image, dimout):
     dimout : int
          dimension of the output array
     Returns
-    ------
+    --------
     im_out : 2D array (float)
         resized image
     """
@@ -115,7 +115,7 @@ def rebin(image, factor=4, center_on_pixel=False):
             If False the PSF is shifted before binning.
 
     Returns
-    ------
+    --------
     im_out : 2D array (float)
         resized image of size dim1 // 4 x dim2//4
     """
@@ -157,7 +157,7 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
         If False the PSf is shifted before binning.
 
     Returns
-    ------
+    --------
     return_image : 2D array (float)
         resized image of size new_dim x new_dim
     """
@@ -219,7 +219,7 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
             The default is 'backward' to be consistent with numpy.fft.fft2() and numpy.fft.ifft2().
 
     Returns
-    ------
+    --------
     shifted_image : 2D numpy array
             shifted array with respect to the xshift and yshift used as input.
     """
@@ -280,7 +280,7 @@ def find_sizes_closest2factor(init_size_large, factor_zoomout, max_allowed_fft_s
         the maximum size to check
 
     Returns
-    ------
+    --------
     dimensions : tuple of 2 floats
         best_size_large, best_size_small
     """
@@ -334,7 +334,7 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
         The maximum size of the first fft. If you increase, you might find a better match, but it might take longer.
 
     Returns
-    ------
+    --------
     smaller_image_cropped : 2D numpy array
         zoomed out array
     """

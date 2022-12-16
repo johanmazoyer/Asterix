@@ -81,7 +81,7 @@ def create_interaction_matrix(testbed: Testbed,
         if true show the focal plane intensity in 2D for each mode
 
     Returns
-    ------
+    --------
     InterMat: 2D array of size [total(DM.basis_size), 2*dimEstim^2]
         jacobian matrix for Electric Field Conjugation.
     """
@@ -202,7 +202,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         if true show the focal plane intensity in 2D for each mode
 
     Returns
-    ------
+    --------
     InterMat: 2D array of size [total(DM.basis_size), 2*dimEstim^2]
         jacobian matrix for Electric Field Conjugation.
     """
@@ -515,7 +515,7 @@ def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.nd
         a binary mask to delimitate the DH
 
     Returns
-    ------
+    --------
     DHInteractionMatrix: 2D numpy array
         matrix only inside the DH. first half is real part, second half is imag part
 
@@ -564,7 +564,7 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
         a testbed with one or more DM
 
     Returns
-    ------
+    --------
     solution:   1D array
                     voltage to apply on each deformable mirror actuator
     """
@@ -609,7 +609,7 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
         a testbed with one or more DM
 
     Returns
-    ------
+    --------
     solution: 1D array
         voltage to apply on each deformable mirror actuator
     """
@@ -660,7 +660,7 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
             a testbed with one or more DM
 
     Returns
-    ------
+    --------
     solution: 1D array
         voltage to apply on each deformable mirror actuator
     lasbestalpha : float
@@ -757,7 +757,7 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
             a testbed with one or more DM
 
     Returns
-    ------
+    --------
     solution: 1D array
          voltage to apply on each deformable mirror actuator
     """

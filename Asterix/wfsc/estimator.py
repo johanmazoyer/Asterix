@@ -187,7 +187,7 @@ class Estimator:
                     the estimation.
 
         Returns
-        ------
+        --------
         estimation : list of 2D array
                 list is the number of wl in the estimation, usually 1 or testbed.nb_wav
                 Each arrays are of size of sixe [dimEstim, dimEstim].
@@ -304,7 +304,7 @@ class Estimator:
             Testbed object which describe your testbed
 
         Returns
-        ----------
+        ------------
         name_DM_to_probe_in_PW: string
             name of the DM to probe in PW
         """

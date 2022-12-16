@@ -136,7 +136,7 @@ def read_parameter_file(parameter_file,
         Can be used to directly change a parameter in the SIMUconfig section of the input parameter file.
 
     Returns
-    ------
+    --------
     config: dict
         Parameter dictionary
     """
@@ -184,7 +184,7 @@ def from_param_to_header(config):
         config obj
 
     Returns
-    ------
+    --------
     header: dict
         list of parameters
 
@@ -218,7 +218,7 @@ def get_data_dir(env_var_name="ASTERIX_DATA_PATH", config_in=None, datadir="aste
         Name of the top-level data directory, default "asterix_data".
 
     Returns
-    -------
+    ---------
     Absolute path to top-level data directory.
     """
     try:

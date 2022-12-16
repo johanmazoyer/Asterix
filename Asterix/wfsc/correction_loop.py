@@ -64,7 +64,7 @@ def correction_loop(testbed: Testbed,
         Whether to silence printing and plotting results as the loop runs.
 
     Returns
-    ------
+    --------
     CorrectionLoopResult : dict
         A dictionary containing the results of all loops.
     """
@@ -203,7 +203,7 @@ def correction_loop_1matrix(testbed: Testbed,
         If False, print and plot results as the loop runs.
 
     Returns
-    ------
+    --------
     if Search_best_Mode == True, return [bestMode, bestContrast]
     else return CorrectionLoopResult dictionary updated with the results from this loop
     """

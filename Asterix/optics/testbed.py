@@ -35,7 +35,7 @@ class Testbed(optsy.OpticalSystem):
             Then can then be accessed inside the Testbed object by os_#i = Testbed.list_os_names[i]
 
         Returns
-        ------
+        --------
         testbed : Asterix.optics.testbed.Tesbed
             an optical system which is the concatenation of all the optical systems
         """
@@ -151,7 +151,7 @@ class Testbed(optsy.OpticalSystem):
             but slower for more complex phases
 
         Returns
-        ------
+        --------
         phases: 3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
             phase maps for each DMs by order of light path in the same unit as actu_vect * DM_pushact
         """
@@ -188,7 +188,7 @@ class Testbed(optsy.OpticalSystem):
             DMs by order of the light path
 
         Returns
-        ------
+        --------
         vector_actuator_voltage : 1D-array real
             vector of base coefficients for all actuators of the DMs by order of the light path
             size (total(DM actuators))
@@ -229,14 +229,14 @@ def _swap_DMphase_name(DM_EF_through_function, name_var):
     AUTHOR : Johan Mazoyer
 
     Parameters:
-    ------
+    --------
     DM_EF_through_function : function
         the function of which we want to change the params
     name_var : string
         the name of the  new name variable
 
     Returns
-    ------
+    --------
     the_new_function: function
         with name_var as a param
     """
@@ -260,14 +260,14 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
     AUTHOR : Johan Mazoyer
 
     Parameters:
-    ------
+    --------
     outer_fun: function
         x -> outer_fun(x)
     inner_fun: function
         x -> inner_fun(x)
 
     Returns
-    ------
+    --------
     the concatenated function: function
         x -> outer_fun(inner_fun(x))
 
@@ -290,12 +290,12 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
     AUTHOR : Johan Mazoyer
 
     Parameters:
-    ------
+    --------
     testbed_EF_through: function
         known_keywords: list of strings of known keywords
 
     Returns
-    ------
+    --------
     cleaned_testbed_EF_through: function
         a function where only known keywords are allowed
     """
@@ -329,14 +329,14 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
     AUTHOR : Johan Mazoyer
 
     Parameters:
-    ------
+    --------
     DM_EF_through_function : function
         the function of which we want to change the params
     name_var : string
         the name of the  new name variable
 
     Returns
-    ------
+    --------
     the_new_function: function
         with name_var as a param
     """

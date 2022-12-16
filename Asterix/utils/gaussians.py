@@ -32,7 +32,7 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=Tru
         if True (default), the 2D-array is flatten into 1D-array
 
     Returns
-    ------
+    --------
     gauss: 2d numpy array
         2D gaussian function
     """
@@ -58,7 +58,7 @@ def gauss2Dfit(data):
         input image
 
     Returns
-    ------
+    --------
     popt: tuple of floats
         Parameters of the gaussian: max, sig_x, sig_y, x_cen, y_cen, angle, offset.
     """

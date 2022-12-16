@@ -199,7 +199,7 @@ class Pupil(optsy.OpticalSystem):
             This can generate a lot of fits especially if in a loop, use with caution
 
         Returns
-        ------
+        --------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
         """
