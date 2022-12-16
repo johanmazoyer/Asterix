@@ -250,7 +250,6 @@ def correction_loop_1matrix(testbed: Testbed,
         fig = plt.figure()
         ax = plt.subplot(1, 1, 1)
         im = ax.imshow(np.log10(initialFP), vmin=-8, vmax=-5)
-        plt.gca().invert_yaxis()
         ax.figure.colorbar(im)
         plt.pause(0.0001)
 
