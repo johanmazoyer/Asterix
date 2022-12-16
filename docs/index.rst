@@ -24,6 +24,7 @@ and Raphaël Galicher from LESIA (Paris Observatory)
     create_my_testbed
     estimation
     correction
+    todo
 
 
 .. toctree::
@@ -32,98 +33,14 @@ and Raphaël Galicher from LESIA (Paris Observatory)
 
    module_docs/main_thd
    module_docs/optical_system
+   module_docs/wf_sensing
+   module_docs/dh_mask
+   module_docs/wf_correction
    module_docs/correction_loop
    module_docs/hci_metrics
+   module_docs/optical_functions
+   module_docs/utils
 
-
-
-
-
-
-
-
-.. Propagation functions
-.. ++++++++++++++++++++++++++
-.. .. automodule:: Asterix.optics.propagation_functions
-..     :members:
-
-.. Phase and amplitude functions
-.. +++++++++++++++++++++++++++++++++
-.. .. automodule:: Asterix.optics.phase_amplitude_functions
-..     :members:
-
-
-.. WF Estimation
-.. -----------------
-.. .. _estimationfiles-label:
-.. .. automodule:: Asterix.wfsc.estimator
-..     :members:
-
-.. .. automodule:: Asterix.wfsc.wf_sensing_functions
-..     :members:
-
-.. .. callgraph:: Asterix.wfsc.estimator.Estimator.__init__
-..     :toctree: api
-..     :zoomable:
-..     :direction: horizontal
-
-.. .. callgraph:: Asterix.wfsc.estimator.Estimator.estimate
-..     :toctree: api
-..     :zoomable:
-..     :direction: horizontal
-
-
-.. WF Correction
-.. -----------------
-.. .. _correctionfiles-label:
-.. .. automodule:: Asterix.wfsc.corrector
-..     :members:
-
-.. .. automodule:: Asterix.wfsc.wf_control_functions
-..     :members:
-
-.. .. automodule:: Asterix.wfsc.thd_quick_invert
-..     :members:
-
-.. .. callgraph:: Asterix.wfsc.corrector.Corrector.update_matrices 
-..     :toctree: api
-..     :zoomable:
-..     :direction: horizontal
-
-.. .. callgraph:: Asterix.wfsc.corrector.Corrector.toDM_voltage
-..     :toctree: api
-..     :zoomable:
-..     :direction: horizontal
-
-
-.. DH Mask
-.. --------
-.. .. automodule:: Asterix.wfsc.MaskDH
-..     :members:
-
-.. Utils: processing
-.. ------------------
-.. .. automodule:: Asterix.utils.processing_functions
-..     :members:
-
-
-.. Utils: Save and read
-.. ----------------------
-.. .. automodule:: Asterix.utils.save_and_read
-..     :members:
-
-
-
-.. .. toctree::
-..     :maxdepth: 2
-..     :caption: Contents:
-
-
-.. .. toctree::
-..     :maxdepth: 1
-..     :caption: Ideas for Asterix improvements
-    
-..     todo
 
 
 .. Indices and tables

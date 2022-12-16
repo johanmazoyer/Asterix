@@ -12,24 +12,20 @@ class Estimator:
     """Estimator Class allows you to define a WF estimator.
 
         It must contains 2 functions at least:
-        - an initialization (e.g. PW matrix) Estimator.__init__()
-        The initialization will require previous initialization of
-        the testbed
-        it takes as parameter:
-                - the testbed structure
-                - the estimation parameters
-                -saving dirs
+            - an initialization (e.g. PW matrix) Estimator.__init__(), with parameters:
+                    - the testbed structure
+                    - the estimation parameters
+                    - saving directories
+                The estimator initialization requires previous initialization of the testbed.
 
-        - an estimatation function itself with parameters
-                - the entrance EF
-                - DM voltages
-                - the wavelength
-        Estimation = Estimator.estimate(entrance EF, DM voltage, WL)
-
-        It returns the estimation as a 2D array. In all generality, it can be pupil or focal plane,
-        complex or real with keywords (Estim.is_focal_plane = True, Estim.is_complex = True)
-        to explain the form of the output and potentially prevent wrongfull combination of
-        estim + correc.
+            - an estimatation function Estimator.estimate(), with parameters:
+                    - the entrance EF
+                    - DM voltages
+                    - the wavelength
+                It returns the estimation as a 2D array. In all generality, it can be pupil or focal plane,
+                complex or real with keywords (Estim.is_focal_plane = True, Estim.is_complex = True)
+                to explain the form of the output and potentially prevent wrongfull combination of
+                estim + correc.
 
     AUTHOR : Johan Mazoyer
     """

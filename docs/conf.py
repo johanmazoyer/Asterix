@@ -30,15 +30,21 @@ author = 'Johan Mazoyer, Iva Laginja, Axel Potier, Raphaël Galicher'
 # release = 'v2.4'  # change version 24/09/22
 release = 'v2.5'  # change version 15/12/22
 
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx_automodapi.automodapi', 'numpydoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon',
-    "sphinx.ext.graphviz", 'sphinx_rtd_theme', "pyan.sphinx", "sphinx.ext.inheritance_diagram",
+    'sphinx.ext.autodoc',
+    'sphinx_automodapi.automodapi',
+    'numpydoc',
+    'sphinx.ext.coverage',
+    'sphinx.ext.napoleon',
+    "sphinx.ext.graphviz",
+    'sphinx_rtd_theme',
+    "pyan.sphinx",
+    "sphinx.ext.inheritance_diagram",
 ]
 
 source_suffix = '.rst'
@@ -71,19 +77,20 @@ exclude_patterns = []
 # html_theme = 'alabaster'
 html_theme = "sphinx_rtd_theme"
 
-
 # add graphviz options
 graphviz_output_format = "svg"
 
 autodoc_member_order = 'bysource'
 
-autodoc_default_options = {"members": True, "inherited-members": True, "show-inheritance":True}
+autodoc_default_options = {"members": True, "inherited-members": True, "show-inheritance": True}
+
 
 def patch_automodapi(app):
     """Monkey-patch the automodapi extension to exclude imported members"""
     from sphinx_automodapi import automodsumm
     from sphinx_automodapi.utils import find_mod_objs
     automodsumm.find_mod_objs = lambda *args: find_mod_objs(args[0], onlylocals=True)
+
 
 def setup(app):
     app.connect("builder-inited", patch_automodapi)

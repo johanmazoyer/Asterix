@@ -11,23 +11,21 @@ import Asterix.wfsc.wf_control_functions as wfc
 
 
 class Corrector:
-    """Corrector Class allows you to define a corrector with different
-    algorithms.
+    """Corrector Class allows you to define a corrector with different algorithms.
 
     Corrector is a class which takes as parameter:
         - the testbed structure
         - the correction parameters
         - the estimator
 
-        It must contains 2 functions at least:
+    It must contains 2 functions at least:
         - an initialization (e.g. Jacobian matrix) Corrector.__init__
-        The initialization requires previous initialization of
-        the testbed and of the estimator
+            The initialization requires previous initialization of
+            the testbed and of the estimator.
 
-        - an correction function itself with parameters
-                - the estimation as a 2D array, potentially 3D for polychromatic correction
-        DMVoltage = Corrector.toDM_voltage(estimation)
-        It returns the DM Voltage. In all generality, it can one or 2 DMs. Depending on the testbed
+        - a correction function Corrector.toDM_voltage(estimation), which returns the DM Voltage vector
+            using as parameter the estimation (2D array or 3D for polychromatic correction).
+            It can one DM or more, depending on the testbed.
 
     AUTHOR : Johan Mazoyer
     """
