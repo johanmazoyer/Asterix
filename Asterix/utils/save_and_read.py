@@ -2,6 +2,8 @@ import errno
 import sys
 import os
 import time
+import subprocess
+import warnings
 
 import datetime
 import numpy as np
@@ -254,3 +256,21 @@ def create_experiment_dir(append=''):
 
     experiment_folder = date_time_string + append
     return experiment_folder
+
+
+def get_git_description():
+    """ Return git description of current branch and commit. """
+
+    # Ensure we run this in the code repo, regardless of current working dir
+    codedir = os.path.dirname(__file__)
+
+    def get_output_wrapper(cmd):
+        return subprocess.check_output(cmd.split(), universal_newlines=True, cwd=codedir).strip()
+
+    try:
+        desc = get_output_wrapper('git rev-parse --short HEAD')
+    except Exception:
+        warnings.warn("Unable to get git description")
+        desc = 'unable to get git hash'
+
+    return desc

@@ -8,11 +8,10 @@ from Asterix.utils import invert_svd
 
 
 def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, number_wl_in_matrix=1):
-    """This code invert the matrix just in the case of THD testbed The goal is
-    to be able to invert the matrix directly on the RTC to be able to do it
-    during correction.
+    """This code invert the matrix just in the case of THD testbed.
 
-    Need the following fits (automatically created in corrector.py is onbench = True):
+    The goal is to be able to invert the matrix directly on the RTC to be able to do it during correction.
+    Needs the following fits files (automatically created in corrector.py if onbench == True):
         if DM1 only is active:
             - Base_Matrix_DM1.fits
             - Direct_Matrix_DM1only.fits
@@ -24,7 +23,7 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
             - Base_Matrix_DM1.fits
             - Direct_Matrix_2DM.fits
 
-    Save the following fits (that can be read by the testbed):
+    Save the following fits files (that can be read by the testbed RTC):
         if DM1 only is active:
             - Matrix_control_EFC_DM1.fits
         if DM3 only is active:
@@ -37,24 +36,18 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
 
     Parameters
     ----------
-
-    Nbmodes: int
+    Nbmodes : int
         threshold to cut the singular values
-
     name_active_DM : int
         Simple code to identify which DMs are active
         1, 3 or 13 depending on the DM you want to access
-
     matrix_directory : str
-                    Directory where Direct matrices are read and Inverse matrices are saved
-                    Careful Windows and MacOS do not write path the same way
-
+        Directory where Direct matrices are read from and Inverse matrices are saved to.
     regularization : string, default 'truncation'
         if 'truncation': when goal is set to 'c', the modes with the highest inverse
                         singular values are truncated
         if 'tikhonov': when goal is set to 'c', the modes with the highest inverse
                         singular values are smoothed (low pass filter)
-
     number_wl_in_matrix : int, default 1
         number of wavelength in the direct matrix
     """
