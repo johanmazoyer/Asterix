@@ -387,9 +387,9 @@ def make_VLT_pup(dim_pp,
        Pupil radius within the image array (in pixels)
     pupangle : float
         pupil rotation angle in deg
-    spiders : bool, (default True)
+    spiders : bool, default True
         if False, return the VLT pupil without spiders
-    grey_pup_bin_factor : int (default, 1)
+    grey_pup_bin_factor : int, default 1
         If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
         (prad = grey_pup_bin_factor*prad) and then rebinned to the given parameter 'prad'.
         This limits the pixel crenellation in the pupil for small pupils.
@@ -397,16 +397,16 @@ def make_VLT_pup(dim_pp,
         the array because binning while keeping the centering is tricky:
             -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
             -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
-    center_pos : string (optional, default 'b')
+    center_pos : string, default 'b'
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
-    reduce_outer_radius : float (default 0)
+    reduce_outer_radius : float, default 0
         reduced diameter of outer radius in fraction of the diameter
-    add_central_obs : float (default 0)
+    add_central_obs : float, default 0
         additional diameter of central obstruction in fraction of the diameter
-    add_spider_thickness : float (default 0)
-    additional spiders width in fraction of the diameter
+    add_spider_thickness : float, default 0
+        additional spiders width in fraction of the diameter
 
     Returns
     -------
@@ -544,7 +544,7 @@ def make_sphere_apodizer(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
         Size of the image (in pixels)
     prad : float
        Pupil radius within the image array (in pixels)
-    grey_pup_bin_factor : int (default, 1)
+    grey_pup_bin_factor : int, default 1
         If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
         (prad = grey_pup_bin_factor*prad) and then rebinned to the given parameter 'prad'.
         This limits the pixel crenellation in the pupil for small pupils.
@@ -552,7 +552,7 @@ def make_sphere_apodizer(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
         the array because binning while keeping the centering is tricky:
             -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
             -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
-    center_pos : string (optional, default 'b')
+    center_pos : string, default 'b'
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.
@@ -590,15 +590,15 @@ def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, grey_pup_bin_factor
     Parameters
     ----------
     dim_pp : int
-        Size of the image (in pixels)
+        Size of the image (in pixels).
     prad : float
        Pupil radius within the image array (in pixels). Careful this is not the radius of the lyot,
        but the pupil associated to this Lyot.
     pupangle : float
-        pupil rotation angle in deg
-    spiders : bool, (default True)
+        Pupil rotation angle in deg.
+    spiders : bool, default True
         if False, return the VLT pupil without spiders
-    grey_pup_bin_factor : int (default, 1)
+    grey_pup_bin_factor : int, default 1
         If grey_pup_bin_factor > 1, the pupil is first defined at a very large scale
         (prad = grey_pup_bin_factor*prad) and then rebinned to the given parameter 'prad'.
         This limits the pixel crenellation in the pupil for small pupils.
@@ -606,7 +606,7 @@ def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, grey_pup_bin_factor
         the array because binning while keeping the centering is tricky:
             -if center_pos is 'p', dimpp and grey_pup_bin_factor must both be odd
             -if center_pos is 'b', dimpp and grey_pup_bin_factor must both be even
-    center_pos : string (optional, default 'b')
+    center_pos : string, default 'b'
         Option for the center pixel.
         If 'p', center on the pixel dim_pp//2.
         If 'b', center in between pixels dim_pp//2 -1 and dim_pp//2, for 'dim_pp' odd or even.

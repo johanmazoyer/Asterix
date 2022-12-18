@@ -15,12 +15,11 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.append('/Users/jmazoyer/GitProjects/my_projects/Asterix/Asterix/')
-os.system('pip install pyan3')
 
 # -- Project information -----------------------------------------------------
 
 project = 'Asterix'
-copyright = '2021, Johan Mazoyer, Axel Potier, Raphaël Galicher'
+copyright = '2021, Johan Mazoyer, Iva Laginja, Axel Potier, Raphaël Galicher'
 author = 'Johan Mazoyer, Iva Laginja, Axel Potier, Raphaël Galicher'
 
 # The full version, including alpha/beta/rc tags
@@ -28,14 +27,30 @@ author = 'Johan Mazoyer, Iva Laginja, Axel Potier, Raphaël Galicher'
 # release = 'v2.1' # change version 22/02/22
 # release = 'v2.2' # change version 15/03/22
 # release = 'v2.3' # change version 02/09/22
-release = 'v2.4'  # change version 24/09/22
+# release = 'v2.4'  # change version 24/09/22
+release = 'v2.5'  # change version 15/12/22
 
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon', "sphinx.ext.graphviz", "pyan.sphinx"]
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx_automodapi.automodapi',
+    'numpydoc',
+    'sphinx.ext.coverage',
+    'sphinx.ext.napoleon',
+    "sphinx.ext.graphviz",
+    'sphinx_rtd_theme',
+    "pyan.sphinx",
+    "sphinx.ext.inheritance_diagram",
+]
+
+source_suffix = '.rst'
+
+# The master toctree document.
+root_doc = 'index'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -58,15 +73,25 @@ exclude_patterns = []
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-html_theme = 'alabaster'
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_theme = 'alabaster'
+html_theme = "sphinx_rtd_theme"
 
 # add graphviz options
 graphviz_output_format = "svg"
 
 autodoc_member_order = 'bysource'
+
+autodoc_default_options = {"members": True, "inherited-members": True, "show-inheritance": True}
+
+# os.system("pyan3 ../Asterix/optics/coronagraph.py --uses --no-defines --colored --grouped --annotated --svg > ./source_images/coronagraph.svg")
+
+def patch_automodapi(app):
+    """Monkey-patch the automodapi extension to exclude imported members"""
+    from sphinx_automodapi import automodsumm
+    from sphinx_automodapi.utils import find_mod_objs
+    automodsumm.find_mod_objs = lambda *args: find_mod_objs(args[0], onlylocals=True)
+
+
+def setup(app):
+    app.connect("builder-inited", patch_automodapi)

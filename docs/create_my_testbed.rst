@@ -1,7 +1,7 @@
 .. _create-my-testbed-label:
 
 Create and modify testbeds
----------------
+---------------------------
 
 Optical System
 +++++++++++++++++++++++
@@ -84,8 +84,8 @@ To define the wavelengths of simulation, 3 parameters are used:
 Using these 3 parameters, we split the BW in small bandwidths of equal ``Delta_wav`` / ``nb_wav`` and 
 we take the centers of each of these small bandwidths. The next Figure shows this in the case of ``nb_wav`` = 5.
 
-.. figure:: source_images/wl_simu.pdf
-    :scale: 80%
+.. figure:: source_images/wl_simu.png
+    :scale: 30%
     :align: center
 
     Determination of simulation wavelengths ``OpticalSystem.wav_vec``
@@ -93,6 +93,7 @@ we take the centers of each of these small bandwidths. The next Figure shows thi
 If  ``Delta_wav`` > 0 and ``nb_wav`` > 1, Asterix is automatically in polychromatic wavelength and the following code
 
 .. code-block:: python
+    
     PSF = generic_os.todetector_intensity(entrance_EF = input_wavefront)
 
 will return a polychromatic PSF. By default, it is done in all possible simulated wavelengths

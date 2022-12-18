@@ -87,7 +87,7 @@ All estimators are done this way (first obtains images in the focal plane at the
 then resizing) to ensure that the behavior is equivalent to waht would be done on a real testbed
 
 Pair Wise Estimation
-+++++++++++++++++++++++
++++++++++++++++++++++++++
 
 The Pair wise estimation version we used is defined in 
 `Potier et al. (2020) <http://adsabs.harvard.edu/abs/2020A%26A...635A.192P>`_ 
@@ -98,7 +98,7 @@ pixels and it shows if all of the part of the DH are covered by the estimation (
 
 
 Polychromatic Estimation
-+++++++++++++++++++++++
+++++++++++++++++++++++++++++++
 .. _polychromaticestim-label:
 
 We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` simulation wavelengths evenly 
@@ -119,8 +119,8 @@ parts of the simulated wavelengths because a lot of wavelength specific tools ar
 For this reason ``nb_wav_estim`` must be an odd integer, divisor of ``nb_wav``. The next figure shows ``nb_wav = 9`` for the wavelength 
 of simulation in blue and ``nb_wav_estim = 3`` for the wavelengths of estimation / correction in red.
 
-.. figure:: source_images/wl_estim.pdf
-    :scale: 80%
+.. figure:: source_images/wl_estim.png
+    :scale: 30%
     :align: center
 
     Determination of estimation wavelengths ``estimation.wav_vec_estim``

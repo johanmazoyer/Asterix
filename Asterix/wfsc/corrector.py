@@ -11,23 +11,21 @@ import Asterix.wfsc.wf_control_functions as wfc
 
 
 class Corrector:
-    """Corrector Class allows you to define a corrector with different
-    algorithms.
+    """Corrector Class allows you to define a corrector with different algorithms.
 
     Corrector is a class which takes as parameter:
         - the testbed structure
         - the correction parameters
         - the estimator
 
-        It must contains 2 functions at least:
+    It must contains 2 functions at least:
         - an initialization (e.g. Jacobian matrix) Corrector.__init__
-        The initialization requires previous initialization of
-        the testbed and of the estimator
+            The initialization requires previous initialization of
+            the testbed and of the estimator.
 
-        - an correction function itself with parameters
-                - the estimation as a 2D array, potentially 3D for polychromatic correction
-        DMVoltage = Corrector.toDM_voltage(estimation)
-        It returns the DM Voltage. In all generality, it can one or 2 DMs. Depending on the testbed
+        - a correction function Corrector.toDM_voltage(estimation), which returns the DM Voltage vector
+            using as parameter the estimation (2D array or 3D for polychromatic correction).
+            It can one DM or more, depending on the testbed.
 
     AUTHOR : Johan Mazoyer
     """
@@ -53,7 +51,7 @@ class Corrector:
         ----------
         Correctionconfig : dict
             general correction parameters
-        testbed :  OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
         MaskDH : 2d numpy array
             binary array of size [dimEstim, dimEstim] : dark hole mask
@@ -186,9 +184,9 @@ class Corrector:
 
         Parameters
         ----------
-        testbed :  OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
-        estimator: Estimator
+        estimator : Estimator
             an estimator object. This contains all information about the estimation
         initial_DM_voltage : float or 1d numpy array, default 0.
             initial DM voltages to measure the Matrix
@@ -243,24 +241,24 @@ class Corrector:
 
         Parameters
         ----------
-        testbed :  OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
-        estimate: list of 2D complex array
+        estimate : list of 2D complex array
             list is the number of wl in the estimation, usually 1 or testbed.nb_wav
             Each arrays are of size of sixe [dimEstim, dimEstim].
             This is the result of Estimator.estimate, from which this function
             send a command to the DM
-        mode: int, defaut 1
+        mode : int, defaut 1
             Use in EFC, EM, and Steepest, this is the mode we use in the SVD inversion
             if the mode is the same than the previous iteration, we store the inverted
             matrix to avoid inverted it again
-        ActualCurrentContrast: float, defau,t 1.
+        ActualCurrentContrast : float, defau,t 1.
             Use in StrokeMin to find a target contrast
             Contrast at the current iteration of the loop
 
         Return
         ----------
-        solution: 1d numpy real float array
+        solution : 1d numpy real float array
             a voltage vector to be applied to the testbed
         """
 

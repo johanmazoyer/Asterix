@@ -25,7 +25,7 @@ jobs:
       run: |
         conda env create --name ci-env --file environment.yml
         conda activate ci-env
-        python setup.py develop
+        pip install ".[dev]"
       shell: bash -l {0}
     - name: Run tests
       run: |

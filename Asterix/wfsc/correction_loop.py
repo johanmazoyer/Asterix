@@ -33,19 +33,19 @@ def correction_loop(testbed: Testbed,
 
     Parameters
     ----------
-    testbed: OpticalSystem.Testbed
+    testbed : OpticalSystem.Testbed
         Object which describes your testbed.
-    estimator: Estimator
+    estimator : Estimator
         Estimator object containing all information about the WF estimation.
-    corrector: Corrector.
+    corrector : Corrector.
         Corrector object containing all information about the WF correction.
     mask_dh: 2d numpy array
         Binary array of size [dimScience, dimScience], the dark-hole mask.
-    Loopconfig: dict
+    Loopconfig : dict
         Simulation parameters for the WFS&C loop.
-    SIMUconfig: dict
+    SIMUconfig : dict
         Simulation parameters.
-    input_wavefront: float or 2d complex array or 3d complex array
+    input_wavefront : float or 2d complex array or 3d complex array
         Initial wavefront at the beginning of this loop.
         Electrical Field which can be a:
             float=1 if there are no phase/amplitude aberrations (default)
@@ -55,16 +55,16 @@ def correction_loop(testbed: Testbed,
             method inside the Corrector allows it. Currently, each matrix is measured with a flat field in
             the entrance of the testbed (input_wavefront = 1).
             'input_wavefront' is only used in the loop once the matrix is calculated. This can be changed but be careful.
-    initial_DM_voltage: float or 1D array
+    initial_DM_voltage : float or 1D array
         Initial DM voltages at the beginning of this loop. The Matrix is measured using these initial DM voltages.
         Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
-    silence: Boolean, default False
+    silence : boolean, default False
         Whether to silence printing and plotting results as the loop runs.
 
     Returns
-    ------
+    --------
     CorrectionLoopResult : dict
         A dictionary containing the results of all loops.
     """
@@ -160,22 +160,22 @@ def correction_loop_1matrix(testbed: Testbed,
 
     Parameters
     ----------
-    testbed: OpticalSystem.Testbed
+    testbed : OpticalSystem.Testbed
         object which describes your testbed
-    estimator: Estimator
+    estimator : Estimator
         This contains all information about the estimation
-    corrector: Corrector
+    corrector : Corrector
         This contains all information about the correction
     mask_dh: 2d numpy array
         binary array of size [dimScience, dimScience] : dark hole mask
-    Nbiter_corr: int or list of int
+    Nbiter_corr : int or list of int
         number of iterations in the loop
     CorrectionLoopResult: dict
         Dictionary containing the result of the previous loop.
         This will be updated with the result of the current loop.
-    gain:  float between 0 and 1, default 0.1
+    gain : float between 0 and 1, default 0.1
         Control gain of the loop in EFC mode.
-    Nbmode_corr: int or list of int
+    Nbmode_corr : int or list of int
         Of same size as Nbiter_corr; SVD modes for each iteration.
     Linesearch: bool, default False
         If True, the function correction_loop_1matrix()
@@ -186,24 +186,24 @@ def correction_loop_1matrix(testbed: Testbed,
         loop information, just the best mode and best contrast.
         This mode is used in Linesearch mode.
         Be careful when using this parameter, it can create an infinite loop.
-    input_wavefront: float or 2d complex array or 3d complex array
+    input_wavefront : float or 2d complex array or 3d complex array
         Initial wavefront at the beginning of this loop.
         Electrical Field which can be a:
             float=1 if no phase/amplitude aberrations present (default)
             2D complex array, of size phase_abb.shape if monochromatic
             or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic
-    initial_DM_voltage: float or 1D array
+    initial_DM_voltage : float or 1D array
         Initial DM voltages at the beginning of this loop. The Matrix is measured using this initial DM voltages.
         Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
     nb_photons : float, optional, default 0
         Number of photons entering the pupil. If 0, no photon noise.
-    silence: Boolean, default False
+    silence : Boolean, default False
         If False, print and plot results as the loop runs.
 
     Returns
-    ------
+    --------
     if Search_best_Mode == True, return [bestMode, bestContrast]
     else return CorrectionLoopResult dictionary updated with the results from this loop
     """

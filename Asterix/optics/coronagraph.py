@@ -26,8 +26,8 @@ class Coronagraph(optsy.OpticalSystem):
             general configuration parameters (sizes and dimensions)
         coroconfig : dict
             coronagraph parameters
-        Model_local_dir: string, default None
-            directory to save things you can measure yourself and can save to save times
+        Model_local_dir : string or None, default None
+            Directory output path for model-related files created on the file for later reuse.
         """
 
         # Initialize the OpticalSystem class and inherit properties
@@ -239,7 +239,7 @@ class Coronagraph(optsy.OpticalSystem):
             Directory to save all planes into fits files if save_all_planes_to_fits=True.
 
         Returns
-        ------
+        --------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane at the exit of the system
         """
@@ -422,7 +422,7 @@ class Coronagraph(optsy.OpticalSystem):
         Modified by Johan Mazoyer
 
         Returns
-        ------
+        --------
         fqpm : list of len(self.wav_vec) 2D arrays
             Complex transmission of the FQPM mask at all wavelengths.
         """
@@ -461,12 +461,12 @@ class Coronagraph(optsy.OpticalSystem):
         AUTHOR : Johan Mazoyer
 
         Parameters
-        ------
-        vortex_charge : int, default=2
+        --------
+        vortex_charge : int, default 2
             Charge of the vortex. Usually a positive, even number (2, 4, 6). Default is charge 2.
 
         Returns
-        ------
+        --------
         vortex : list of 2D numpy array
             The complex FP mask at all wavelengths.
         """
@@ -510,7 +510,7 @@ class Coronagraph(optsy.OpticalSystem):
             Inclination of the phase mask around the y-axis in degrees.
 
         Returns
-        -------
+        --------
         wrapped_vortex : list of 2D numpy array
             The complex FP masks at all wavelengths.
         """
@@ -551,7 +551,7 @@ class Coronagraph(optsy.OpticalSystem):
         Modified by Johan Mazoyer
 
         Returns
-        ------
+        --------
         knife_allwl : list of len(self.wav_vec) 2D arrays
             Complex transmission of the knife-edge coronagraph mask at all wavelengths.
         """
@@ -590,7 +590,7 @@ class Coronagraph(optsy.OpticalSystem):
         AUTHOR : Johan Mazoyer
 
         Returns
-        ------
+        --------
         ClassicalLyotFPM_allwl : list of 2D numpy arrays
             The FP masks at all wavelengths.
         """
@@ -610,7 +610,7 @@ class Coronagraph(optsy.OpticalSystem):
         AUTHOR : Johan Mazoyer
 
         Returns
-        ------
+        --------
         hlc_all_wl : list of 2D numpy array
             The FP masks at all wavelengths.
         """
@@ -641,7 +641,7 @@ def fqpm_mask(dim):
     Parameters
     ----------
     dim : int
-       Number of pixels for the resulting phase mask.
+        Number of pixels for the resulting phase mask.
 
     Returns
     -------

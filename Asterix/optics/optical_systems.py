@@ -12,6 +12,7 @@ from Asterix.utils import save_plane_in_fits, ft_subpixel_shift, ft_zoom_out, cr
 
 class OpticalSystem:
     """Super class OpticalSystem allows passing parameters to all subclasses.
+
     We can then creat blocks inside this super class. An OpticalSystem start
     and end in the pupil plane. The entrance and exit pupil plane must always
     of the same size (dim_overpad_pupil) With these conventions, they can be
@@ -119,19 +120,16 @@ class OpticalSystem:
 
         Parameters
         ----------
-        entrance_EF : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (entrance_EF is constant)
-            Default is 1.
+        entrance_EF : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (entrance_EF is constant), default is 1.
             Electric field in the pupil plane a the entrance of the system.
-
-        dir_save_all_planes : default None
-            If not None, directory to save all planes in fits for debugging purposes.
-            This can generate a lot of fits especially if in a loop, use with caution
-
-        **kwargs:
+        dir_save_all_planes : string or None, default None
+            If not None, absolute directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution.
+        **kwargs :
             other parameters can be passed for OpticalSystem objects EF_trough functions
 
         Returns
-        ------
+        --------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
         """
@@ -157,31 +155,25 @@ class OpticalSystem:
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (entrance_EF is constant)
-            Default is 1. Electric field in the pupil plane a the entrance of the system.
-
+        entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (entrance_EF is constant), default is 1. Electric field in the pupil plane a the entrance of the system.
         wavelength : float. Default is self.wavelength_0 the reference wavelength
             Current wavelength in m.
-
         in_contrast : bool, default True
             Normalize to np.sqrt(self.norm_monochrom[self.wav_vec.tolist().index(wavelength)]))
             (see self.measure_normalization)
-
         center_on_pixel : bool Default False
             If True, the PSF will be centered on a pixel
             If False, the PSF will be centered between 4 pixels
             This of course assume that no tip-tilt have been introduced
             in the entrance_EFor during self.EF_through
-
-        dir_save_all_planes : default None
-            If not None, directory to save all planes in fits for debugging purposes.
-            This can generate a lot of fits especially if in a loop, use with caution
-
-        **kwargs:
+        dir_save_all_planes : string or None, default None
+            If not None, absolute directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution.
+        **kwargs :
             other kw parameters can be passed direclty to self.EF_through function
 
         Returns
-        ------
+        --------
         ef_focal_plane : 2D array of size [self.dimScience, self.dimScience]
             Electric field in the focal plane.
             the lambda / D is defined with the entrance pupil diameter, such as:
@@ -243,35 +235,29 @@ class OpticalSystem:
 
         Parameters
         ----------
-        entrance_EF:   3D complex array of size [nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil]
+        entrance_EF : 3D complex array of size [nb_wav, self.dim_overpad_pupil, self.dim_overpad_pupil]
                         or 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
-                        or complex/float scalar (entrance_EF is constant)
-            Default is 1. Electric field in the pupil plane a the entrance of the system.
-
+                        or complex/float scalar (entrance_EF is constant), default is 1.
+            Electric field in the pupil plane a the entrance of the system.
         wavelengths : float or float array of wavelength in m.
             Default is all wavelenthg in self.wav_vec
-
         in_contrast : bool, default True. normalize to
             self.norm_polychrom (see self.measure_normalization)
-
         center_on_pixel : bool Default False
             If True, the PSF will be centered on a pixel
             If False, the PSF will be centered between 4 pixels
             This of course assume that no tip-tilt have been introduced in the entrance_EF
             or during self.EF_through
-
-        dir_save_all_planes : default None
-            If not None, directory to save all planes in fits for debugging purposes.
-            This can generate a lot of fits especially if in a loop, use with caution
-
+        dir_save_all_planes : string or None, default None
+            If not None, absolute directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution.
         nb_photons : float, optional, default 0
             Number of photons entering the pupil. If 0, no photon noise.
-
-        **kwargs:
+        **kwargs :
             Other kw parameters can be passed direclty to self.EF_through function
 
         Returns
-        ------
+        --------
         focal_plane_intensity : 2D array of size [self.dimScience, self.dimScience]
             Intensity in the focal plane. the lambda / D is defined with
             the entrance pupil diameter, such as:
@@ -335,7 +321,9 @@ class OpticalSystem:
         return focal_plane_intensity
 
     def add_photon_noise(self, focal_plane_intensity, nb_photons, in_contrast=True):
-        """Add photon noise to an image in contrast. This is only applied to images for which the normalization
+        """Add photon noise to an image in contrast.
+
+        This is only applied to images for which the normalization
         factors have been measured (for wavelength in self.wave_vec). You need to have measured the normalization
         previously (running self.measure_normalization). Making it separate allow us to run the propagation only
         once in cases where we want both the image with and without photon noise.
@@ -343,18 +331,16 @@ class OpticalSystem:
         AUTHOR : Johan Mazoyer
 
         Parameters
-        ------
+        --------
         focal_plane_intensity : numpy array of shape (self.dimScience,self.dimScience)
             the focal plane intensity, normalized in contrast
-
         nb_photons : float
             Number of photons entering the pupil.
-
         in_contrast : bool, default True.
             If True, the data are normalized in contrast
 
         Returns
-        ------
+        --------
         focal_plane_intensity : numpy array of shape (self.dimScience,self.dimScience)
             the focal plane intensity, with photon noise, normalized in contrast
         """
@@ -369,7 +355,7 @@ class OpticalSystem:
             return focal_plane_intensity
 
     def transmission(self, noFPM=True, **kwargs):
-        """measure ratio of photons lost when crossing the system compared to a
+        """Measure ratio of photons lost when crossing the system compared to a
         clear round aperture of radius self.prad.
 
         By default, transmission is done at the reference WL, and there is
@@ -378,15 +364,14 @@ class OpticalSystem:
         AUTHOR : Johan Mazoyer
 
         Parameters
-        ------
+        --------
         noFPM : bool, defaut True
             if the optical transfert function EF_through has a noFPM parameter
-
         **kwargs :
             other kw parameters can be passed direclty to self.EF_through function
 
         Returns
-        ------
+        --------
         transmission : float
             ratio exit flux  / clear entrance pupil flux
         """
@@ -403,10 +388,11 @@ class OpticalSystem:
         return transmission
 
     def measure_normalization(self):
-        """
-        Function must be used at the end of all Optical Systems initalization
+        """Measure several values to normalize the data.
 
-        Measure 3 values to normalize the data:
+        Function must be used at the end of all Optical Systems initalization.
+
+        Measure 3 values:
             - self.norm_monochrom. Array of size len(self.wav_vec)
                         the PSF per WL, use to normalize to_detector
             - self.norm_polychrom. float
@@ -418,6 +404,7 @@ class OpticalSystem:
                 lost in the process (self.transmission()).
                 Can be used as follow:
                 Im_intensity_photons = Im_Intensity_contrast * self.normPupto1 * nb_photons
+
 
         AUTHOR : Johan Mazoyer
         """
@@ -441,7 +428,7 @@ class OpticalSystem:
             wavelengths in m.
 
         Returns
-        ------
+        -------
         norm_polychrom : float
             Maximum value of the PSF in polychrom light. Used to normalize to_detector_intensity().
         sum_polychrom : float
@@ -485,17 +472,15 @@ class OpticalSystem:
         ----------
         SIMUconfig : dict
             parameter of this simualtion (describing the phase)
-
         up_or_down : string, default, 'up'
             'up' or 'do', use to access the right parameters in the parameter file for
             upstream (entrance pupil) or downstream (Lyot plane) aberrations
-
-        Model_local_dir: string, default None
-            directory to save things you can measure yourself and can save to save time
+        Model_local_dir : string or None, default None
+            Directory output path for model-related files created on the file for later reuse.
             In this case the phase aberrations is saved if Model_local_dir is not None
 
         Returns
-        ------
+        --------
         return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             phase aberration at the reference wavelength
         """
@@ -550,13 +535,11 @@ class OpticalSystem:
         ----------
         SIMUconfig : dict
             Parameter of this simualtion (describing the amplitude)
-
-        Model_local_dir: string, default None
-            Directory to save things you can measure yourself and can save to save time
-
+        Model_local_dir : string or None, default None
+            Directory output path for model-related files created on the file for later reuse.
 
         Returns
-        ------
+        --------
         return_ampl : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Amplitude abberation
         """
@@ -664,17 +647,14 @@ class OpticalSystem:
         ----------
         phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
             Phase aberration at reference wavelength self.wavelength_0. if 0, no phase aberration (default)
-
         ampl_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
              Amplitude aberration at reference wavelength self.wavelength_0. if 0, no amplitude aberration (default)
-
         wavelengths : float or list of floats
             Default is all the wl of the testbed self.wav_vec
             wavelengths in m.
 
-
         Returns
-        ------
+        --------
         EF : scalar or numpy 2D array or numpy 3d array
             Electric field in the pupil plane a the exit of the system:
                 1. if no phase / amplitude

@@ -35,34 +35,25 @@ class Pupil(optsy.OpticalSystem):
         Parameters
         ----------
         modelconfig : dict
-                    general configuration parameters (sizes and dimensions)
-                        to initialize OpticalSystem class
-
+            General configuration parameters (sizes and dimensions) to initialize OpticalSystem class
         prad : float
+            Radius in pixels of the round pupil.
             Default is the pupil radius in the parameter file (self.prad)
-            radius in pixels of the round pupil.
-
-        PupType : string (default None)
+        PupType : string or None, default None
             Currently known possibilities are
-            "RoundPup", "ClearPlane", "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2"
-
-            if not one of those , it will try a full path to a fits file given by the user:
-
+            "RoundPup", "ClearPlane", "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2".
+            If not one of those , it will try a full path to a fits file given by the user:
             The pupil .fits files should be 2D and square with an even number of pix.
             with even number of pix and centered between 4 pixels.
             The array size will be assumed to correspond to the size of the entrance pupil
             and will be rescaled self.prad and then padded to self.dim_overpad_pupil
-
             This is a bit dangerous because your .fits file might must be defined
-            the right way so be careful
-
-        angle_rotation: float (default 0)
-            angle of rotation of the pupil in degrees in counter-clockwise direction.
+            the right way so be careful.
+        angle_rotation : float, default 0
+            Angle of rotation of the pupil in degrees in counter-clockwise direction.
             this is only used if the pupil is not clear or empty
-
-        Model_local_dir: string, default None
-                    directory to save things you can measure yourself
-                    and can save to save time
+        Model_local_dir : string or None, default None
+            Directory output path for model-related files created on the file for later reuse.
         """
         # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
@@ -191,15 +182,16 @@ class Pupil(optsy.OpticalSystem):
         Parameters
         ----------
         entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or complex/float scalar (entrance_EF is constant)
-            Default is 1. Electric field in the pupil plane a the entrance of the system.
-        wavelength : float. Default is self.wavelength_0 the reference wavelength
+            Electric field in the pupil plane a the entrance of the system. Default is 1.
+        wavelength : float
             Current wavelength in m.
-        dir_save_all_planes : default None
-            If not None, directory to save all planes in fits for debugging purposes.
-            This can generate a lot of fits especially if in a loop, use with caution
+            Default is self.wavelength_0 the reference wavelength
+        dir_save_all_planes : string or None, default None
+            If not None, absolute directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution.
 
         Returns
-        ------
+        --------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
         """

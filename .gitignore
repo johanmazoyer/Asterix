@@ -26,5 +26,6 @@ Results/
 #ignore auxiliary directories if built
 Asterix.egg-info/
 testing_scripts/
-build/
+docs/build/
+docs/api/
 dist/

@@ -1,6 +1,9 @@
 .. _todo-label:
 
-**To Do**: These are future improvements to Asterix currenly envisionned (not particularly by order of priority):
+Open issues
+---------------
+
+These are future improvements to Asterix currenly envisionned (not particularly by order of priority):
 
 - add a parameter to do an offset en between PSF and detector (in lambda /D): during matrix measurement and a different one during correction 
 - add a parameter to do an offset en between corono and detector (in lambda /D): during matrix measurement and a different one during correction 

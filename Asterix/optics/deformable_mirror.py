@@ -29,15 +29,14 @@ class DeformableMirror(optsy.OpticalSystem):
         Parameters
         ----------
         modelconfig : dict
-                general configuration parameters (sizes and dimensions)
+            general configuration parameters (sizes and dimensions)
         DMconfig : dict
-                DM configuration parameters dictionary
+            DM configuration parameters dictionary
         Name_DM : string
-                the name of the DM, which allows to find it in the parameter file
-                we measure and save the pushact functions
+            The name of the DM, which allows to find it in the parameter file
+            we measure and save the pushact functions
         Model_local_dir : string
-                path directory to save things you can measure yourself
-                    and can save to save time
+            Directory output path for model-related files created on the file for later reuse.
         """
 
         # Initialize the OpticalSystem class and inherit properties
@@ -116,23 +115,20 @@ class DeformableMirror(optsy.OpticalSystem):
 
         Parameters
         ----------
-        entrance_EF:    2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or complex/float scalar (entrance_EF is constant)
-            default is 1. Electric field in the pupil plane a the entrance of the system.
-
+        entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil] or complex/float scalar (entrance_EF is constant)
+            Default is 1. Electric field in the pupil plane a the entrance of the system.
         wavelength : float. Default is self.wavelength_0 the reference wavelength
             Current wavelength in m.
-
-        DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (DM_phase is constant)
-            Default is 0.
+        DMphase : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (DM_phase is constant), default is 0
+            Phase on DM
             CAREFUL !! If the DM is part of a testbed. this variable name is changed
             to DMXXphase (DMXX: name of the DM) to avoid confusion
-
-        dir_save_all_planes : default None
+        dir_save_all_planes : string or None, default None
             if not None, directory to save all planes in fits for debugging purposes.
-            This can generate a lot of fits especially if in a loop, use with caution
+            This can generate a lot of fits especially if in a loop, use with caution.
 
         Returns
-        ------
+        --------
         exit_EF : 2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electric field in the pupil plane a the exit of the system
 
@@ -194,10 +190,9 @@ class DeformableMirror(optsy.OpticalSystem):
             DM configuration parameters dictionary
 
         Returns
-        ------
-        pushact : 3D numpy array
-                    of size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]
-                    contains all the DM OPD map induced in the DM plane for each actuator.
+        --------
+        pushact : 3D numpy arrayof size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]
+            DM OPD maps induced in the DM plane for each actuator.
         """
         start_time = time.time()
         Name_pushact_fits = "PushAct_" + self.Name_DM
@@ -331,15 +326,14 @@ class DeformableMirror(optsy.OpticalSystem):
         return pushact3d
 
     def id_in_pupil_actuators(self):
-        """Create a vector with the index of all the actuators located in the
-        entrance pupil.
+        """Create a vector with the index of all the actuators located in the entrance pupil.
 
         AUTHOR: Johan Mazoyer
 
         Returns
-        ------
+        --------
         WhichInPupil: 1D array
-                index of all the actuators located inside the pupil
+            Index of all the actuators located inside the pupil.
         """
         start_time = time.time()
         Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
@@ -393,20 +387,17 @@ class DeformableMirror(optsy.OpticalSystem):
         Parameters
         ----------
         pupil_wavefront : 2D array (float, double or complex)
-            Wavefront in the pupil plane
-
+            Wavefront in the pupil plane.
         phase_DM : 2D array
-            Phase introduced by out of PP DM
-
+            Phase introduced by out of PP DM.
         wavelength : float
-            wavelength in m
-
-        dir_save_all_planes : default None
-            If not None, directory to save all planes in fits for debugging purposes.
-            This can generate a lot of fits especially if in a loop, use with caution
+            Wavelength in m.
+        dir_save_all_planes : string or None, default None
+            If not None, absolute directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution.
 
         Returns
-        ------
+        --------
         EF_back_in_pup_plane : 2D array (complex)
             Wavefront in the pupil plane following the DM
         """
@@ -446,16 +437,16 @@ class DeformableMirror(optsy.OpticalSystem):
         Parameters
         ----------
         actu_vect : 1D array
-            values of the amplitudes for each actuator
+            Values of the amplitudes for each actuator.
         einstein_sum : boolean, default false
             Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
             gives the same results as normal sum. Seems ot be faster for unique actuator
-            but slower for more complex phases
+            but slower for more complex phases.
 
         Returns
-        ------
+        --------
         DM_phase: 2D array
-            phase map in the same unit as actu_vect * DM_pushact)
+            phase map in the same unit as actu_vect * DM_pushact.
         """
 
         where_non_zero_voltage = np.where(actu_vect != 0)
@@ -482,12 +473,12 @@ class DeformableMirror(optsy.OpticalSystem):
         Parameters
         ----------
         basis_type: string, default 'actuator'
-            the type of basis. 'fourier' or 'actuator'
+            the type of basis. 'fourier' or 'actuator'.
 
         Returns
-        ------
+        --------
         basis: 2d numpy array
-            basis [Size basis, Number of active act in the DM]
+            Basis [Size basis, Number of active act in the DM].
         """
         if basis_type == 'actuator':
             # no need to remove the inactive actuators,
@@ -552,19 +543,18 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
     Parameters
     ----------
     Nact1D : int
-            Number of actuators of a square DM in one of the principal direction
+        Number of actuators of a square DM in one of the principal direction.
     pitchDM: float
-            Pitch of the DM (distance between actuators),in meter
+        Pitch of the DM (distance between actuators), in meter.
     diam_pup_in_m : float
-            Diameter of the pupil in meter
+        Diameter of the pupil in meter.
     diam_pup_in_pix : int
-            Diameter of the pupil in pixel
+        Diameter of the pupil in pixel.
 
     Returns
-    ------
-    simu_grid : 2D array
-                Array of shape is 2 x Nb_actuator
-                x and y positions of each actuator for simulation
+    --------
+    simu_grid : 2D array of shape is 2 x Nb_actuator
+        x and y positions of each actuator for simulation.
     """
 
     if Nact1D * pitchDM < diam_pup_in_m:

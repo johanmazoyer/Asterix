@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='Asterix',
-    version='2.4',
+    version='2.5',
     description='Asterix: A simulation tool for high-contrast sensing and control algorithms',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -30,5 +30,15 @@ setup(
     ],
     keywords='Exoplanets imaging high-contrast coronagraphy',
     install_requires=[
-        'astropy', 'configobj', 'flake8', 'jupyter', 'matplotlib', 'numpy', 'pytest', 'scikit-image', 'scipy'
-    ])
+        "astropy",
+        "configobj",
+        "ipython",
+        "matplotlib",
+        "numpy",
+        "scikit-image",
+        "scipy",
+    ],
+    extras_require={
+        "dev": ["flake8", "jupyter", "pytest"],
+        "docs": ["numpydoc", "pyan3", "sphinx-automodapi", "sphinx_rtd_theme"]
+    })

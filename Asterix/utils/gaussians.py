@@ -13,27 +13,24 @@ def twoD_Gaussian(xy, amplitude, sigma_x, sigma_y, xo, yo, theta, h, flatten=Tru
         which can be created with:
         x, y = np.mgrid[0:dim1, 0:dim2]
         xy=(x,y)
-
-    amplitude: float
+    amplitude : float
         Peak of the gaussian function
-
-    sigma_x: float
+    sigma_x : float
         Standard deviation of the gaussian function in the x direction
-
-    sigma_y: float
+    sigma_y : float
         Standard deviation of the gaussian function in the y direction
-    xo: float
+    xo : float
         Position of the Gaussian peak in the x direction
-    yo: float
+    yo : float
         Position of the Gaussian peak in the y direction
-    h: float
+    h : float
         Floor amplitude
     flatten : bool, default True
         if True (default), the 2D-array is flatten into 1D-array
 
     Returns
-    ------
-    gauss: 2d numpy array
+    --------
+    gauss : 2d numpy array
         2D gaussian function
     """
     x = xy[0]
@@ -54,12 +51,12 @@ def gauss2Dfit(data):
 
     Parameters
     ----------
-    data: 2D array
+    data : 2D array
         input image
 
     Returns
-    ------
-    popt: tuple of floats
+    --------
+    popt : tuple of floats
         Parameters of the gaussian: max, sig_x, sig_y, x_cen, y_cen, angle, offset.
     """
     # 2D-Gaussian fit

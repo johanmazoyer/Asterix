@@ -24,20 +24,19 @@ class Testbed(optsy.OpticalSystem):
 
         Parameters
         ----------
-        list_os:    list of OpticalSystem instances
-            all the systems must have been defined with
+        list_os : list of OpticalSystem instances
+            All the systems must have been defined with
             the same modelconfig or it will send an error.
             The list order is form the first optics system to the last in the
             path of the light (so usually from entrance pupil to Lyot pupil)
-
         list_os_names:  list of string of the same size as list_os
             Name of the optical systems.
-            Then can then be accessed inside the Testbed object by os_#i = Testbed.list_os_names[i]
+            They can then be accessed inside the Testbed object by os_#i = Testbed.list_os_names[i]
 
         Returns
-        ------
+        --------
         testbed : Asterix.optics.testbed.Tesbed
-            an optical system which is the concatenation of all the optical systems
+            An optical system which is the concatenation of all the optical systems
         """
         if len(list_os) != len(list_os_names):
             print("")
@@ -144,16 +143,16 @@ class Testbed(optsy.OpticalSystem):
         Parameters
         ----------
         actu_vect : float or 1D array of size testbed.number_act
-            values of the amplitudes for each actuator and each DM
+            Values of the amplitudes for each actuator and each DM.
         einstein_sum : boolean. default False
             Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
             gives the same results as normal sum. Seems ot be faster for unique actuator
-            but slower for more complex phases
+            but slower for more complex phases.
 
         Returns
-        ------
-        phases: 3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
-            phase maps for each DMs by order of light path in the same unit as actu_vect * DM_pushact
+        --------
+        phases : 3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
+            Phase maps for each DMs by order of light path in the same unit as actu_vect * DM_pushact.
         """
         DMphases = np.zeros((self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
         indice_acum_number_act = 0
@@ -184,14 +183,14 @@ class Testbed(optsy.OpticalSystem):
         Parameters
         ----------
         vector_basis_voltage : 1D-array real
-            vector of voltages of size (total(basisDM sizes)) on the mode of the basis for all
-            DMs by order of the light path
+            Vector of voltages of size (total(basisDM sizes)) on the mode of the basis for all
+            DMs by order of the light path.
 
         Returns
-        ------
+        --------
         vector_actuator_voltage : 1D-array real
-            vector of base coefficients for all actuators of the DMs by order of the light path
-            size (total(DM actuators))
+            Vector of base coefficients for all actuators of the DMs by order of the light path
+            size (total(DM actuators)).
         """
 
         indice_acum_basis_size = 0
@@ -223,22 +222,21 @@ class Testbed(optsy.OpticalSystem):
 
 # Some internal functions to properly concatenate the EF_through functions
 def _swap_DMphase_name(DM_EF_through_function, name_var):
-    """A function to rename the DMphase parameter to another name (usually
-    DMXXphase)
+    """A function to rename the DMphase parameter to another name (usually DMXXphase)
 
     AUTHOR : Johan Mazoyer
 
     Parameters:
-    ------
+    --------
     DM_EF_through_function : function
-        the function of which we want to change the params
+        The function of which we want to change the params.
     name_var : string
-        the name of the  new name variable
+        The name of the  new name variable.
 
     Returns
-    ------
-    the_new_function: function
-        with name_var as a param
+    --------
+    the_new_function : function
+        Same function with name_var as a param.
     """
 
     def wrapper(**kwargs):
@@ -256,19 +254,20 @@ def _swap_DMphase_name(DM_EF_through_function, name_var):
 
 def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
     """
-    A very small function to concatenate 2 functions
+    A very small function to concatenate 2 functions.
+
     AUTHOR : Johan Mazoyer
 
     Parameters:
-    ------
-    outer_fun: function
+    --------
+    outer_fun : function
         x -> outer_fun(x)
-    inner_fun: function
+    inner_fun : function
         x -> inner_fun(x)
 
     Returns
-    ------
-    the concatenated function: function
+    --------
+    the concatenated function : function
         x -> outer_fun(inner_fun(x))
 
     """
@@ -284,20 +283,21 @@ def _concat_fun(outer_EF_through_fun, inner_EF_through_fun):
 
 
 def _clean_EF_through(testbed_EF_through, known_keywords):
-    """a functions to check that we do not set unknown keyword in the testbed
+    """A functions to check that we do not set unknown keyword in the testbed
     EF through function. Maybe not necessary.
 
     AUTHOR : Johan Mazoyer
 
     Parameters:
-    ------
-    testbed_EF_through: function
-        known_keywords: list of strings of known keywords
+    --------
+    testbed_EF_through : function
+    known_keywords: list of strings
+        List of known keywords.
 
     Returns
-    ------
-    cleaned_testbed_EF_through: function
-        a function where only known keywords are allowed
+    --------
+    cleaned_testbed_EF_through : function
+        A function where only known keywords are allowed.
     """
 
     def wrapper(**kwargs):
@@ -329,15 +329,15 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
     AUTHOR : Johan Mazoyer
 
     Parameters:
-    ------
+    --------
     DM_EF_through_function : function
         the function of which we want to change the params
     name_var : string
         the name of the  new name variable
 
     Returns
-    ------
-    the_new_function: function
+    --------
+    the_new_function : function
         with name_var as a param
     """
 

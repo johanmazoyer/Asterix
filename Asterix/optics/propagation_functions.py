@@ -82,54 +82,54 @@ def mft(image,
             If inverse=False, direct mft (default value).
             If inverse=True, indirect mft.
         norm : string default 'backward'
-                'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
-                https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
-                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is
-                done in MFT(inverse = True)
-                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is
-                done in MFT(inverse = True)
-                if 'ortho' 1/sqrt(N) normalisation is done in both directions.
-                Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
-                The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
+            'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
+            https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
+            if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N is
+            done in MFT(inverse = True)
+            if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation is
+            done in MFT(inverse = True)
+            if 'ortho' 1/sqrt(N) normalisation is done in both directions.
+            Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
+            The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
         X_offset_input : float default 0
-                position of the 0-frequency pixel in x for the entrance
-                image with respect to the center of the entrance image (real position
-                of the 0-frequency pixel on dim_input_x/2+x0)
-        Y_offset_input : float default 0
-                position of the 0-frequency pixel in Y for the entrance
-                image with respect to the center of the entrance image (real position
-                of the 0-frequency pixel on dim_input_y/2+y0)
-        X_offset_output : float default 0
-                position of the 0-frequency pixel in x for the output
-                image with respect to the center of the output image (real position
-                of the 0-frequency pixel on dim_output_x/2+x1)
-        Y_offset_output : float default 0
-                position of the 0-frequency pixel in Y for the output
-                image with respect to the center of the output image (real position
-                of the 0-frequency pixel on dim_output_y/2+y1)
-        only_mat_mult: boolean, default False
-                if True, we only do the matrix multiplication, but we need AA, BB and norm0 to be provided.
-                    in that case all other parameters are not used. Careful, in this mode, it is assumed that
-                    the user is 'expert' and no specific error message will be thrown if parameters are wrong.
-                    e.g. it will crash if image, AA and BB dimensions are not compatibles
-                if False : classical MFT, AA, BB and norm0 parameters are not used
+            position of the 0-frequency pixel in x for the entrance
+            image with respect to the center of the entrance image (real position
+            of the 0-frequency pixel on dim_input_x/2+x0)
+        Y_offset_input : float, default 0
+            position of the 0-frequency pixel in Y for the entrance
+            image with respect to the center of the entrance image (real position
+            of the 0-frequency pixel on dim_input_y/2+y0)
+        X_offset_output : float, default 0
+            position of the 0-frequency pixel in x for the output
+            image with respect to the center of the output image (real position
+            of the 0-frequency pixel on dim_output_x/2+x1)
+        Y_offset_output : float, default 0
+            position of the 0-frequency pixel in Y for the output
+            image with respect to the center of the output image (real position
+            of the 0-frequency pixel on dim_output_y/2+y1)
+        only_mat_mult: boolean,, default False
+            if True, we only do the matrix multiplication, but we need AA, BB and norm0 to be provided.
+                in that case all other parameters are not used. Careful, in this mode, it is assumed that
+                the user is 'expert' and no specific error message will be thrown if parameters are wrong.
+                e.g. it will crash if image, AA and BB dimensions are not compatibles
+            if False : classical MFT, AA, BB and norm0 parameters are not used
         AA: complex numpy array, default None
-                Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
+            Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
         BB: complex numpy array, default None
-                Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
+            Matrix multiplied in norm0 * ((AA @ image) @ BB). This parameter is only used if only_mat_mult = True
         norm0: float, default None
-                Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
-                This parameter is only used if only_mat_mult = True
+            Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
+            This parameter is only used if only_mat_mult = True
         returnAABB: boolean, default False
-                if False, the normal MFT(image is returned)
-                if True, we return AA, BB, norm0 used to do norm0 * ((AA @ image) @ BB).
-        dtype_complex: string, default complex128
-                bit number for the complex arrays in the MFT matrices.
-                Can be complex128 or complex64. The latter increases the speed of the mft but at the
-                cost of lower precision.
+            if False, the normal MFT(image is returned)
+            if True, we return AA, BB, norm0 used to do norm0 * ((AA @ image) @ BB).
+        dtype_complex: string, default 'complex128'
+            bit number for the complex arrays in the MFT matrices.
+            Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
+            cost of lower precision.
 
     Returns
-    ------
+    --------
         if returnAABB is False:
             MFT of the image : complex 2D array.
 
@@ -254,17 +254,17 @@ def mat_mult_mft(image, AA, BB, norm0):
     Parameters
     ----------
     image : 2D numpy array (complex)
-            Entrance image
-    AA: 2D numpy array (complex)
-            Matrix multiplied in norm0 * ((AA @ image) @ BB).
-    BB: 2D numpy array (complex)
-            Matrix multiplied in norm0 * ((AA @ image) @ BB).
-    norm0: float
-            Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
+        Entrance image
+    AA : 2D numpy array (complex)
+        Matrix multiplied in norm0 * ((AA @ image) @ BB).
+    BB : 2D numpy array (complex)
+        Matrix multiplied in norm0 * ((AA @ image) @ BB).
+    norm0 : float
+        Normalization value in matrix multiplication norm0 * ((AA @ image) @ BB).
 
     Returns
-    ------
-    norm0 * ((AA @ image) @ BB) :  2D numpy array (complex)
+    --------
+    norm0*((AA@image)@BB) : 2D numpy array (complex)
     """
 
     return norm0 * ((AA @ image) @ BB)
@@ -285,19 +285,19 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         if retscale == 0
             electric field at z=0
             CAUTION : pup has to be centered on (dimpup/2+1,dimpup/2+1)
-            where 'dimpup' is the pup array dimension
+            where 'dimpup' is the pup array dimension.
         else:
-            dim of the input array that will be used for pup
+            Dim of the input array that will be used for pup.
     lam : float
-         wavelength in meter
+        Wavelength in meter.
     z : float
-         distance of propagation
+        distance of propagation
     rad : float
-         if z>0: entrance beam radius in meter
-         if z<0: output beam radius in meter
+        if z>0: entrance beam radius in meter
+        if z<0: output beam radius in meter
     prad : float
-         if z>0: entrance beam radius in pixel
-         if z<0: output beam radius in pixel
+        if z>0: entrance beam radius in pixel
+        if z<0: output beam radius in pixel
     retscale : int 0 or 1:
         if not 0, the function returns the scales
         of the input and output arrays
@@ -305,7 +305,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         electric field (see Returns)
 
     Returns
-    ------
+    --------
     if retscale is 0:
         pup_z : 2D array (complex)
                 electric field after propagating in free space along
@@ -402,7 +402,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
         optional: default = 2
 
     Returns
-    ------
+    --------
     pup_z : 2D array (complex) of size [2*gamma*prad,2*gamma*prad]
         electric field after propagating in free space along
         a distance z
@@ -440,37 +440,37 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     Parameters
     ----------
     input : 2D numpy array
-            initial array.
+        Initial array.
     inverse : bool (optional, default False)
-            direction of the FFT,
-            inverse == False for direct FFT,
-            inverse == True for inverse FFT.
+        Direction of the FFT,
+        inverse == False for direct FFT,
+        inverse == True for inverse FFT.
     center_pos : string (optional, default 'bb')
-                      option for the origin. Shorthand for specifying
-                      the origin center in direct and fourier spaces when
-                      manipulating centered arrays.
-                       Direct space             Fourier space
-               pp     Central pix              Central pix
-               pb     Central pix              Between 4 central pix
-               bp     Between 4 central pix    Central pix
-               bb     Between 4 central pix    Between 4 central pix
-               if dim_i (i = x or y) is even or odd :
-                    Central pix = dim_i // 2
-                    Between 4 central pix: between dim_i // 2 - 1 and dim_i // 2
-                with // the euclidian division.
+        Option for the origin. Shorthand for specifying
+        the origin center in direct and fourier spaces when
+        manipulating centered arrays.
+                Direct space             Fourier space
+        pp     Central pix              Central pix
+        pb     Central pix              Between 4 central pix
+        bp     Between 4 central pix    Central pix
+        bb     Between 4 central pix    Between 4 central pix
+        if dim_i (i = x or y) is even or odd :
+            Central pix = dim_i // 2
+            Between 4 central pix: between dim_i // 2 - 1 and dim_i // 2
+        with // the euclidian division.
     norm : string default 'backward'
-                'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
-                https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
-                if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N
-                is done in MFT(inverse = True)
-                if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation
-                is done in MFT(inverse = True)
-                if 'ortho' 1/sqrt(N) normalisation is done in both directions.
-                Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
-                The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
+        'backward', 'forward' or 'ortho'. this is the same paramter as in numpy.fft functions
+        https://numpy.org/doc/stable/reference/routines.fft.html#module-numpy.fft
+        if 'backward' no normalisation is done on MFT(inverse = False) and normalisation 1/N
+        is done in MFT(inverse = True)
+        if 'forward' 1/N normalisation is done on MFT(inverse = False) and no normalisation
+        is done in MFT(inverse = True)
+        if 'ortho' 1/sqrt(N) normalisation is done in both directions.
+        Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
+        The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
 
     Returns
-    ------
+    --------
     FFT_array : 2D numpy array
         FFT of input array with respect to the input centering parameters.
     """
@@ -537,7 +537,7 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
 
     Returns
     -------
-    2D array
+    butterworth : 2D array
 
     Example
     --------
@@ -607,7 +607,8 @@ def prop_fpm_regional_sampling(pup,
 
     Returns
     -------
-    array : E-field before the Lyot stop.
+    EF_before_LS : 2D array (complex)
+        E-field before the Lyot stop.
     """
     from Asterix.optics import shift_phase_ramp
 
