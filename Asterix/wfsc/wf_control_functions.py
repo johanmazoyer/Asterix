@@ -8,7 +8,7 @@ if get_ipython() is None:  # this matplotlib option is just in non-notebook case
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress
+from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress, concat_flat_real_imag
 import Asterix.optics.propagation_functions as prop
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
@@ -815,7 +815,3 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
     solution = pas * 2 * Eab
 
     return testbed.basis_vector_to_act_vector(solution)
-
-
-def concat_flat_real_imag(complex_arr):
-    return np.concatenate((np.real(complex_arr).flatten(), np.imag(complex_arr).flatten()))

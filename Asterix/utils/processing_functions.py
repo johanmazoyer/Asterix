@@ -395,3 +395,26 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
         smaller_image_cropped = np.real(smaller_image_cropped)
 
     return smaller_image_cropped
+
+
+
+def concat_flat_real_imag(complex_arr):
+    """From a given complex numpy array, this function separates and flatten RE and IM parts and concatenates them.
+
+    AUTHORS: J Mazoyer
+
+    19/12/2022 : Introduction in asterix
+
+    Parameters
+    ----------
+    complex_arr : 2D complex numpy array
+        Initial array, must be complex
+
+    Returns
+    --------
+    flatten_concat_array : 1D real numpy array
+        zoomed out array
+    """
+
+
+    return np.concatenate((np.real(complex_arr).flatten(), np.imag(complex_arr).flatten()))
