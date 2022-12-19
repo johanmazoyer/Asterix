@@ -27,6 +27,15 @@ To contribute to Asterix, please follow the following steps:
 
     4. Iterate on the review, once it's approved it will be immediately merged.
 
+**Documentation**
+
+Please update the documentation after modifying Asterix. Docstrings must follow the `numpydoc guidelines <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+To check your updates, you can locally generate the documentation before pushing to master:
+
+.. code-block:: bash
+
+        $ cd docs/
+        $ make html
 
 Generale guidelines:
     * Do not touch other people's branches.
