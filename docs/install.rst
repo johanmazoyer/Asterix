@@ -25,26 +25,32 @@ which lists the most common conda command lines you can use.
 Install Asterix
 -----------------
 
-Due to the continually developing nature of Asterix, you should always use the current version of the code on
-`GitHub <https://github.com/johanmazoyer/Asterix>`_ and keep it updated frequently. 
-
 First ``cd`` in the directory where you want to download Asterix. To install the most up to date 
 developer version, clone the Asterix repository :
+
+.. code-block:: bash
 
     $ git clone https://github.com/johanmazoyer/Asterix.git
 
 This clones the repository using HTTPS authentication. Once the repository is cloned onto your computer, ``cd Asterix`` into it. 
 Then type:
 
+.. code-block:: bash
+
     $ conda env create --file environment.yml
 
 This will automatically create a python environement named ``asterix`` with only the required python packages for Asterix, at their
 latest stable version. Before installing Asterix and everytime you want to use it, you need to activate this environement:
 
+.. code-block:: bash
+
     $ conda activate asterix
 
-Run the setup file to install Asterix:
+Run the setup file to install Asterix. Due to the continually developing nature of Asterix, you should always use the current version of the code on
+`GitHub <https://github.com/johanmazoyer/Asterix>`_, keep it updated frequently and install in developer's mode, allowing easy update when pulled:
 
+.. code-block:: bash
+    
     $ pip install -e '.'
 
 
