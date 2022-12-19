@@ -330,8 +330,8 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
 
     Parameters:
     ------
-            Testbed object which describe your testbed
-    testbed :  OpticalSystem.Testbed
+    testbed : OpticalSystem.Testbed
+        Testbed object which describes your testbed
     testbed_EF_through : function
         the EF_through function with DMXX_phase functions
 
