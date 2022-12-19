@@ -143,6 +143,10 @@ def runthd2(parameter_file_path,
                           save_for_bench=onbench,
                           realtestbed_dir=labview_dir)
 
+    ### Write configfile to Labview-style matrix directory
+    config.filename = os.path.join(labview_dir, "Simulation_parameters.ini")
+    config.write()
+
     ### Set initial phase and amplitude
     # Phase upstream of the coronagraph (entrance pup)
     phase_abb_up = thd2.generate_phase_aberr(SIMUconfig, up_or_down='up', Model_local_dir=model_local_dir)
