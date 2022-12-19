@@ -337,7 +337,7 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
 
     Returns
     --------
-    the_new_function: function
+    the_new_function : function
         the EF_through function with voltage_vector as a parameters
     """
 
