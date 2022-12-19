@@ -40,5 +40,5 @@ setup(
     ],
     extras_require={
         "dev": ["flake8", "jupyter", "pytest"],
-        "docs": ["numpydoc", "pyan3", "sphinx-automodapi", "sphinx_rtd_theme"]
+        "docs": ["numpydoc", "sphinx-automodapi", "sphinx_rtd_theme"]
     })

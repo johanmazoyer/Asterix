@@ -1,4 +1,4 @@
-.. _install-label:
+..  _install-label:
 
 
 Conda envs
@@ -46,12 +46,19 @@ latest stable version. Before installing Asterix and everytime you want to use i
 
     $ conda activate asterix
 
-Run the setup file to install Asterix. Due to the continually developing nature of Asterix, you should always use the current version of the code on
-`GitHub <https://github.com/johanmazoyer/Asterix>`_, keep it updated frequently and install in developer's mode, allowing easy update when pulled:
+Run the setup file to install Asterix. Due to the continually developing nature of Asterix, you should 
+always use the current version of the code on `GitHub <https://github.com/johanmazoyer/Asterix>`_, 
+install in "develop mode", allowing frequent updates when pulling:
 
 .. code-block:: bash
     
     $ pip install -e '.'
+
+If you want to develop for Asterix, you might need packages to test and build the documentation. Run instead:
+
+.. code-block:: bash
+    
+    $  pip install -e '.[dev,docs]'
 
 
 Dependencies

@@ -1,4 +1,4 @@
-.. _run-asterix-label:
+..  _run-asterix-label:
 
 Basic Asterix Tutorial with THD2 model
 -----------------------------------------------

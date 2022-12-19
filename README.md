@@ -27,17 +27,18 @@ $ pip install -e '.'
 
 ## Testing and linting
 
-Go into the package
+If you want to develop for Asterix, you might need packages to test and build the documentation. Run instead:
 ```bash
-$ cd repos/Asterix/Asterix
+$ conda activate asterix
+$ pip install -e '.[dev,docs]'
 ```
 
-Run the pytests
+You can then the run the pytests
 ```bash
 $ pytest
 ```
 
-or run the flake8 linter
+or run the flake8 linter:
 ```bash
 $ flake8 . --max-line-length=121 --count --statistics
 ```

@@ -1,10 +1,10 @@
-.. _estimation-label:
+..  _estimation-label:
 
 Estimation
 ---------------
 
 This section describes how to estimate the electrical field in focal plane in Asterix. Several estimation mode 
-are possible in Asterix. Files can be found in :ref:`estimationfiles-label`. 
+are possible in Asterix. Additional details can be found directly in :ref:`the code documentation <estimationfiles-label>`.
 
 It contains 2 functions at least:
 
@@ -96,10 +96,9 @@ The probe used are actuators, which can be chosen using ``posprobes`` parameter.
 Interaction_Matrices directory. This is the map of the inverse singular values for each 
 pixels and it shows if all of the part of the DH are covered by the estimation (see Fig. 4 in Potier et al. 2020).
 
-
+..  _polychromaticestim-label:
 Polychromatic Estimation
 ++++++++++++++++++++++++++++++
-.. _polychromaticestim-label:
 
 We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` simulation wavelengths evenly 
 spaced in ``Delta_wav``, centered on ``wavelength_0``. 

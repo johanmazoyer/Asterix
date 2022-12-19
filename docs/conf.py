@@ -43,7 +43,6 @@ extensions = [
     'sphinx.ext.napoleon',
     "sphinx.ext.graphviz",
     'sphinx_rtd_theme',
-    "pyan.sphinx",
     "sphinx.ext.inheritance_diagram",
 ]
 
@@ -83,8 +82,6 @@ graphviz_output_format = "svg"
 autodoc_member_order = 'bysource'
 
 autodoc_default_options = {"members": True, "inherited-members": True, "show-inheritance": True}
-
-# os.system("pyan3 ../Asterix/optics/coronagraph.py --uses --no-defines --colored --grouped --annotated --svg > ./source_images/coronagraph.svg")
 
 def patch_automodapi(app):
     """Monkey-patch the automodapi extension to exclude imported members"""

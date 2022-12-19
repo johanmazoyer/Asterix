@@ -1,10 +1,11 @@
-.. _correction-label:
+..  _correction-label:
 
 Correction
 ---------------
 
 This section describes how to correct the electrical field in the focal plane in Asterix. Several correction modes
-are possible in Asterix. Files can be found in :ref:`correctionfiles-label`;
+are possible in Asterix. 
+
 
 - an initialization (e.g. Jacobian matrix) ``Corrector.__init__`` : The initialization requires previous initialization of the testbed and of the estimator.
 - a matrix update function ``Corrector.update_matrices`` This function is called once during initialization and then each time we need to recompute the Jacobian in the middle of the correction using different DM voltages as the starting point.
@@ -42,6 +43,8 @@ Several shapes are possible for the DH using the input parameter ``DH_shape``:
 
 ``creatingMaskDH()`` function has been set up with a mode where each optical plane is saved to a .fits file for debugging purposes.
 To use this option, set up the keyword ``dir_save_all_planes`` to an existing path directory.
+
+Additional details can be found directly in :ref:`the code documentation <dh-label>`.
 
 Interaction Matrix
 +++++++++++++++++++++++++++++++
@@ -130,11 +133,13 @@ Same parameters as efc. Does not currently work in polychromatic correction.
 **Steepest** : 
 Same parameters as efc. Does not currently work in polychromatic correction.
 
+Additional details can be found directly in :ref:`the code documentation <correctionfiles-label>`.
+
 Polychromatic Correction
 +++++++++++++++++++++++++++++++
 
 Polychromatic estimation and correction are linked so they are both driven by a single parameter 
-in the ``[Estimationconfig]`` section, ``polychromatic``. See Section :ref:`_polychromaticestim-label`.
+in the ``[Estimationconfig]`` :ref:`section <polychromaticestim-label>`.
 
 Correction loop
 +++++++++++++++++++++++++++++++
@@ -154,3 +159,5 @@ The ``correction_loop_1matrix()`` function is a loop running ``Nbiter_corr`` tim
 The results are stored in a dictionary and then sent to ``save_loop_results()`` for plotting and saving in the folder
 named '/Results/timestamp-Name_experiement' where ``Name_Experiment`` is a parameter from the configuration file. All saved .fits files have all parameters in their headers.
 The config (with updated parameters) is also saved in a .ini file, so you can run the same experiment again at a later time.
+
+Additional details can be found directly in :ref:`the code documentation <correction-loop-label>`.

@@ -1,4 +1,4 @@
-.. _todo-label:
+..  _todo-label:
 
 Open issues
 ---------------
