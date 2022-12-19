@@ -32,11 +32,10 @@ developer version, clone the Asterix repository :
 
     $ git clone https://github.com/johanmazoyer/Asterix.git
 
-This clones the repository using HTTPS authentication. Once the repository is cloned onto your computer, ``cd Asterix`` into it. 
-Then type:
+This clones the repository using HTTPS authentication. Once the repository is cloned onto your computer, type:
 
 .. code-block:: bash
-
+    $ cd Asterix
     $ conda env create --file environment.yml
 
 This will automatically create a python environement named ``asterix`` with only the required python packages for Asterix, at their
@@ -46,9 +45,9 @@ latest stable version. Before installing Asterix and everytime you want to use i
 
     $ conda activate asterix
 
-Run the setup file to install Asterix. Due to the continually developing nature of Asterix, you should 
+Now run the setup file to install Asterix. Due to the continually developing nature of Asterix, you should 
 always use the current version of the code on `GitHub <https://github.com/johanmazoyer/Asterix>`_, 
-install in "develop mode", allowing frequent updates when pulling:
+install in "develop mode" ("-e" editing option), allowing frequent updates when pulling:
 
 .. code-block:: bash
     
