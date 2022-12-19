@@ -8,7 +8,7 @@ if get_ipython() is None:  # this matplotlib option is just in non-notebook case
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress, concat_flat_real_imag
+from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress
 import Asterix.optics.propagation_functions as prop
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
@@ -295,6 +295,11 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             positioonDMintestbed = testbed.subsystems.index(DM_name)
             OpticSysNameBefore = testbed.subsystems[:positioonDMintestbed]
             OpticSysNameAfter = testbed.subsystems[positioonDMintestbed + 1:]
+
+            # I tried something different to be able to parralellize the function, but it did not
+            # allow multi matrix (which requires non flat DM initially) and it did not work because
+            # functions have to be defined outside of the function to be pickable. However, this is a
+            # very compact way to do that so I think this is interresting sop I keep it here for now.
 
             # OpticSysbefore = []
             # for osname in OpticSysNameBefore:
@@ -815,3 +820,24 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
     solution = pas * 2 * Eab
 
     return testbed.basis_vector_to_act_vector(solution)
+
+
+# def concat_flat_real_imag(complex_arr):
+#     """From a given complex numpy array, this function separates and flatten RE and IM parts and concatenates them.
+
+#     AUTHORS: J Mazoyer
+
+#     19/12/2022 : Introduction in asterix
+
+#     Parameters
+#     ----------
+#     complex_arr : 2D complex numpy array
+#         Initial array, must be complex
+
+#     Returns
+#     --------
+#     flatten_concat_array : 1D real numpy array
+#         zoomed out array
+#     """
+
+#     return np.concatenate((np.real(complex_arr).flatten(), np.imag(complex_arr).flatten()))
