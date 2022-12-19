@@ -35,6 +35,7 @@ developer version, clone the Asterix repository :
 This clones the repository using HTTPS authentication. Once the repository is cloned onto your computer, type:
 
 .. code-block:: bash
+    
     $ cd Asterix
     $ conda env create --file environment.yml
 

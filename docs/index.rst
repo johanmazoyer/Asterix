@@ -15,6 +15,8 @@ and Raphaël Galicher from LESIA (Paris Observatory).
     :caption: Getting Started
 
     install
+    todo
+
 
 .. toctree::
     :maxdepth: 1
@@ -24,7 +26,6 @@ and Raphaël Galicher from LESIA (Paris Observatory).
     create_my_testbed
     estimation
     correction
-    todo
 
 
 .. toctree::
