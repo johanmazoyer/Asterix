@@ -453,7 +453,6 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     plt.clf()
                     plt.imshow(np.log10(np.abs(Gvector)**2), vmin=-10, vmax=-6)
                     print("Max contrast", np.log10(np.max(np.abs(Gvector)**2)))
-                    plt.gca().invert_yaxis()
                     plt.colorbar()
                     plt.pause(0.01)
                 # We fill the interaction matrix:
