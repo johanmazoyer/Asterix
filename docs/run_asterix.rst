@@ -5,7 +5,11 @@ Basic Asterix Tutorial with THD2 model
 
 This sections is if you want to use the code as it currently set up, in the THD2 configuration.
 To run Asterix you first need a parameter .ini file describing all the testbed configuration and a python file to call the main. 
-An example of these files are provided in the packages : Example_param_file.ini and example_run_asterix.py
+An example of these files are provided in the package: 
+`Example_param_file.ini <https://github.com/johanmazoyer/Asterix/blob/master/Asterix/Example_param_file.ini>`_ and 
+`example_run_asterix.py <https://github.com/johanmazoyer/Asterix/blob/master/Asterix/example_run_asterix.py>`_.
+
+Tutorial notebooks can be found in `a dedicated folder <https://github.com/johanmazoyer/Asterix/tree/master/notebooks>`_.
 
 Run Asterix in THD2 mode
 +++++++++++++++++++++++++++++++++

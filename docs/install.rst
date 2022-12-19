@@ -63,8 +63,8 @@ If you want to develop for Asterix, you might need packages to test and build th
 
 Dependencies
 -------------
-The installation of Asterix requires the commmon python packages, documented in the setup.py file, which are useful for most astronomical 
-data analysis. They will be automatically installed in the setup. 
+The installation of Asterix requires the commmon python packages, listed in the `setup.py file <https://github.com/johanmazoyer/Asterix/blob/master/setup.py>`_, 
+which are useful for most astronomical data analysis. They will be automatically installed with Asterix.
 
 We recommend you use a version of Python > 3.10 to use Asterix. As Asterix can be computationally expensive, we recommend a 
 powerful computer to optimize the correction. This will depend on specific test you want to perform (number of deformable mirrors, 
