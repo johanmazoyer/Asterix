@@ -381,10 +381,10 @@ class Coronagraph(optsy.OpticalSystem):
                 fpm_array = np.ones((self.dimScience, self.dimScience))
             else:
                 fpm_array = FPmsk
-            lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod,
-                                                                    fpm_array,
-                                                                    nbres=np.array([0.1, 5, 50, 100]),
-                                                                    shift=(0, 0))
+            lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
+                                                               fpm_array,
+                                                               nbres=np.array([0.1, 5, 50, 100]),
+                                                               shift=(0, 0))
 
         else:
             raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
@@ -808,3 +808,139 @@ def create_wrapped_vortex_mask(dim,
         phase_mask = phase
 
     return angles, phase_mask
+
+
+def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shift=(0, 0), filter_order=15, alpha=1.5):
+    """
+    Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
+
+    Starting from the electric field in an input pupil plane, propagate through a phase-mask coronagraph with
+    different sampling values in different rings around the FPM center. Each propagation goes from the pupil to the FPM
+    and then to the Lyot plane (without Lyot stop applied), using MFTs, while a (combination of) Butterworth filters
+    marks annular regions around the FPM center that are considered in the propagation in each step. The electric field
+    contribution from each step is then summed up to yield the total electric field in the Lyot plane (before the LS).
+
+    AUTHOR: R. Galicher (in IDL)
+            ILa (to Python)
+
+    Parameters
+    ----------
+    pup : 2D array
+        Input mage array containing the wavefront at the entrance pupil of the optical system.
+    fpm : 2D array
+        Complex electric field in the focal plane of the focal-plane mask.
+    nbres : 1D array or list
+        List of the number of resolution elements in the total image plane for all propagation layers.
+        As a general rule, it is probably safer to put these numbers so that there is not sampling shift right in
+        the middle of the DH to avoid confusing the matrix. So if we correct the DH between
+        two radius IWA and OWA (in lambda/D), nbrs should not have any elements between 2*IWA and 2*OWA.
+    shift : tuple, default (0, 0)
+        Shift of FPM with respect to optical axis in units of lambda/D. This is done by introducing a tip/tilt on the
+        input wavefront in the pupil that is subsequently taken out in the Lyot plane after each propagation layer.
+    filter_order : int
+        Order of the Butterworth filter.
+    alpha : float
+        Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
+        input array.
+
+    Returns
+    -------
+    EF_before_LS : 2D array (complex)
+        E-field before the Lyot stop.
+    """
+    samp_outer = 2
+    nbres = np.array(nbres)
+
+    dim_pup = pup.shape[0]
+    dim_fpm = fpm.shape[0]
+
+    samplings = dim_pup / nbres
+
+    if not np.all(np.diff(nbres) >= 0):  # check if it is sorted by checking 2 by 2 diff is always positive
+        raise ValueError(f"'nbres' parameter need to be sorted from the highest to lowest nbrs of elements."
+                         f"Currently 'nbres' = {nbres}")
+
+    if np.min(samplings) < 2:
+        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded 2, otherwise we cut off"
+                         f"the high-spatial frequencies and the simulation turns out bad. We need the samplings"
+                         f"defined by the 'nbres' parameter (dim_pup/nbres) to be always >= 2. Currently, with"
+                         f"dim_pup = {dim_pup}, samplings are {samplings}")
+
+    if np.min(samplings) == 2:
+        # If the outer sampling defined by nbrs is already 2, we can remove it and gain some time
+        # because the last sampling is harcoded at 2
+        nbres = np.delete(nbres, -1)
+        samplings = np.delete(samplings, -1)
+
+    # can be used to check:
+    # print(f"With dim_pup = {dim_pup} and nbrs = {nbres}, Samplings: ", samplings)
+
+    # Innermost part of the focal plane
+    but_inner = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+    efield_before_fpm_inner = prop.mft(pup,
+                                       real_dim_input=dim_pup,
+                                       dim_output=dim_fpm,
+                                       nbres=nbres[0],
+                                       X_offset_output=shift[0] * samplings[0],
+                                       Y_offset_output=shift[1] * samplings[0])
+    efield_before_ls = prop.mft(efield_before_fpm_inner * fpm * but_inner,
+                                real_dim_input=dim_fpm,
+                                dim_output=dim_pup,
+                                nbres=nbres[0],
+                                inverse=True,
+                                X_offset_input=shift[0] * samplings[0],
+                                Y_offset_input=shift[1] * samplings[0])
+
+    # From inner to outer part of FPM
+    const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+    for k in range(nbres.shape[0] - 1):
+        # Butterworth filter in each layer
+        sizebut_here = dim_fpm / alpha * nbres[k] / nbres[k + 1]
+        but = (1 -
+               phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
+
+        ef_pre_fpm = prop.mft(pup,
+                              real_dim_input=dim_pup,
+                              dim_output=dim_fpm,
+                              nbres=nbres[k + 1],
+                              X_offset_output=shift[0] * samplings[k + 1],
+                              Y_offset_output=shift[1] * samplings[k + 1])
+        ef_pre_ls = prop.mft(ef_pre_fpm * fpm * but,
+                             real_dim_input=dim_fpm,
+                             dim_output=dim_pup,
+                             nbres=nbres[k + 1],
+                             X_offset_input=shift[0] * samplings[k + 1],
+                             Y_offset_input=shift[1] * samplings[k + 1],
+                             inverse=True)
+
+        # Sum up E-field contributions before the LS
+        efield_before_ls += ef_pre_ls
+
+    # Outer part of the FPM
+    nbres_outer = dim_fpm / samp_outer
+    sizebut_outer = dim_fpm / alpha * nbres[-1] / nbres_outer
+    but_outer = 1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
+
+    ef_pre_fpm_outer = prop.mft(pup,
+                                real_dim_input=dim_pup,
+                                dim_output=dim_fpm,
+                                nbres=nbres_outer,
+                                X_offset_output=shift[0] * samp_outer,
+                                Y_offset_output=shift[1] * samp_outer)
+    ef_pre_ls_outer = prop.mft(ef_pre_fpm_outer * fpm * but_outer,
+                               real_dim_input=dim_fpm,
+                               dim_output=dim_pup,
+                               nbres=nbres_outer,
+                               inverse=True,
+                               X_offset_input=shift[0] * samp_outer,
+                               Y_offset_input=shift[1] * samp_outer)
+
+    # Total E-field before the LS
+    efield_before_ls += ef_pre_ls_outer
+
+    # this last line is useless. Raphael and I sometimes put a crop or pad out of lazyness to make sure that
+    # all arrays are of the right dimension but in this case if it is NOT of the right dimension it
+    # SHOULD throw an error, because this is not normal
+    # efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup)
+
+    return efield_before_ls

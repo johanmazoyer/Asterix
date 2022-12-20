@@ -39,6 +39,6 @@ setup(
         "scipy",
     ],
     extras_require={
-        "dev": ["flake8", "jupyter", "pytest"],
+        "dev": ["flake8", "jupyter", "pytest", "yapf"],
         "docs": ["numpydoc", "pyan3", "sphinx-automodapi", "sphinx_rtd_theme"]
     })
