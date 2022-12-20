@@ -629,8 +629,8 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
         nbres = np.delete(nbres, -1)
         samplings = np.delete(samplings, -1)
 
-    if max(shift) > nbres[0] / 2:
-        raise ValueError(f"shift is larger than the minimum nbrs of element of resolution : the"
+    if max(shift) >= nbres[0] / 2:
+        raise ValueError(f"shift {shift} is larger than the minimum nbrs {nbres[0]} of element of resolution : the "
                          f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
 
     # can be used to check:
