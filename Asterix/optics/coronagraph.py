@@ -875,7 +875,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
                          f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
 
     # can be used to check:
-    # print(f"With dim_pup = {dim_pup} and nbrs = {nbres}, Samplings: ", samplings)
+    # print(f"With dim_pup = {dim_pup} and nbrs = {nbres}, Samplings: {samplings}")
 
     efield_before_ls = np.zeros((dim_pup, dim_pup), dtype='complex128')
 
@@ -884,10 +884,10 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
 
         if k == 0:
             # Innermost part of the focal plane
-            but_here = const_but
+            but_here = np.copy(const_but)
         elif k < nbres.shape[0] - 1:
             # Butterworth filter in each layer
-            sizebut_here = dim_fpm / alpha * nbres[k] / nbres[k + 1]
+            sizebut_here = dim_fpm / alpha * nbres[k-1] / nbres[k]
             but_here = (1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5,
                                                           yshift=-0.5)) * const_but
         else:
