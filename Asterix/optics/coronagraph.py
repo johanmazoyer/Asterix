@@ -870,7 +870,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
         # because the last sampling is harcoded at 2
         nbres = np.delete(nbres, -1)
         samplings = np.delete(samplings, -1)
-    
+
     if max(shift) >= nbres[0] / 2:
         raise ValueError(f"shift {shift} is larger than the minimum nbrs {nbres[0]} of element of resolution : the "
                          f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
@@ -940,10 +940,5 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
 
     # Total E-field before the LS
     efield_before_ls += ef_pre_ls_outer
-
-    # this last line is useless. Raphael and I sometimes put a crop or pad out of lazyness to make sure that
-    # all arrays are of the right dimension but in this case if it is NOT of the right dimension it
-    # SHOULD throw an error, because this is not normal
-    # efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup)
 
     return efield_before_ls
