@@ -810,7 +810,20 @@ def create_wrapped_vortex_mask(dim,
     return angles, phase_mask
 
 
-def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shift=(0, 0), filter_order=15, alpha=1.5):
+def prop_fpm_regional_sampling(pup,
+                               fpm,
+                               nbres=np.array([0.1, 5, 50, 100]),
+                               only_mat_mult=False,
+                               AAs_direct=None,
+                               AAs_inverse=None,
+                               BBs_direct=None,
+                               BBs_inverse=None,
+                               norm0s_direct=None,
+                               norm0s_inverse=None,
+                               returnAAsBBs=False,
+                               shift=(0, 0),
+                               filter_order=15,
+                               alpha=1.5):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
 
@@ -878,21 +891,63 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
     # can be used to check:
     # print(f"With dim_pup = {dim_pup} and nbrs = {nbres}, Samplings: ", samplings)
 
+    if returnAAsBBs:
+        AAs_direct = list()
+        AAs_inverse = list()
+        BBs_direct = list()
+        BBs_inverse = list()
+        norm0s_direct = list()
+        norm0s_inverse = list()
+
+    if shift != (0, 0):
+        if returnAAsBBs or only_mat_mult:
+            raise ValueError(f"Cannot use precalculated MFT matrices in the case of of shifted center."
+                             f"Use shift = (0,0) or returnAAsBBs=False and only_mat_mult = False")
+
     # Innermost part of the focal plane
     but_inner = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
-    efield_before_fpm_inner = prop.mft(pup,
-                                       real_dim_input=dim_pup,
-                                       dim_output=dim_fpm,
-                                       nbres=nbres[0],
-                                       X_offset_output=shift[0] * samplings[0],
-                                       Y_offset_output=shift[1] * samplings[0])
-    efield_before_ls = prop.mft(efield_before_fpm_inner * fpm * but_inner,
-                                real_dim_input=dim_fpm,
-                                dim_output=dim_pup,
-                                nbres=nbres[0],
-                                inverse=True,
-                                X_offset_input=shift[0] * samplings[0],
-                                Y_offset_input=shift[1] * samplings[0])
+
+    if returnAAsBBs:
+        AA, BB, norm0 = prop.mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0], returnAABB=True)
+        AAs_direct.append(AA)
+        BBs_direct.append(BB)
+        norm0s_direct.append(norm0)
+
+        AA, BB, norm0 = prop.mft(efield_before_fpm_inner * fpm * but_inner,
+                                 real_dim_input=dim_fpm,
+                                 dim_output=dim_pup,
+                                 nbres=nbres[0],
+                                 inverse=True,
+                                 returnAABB=True)
+        AAs_inverse.append(AA)
+        BBs_inverse.append(BB)
+        norm0s_inverse.append(norm0)
+
+    elif only_mat_mult:
+        efield_before_fpm_inner = prop.mft(pup,
+                                           only_mat_mult=True,
+                                           AA=AAs_direct[0],
+                                           BB=BBs_direct[0],
+                                           norm0=norm0s_direct[0])
+        efield_before_ls = prop.mft(efield_before_fpm_inner * fpm * but_inner,
+                                    only_mat_mult=True,
+                                    AA=AAs_inverse[0],
+                                    BB=BBs_inverse[0],
+                                    norm0=norm0s_inverse[0])
+    else:
+        efield_before_fpm_inner = prop.mft(pup,
+                                           real_dim_input=dim_pup,
+                                           dim_output=dim_fpm,
+                                           nbres=nbres[0],
+                                           X_offset_output=shift[0] * samplings[0],
+                                           Y_offset_output=shift[1] * samplings[0])
+        efield_before_ls = prop.mft(efield_before_fpm_inner * fpm * but_inner,
+                                    real_dim_input=dim_fpm,
+                                    dim_output=dim_pup,
+                                    nbres=nbres[0],
+                                    inverse=True,
+                                    X_offset_input=shift[0] * samplings[0],
+                                    Y_offset_input=shift[1] * samplings[0])
 
     # From inner to outer part of FPM
     const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
@@ -902,19 +957,50 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
         but = (1 -
                phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
 
-        ef_pre_fpm = prop.mft(pup,
-                              real_dim_input=dim_pup,
-                              dim_output=dim_fpm,
-                              nbres=nbres[k + 1],
-                              X_offset_output=shift[0] * samplings[k + 1],
-                              Y_offset_output=shift[1] * samplings[k + 1])
-        ef_pre_ls = prop.mft(ef_pre_fpm * fpm * but,
-                             real_dim_input=dim_fpm,
-                             dim_output=dim_pup,
-                             nbres=nbres[k + 1],
-                             X_offset_input=shift[0] * samplings[k + 1],
-                             Y_offset_input=shift[1] * samplings[k + 1],
-                             inverse=True)
+        if returnAAsBBs:
+            AA, BB, norm0 = prop.mft(pup,
+                                     real_dim_input=dim_pup,
+                                     dim_output=dim_fpm,
+                                     nbres=nbres[k + 1],
+                                     returnAABB=True)
+            AAs_direct.append(AA)
+            BBs_direct.append(BB)
+            norm0s_direct.append(norm0)
+
+            AA, BB, norm0 = prop.mft(ef_pre_fpm * fpm * but,
+                                     real_dim_input=dim_fpm,
+                                     dim_output=dim_pup,
+                                     nbres=nbres[k + 1],
+                                     returnAABB=True)
+            AAs_inverse.append(AA)
+            BBs_inverse.append(BB)
+            norm0s_inverse.append(norm0)
+
+        elif only_mat_mult:
+            efield_before_fpm_inner = prop.mft(pup,
+                                               only_mat_mult=True,
+                                               AA=AAs_direct[k + 1],
+                                               BB=BBs_direct[k + 1],
+                                               norm0=norm0s_direct[k + 1])
+            efield_before_ls = prop.mft(ef_pre_fpm * fpm * but,
+                                        only_mat_mult=True,
+                                        AA=AAs_inverse[k + 1],
+                                        BB=BBs_inverse[k + 1],
+                                        norm0=norm0s_inverse[k + 1])
+        else:
+            ef_pre_fpm = prop.mft(pup,
+                                  real_dim_input=dim_pup,
+                                  dim_output=dim_fpm,
+                                  nbres=nbres[k + 1],
+                                  X_offset_output=shift[0] * samplings[k + 1],
+                                  Y_offset_output=shift[1] * samplings[k + 1])
+            ef_pre_ls = prop.mft(ef_pre_fpm * fpm * but,
+                                 real_dim_input=dim_fpm,
+                                 dim_output=dim_pup,
+                                 nbres=nbres[k + 1],
+                                 inverse=True,
+                                 X_offset_input=shift[0] * samplings[k + 1],
+                                 Y_offset_input=shift[1] * samplings[k + 1])
 
         # Sum up E-field contributions before the LS
         efield_before_ls += ef_pre_ls
@@ -924,19 +1010,55 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
     sizebut_outer = dim_fpm / alpha * nbres[-1] / nbres_outer
     but_outer = 1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
 
-    ef_pre_fpm_outer = prop.mft(pup,
+
+            if returnAAsBBs:
+            AA, BB, norm0 = prop.mft(pup,
+                                     real_dim_input=dim_pup,
+                                     dim_output=dim_fpm,
+                                     nbres=nbres[k + 1],
+                                     returnAABB=True)
+            AAs_direct.append(AA)
+            BBs_direct.append(BB)
+            norm0s_direct.append(norm0)
+
+            AA, BB, norm0 = prop.mft(ef_pre_fpm * fpm * but,
+                                     real_dim_input=dim_fpm,
+                                     dim_output=dim_pup,
+                                     nbres=nbres[k + 1],
+                                     returnAABB=True)
+            AAs_inverse.append(AA)
+            BBs_inverse.append(BB)
+            norm0s_inverse.append(norm0)
+
+        elif only_mat_mult:
+            efield_before_fpm_inner = prop.mft(pup,
+                                               only_mat_mult=True,
+                                               AA=AAs_direct[-1],
+                                               BB=BBs_direct[-1],
+                                               norm0=norm0s_direct[-1])
+            efield_before_ls = prop.mft(ef_pre_fpm * fpm * but,
+                                        only_mat_mult=True,
+                                        AA=AAs_inverse[-1],
+                                        BB=BBs_inverse[-1],
+                                        norm0=norm0s_inverse[-1])
+        else:
+            ef_pre_fpm_outer = prop.mft(pup,
                                 real_dim_input=dim_pup,
                                 dim_output=dim_fpm,
                                 nbres=nbres_outer,
                                 X_offset_output=shift[0] * samp_outer,
                                 Y_offset_output=shift[1] * samp_outer)
-    ef_pre_ls_outer = prop.mft(ef_pre_fpm_outer * fpm * but_outer,
+            ef_pre_ls_outer = prop.mft(ef_pre_fpm_outer * fpm * but_outer,
                                real_dim_input=dim_fpm,
                                dim_output=dim_pup,
                                nbres=nbres_outer,
                                inverse=True,
                                X_offset_input=shift[0] * samp_outer,
                                Y_offset_input=shift[1] * samp_outer)
+
+                                 
+
+    
 
     # Total E-field before the LS
     efield_before_ls += ef_pre_ls_outer
