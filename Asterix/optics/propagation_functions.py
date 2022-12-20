@@ -592,8 +592,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
         the middle of the DH to avoid confusing the matrix. So if we correct the DH between
         two radius IWA and OWA (in lambda/D), nbrs should not have any elements between 2*IWA and 2*OWA.
     shift : tuple, default (0, 0)
-        Shift of FPM with respect to optical axis in units of lambda/D. This is done by introducing a tip/tilt on the
-        input wavefront in the pupil that is subsequently taken out in the Lyot plane after each propagation layer.
+        Shift of FPM with respect to optical axis in units of lambda/D.
     filter_order : int
         Order of the Butterworth filter.
     alpha : float
