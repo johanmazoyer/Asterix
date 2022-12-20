@@ -567,13 +567,7 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     return butterworth
 
 
-def prop_fpm_regional_sampling(pup,
-                               fpm,
-                               nbres=np.array([0.1, 5, 50, 100]),
-                               shift=(0, 0),
-                               samp_outer=2,
-                               filter_order=15,
-                               alpha=1.5):
+def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shift=(0, 0), filter_order=15, alpha=1.5):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
 
@@ -597,8 +591,6 @@ def prop_fpm_regional_sampling(pup,
     shift : tuple, default (0, 0)
         Shift of FPM with respect to optical axis in units of lambda/D. This is done by introducing a tip/tilt on the
         input wavefront in the pupil that is subsequently taken out in the Lyot plane after each propagation layer.
-    samp_outer : float
-        Sampling in the outermost layer of propagations.
     filter_order : int
         Order of the Butterworth filter.
     alpha : float
@@ -610,30 +602,63 @@ def prop_fpm_regional_sampling(pup,
     EF_before_LS : 2D array (complex)
         E-field before the Lyot stop.
     """
-    from Asterix.optics import shift_phase_ramp
-
-    if samp_outer != 2:
-        raise ValueError(f"samp_outer' needs to be 2, otherwise we cut off the high-spatial frequencies and the"
-                         f"simulation turns out bad. This can become a variable parameter in the future if we allow"
-                         f"the array sizes to be adapted in this function as well, in order to retain the original"
-                         f"spatial frequency content in the outer sampling layer.")
+    samp_outer = 2
+    nbres = np.array(nbres)
 
     dim_pup = pup.shape[0]
     dim_fpm = fpm.shape[0]
     pup0 = np.array(pup, copy=True, dtype='complex128')
 
+    samplings = dim_pup / nbres
+
+    if not np.all(np.diff(nbres) >= 0):  # check if it is sorted by checking 2 by 2 diff is always positive
+        raise ValueError(f"'nbres' parameter need to be sorted from the highest to lowest nbrs of elements."
+                         f"Currently 'nbres' = {nbres}")
+
+    if np.min(samplings) < 2:
+        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded 2, otherwise we cut off"
+                         f"the high-spatial frequencies and the simulation turns out bad. We need the samplings"
+                         f"defined by the 'nbres' parameter (dim_pup/nbres) to be always >= 2. Currently, with"
+                         f"dim_pup = {dim_pup}, samplings are {samplings}")
+
+    if np.min(samplings) == 2:
+        # If the outer sampling defined by nbrs is already 2, we can remove it and gain some time
+        # because the last sampling is harcoded at 2
+        nbres = np.delete(nbres, -1)
+        samplings = np.delete(samplings, -1)
+
+    # can be used to check:
+    # print(f"With dim_pup = {dim_pup} and nbrs = {nbres}, Samplings: ", samplings)
+
     # Add tip-tilt to in pupil wavefront to simulate FPM offsets
-    phase_ramp = shift_phase_ramp(dim_pup, shift[0], shift[1])
-    inverted_phase_ramp = shift_phase_ramp(dim_pup, -shift[0], -shift[1])
+    # phase_ramp = shift_phase_ramp(dim_pup, shift[0], shift[1])
+    # inverted_phase_ramp = shift_phase_ramp(dim_pup, -shift[0], -shift[1])
+
+    # non non non ! shift_phase_ramp function parameters shift_x and shift_y are in pixels!
+    # Doing tip/tilt like that, you introduce a fix pixel shift. But because the resolution change,
+    # the tip_tilt change also for each samplings.
+    # For example: if samplings = 200, 20, 2 (pix per lambda /D), a shift = (1,0) (1 pix shift) will correspond to a
+    # tip tilt of 0.005 l/D in the first array, 0.05 l/D in the second and 0.5 l/D in the last
+    # I see that you introduced the 'shift' parameter in the docstring in element of resolution, which is
+    # a good idea to avoid that. See below the correct way (I think) to do that, we need to multiply each time by
+    # sampling to have the right shift in pixel. I also use the parameter X_offset_output and X_offset_input which
+    # are exactly doing that
 
     # Innermost part of the focal plane
-    but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, -0.5, -0.5)
-    efield_before_fpm_inner = mft(pup0 * phase_ramp, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0])
+    but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+    efield_before_fpm_inner = mft(pup0,
+                                  real_dim_input=dim_pup,
+                                  dim_output=dim_fpm,
+                                  nbres=nbres[0],
+                                  X_offset_output=shift[0] * samplings[0],
+                                  Y_offset_output=shift[1] * samplings[0])
     efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner,
                            real_dim_input=dim_fpm,
                            dim_output=dim_pup,
                            nbres=nbres[0],
-                           inverse=True) * inverted_phase_ramp
+                           inverse=True,
+                           X_offset_input=shift[0] * samplings[0],
+                           Y_offset_input=shift[1] * samplings[0])
 
     # From inner to outer part of FPM
     const_but = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
@@ -642,12 +667,21 @@ def prop_fpm_regional_sampling(pup,
         sizebut_here = dim_fpm / alpha * nbres[k] / nbres[k + 1]
         but = (1 - butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
 
-        ef_pre_fpm = mft(pup0 * phase_ramp, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k + 1])
+        ef_pre_fpm = mft(
+            pup0,
+            real_dim_input=dim_pup,
+            dim_output=dim_fpm,
+            nbres=nbres[k + 1],
+            X_offset_output=shift[0] * samplings[k + 1],
+            Y_offset_output=shift[1] * samplings[k + 1],
+        )
         ef_pre_ls = mft(ef_pre_fpm * fpm * but,
                         real_dim_input=dim_fpm,
                         dim_output=dim_pup,
                         nbres=nbres[k + 1],
-                        inverse=True) * inverted_phase_ramp
+                        X_offset_input=shift[0] * samplings[k + 1],
+                        Y_offset_input=shift[1] * samplings[k + 1],
+                        inverse=True)
 
         # Sum up E-field contributions before the LS
         efield_before_ls += ef_pre_ls
@@ -657,12 +691,26 @@ def prop_fpm_regional_sampling(pup,
     sizebut_outer = dim_fpm / alpha * nbres[-1] / nbres_outer
     but_outer = 1 - butterworth_circle(dim_fpm, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
 
-    ef_pre_fpm_outer = mft(pup0 * phase_ramp, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres_outer)
-    ef_pre_ls_outer = mft(ef_pre_fpm_outer * fpm * but_outer, real_dim_input=dim_fpm, dim_output=dim_pup,
-                          nbres=nbres_outer, inverse=True) * inverted_phase_ramp
+    ef_pre_fpm_outer = mft(pup0,
+                           real_dim_input=dim_pup,
+                           dim_output=dim_fpm,
+                           nbres=nbres_outer,
+                           X_offset_output=shift[0] * samp_outer,
+                           Y_offset_output=shift[1] * samp_outer)
+    ef_pre_ls_outer = mft(ef_pre_fpm_outer * fpm * but_outer,
+                          real_dim_input=dim_fpm,
+                          dim_output=dim_pup,
+                          nbres=nbres_outer,
+                          inverse=True,
+                          X_offset_input=shift[0] * samp_outer,
+                          Y_offset_input=shift[1] * samp_outer)
 
     # Total E-field before the LS
     efield_before_ls += ef_pre_ls_outer
-    efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup)
+
+    # this last line is useless. Raphael and I sometimes put a crop or pad out of lazyness to make sure that
+    # all arrays are of the right dimension but in this case if it is NOT of the right dimension it
+    # SHOULD throw an error, because this is not normal
+    # efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup)
 
     return efield_before_ls

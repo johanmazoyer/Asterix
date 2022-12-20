@@ -131,7 +131,7 @@ def test_prop_area_sampling():
     expected_attenuation = [9e-4, 2e-7]
 
     for i, fpm in enumerate([fqpm, wrapped_vortex]):
-        pre_ls_areas = prop_fpm_regional_sampling(pup, np.exp(1j * fpm), nbres=res_list, samp_outer=samp_outer)
+        pre_ls_areas = prop_fpm_regional_sampling(pup, np.exp(1j * fpm), nbres=res_list)
         post_ls_areas = pre_ls_areas * lyot_stop
 
         coro_ef_areas = mft(post_ls_areas, real_dim_input=dim, dim_output=dim, nbres=nbres_direct)
