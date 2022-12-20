@@ -512,4 +512,3 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
     farray *= np.exp(sens * (2. * 1j * np.pi / np.sqrt(Nx * Ny)) * np.sum(direct * fourier))
 
     return farray
-

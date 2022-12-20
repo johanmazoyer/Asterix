@@ -885,7 +885,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
         if k == 0:
             # Innermost part of the focal plane
             but_here = const_but
-        elif k < range(nbres.shape[0]) - 1:
+        elif k < nbres.shape[0] - 1:
             # Butterworth filter in each layer
             sizebut_here = dim_fpm / alpha * nbres[k] / nbres[k + 1]
             but_here = (1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5,
