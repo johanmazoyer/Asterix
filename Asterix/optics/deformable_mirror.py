@@ -105,6 +105,12 @@ class DeformableMirror(optsy.OpticalSystem):
         # now if we relaunch self.DM_pushact, and if misregistration = True
         # it will be different due to misregistration
 
+        # initialize DM basis that will be defined in the corrector initialization once the
+        # full testbed is created
+        self.basis = None
+        self.basis_size = None
+        self.basis_type = None
+
     def EF_through(self, entrance_EF=1., wavelength=None, DMphase=0., dir_save_all_planes=None, **kwargs):
         """
         Propagate the electric field through the DM.

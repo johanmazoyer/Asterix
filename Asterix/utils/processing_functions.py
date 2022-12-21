@@ -395,3 +395,4 @@ def ft_zoom_out(image, factor_zoomout, complex_image=False, max_allowed_fft_size
         smaller_image_cropped = np.real(smaller_image_cropped)
 
     return smaller_image_cropped
+

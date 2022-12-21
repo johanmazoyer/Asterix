@@ -210,11 +210,6 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[4:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
-        # attach the initial phase for each DM
-        DM.phase_init = DM_phase_init[i]
-
-    # remove to save memory
-    del DM_phase_init
 
     # Some string manips to name the matrix if we save it
     if MatrixType == 'perfect':
@@ -255,8 +250,6 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(
                 os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
-
-            pos_in_matrix += DM.basis_size
 
         else:
             start_time = time.time()
@@ -303,12 +296,103 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             OpticSysNameBefore = testbed.subsystems[:positioonDMintestbed]
             OpticSysNameAfter = testbed.subsystems[positioonDMintestbed + 1:]
 
+            # I tried something different to be able to parralellize the function, but it did not
+            # allow multi matrix (which requires non flat DM initially) and it did not work because
+            # functions have to be defined outside of the function to be pickable. However, this is a
+            # very compact way to do that so I think this is interresting sop I keep it here for now.
+
+            # OpticSysbefore = []
+            # for osname in OpticSysNameBefore:
+            #     OpticSysbefore.append(vars(testbed)[osname])
+            # testbed_upstream = Testbed(OpticSysbefore, OpticSysNameBefore)
+
+            # OpticSysafter = []
+            # for osname in OpticSysNameAfter:
+            #     OpticSysafter.append(vars(testbed)[osname])
+            # testbed_downstream = Testbed(OpticSysafter, OpticSysNameAfter)
+
+            # # we go through all subsystems of the testbed
+
+            # # First before the DM we want to actuate (aperture, other DMs, etc).
+            # # This ones, we only do once !
+            # wavefrontupstream = input_wavefront
+
+            # wavefrontupstream = testbed_upstream.EF_through(entrance_EF=wavefrontupstream, wavelength=wavelength)
+
+            # if DM.z_position != 0:
+
+            #     wavefrontupstreaminDM = crop_or_pad_image(
+            #         prop.prop_angular_spectrum(wavefrontupstream, wavelength, DM.z_position, DM.diam_pup_in_m / 2,
+            #                                    DM.prad), DM.dim_overpad_pupil)
+
+            # if MatrixType == 'perfect':
+            #     if DM.z_position == 0:
+
+            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
+            #             map(
+            #                 concat_flat_real_imag(
+            #                     resizing(
+            #                         testbed_downstream.todetector(
+            #                             entrance_EF=wavefrontupstream * DM.EF_from_phase_and_ampl(
+            #                                 phase_abb=phase_in_basis + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+            #                                 wavelengths=wavelength),
+            #                             wavelength=wavelength,
+            #                             in_contrast=False) / normalisation_testbed_EF_contrast, dimEstim) - G0),
+            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
+            #     else:
+            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
+            #             map(
+            #                 concat_flat_real_imag(
+            #                     resizing(
+            #                         testbed_downstream.todetector(entrance_EF=crop_or_pad_image(
+            #                             prop.prop_angular_spectrum(
+            #                                 wavefrontupstreaminDM *
+            #                                 DM.EF_from_phase_and_ampl(phase_abb=phase_in_basis +
+            #                                                           DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+            #                                                           wavelengths=wavelength), wavelength,
+            #                                 -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil),
+            #                                                       wavelength=wavelength,
+            #                                                       in_contrast=False) /
+            #                         normalisation_testbed_EF_contrast, dimEstim) - G0),
+            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
+
+            # if MatrixType == 'smallphase':
+            #     if DM.z_position == 0:
+            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
+            #             map(
+            #                 concat_flat_real_imag(
+            #                     resizing(
+            #                         testbed_downstream.todetector(entrance_EF=(
+            #                             1 + 1j * phase_in_basis) * wavefrontupstream * DM.EF_from_phase_and_ampl(
+            #                                 phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+            #                                 wavelengths=wavelength),
+            #                                                       wavelength=wavelength,
+            #                                                       in_contrast=False) /
+            #                         normalisation_testbed_EF_contrast, dimEstim) - G0),
+            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
+
+            #     else:
+            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
+            #             map(
+            #                 concat_flat_real_imag(
+            #                     resizing(
+            #                         testbed_downstream.todetector(entrance_EF=crop_or_pad_image(
+            #                             prop.prop_angular_spectrum(
+            #                                 wavefrontupstreaminDM *
+            #                                 (1 + 1j * phase_in_basis) * DM.EF_from_phase_and_ampl(
+            #                                     phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+            #                                     wavelengths=wavelength), wavelength, -DM.z_position, DM.diam_pup_in_m /
+            #                                 2, DM.prad), DM.dim_overpad_pupil),
+            #                                                       wavelength=wavelength,
+            #                                                       in_contrast=False) /
+            #                         normalisation_testbed_EF_contrast, dimEstim) - G0),
+            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
+
             # we go through all subsystems of the testbed
 
             # First before the DM we want to actuate (aperture, other DMs, etc).
             # This ones, we only do once !
             wavefrontupstream = input_wavefront
-
             for osname in OpticSysNameBefore:
                 OpticSysbefore: OpticalSystem = vars(testbed)[osname]
 
@@ -316,20 +400,22 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     # save PP plane before this subsystem
                     name_plane = 'EF_PP_before_' + osname + f'_wl{int(wavelength * 1e9)}'
                     save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
+
                 if isinstance(OpticSysbefore, DeformableMirror) and OpticSysbefore.active:
                     # this subsystem is an active DM but not the one we actuate now (located before the one we actuate)
 
                     if OpticSysbefore.z_position == 0:
                         wavefrontupstream = wavefrontupstream * OpticSysbefore.EF_from_phase_and_ampl(
-                            phase_abb=OpticSysbefore.phase_init, wavelengths=wavelength)
+                            phase_abb=DM_phase_init[testbed.name_of_DMs.index(osname)], wavelengths=wavelength)
                     else:
-                        wavefrontupstream = OpticSysbefore.prop_pup_to_DM_and_back(wavefrontupstream,
-                                                                                   OpticSysbefore.phase_init, wavelength)
+                        wavefrontupstream = OpticSysbefore.prop_pup_to_DM_and_back(
+                            wavefrontupstream, DM_phase_init[testbed.name_of_DMs.index(osname)], wavelength)
 
                     if dir_save_all_planes is not None:
                         # save phase on this DM
                         name_plane = 'Phase_init_on_' + osname + f'_wl{int(wavelength * 1e9)}'
-                        save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
+                        save_plane_in_fits(dir_save_all_planes, name_plane,
+                                           DM_phase_init[testbed.name_of_DMs.index(osname)])
 
                 else:
                     wavefrontupstream = OpticSysbefore.EF_through(entrance_EF=wavefrontupstream, wavelength=wavelength)
@@ -340,7 +426,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     save_plane_in_fits(dir_save_all_planes, name_plane, wavefrontupstream)
 
             # then the DM we want to actuate !
-            #
+
             # if the DM is not in pupil plane, we can measure the first Fresnel transf only once
             if DM.z_position != 0:
 
@@ -353,9 +439,9 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 plt.figure()
 
             # now we go throught the DM basis
-            init_pos_in_matrix = pos_in_matrix  # where we store the next vect in the matrix
 
-            for i in range(DM.basis_size):
+            for i, phase_in_basis in enumerate(phasesBasis):
+                # for i in range(DM.basis_size):
 
                 if i % 10:
                     progress(i, DM.basis_size, status='')
@@ -364,33 +450,36 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     if DM.z_position == 0:
 
                         wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(
-                            phase_abb=phasesBasis[i] + DM.phase_init, wavelengths=wavelength)
+                            phase_abb=phase_in_basis + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+                            wavelengths=wavelength)
 
                         if dir_save_all_planes is not None:
                             name_plane = 'Phase_on_' + DM_name + f'_wl{int(wavelength * 1e9)}'
-                            save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysbefore.phase_init)
+                            save_plane_in_fits(dir_save_all_planes, name_plane,
+                                               DM_phase_init[testbed.name_of_DMs.index(DM_name)])
 
                     else:
 
                         wavefront = crop_or_pad_image(
                             prop.prop_angular_spectrum(
                                 wavefrontupstreaminDM * DM.EF_from_phase_and_ampl(
-                                    phase_abb=phasesBasis[i] + DM.phase_init, wavelengths=wavelength), wavelength,
-                                -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
+                                    phase_abb=phase_in_basis + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+                                    wavelengths=wavelength), wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad),
+                            DM.dim_overpad_pupil)
 
                 if MatrixType == 'smallphase':
                     # TODO we added a 1+ which was initially in Axel's code and that was
                     # removed. Need to be tested with and without on the testbed
                     if DM.z_position == 0:
-                        wavefront = (1 + 1j * phasesBasis[i]) * wavefrontupstream * DM.EF_from_phase_and_ampl(
-                            phase_abb=DM.phase_init, wavelengths=wavelength)
+                        wavefront = (1 + 1j * phase_in_basis) * wavefrontupstream * DM.EF_from_phase_and_ampl(
+                            phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)], wavelengths=wavelength)
                     else:
 
                         wavefront = crop_or_pad_image(
                             prop.prop_angular_spectrum(
-                                wavefrontupstreaminDM * (1 + 1j * phasesBasis[i]) *
-                                DM.EF_from_phase_and_ampl(phase_abb=DM.phase_init, wavelengths=wavelength), wavelength,
-                                -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
+                                wavefrontupstreaminDM * (1 + 1j * phase_in_basis) * DM.EF_from_phase_and_ampl(
+                                    phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)], wavelengths=wavelength),
+                                wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
 
                 if dir_save_all_planes is not None:
                     name_plane = 'EF_PP_after_' + DM_name + f'_wl{int(wavelength * 1e9)}'
@@ -406,14 +495,15 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                             # this subsystem is an active DM but not the one we actuate now (located after the one we actuate)
                             if OpticSysAfter.z_position == 0:
                                 wavefront = wavefront * OpticSysAfter.EF_from_phase_and_ampl(
-                                    phase_abb=OpticSysAfter.phase_init, wavelengths=wavelength)
+                                    phase_abb=DM_phase_init[testbed.name_of_DMs.index(osname)], wavelengths=wavelength)
                             else:
-                                wavefront = OpticSysAfter.prop_pup_to_DM_and_back(wavefront, OpticSysAfter.phase_init,
-                                                                                  wavelength)
+                                wavefront = OpticSysAfter.prop_pup_to_DM_and_back(
+                                    wavefront, DM_phase_init[testbed.name_of_DMs.index(osname)], wavelength)
 
                             if dir_save_all_planes is not None:
                                 name_plane = 'Phase_init_on_' + osname + f'_wl{int(wavelength * 1e9)}'
-                                save_plane_in_fits(dir_save_all_planes, name_plane, OpticSysAfter.phase_init)
+                                save_plane_in_fits(dir_save_all_planes, name_plane,
+                                                   DM_phase_init[testbed.name_of_DMs.index(osname)])
 
                         else:
                             wavefront = OpticSysAfter.EF_through(entrance_EF=wavefront, wavelength=wavelength)
@@ -456,12 +546,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     plt.colorbar()
                     plt.pause(0.01)
                 # We fill the interaction matrix:
-                InterMat[:dimEstim**2, pos_in_matrix] = np.real(Gvector).flatten()
-                InterMat[dimEstim**2:, pos_in_matrix] = np.imag(Gvector).flatten()
+                InterMat[:dimEstim**2, pos_in_matrix + i] = np.real(Gvector).flatten()
+                InterMat[dimEstim**2:, pos_in_matrix + i] = np.imag(Gvector).flatten()
                 # Note that we do not crop to DH. This is done after so that we can change DH more easily
                 # without changeing the matrix
-
-                pos_in_matrix += 1
 
             if visu:
                 plt.close()
@@ -469,15 +557,13 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
                 fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
-                             InterMat[:, init_pos_in_matrix:init_pos_in_matrix + DM.basis_size])
+                             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size])
+
             print("")
             print("Time for interaction Matrix " + DM_name + " (s):", round(time.time() - start_time))
             print("")
 
-    # clean to save memory
-    for i, DM_name in enumerate(testbed.name_of_DMs):
-        DM: DeformableMirror = vars(testbed)[DM_name]
-        DM.phase_init = 0
+        pos_in_matrix += DM.basis_size
 
     return InterMat
 
@@ -734,3 +820,24 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
     solution = pas * 2 * Eab
 
     return testbed.basis_vector_to_act_vector(solution)
+
+
+# def concat_flat_real_imag(complex_arr):
+#     """From a given complex numpy array, this function separates and flatten RE and IM parts and concatenates them.
+
+#     AUTHORS: J Mazoyer
+
+#     19/12/2022 : Introduction in asterix
+
+#     Parameters
+#     ----------
+#     complex_arr : 2D complex numpy array
+#         Initial array, must be complex
+
+#     Returns
+#     --------
+#     flatten_concat_array : 1D real numpy array
+#         zoomed out array
+#     """
+
+#     return np.concatenate((np.real(complex_arr).flatten(), np.imag(complex_arr).flatten()))
