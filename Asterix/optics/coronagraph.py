@@ -383,7 +383,8 @@ class Coronagraph(optsy.OpticalSystem):
                 fpm_array = FPmsk
             lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod,
                                                                     fpm_array,
-                                                                    nbres=np.array([0.1, 5, 50, 100]),
+                                                                    real_dim_input=int(2 * self.prad),
+                                                                    nbres=np.array([0.1, 5., 50.]),
                                                                     shift=(0, 0))
 
         else:
@@ -397,6 +398,8 @@ class Coronagraph(optsy.OpticalSystem):
         lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
 
         # crop to the dim_overpad_pupil expected size
+        # TODO I do not like this line. A random crop or pad is the best way to mask an error in coding
+        # if we made an error in dimenensions. We should make sure that our arrays are of the right dimensions at all times
         lyotplane_before_lyot_crop = crop_or_pad_image(lyotplane_before_lyot, self.dim_overpad_pupil)
 
         # Field after filtering by Lyot stop
