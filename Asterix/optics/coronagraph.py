@@ -532,6 +532,9 @@ class Coronagraph(optsy.OpticalSystem):
                                                              inclination_x=inclination_x,
                                                              inclination_y=inclination_y)
 
+        # Match the orientation of the phase mask to THD2
+        phase_wrapped_vortex = np.rot90(phase_wrapped_vortex)
+
         wrapped_vortex = list()
         for i, wav in enumerate(self.wav_vec):
             if self.prop_apod2lyot == "fft":
