@@ -125,14 +125,6 @@ class Coronagraph(optsy.OpticalSystem):
 
         if self.prop_apod2lyot in ['mft', 'mft-babinet']:
 
-            # we measure the AA and BB matrix and norm0 for all MFTs used in coronagraphy
-            if self.prop_apod2lyot == 'mft':
-                dim_science_here = self.dimScience
-                fpm_sampling_here = self.Science_sampling
-            if self.prop_apod2lyot == 'mft-babinet':
-                dim_science_here = self.dim_fpm
-                fpm_sampling_here = self.Lyot_fpm_sampling
-
             self.AA_direct = []
             self.BB_direct = []
             self.norm0_direct = []
@@ -140,41 +132,6 @@ class Coronagraph(optsy.OpticalSystem):
             self.AA_inverse = []
             self.BB_inverse = []
             self.norm0_inverse = []
-
-            for i, wave_i in enumerate(self.wav_vec):
-
-                lambda_ratio = wave_i / self.wavelength_0
-
-                if self.prop_apod2lyot == 'mft':
-                    # in practice in MFT mode, the final MFT is identical to the
-                    # one in the corono so we save a bit of time / memory here
-                    self.AA_direct.append(self.AA_direct_final[i])
-                    self.BB_direct.append(self.BB_direct_final[i])
-                    self.norm0_direct.append(self.norm0_direct_final[i])
-
-                else:
-                    a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
-                                       real_dim_input=int(2 * self.prad),
-                                       dim_output=dim_science_here,
-                                       nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
-                                       inverse=False,
-                                       norm='ortho',
-                                       returnAABB=True)
-                    self.AA_direct.append(a)
-                    self.BB_direct.append(b)
-                    self.norm0_direct.append(c)
-
-                a, b, c = prop.mft(np.zeros((dim_science_here, dim_science_here)),
-                                   real_dim_input=dim_science_here,
-                                   dim_output=int(2 * self.prad),
-                                   nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
-                                   inverse=True,
-                                   norm='ortho',
-                                   returnAABB=True)
-
-                self.AA_inverse.append(a)
-                self.BB_inverse.append(b)
-                self.norm0_inverse.append(c)
 
         if "bool_overwrite_perfect_coro" in coroconfig:
             if coroconfig["bool_overwrite_perfect_coro"]:
@@ -377,6 +334,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         elif self.prop_apod2lyot == "regional-sampling":
             # Apod plane to Lyot plane
+            # TODO : is this useful here ? it is already done earlier for all methods at the begining of EF_through
             if noFPM:
                 fpm_array = np.ones((self.dimScience, self.dimScience))
             else:
@@ -632,6 +590,73 @@ class Coronagraph(optsy.OpticalSystem):
 
         return hlc_all_wl
 
+    def precalculate_mft_matrices(self):
+
+        # we measure the AA and BB matrix and norm0 for all MFTs used in coronagraphy
+        if self.prop_apod2lyot in ['mft', 'mft-babinet']:
+            if self.prop_apod2lyot == 'mft':
+                dim_science_here = self.dimScience
+                fpm_sampling_here = self.Science_sampling
+            if self.prop_apod2lyot == 'mft-babinet':
+                dim_science_here = self.dim_fpm
+                fpm_sampling_here = self.Lyot_fpm_sampling
+
+            for i, wave_i in enumerate(self.wav_vec):
+
+                lambda_ratio = wave_i / self.wavelength_0
+
+                if self.prop_apod2lyot == 'mft':
+                    # in practice in MFT mode, the final MFT is identical to the
+                    # one in the corono so we save a bit of time / memory here
+                    self.AA_direct.append(self.AA_direct_final[i])
+                    self.BB_direct.append(self.BB_direct_final[i])
+                    self.norm0_direct.append(self.norm0_direct_final[i])
+
+                else:
+                    a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
+                                       real_dim_input=int(2 * self.prad),
+                                       dim_output=dim_science_here,
+                                       nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                                       inverse=False,
+                                       norm='ortho',
+                                       returnAABB=True)
+                    self.AA_direct.append(a)
+                    self.BB_direct.append(b)
+                    self.norm0_direct.append(c)
+
+                a, b, c = prop.mft(np.zeros((dim_science_here, dim_science_here)),
+                                   real_dim_input=dim_science_here,
+                                   dim_output=int(2 * self.prad),
+                                   nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                                   inverse=True,
+                                   norm='ortho',
+                                   returnAABB=True)
+
+                self.AA_inverse.append(a)
+                self.BB_inverse.append(b)
+                self.norm0_inverse.append(c)
+        if self.prop_apod2lyot == 'regional-sampling':
+            for i, wave_i in enumerate(self.wav_vec):
+
+                lambda_ratio = wave_i / self.wavelength_0
+                a, b, c, d, e, f, g = prop_fpm_regional_sampling(pup,
+                               fpm,
+                               nbres=np.array([0.1, 5, 50, 100]),
+                               lambda_ratio=1,
+                               shift=(0, 0),
+                               only_mat_mult=False,
+                               AAs_direct=None,
+                               AAs_inverse=None,
+                               BBs_direct=None,
+                               BBs_inverse=None,
+                               norm0s_direct=None,
+                               norm0s_inverse=None,
+                               butterworths=None,
+                               returnAAsBBs=False,
+                               filter_order=15,
+                               alpha=1.5):
+                # AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths
+
 
 def fqpm_mask(dim):
     """Create a FQPM phase mask.
@@ -813,6 +838,7 @@ def create_wrapped_vortex_mask(dim,
 def prop_fpm_regional_sampling(pup,
                                fpm,
                                nbres=np.array([0.1, 5, 50, 100]),
+                               lambda_ratio=1,
                                shift=(0, 0),
                                only_mat_mult=False,
                                AAs_direct=None,
@@ -940,7 +966,11 @@ def prop_fpm_regional_sampling(pup,
 
     if not only_mat_mult:
         const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
-    for k in range(nbres.shape[0]):
+        nbrs2nbrs = nbres.shape[0]
+    else:
+        nbrs2nbrs = len(butterworths) # in the case only_mat_mult, nbrs are fixed
+
+    for k in range(nbrs2nbrs):
         if only_mat_mult:
             but_here = butterworths[k]
         else:
@@ -960,7 +990,11 @@ def prop_fpm_regional_sampling(pup,
 
         if returnAAsBBs:
             butterworths.append(but_here)
-            AA, BB, norm0 = prop.mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k], returnAABB=True)
+            AA, BB, norm0 = prop.mft(pup,
+                                     real_dim_input=dim_pup,
+                                     dim_output=dim_fpm,
+                                     nbres=nbres[k] * lambda_ratio,
+                                     returnAABB=True)
             AAs_direct.append(AA)
             BBs_direct.append(BB)
             norm0s_direct.append(norm0)
@@ -968,7 +1002,7 @@ def prop_fpm_regional_sampling(pup,
             AA, BB, norm0 = prop.mft(fpm,
                                      real_dim_input=dim_fpm,
                                      dim_output=dim_pup,
-                                     nbres=nbres[k],
+                                     nbres=nbres[k] * lambda_ratio,
                                      inverse=True,
                                      returnAABB=True)
             AAs_inverse.append(AA)
@@ -990,13 +1024,13 @@ def prop_fpm_regional_sampling(pup,
             efield_before_fpm = prop.mft(pup,
                                          real_dim_input=dim_pup,
                                          dim_output=dim_fpm,
-                                         nbres=nbres[k],
+                                         nbres=nbres[k] * lambda_ratio,
                                          X_offset_output=shift[0] * samplings[k],
                                          Y_offset_output=shift[1] * samplings[k])
             efield_before_ls += prop.mft(efield_before_fpm * fpm * but_here,
                                          real_dim_input=dim_fpm,
                                          dim_output=dim_pup,
-                                         nbres=nbres[k],
+                                         nbres=nbres[k] * lambda_ratio,
                                          inverse=True,
                                          X_offset_input=shift[0] * samplings[k],
                                          Y_offset_input=shift[1] * samplings[k])
