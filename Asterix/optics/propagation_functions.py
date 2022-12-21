@@ -570,7 +570,7 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
 def prop_fpm_regional_sampling(pup,
                                fpm,
                                real_dim_input = None,
-                               nbres=np.array([0.1, 5., 50.]),
+                               nbres=np.array([2., 5., 50.]),
                                shift=(0, 0),
                                filter_order=15,
                                alpha=1.5):

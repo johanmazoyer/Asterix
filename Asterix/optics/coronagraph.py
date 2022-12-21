@@ -384,7 +384,7 @@ class Coronagraph(optsy.OpticalSystem):
             lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod,
                                                                     fpm_array,
                                                                     real_dim_input=int(2 * self.prad),
-                                                                    nbres=np.array([0.1, 5., 50.]),
+                                                                    nbres=np.array([1., 5., 30., 50.]),
                                                                     shift=(0, 0))
 
         else:
