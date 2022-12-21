@@ -821,6 +821,7 @@ def prop_fpm_regional_sampling(pup,
                                BBs_inverse=None,
                                norm0s_direct=None,
                                norm0s_inverse=None,
+                               butterworths=None,
                                returnAAsBBs=False,
                                filter_order=15,
                                alpha=1.5):
@@ -855,27 +856,30 @@ def prop_fpm_regional_sampling(pup,
             it is assumed that the user is 'expert' and no specific error message will be thrown if
             parameters are wrong. e.g. it will crash if image, AA and BB dimensions are not compatibles
             if False : classical MFT, AA, BB and norm0 parameters are not used
-    AAs_direct: List of complex numpy arrays or None, default None
+    AAs_direct : List of complex numpy arrays or None, default None
         Listist of matrices AA that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
-        mft (direct direction). This parameter is only used if only_mat_mult = True
-    AAs_inverse: List of complex numpy arrays or None, default None
+        mft (direct direction). This parameter is only used if only_mat_mult = True.
+    AAs_inverse : List of complex numpy arrays or None, default None
         List of matrices AA that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
-        mft (inverse direction). This parameter is only used if only_mat_mult = True
-    BBs_direct: List of complex numpy arrays or None, default None
+        mft (inverse direction). This parameter is only used if only_mat_mult = True.
+    BBs_direct : List of complex numpy arrays or None, default None
         List of matrices BB that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
-        mft (direct direction). This parameter is only used if only_mat_mult = True
-    BBs_inverse: List of complex numpy arrays or None, default None
+        mft (direct direction). This parameter is only used if only_mat_mult = True.
+    BBs_inverse : List of complex numpy arrays or None, default None
         List of matrices BB that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
-        mft (inverse direction). This parameter is only used if only_mat_mult = True
-    norm0s_direct: List of floats or None, default None
-        List of Normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional 
-        sampling mft (direct direction). This parameter is only used if only_mat_mult = True
-    norm0s_inverse: List of floats or None, default None
-        List of Normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional 
-        sampling mft (inverse direction). This parameter is only used if only_mat_mult = True
-    returnAAsBBs: boolean, default False
+        mft (inverse direction). This parameter is only used if only_mat_mult = True.
+    norm0s_direct : List of floats or None, default None
+        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional 
+        sampling mft (direct direction). This parameter is only used if only_mat_mult = True.
+    norm0s_inverse : List of floats or None, default None
+        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional 
+        sampling mft (inverse direction). This parameter is only used if only_mat_mult = True.
+    butterworths : List of real numpy arrays or None, default None
+        List of butterworth windows used for each regional sampling mft. 
+        This parameter is only used if only_mat_mult = True.
+    returnAAsBBs : boolean, default False
         if False, the normal propagation image is returned
-        if True, we return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse
+        if True, return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths
                 that can be used for all the propagation when only_mat_mult is True.
     filter_order : int
         Order of the Butterworth filter.
@@ -930,26 +934,32 @@ def prop_fpm_regional_sampling(pup,
         BBs_inverse = list()
         norm0s_direct = list()
         norm0s_inverse = list()
+        butterworths = list()
 
     efield_before_ls = np.zeros((dim_pup, dim_pup), dtype='complex128')
 
-    const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+    if not only_mat_mult:
+        const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
     for k in range(nbres.shape[0]):
-
-        if k == 0:
-            # Innermost part of the focal plane
-            but_here = np.copy(const_but)
-        elif k < nbres.shape[0] - 1:
-            # Butterworth filter in each layer
-            sizebut_here = dim_fpm / alpha * nbres[k - 1] / nbres[k]
-            but_here = (1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5,
-                                                          yshift=-0.5)) * const_but
+        if only_mat_mult:
+            but_here = butterworths[k]
         else:
-            # Outer part of the FPM
-            sizebut_here = dim_fpm / alpha * nbres[-2] / nbres[-1]
-            but_here = 1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)
+            if k == 0:
+                # Innermost part of the focal plane
+                but_here = np.copy(const_but)
+            elif k < nbres.shape[0] - 1:
+                # Butterworth filter in each layer
+                sizebut_here = dim_fpm / alpha * nbres[k - 1] / nbres[k]
+                but_here = (1 - phase_ampl.butterworth_circle(
+                    dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
+            else:
+                # Outer part of the FPM
+                sizebut_here = dim_fpm / alpha * nbres[-2] / nbres[-1]
+                but_here = 1 - phase_ampl.butterworth_circle(
+                    dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)
 
         if returnAAsBBs:
+            butterworths.append(but_here)
             AA, BB, norm0 = prop.mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k], returnAABB=True)
             AAs_direct.append(AA)
             BBs_direct.append(BB)
@@ -992,6 +1002,6 @@ def prop_fpm_regional_sampling(pup,
                                          Y_offset_input=shift[1] * samplings[k])
 
     if returnAAsBBs:
-        return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse
+        return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths
 
     return efield_before_ls
