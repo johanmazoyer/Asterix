@@ -869,13 +869,13 @@ def prop_fpm_regional_sampling(pup,
         List of matrices BB that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
         mft (inverse direction). This parameter is only used if only_mat_mult = True.
     norm0s_direct : List of floats or None, default None
-        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional 
+        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional
         sampling mft (direct direction). This parameter is only used if only_mat_mult = True.
     norm0s_inverse : List of floats or None, default None
-        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional 
+        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional
         sampling mft (inverse direction). This parameter is only used if only_mat_mult = True.
     butterworths : List of real numpy arrays or None, default None
-        List of butterworth windows used for each regional sampling mft. 
+        List of butterworth windows used for each regional sampling mft.
         This parameter is only used if only_mat_mult = True.
     returnAAsBBs : boolean, default False
         if False, the normal propagation image is returned
