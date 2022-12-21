@@ -423,7 +423,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         Returns
         --------
-        fqpm : list of len(self.wav_vec) 2D arrays
+        fqpm : List of len(self.wav_vec) 2D arrays
             Complex transmission of the FQPM mask at all wavelengths.
         """
 
@@ -467,7 +467,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         Returns
         --------
-        vortex : list of 2D numpy array
+        vortex : List of 2D numpy array
             The complex FP mask at all wavelengths.
         """
 
@@ -511,7 +511,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         Returns
         --------
-        wrapped_vortex : list of 2D numpy array
+        wrapped_vortex : List of 2D numpy array
             The complex FP masks at all wavelengths.
         """
         if self.prop_apod2lyot == "fft":
@@ -552,7 +552,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         Returns
         --------
-        knife_allwl : list of len(self.wav_vec) 2D arrays
+        knife_allwl : List of len(self.wav_vec) 2D arrays
             Complex transmission of the knife-edge coronagraph mask at all wavelengths.
         """
         if self.prop_apod2lyot == "fft":
@@ -591,7 +591,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         Returns
         --------
-        ClassicalLyotFPM_allwl : list of 2D numpy arrays
+        ClassicalLyotFPM_allwl : List of 2D numpy arrays
             The FP masks at all wavelengths.
         """
 
@@ -611,7 +611,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         Returns
         --------
-        hlc_all_wl : list of 2D numpy array
+        hlc_all_wl : List of 2D numpy array
             The FP masks at all wavelengths.
         """
 
@@ -810,7 +810,20 @@ def create_wrapped_vortex_mask(dim,
     return angles, phase_mask
 
 
-def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shift=(0, 0), filter_order=15, alpha=1.5):
+def prop_fpm_regional_sampling(pup,
+                               fpm,
+                               nbres=np.array([0.1, 5, 50, 100]),
+                               shift=(0, 0),
+                               only_mat_mult=False,
+                               AAs_direct=None,
+                               AAs_inverse=None,
+                               BBs_direct=None,
+                               BBs_inverse=None,
+                               norm0s_direct=None,
+                               norm0s_inverse=None,
+                               returnAAsBBs=False,
+                               filter_order=15,
+                               alpha=1.5):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
 
@@ -829,13 +842,41 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
         Input mage array containing the wavefront at the entrance pupil of the optical system.
     fpm : 2D array
         Complex electric field in the focal plane of the focal-plane mask.
-    nbres : 1D array or list
+    nbres : 1D array or List
         List of the number of resolution elements in the total image plane for all propagation layers.
         As a general rule, it is probably safer to put these numbers so that there is not sampling shift right in
         the middle of the DH to avoid confusing the matrix. So if we correct the DH between
         two radius IWA and OWA (in lambda/D), nbrs should not have any elements between 2*IWA and 2*OWA.
     shift : tuple, default (0, 0)
         Shift of FPM with respect to optical axis in units of lambda/D.
+    only_mat_mult: boolean,, default False
+            if True, we only do the matrix multiplication, but we need the matrices AA, BB and the scalars
+            norm0 to be provided. In that case all other parameters are not used. Careful, in this mode,
+            it is assumed that the user is 'expert' and no specific error message will be thrown if
+            parameters are wrong. e.g. it will crash if image, AA and BB dimensions are not compatibles
+            if False : classical MFT, AA, BB and norm0 parameters are not used
+    AAs_direct: List of complex numpy arrays or None, default None
+        Listist of matrices AA that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (direct direction). This parameter is only used if only_mat_mult = True
+    AAs_inverse: List of complex numpy arrays or None, default None
+        List of matrices AA that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (inverse direction). This parameter is only used if only_mat_mult = True
+    BBs_direct: List of complex numpy arrays or None, default None
+        List of matrices BB that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (direct direction). This parameter is only used if only_mat_mult = True
+    BBs_inverse: List of complex numpy arrays or None, default None
+        List of matrices BB that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (inverse direction). This parameter is only used if only_mat_mult = True
+    norm0s_direct: List of floats or None, default None
+        List of Normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional 
+        sampling mft (direct direction). This parameter is only used if only_mat_mult = True
+    norm0s_inverse: List of floats or None, default None
+        List of Normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional 
+        sampling mft (inverse direction). This parameter is only used if only_mat_mult = True
+    returnAAsBBs: boolean, default False
+        if False, the normal propagation image is returned
+        if True, we return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse
+                that can be used for all the propagation when only_mat_mult is True.
     filter_order : int
         Order of the Butterworth filter.
     alpha : float
@@ -877,6 +918,19 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
     # can be used to check:
     # print(f"With dim_pup = {dim_pup} and nbrs = {nbres}, Samplings: {samplings}")
 
+    if shift != (0, 0):
+        if returnAAsBBs or only_mat_mult:
+            raise ValueError(f"Cannot use precalculated MFT matrices in the case of of shifted center."
+                             f"Use shift = (0,0) or returnAAsBBs=False and only_mat_mult = False")
+
+    if returnAAsBBs:
+        AAs_direct = list()
+        AAs_inverse = list()
+        BBs_direct = list()
+        BBs_inverse = list()
+        norm0s_direct = list()
+        norm0s_inverse = list()
+
     efield_before_ls = np.zeros((dim_pup, dim_pup), dtype='complex128')
 
     const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
@@ -887,7 +941,7 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
             but_here = np.copy(const_but)
         elif k < nbres.shape[0] - 1:
             # Butterworth filter in each layer
-            sizebut_here = dim_fpm / alpha * nbres[k-1] / nbres[k]
+            sizebut_here = dim_fpm / alpha * nbres[k - 1] / nbres[k]
             but_here = (1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5,
                                                           yshift=-0.5)) * const_but
         else:
@@ -895,193 +949,49 @@ def prop_fpm_regional_sampling(pup, fpm, nbres=np.array([0.1, 5, 50, 100]), shif
             sizebut_here = dim_fpm / alpha * nbres[-2] / nbres[-1]
             but_here = 1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)
 
-        efield_before_fpm = prop.mft(pup,
-                                     real_dim_input=dim_pup,
-                                     dim_output=dim_fpm,
-                                     nbres=nbres[k],
-                                     X_offset_output=shift[0] * samplings[k],
-                                     Y_offset_output=shift[1] * samplings[k])
-        efield_before_ls += prop.mft(efield_before_fpm * fpm * but_here,
+        if returnAAsBBs:
+            AA, BB, norm0 = prop.mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k], returnAABB=True)
+            AAs_direct.append(AA)
+            BBs_direct.append(BB)
+            norm0s_direct.append(norm0)
+
+            AA, BB, norm0 = prop.mft(fpm,
                                      real_dim_input=dim_fpm,
                                      dim_output=dim_pup,
                                      nbres=nbres[k],
                                      inverse=True,
-                                     X_offset_input=shift[0] * samplings[k],
-                                     Y_offset_input=shift[1] * samplings[k])
+                                     returnAABB=True)
+            AAs_inverse.append(AA)
+            BBs_inverse.append(BB)
+            norm0s_inverse.append(norm0)
 
-    # only_mat_mult=False,
-    # AAs_direct=None,
-    # AAs_inverse=None,
-    # BBs_direct=None,
-    # BBs_inverse=None,
-    # norm0s_direct=None,
-    # norm0s_inverse=None,
-    # returnAAsBBs=False,
-    # if returnAAsBBs:
-    #     AAs_direct = list()
-    #     AAs_inverse = list()
-    #     BBs_direct = list()
-    #     BBs_inverse = list()
-    #     norm0s_direct = list()
-    #     norm0s_inverse = list()
+        elif only_mat_mult:
+            efield_before_fpm = prop.mft(pup,
+                                         only_mat_mult=True,
+                                         AA=AAs_direct[k],
+                                         BB=BBs_direct[k],
+                                         norm0=norm0s_direct[k])
+            efield_before_ls += prop.mft(efield_before_fpm * fpm * but_here,
+                                         only_mat_mult=True,
+                                         AA=AAs_inverse[k],
+                                         BB=BBs_inverse[k],
+                                         norm0=norm0s_inverse[k])
+        else:
+            efield_before_fpm = prop.mft(pup,
+                                         real_dim_input=dim_pup,
+                                         dim_output=dim_fpm,
+                                         nbres=nbres[k],
+                                         X_offset_output=shift[0] * samplings[k],
+                                         Y_offset_output=shift[1] * samplings[k])
+            efield_before_ls += prop.mft(efield_before_fpm * fpm * but_here,
+                                         real_dim_input=dim_fpm,
+                                         dim_output=dim_pup,
+                                         nbres=nbres[k],
+                                         inverse=True,
+                                         X_offset_input=shift[0] * samplings[k],
+                                         Y_offset_input=shift[1] * samplings[k])
 
-    # if shift != (0, 0):
-    #     if returnAAsBBs or only_mat_mult:
-    #         raise ValueError(f"Cannot use precalculated MFT matrices in the case of of shifted center."
-    #                          f"Use shift = (0,0) or returnAAsBBs=False and only_mat_mult = False")
-
-    # #Innermost part of the focal plane
-    # but_inner = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
-
-    # if returnAAsBBs:
-    #     AA, BB, norm0 = prop.mft(pup, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0], returnAABB=True)
-    #     AAs_direct.append(AA)
-    #     BBs_direct.append(BB)
-    #     norm0s_direct.append(norm0)
-
-    #     AA, BB, norm0 = prop.mft(efield_before_fpm_inner * fpm * but_inner,
-    #                              real_dim_input=dim_fpm,
-    #                              dim_output=dim_pup,
-    #                              nbres=nbres[0],
-    #                              inverse=True,
-    #                              returnAABB=True)
-    #     AAs_inverse.append(AA)
-    #     BBs_inverse.append(BB)
-    #     norm0s_inverse.append(norm0)
-
-    # elif only_mat_mult:
-    #     efield_before_fpm_inner = prop.mft(pup,
-    #                                        only_mat_mult=True,
-    #                                        AA=AAs_direct[0],
-    #                                        BB=BBs_direct[0],
-    #                                        norm0=norm0s_direct[0])
-    #     efield_before_ls = prop.mft(efield_before_fpm_inner * fpm * but_inner,
-    #                                 only_mat_mult=True,
-    #                                 AA=AAs_inverse[0],
-    #                                 BB=BBs_inverse[0],
-    #                                 norm0=norm0s_inverse[0])
-    # else:
-    #     efield_before_fpm_inner = prop.mft(pup,
-    #                                        real_dim_input=dim_pup,
-    #                                        dim_output=dim_fpm,
-    #                                        nbres=nbres[0],
-    #                                        X_offset_output=shift[0] * samplings[0],
-    #                                        Y_offset_output=shift[1] * samplings[0])
-    #     efield_before_ls = prop.mft(efield_before_fpm_inner * fpm * but_inner,
-    #                                 real_dim_input=dim_fpm,
-    #                                 dim_output=dim_pup,
-    #                                 nbres=nbres[0],
-    #                                 inverse=True,
-    #                                 X_offset_input=shift[0] * samplings[0],
-    #                                 Y_offset_input=shift[1] * samplings[0])
-
-    # # From inner to outer part of FPM
-    # const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
-    # for k in range(nbres.shape[0] - 1):
-    #     # Butterworth filter in each layer
-    #     sizebut_here = dim_fpm / alpha * nbres[k] / nbres[k + 1]
-    #     but = (1 -
-    #            phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
-
-    #     if returnAAsBBs:
-    #         AA, BB, norm0 = prop.mft(pup,
-    #                                  real_dim_input=dim_pup,
-    #                                  dim_output=dim_fpm,
-    #                                  nbres=nbres[k + 1],
-    #                                  returnAABB=True)
-    #         AAs_direct.append(AA)
-    #         BBs_direct.append(BB)
-    #         norm0s_direct.append(norm0)
-
-    #         AA, BB, norm0 = prop.mft(ef_pre_fpm * fpm * but,
-    #                                  real_dim_input=dim_fpm,
-    #                                  dim_output=dim_pup,
-    #                                  nbres=nbres[k + 1],
-    #                                  returnAABB=True)
-    #         AAs_inverse.append(AA)
-    #         BBs_inverse.append(BB)
-    #         norm0s_inverse.append(norm0)
-
-    #     elif only_mat_mult:
-    #         efield_before_fpm_inner = prop.mft(pup,
-    #                                            only_mat_mult=True,
-    #                                            AA=AAs_direct[k + 1],
-    #                                            BB=BBs_direct[k + 1],
-    #                                            norm0=norm0s_direct[k + 1])
-    #         efield_before_ls = prop.mft(ef_pre_fpm * fpm * but,
-    #                                     only_mat_mult=True,
-    #                                     AA=AAs_inverse[k + 1],
-    #                                     BB=BBs_inverse[k + 1],
-    #                                     norm0=norm0s_inverse[k + 1])
-    #     else:
-    #         ef_pre_fpm = prop.mft(pup,
-    #                               real_dim_input=dim_pup,
-    #                               dim_output=dim_fpm,
-    #                               nbres=nbres[k + 1],
-    #                               X_offset_output=shift[0] * samplings[k + 1],
-    #                               Y_offset_output=shift[1] * samplings[k + 1])
-    #         ef_pre_ls = prop.mft(ef_pre_fpm * fpm * but,
-    #                              real_dim_input=dim_fpm,
-    #                              dim_output=dim_pup,
-    #                              nbres=nbres[k + 1],
-    #                              inverse=True,
-    #                              X_offset_input=shift[0] * samplings[k + 1],
-    #                              Y_offset_input=shift[1] * samplings[k + 1])
-
-    #     # Sum up E-field contributions before the LS
-    #     efield_before_ls += ef_pre_ls
-
-    # # Outer part of the FPM
-    # nbres_outer = dim_fpm / samp_outer
-    # sizebut_outer = dim_fpm / alpha * nbres[-1] / nbres_outer
-    # but_outer = 1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
-
-    #         if returnAAsBBs:
-    #         AA, BB, norm0 = prop.mft(pup,
-    #                                  real_dim_input=dim_pup,
-    #                                  dim_output=dim_fpm,
-    #                                  nbres=nbres[k + 1],
-    #                                  returnAABB=True)
-    #         AAs_direct.append(AA)
-    #         BBs_direct.append(BB)
-    #         norm0s_direct.append(norm0)
-
-    #         AA, BB, norm0 = prop.mft(ef_pre_fpm * fpm * but,
-    #                                  real_dim_input=dim_fpm,
-    #                                  dim_output=dim_pup,
-    #                                  nbres=nbres[k + 1],
-    #                                  returnAABB=True)
-    #         AAs_inverse.append(AA)
-    #         BBs_inverse.append(BB)
-    #         norm0s_inverse.append(norm0)
-
-    #     elif only_mat_mult:
-    #         efield_before_fpm_inner = prop.mft(pup,
-    #                                            only_mat_mult=True,
-    #                                            AA=AAs_direct[-1],
-    #                                            BB=BBs_direct[-1],
-    #                                            norm0=norm0s_direct[-1])
-    #         efield_before_ls = prop.mft(ef_pre_fpm * fpm * but,
-    #                                     only_mat_mult=True,
-    #                                     AA=AAs_inverse[-1],
-    #                                     BB=BBs_inverse[-1],
-    #                                     norm0=norm0s_inverse[-1])
-    #     else:
-    #         ef_pre_fpm_outer = prop.mft(pup,
-    #                             real_dim_input=dim_pup,
-    #                             dim_output=dim_fpm,
-    #                             nbres=nbres_outer,
-    #                             X_offset_output=shift[0] * samp_outer,
-    #                             Y_offset_output=shift[1] * samp_outer)
-    #         ef_pre_ls_outer = prop.mft(ef_pre_fpm_outer * fpm * but_outer,
-    #                            real_dim_input=dim_fpm,
-    #                            dim_output=dim_pup,
-    #                            nbres=nbres_outer,
-    #                            inverse=True,
-    #                            X_offset_input=shift[0] * samp_outer,
-    #                            Y_offset_input=shift[1] * samp_outer)
-
-    # # Total E-field before the LS
-    # efield_before_ls += ef_pre_ls_outer
+    if returnAAsBBs:
+        return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse
 
     return efield_before_ls
