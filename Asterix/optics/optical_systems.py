@@ -99,7 +99,7 @@ class OpticalSystem:
             a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
                                real_dim_input=int(2 * self.prad),
                                dim_output=self.dimScience,
-                               nbres=self.dimScience / self.Science_sampling * lambda_ratio,
+                               nbres=self.dimScience / self.Science_sampling / lambda_ratio,
                                inverse=False,
                                norm='ortho',
                                returnAABB=True)
@@ -196,7 +196,7 @@ class OpticalSystem:
             focal_plane_EF = prop.mft(exit_EF,
                                       real_dim_input=int(self.prad * 2),
                                       dim_output=self.dimScience,
-                                      nbres=self.dimScience / self.Science_sampling * lambda_ratio,
+                                      nbres=self.dimScience / self.Science_sampling / lambda_ratio,
                                       X_offset_output=Psf_offset[0],
                                       Y_offset_output=Psf_offset[1],
                                       inverse=False,

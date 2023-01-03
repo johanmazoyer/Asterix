@@ -156,7 +156,7 @@ class Coronagraph(optsy.OpticalSystem):
                     a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
                                        real_dim_input=int(2 * self.prad),
                                        dim_output=dim_science_here,
-                                       nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                                       nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
                                        inverse=False,
                                        norm='ortho',
                                        returnAABB=True)
@@ -167,7 +167,7 @@ class Coronagraph(optsy.OpticalSystem):
                 a, b, c = prop.mft(np.zeros((dim_science_here, dim_science_here)),
                                    real_dim_input=dim_science_here,
                                    dim_output=int(2 * self.prad),
-                                   nbres=dim_science_here / fpm_sampling_here * lambda_ratio,
+                                   nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
                                    inverse=True,
                                    norm='ortho',
                                    returnAABB=True)
