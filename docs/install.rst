@@ -1,4 +1,4 @@
-.. _install-label:
+..  _install-label:
 
 
 Conda envs
@@ -25,33 +25,46 @@ which lists the most common conda command lines you can use.
 Install Asterix
 -----------------
 
-Due to the continually developing nature of Asterix, you should always use the current version of the code on
-`GitHub <https://github.com/johanmazoyer/Asterix>`_ and keep it updated frequently. 
-
 First ``cd`` in the directory where you want to download Asterix. To install the most up to date 
 developer version, clone the Asterix repository :
 
+.. code-block:: bash
+
     $ git clone https://github.com/johanmazoyer/Asterix.git
 
-This clones the repository using HTTPS authentication. Once the repository is cloned onto your computer, ``cd Asterix`` into it. 
-Then type:
+This clones the repository using HTTPS authentication. Once the repository is cloned onto your computer, type:
 
+.. code-block:: bash
+    
+    $ cd Asterix
     $ conda env create --file environment.yml
 
 This will automatically create a python environement named ``asterix`` with only the required python packages for Asterix, at their
 latest stable version. Before installing Asterix and everytime you want to use it, you need to activate this environement:
 
+.. code-block:: bash
+
     $ conda activate asterix
 
-Run the setup file to install Asterix:
+Now run the setup file to install Asterix. Due to the continually developing nature of Asterix, you should 
+always use the current version of the code on `GitHub <https://github.com/johanmazoyer/Asterix>`_, 
+install in "develop mode" ("-e" editing option), allowing frequent updates when pulling:
 
+.. code-block:: bash
+    
     $ pip install -e '.'
+
+If you want to develop for Asterix, you might need packages to test and build the documentation. Run instead:
+
+.. code-block:: bash
+    
+    $  pip install -e '.[dev,docs]'
 
 
 Dependencies
 -------------
-The installation of Asterix requires the commmon python packages, documented in the setup.py file, which are useful for most astronomical 
-data analysis. They will be automatically installed in the setup. 
+The installation of Asterix requires the commmon python packages, listed in the `setup.py file <https://github.com/johanmazoyer/Asterix/blob/master/setup.py>`_, 
+which are useful for most astronomical data analysis. They will be automatically installed with Asterix.
 
 We recommend you use a version of Python > 3.10 to use Asterix. As Asterix can be computationally expensive, we recommend a 
 powerful computer to optimize the correction. This will depend on specific test you want to perform (number of deformable mirrors, 

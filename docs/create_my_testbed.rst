@@ -1,4 +1,4 @@
-.. _create-my-testbed-label:
+..  _create-my-testbed-label:
 
 Create and modify testbeds
 ---------------------------
@@ -70,7 +70,7 @@ Finally, ``OpticalSystem`` have been set up with a mode where each optical plane
 This can generate a lot of fits especially if in a loop so be careful. 
 To use this option, set up the keyword ``dir_save_all_planes`` to an existing path directory.
 
-Function documentation can be found in Section :ref:`os-label`. 
+Additional details can be found directly in :ref:`the code documentation <os-label>`.
 
 Polychromatic images
 +++++++++++++++++++++++
@@ -152,15 +152,14 @@ The keyword "diam_lyot_in_m" is only used in the case of a round Lyot Stop ("Rou
 The pupil in the .fits file are automatically rescaled at 2*prad using binning. Therefore the code requires that the parameter 
 diam_pup_in_pix is a divisor of the .fits file dimension
 
-Function documentation can be found in Section :ref:`pupil-label`. 
+Additional details can be found directly in :ref:`the code documentation <pupil-label>`.
 
 
 Coronagraph
 +++++++++++++++++++++++
 
 ``Coronagraph`` is a sub class of ``OpticalSystem`` which initializes and describes the behavior
-of a coronagraph system (from apodization plane at the entrance of the coronagraph to the Lyot plane). Function
-documentation can be found in Section :ref:`coronagraph-label`. 
+of a coronagraph system (from apodization plane at the entrance of the coronagraph to the Lyot plane).
 
 
 .. code-block:: python
@@ -182,7 +181,10 @@ documentation can be found in Section :ref:`coronagraph-label`.
 Type of coronagraph can be changed with ``corona_type`` parameter.  Currently supported ``corona_type`` 
 are 'fqpm' or 'knife', 'classiclyot' or 'HLC'. Focal plane functions are automatically normalized in contrast
 by default. For details about the way to normalize in polychromatic light, see ``measure_normalization`` 
-and ``todetector_intensity`` documentation in :ref:`os-label`
+and ``todetector_intensity`` documentation in the docs. 
+
+Additional details can be found directly in :ref:`the code documentation <coronagraph-label>`.
+
 
 
 Deformable Mirror
@@ -216,7 +218,7 @@ and the position of one of them compared to the pupil. This file must have verti
 Out of the pupil plane DMs are simulated by taking a Angular-Spectrum transform, multiply by the DM phase, and then coming back to a pupil plane. 
 Because we are only in close range, this is more accurate than Fresnel propogation.
 
-Function documentation can be found in Section :ref:`deformable-mirror-label`. 
+Additional details can be found directly in :ref:`the code documentation <deformable-mirror-label>`.
 
 
 Concatenate your Optical Systems
@@ -272,6 +274,4 @@ or a specific pupil in the entrance plane of the coronagraph (e.g. like the Roma
     testbed = Testbed([pup_round, DM34act, DM32act,pup_roman, corono],
                       ["entrancepupil", "DM1", "DM3", "romanpupil" , "corono"])
     
-
-
-Function documentation can be found in Section :ref:`testbed-label`. 
+Additional details can be found directly in :ref:`the code documentation <testbed-label>`.

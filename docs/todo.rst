@@ -1,7 +1,46 @@
-.. _todo-label:
+..  _todo-label:
 
-Open issues
+Contributing
 ---------------
+
+If you want to develop for Asterix, you might need packages to test and build the documentation. Run:
+
+.. code-block:: bash
+    
+    $  pip install -e '.[dev,docs]'
+
+To contribute to Asterix, please follow the following steps:
+    1. Make sure your local `master` branch is up-to-date by pulling.
+    2. Create a new branch off `master` with a name of your choice and commit your work.
+    3. When done, open a PR and request a review after ensuring your branch is up-to-date with the base branch you're merging into (usually `master`) and after running the pytests and the linter locally as follows. To run the pytests:
+
+    .. code-block:: bash
+
+        $ pytest
+
+    To run the flake8 linter:
+
+    .. code-block:: bash
+
+        $ flake8 . --max-line-length=121 --count --statistics
+
+
+    4. Iterate on the review, once it's approved it will be immediately merged.
+
+**Documentation**
+
+Please update any affected documentation when working on a PR. Docstrings must follow the `numpydoc guidelines <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+To check your updates, you can locally generate the documentation before pushing to master:
+
+.. code-block:: bash
+
+        $ cd docs/
+        $ make html
+
+General guidelines:
+    * Do not touch other people's branches.
+    * Do not touch Draft PRs.
+    * If you approve a PR, you can immediately merge it.
 
 These are future improvements to Asterix currenly envisionned (not particularly by order of priority):
 
