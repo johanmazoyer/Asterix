@@ -12,13 +12,13 @@ If you want to develop for Asterix, you might need packages to test and build th
 To contribute to Asterix, please follow the following steps:
     1. Make sure your local `master` branch is up-to-date by pulling.
     2. Create a new branch off `master` with a name of your choice and commit your work.
-    3. When done, open a PR and request a review after ensuring your branch is up-to-date with the base branch you're merging into (usually `master`) and after running the pytests and the linter locally. You can then the run the pytests
+    3. When done, open a PR and request a review after ensuring your branch is up-to-date with the base branch you're merging into (usually `master`) and after running the pytests and the linter locally as follows. To run the pytests:
 
     .. code-block:: bash
 
         $ pytest
 
-    or run the flake8 linter:
+    To run the flake8 linter:
 
     .. code-block:: bash
 
@@ -29,7 +29,7 @@ To contribute to Asterix, please follow the following steps:
 
 **Documentation**
 
-Please update the documentation after modifying Asterix. Docstrings must follow the `numpydoc guidelines <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+Please update any affected documentation when working on a PR. Docstrings must follow the `numpydoc guidelines <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 To check your updates, you can locally generate the documentation before pushing to master:
 
 .. code-block:: bash
@@ -37,7 +37,7 @@ To check your updates, you can locally generate the documentation before pushing
         $ cd docs/
         $ make html
 
-Generale guidelines:
+General guidelines:
     * Do not touch other people's branches.
     * Do not touch Draft PRs.
     * If you approve a PR, you can immediately merge it.
