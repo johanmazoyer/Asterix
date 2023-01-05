@@ -1,5 +1,5 @@
 import numpy as np
-from Asterix.utils import crop_or_pad_image
+from Asterix.utils import crop_or_pad_image, save_plane_in_fits
 
 
 def mft(image,
@@ -147,7 +147,7 @@ def mft(image,
     # check dimensions and type of real_dim_input
     error_string_real_dim_input = "'dimpup' must be an int (square input pupil) or tuple of ints of dimension 2"
     if np.isscalar(real_dim_input):
-        if isinstance(real_dim_input, int):
+        if isinstance(real_dim_input, (int, np.integer)):
             real_dim_input_x = real_dim_input
             real_dim_input_y = real_dim_input
         else:
@@ -164,7 +164,7 @@ def mft(image,
     # check dimensions and type of dim_output
     error_string_dim_output = "'dim_output' must be an int (square output) or tuple of ints of dimension 2"
     if np.isscalar(dim_output):
-        if isinstance(dim_output, int):
+        if isinstance(dim_output, (int, np.integer)):
             dim_output_x = dim_output
             dim_output_y = dim_output
         else:
@@ -181,13 +181,13 @@ def mft(image,
     # check dimensions and type of nbres
     error_string_nbr = "'nbres' must be an float or int (square output) or tuple of float or int of dimension 2"
     if np.isscalar(nbres):
-        if isinstance(nbres, (float, int)):
+        if isinstance(nbres, (float, int, np.integer)):
             nbresx = float(nbres)
             nbresy = float(nbres)
         else:
             raise TypeError(error_string_nbr)
     elif isinstance(nbres, tuple):
-        if all(isinstance(nbresi, (float, int)) for nbresi in nbres) & (len(nbres) == 2):
+        if all(isinstance(nbresi, (float, int, np.integer)) for nbresi in nbres) & (len(nbres) == 2):
             nbresx = float(nbres[0])
             nbresy = float(nbres[1])
         else:
@@ -569,11 +569,12 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
 
 def prop_fpm_regional_sampling(pup,
                                fpm,
-                               real_dim_input = None,
+                               real_dim_input=None,
                                nbres=np.array([2., 5., 50.]),
                                shift=(0, 0),
                                filter_order=15,
-                               alpha=1.5):
+                               alpha=1.5,
+                               dir_save_all_planes=None):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
 
@@ -596,7 +597,7 @@ def prop_fpm_regional_sampling(pup,
     real_dim_input : int or None, default None
             Diameter of the support in pup (can differ from pup.shape). If None real_dim_input = pup.shape
             Example: real_dim_input = diameter of the pupil in pixel for a padded pupil
-    nbres : 1D array or list
+    nbres : list
         List of the number of resolution elements in the total image plane for all propagation layers.
         As a general rule, it is probably safer to put these numbers so that there is not sampling shift right in
         the middle of the DH to avoid confusing the matrix. So if we correct the DH between
@@ -615,6 +616,10 @@ def prop_fpm_regional_sampling(pup,
         E-field before the Lyot stop.
     """
     samp_outer = 2
+
+    if not isinstance(nbres, (list, np.ndarray)):
+        raise TypeError(f"'nbres' parameter need to be of type list or numpy.array. Currently type = {type(nbres)}")
+
     nbres = np.array(nbres)
 
     dim_overpad_pupil = pup.shape[0]
@@ -676,6 +681,13 @@ def prop_fpm_regional_sampling(pup,
                            inverse=True,
                            X_offset_input=shift[0] * samplings[0],
                            Y_offset_input=shift[1] * samplings[0])
+    if dir_save_all_planes is not None:
+        name_plane = f'FPbeforeFPM_nbr{int(nbres[0])}_sampling{int(samplings[0])}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, efield_before_fpm_inner)
+        name_plane = f'FPafterButandFPM_nbr{int(nbres[0])}_sampling{int(samplings[0])}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, efield_before_fpm_inner * fpm * but_inner)
+        name_plane = f'PPbeforeLyot_nbr{int(nbres[0])}_sampling{int(samplings[0])}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, efield_before_ls)
 
     # From inner to outer part of FPM
     const_but = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
@@ -699,6 +711,13 @@ def prop_fpm_regional_sampling(pup,
                         X_offset_input=shift[0] * samplings[k + 1],
                         Y_offset_input=shift[1] * samplings[k + 1],
                         inverse=True)
+        if dir_save_all_planes is not None:
+            name_plane = f'FPbeforeFPM_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_fpm)
+            name_plane = f'FPafterButandFPM_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_fpm * fpm * but)
+            name_plane = f'PPbeforeLyot_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_ls)
 
         # Sum up E-field contributions before the LS
         efield_before_ls += ef_pre_ls
@@ -721,6 +740,14 @@ def prop_fpm_regional_sampling(pup,
                           inverse=True,
                           X_offset_input=shift[0] * samp_outer,
                           Y_offset_input=shift[1] * samp_outer)
+
+    if dir_save_all_planes is not None:
+        name_plane = f'FPbeforeFPM_nbr{int(nbres_outer)}_sampling{int(samp_outer)}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_fpm_outer)
+        name_plane = f'FPafterButandFPM_nbr{int(nbres_outer)}_sampling{int(samp_outer)}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_fpm_outer * fpm * but_outer)
+        name_plane = f'PPbeforeLyot_nbr{int(nbres_outer)}_sampling{int(samp_outer)}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_ls_outer)
 
     # Total E-field before the LS
     efield_before_ls += ef_pre_ls_outer
