@@ -51,6 +51,37 @@ class Coronagraph(optsy.OpticalSystem):
         self.corona_type = coroconfig["corona_type"].lower()
         self.string_os += '_' + self.corona_type
 
+        # define the types of propagation first for each coronagraph type
+        # this is also used to hard code some of the internal propagation of the
+        # coronagraph like the size of the focal plane
+        if self.corona_type in ("classiclyot", "hlc"):
+            self.prop_apod2lyot = 'mft-babinet'
+
+            self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
+
+            # we oversample the center in babinet's mode because we can
+            # hard coded for now, this is very internal cooking
+            self.Lyot_fpm_sampling = 20.  # self.Science_sampling
+            rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
+            self.dim_fpm = 2 * int(2.2 * rad_LyotFP_pix / 2)
+
+        elif self.corona_type in ("vortex", "wrapped_vortex"):
+            self.prop_apod2lyot = 'regional-sampling'
+            if self.prad < 100:
+                raise ValueError(f"In regional-sampling mode, 'diam_pup_in_pix' must be > 200 to be most accurate")
+
+            # with 'diam_pup_in_pix' = 256 these parameter give ~3 10-9 for the wrapped vortex
+            # it is possible to do better but would require higher pupil and fpm size
+            # Ideally try to find the 2 best 'nbres' so that we can get better than 10-10
+            self.dim_fpm = 256
+            self.nbrs_res_list = [4, 32.]
+
+        elif self.corona_type in ("fqpm", "knife"):
+            self.prop_apod2lyot = 'mft'
+
+        else:
+            raise ValueError(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
+
         # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
         self.corono_fpm_sampling = self.Science_sampling
         self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=int)
@@ -60,7 +91,6 @@ class Coronagraph(optsy.OpticalSystem):
             # We do not need to be exact, the mft in science_focal_plane will be
 
         if self.corona_type == "fqpm":
-            self.prop_apod2lyot = 'mft'
             self.err_fqpm = coroconfig["err_fqpm"]
             self.achrom_fqpm = coroconfig["achrom_fqpm"]
             self.FPmsk = self.FQPM()
@@ -72,14 +102,6 @@ class Coronagraph(optsy.OpticalSystem):
             self.perfect_coro = True
 
         elif self.corona_type in ("classiclyot", "hlc"):
-            self.prop_apod2lyot = 'mft-babinet'
-            self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
-            # we oversample the center in babinet's mode because we can
-            # hard coded for now, this is very internal cooking
-
-            self.Lyot_fpm_sampling = 20.  # self.Science_sampling
-            rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
-            self.dim_fpm = 2 * int(2.2 * rad_LyotFP_pix / 2)
 
             self.string_os += '_' + "iwa" + str(round(self.rad_lyot_fpm, 2))
             self.perfect_coro = False
@@ -92,7 +114,6 @@ class Coronagraph(optsy.OpticalSystem):
                 self.FPmsk = self.HLC()
 
         elif self.corona_type == "knife":
-            self.prop_apod2lyot = 'mft'
             self.coro_position = coroconfig["knife_coro_position"].lower()
             self.knife_coro_offset = coroconfig["knife_coro_offset"]
             self.FPmsk = self.KnifeEdgeCoro()
@@ -100,22 +121,15 @@ class Coronagraph(optsy.OpticalSystem):
             self.perfect_coro = False
 
         elif self.corona_type == "vortex":
-            self.prop_apod2lyot = 'mft'
             vortex_charge = coroconfig["vortex_charge"]
             self.string_os += '_charge' + str(int(vortex_charge))
             self.FPmsk = self.Vortex(vortex_charge=vortex_charge)
-            self.perfect_coro = True
+            self.perfect_coro = False
 
         elif self.corona_type == "wrapped_vortex":
-            self.prop_apod2lyot = 'regional-sampling'
-            if self.prad < 100:
-                raise ValueError(f"In regional-sampling mode, 'diam_pup_in_pix' must be > 200 to be most effective")
             self.string_os += '2020'
             self.FPmsk = self.WrappedVortex()
             self.perfect_coro = False
-
-        else:
-            raise ValueError(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
 
         self.lyot_pup = pupil.Pupil(modelconfig,
                                     prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
@@ -381,14 +395,14 @@ class Coronagraph(optsy.OpticalSystem):
         elif self.prop_apod2lyot == "regional-sampling":
             # Apod plane to Lyot plane
             if noFPM:
-                fpm_array = np.ones((self.dimScience, self.dimScience))
+                fpm_array = np.ones((self.dim_fpm, self.dim_fpm))
             else:
                 fpm_array = FPmsk
-            lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod,
-                                                                    fpm_array,
-                                                                    real_dim_input=int(2 * self.prad),
-                                                                    nbres=[4., 50.],
-                                                                    shift=(0, 0))
+            lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
+                                                               fpm_array,
+                                                               real_dim_input=int(2 * self.prad),
+                                                               nbres=self.nbrs_res_list,
+                                                               shift=(0, 0))
 
         else:
             raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
@@ -480,7 +494,7 @@ class Coronagraph(optsy.OpticalSystem):
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
         else:
-            maxdimension_array_fpm = self.dimScience
+            maxdimension_array_fpm = self.dim_fpm
 
         xx, yy = np.meshgrid(
             np.arange(maxdimension_array_fpm) - maxdimension_array_fpm / 2 + 1 / 2,
@@ -493,7 +507,7 @@ class Coronagraph(optsy.OpticalSystem):
             if self.prop_apod2lyot == "fft":
                 dim_fp = self.dim_fp_fft[i]
             else:
-                dim_fp = self.dimScience
+                dim_fp = self.dim_fpm
 
             phasevortex_cut = crop_or_pad_image(phase_vortex, dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
             vortex.append(np.exp(1j * phasevortex_cut))
@@ -523,7 +537,7 @@ class Coronagraph(optsy.OpticalSystem):
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
         else:
-            maxdimension_array_fpm = self.dimScience
+            maxdimension_array_fpm = self.dim_fpm
 
         # TODO: The below should not be hard-coded, but ok until we actually want to be able to use different values.
         thval = np.array([0, 3, 4, 5, 8]) * np.pi / 8
@@ -546,7 +560,7 @@ class Coronagraph(optsy.OpticalSystem):
             if self.prop_apod2lyot == "fft":
                 dim_fp = self.dim_fp_fft[i]
             else:
-                dim_fp = self.dimScience
+                dim_fp = self.dim_fpm
 
             phasevortex_cut = crop_or_pad_image(phase_wrapped_vortex, dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
             wrapped_vortex.append(np.exp(1j * phasevortex_cut))
@@ -817,3 +831,139 @@ def create_wrapped_vortex_mask(dim,
         phase_mask = phase
 
     return angles, phase_mask
+
+
+def prop_fpm_regional_sampling(pup,
+                               fpm,
+                               real_dim_input=None,
+                               nbres=[4, 50],
+                               shift=(0, 0),
+                               filter_order=15,
+                               alpha=1.5,
+                               dir_save_all_planes=None):
+    """
+    Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
+
+    Starting from the electric field in an input pupil plane, propagate through a phase-mask coronagraph with
+    different sampling values in different rings around the FPM center. Each propagation goes from the pupil to the FPM
+    and then to the Lyot plane (without Lyot stop applied), using MFTs, while a (combination of) Butterworth filters
+    marks annular regions around the FPM center that are considered in the propagation in each step. The electric field
+    contribution from each step is then summed up to yield the total electric field in the Lyot plane (before the LS).
+
+    AUTHOR: R. Galicher (in IDL)
+            ILa (to Python)
+            J. Mazoyer : small modifs to adapt to Asterix Dec 22
+
+    Parameters
+    ----------
+    pup : 2D array of size [self.dim_overpad_pupil,self.dim_overpad_pupil]
+        Input mage array containing the wavefront at the entrance pupil of the optical system.
+    fpm : 2D array
+        Complex electric field in the focal plane of the focal-plane mask. The size of fpm array set the
+        FPM size for all propagation and in practice the sampling use.
+    real_dim_input : int or None, default None
+            Diameter of the support in pup (can differ from pup.shape). If None real_dim_input = pup.shape
+            Example: real_dim_input = diameter of the pupil in pixel for a padded pupil
+    nbres : list, default [4, 50]
+        List of the number of resolution elements in the total image plane for all propagation layers.
+        As a general rule, it is probably safer to put these numbers so that there is not sampling shift right in
+        the middle of the DH to avoid confusing the matrix. So if we correct the DH between
+        two radius IWA and OWA (in lambda/D), nbrs should not have any elements between 2*IWA and 2*OWA.
+    shift : tuple, default (0, 0)
+        Shift of FPM with respect to optical axis in units of lambda/D.
+    filter_order : int, default 15
+        Order of the Butterworth filter.
+    alpha : float, default 1.5
+        Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
+        input array.
+
+    Returns
+    -------
+    EF_before_LS : 2D array (complex)
+        E-field before the Lyot stop.
+    """
+
+    if not isinstance(nbres, list):
+        raise TypeError(f"'nbres' parameter need to be of type list or numpy.array. Currently type = {type(nbres)}")
+
+    nbres = np.array(nbres)
+
+    dim_overpad_pupil = pup.shape[0]
+    dim_fpm = fpm.shape[0]
+
+    if real_dim_input is None:
+        real_dim_input = pup.shape[0]
+    samplings = dim_fpm / nbres
+
+    if not np.all(np.diff(nbres) >= 0):  # check if it is sorted by checking 2 by 2 diff is always positive
+        raise ValueError(f"'nbres' parameter need to be sorted from the highest to lowest nbrs of elements."
+                         f"Currently 'nbres' = {nbres}")
+
+    if np.min(samplings) < 2:
+        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded 2, otherwise we cut off"
+                         f"the high-spatial frequencies and the simulation turns out bad. We need the samplings"
+                         f"defined by the 'nbres' parameter (real_dim_input/nbres) to be always >= 2. Currently, with"
+                         f"real_dim_input = {real_dim_input}, samplings are {samplings}")
+
+    if np.min(samplings) != 2:
+        nbres = np.append(nbres, dim_fpm / 2)
+        samplings = np.append(samplings, 2)
+    # If the outer sampling defined by nbrs is already 2, we do not append it and gain some time
+    # because the last sampling is harcoded at 2
+
+    if max(shift) >= nbres[0] / 2:
+        raise ValueError(f"shift {shift} is larger than the minimum nbrs {nbres[0]} of element of resolution : the "
+                         f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
+
+    # can be used to check:
+    # print(f"With dim_fpm = {dim_fpm} and nbrs = {nbres}, Samplings: {samplings}")
+
+    ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
+    const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+
+    # From inner to outer part of FPM
+    for k in range(nbres.shape[0]):
+
+        if k == 0:
+            # Innermost part of the focal plane
+            but_here = np.copy(const_but)
+        elif k < nbres.shape[0] - 1:
+            # Butterworth filter in each layer
+            sizebut_here = dim_fpm / alpha * nbres[k - 1] / nbres[k]
+            but_here = (1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5,
+                                                          yshift=-0.5)) * const_but
+        else:
+            # Outer part of the FPM
+            sizebut_here = dim_fpm / alpha * nbres[-2] / nbres[-1]
+            but_here = 1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)
+
+        ef_fp_before_fpm = prop.mft(
+            pup,
+            real_dim_input=real_dim_input,
+            dim_output=dim_fpm,
+            nbres=nbres[k],
+            norm='ortho',
+            X_offset_output=shift[0] * samplings[k],
+            Y_offset_output=shift[1] * samplings[k],
+        )
+        ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
+                                       real_dim_input=dim_fpm,
+                                       dim_output=real_dim_input,
+                                       nbres=nbres[k],
+                                       X_offset_input=shift[0] * samplings[k],
+                                       Y_offset_input=shift[1] * samplings[k],
+                                       norm='ortho',
+                                       inverse=True)
+
+        if dir_save_all_planes is not None:
+            name_plane = f'FPbeforeFPM_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm)
+            name_plane = f'FPafterButandFPM_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm * fpm * but_here)
+            name_plane = f'PPbeforeLyot_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            save_plane_in_fits(dir_save_all_planes, name_plane, ef_pp_before_ls_reg)
+
+        # Sum up E-field contributions before the LS
+        ef_pp_before_ls_tot += ef_pp_before_ls_reg
+
+    return crop_or_pad_image(ef_pp_before_ls_tot, dim_overpad_pupil)

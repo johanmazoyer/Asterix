@@ -17,8 +17,8 @@ def test_all_coronagraphs():
 
     # Set coronagraph to be tested
     coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
-    expected_attenuation = [1e-20, 8e-10, 5e-3, 1e-2, 1e-3, 1e-20]  # Note that these are for the 100 px pupil below
-    atols = [0, 1e-14, 1e-14, np.nan, 1e-14, 0]  # zeros are for perfect coronagraphs
+    expected_attenuation = [1e-20, 5e-9, 5e-3, 1e-2, 1e-3, 8e-9]  # Note that these are for the 100 px pupil below
+    atols = [0, 1e-14, 1e-14, np.nan, 1e-14, 1e-14]  # zeros are for perfect coronagraphs
 
     for i, coro in enumerate(coros_to_test):
         Coronaconfig.update({"corona_type": coro})
@@ -98,3 +98,6 @@ def test_fqpm_phase_mask():
     assert fqpm[-qsize, -qsize] == np.pi, "Expected pi-quadrant is not pi."
     assert fqpm[-qsize, qsize] == 0, "Expected zero-quadrant is not zero."
     assert fqpm[qsize, -qsize] == 0, "Expected zero-quadrant is not zero."
+
+
+test_all_coronagraphs()
