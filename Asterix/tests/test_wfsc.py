@@ -64,10 +64,6 @@ def test_1dm_correction():
 
     # Load configuration file
     config = read_parameter_file(parameter_file_test,
-                                 NewMODELconfig={
-                                     'diam_pup_in_pix': 100,
-                                     'dimScience': 200
-                                 },
                                  NewDMconfig={'DM1_active': False},
                                  NewEstimationconfig={'estimation': 'pw'},
                                  NewCorrectionconfig={
@@ -92,10 +88,6 @@ def test_2dm_correction():
 
     # Load configuration file
     config = read_parameter_file(parameter_file_test,
-                                 NewMODELconfig={
-                                     'diam_pup_in_pix': 100,
-                                     'dimScience': 200
-                                 },
                                  NewDMconfig={'DM1_active': True},
                                  NewEstimationconfig={'estimation': 'perfect'},
                                  NewCorrectionconfig={
