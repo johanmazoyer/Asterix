@@ -109,7 +109,7 @@ class Coronagraph(optsy.OpticalSystem):
         elif self.corona_type == "wrapped_vortex":
             self.prop_apod2lyot = 'regional-sampling'
             if self.prad < 100:
-                raise ValueError(f"In regional-sampling mode, 'diam_pup_in_pix' must be > 250 to be most effective")
+                raise ValueError(f"In regional-sampling mode, 'diam_pup_in_pix' must be > 200 to be most effective")
             self.string_os += '2020'
             self.FPmsk = self.WrappedVortex()
             self.perfect_coro = False
