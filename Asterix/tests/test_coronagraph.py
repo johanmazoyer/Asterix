@@ -14,6 +14,8 @@ def test_all_coronagraphs():
     # Reassign the parameter groups to variables
     modelconfig = config["modelconfig"]
     Coronaconfig = config["Coronaconfig"]
+    Coronaconfig.update({"filename_instr_apod": "RoundPup"})
+    Coronaconfig.update({"overpadding_pupilplane_factor": 1.})
 
     # Set coronagraph to be tested
     coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
@@ -100,4 +102,4 @@ def test_fqpm_phase_mask():
     assert fqpm[qsize, -qsize] == 0, "Expected zero-quadrant is not zero."
 
 
-test_all_coronagraphs()
+# test_all_coronagraphs()
