@@ -406,7 +406,7 @@ class Coronagraph(optsy.OpticalSystem):
                                                                fpm_array,
                                                                real_dim_input=int(2 * self.prad),
                                                                nbres=self.nbrs_res_list,
-                                                               dir_save_all_planes = dir_save_all_planes,
+                                                               dir_save_all_planes=dir_save_all_planes,
                                                                shift=(0, 0))
 
         else:
