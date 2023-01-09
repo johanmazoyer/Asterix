@@ -94,15 +94,13 @@ class Coronagraph(optsy.OpticalSystem):
             # we take the ceil to be sure that we measure at least the good resolution
             # We do not need to be exact, the mft in science_focal_plane will be
 
+        self.achrom_phase_coro = coroconfig["achrom_phase_coro"]
+
         if self.corona_type == "fqpm":
             self.err_fqpm = coroconfig["err_fqpm"]
-            self.achrom_fqpm = coroconfig["achrom_fqpm"]
             self.FPmsk = self.FQPM()
-            if self.achrom_fqpm:
-                str_achrom = "achrom"
-            else:
-                str_achrom = "nonachrom"
-            self.string_os += '_' + str_achrom
+            if self.achrom_phase_coro:
+                self.string_os += '_' + "achrom"
             self.perfect_coro = True
 
         elif self.corona_type in ("classiclyot", "hlc"):
@@ -116,6 +114,8 @@ class Coronagraph(optsy.OpticalSystem):
                 self.phase_fpm = coroconfig["phase_fpm"]
                 self.string_os += '_' + f"trans{self.transmission_fpm:.1e}_pha{round(self.phase_fpm, 2)}"
                 self.FPmsk = self.HLC()
+                if self.achrom_phase_coro:
+                    self.string_os += '_' + "achrom"
 
         elif self.corona_type == "knife":
             self.coro_position = coroconfig["knife_coro_position"].lower()
@@ -129,11 +129,15 @@ class Coronagraph(optsy.OpticalSystem):
             self.string_os += '_charge' + str(int(vortex_charge))
             self.FPmsk = self.Vortex(vortex_charge=vortex_charge)
             self.perfect_coro = False
+            if self.achrom_phase_coro:
+                self.string_os += '_' + "achrom"
 
         elif self.corona_type == "wrapped_vortex":
             self.string_os += '2020'
             self.FPmsk = self.WrappedVortex()
             self.perfect_coro = False
+            if self.achrom_phase_coro:
+                self.string_os += '_' + "achrom"
 
         self.lyot_pup = pupil.Pupil(modelconfig,
                                     prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
@@ -399,11 +403,12 @@ class Coronagraph(optsy.OpticalSystem):
         elif self.prop_apod2lyot == "regional-sampling":
             # Apod plane to Lyot plane
             if noFPM:
-                fpm_array = np.ones((self.dim_fpm, self.dim_fpm))
-            else:
-                fpm_array = FPmsk
+                FPmsk = np.ones((self.dim_fpm, self.dim_fpm))
+
+            lambda_ratio = wavelength / self.wavelength_0
             lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
-                                                               fpm_array,
+                                                               FPmsk,
+                                                               lambda_ratio=lambda_ratio,
                                                                real_dim_input=int(2 * self.prad),
                                                                nbres=self.nbrs_res_list,
                                                                dir_save_all_planes=dir_save_all_planes,
@@ -470,8 +475,8 @@ class Coronagraph(optsy.OpticalSystem):
             fqpm_thick_cut = crop_or_pad_image(phase_fqpm, dim_fp)
             phase4q[np.where(fqpm_thick_cut != 0)] = np.pi + self.err_fqpm
 
-            if self.achrom_fqpm:
-                # If we want to do an achromatic_fqpm, we do not include a variation
+            if self.achrom_phase_coro:
+                # If we want to do an achromatic fqpm, we do not include a variation
                 # of the phase with the wl.
                 fqpm.append(np.exp(1j * phase4q))
             else:
@@ -515,7 +520,14 @@ class Coronagraph(optsy.OpticalSystem):
                 dim_fp = self.dim_fpm
 
             phasevortex_cut = crop_or_pad_image(phase_vortex, dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
-            vortex.append(np.exp(1j * phasevortex_cut))
+
+            if self.achrom_phase_coro:
+                # If we want to do an achromatic vortex, we do not include a variation
+                # of the phase with the wl.
+                vortex.append(np.exp(1j * phasevortex_cut))
+            else:
+                # In the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
+                vortex.append(self.EF_from_phase_and_ampl(phase_abb=phasevortex_cut, wavelengths=wav))
 
         return vortex
 
@@ -568,7 +580,14 @@ class Coronagraph(optsy.OpticalSystem):
                 dim_fp = self.dim_fpm
 
             phasevortex_cut = crop_or_pad_image(phase_wrapped_vortex, dim_fp)  # *phase_ampl.roundpupil(dim_fp, dim_fp/2)
-            wrapped_vortex.append(np.exp(1j * phasevortex_cut))
+
+            if self.achrom_phase_coro:
+                # If we want to do an achromatic vortex, we do not include a variation
+                # of the phase with the wl.
+                wrapped_vortex.append(np.exp(1j * phasevortex_cut))
+            else:
+                # In the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
+                wrapped_vortex.append(self.EF_from_phase_and_ampl(phase_abb=phasevortex_cut, wavelengths=wav))
 
         return wrapped_vortex
 
@@ -656,7 +675,14 @@ class Coronagraph(optsy.OpticalSystem):
 
         hlc_all_wl = []
         for wav in self.wav_vec:
-            hlc_all_wl.append(self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
+
+            if self.achrom_phase_coro:
+                # If we want to do an achromatic hlc, we do not include a variation
+                # of the phase with the wl.
+                hlc_all_wl.append((1 + ampl_hlc) * np.exp(1j * phase_hlc))
+            else:
+                # In the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
+                hlc_all_wl.append(self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
 
         return hlc_all_wl
 
@@ -841,6 +867,7 @@ def create_wrapped_vortex_mask(dim,
 def prop_fpm_regional_sampling(pup,
                                fpm,
                                real_dim_input=None,
+                               lambda_ratio=1,
                                nbres=[4, 50],
                                shift=(0, 0),
                                filter_order=15,
@@ -947,7 +974,7 @@ def prop_fpm_regional_sampling(pup,
             pup,
             real_dim_input=real_dim_input,
             dim_output=dim_fpm,
-            nbres=nbres[k],
+            nbres=nbres[k] / lambda_ratio,
             norm='ortho',
             X_offset_output=shift[0] * samplings[k],
             Y_offset_output=shift[1] * samplings[k],
@@ -955,18 +982,18 @@ def prop_fpm_regional_sampling(pup,
         ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
                                        real_dim_input=dim_fpm,
                                        dim_output=real_dim_input,
-                                       nbres=nbres[k],
+                                       nbres=nbres[k] / lambda_ratio,
                                        X_offset_input=shift[0] * samplings[k],
                                        Y_offset_input=shift[1] * samplings[k],
                                        norm='ortho',
                                        inverse=True)
 
         if dir_save_all_planes is not None:
-            name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+            name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}_lambdaratio{int(lambda_ratio)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm)
-            name_plane = f'FPafterButandFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+            name_plane = f'FPafterButandFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}_lambdaratio{int(lambda_ratio)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm * fpm * but_here)
-            name_plane = f'PPbeforeLyot_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+            name_plane = f'PPbeforeLyot_nbr{int(nbres[k])}_sampling{int(samplings[k])}_lambdaratio{int(lambda_ratio)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, ef_pp_before_ls_reg)
 
         # Sum up E-field contributions before the LS

@@ -205,11 +205,12 @@ If HLC :
 
 If FQPM:
     - err_fqpm = 0 : float, phase error on the pi phase-shift (in rad)
-    - achrom_fqpm : bool, if True, Achromatic FQPM, else pi*lamda0/lamda
 
 If Vortex :
     - vortex_charge : even int, charge of the vortex
 
+If phase coronagraph:
+    - achrom_phase_coro = False : bool, If, we can choose to use it in achromatic mode (the coronagraph diplays the same behavior for each wavelengths) or not (phase is introduced by material step and therefore chromatic behavior)
 
 
 [Estimationconfig]
