@@ -82,6 +82,10 @@ class Coronagraph(optsy.OpticalSystem):
             self.dim_fpm = 256
             self.nbrs_res_list = [4, 32]
 
+            # Following lines ~7 10-10 for 'diam_pup_in_pix' = 512. This is very slow though
+            # self.dim_fpm = 512
+            # self.nbrs_res_list = [6, 42]
+
         elif self.corona_type in ("fqpm", "knife"):
             self.prop_apod2lyot = 'mft'
 
