@@ -74,7 +74,7 @@ class Coronagraph(optsy.OpticalSystem):
             # it is possible to do better but would require higher pupil and fpm size
             # Ideally try to find the 2 best 'nbres' so that we can get better than 10-10
             self.dim_fpm = 256
-            self.nbrs_res_list = [4, 32.]
+            self.nbrs_res_list = [4, 32]
 
         elif self.corona_type in ("fqpm", "knife"):
             self.prop_apod2lyot = 'mft'
@@ -402,6 +402,7 @@ class Coronagraph(optsy.OpticalSystem):
                                                                fpm_array,
                                                                real_dim_input=int(2 * self.prad),
                                                                nbres=self.nbrs_res_list,
+                                                               dir_save_all_planes = dir_save_all_planes,
                                                                shift=(0, 0))
 
         else:
@@ -884,7 +885,7 @@ def prop_fpm_regional_sampling(pup,
     """
 
     if not isinstance(nbres, list):
-        raise TypeError(f"'nbres' parameter need to be of type list or numpy.array. Currently type = {type(nbres)}")
+        raise TypeError(f"'nbres' parameter need to be of type list. Currently type = {type(nbres)}")
 
     nbres = np.array(nbres)
 
@@ -916,6 +917,7 @@ def prop_fpm_regional_sampling(pup,
                          f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
 
     # can be used to check:
+    # print(dim_overpad_pupil, real_dim_input)
     # print(f"With dim_fpm = {dim_fpm} and nbrs = {nbres}, Samplings: {samplings}")
 
     ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
@@ -956,11 +958,11 @@ def prop_fpm_regional_sampling(pup,
                                        inverse=True)
 
         if dir_save_all_planes is not None:
-            name_plane = f'FPbeforeFPM_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
             save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm)
-            name_plane = f'FPafterButandFPM_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            name_plane = f'FPafterButandFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
             save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm * fpm * but_here)
-            name_plane = f'PPbeforeLyot_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            name_plane = f'PPbeforeLyot_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
             save_plane_in_fits(dir_save_all_planes, name_plane, ef_pp_before_ls_reg)
 
         # Sum up E-field contributions before the LS
