@@ -989,7 +989,7 @@ def prop_fpm_regional_sampling(pup,
             pup,
             real_dim_input=real_dim_input,
             dim_output=dim_fpm,
-            nbres=nbres[k],
+            nbres=nbres[k] / lambda_ratio,
             norm='ortho',
             X_offset_output=shift[0] * samplings[k],
             Y_offset_output=shift[1] * samplings[k],
@@ -997,18 +997,18 @@ def prop_fpm_regional_sampling(pup,
         ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
                                        real_dim_input=dim_fpm,
                                        dim_output=real_dim_input,
-                                       nbres=nbres[k],
+                                       nbres=nbres[k] / lambda_ratio,
                                        X_offset_input=shift[0] * samplings[k],
                                        Y_offset_input=shift[1] * samplings[k],
                                        norm='ortho',
                                        inverse=True)
 
         if dir_save_all_planes is not None:
-            name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+            name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}_lambdaratio{int(lambda_ratio)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm)
-            name_plane = f'FPafterButandFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+            name_plane = f'FPafterButandFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}_lambdaratio{int(lambda_ratio)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm * fpm * but_here)
-            name_plane = f'PPbeforeLyot_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+            name_plane = f'PPbeforeLyot_nbr{int(nbres[k])}_sampling{int(samplings[k])}_lambdaratio{int(lambda_ratio)}'
             save_plane_in_fits(dir_save_all_planes, name_plane, ef_pp_before_ls_reg)
 
         # Sum up E-field contributions before the LS
