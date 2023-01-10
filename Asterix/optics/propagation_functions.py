@@ -591,7 +591,7 @@ def prop_fpm_regional_sampling(pup,
     Parameters
     ----------
     pup : 2D array of size [self.dim_overpad_pupil,self.dim_overpad_pupil]
-        Input mage array containing the wavefront at the entrance pupil of the optical system. Be careful this si
+        Input mage array containing the wavefront at the entrance pupil of the optical system.
     fpm : 2D array
         Complex electric field in the focal plane of the focal-plane mask.
     real_dim_input : int or None, default None
