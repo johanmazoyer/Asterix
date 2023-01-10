@@ -52,7 +52,7 @@ def quick_run_no_save(config, data_dir):
                               SIMUconfig,
                               input_wavefront=input_wavefront,
                               initial_DM_voltage=0,
-                              silence=False)
+                              silence=True)
 
     best_contrast = np.min(results["MeanDHContrast"])
     return best_contrast
