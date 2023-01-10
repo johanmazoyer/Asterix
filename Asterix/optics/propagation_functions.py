@@ -411,7 +411,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
     diam_pup_in_m = 2 * rad
     diam_pup_in_pix = 2 * prad
 
-    Nfourier = gamma * diam_pup_in_pix
+    Nfourier = int(gamma * diam_pup_in_pix)
     cycles = diam_pup_in_pix
 
     four = np.fft.fft2(crop_or_pad_image(pup, Nfourier), norm='ortho')

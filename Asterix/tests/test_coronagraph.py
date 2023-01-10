@@ -15,7 +15,6 @@ def test_all_coronagraphs():
     modelconfig = config["modelconfig"]
     Coronaconfig = config["Coronaconfig"]
     Coronaconfig.update({"filename_instr_apod": "RoundPup"})
-    Coronaconfig.update({"overpadding_pupilplane_factor": 1.})
 
     # Set coronagraph to be tested
     coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
@@ -49,7 +48,6 @@ def test_all_coronagraphs_polychromatic():
     modelconfig = config["modelconfig"]
     Coronaconfig = config["Coronaconfig"]
     Coronaconfig.update({"filename_instr_apod": "RoundPup"})
-    Coronaconfig.update({"overpadding_pupilplane_factor": 1.})
     Coronaconfig.update({"achrom_phase_coro": False})
 
     # Set coronagraph to be tested
