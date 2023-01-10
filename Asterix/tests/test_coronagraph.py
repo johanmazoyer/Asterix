@@ -104,3 +104,4 @@ def test_fqpm_phase_mask():
 
 
 # test_all_coronagraphs_polychromatic()
+# test_all_coronagraphs()
