@@ -52,7 +52,7 @@ def quick_run_no_save(config, data_dir):
                               SIMUconfig,
                               input_wavefront=input_wavefront,
                               initial_DM_voltage=0,
-                              silence=True)
+                              silence=False)
 
     best_contrast = np.min(results["MeanDHContrast"])
     return best_contrast
@@ -96,7 +96,7 @@ def test_2dm_correction():
                                      'Nbmodes_OnTestbed': 600
                                  },
                                  NewLoopconfig={
-                                     'Nbiter_corr': [6],
+                                     'Nbiter_corr': [5],
                                      'Nbmode_corr': [250]
                                  })
 
