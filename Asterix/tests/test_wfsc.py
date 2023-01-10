@@ -96,7 +96,7 @@ def test_2dm_correction():
                                      'Nbmodes_OnTestbed': 600
                                  },
                                  NewLoopconfig={
-                                     'Nbiter_corr': [5],
+                                     'Nbiter_corr': [6],
                                      'Nbmode_corr': [250]
                                  })
 
