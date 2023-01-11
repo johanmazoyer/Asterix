@@ -102,6 +102,3 @@ def test_fqpm_phase_mask():
     assert fqpm[-qsize, qsize] == 0, "Expected zero-quadrant is not zero."
     assert fqpm[qsize, -qsize] == 0, "Expected zero-quadrant is not zero."
 
-
-# test_all_coronagraphs_polychromatic()
-# test_all_coronagraphs()
