@@ -906,8 +906,10 @@ def prop_fpm_regional_sampling(pup,
     alpha : float, default 1.5
         Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
         input array.
-    dir_save_all_planes : string, default None
-        Directory to save all planes into fits files if save_all_planes_to_fits=True.
+    dir_save_all_planes : string or None, default None
+        If not None, absolute directory to save all planes in fits for debugging purposes.
+        This can generate a lot of fits especially if in a loop, use with caution.
+
 
     Returns
     -------
@@ -932,19 +934,18 @@ def prop_fpm_regional_sampling(pup,
                          f"Currently 'nbres' = {nbres}.")
 
     if np.min(samplings) < 2:
-        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2, otherwise we cut off"
-                         f"the high-spatial frequencies and the simulation turns out bad. We need the samplings"
+        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2. We need the samplings"
                          f"defined by the 'nbres' parameter (real_dim_input/nbres) to be always >= 2. Currently, with"
                          f"real_dim_input = {real_dim_input}, samplings are {samplings}.")
 
     if np.min(samplings) != 2:
-        # If the outer sampling defined by nbrs is already 2, we do not append it and gain some time
-        # because the last sampling is harcoded at 2.
+        # If the smaller sampling defined by parameter 'nbres' is not 2, we append it to the list. This is a
+        # way to force the last sampling to be harcoded at 2.
         nbres = np.append(nbres, dim_fpm / 2)
         samplings = np.append(samplings, 2)
 
     if max(shift) >= nbres[0] / 2:
-        raise ValueError(f"shift {shift} is larger than the minimum nbrs {nbres[0]} of element of resolution : the "
+        raise ValueError(f"shift {shift} is larger than the minimum number of elements of resolution {nbres[0]}: the "
                          f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
 
     ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
