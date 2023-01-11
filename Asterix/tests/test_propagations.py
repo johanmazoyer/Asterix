@@ -137,7 +137,7 @@ def test_prop_area_sampling():
     name_coro = ['fqpm', 'wrapped_vortex']
 
     for i, fpm in enumerate([fqpm, wrapped_vortex]):
-        pre_ls_areas = prop_fpm_regional_sampling(pup, np.exp(1j * fpm), nbres=nbr_list)
+        pre_ls_areas = prop_fpm_regional_sampling(pup, np.exp(1j * fpm), nbr_list)
         post_ls_areas = pre_ls_areas * lyot_stop
 
         coro_ef_areas = mft(post_ls_areas,

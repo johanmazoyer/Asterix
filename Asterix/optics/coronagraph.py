@@ -407,8 +407,8 @@ class Coronagraph(optsy.OpticalSystem):
 
             lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
                                                                FPmsk,
+                                                               self.nbrs_res_list,
                                                                real_dim_input=int(2 * self.prad),
-                                                               nbres=self.nbrs_res_list,
                                                                dir_save_all_planes=dir_save_all_planes,
                                                                shift=(0, 0))
 
@@ -864,8 +864,8 @@ def create_wrapped_vortex_mask(dim,
 
 def prop_fpm_regional_sampling(pup,
                                fpm,
+                               nbres,
                                real_dim_input=None,
-                               nbres=[4, 50],
                                shift=(0, 0),
                                filter_order=15,
                                alpha=1.5,
@@ -889,16 +889,16 @@ def prop_fpm_regional_sampling(pup,
         Input mage array containing the wavefront at the entrance pupil of the optical system.
     fpm : 2D array
         Complex electric field in the focal plane of the focal-plane mask.
-    real_dim_input : int or None, default None
-        Diameter of the support in pup (can differ from pup.shape). If None, real_dim_input = pup.shape
-        If the pupil fills its array out until the edges, then real_dim_input = pup.shape; if the pupil
-        is padded, then real_dim_input is the size of the pupil in pixels.
     nbres : list
         List of the number of resolution elements across the total image plane for all propagation layers.
         As a general rule, it is probably safest to choose these numbers such that there is not sampling
         shift right in the middle of the DH. This would ensure that the frequencies inside the DH are all
         calculated with the same resolution in the EFC matrix. So if we correct the DH between two radii
         IWA and OWA (in lambda/D), nbres should not have any elements between 2IWA and 2OWA.
+    real_dim_input : int or None, default None
+        Diameter of the support in pup (can differ from pup.shape). If None, real_dim_input = pup.shape
+        If the pupil fills its array out until the edges, then real_dim_input = pup.shape; if the pupil
+        is padded, then real_dim_input is the size of the pupil in pixels.
     shift : tuple, default (0, 0)
         Shift of FPM with respect to optical axis in units of lambda/D.
     filter_order : int, default 15
