@@ -45,4 +45,4 @@ def test_def_thd():
                        equal_nan=True), "PSF after testbed with no aberrration is not symmetric (transpose PSF != PSF)"
 
 
-test_def_thd()
+# test_def_thd()
