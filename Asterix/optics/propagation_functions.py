@@ -651,8 +651,8 @@ def prop_fpm_regional_sampling(pup,
         samplings = np.delete(samplings, -1)
 
     if max(shift) >= nbres[0] / 2:
-        raise ValueError(f"shift {shift} is larger than the minimum number of element of resolution{nbres[0]}:"
-                        f"the tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
+        raise ValueError(f"shift {shift} is larger than the minimum number of elements of resolution {nbres[0]} / 2:"
+                         f"the tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
 
 
     # Innermost part of the focal plane
