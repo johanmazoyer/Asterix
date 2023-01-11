@@ -237,8 +237,9 @@ class Coronagraph(optsy.OpticalSystem):
         EF_aberrations_introduced_in_LS : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electrical field created by the downstream aberrations introduced directly in the Lyot Stop.
             Can also be a float scalar in which case entrance_EF is constant; default=1.
-        dir_save_all_planes : string, default None
-            Directory to save all planes into fits files if save_all_planes_to_fits=True.
+        dir_save_all_planes : string or None, default None
+            If not None, absolute directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution.
 
         Returns
         --------

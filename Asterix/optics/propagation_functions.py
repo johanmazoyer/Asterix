@@ -611,8 +611,9 @@ def prop_fpm_regional_sampling(pup,
     alpha : float
         Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
         input array.
-    dir_save_all_planes : string, default None
-        Directory to save all planes into fits files if save_all_planes_to_fits=True.
+    dir_save_all_planes : string or None, default None
+        If not None, absolute directory to save all planes in fits for debugging purposes.
+        This can generate a lot of fits especially if in a loop, use with caution.
 
     Returns
     -------
@@ -644,14 +645,14 @@ def prop_fpm_regional_sampling(pup,
                          f"real_dim_input = {real_dim_input}, samplings are {samplings}.")
 
     if np.min(samplings) == 2:
-        # The outer sampling defined by nbrs is already 2 (samp_outer = 2). In the case the maximum element in 'nbrs'
-        # correspond to a sampling of 2, we can remove it and gain some time.
+        # The outer sampling is already 2 (samp_outer = 2). In the case where the maximum
+        # element in 'nbres' corresponds to a sampling of 2, we can remove it and gain some time.
         nbres = np.delete(nbres, -1)
         samplings = np.delete(samplings, -1)
 
     if max(shift) >= nbres[0] / 2:
-        raise ValueError(f"shift {shift} is larger than the minimum nbrs {nbres[0]} of element of resolution : the "
-                         f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
+        raise ValueError(f"shift {shift} is larger than the minimum number of element of resolution{nbres[0]}:"
+                        f"the tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
 
 
     # Innermost part of the focal plane
