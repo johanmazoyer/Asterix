@@ -619,8 +619,8 @@ def prop_fpm_regional_sampling(pup,
     """
     samp_outer = 2
 
-    if not isinstance(nbres, (list, np.ndarray)):
-        raise TypeError(f"'nbres' parameter need to be of type list or numpy.array. Currently type = {type(nbres)}")
+    if not isinstance(nbres, list):
+        raise TypeError(f"'nbres' parameter needs to be of type list or numpy.array. Currently type = {type(nbres)}")
 
     nbres = np.array(nbres)
 
@@ -628,22 +628,22 @@ def prop_fpm_regional_sampling(pup,
     dim_fpm = fpm.shape[0]
 
     if real_dim_input is None:
-        real_dim_input = pup.shape[0]
+        real_dim_input = dim_overpad_pupil
     samplings = real_dim_input / nbres
 
-    if not np.all(np.diff(nbres) >= 0):  # check if it is sorted by checking 2 by 2 diff is always positive
-        raise ValueError(f"'nbres' parameter need to be sorted from the highest to lowest nbrs of elements."
+    if not np.all(np.diff(nbres) >= 0):
+        raise ValueError(f"'nbres' parameter needs to be sorted from the highest to lowest number of elements."
                          f"Currently 'nbres' = {nbres}")
 
     if np.min(samplings) < 2:
-        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded 2, otherwise we cut off"
+        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2, otherwise we cut off"
                          f"the high-spatial frequencies and the simulation turns out bad. We need the samplings"
                          f"defined by the 'nbres' parameter (real_dim_input/nbres) to be always >= 2. Currently, with"
-                         f"real_dim_input = {real_dim_input}, samplings are {samplings}")
+                         f"real_dim_input = {real_dim_input}, samplings are {samplings}.")
 
     if np.min(samplings) == 2:
-        # If the outer sampling defined by nbrs is already 2, we can remove it and gain some time
-        # because the last sampling is harcoded at 2
+        # The outer sampling defined by nbrs is already 2 (samp_outer = 2). In the case the maximum element in 'nbrs'
+        # correspond to a sampling of 2, we can remove it and gain some time.
         nbres = np.delete(nbres, -1)
         samplings = np.delete(samplings, -1)
 
@@ -651,22 +651,6 @@ def prop_fpm_regional_sampling(pup,
         raise ValueError(f"shift {shift} is larger than the minimum nbrs {nbres[0]} of element of resolution : the "
                          f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
 
-    # can be used to check:
-    # print(f"With real_dim_input = {real_dim_input} and nbrs = {nbres}, Samplings: ", samplings)
-
-    # Add tip-tilt to in pupil wavefront to simulate FPM offsets
-    # phase_ramp = shift_phase_ramp(dim_pup, shift[0], shift[1])
-    # inverted_phase_ramp = shift_phase_ramp(dim_pup, -shift[0], -shift[1])
-
-    # non non non ! shift_phase_ramp function parameters shift_x and shift_y are in pixels!
-    # Doing tip/tilt like that, you introduce a fix pixel shift. But because the resolution change,
-    # the tip_tilt change also for each samplings.
-    # For example: if samplings = 200, 20, 2 (pix per lambda /D), a shift = (1,0) (1 pix shift) will correspond to a
-    # tip tilt of 0.005 l/D in the first array, 0.05 l/D in the second and 0.5 l/D in the last
-    # I see that you introduced the 'shift' parameter in the docstring in element of resolution, which is
-    # a good idea to avoid that. See below the correct way (I think) to do that, we need to multiply each time by
-    # sampling to have the right shift in pixel. I also use the parameter X_offset_output and X_offset_input which
-    # are exactly doing that
 
     # Innermost part of the focal plane
     but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
