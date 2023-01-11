@@ -885,19 +885,20 @@ def prop_fpm_regional_sampling(pup,
 
     Parameters
     ----------
-    pup : 2D array of size [self.dim_overpad_pupil,self.dim_overpad_pupil]
+    pup : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
         Input mage array containing the wavefront at the entrance pupil of the optical system.
     fpm : 2D array
-        Complex electric field in the focal plane of the focal-plane mask. The size of fpm array set the
-        FPM size for all propagation and in practice the sampling use.
+        Complex electric field in the focal plane of the focal-plane mask.
     real_dim_input : int or None, default None
-            Diameter of the support in pup (can differ from pup.shape). If None real_dim_input = pup.shape
-            Example: real_dim_input = diameter of the pupil in pixel for a padded pupil
-    nbres : list, default [4, 50]
-        List of the number of resolution elements in the total image plane for all propagation layers.
-        As a general rule, it is probably safer to put these numbers so that there is not sampling shift right in
-        the middle of the DH to avoid confusing the matrix. So if we correct the DH between
-        two radius IWA and OWA (in lambda/D), nbrs should not have any elements between 2*IWA and 2*OWA.
+        Diameter of the support in pup (can differ from pup.shape). If None, real_dim_input = pup.shape
+        If the pupil fills its array out until the edges, then real_dim_input = pup.shape; if the pupil
+        is padded, then real_dim_input is the size of the pupil in pixels.
+    nbres : list
+        List of the number of resolution elements across the total image plane for all propagation layers.
+        As a general rule, it is probably safest to choose these numbers such that there is not sampling
+        shift right in the middle of the DH. This would ensure that the frequencies inside the DH are all 
+        calculated with the same resolution in the EFC matrix. So if we correct the DH between two radii 
+        IWA and OWA (in lambda/D), nbres should not have any elements between 2IWA and 2OWA.
     shift : tuple, default (0, 0)
         Shift of FPM with respect to optical axis in units of lambda/D.
     filter_order : int, default 15
@@ -913,7 +914,7 @@ def prop_fpm_regional_sampling(pup,
     """
 
     if not isinstance(nbres, list):
-        raise TypeError(f"'nbres' parameter need to be of type list. Currently type = {type(nbres)}")
+        raise TypeError(f"'nbres' parameter needs to be of type list. Currently type = {type(nbres)}")
 
     nbres = np.array(nbres)
 
@@ -924,15 +925,15 @@ def prop_fpm_regional_sampling(pup,
         real_dim_input = pup.shape[0]
     samplings = dim_fpm / nbres
 
-    if not np.all(np.diff(nbres) >= 0):  # check if it is sorted by checking 2 by 2 diff is always positive
-        raise ValueError(f"'nbres' parameter need to be sorted from the highest to lowest nbrs of elements."
+    if not np.all(np.diff(nbres) >= 0):
+        raise ValueError(f"'nbres' parameter needs to be sorted from the highest to lowest number of elements."
                          f"Currently 'nbres' = {nbres}")
 
     if np.min(samplings) < 2:
-        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded 2, otherwise we cut off"
+        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2, otherwise we cut off"
                          f"the high-spatial frequencies and the simulation turns out bad. We need the samplings"
                          f"defined by the 'nbres' parameter (real_dim_input/nbres) to be always >= 2. Currently, with"
-                         f"real_dim_input = {real_dim_input}, samplings are {samplings}")
+                         f"real_dim_input = {real_dim_input}, samplings are {samplings}.")
 
     if np.min(samplings) != 2:
         nbres = np.append(nbres, dim_fpm / 2)
