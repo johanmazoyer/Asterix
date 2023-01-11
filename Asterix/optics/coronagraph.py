@@ -922,7 +922,7 @@ def prop_fpm_regional_sampling(pup,
     dim_fpm = fpm.shape[0]
 
     if real_dim_input is None:
-        real_dim_input = pup.shape[0]
+        real_dim_input = dim_overpad_pupil
     samplings = dim_fpm / nbres
 
     if not np.all(np.diff(nbres) >= 0):
@@ -936,10 +936,10 @@ def prop_fpm_regional_sampling(pup,
                          f"real_dim_input = {real_dim_input}, samplings are {samplings}.")
 
     if np.min(samplings) != 2:
+        # If the outer sampling defined by nbrs is already 2, we do not append it and gain some time
+        # because the last sampling is harcoded at 2.
         nbres = np.append(nbres, dim_fpm / 2)
         samplings = np.append(samplings, 2)
-    # If the outer sampling defined by nbrs is already 2, we do not append it and gain some time
-    # because the last sampling is harcoded at 2.
 
     if max(shift) >= nbres[0] / 2:
         raise ValueError(f"shift {shift} is larger than the minimum nbrs {nbres[0]} of element of resolution : the "
