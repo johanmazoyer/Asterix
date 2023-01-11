@@ -39,7 +39,6 @@ def test_def_thd():
     optical_bench = Bench([entrance_pupil, dm3, corono], ["entrancepupil", "DM3", "corono"])
 
     testbed_psf = optical_bench.todetector_intensity()
-    print(np.max(testbed_psf))
     assert np.max(testbed_psf) < 5e-9, "PSF after wrapped vortex without aberrration should be better than 5e-9"
 
     assert np.allclose(testbed_psf, np.transpose(testbed_psf), rtol=0, atol=1e-14,
