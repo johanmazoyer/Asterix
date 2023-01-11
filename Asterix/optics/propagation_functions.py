@@ -611,6 +611,8 @@ def prop_fpm_regional_sampling(pup,
     alpha : float
         Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
         input array.
+    dir_save_all_planes : string, default None
+        Directory to save all planes into fits files if save_all_planes_to_fits=True.
 
     Returns
     -------
