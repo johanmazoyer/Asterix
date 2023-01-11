@@ -927,7 +927,7 @@ def prop_fpm_regional_sampling(pup,
 
     if not np.all(np.diff(nbres) >= 0):
         raise ValueError(f"'nbres' parameter needs to be sorted from the highest to lowest number of elements."
-                         f"Currently 'nbres' = {nbres}")
+                         f"Currently 'nbres' = {nbres}.")
 
     if np.min(samplings) < 2:
         raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2, otherwise we cut off"
@@ -939,15 +939,11 @@ def prop_fpm_regional_sampling(pup,
         nbres = np.append(nbres, dim_fpm / 2)
         samplings = np.append(samplings, 2)
     # If the outer sampling defined by nbrs is already 2, we do not append it and gain some time
-    # because the last sampling is harcoded at 2
+    # because the last sampling is harcoded at 2.
 
     if max(shift) >= nbres[0] / 2:
         raise ValueError(f"shift {shift} is larger than the minimum nbrs {nbres[0]} of element of resolution : the "
                          f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
-
-    # can be used to check:
-    # print(dim_overpad_pupil, real_dim_input)
-    # print(f"With dim_fpm = {dim_fpm} and nbrs = {nbres}, Samplings: {samplings}")
 
     ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
     const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
