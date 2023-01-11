@@ -162,7 +162,7 @@ def test_prop_area_sampling():
                               Y_offset_output=1 / 2)
         coro_psf_uniform = np.abs(coro_ef_uniform)**2 / norm
 
-        # check regionnal sampling
+        # check regional sampling
         print(np.max(coro_psf_areas), np.max(coro_psf_uniform))
         assert np.max(coro_psf_areas) < expected_attenuation_regional[
             i], f"Attenuation of '{name_coro[i]}' with regional sampling not below expected {expected_attenuation_regional[i]}."
