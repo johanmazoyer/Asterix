@@ -1,5 +1,5 @@
 import numpy as np
-from Asterix.utils import crop_or_pad_image
+from Asterix.utils import crop_or_pad_image, save_plane_in_fits
 
 
 def mft(image,
@@ -147,7 +147,7 @@ def mft(image,
     # check dimensions and type of real_dim_input
     error_string_real_dim_input = "'dimpup' must be an int (square input pupil) or tuple of ints of dimension 2"
     if np.isscalar(real_dim_input):
-        if isinstance(real_dim_input, int):
+        if isinstance(real_dim_input, (int, np.integer)):
             real_dim_input_x = real_dim_input
             real_dim_input_y = real_dim_input
         else:
@@ -164,7 +164,7 @@ def mft(image,
     # check dimensions and type of dim_output
     error_string_dim_output = "'dim_output' must be an int (square output) or tuple of ints of dimension 2"
     if np.isscalar(dim_output):
-        if isinstance(dim_output, int):
+        if isinstance(dim_output, (int, np.integer)):
             dim_output_x = dim_output
             dim_output_y = dim_output
         else:
@@ -181,13 +181,13 @@ def mft(image,
     # check dimensions and type of nbres
     error_string_nbr = "'nbres' must be an float or int (square output) or tuple of float or int of dimension 2"
     if np.isscalar(nbres):
-        if isinstance(nbres, (float, int)):
+        if isinstance(nbres, (float, int, np.integer)):
             nbresx = float(nbres)
             nbresy = float(nbres)
         else:
             raise TypeError(error_string_nbr)
     elif isinstance(nbres, tuple):
-        if all(isinstance(nbresi, (float, int)) for nbresi in nbres) & (len(nbres) == 2):
+        if all(isinstance(nbresi, (float, int, np.integer)) for nbresi in nbres) & (len(nbres) == 2):
             nbresx = float(nbres[0])
             nbresy = float(nbres[1])
         else:
@@ -569,11 +569,12 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
 
 def prop_fpm_regional_sampling(pup,
                                fpm,
-                               nbres=np.array([0.1, 5, 50, 100]),
+                               real_dim_input=None,
+                               nbres=[4, 50],
                                shift=(0, 0),
-                               samp_outer=2,
                                filter_order=15,
-                               alpha=1.5):
+                               alpha=1.5,
+                               dir_save_all_planes=None):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
 
@@ -585,55 +586,99 @@ def prop_fpm_regional_sampling(pup,
 
     AUTHOR: R. Galicher (in IDL)
             ILa (to Python)
+            J. Mazoyer : small modifs to adapt to Asterix Dec 22
 
     Parameters
     ----------
-    pup : 2D array
+    pup : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
         Input mage array containing the wavefront at the entrance pupil of the optical system.
     fpm : 2D array
         Complex electric field in the focal plane of the focal-plane mask.
-    nbres : 1D array or list
-        List of the number of resolution elements in the total image plane for all propagation layers.
+    real_dim_input : int or None, default None
+        Diameter of the support in pup (can differ from pup.shape). If None, real_dim_input = pup.shape
+        If the pupil fills its array out until the edges, then real_dim_input = pup.shape; if the pupil
+        is padded, then real_dim_input is the size of the pupil in pixels.
+    nbres : list
+        List of the number of resolution elements across the total image plane for all propagation layers.
+        As a general rule, it is probably safest to choose these numbers such that there is not sampling
+        shift right in the middle of the DH. This would ensure that the frequencies inside the DH are all
+        calculated with the same resolution in the EFC matrix. So if we correct the DH between two radii
+        IWA and OWA (in lambda/D), nbres should not have any elements between 2IWA and 2OWA.
     shift : tuple, default (0, 0)
-        Shift of FPM with respect to optical axis in units of lambda/D. This is done by introducing a tip/tilt on the
-        input wavefront in the pupil that is subsequently taken out in the Lyot plane after each propagation layer.
-    samp_outer : float
-        Sampling in the outermost layer of propagations.
+        Shift of FPM with respect to optical axis in units of lambda/D.
     filter_order : int
         Order of the Butterworth filter.
     alpha : float
         Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
         input array.
+    dir_save_all_planes : string or None, default None
+        If not None, absolute directory to save all planes in fits for debugging purposes.
+        This can generate a lot of fits especially if in a loop, use with caution.
 
     Returns
     -------
     EF_before_LS : 2D array (complex)
         E-field before the Lyot stop.
     """
-    from Asterix.optics import shift_phase_ramp
+    samp_outer = 2
 
-    if samp_outer != 2:
-        raise ValueError(f"samp_outer' needs to be 2, otherwise we cut off the high-spatial frequencies and the"
-                         f"simulation turns out bad. This can become a variable parameter in the future if we allow"
-                         f"the array sizes to be adapted in this function as well, in order to retain the original"
-                         f"spatial frequency content in the outer sampling layer.")
+    if not isinstance(nbres, list):
+        raise TypeError(f"'nbres' parameter needs to be of type list or numpy.array. Currently type = {type(nbres)}")
 
-    dim_pup = pup.shape[0]
+    nbres = np.array(nbres)
+
+    dim_overpad_pupil = pup.shape[0]
     dim_fpm = fpm.shape[0]
-    pup0 = np.array(pup, copy=True, dtype='complex128')
 
-    # Add tip-tilt to in pupil wavefront to simulate FPM offsets
-    phase_ramp = shift_phase_ramp(dim_pup, shift[0], shift[1])
-    inverted_phase_ramp = shift_phase_ramp(dim_pup, -shift[0], -shift[1])
+    if real_dim_input is None:
+        real_dim_input = dim_overpad_pupil
+    samplings = real_dim_input / nbres
+
+    if not np.all(np.diff(nbres) >= 0):
+        raise ValueError(f"'nbres' parameter needs to be sorted from the highest to lowest number of elements."
+                         f"Currently 'nbres' = {nbres}")
+
+    if np.min(samplings) < 2:
+        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2, otherwise we cut off"
+                         f"the high-spatial frequencies and the simulation turns out bad. We need the samplings"
+                         f"defined by the 'nbres' parameter (real_dim_input/nbres) to be always >= 2. Currently, with"
+                         f"real_dim_input = {real_dim_input}, samplings are {samplings}.")
+
+    if np.min(samplings) == 2:
+        # The outer sampling is already 2 (samp_outer = 2). In the case where the maximum
+        # element in 'nbres' corresponds to a sampling of 2, we can remove it and gain some time.
+        nbres = np.delete(nbres, -1)
+        samplings = np.delete(samplings, -1)
+
+    if max(shift) >= nbres[0] / 2:
+        raise ValueError(f"shift {shift} is larger than the minimum number of elements of resolution {nbres[0]} / 2:"
+                         f"the tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
+
 
     # Innermost part of the focal plane
-    but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, -0.5, -0.5)
-    efield_before_fpm_inner = mft(pup0 * phase_ramp, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[0])
+    but_inner = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+    efield_before_fpm_inner = mft(pup,
+                                  real_dim_input=real_dim_input,
+                                  dim_output=dim_fpm,
+                                  nbres=nbres[0],
+                                  norm='ortho',
+                                  X_offset_output=shift[0] * samplings[0],
+                                  Y_offset_output=shift[1] * samplings[0])
     efield_before_ls = mft(efield_before_fpm_inner * fpm * but_inner,
                            real_dim_input=dim_fpm,
-                           dim_output=dim_pup,
+                           dim_output=real_dim_input,
                            nbres=nbres[0],
-                           inverse=True) * inverted_phase_ramp
+                           inverse=True,
+                           norm='ortho',
+                           X_offset_input=shift[0] * samplings[0],
+                           Y_offset_input=shift[1] * samplings[0])
+    if dir_save_all_planes is not None:
+        name_plane = f'FPbeforeFPM_nbr{int(nbres[0])}_sampling{int(samplings[0])}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, efield_before_fpm_inner)
+        name_plane = f'FPafterButandFPM_nbr{int(nbres[0])}_sampling{int(samplings[0])}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, efield_before_fpm_inner * fpm * but_inner)
+        name_plane = f'PPbeforeLyot_nbr{int(nbres[0])}_sampling{int(samplings[0])}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, efield_before_ls)
 
     # From inner to outer part of FPM
     const_but = butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
@@ -642,12 +687,30 @@ def prop_fpm_regional_sampling(pup,
         sizebut_here = dim_fpm / alpha * nbres[k] / nbres[k + 1]
         but = (1 - butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
 
-        ef_pre_fpm = mft(pup0 * phase_ramp, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres[k + 1])
+        ef_pre_fpm = mft(
+            pup,
+            real_dim_input=real_dim_input,
+            dim_output=dim_fpm,
+            nbres=nbres[k + 1],
+            norm='ortho',
+            X_offset_output=shift[0] * samplings[k + 1],
+            Y_offset_output=shift[1] * samplings[k + 1],
+        )
         ef_pre_ls = mft(ef_pre_fpm * fpm * but,
                         real_dim_input=dim_fpm,
-                        dim_output=dim_pup,
+                        dim_output=real_dim_input,
                         nbres=nbres[k + 1],
-                        inverse=True) * inverted_phase_ramp
+                        X_offset_input=shift[0] * samplings[k + 1],
+                        Y_offset_input=shift[1] * samplings[k + 1],
+                        norm='ortho',
+                        inverse=True)
+        if dir_save_all_planes is not None:
+            name_plane = f'FPbeforeFPM_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_fpm)
+            name_plane = f'FPafterButandFPM_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_fpm * fpm * but)
+            name_plane = f'PPbeforeLyot_nbr{int(nbres[k + 1])}_sampling{int(samplings[k + 1])}'
+            save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_ls)
 
         # Sum up E-field contributions before the LS
         efield_before_ls += ef_pre_ls
@@ -657,12 +720,33 @@ def prop_fpm_regional_sampling(pup,
     sizebut_outer = dim_fpm / alpha * nbres[-1] / nbres_outer
     but_outer = 1 - butterworth_circle(dim_fpm, sizebut_outer, filter_order, xshift=-0.5, yshift=-0.5)
 
-    ef_pre_fpm_outer = mft(pup0 * phase_ramp, real_dim_input=dim_pup, dim_output=dim_fpm, nbres=nbres_outer)
-    ef_pre_ls_outer = mft(ef_pre_fpm_outer * fpm * but_outer, real_dim_input=dim_fpm, dim_output=dim_pup,
-                          nbres=nbres_outer, inverse=True) * inverted_phase_ramp
+    ef_pre_fpm_outer = mft(pup,
+                           real_dim_input=real_dim_input,
+                           dim_output=dim_fpm,
+                           nbres=nbres_outer,
+                           norm='ortho',
+                           X_offset_output=shift[0] * samp_outer,
+                           Y_offset_output=shift[1] * samp_outer)
+    ef_pre_ls_outer = mft(ef_pre_fpm_outer * fpm * but_outer,
+                          real_dim_input=dim_fpm,
+                          dim_output=real_dim_input,
+                          nbres=nbres_outer,
+                          norm='ortho',
+                          inverse=True,
+                          X_offset_input=shift[0] * samp_outer,
+                          Y_offset_input=shift[1] * samp_outer)
+
+    if dir_save_all_planes is not None:
+        name_plane = f'FPbeforeFPM_nbr{int(nbres_outer)}_sampling{int(samp_outer)}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_fpm_outer)
+        name_plane = f'FPafterButandFPM_nbr{int(nbres_outer)}_sampling{int(samp_outer)}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_fpm_outer * fpm * but_outer)
+        name_plane = f'PPbeforeLyot_nbr{int(nbres_outer)}_sampling{int(samp_outer)}'
+        save_plane_in_fits(dir_save_all_planes, name_plane, ef_pre_ls_outer)
 
     # Total E-field before the LS
     efield_before_ls += ef_pre_ls_outer
-    efield_before_ls = crop_or_pad_image(efield_before_ls, dim_pup)
+
+    efield_before_ls = crop_or_pad_image(efield_before_ls, dim_overpad_pupil)
 
     return efield_before_ls

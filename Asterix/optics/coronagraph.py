@@ -108,6 +108,8 @@ class Coronagraph(optsy.OpticalSystem):
 
         elif self.corona_type == "wrapped_vortex":
             self.prop_apod2lyot = 'regional-sampling'
+            if self.prad < 100:
+                raise ValueError(f"In regional-sampling mode, 'diam_pup_in_pix' must be > 200 to be most effective")
             self.string_os += '2020'
             self.FPmsk = self.WrappedVortex()
             self.perfect_coro = False
@@ -235,8 +237,9 @@ class Coronagraph(optsy.OpticalSystem):
         EF_aberrations_introduced_in_LS : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Electrical field created by the downstream aberrations introduced directly in the Lyot Stop.
             Can also be a float scalar in which case entrance_EF is constant; default=1.
-        dir_save_all_planes : string, default None
-            Directory to save all planes into fits files if save_all_planes_to_fits=True.
+        dir_save_all_planes : string or None, default None
+            If not None, absolute directory to save all planes in fits for debugging purposes.
+            This can generate a lot of fits especially if in a loop, use with caution.
 
         Returns
         --------
@@ -383,7 +386,8 @@ class Coronagraph(optsy.OpticalSystem):
                 fpm_array = FPmsk
             lyotplane_before_lyot = prop.prop_fpm_regional_sampling(input_wavefront_after_apod,
                                                                     fpm_array,
-                                                                    nbres=np.array([0.1, 5, 50, 100]),
+                                                                    real_dim_input=int(2 * self.prad),
+                                                                    nbres=[4., 50.],
                                                                     shift=(0, 0))
 
         else:
@@ -397,6 +401,8 @@ class Coronagraph(optsy.OpticalSystem):
         lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
 
         # crop to the dim_overpad_pupil expected size
+        # TODO I do not like this line. A random crop or pad is the best way to mask an error in coding
+        # if we made an error in dimenensions. We should make sure that our arrays are of the right dimensions at all times
         lyotplane_before_lyot_crop = crop_or_pad_image(lyotplane_before_lyot, self.dim_overpad_pupil)
 
         # Field after filtering by Lyot stop
