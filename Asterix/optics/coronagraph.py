@@ -894,7 +894,7 @@ def prop_fpm_regional_sampling(pup,
         As a general rule, it is probably safest to choose these numbers such that there is not sampling
         shift right in the middle of the DH. This would ensure that the frequencies inside the DH are all
         calculated with the same resolution in the EFC matrix. So if we correct the DH between two radii
-        IWA and OWA (in lambda/D), nbres should not have any elements between 2IWA and 2OWA.
+        IWA and OWA (in lambda/D), nbres should not have any elements between 2*IWA and 2*OWA.
     real_dim_input : int or None, default None
         Diameter of the support in pup (can differ from pup.shape). If None, real_dim_input = pup.shape
         If the pupil fills its array out until the edges, then real_dim_input = pup.shape; if the pupil
