@@ -601,8 +601,8 @@ def prop_fpm_regional_sampling(pup,
     nbres : list
         List of the number of resolution elements across the total image plane for all propagation layers.
         As a general rule, it is probably safest to choose these numbers such that there is not sampling
-        shift right in the middle of the DH. This would ensure that the frequencies inside the DH are all 
-        calculated with the same resolution in the EFC matrix. So if we correct the DH between two radii 
+        shift right in the middle of the DH. This would ensure that the frequencies inside the DH are all
+        calculated with the same resolution in the EFC matrix. So if we correct the DH between two radii
         IWA and OWA (in lambda/D), nbres should not have any elements between 2IWA and 2OWA.
     shift : tuple, default (0, 0)
         Shift of FPM with respect to optical axis in units of lambda/D.
