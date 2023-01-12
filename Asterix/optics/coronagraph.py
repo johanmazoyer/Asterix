@@ -55,9 +55,9 @@ class Coronagraph(optsy.OpticalSystem):
 
         # The way we define the focal plane mask depends on the type of coronagraph (fqpm, HLC, Vortex, etc),
         # but also on the propagation method (mft, fft, etc). For most propagation methods, there are internal
-        # propagation parameters that can be adjusted (usually at least the number of pixel in the focal plane),
-        # which willhave an impact on the precision of the simulation. These parameter are not physical parameter
-        # and we decide to harcode them for expert users.
+        # propagation parameters that can be adjusted (usually at least the number of pixels in the focal plane),
+        # which will have an impact on the precision of the simulation. These parameters are not physical parameters
+        # and we decide to hardcode them for expert users.
 
         # We first go through each propagation methods one by one and set these parameters
         # once for all coronagraphs using this method.
@@ -66,7 +66,7 @@ class Coronagraph(optsy.OpticalSystem):
 
             self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
 
-            # Ee oversample the center in babinet's mode because it can be done
+            # We oversample the center in babinet's mode because it can be done
             # quite a lot without increasing the number of pixel too much.
             self.Lyot_fpm_sampling = 20.
             rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
