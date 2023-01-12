@@ -51,17 +51,24 @@ class Coronagraph(optsy.OpticalSystem):
         self.corona_type = coroconfig["corona_type"].lower()
         self.string_os += '_' + self.corona_type
 
-        # define the types of propagation first for each coronagraph type
-        # this is also used to hard code some of the internal propagation of the
-        # coronagraph like the size of the focal plane
+        self.achrom_phase_coro = coroconfig["achrom_phase_coro"]
+
+        # The way we define the focal plane mask depends on the type of coronagraph (fqpm, HLC, Vortex, etc),
+        # but also on the propagation method (mft, fft, etc). For most propagation methods, there are internal
+        # propagation parameters that can be adjusted (usually at least the number of pixel in the focal plane),
+        # which willhave an impact on the precision of the simulation. These parameter are not physical parameter
+        # and we decide to harcode them for expert users.
+
+        # We first go through each propagation methods one by one and set these parameters
+        # once for all coronagraphs using this method.
         if self.corona_type in ("classiclyot", "hlc"):
             self.prop_apod2lyot = 'mft-babinet'
 
             self.rad_lyot_fpm = coroconfig["rad_lyot_fpm"]
 
-            # we oversample the center in babinet's mode because we can
-            # hard coded for now, this is very internal cooking
-            self.Lyot_fpm_sampling = 20.  # self.Science_sampling
+            # Ee oversample the center in babinet's mode because it can be done
+            # quite a lot without increasing the number of pixel too much.
+            self.Lyot_fpm_sampling = 20.
             rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
             self.dim_fpm = 2 * int(2.2 * rad_LyotFP_pix / 2)
 
@@ -70,13 +77,12 @@ class Coronagraph(optsy.OpticalSystem):
             if self.prad < 100:
                 raise ValueError(f"In regional-sampling mode, 'diam_pup_in_pix' must be > 200 to be most accurate")
 
-            # with 'diam_pup_in_pix' = 256 these parameter give ~3 10-9 for the wrapped vortex
-            # it is possible to do better but would require higher pupil and fpm size
-            # Ideally try to find the 2 best 'nbres' so that we can get better than 10-10
+            # With 'diam_pup_in_pix' = 200 these parameter give ~2 10-9 for the wrapped vortex.
+            # It is possible to do better but would probably require higher pupil and fpm size.
             self.dim_fpm = 256
             self.nbrs_res_list = [4, 32]
 
-            # Following lines ~7 10-10 for 'diam_pup_in_pix' = 512. This is very slow though
+            # Following lines ~7 10-10 for 'diam_pup_in_pix' = 512. This is very slow though.
             # self.dim_fpm = 512
             # self.nbrs_res_list = [6, 42]
 
@@ -84,17 +90,20 @@ class Coronagraph(optsy.OpticalSystem):
             self.prop_apod2lyot = 'mft'
 
         else:
-            raise ValueError(f"The requested coronagraph mode '{self.corona_type}' does not exists.")
+            raise ValueError(f"The requested coronagraph mode '{self.corona_type}' does not exist.")
 
-        # dim_fp_fft definition only use if prop_apod2lyot == 'fft'
-        self.corono_fpm_sampling = self.Science_sampling
-        self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=int)
-        for i, wav in enumerate(self.wav_vec):
-            self.dim_fp_fft[i] = int(np.ceil(self.prad * self.corono_fpm_sampling * self.wavelength_0 / wav)) * 2
-            # we take the ceil to be sure that we measure at least the good resolution
-            # We do not need to be exact, the mft in science_focal_plane will be
+        # In the case of the fft propagation, the size of the focal plane is directly linked to the size of
+        # the pupil plane and depends on the WL.
+        if self.prop_apod2lyot == 'fft':
+            self.corono_fpm_sampling = self.Science_sampling
+            self.dim_fp_fft = np.zeros(len(self.wav_vec), dtype=int)
+            for i, wav in enumerate(self.wav_vec):
+                self.dim_fp_fft[i] = int(np.ceil(self.prad * self.corono_fpm_sampling * self.wavelength_0 / wav)) * 2
+                # We take the ceil to be sure that we measure at least the good resolution.
+                # We do not need to be exact, the mft in science_focal_plane will be
 
-        self.achrom_phase_coro = coroconfig["achrom_phase_coro"]
+        # We now go throught the coronagraphs one by one and use the propagation parameters to
+        # define the focal plane mask in each case.
 
         if self.corona_type == "fqpm":
             self.err_fqpm = coroconfig["err_fqpm"]
@@ -909,7 +918,6 @@ def prop_fpm_regional_sampling(pup,
     dir_save_all_planes : string or None, default None
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
-
 
     Returns
     -------

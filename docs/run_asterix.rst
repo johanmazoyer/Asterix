@@ -210,7 +210,7 @@ If Vortex :
     - vortex_charge : even int, charge of the vortex
 
 If phase coronagraph:
-    - achrom_phase_coro = False : bool, If, we can choose to use it in achromatic mode (the coronagraph diplays the same behavior for each wavelengths) or not (phase is introduced by material step and therefore chromatic behavior)
+    - achrom_phase_coro = False : bool. We can choose to use it in achromatic mode (the coronagraph diplays the same behavior for each wavelengths) or not (phase is introduced by material step and therefore chromatic behavior)
 
 
 [Estimationconfig]

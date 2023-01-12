@@ -632,7 +632,6 @@ def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, grey_pup_bin_factor
                         add_spider_thickness=addSpiderObs)
 
 
-
 def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     """
     Return a circular Butterworth filter.
