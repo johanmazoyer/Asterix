@@ -18,7 +18,7 @@ def test_all_coronagraphs():
 
     # Set coronagraph to be tested
     coros_to_test = ["fqpm", "wrapped_vortex", "classiclyot", "knife", "hlc", "vortex"]
-    expected_attenuation = [1e-20, 5e-9, 5e-3, 1e-2, 1e-3, 8e-9]  # Note that these are for the 256 px pupil below
+    expected_attenuation = [1e-20, 3e-9, 5e-3, 1e-2, 1e-3, 5e-9]  # Note that these are for the 256 px pupil below
     atols = [0, 1e-14, 1e-14, np.nan, 1e-14, 1e-14]  # zeros are for perfect coronagraphs
 
     for i, coro in enumerate(coros_to_test):
@@ -35,6 +35,7 @@ def test_all_coronagraphs():
             assert np.allclose(coro_psf, np.transpose(coro_psf), atol=atols[i],
                                rtol=0), f"Coronagraphic image is not symmetric in transpose for '{coro}'."
 
+test_all_coronagraphs()
 
 def test_all_coronagraphs_polychromatic():
     # Load the test parameter file
