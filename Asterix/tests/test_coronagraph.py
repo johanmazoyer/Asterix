@@ -35,7 +35,6 @@ def test_all_coronagraphs():
             assert np.allclose(coro_psf, np.transpose(coro_psf), atol=atols[i],
                                rtol=0), f"Coronagraphic image is not symmetric in transpose for '{coro}'."
 
-test_all_coronagraphs()
 
 def test_all_coronagraphs_polychromatic():
     # Load the test parameter file
