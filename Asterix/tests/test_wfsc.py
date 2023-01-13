@@ -107,6 +107,40 @@ def test_2dm_correction():
     assert best_contrast_2DM < 1e-8, "best contrast 2DM should be < 1e-8"
 
 
+def test_2dm_correction_roman():
+    # Load the test parameter file
+    parameter_file_test = os.path.join(Asterix_root, 'tests', "param_file_tests.ini")
+
+    # Load configuration file
+    config = read_parameter_file(parameter_file_test,
+                                 NewMODELconfig={
+                                     'filename_instr_pup': 'RomanPup',
+                                     'diam_pup_in_pix': 100
+                                 },
+                                 NewCoronaconfig={
+                                     'filename_instr_apod': 'Clear',
+                                     'corona_type': 'HLC',
+                                     'filename_instr_lyot': 'RomanLyot'
+                                 },
+                                 NewDMconfig={'DM1_active': True},
+                                 NewEstimationconfig={'estimation': 'perfect'},
+                                 NewCorrectionconfig={
+                                     'DH_side': "Full",
+                                     'correction_algorithm': "sm",
+                                     'Nbmodes_OnTestbed': 600
+                                 },
+                                 NewLoopconfig={
+                                     'Nbiter_corr': [20],
+                                     'Nbmode_corr': [250]
+                                 })
+
+    # we create a specific test_dir because we want the matrices to be redone everytime in testing
+    test_dir = get_data_dir(datadir="asterix_test_dir")
+    best_contrast_2DM = quick_run_no_save(config, test_dir)
+
+    assert best_contrast_2DM < 1e-8, "Best contrast 2DM Roman HLC should be < 1e-8"
+
+
 @pytest.fixture(scope="session", autouse=True)
 def cleanup(request):
     """Cleanup a testing directory once we are finished,  because we want the matrices 
