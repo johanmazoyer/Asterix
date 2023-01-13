@@ -82,10 +82,6 @@ class Coronagraph(optsy.OpticalSystem):
             self.dim_fpm = 256
             self.nbrs_res_list = [4, 32]
 
-            # Following lines ~7 10-10 for 'diam_pup_in_pix' = 512. This is very slow though.
-            # self.dim_fpm = 512
-            # self.nbrs_res_list = [6, 42]
-
         elif self.corona_type in ("fqpm", "knife"):
             self.prop_apod2lyot = 'mft'
 
@@ -887,6 +883,16 @@ def prop_fpm_regional_sampling(pup,
     and then to the Lyot plane (without Lyot stop applied), using MFTs, while a (combination of) Butterworth filters
     marks annular regions around the FPM center that are considered in the propagation in each step. The electric field
     contribution from each step is then summed up to yield the total electric field in the Lyot plane (before the LS).
+
+    The parameters of this function are very hard to optimize because it is not super reliable, increasing
+    the number of pixels in PP or FP generally gives you better contrast but sometimes get you worse contrast.
+    Following array gives you some of the result I obtained:
+
+    __________________________________________________________________________________________________________
+    |     Dim pup    | Overpadding PP factor | Actual PP size | FP size |     nbres    || Resulting contrast |
+    |       200      |          1.5          |      300       |   256   |    [4, 32]   ||       2.1e-09      |
+    |       280      |          1.5          |      420       |   512   |    [6, 50]   ||       3.6e-10      |
+    __________________________________________________________________________________________________________
 
     AUTHOR: R. Galicher (in IDL)
             ILa (to Python)
