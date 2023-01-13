@@ -105,6 +105,10 @@ def correction_loop(testbed: Testbed,
     if corrector.correction_algorithm == 'sm':
         Linesearch = False
 
+    no_aberr_FP = testbed.todetector_intensity()
+    no_aberr_attenuation = np.max(no_aberr_FP)
+    print("Tesbed FP maximum contrast in the absence of aberrations: ", no_aberr_attenuation)
+
     for i in range(Number_matrix):
 
         if i > 0:

@@ -630,3 +630,56 @@ def make_sphere_lyot(dim_pp, prad, pupangle=0, spiders=True, grey_pup_bin_factor
                         reduce_outer_radius=lyotOuterEdgeObs,
                         add_central_obs=addCentralObs,
                         add_spider_thickness=addSpiderObs)
+
+
+def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
+    """
+    Return a circular Butterworth filter.
+
+    AUTHOR: Raphaël Galicher (in IDL)
+            ILa (to Python)
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of 2D output array in pixels. If even, filter will be centered on a pixel, but can be shifted to
+        between pixels by using xshift=-0.5 and yshift=-0.5. If uneven, filter will be centered between pixels.
+    size_filter : int
+        Inverse size of the filter.
+    order : int
+        Order of the filter.
+    xshift : float
+        Shift of filter with respect to its array in the x direction, in pixels.
+    yshift : float
+        Shift of filter with respect to its array in the y direction, in pixels.
+
+    Returns
+    -------
+    butterworth : 2D array
+
+    Example
+    --------
+    siz = 100
+    rad = int(siz / 2)
+
+    bfilter3 = butterworth_circle(siz, rad, order=3, xshift=-0.5, yshift=-0.5)
+    bfilter5 = butterworth_circle(siz, rad, order=5, xshift=-0.5, yshift=-0.5)
+
+    plt.figure(figsize=(16, 8))
+    plt.subplot(1,2,1)
+    plt.imshow(bfilter5, cmap='Greys_r', origin='lower')
+    plt.title("Order = 5")
+    plt.colorbar()
+    plt.subplot(1,2,2)
+    plt.plot(bfilter3[rad], label="order=3")
+    plt.plot(bfilter5[rad], label="order=5")
+    plt.legend()
+    plt.show()
+    """
+    ty = (np.arange(dim) - yshift - dim / 2)
+    tx = (np.arange(dim) - xshift - dim / 2)
+    xx, yy = np.meshgrid(ty, tx)
+
+    butterworth = 1 / np.sqrt(1 + (np.sqrt(xx**2 + yy**2) / np.abs(size_filter) * 2)**(2. * order))
+
+    return butterworth
