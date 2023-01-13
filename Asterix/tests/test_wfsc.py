@@ -141,9 +141,6 @@ def test_2dm_correction_roman():
     assert best_contrast_2DM < 1e-8, "Best contrast 2DM Roman HLC should be < 1e-8"
 
 
-test_2dm_correction_roman()
-
-
 @pytest.fixture(scope="session", autouse=True)
 def cleanup(request):
     """Cleanup a testing directory once we are finished,  because we want the matrices 
