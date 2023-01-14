@@ -78,9 +78,9 @@ class Coronagraph(optsy.OpticalSystem):
                 raise ValueError(f"In regional-sampling mode, 'diam_pup_in_pix' must be > 200 to be most accurate")
 
             # With 'diam_pup_in_pix' = 200 these parameter give ~2 10-9 for the wrapped vortex.
-            # It is possible to do better but would probably require higher pupil and fpm size.
-            self.dim_fpm = 256
-            self.nbrs_res_list = [4, 32]
+            # See Array in prop_fpm_regional_sampling function docstring for better
+            self.dim_fpm = 250
+            self.nbrs_res_list = [12, 78]
 
         elif self.corona_type in ("fqpm", "knife"):
             self.prop_apod2lyot = 'mft'
@@ -886,13 +886,15 @@ def prop_fpm_regional_sampling(pup,
 
     The parameters of this function are very hard to optimize because it is not super reliable, increasing
     the number of pixels in PP or FP generally gives you better contrast but sometimes get you worse contrast.
-    Following array gives you some of the result I obtained:
-
-    __________________________________________________________________________________________________________
-    |     Dim pup    | Overpadding PP factor | Actual PP size | FP size |     nbres    || Resulting contrast |
-    |       200      |          1.5          |      300       |   256   |    [4, 32]   ||       2.1e-09      |
-    |       280      |          1.5          |      420       |   512   |    [6, 50]   ||       3.6e-10      |
-    __________________________________________________________________________________________________________
+    Following array gives you some of the result I obtained for the wrapped vortex:
+        ______________________________________________________________________________________________________
+        |     Dim pup    | Overpad PP factor | Actual PP size | FP size |     nbres    || Resulting contrast |
+        |       200      |        2.0        |      400       |   250   |    [12, 78]  ||       1.9e-09      |
+        |       214      |        2.0        |      440       |   358   |    [16 151]  ||       7.9e-10      |
+        |       232      |        2.0        |      464       |   372   |    [5, 58]   ||       5.0e-10      |
+        |       310      |        2.0        |      620       |   482   |    [14, 88]  ||       2.0e-10      |
+        |       380      |        2.0        |      760       |   630   |    [3, 44]   ||       7.6e-11      |
+        ______________________________________________________________________________________________________
 
     AUTHOR: R. Galicher (in IDL)
             ILa (to Python)
@@ -948,9 +950,9 @@ def prop_fpm_regional_sampling(pup,
                          f"Currently 'nbres' = {nbres}.")
 
     if np.min(samplings) < 2:
-        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2. We need the samplings"
-                         f"defined by the 'nbres' parameter (real_dim_input/nbres) to be always >= 2. Currently, with"
-                         f"real_dim_input = {real_dim_input}, samplings are {samplings}.")
+        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2. We need the samplings "
+                         f"defined by the 'nbres' parameter (dim_fpm/nbres) to be always >= 2. Currently, "
+                         f"dim_fpm = {dim_fpm}, nbres = {nbres} => samplings = {samplings}.")
 
     if np.min(samplings) != 2:
         # If the smaller sampling defined by parameter 'nbres' is not 2, we append it to the list. This is a
