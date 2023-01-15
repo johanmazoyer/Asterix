@@ -874,6 +874,15 @@ def prop_fpm_regional_sampling(pup,
                                shift=(0, 0),
                                filter_order=15,
                                alpha=1.5,
+                               only_mat_mult=False,
+                               AAs_direct=None,
+                               AAs_inverse=None,
+                               BBs_direct=None,
+                               BBs_inverse=None,
+                               norm0s_direct=None,
+                               norm0s_inverse=None,
+                               butterworths=None,
+                               returnAAsBBs=False,
                                dir_save_all_planes=None):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
