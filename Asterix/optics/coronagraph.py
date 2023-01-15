@@ -932,6 +932,37 @@ def prop_fpm_regional_sampling(pup,
     alpha : float, default 1.5
         Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
         input array.
+    only_mat_mult : boolean,, default False
+        if True, we only do the matrix multiplication, but we need the matrices AA, BB and the scalars
+        norm0 to be provided. In that case all other parameters are not used. Careful, in this mode,
+        it is assumed that the user is 'expert' and no specific error message will be thrown if
+        parameters are wrong. e.g. it will crash if image, AA and BB dimensions are not compatibles
+        if False : classical MFT, AA, BB and norm0 parameters are not used
+    AAs_direct : List of complex numpy arrays or None, default None
+        Listist of matrices AA that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (direct direction). This parameter is only used if only_mat_mult = True.
+    AAs_inverse : List of complex numpy arrays or None, default None
+        List of matrices AA that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (inverse direction). This parameter is only used if only_mat_mult = True.
+    BBs_direct : List of complex numpy arrays or None, default None
+        List of matrices BB that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (direct direction). This parameter is only used if only_mat_mult = True.
+    BBs_inverse : List of complex numpy arrays or None, default None
+        List of matrices BB that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (inverse direction). This parameter is only used if only_mat_mult = True.
+    norm0s_direct : List of floats or None, default None
+        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional
+        sampling mft (direct direction). This parameter is only used if only_mat_mult = True.
+    norm0s_inverse : List of floats or None, default None
+        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional
+        sampling mft (inverse direction). This parameter is only used if only_mat_mult = True.
+    butterworths : List of real numpy arrays or None, default None
+        List of butterworth windows used for each regional sampling mft.
+        This parameter is only used if only_mat_mult = True.
+    returnAAsBBs : boolean, default False
+        if False, the normal propagation image is returned
+        if True, return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths
+        that can be used for all the propagation when only_mat_mult is True.
     dir_save_all_planes : string or None, default None
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
