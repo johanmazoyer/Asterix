@@ -1004,52 +1004,110 @@ def prop_fpm_regional_sampling(pup,
         raise ValueError(f"shift {shift} is larger than the minimum number of elements of resolution {nbres[0]}: the "
                          f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
 
+    if shift != (0, 0):
+        if returnAAsBBs or only_mat_mult:
+            raise ValueError(f"Cannot use precalculated MFT matrices in the case of of shifted center."
+                             f"Use shift = (0,0) or returnAAsBBs=False and only_mat_mult = False")
+
+    if returnAAsBBs:
+        if only_mat_mult:
+            raise ValueError(f"Cannot have both returnAAsBBs = True and only_mat_mult = True.")
+        AAs_direct = list()
+        AAs_inverse = list()
+        BBs_direct = list()
+        BBs_inverse = list()
+        norm0s_direct = list()
+        norm0s_inverse = list()
+        butterworths = list()
+
     ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
-    const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
 
-    # From inner to outer part of FPM
-    for k in range(nbres.shape[0]):
+    if not only_mat_mult:
+        const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+        nbrs2nbrs = nbres.shape[0]
+    else:
+        nbrs2nbrs = len(butterworths)  # in the case only_mat_mult, nbrs are fixed
 
-        if k == 0:
-            # Innermost part of the focal plane
-            but_here = np.copy(const_but)
-        elif k < nbres.shape[0] - 1:
-            # Butterworth filter in each layer
-            sizebut_here = dim_fpm / alpha * nbres[k - 1] / nbres[k]
-            but_here = (1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5,
-                                                          yshift=-0.5)) * const_but
+    for k in range(nbrs2nbrs):
+        if only_mat_mult:
+            but_here = butterworths[k]
         else:
-            # Outer part of the FPM
-            sizebut_here = dim_fpm / alpha * nbres[-2] / nbres[-1]
-            but_here = 1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)
+            if k == 0:
+                # Innermost part of the focal plane
+                but_here = np.copy(const_but)
+            elif k < nbres.shape[0] - 1:
+                # Butterworth filter in each layer
+                sizebut_here = dim_fpm / alpha * nbres[k - 1] / nbres[k]
+                but_here = (1 - phase_ampl.butterworth_circle(
+                    dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
+            else:
+                # Outer part of the FPM
+                sizebut_here = dim_fpm / alpha * nbres[-2] / nbres[-1]
+                but_here = 1 - phase_ampl.butterworth_circle(
+                    dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)
 
-        ef_fp_before_fpm = prop.mft(
-            pup,
-            real_dim_input=real_dim_input,
-            dim_output=dim_fpm,
-            nbres=nbres[k],
-            norm='ortho',
-            X_offset_output=shift[0] * samplings[k],
-            Y_offset_output=shift[1] * samplings[k],
-        )
-        ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
-                                       real_dim_input=dim_fpm,
-                                       dim_output=real_dim_input,
-                                       nbres=nbres[k],
-                                       X_offset_input=shift[0] * samplings[k],
-                                       Y_offset_input=shift[1] * samplings[k],
-                                       norm='ortho',
-                                       inverse=True)
+        if returnAAsBBs:
+            butterworths.append(but_here)
 
-        if dir_save_all_planes is not None:
-            name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
-            save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm)
-            name_plane = f'FPafterButandFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
-            save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm * fpm * but_here)
-            name_plane = f'PPbeforeLyot_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
-            save_plane_in_fits(dir_save_all_planes, name_plane, ef_pp_before_ls_reg)
+            AA, BB, norm0 = prop.mft(pup,
+                                     real_dim_input=real_dim_input,
+                                     dim_output=dim_fpm,
+                                     nbres=nbres[k],
+                                     norm='ortho',
+                                     returnAABB=True)
+            AAs_direct.append(AA)
+            BBs_direct.append(BB)
+            norm0s_direct.append(norm0)
+
+            AA, BB, norm0 = prop.mft(fpm,
+                                     real_dim_input=dim_fpm,
+                                     dim_output=real_dim_input,
+                                     nbres=nbres[k],
+                                     inverse=True,
+                                     norm='ortho',
+                                     returnAABB=True)
+            AAs_inverse.append(AA)
+            BBs_inverse.append(BB)
+            norm0s_inverse.append(norm0)
+
+        elif only_mat_mult:
+            ef_fp_before_fpm = prop.mft(pup,
+                                        only_mat_mult=True,
+                                        AA=AAs_direct[k],
+                                        BB=BBs_direct[k],
+                                        norm0=norm0s_direct[k])
+            ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
+                                           only_mat_mult=True,
+                                           AA=AAs_inverse[k],
+                                           BB=BBs_inverse[k],
+                                           norm0=norm0s_inverse[k])
+        else:
+            ef_fp_before_fpm = prop.mft(pup,
+                                        real_dim_input=real_dim_input,
+                                        dim_output=dim_fpm,
+                                        nbres=nbres[k],
+                                        X_offset_output=shift[0] * samplings[k],
+                                        Y_offset_output=shift[1] * samplings[k])
+            ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
+                                           real_dim_input=dim_fpm,
+                                           dim_output=real_dim_input,
+                                           nbres=nbres[k],
+                                           inverse=True,
+                                           X_offset_input=shift[0] * samplings[k],
+                                           Y_offset_input=shift[1] * samplings[k])
+
+            if dir_save_all_planes is not None:
+                name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+                save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm)
+                name_plane = f'FPafterButandFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+                save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm * fpm * but_here)
+                name_plane = f'PPbeforeLyot_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+                save_plane_in_fits(dir_save_all_planes, name_plane, ef_pp_before_ls_reg)
 
         # Sum up E-field contributions before the LS
         ef_pp_before_ls_tot += ef_pp_before_ls_reg
+
+    if returnAAsBBs:
+        return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths
 
     return crop_or_pad_image(ef_pp_before_ls_tot, dim_overpad_pupil)
