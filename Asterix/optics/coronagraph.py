@@ -207,10 +207,11 @@ class Coronagraph(optsy.OpticalSystem):
 
         if self.prop_apod2lyot == 'regional-sampling':
 
-            AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths = prop_fpm_regional_sampling(
+            self.AAs_direct, self.AAs_inverse, self.BBs_direct, self.BBs_inverse, self.norm0s_direct, self.norm0s_inverse, self.butterworths = prop_fpm_regional_sampling(
                 np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
                 np.zeros((self.dim_fpm, self.dim_fpm)),
                 self.nbrs_res_list,
+                real_dim_input=int(2 * self.prad),
                 returnAAsBBs=True,
                 filter_order=15,
                 alpha=1.5)
@@ -421,11 +422,16 @@ class Coronagraph(optsy.OpticalSystem):
                 FPmsk = np.ones((self.dim_fpm, self.dim_fpm))
 
             lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
-                                                               FPmsk,
-                                                               self.nbrs_res_list,
-                                                               real_dim_input=int(2 * self.prad),
+                                                               FPmsk, [0] * len(self.nbrs_res_list),
                                                                dir_save_all_planes=dir_save_all_planes,
-                                                               shift=(0, 0))
+                                                               only_mat_mult=True,
+                                                               AAs_direct=self.AAs_direct,
+                                                               AAs_inverse=self.AAs_inverse,
+                                                               BBs_direct=self.BBs_direct,
+                                                               BBs_inverse=self.BBs_inverse,
+                                                               norm0s_direct=self.norm0s_direct,
+                                                               norm0s_inverse=self.norm0s_inverse,
+                                                               butterworths=self.butterworths)
 
         else:
             raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
@@ -983,45 +989,45 @@ def prop_fpm_regional_sampling(pup,
         E-field before the Lyot stop.
     """
 
-    if not isinstance(nbres, list):
-        raise TypeError(f"'nbres' parameter needs to be of type list. Currently type = {type(nbres)}")
-
-    nbres = np.array(nbres)
-
+    if only_mat_mult and returnAAsBBs:
+            raise ValueError(f"Cannot have both returnAAsBBs = True and only_mat_mult = True.")
+    
     dim_overpad_pupil = pup.shape[0]
-    dim_fpm = fpm.shape[0]
 
-    if real_dim_input is None:
-        real_dim_input = dim_overpad_pupil
-    samplings = dim_fpm / nbres
+    if not only_mat_mult:
+        if not isinstance(nbres, list):
+            raise TypeError(f"'nbres' parameter needs to be of type list. Currently type = {type(nbres)}")
 
-    if not np.all(np.diff(nbres) >= 0):
-        raise ValueError(f"'nbres' parameter needs to be sorted from the highest to lowest number of elements."
-                         f"Currently 'nbres' = {nbres}.")
+        nbres = np.array(nbres)
 
-    if np.min(samplings) < 2:
-        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2. We need the samplings "
-                         f"defined by the 'nbres' parameter (dim_fpm/nbres) to be always >= 2. Currently, "
-                         f"dim_fpm = {dim_fpm}, nbres = {nbres} => samplings = {samplings}.")
+        dim_fpm = fpm.shape[0]
 
-    if np.min(samplings) != 2:
-        # If the smaller sampling defined by parameter 'nbres' is not 2, we append it to the list. This is a
-        # way to force the last sampling to be harcoded at 2.
-        nbres = np.append(nbres, dim_fpm / 2)
-        samplings = np.append(samplings, 2)
+        if real_dim_input is None:
+            real_dim_input = dim_overpad_pupil
+        samplings = dim_fpm / nbres
 
-    if max(shift) >= nbres[0] / 2:
-        raise ValueError(f"shift {shift} is larger than the minimum number of elements of resolution {nbres[0]}: the "
-                         f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
+        if not np.all(np.diff(nbres) >= 0):
+            raise ValueError(f"'nbres' parameter needs to be sorted from the highest to lowest number of elements."
+                             f"Currently 'nbres' = {nbres}.")
 
-    if shift != (0, 0):
-        if returnAAsBBs or only_mat_mult:
-            raise ValueError(f"Cannot use precalculated MFT matrices in the case of of shifted center."
-                             f"Use shift = (0,0) or returnAAsBBs=False and only_mat_mult = False")
+        if np.min(samplings) < 2:
+            raise ValueError(
+                f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2. We need the samplings "
+                f"defined by the 'nbres' parameter (dim_fpm/nbres) to be always >= 2. Currently, "
+                f"dim_fpm = {dim_fpm}, nbres = {nbres} => samplings = {samplings}.")
+
+        if np.min(samplings) != 2:
+            # If the smaller sampling defined by parameter 'nbres' is not 2, we append it to the list. This is a
+            # way to force the last sampling to be harcoded at 2.
+            nbres = np.append(nbres, dim_fpm / 2)
+            samplings = np.append(samplings, 2)
+
+        if max(shift) >= nbres[0] / 2:
+            raise ValueError(
+                f"shift {shift} is larger than the minimum number of elements of resolution {nbres[0]}: the "
+                f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
 
     if returnAAsBBs:
-        if only_mat_mult:
-            raise ValueError(f"Cannot have both returnAAsBBs = True and only_mat_mult = True.")
         AAs_direct = list()
         AAs_inverse = list()
         BBs_direct = list()
@@ -1030,12 +1036,12 @@ def prop_fpm_regional_sampling(pup,
         norm0s_inverse = list()
         butterworths = list()
 
-    ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
-
     if not only_mat_mult:
+        ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
         const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
         nbrs2nbrs = nbres.shape[0]
     else:
+        ef_pp_before_ls_tot = 0
         nbrs2nbrs = len(butterworths)  # in the case only_mat_mult, nbrs are fixed
 
     for k in range(nbrs2nbrs):
@@ -1064,6 +1070,8 @@ def prop_fpm_regional_sampling(pup,
                                      dim_output=dim_fpm,
                                      nbres=nbres[k],
                                      norm='ortho',
+                                     X_offset_output=shift[0] * samplings[k],
+                                     Y_offset_output=shift[1] * samplings[k],
                                      returnAABB=True)
             AAs_direct.append(AA)
             BBs_direct.append(BB)
@@ -1075,10 +1083,13 @@ def prop_fpm_regional_sampling(pup,
                                      nbres=nbres[k],
                                      inverse=True,
                                      norm='ortho',
+                                     X_offset_output=shift[0] * samplings[k],
+                                     Y_offset_output=shift[1] * samplings[k],
                                      returnAABB=True)
             AAs_inverse.append(AA)
             BBs_inverse.append(BB)
             norm0s_inverse.append(norm0)
+            ef_pp_before_ls_reg = 0
 
         elif only_mat_mult:
             ef_fp_before_fpm = prop.mft(pup,
@@ -1096,6 +1107,7 @@ def prop_fpm_regional_sampling(pup,
                                         real_dim_input=real_dim_input,
                                         dim_output=dim_fpm,
                                         nbres=nbres[k],
+                                        norm='ortho',
                                         X_offset_output=shift[0] * samplings[k],
                                         Y_offset_output=shift[1] * samplings[k])
             ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
@@ -1103,6 +1115,7 @@ def prop_fpm_regional_sampling(pup,
                                            dim_output=real_dim_input,
                                            nbres=nbres[k],
                                            inverse=True,
+                                           norm='ortho',
                                            X_offset_input=shift[0] * samplings[k],
                                            Y_offset_input=shift[1] * samplings[k])
 
