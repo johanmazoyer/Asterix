@@ -205,6 +205,16 @@ class Coronagraph(optsy.OpticalSystem):
                 self.BB_inverse.append(b)
                 self.norm0_inverse.append(c)
 
+        if self.prop_apod2lyot == 'regional-sampling':
+
+            AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths = prop_fpm_regional_sampling(
+                np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
+                np.zeros((self.dim_fpm, self.dim_fpm)),
+                self.nbrs_res_list,
+                returnAAsBBs=True,
+                filter_order=15,
+                alpha=1.5)
+
         if "bool_overwrite_perfect_coro" in coroconfig:
             if coroconfig["bool_overwrite_perfect_coro"]:
                 self.perfect_coro = True
