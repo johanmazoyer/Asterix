@@ -991,7 +991,7 @@ def prop_fpm_regional_sampling(pup,
 
     if only_mat_mult and returnAAsBBs:
             raise ValueError(f"Cannot have both returnAAsBBs = True and only_mat_mult = True.")
-    
+
     dim_overpad_pupil = pup.shape[0]
 
     if not only_mat_mult:
