@@ -78,9 +78,9 @@ class Coronagraph(optsy.OpticalSystem):
                 raise ValueError(f"In regional-sampling mode, 'diam_pup_in_pix' must be > 200 to be most accurate")
 
             # With 'diam_pup_in_pix' = 200 these parameter give ~2 10-9 for the wrapped vortex.
-            # It is possible to do better but would probably require higher pupil and fpm size.
-            self.dim_fpm = 256
-            self.nbrs_res_list = [4, 32]
+            # See Array in prop_fpm_regional_sampling function docstring for better
+            self.dim_fpm = 250
+            self.nbrs_res_list = [12, 78]
 
         elif self.corona_type in ("fqpm", "knife"):
             self.prop_apod2lyot = 'mft'
@@ -204,6 +204,17 @@ class Coronagraph(optsy.OpticalSystem):
                 self.AA_inverse.append(a)
                 self.BB_inverse.append(b)
                 self.norm0_inverse.append(c)
+
+        if self.prop_apod2lyot == 'regional-sampling':
+
+            self.AAs_direct, self.AAs_inverse, self.BBs_direct, self.BBs_inverse, self.norm0s_direct, self.norm0s_inverse, self.butterworths = prop_fpm_regional_sampling(
+                np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
+                np.zeros((self.dim_fpm, self.dim_fpm)),
+                self.nbrs_res_list,
+                real_dim_input=int(2 * self.prad),
+                returnAAsBBs=True,
+                filter_order=15,
+                alpha=1.5)
 
         if "bool_overwrite_perfect_coro" in coroconfig:
             if coroconfig["bool_overwrite_perfect_coro"]:
@@ -411,11 +422,16 @@ class Coronagraph(optsy.OpticalSystem):
                 FPmsk = np.ones((self.dim_fpm, self.dim_fpm))
 
             lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
-                                                               FPmsk,
-                                                               self.nbrs_res_list,
-                                                               real_dim_input=int(2 * self.prad),
+                                                               FPmsk, [0] * len(self.nbrs_res_list),
                                                                dir_save_all_planes=dir_save_all_planes,
-                                                               shift=(0, 0))
+                                                               only_mat_mult=True,
+                                                               AAs_direct=self.AAs_direct,
+                                                               AAs_inverse=self.AAs_inverse,
+                                                               BBs_direct=self.BBs_direct,
+                                                               BBs_inverse=self.BBs_inverse,
+                                                               norm0s_direct=self.norm0s_direct,
+                                                               norm0s_inverse=self.norm0s_inverse,
+                                                               butterworths=self.butterworths)
 
         else:
             raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
@@ -874,6 +890,15 @@ def prop_fpm_regional_sampling(pup,
                                shift=(0, 0),
                                filter_order=15,
                                alpha=1.5,
+                               only_mat_mult=False,
+                               AAs_direct=None,
+                               AAs_inverse=None,
+                               BBs_direct=None,
+                               BBs_inverse=None,
+                               norm0s_direct=None,
+                               norm0s_inverse=None,
+                               butterworths=None,
+                               returnAAsBBs=False,
                                dir_save_all_planes=None):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
@@ -886,13 +911,15 @@ def prop_fpm_regional_sampling(pup,
 
     The parameters of this function are very hard to optimize because it is not super reliable, increasing
     the number of pixels in PP or FP generally gives you better contrast but sometimes get you worse contrast.
-    Following array gives you some of the result I obtained:
-
-    __________________________________________________________________________________________________________
-    |     Dim pup    | Overpadding PP factor | Actual PP size | FP size |     nbres    || Resulting contrast |
-    |       200      |          1.5          |      300       |   256   |    [4, 32]   ||       2.1e-09      |
-    |       280      |          1.5          |      420       |   512   |    [6, 50]   ||       3.6e-10      |
-    __________________________________________________________________________________________________________
+    Following array gives you some of the result I obtained for the wrapped vortex:
+        ______________________________________________________________________________________________________
+        |     Dim pup    | Overpad PP factor | Actual PP size | FP size |     nbres    || Resulting contrast |
+        |       200      |        2.0        |      400       |   250   |    [12, 78]  ||       1.9e-09      |
+        |       214      |        2.0        |      428       |   358   |    [16 151]  ||       7.9e-10      |
+        |       232      |        2.0        |      464       |   372   |    [5, 58]   ||       5.0e-10      |
+        |       310      |        2.0        |      620       |   482   |    [14, 88]  ||       2.0e-10      |
+        |       380      |        2.0        |      760       |   630   |    [3, 44]   ||       7.6e-11      |
+        ______________________________________________________________________________________________________
 
     AUTHOR: R. Galicher (in IDL)
             ILa (to Python)
@@ -921,6 +948,37 @@ def prop_fpm_regional_sampling(pup,
     alpha : float, default 1.5
         Scale factor for the filter size. The larger this number, the smaller the filter size with respect to the
         input array.
+    only_mat_mult : boolean,, default False
+        if True, we only do the matrix multiplication, but we need the matrices AA, BB and the scalars
+        norm0 to be provided. In that case all other parameters are not used. Careful, in this mode,
+        it is assumed that the user is 'expert' and no specific error message will be thrown if
+        parameters are wrong. e.g. it will crash if image, AA and BB dimensions are not compatibles
+        if False : classical MFT, AA, BB and norm0 parameters are not used
+    AAs_direct : List of complex numpy arrays or None, default None
+        Listist of matrices AA that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (direct direction). This parameter is only used if only_mat_mult = True.
+    AAs_inverse : List of complex numpy arrays or None, default None
+        List of matrices AA that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (inverse direction). This parameter is only used if only_mat_mult = True.
+    BBs_direct : List of complex numpy arrays or None, default None
+        List of matrices BB that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (direct direction). This parameter is only used if only_mat_mult = True.
+    BBs_inverse : List of complex numpy arrays or None, default None
+        List of matrices BB that can be multiplied in norm0 * ((AA @ image) @ BB) for each regional sampling
+        mft (inverse direction). This parameter is only used if only_mat_mult = True.
+    norm0s_direct : List of floats or None, default None
+        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional
+        sampling mft (direct direction). This parameter is only used if only_mat_mult = True.
+    norm0s_inverse : List of floats or None, default None
+        List of normalization values in matrix multiplication norm0 * ((AA @ image) @ BB) for each regional
+        sampling mft (inverse direction). This parameter is only used if only_mat_mult = True.
+    butterworths : List of real numpy arrays or None, default None
+        List of butterworth windows used for each regional sampling mft.
+        This parameter is only used if only_mat_mult = True.
+    returnAAsBBs : boolean, default False
+        if False, the normal propagation image is returned
+        if True, return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths
+        that can be used for all the propagation when only_mat_mult is True.
     dir_save_all_planes : string or None, default None
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
@@ -931,83 +989,148 @@ def prop_fpm_regional_sampling(pup,
         E-field before the Lyot stop.
     """
 
-    if not isinstance(nbres, list):
-        raise TypeError(f"'nbres' parameter needs to be of type list. Currently type = {type(nbres)}")
-
-    nbres = np.array(nbres)
+    if only_mat_mult and returnAAsBBs:
+            raise ValueError(f"Cannot have both returnAAsBBs = True and only_mat_mult = True.")
 
     dim_overpad_pupil = pup.shape[0]
-    dim_fpm = fpm.shape[0]
 
-    if real_dim_input is None:
-        real_dim_input = dim_overpad_pupil
-    samplings = dim_fpm / nbres
+    if not only_mat_mult:
+        if not isinstance(nbres, list):
+            raise TypeError(f"'nbres' parameter needs to be of type list. Currently type = {type(nbres)}")
 
-    if not np.all(np.diff(nbres) >= 0):
-        raise ValueError(f"'nbres' parameter needs to be sorted from the highest to lowest number of elements."
-                         f"Currently 'nbres' = {nbres}.")
+        nbres = np.array(nbres)
 
-    if np.min(samplings) < 2:
-        raise ValueError(f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2. We need the samplings"
-                         f"defined by the 'nbres' parameter (real_dim_input/nbres) to be always >= 2. Currently, with"
-                         f"real_dim_input = {real_dim_input}, samplings are {samplings}.")
+        dim_fpm = fpm.shape[0]
 
-    if np.min(samplings) != 2:
-        # If the smaller sampling defined by parameter 'nbres' is not 2, we append it to the list. This is a
-        # way to force the last sampling to be harcoded at 2.
-        nbres = np.append(nbres, dim_fpm / 2)
-        samplings = np.append(samplings, 2)
+        if real_dim_input is None:
+            real_dim_input = dim_overpad_pupil
+        samplings = dim_fpm / nbres
 
-    if max(shift) >= nbres[0] / 2:
-        raise ValueError(f"shift {shift} is larger than the minimum number of elements of resolution {nbres[0]}: the "
-                         f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
+        if not np.all(np.diff(nbres) >= 0):
+            raise ValueError(f"'nbres' parameter needs to be sorted from the highest to lowest number of elements."
+                             f"Currently 'nbres' = {nbres}.")
 
-    ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
-    const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+        if np.min(samplings) < 2:
+            raise ValueError(
+                f"The outer sampling in prop_fpm_regional_sampling is hardcoded to 2. We need the samplings "
+                f"defined by the 'nbres' parameter (dim_fpm/nbres) to be always >= 2. Currently, "
+                f"dim_fpm = {dim_fpm}, nbres = {nbres} => samplings = {samplings}.")
 
-    # From inner to outer part of FPM
-    for k in range(nbres.shape[0]):
+        if np.min(samplings) != 2:
+            # If the smaller sampling defined by parameter 'nbres' is not 2, we append it to the list. This is a
+            # way to force the last sampling to be harcoded at 2.
+            nbres = np.append(nbres, dim_fpm / 2)
+            samplings = np.append(samplings, 2)
 
-        if k == 0:
-            # Innermost part of the focal plane
-            but_here = np.copy(const_but)
-        elif k < nbres.shape[0] - 1:
-            # Butterworth filter in each layer
-            sizebut_here = dim_fpm / alpha * nbres[k - 1] / nbres[k]
-            but_here = (1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5,
-                                                          yshift=-0.5)) * const_but
+        if max(shift) >= nbres[0] / 2:
+            raise ValueError(
+                f"shift {shift} is larger than the minimum number of elements of resolution {nbres[0]}: the "
+                f"tip/tilt is out of the array! Increase min(nbres) or decrease shift.")
+
+    if returnAAsBBs:
+        AAs_direct = list()
+        AAs_inverse = list()
+        BBs_direct = list()
+        BBs_inverse = list()
+        norm0s_direct = list()
+        norm0s_inverse = list()
+        butterworths = list()
+
+    if not only_mat_mult:
+        ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
+        const_but = phase_ampl.butterworth_circle(dim_fpm, dim_fpm / alpha, filter_order, xshift=-0.5, yshift=-0.5)
+        nbrs2nbrs = nbres.shape[0]
+    else:
+        ef_pp_before_ls_tot = 0
+        nbrs2nbrs = len(butterworths)  # in the case only_mat_mult, nbrs are fixed
+
+    for k in range(nbrs2nbrs):
+        if only_mat_mult:
+            but_here = butterworths[k]
         else:
-            # Outer part of the FPM
-            sizebut_here = dim_fpm / alpha * nbres[-2] / nbres[-1]
-            but_here = 1 - phase_ampl.butterworth_circle(dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)
+            if k == 0:
+                # Innermost part of the focal plane
+                but_here = np.copy(const_but)
+            elif k < nbres.shape[0] - 1:
+                # Butterworth filter in each layer
+                sizebut_here = dim_fpm / alpha * nbres[k - 1] / nbres[k]
+                but_here = (1 - phase_ampl.butterworth_circle(
+                    dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)) * const_but
+            else:
+                # Outer part of the FPM
+                sizebut_here = dim_fpm / alpha * nbres[-2] / nbres[-1]
+                but_here = 1 - phase_ampl.butterworth_circle(
+                    dim_fpm, sizebut_here, filter_order, xshift=-0.5, yshift=-0.5)
 
-        ef_fp_before_fpm = prop.mft(
-            pup,
-            real_dim_input=real_dim_input,
-            dim_output=dim_fpm,
-            nbres=nbres[k],
-            norm='ortho',
-            X_offset_output=shift[0] * samplings[k],
-            Y_offset_output=shift[1] * samplings[k],
-        )
-        ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
-                                       real_dim_input=dim_fpm,
-                                       dim_output=real_dim_input,
-                                       nbres=nbres[k],
-                                       X_offset_input=shift[0] * samplings[k],
-                                       Y_offset_input=shift[1] * samplings[k],
-                                       norm='ortho',
-                                       inverse=True)
+        if returnAAsBBs:
+            butterworths.append(but_here)
 
-        if dir_save_all_planes is not None:
-            name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
-            save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm)
-            name_plane = f'FPafterButandFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
-            save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm * fpm * but_here)
-            name_plane = f'PPbeforeLyot_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
-            save_plane_in_fits(dir_save_all_planes, name_plane, ef_pp_before_ls_reg)
+            AA, BB, norm0 = prop.mft(pup,
+                                     real_dim_input=real_dim_input,
+                                     dim_output=dim_fpm,
+                                     nbres=nbres[k],
+                                     norm='ortho',
+                                     X_offset_output=shift[0] * samplings[k],
+                                     Y_offset_output=shift[1] * samplings[k],
+                                     returnAABB=True)
+            AAs_direct.append(AA)
+            BBs_direct.append(BB)
+            norm0s_direct.append(norm0)
+
+            AA, BB, norm0 = prop.mft(fpm,
+                                     real_dim_input=dim_fpm,
+                                     dim_output=real_dim_input,
+                                     nbres=nbres[k],
+                                     inverse=True,
+                                     norm='ortho',
+                                     X_offset_output=shift[0] * samplings[k],
+                                     Y_offset_output=shift[1] * samplings[k],
+                                     returnAABB=True)
+            AAs_inverse.append(AA)
+            BBs_inverse.append(BB)
+            norm0s_inverse.append(norm0)
+            ef_pp_before_ls_reg = 0
+
+        elif only_mat_mult:
+            ef_fp_before_fpm = prop.mft(pup,
+                                        only_mat_mult=True,
+                                        AA=AAs_direct[k],
+                                        BB=BBs_direct[k],
+                                        norm0=norm0s_direct[k])
+            ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
+                                           only_mat_mult=True,
+                                           AA=AAs_inverse[k],
+                                           BB=BBs_inverse[k],
+                                           norm0=norm0s_inverse[k])
+        else:
+            ef_fp_before_fpm = prop.mft(pup,
+                                        real_dim_input=real_dim_input,
+                                        dim_output=dim_fpm,
+                                        nbres=nbres[k],
+                                        norm='ortho',
+                                        X_offset_output=shift[0] * samplings[k],
+                                        Y_offset_output=shift[1] * samplings[k])
+            ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
+                                           real_dim_input=dim_fpm,
+                                           dim_output=real_dim_input,
+                                           nbres=nbres[k],
+                                           inverse=True,
+                                           norm='ortho',
+                                           X_offset_input=shift[0] * samplings[k],
+                                           Y_offset_input=shift[1] * samplings[k])
+
+            if dir_save_all_planes is not None:
+                name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+                save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm)
+                name_plane = f'FPafterButandFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+                save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm * fpm * but_here)
+                name_plane = f'PPbeforeLyot_nbr{int(nbres[k])}_sampling{int(samplings[k])}'
+                save_plane_in_fits(dir_save_all_planes, name_plane, ef_pp_before_ls_reg)
 
         # Sum up E-field contributions before the LS
         ef_pp_before_ls_tot += ef_pp_before_ls_reg
+
+    if returnAAsBBs:
+        return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths
 
     return crop_or_pad_image(ef_pp_before_ls_tot, dim_overpad_pupil)
