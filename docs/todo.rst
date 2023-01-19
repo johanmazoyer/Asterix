@@ -60,6 +60,11 @@ To create a new release, follow these steps:
     3. Work through the necessary test and documentation steps - you will need to work on the THD2 testbed for this, and might have to switch from one coronagraph to another
     4. Once all points are checked, request a review and follow the standard review process (see top of this page)
 
+You can check the release requirements from the template in this file:  
+https://github.com/johanmazoyer/Asterix/blob/add_pr_template_releases/.github/pull_request_templates/release.md
+
+You will need to check the raw file to see all comments.
+
 The parameter files for THD2 testbed configurations are:
     - `thd2_setups/fqpm_parameters.ini` for the FPQM coronagraph
     - `thd2_setups/wrapped_vortex_parameters.ini` for the wrapped vortex coronagraph
