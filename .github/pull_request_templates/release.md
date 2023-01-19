@@ -20,9 +20,9 @@ tests you ran successfully.
 | **WV** sim   | [ ]                           | [ ]                           | [ ]                           |
 | **WV** hw    | [ ]                           | [ ]                           | [ ]                           |
 
-FQPM ... four-quadrant phase-mask coronagraph
-WV ... wrapped vortex coronagraph
-hw ... hardware -> on the THD2 testbed
+FQPM ... four-quadrant phase-mask coronagraph  
+WV ... wrapped vortex coronagraph  
+hw ... hardware -> on the THD2 testbed  
 sim ... simulations
 
 Each box can be ticked if the corresponding matrix leads to a converging EFC loop, and on hardware without noticeable
