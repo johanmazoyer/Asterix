@@ -13,7 +13,7 @@ Perform all the tests in the table below and make sure the results are satisfact
 tests you ran successfully.
 -->
 
-|          | FDH, 2DM control<br>600 modes | FDH, 1DM control<br>300 modes | HDH, 1DM control<br>300 modes |
+|          | FDH, 2DM control<br>600 modes | FDH, DM3 control<br>300 modes | HDH, DM3 control<br>300 modes |
 |----------|-------------------------------|-------------------------------|-------------------------------|
 | **FQPM** sim | [ ]                           | [ ]                           | [ ]                           |
 | **FQPM** hw  | [ ]                           | [ ]                           | [ ]                           |
@@ -23,7 +23,11 @@ tests you ran successfully.
 FQPM ... four-quadrant phase-mask coronagraph  
 WV ... wrapped vortex coronagraph  
 hw ... hardware -> on the THD2 testbed  
-sim ... simulations
+sim ... simulations  
+DM3 ... the in-pupil DM
+
+["converging EFC loop" specs TBD]  
+[current idea: reaching a level of 1e-8 in less than 20 iterations and not diverging after 30 iterations]
 
 Each box can be ticked if the corresponding matrix leads to a converging EFC loop, and on hardware without noticeable
 DH degradations caused by the matrix or loop. FDH is a full dark hole, HDH is a half dark hole. The number of modes
