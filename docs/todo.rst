@@ -50,7 +50,7 @@ package available that is capable of producing interaction matrices that success
 dark holes on the testbed. Such versions are marked by releases.
 
 The requirements for a release are that such a matrix can be generated without changing any parameters (just using the
-ones provided in a savef parameter file), and the necessary files are generated without errors. Further, this needs to
+ones provided in a saved parameter file), and the necessary files are generated without errors. Further, this needs to
 be possible for matrices for full as well as half dark holes, both for the FQPM and the WV coronagraph. To ensure this,
 each release requires a set of both simulation tests as well as tests on hardware.
 

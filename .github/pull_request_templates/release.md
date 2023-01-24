@@ -31,7 +31,7 @@ DM3 ... the in-pupil DM
 
 Each box can be ticked if the corresponding matrix leads to a converging EFC loop, and on hardware without noticeable
 DH degradations caused by the matrix or loop. FDH is a full dark hole, HDH is a half dark hole. The number of modes
-indicate the number of modes you need to use in the matrix inversion when creating your matrices for the tests.
+indicate the number of modes you need to use in the matrix inversion when creating your dark hole for the tests.
 
 The matrices created for the respective test cases need to be calculated without adjusting a single parameter in the
 respective configfile, and after old simulation files have been deleted from disk - this includes matrix files
