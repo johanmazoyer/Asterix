@@ -14,17 +14,20 @@ tests you ran successfully.
 -->
 
 |          | FDH, 2DM control<br>600 modes | FDH, DM3 control<br>300 modes | HDH, DM3 control<br>300 modes |
-|----------|-------------------------------|-------------------------------|-------------------------------|
-| **FQPM** sim | [ ]                           | [ ]                           | [ ]                           |
-| **FQPM** hw  | [ ]                           | [ ]                           | [ ]                           |
-| **WV** sim   | [ ]                           | [ ]                           | [ ]                           |
-| **WV** hw    | [ ]                           | [ ]                           | [ ]                           |
+|----------|-------------------|-------------------|-------------------|
+| **FQPM** sim |                   |                   |                   |
+| **FQPM** hw  |                   |                   |                   |
+| **WV** sim   |                   |                   |                   |
+| **WV** hw    |                   |                   |                   |
 
 FQPM ... four-quadrant phase-mask coronagraph  
 WV ... wrapped vortex coronagraph  
 hw ... hardware -> on the THD2 testbed  
 sim ... simulations  
 DM3 ... the in-pupil DM
+
+✅ ... tested
+🟡 ... untested
 
 ["converging EFC loop" specs TBD]  
 [current idea: reaching a level of 1e-8 in less than 20 iterations and not diverging after 30 iterations]
@@ -36,6 +39,40 @@ indicate the number of modes you need to use in the matrix inversion when creati
 The matrices created for the respective test cases need to be calculated without adjusting a single parameter in the
 respective configfile, and after old simulation files have been deleted from disk - this includes matrix files
 in the folder `Interaction_Matrices` as well as model files in `Model_local`.
+
+## Matrix file names used
+
+<!--
+Please fill in the matrix file names you used for the tests above and save them on the RTC computer under
+`F:\Control_matrices`
+-->
+
+FDH, 2-DM control: ...
+
+FDH, DM3 control: ...
+
+HDH, DM3 control: ..
+
+## Preparation on hardware
+
+1. Check the pupil alignments and actuators inside the pupil
+2. Align science camera to focal-plane mask
+3. Align tip-tilt
+
+## Parameters used on hardware
+
+Empty cells mean repeating values.
+
+|                                | FDH, 2-DM control<br>600 modes | FDH, DM3 control<br>300 modes | HDH, DM3 control<br>300 modes |
+|--------------------------------|--------------------------------|-------------------------------|-------------------------------|
+| Exposure time science camera   |                                |                               |                               |
+| Gain DM3 (in-pupil DM)         |                                |                               |                               |
+| Gain DM1 (out-of-pupil DM)     |                                |                               |                               |
+| Normalization data             |                                |                               |                               |
+| Flux                           |                                |                               |                               |
+| Lyot stop diameter             |                                |                               |                               |
+| Pupil diameter                 |                                |                               |                               |
+
 
 ## Screenshots
 
@@ -49,3 +86,4 @@ Include DH images resulting from the EFC loops in the table above in this sectio
 - [ ] All boxes in the above table have been checked
 - [ ] Images for each configuration have been added to the top-level comment in this PR, in the "Screenshots" section
 - [ ] The used matrix for each hardware configuration has been saved to the matrix vault on RTC, under `F:\Control_matrices`
+- [ ] The names of the used matrices have been put into the section "Matrix file names used"
