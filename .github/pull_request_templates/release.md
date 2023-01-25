@@ -47,11 +47,11 @@ Please fill in the matrix file names you used for the tests above and save them 
 `F:\Control_matrices`
 -->
 
-FDH, 2-DM control: ...
+FDH, 2-DM control: `20XX_please-fill-in`
 
-FDH, DM3 control: ...
+FDH, DM3 control: `20XX_please-fill-in`
 
-HDH, DM3 control: ..
+HDH, DM3 control: `20XX_please-fill-in`
 
 ## Preparation on hardware
 
