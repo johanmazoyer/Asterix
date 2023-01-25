@@ -13,12 +13,12 @@ Perform all the tests in the table below and make sure the results are satisfact
 tests you ran successfully.
 -->
 
-|              | FDH, 2DM control<br>600 modes | FDH, DM3 control<br>300 modes | HDH, DM3 control<br>300 modes |
-|--------------|-------------------|-------------------|-------------------|
-| **FQPM** sim |                   |                   |                   |
-| **FQPM** hw  |                   |                   |                   |
-| **WV** sim   |                   |                   |                   |
-| **WV** hw    |                   |                   |                   |
+|              | FDH, 2-DM control<br>600 modes | FDH, DM3 control<br>300 modes | HDH, DM3 control<br>300 modes |
+|--------------|--------------------------------|-------------------------------|-------------------------------|
+| **FQPM** sim |                                |                               |                               |
+| **FQPM** hw  |                                |                               |                               |
+| **WV** sim   |                                |                               |                               |
+| **WV** hw    |                                |                               |                               |
 
 FQPM ... four-quadrant phase-mask coronagraph  
 WV ... wrapped vortex coronagraph  
