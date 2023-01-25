@@ -59,6 +59,7 @@ To create a new release, follow these steps:
     2. Open a PR of your branch against master. This will will load the release PR template that lists all necessary tests
     3. Work through the necessary test and documentation steps - you will need to work on the THD2 testbed for this, and might have to switch from one coronagraph to another
     4. Once all points are checked, request a review and follow the standard review process (see top of this page)
+    5. Once the PR is merged, publish the actual release on Github
 
 You can check the release requirements from the template in this file:  
 https://github.com/johanmazoyer/Asterix/blob/add_pr_template_releases/.github/pull_request_templates/release.md
@@ -71,7 +72,7 @@ The parameter files for THD2 testbed configurations are:
 
 Remember that if you make changes to your code (or the parameter file), your tests become invalid and you have to start from scratch.
 This means it is recommended that once you start a release you push through it without changing anything else unless it
-is absolutely necessary. Otherwise, just leave other issues for a future PR.
+is absolutely necessary. Simply leave other issues for a future PR.
 
 Envisioned improvements
 -------------------------
