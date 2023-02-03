@@ -87,9 +87,6 @@ def runthd2(parameter_file_path,
         Whether to silence correction loop outputs; default False.
     """
 
-    # Get git commit hash
-    commit = get_git_description()
-
     # Load configuration file
     config = read_parameter_file(parameter_file_path,
                                  NewMODELconfig=NewMODELconfig,
@@ -112,6 +109,9 @@ def runthd2(parameter_file_path,
     model_local_dir = os.path.join(data_dir, "Model_local")
     matrix_dir = os.path.join(data_dir, "Interaction_Matrices")
     result_dir = os.path.join(data_dir, "Results", name_experiment)
+
+    # Get git commit hash
+    commit = get_git_description()
     labview_dir = os.path.join(data_dir, "Labview",
                                create_experiment_dir(append=config["Coronaconfig"]["corona_type"]) + f"_{commit}")
 
@@ -144,8 +144,10 @@ def runthd2(parameter_file_path,
                           realtestbed_dir=labview_dir)
 
     ### Write configfile to Labview-style matrix directory
-    config.filename = os.path.join(labview_dir, "Simulation_parameters.ini")
-    config.write()
+    if onbench:
+        os.makedirs(labview_dir, exist_ok=True)
+        config.filename = os.path.join(labview_dir, "Simulation_parameters.ini")
+        config.write()
 
     ### Set initial phase and amplitude
     # Phase upstream of the coronagraph (entrance pup)

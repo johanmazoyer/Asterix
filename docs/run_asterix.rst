@@ -188,7 +188,7 @@ The [Coronaconfig] section contains the coronagraph parameter.
     
     - lyot_pup_rotation : float, if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory. 
 
-    - diam_lyot_in_m : flaot, lyot diameter (in meters). Only use in the case of a RoundPup Lyot stop (filename_instr_lyot = "RoundPup"). Value for THD2 clear Lyot is 8.035mm = 8.1*0.097 (rayon Lyot * de-zoom entrance pupil plane / Lyopt plane)
+    - diam_lyot_in_m : flaot, lyot diameter (in meters). Only use in the case of a RoundPup Lyot stop (filename_instr_lyot = "RoundPup"). Value for THD2 clear Lyot is 8.035mm = 8.1*0.97 (rayon Lyot * de-zoom entrance pupil plane / Lyopt plane)
 
     - corona_type: Can be fqpm or knife, vortex, lassiclyot or HLC
 
