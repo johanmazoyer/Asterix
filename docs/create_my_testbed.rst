@@ -143,12 +143,11 @@ Some specific aperture types are defined that you can access using the keyword `
 
     pup_roman = Pupil(modelconfig, PupType = "RomanPup")
 
-Currently supported ``PupType`` are : "RoundPup", "CleanPlane" (empty pupil plane), "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2".
+Currently supported ``PupType`` are : "RoundPup", "Clear" (empty pupil plane), "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2" (same as RomanPup and RomanLyot but with same rotation as on the testbed), "VLTPup", "SphereApod".
 
-You can finally defined your own pupils from a .fits using the same keyword if you put a full path. In this case, it will assume the same 
-physical diam_pup_in_msize as the entrance pupil defined in the parameter file. 
-The keyword "diam_lyot_in_m" is only used in the case of a round Lyot Stop ("RoundPup") and is not use to scale the .fits files aperture
-
+You can finally defined your own pupils from a .fits using the same keyword if you put a full path. In this case, it will be assumed that the fits file 
+has the same physical size as the entrance pupil defined in the parameter file (``diam_pup_in_m``). 
+The keyword ``diam_lyot_in_m`` is only used in the case of a round Lyot Stop ("RoundPup") and is not use to scale the .fits files aperture.
 The pupil in the .fits file are automatically rescaled at 2*prad using binning. Therefore the code requires that the parameter 
 diam_pup_in_pix is a divisor of the .fits file dimension
 
