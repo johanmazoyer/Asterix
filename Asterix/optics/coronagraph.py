@@ -81,6 +81,10 @@ class Coronagraph(optsy.OpticalSystem):
             # See Array in prop_fpm_regional_sampling function docstring for better
             self.dim_fpm = 250
             self.nbrs_res_list = [12, 78]
+            # self.dim_fpm = 630
+            # self.nbrs_res_list = [3, 44]
+            # self.dim_fpm = 372
+            # self.nbrs_res_list = [5, 58]
 
         elif self.corona_type in ("fqpm", "knife"):
             self.prop_apod2lyot = 'mft'
@@ -157,7 +161,7 @@ class Coronagraph(optsy.OpticalSystem):
 
         self.string_os += '_LS' + self.lyot_pup.string_os
 
-        if self.prop_apod2lyot in ['mft', 'mft-babinet']:
+        if self.prop_apod2lyot in ['mft', 'mft-babinet'] and self.precalculate_mft_matrices:
 
             # we measure the AA and BB matrix and norm0 for all MFTs used in coronagraphy
             if self.prop_apod2lyot == 'mft':
@@ -179,24 +183,16 @@ class Coronagraph(optsy.OpticalSystem):
 
                 lambda_ratio = wave_i / self.wavelength_0
 
-                if self.prop_apod2lyot == 'mft':
-                    # in practice in MFT mode, the final MFT is identical to the
-                    # one in the corono so we save a bit of time / memory here
-                    self.AA_direct.append(self.AA_direct_final[i])
-                    self.BB_direct.append(self.BB_direct_final[i])
-                    self.norm0_direct.append(self.norm0_direct_final[i])
-
-                else:
-                    a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
-                                       real_dim_input=int(2 * self.prad),
-                                       dim_output=dim_science_here,
-                                       nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
-                                       inverse=False,
-                                       norm='ortho',
-                                       returnAABB=True)
-                    self.AA_direct.append(a)
-                    self.BB_direct.append(b)
-                    self.norm0_direct.append(c)
+                a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
+                                   real_dim_input=int(2 * self.prad),
+                                   dim_output=dim_science_here,
+                                   nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
+                                   inverse=False,
+                                   norm='ortho',
+                                   returnAABB=True)
+                self.AA_direct.append(a)
+                self.BB_direct.append(b)
+                self.norm0_direct.append(c)
 
                 a, b, c = prop.mft(np.zeros((dim_science_here, dim_science_here)),
                                    real_dim_input=dim_science_here,
@@ -210,7 +206,7 @@ class Coronagraph(optsy.OpticalSystem):
                 self.BB_inverse.append(b)
                 self.norm0_inverse.append(c)
 
-        if self.prop_apod2lyot == 'regional-sampling':
+        if self.prop_apod2lyot == 'regional-sampling' and self.precalculate_mft_matrices:
 
             self.AAs_direct, self.AAs_inverse, self.BBs_direct, self.BBs_inverse, self.norm0s_direct, self.norm0s_inverse, self.butterworths = prop_fpm_regional_sampling(
                 np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
@@ -353,11 +349,22 @@ class Coronagraph(optsy.OpticalSystem):
 
         elif self.prop_apod2lyot == "mft-babinet":
             # Apod plane to focal plane
-            corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
-                                          BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
-                                          norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
-                                          only_mat_mult=True)
+            if self.precalculate_mft_matrices:
+                corono_focal_plane = prop.mft(input_wavefront_after_apod,
+                                              AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
+                                              BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
+                                              norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
+                                              only_mat_mult=True)
+            else:
+                lambda_ratio = wavelength / self.wavelength_0
+                dim_science_here = self.dim_fpm
+                fpm_sampling_here = self.Lyot_fpm_sampling
+                corono_focal_plane = prop.mft(input_wavefront_after_apod,
+                                              real_dim_input=int(2 * self.prad),
+                                              dim_output=dim_science_here,
+                                              nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
+                                              inverse=False,
+                                              norm='ortho')
 
             if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
@@ -380,22 +387,43 @@ class Coronagraph(optsy.OpticalSystem):
 
             # Focal plane to Lyot plane
             # Babinet's trick:
-            lyotplane_before_lyot_central_part = crop_or_pad_image(
-                prop.mft(corono_focal_plane * (1 - FPmsk),
-                         AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
-                         BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
-                         norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
-                         only_mat_mult=True), self.dim_overpad_pupil)
+            if self.precalculate_mft_matrices:
+                lyotplane_before_lyot_central_part = crop_or_pad_image(
+                    prop.mft(corono_focal_plane * (1 - FPmsk),
+                             AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
+                             BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
+                             norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
+                             only_mat_mult=True), self.dim_overpad_pupil)
+            else:
+                lyotplane_before_lyot_central_part = crop_or_pad_image(
+                    prop.mft(corono_focal_plane * (1 - FPmsk),
+                             real_dim_input=dim_science_here,
+                             dim_output=int(2 * self.prad),
+                             nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
+                             inverse=True,
+                             norm='ortho'), self.dim_overpad_pupil)
 
             lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
 
         elif self.prop_apod2lyot == "mft":
             # Apod plane to focal plane
-            corono_focal_plane = prop.mft(input_wavefront_after_apod,
-                                          AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
-                                          BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
-                                          norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
-                                          only_mat_mult=True)
+            if self.precalculate_mft_matrices:
+                corono_focal_plane = prop.mft(input_wavefront_after_apod,
+                                              AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
+                                              BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
+                                              norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
+                                              only_mat_mult=True)
+            else:
+                dim_science_here = self.dimScience
+                fpm_sampling_here = self.Science_sampling
+                lambda_ratio = wavelength / self.wavelength_0
+
+                corono_focal_plane = prop.mft(input_wavefront_after_apod,
+                                              real_dim_input=int(2 * self.prad),
+                                              dim_output=dim_science_here,
+                                              nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
+                                              inverse=False,
+                                              norm='ortho')
 
             if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
@@ -414,29 +442,45 @@ class Coronagraph(optsy.OpticalSystem):
                 save_plane_in_fits(dir_save_all_planes, name_plane, corono_focal_plane * FPmsk)
 
             # Focal plane to Lyot plane
-            lyotplane_before_lyot = crop_or_pad_image(
-                prop.mft(corono_focal_plane * FPmsk,
-                         AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
-                         BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
-                         norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
-                         only_mat_mult=True), self.dim_overpad_pupil)
+            if self.precalculate_mft_matrices:
+                lyotplane_before_lyot = crop_or_pad_image(
+                    prop.mft(corono_focal_plane * FPmsk,
+                             AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
+                             BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
+                             norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
+                             only_mat_mult=True), self.dim_overpad_pupil)
+            else:
+                lyotplane_before_lyot = crop_or_pad_image(
+                    prop.mft(corono_focal_plane * FPmsk,
+                             real_dim_input=dim_science_here,
+                             dim_output=int(2 * self.prad),
+                             nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
+                             inverse=True,
+                             norm='ortho'), self.dim_overpad_pupil)
 
         elif self.prop_apod2lyot == "regional-sampling":
             # Apod plane to Lyot plane
             if noFPM:
                 FPmsk = np.ones((self.dim_fpm, self.dim_fpm))
 
-            lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
-                                                               FPmsk, [0] * len(self.nbrs_res_list),
-                                                               dir_save_all_planes=dir_save_all_planes,
-                                                               only_mat_mult=True,
-                                                               AAs_direct=self.AAs_direct,
-                                                               AAs_inverse=self.AAs_inverse,
-                                                               BBs_direct=self.BBs_direct,
-                                                               BBs_inverse=self.BBs_inverse,
-                                                               norm0s_direct=self.norm0s_direct,
-                                                               norm0s_inverse=self.norm0s_inverse,
-                                                               butterworths=self.butterworths)
+            if self.precalculate_mft_matrices:
+                lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
+                                                                   FPmsk, [0] * len(self.nbrs_res_list),
+                                                                   dir_save_all_planes=dir_save_all_planes,
+                                                                   only_mat_mult=True,
+                                                                   AAs_direct=self.AAs_direct,
+                                                                   AAs_inverse=self.AAs_inverse,
+                                                                   BBs_direct=self.BBs_direct,
+                                                                   BBs_inverse=self.BBs_inverse,
+                                                                   norm0s_direct=self.norm0s_direct,
+                                                                   norm0s_inverse=self.norm0s_inverse,
+                                                                   butterworths=self.butterworths)
+            else:
+                lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
+                                                                   FPmsk,
+                                                                   self.nbrs_res_list,
+                                                                   real_dim_input=int(2 * self.prad),
+                                                                   shift=(0, 0))
 
         else:
             raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
@@ -1040,6 +1084,8 @@ def prop_fpm_regional_sampling(pup,
         norm0s_direct = list()
         norm0s_inverse = list()
         butterworths = list()
+        if shift != (0, 0):
+            raise ValueError("regional sampling: Do not use TT shift witn returnAAsBBs = True")
 
     if not only_mat_mult:
         ef_pp_before_ls_tot = np.zeros((real_dim_input, real_dim_input), dtype='complex128')
@@ -1048,6 +1094,8 @@ def prop_fpm_regional_sampling(pup,
     else:
         ef_pp_before_ls_tot = 0
         nbrs2nbrs = len(butterworths)  # in the case only_mat_mult, nbrs are fixed
+        if shift != (0, 0):
+            raise ValueError("regional sampling: Do not use TT shift witn only_mat_mult = True")
 
     for k in range(nbrs2nbrs):
         if only_mat_mult:
@@ -1075,8 +1123,6 @@ def prop_fpm_regional_sampling(pup,
                                      dim_output=dim_fpm,
                                      nbres=nbres[k],
                                      norm='ortho',
-                                     X_offset_output=shift[0] * samplings[k],
-                                     Y_offset_output=shift[1] * samplings[k],
                                      returnAABB=True)
             AAs_direct.append(AA)
             BBs_direct.append(BB)
@@ -1088,8 +1134,6 @@ def prop_fpm_regional_sampling(pup,
                                      nbres=nbres[k],
                                      inverse=True,
                                      norm='ortho',
-                                     X_offset_output=shift[0] * samplings[k],
-                                     Y_offset_output=shift[1] * samplings[k],
                                      returnAABB=True)
             AAs_inverse.append(AA)
             BBs_inverse.append(BB)
@@ -1107,6 +1151,14 @@ def prop_fpm_regional_sampling(pup,
                                            AA=AAs_inverse[k],
                                            BB=BBs_inverse[k],
                                            norm0=norm0s_inverse[k])
+
+            if dir_save_all_planes is not None:
+                name_plane = f'FPbeforeFPM_number{k}'
+                save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm)
+                name_plane = f'FPafterButandFPM_number{k}'
+                save_plane_in_fits(dir_save_all_planes, name_plane, ef_fp_before_fpm * fpm * but_here)
+                name_plane = f'PPbeforeLyot_number{k}'
+                save_plane_in_fits(dir_save_all_planes, name_plane, ef_pp_before_ls_reg)
         else:
             ef_fp_before_fpm = prop.mft(pup,
                                         real_dim_input=real_dim_input,
