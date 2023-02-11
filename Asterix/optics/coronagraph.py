@@ -214,6 +214,7 @@ class Coronagraph(optsy.OpticalSystem):
                 self.nbrs_res_list,
                 real_dim_input=int(2 * self.prad),
                 returnAAsBBs=True,
+                shift=(0, 0),
                 filter_order=15,
                 alpha=1.5)
 
@@ -480,7 +481,9 @@ class Coronagraph(optsy.OpticalSystem):
                                                                    FPmsk,
                                                                    self.nbrs_res_list,
                                                                    real_dim_input=int(2 * self.prad),
-                                                                   shift=(0, 0))
+                                                                   shift=(0, 0),
+                                                                   filter_order=15,
+                                                                   alpha=1.5)
 
         else:
             raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
