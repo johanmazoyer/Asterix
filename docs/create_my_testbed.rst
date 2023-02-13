@@ -80,7 +80,7 @@ To define the wavelengths of simulation, 4 parameters are used:
 * ``wavelength_0`` the central wavelength (in meters)
 * ``Delta_wav`` the width of Spectral band (in meters), centered on ``wavelength_0``
 * ``nb_wav`` Number of monochromatic images in the spectral band (must be odd integer). ``nb_wav`` is ignored if ``Delta_wav`` = 0 and ``Delta_wav`` is ignored if ``nb_wav`` = 1
-* ``mandatory_wls`` Specific wavelengths that need to appear to simulate the polychromatic image, ignored if Delta_wav = 0. Must be in the range ]wavelength_0 - Delta_wav / 2 , wavelength_0 + Delta_wav / 2[. Default is an empty list (``mandatory_wls`` = ,). This is an advanced user parameter as it might break the polychromatic correction.
+* ``mandatory_wls`` Specific wavelengths that need to appear to simulate the polychromatic image (mostly useful if we sant to estimate or correct at specific wavelenghts, please refer to the :ref:`relevant section <polychromaticestim-label:>`). Ignored if ``Delta_wav`` = 0. Must be in the range ]wavelength_0 - Delta_wav / 2 , wavelength_0 + Delta_wav / 2[. Default is an empty list (``mandatory_wls`` = ,). This is an advanced user parameter as it might break the polychromatic correction.
 
 In the case of an empty ``mandatory_wls`` list (``mandatory_wls`` = ,), the BW is split in small bandwidths of equal ``Delta_wav`` / ``nb_wav`` and 
 we take the centers of each of these small bandwidths. The next Figure shows this in the case of ``nb_wav`` = 5.
