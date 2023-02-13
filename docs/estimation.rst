@@ -100,19 +100,27 @@ pixels and it shows if all of the part of the DH are covered by the estimation (
 Polychromatic Estimation
 ++++++++++++++++++++++++++++++
 
-We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` simulation wavelengths evenly 
-spaced in ``Delta_wav``, centered on ``wavelength_0``. 
-
+We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` simulation wavelengths in ``Delta_wav``, centered on ``wavelength_0`` and then use the `Riemann sum <https://en.wikipedia.org/wiki/Riemann_sum>`_ to approximate the polychromatic image.
+If ``mandatory_wls`` is an empty list, these simulation wavelengths are evenly spaced.
 Polychromatic estimation and correction are linked so they are 
-both driven by a single parameter in the ``[Estimationconfig]`` section, ``polychromatic``:
-* 'singlewl': only a single wavelength is used for estimation / correction. Probes and PW / EFC matrices are measured at this wavelength.
+both driven by the parameter  the ``[Estimationconfig]`` section, ``polychromatic``:
+
+* ``'singlewl'``: only one wavelength is used for estimation / correction. Probes and PW / EFC matrices are measured at this wavelength.
 This parameter allows you to test the results of a monochromatic correction, applied to polychromatic light. 
-* 'broadband_pwprobes': This is mostly like the previous case, but probes images used for PW are broadband (of bandwidth ``Delta_wav``). 
+* ``'broadband_pwprobes'``: This is mostly like the previous case, but probes images used for PW are broadband (of bandwidth ``Delta_wav``). 
 Matrices are at central wavelength. This is what is currently done in `Potier et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.136P/abstract>`_  
 on SPHERE on sky for example. This mode is only relevant for PW estimation and will raise an error if use with perfect estimation.
-* 'multiwl': ``nb_wav_estim`` estimations are performed at different wavelengths spanning the bandwidth of correction.
-There are ``nb_wav_estim`` matrices for estimation / correction. The bandwidth of the correction is still parametrized 
-in [modelconfig] right now. We use ``nb_wav_estim`` estimation / correction wavelengths evenly spaced in ``Delta_wav``, centered on 
+* ``'multiwl'``: several images at different wls are used for estimation and there are several matrices of estimation. This parameter is only for the estimation / correction. The bandwidth of the images are 
+still parametrized in [modelconfig](nb_wav, Delta_wav)
+
+We have 2 ways of defining the estimation / correction wavelengths. If ``polychromatic = 'broadband_pwprobes'``, the central wavelength and bandwidth are always used. For other case, you can use 2 different methods :
+
+*Method 1 (preferable for beginners):* automatic selection.
+If no estimation_wls are hand-picked ``estimation_wls = ,`` the estimation / correction wavelengths are automatically estimated. 
+
+If ``polychromatic = 'singlewl'`` the central wavelength is used.
+If ``polychromatic = 'multiwl'`` the wavelengths are automatically selected to be equally distributed in the bandwidth ``[modelconfig](Delta_wav)`` parameter.
+We use ``nb_wav_estim`` estimation / correction wavelengths evenly spaced in ``Delta_wav``, centered on 
 ``wavelength_0``, the same way that the ``nb_wav`` simulation wavelengths are defined. These wavelength must be sub 
 parts of the simulated wavelengths because a lot of wavelength specific tools are defined during ``OpticalSystem`` initialization. 
 For this reason ``nb_wav_estim`` must be an odd integer, divisor of ``nb_wav``. The next figure shows ``nb_wav = 9`` for the wavelength 
@@ -124,7 +132,12 @@ of simulation in blue and ``nb_wav_estim = 3`` for the wavelengths of estimation
 
     Determination of estimation wavelengths ``estimation.wav_vec_estim``
 
-If monochromatic images (``nb_wav = 1`` or ``Delta_wav = 0``), all ``polychromatic`` options are equivalent.
+
+*Method 2:* hand-pick selection. If ``estimation_wls`` parameter is not an empty list (``estimation_wls = ,``), this
+parameter is used to individually hand pick the estimation / correction wavelengths. In this case, these wavelengths must also be added to the list of simulation wavelengths
+(parameter ``modelconfig['mandatory_wls']``). If ``polychromatic = 'singlewl'``, ``estimation_wls`` must ba a unique element. 
+
+If monochromatic images (``nb_wav = 1`` or ``Delta_wav = 0``), all ``polychromatic`` options are ignored.
 
 
 

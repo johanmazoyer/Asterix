@@ -97,6 +97,7 @@ This also defines the entrance pupil plane of the testbed.
     - wavelength_0 : float, central wavelength (in meters).
     - Delta_wav : float, Spectral band (in meters).
     - nb_wav : int, Number of monochromatic images in the spectral band (must be odd number). Ignored if Delta_wav = 0.
+    - mandatory_wls : list of floats. Specific wavelengths that need to appear to simulate the polychromatic image, ignored if Delta_wav = 0. Must be in the range ]wavelength_0 - Delta_wav / 2 , wavelength_0 + Delta_wav / 2[. Default is an empty list ('mandatory_wls =  , '). In the case of an empty list case, the nb_wav simulation wavelenghts are chosen to be well equally distributed in the Delta_wav. This is an advanced user parameter as it might break the polychromatic correction.
     - dimScience : int, detector science image size (in pixels).
     - Science_sampling : float, Sampling in the detector science image lambda/Entrance_pupil_diameter (in pixels).
     - diam_pup_in_m : float, pupil diameter (in meters).

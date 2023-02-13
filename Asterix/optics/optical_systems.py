@@ -72,6 +72,11 @@ class OpticalSystem:
 
             if mandatory_wls != []:
 
+                if len(mandatory_wls) >= len(self.wav_vec):
+                    raise ValueError(("'nb_wav' must be greater than the number 'mandatory_wls'. Quite higher",
+                                      "('nb_wav' > 2*len('mandatory_wls')) would be better so that the",
+                                      "differences between each Riemann interval length are minimal."))
+
                 for new_wl in mandatory_wls:
 
                     if new_wl <= self.wavelength_0 - self.Delta_wav / 2 or new_wl >= self.wavelength_0 + self.Delta_wav / 2:
