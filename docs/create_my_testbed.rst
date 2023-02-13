@@ -81,7 +81,7 @@ To define the wavelengths of simulation, 3 parameters are used:
 - ``nb_wav`` Number of monochromatic images in the spectral band (must be odd integer). ``nb_wav`` is ignored if ``Delta_wav`` = 0 and ``Delta_wav`` is ignored if ``nb_wav`` = 1
 - ``mandatory_wls`` Specific wavelengths that need to appear to simulate the polychromatic image, ignored if Delta_wav = 0. Must be in the range ]wavelength_0 - Delta_wav / 2 , wavelength_0 + Delta_wav / 2[. Default is an empty list (``mandatory_wls =  , ``). This is an advanced user parameter as it might break the polychromatic correction.
 
-In the case of an empty ``mandatory_wls`` list (``mandatory_wls =  , ``), the BW is split in small bandwidths of equal ``Delta_wav`` / ``nb_wav`` and 
+In the case of an empty ``mandatory_wls`` list (``mandatory_wls`` = ,), the BW is split in small bandwidths of equal ``Delta_wav`` / ``nb_wav`` and 
 we take the centers of each of these small bandwidths. The next Figure shows this in the case of ``nb_wav`` = 5.
 
 .. figure:: source_images/wl_simu.png
@@ -102,9 +102,14 @@ will return a polychromatic PSF. By default, it is done in all possible simulate
 (``wavelengths = OpticalSystem.wav_vec``), using the `Riemann sum <https://en.wikipedia.org/wiki/Riemann_sum>`_ to approximate the polychromatic image.
 There is also a ``wavelengths`` parameter to selectother wavelengths. These wavelength must be sub parts of the simulated wavelengths ``OpticalSystem.wav_vec``
 because a lot of wavelength specific tools are defined during ``OpticalSystem`` initialization. Finally, the normalization in contrast
-is by default for the whole bandwidth. If you want other wavelengths, 
-use ``in_contrast=False`` and measure the PSF to normalize.
+is by default for the whole bandwidth. If you want other wavelengths, use ``in_contrast=False`` and measure the PSF to normalize.
 
+
+.. figure:: source_images/riemann_sum.png
+    :scale: 30%
+    :align: center
+
+    Approximation of a coronographic polychromatic Intensity using monochromatic Intensities
 
 Pupil
 +++++++++++++++++++++++
