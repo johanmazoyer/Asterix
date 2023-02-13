@@ -110,7 +110,7 @@ is by default for the whole bandwidth. If you want other wavelengths, use ``in_c
     :scale: 30%
     :align: center
 
-    Approximation of a coronographic polychromatic Intensity using monochromatic Intensities
+    Approximation of a coronagraphic polychromatic Intensity using monochromatic Intensities
 
 Pupil
 +++++++++++++++++++++++

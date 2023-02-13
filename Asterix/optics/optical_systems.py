@@ -351,7 +351,7 @@ class OpticalSystem:
         # Riemann sum (https://en.wikipedia.org/wiki/riemann_sum) with the formula:
         # I_poly = Sum(Imono[lambda_i] * riemannn_intervals_lengths[i])
         # We also normalize each monochromatic measurement to Delta_wav to avoid using very small numbers but
-        # this does not change the nomrmalized intensity since the non-coronographic PSF are also normalized the same way.
+        # this does not change the normalized intensity since the non-coronagraphic PSF are also normalized the same way.
         # The Riemann sum only makes sense if done in all possible wavelengths in the bandwidths (wavelength_vec = self.wav_vec).
         # If you want a specific normalization for a subset of wavelengths, do it yourself with the todetector() function."
 
