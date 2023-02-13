@@ -81,32 +81,35 @@ class OpticalSystem:
         else:
             self.grey_pup_bin_factor = 1
 
-        # we measure the AA and BB matrix and norm0 for all MFTs used to go to final focal plane
-        # TODO in practice, those will be remeasured each time we initialize an OpticalSystem
-        # I am not sure this is a problem because we only do it a few times (~10 in thd2)
-        # Maybe there is a possibility to do it only once ?
-        # we can maybe pass AA,BB and norm0 as parameter in case of very internal definition
-        # when we just create a clear pupil we need for example
+        self.precalculate_mft_matrices = True
 
-        self.AA_direct_final = []
-        self.BB_direct_final = []
-        self.norm0_direct_final = []
+        if self.precalculate_mft_matrices:
+            # we measure the AA and BB matrix and norm0 for all MFTs used to go to final focal plane
+            # TODO in practice, those will be remeasured each time we initialize an OpticalSystem
+            # I am not sure this is a problem because we only do it a few times (~10 in thd2)
+            # Maybe there is a possibility to do it only once ?
+            # we can maybe pass AA,BB and norm0 as parameter in case of very internal definition
+            # when we just create a clear pupil we need for example
 
-        for wave_i in self.wav_vec:
+            self.AA_direct_final = []
+            self.BB_direct_final = []
+            self.norm0_direct_final = []
 
-            lambda_ratio = wave_i / self.wavelength_0
+            for wave_i in self.wav_vec:
 
-            a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
-                               real_dim_input=int(2 * self.prad),
-                               dim_output=self.dimScience,
-                               nbres=self.dimScience / self.Science_sampling / lambda_ratio,
-                               inverse=False,
-                               norm='ortho',
-                               returnAABB=True)
+                lambda_ratio = wave_i / self.wavelength_0
 
-            self.AA_direct_final.append(a)
-            self.BB_direct_final.append(b)
-            self.norm0_direct_final.append(c)
+                a, b, c = prop.mft(np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil)),
+                                   real_dim_input=int(2 * self.prad),
+                                   dim_output=self.dimScience,
+                                   nbres=self.dimScience / self.Science_sampling / lambda_ratio,
+                                   inverse=False,
+                                   norm='ortho',
+                                   returnAABB=True)
+
+                self.AA_direct_final.append(a)
+                self.BB_direct_final.append(b)
+                self.norm0_direct_final.append(c)
 
     # We define functions that all OpticalSystem object can use.
     # These can be overwritten for a subclass if need be
@@ -190,9 +193,12 @@ class OpticalSystem:
                                   dir_save_all_planes=dir_save_all_planes,
                                   **kwargs)
 
-        if center_on_pixel:
+        if center_on_pixel or not self.precalculate_mft_matrices:
             # if we need center on pixel, lets remeasure the whole mft but this is quite rare
-            Psf_offset = (0.5, 0.5)
+            if center_on_pixel:
+                Psf_offset = (0.5, 0.5)
+            else:
+                Psf_offset = (0, 0)
             focal_plane_EF = prop.mft(exit_EF,
                                       real_dim_input=int(self.prad * 2),
                                       dim_output=self.dimScience,
