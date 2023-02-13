@@ -105,7 +105,7 @@ spaced in ``Delta_wav``, centered on ``wavelength_0``.
 
 Polychromatic estimation and correction are linked so they are 
 both driven by a single parameter in the ``[Estimationconfig]`` section, ``polychromatic``:
-* 'centralwl': only the central wavelength is used for estimation / correction. Probes and matrices are measured at the central wavelength. 
+* 'singlewl': only a single wavelength is used for estimation / correction. Probes and PW / EFC matrices are measured at this wavelength.
 This parameter allows you to test the results of a monochromatic correction, applied to polychromatic light. 
 * 'broadband_pwprobes': This is mostly like the previous case, but probes images used for PW are broadband (of bandwidth ``Delta_wav``). 
 Matrices are at central wavelength. This is what is currently done in `Potier et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.136P/abstract>`_  

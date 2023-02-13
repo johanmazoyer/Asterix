@@ -66,10 +66,10 @@ class Estimator:
         self.polychrom = Estimationconfig["polychromatic"].lower()
 
         # For now estimation central wl and simu central wl are the same
-        wavelength_0_estim = testbed.wavelength_0
+        # wavelength_0_estim = testbed.wavelength_0
 
         if len(testbed.wav_vec) == 1:
-            self.polychrom = "centralwl"
+            self.polychrom = "singlewl"
 
         if self.polychrom == 'multiwl':
             # For now estimation BW and testbed BW are the same and can be easily changed.
@@ -92,11 +92,24 @@ class Estimator:
                                       "or 'set nb_wav_estim' parameter to an odd number > 1"))
 
                 delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
-                self.wav_vec_estim = wavelength_0_estim + (np.arange(self.nb_wav_estim) -
+                self.wav_vec_estim = testbed.wavelength_0 + (np.arange(self.nb_wav_estim) -
                                                            self.nb_wav_estim // 2) * delta_wav_estim_interval
-        else:
-            self.wav_vec_estim = np.array([wavelength_0_estim])
+        elif self.polychrom == 'singlewl':
+            estimation_wls = [float(x) for x in Estimationconfig["estimation_wls"]]
+            if estimation_wls != []:
+                if len(estimation_wls) > 1:
+                    raise ValueError(("In 'singlewl' estimation mode, 'estimation_wls' list must be either an empty ",
+                                      "(and the estimtion / correction will be done at the central wavelength) ",
+                                      "or have no more than a single elements"))
+                self.wav_vec_estim = np.array(estimation_wls)
+            else:
+                self.wav_vec_estim = np.array([testbed.wavelength_0])
             self.nb_wav_estim = 1
+        elif self.polychrom == 'broadband_pwprobes':
+            self.wav_vec_estim = np.array([testbed.wavelength_0])
+            self.nb_wav_estim = 1
+        else:
+            raise ValueError(self.polychrom + "is not a valid polychromatic estimation/correction mode")
 
         for wavei in self.wav_vec_estim:
             if wavei not in testbed.wav_vec:
@@ -140,7 +153,7 @@ class Estimator:
                     print("Creating directory: " + realtestbed_dir)
                     os.makedirs(realtestbed_dir)
 
-                if self.polychrom in ['centralwl', 'broadband_pwprobes']:
+                if self.polychrom in ['broadband_pwprobes']:
                     wl_in_pw_matrix = [testbed.wavelength_0]
                 else:
                     wl_in_pw_matrix = self.wav_vec_estim
@@ -229,7 +242,7 @@ class Estimator:
                         voltage_vector=voltage_vector,
                         wavelength=wavei)
                     result_estim.append(resizing(resultatestimation, self.dimEstim))
-            elif self.polychrom == 'centralwl':
+            elif self.polychrom == 'singlewl':
                 resultatestimation = testbed.todetector(entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(
                     testbed.wavelength_0)],
                                                         voltage_vector=voltage_vector,
@@ -264,14 +277,14 @@ class Estimator:
 
                     result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[i]))
 
-            elif self.polychrom == 'centralwl':
+            elif self.polychrom == 'singlewl':
                 Difference = wfs.simulate_pw_difference(entrance_EF,
                                                         testbed,
                                                         self.posprobes,
                                                         self.dimEstim,
                                                         self.amplitudePW,
                                                         voltage_vector=voltage_vector,
-                                                        wavelengths=testbed.wavelength_0,
+                                                        wavelengths=self.wav_vec_estim[0],
                                                         **kwargs)
 
                 result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0]))

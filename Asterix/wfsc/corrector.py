@@ -102,7 +102,7 @@ class Corrector:
                 print("Creating directory " + realtestbed_dir)
                 os.makedirs(realtestbed_dir)
 
-            if estimator.polychrom in ['centralwl', 'broadband_pwprobes']:
+            if estimator.polychrom in ['singlewl', 'broadband_pwprobes']:
                 number_wl_in_matrix = 1
             else:
                 number_wl_in_matrix = estimator.nb_wav_estim

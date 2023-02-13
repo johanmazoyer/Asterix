@@ -39,7 +39,7 @@ def create_pw_matrix(testbed: Testbed,
         path to directory to save all the matrices here
     polychrom : string
         For polychromatic estimation and correction:
-        - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
+        - 'singlewl': only a single wavelength is used for estimation / correction. 1 Interation Matrix
         - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     wav_vec_estim : list of float, default None
@@ -56,7 +56,18 @@ def create_pw_matrix(testbed: Testbed,
 
     return_matrix = []
 
-    if polychrom in ['centralwl', 'broadband_pwprobes']:
+    if polychrom == 'singlewl':
+        return_matrix.append(
+            create_singlewl_pw_matrix(testbed,
+                                      amplitude,
+                                      posprobes,
+                                      dimEstim,
+                                      cutsvd,
+                                      matrix_dir,
+                                      wavelength=wav_vec_estim[0],
+                                      **kwargs))
+    
+    elif polychrom == 'broadband_pwprobes':
         return_matrix.append(
             create_singlewl_pw_matrix(testbed,
                                       amplitude,
@@ -305,7 +316,7 @@ def simulate_pw_difference(input_wavefront,
 
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
-            # case polychromatic = 'centralwl' or polychromatic = 'multiwl'
+            # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
             Ikmoins = testbed.todetector_intensity(
                 entrance_EF=input_wavefront,
                 voltage_vector=voltage_vector - Voltage_probe,
