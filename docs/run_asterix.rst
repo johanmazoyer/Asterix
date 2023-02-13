@@ -72,6 +72,7 @@ What is saved if you activate this option in runthd2() was carefully thougth abo
 * 1 full run through testbed (~17 fits file for 1 DM testbed -one before and after each planes more or less-) at each iteration.
 
 What is not saved by default, but can be easily done by setting up the keyword ``dir_save_all_planes`` to an existing path directory, individually for these functions:
+
 * PW Matrix (nb_probes*17 fits for 1 DM testbed)
 * EFC Matrix (nb_actuator*17 fits for 1 DM testbed)
 * PW difference (nb_probes x17 fits for 1 DM testbed), at each iteration
@@ -103,7 +104,8 @@ This also defines the entrance pupil plane of the testbed.
     - diam_pup_in_m : float, pupil diameter (in meters).
     - diam_pup_in_pix : int, pupil diameter (in pixels).
     - overpadding_pupilplane_factor : overpadding pupil plane factor if 2: the pupil of diameter ``2*diam_pup_in_pix`` is in a ``2*overpadding_pupilplane_factor*diam_pup_in_pix`` array.
-    - filename_instr_pup : Instrument entrance pupil definition. Several keywords are already defined :
+    - filename_instr_pup : Instrument entrance pupil definition. Several keywords are already defined:
+
                                 - "Clear" for no pupil at all (clear plane)
                                 - "RoundPup" for a round pupil of radius diam_pup_in_m
                                 - "RomanPup" for HLC Roman Pupil on THD
@@ -116,27 +118,32 @@ This also defines the entrance pupil plane of the testbed.
 
 [DMconfig]
 ~~~~~~~~~~~~~~~~~~~~~~
-The [DMconfig] section define the parameter for DMs
+The [DMconfig] section define the parameter for DMs:
+
     - MinimumSurfaceRatioInThePupil : minimum ratio of energy of the influence function inside the pupil wrt to energy of the influence function so that the actuator are included into the basis. The lowest the more actuators are considered.
 
 Parameters that have to be define for each DMs:
+
     - DM#_active : bool, Switch on/off DM#.
     - DM#_z_position : float, in meter, distance from the pupil in a collimated beam.
     - DM#_filename_actu_infl_fct: string, filename of the actuator influence function (inside Model directory).
     - DM#_Generic: bool, in the case of a generic DM (DM#_Generic =True), we need only one more parameter to define the DM: the number of actuator N_act1D in one of its principal direction. We need N_act1D > diam_pup_in_m / DM_pitch, so that the DM is larger than the pupil. The DM will then be automatically defined as squared with N_act1DxN_act1D actuators and the puil centered on this DM. careful this not change the  DM#_pitch and the aperture diameter. If you want to have more actuators in the pupil, you migh want to change those as well.
 
-If DM#_Generic = True :
+If DM#_Generic is True:
     - DM#_pitch: float, in meter, pitch of the DM (distance between actuators).
     - DM#_Nact1D : int, number of actuator in one of its principal direction.
 
-If DM#_Generic = False  :
+If DM#_Generic is False:
+
     - DM#_filename_grid_actu : string, filename of the grid of actuator positions in unit of pupil diameter with (0,0)=center of the pupil. This fits must have PITCHV and PITCHH param in the header
     - DM#_filename_active_actu : string, filename to put if not all actuators are active as in the case of circular DM on THD2.
 
-Misregistration parameters:   
+Misregistration parameters:
+
     - DM#_misregistration : bool, if true, use difference between testbed model use to create matrix and the one use for correction.
 
-If DM#_misregistration = True :
+If DM#_misregistration is True:
+
     - DM#_xerror: float, x-direction misalignement in actuator pitch between matrix measurement and correction.
     - DM#_yerror: float, y-direction misalignement in actuator pitch between matrix measurement and correction.
     - DM#_angerror: float, rotation misalignement in degree between matrix measurement and correction.
@@ -148,6 +155,7 @@ If DM#_misregistration = True :
 The [Coronaconfig] section contains the coronagraph parameter.
 
     - filename_instr_apod : string, Apodisation pupil definition (pupil after the DMS at the entrance of the coronagraph in Roman). Several keywords are already defined:
+
                                 - "Clear" for no apodizer at all (clear plane): this is the case in THD2.
                                 - "RoundPup" for a round pupil of radius diam_pup_in_m.
                                 - "RomanPup" for HLC Roman Pupil on THD.
@@ -156,6 +164,7 @@ The [Coronaconfig] section contains the coronagraph parameter.
     
     - apod_pup_rotation : float, if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory. 
     - filename_instr_lyot : string, Lyot pupil definition (pupil after the DMS at the entrance of the coronagraph in Roman). Several keywords are already defined:
+
                                 - "Clear" for no Lyot pupil at all (clear plane).
                                 - "RoundPup" for a round pupil of radius diam_pup_in_m.
                                 - "RomanLyot" for HLC Roman Pupil.
@@ -168,33 +177,41 @@ The [Coronaconfig] section contains the coronagraph parameter.
     - corona_type: Can be fqpm or knife, vortex, lassiclyot or HLC.
 
 If knife coronagraph:
+
     - knife_coro_position: string, where light passes ('left', 'right', 'top', 'bottom').
     - knife_coro_offset : float, offset of the knife in lambda/pupil diameter.
 
 If classiclyot or HLC:
+
     - rad_lyot_fpm: float radius of the classical Lyot FPM in lambda/pupil diameter.
 
-If HLC :
+If HLC:
+
     - transmission_fpm: float, we define the transmission in intensity at vawelength0.
     - phase_fpm: float, phase shift at vawelength0.
 
 If FQPM:
+
     - err_fqpm = 0 : float, phase error on the pi phase-shift (in rad).
 
 If Vortex :
+
     - vortex_charge : even int, charge of the vortex.
 
 If phase coronagraph:
+
     - achrom_phase_coro = False : bool. We can choose to use it in achromatic mode (the coronagraph diplays the same behavior for each wavelengths) or not (phase is introduced by material step and therefore chromatic behavior).
 
 
 [Estimationconfig]
 ~~~~~~~~~~~~~~~~~~~~~~
 The [Estimationconfig] section contains the estimator parameters. An estimator is the thing that measure something you want to correct. 
+
     - estimation: string, FP WF sensing : 'Perfect' or 'pw'.
     - Estim_bin_factor : int, We bin the estimation images used for PW / perfect estim by this factor. this way dimEstim = dimScience / Estim_bin_factor and  Estim_sampling = Science_sampling / Estim_bin_factor. Be careful, this raise an error if Estim_sampling < 3.
 
 If estimation = 'PW':
+
     - amplitudePW : float, Amplitude of PW probes (in nm).
     - posprobes : list of int, Actuators used for PW (DM in pupil plane).
     - cut : float, Threshold to remove pixels with bad estimation of the electric field.
@@ -203,33 +220,40 @@ If estimation = 'PW':
 [Correctionconfig]
 ~~~~~~~~~~~~~~~~~~~~~~
 The [Correctionconfig] section contains the corrector parameters. An estimator receive an estimation and send DM command to correct for it.
+
     - DH_shape :  string, "circle", "square" or "noDH" (all FP is corrected, depending on the DM(s) size). Not case sensitive.
 
 If DH_shape == 'square':
+
     - corner_pos = list of float 2.7,11.7,-11.7,11.7 [xmin, xmax, ymin, ymax] Position of the corners of the DH in lambda/Entrance_pupil_diameter.
 
 If DH_shape == 'circle':
+
     - DH_side : string, "Full", "Left", "Right", "Top", "Bottom" to correct one side of the fp. Not case sensitive.
     - Sep_Min_Max = 3.5,10 : circle inner and outer radii of the circle DH size in lambda/D.
     - circ_offset: float, if circ_side != "Full", remove separation closer than circ_offset (in lambda/Entrance_pupil_diameter).
     - circ_angle : float, if circ_side != "Full", we remove the angles closer than circ_angle (in degrees) from the DH.
 
 Matrix parameters:
+
     - DM_basis : string, Actuator basis. Currently 'fourier' or 'actuator'. Same parameter for all DMs. Not case sensitive.
     - MatrixType : string, Type of matrix : Either 'Perfect' Matrix (exp(i.(phi_DM+phi))) or a 'SmallPhase' aberration matrix (phi_DM.exp(i.phi)). Not totally sure what change. Not case sensitive.
     - correction_algorithm: 'efc' for Electric Field Conjugation, 'em' for Energy Minimization, 'sm' for Stroke Minimization, or 'steepest'. Not case sensitive.
 
-If EFC :
+If EFC:
+
     - amplitudeEFC float, in nm the value by which actuator is pusched. 
     - regularization: string, regularization when truncated modes in the inversion 'truncation' or 'tikhonov'.
 
-if  onbench=True   
+if onbench is True:
+
     - Nbmodes_OnTestbed : int, number of mode for the inversion
 
 
 [Loopconfig]
 ~~~~~~~~~~~~~~~~~~~~~~
 Configuration of the loop. The loop is an estimation and a correction which send a command to the DM:
+
     - Number_matrix : int>1, Number of time we recompute the Interraction Matrix.
     - Nbiter_corr: integer or a list of integers, number of iterations in each loop. if you want several iterations with different mode ex: 2,3,2.
     - Nbmode_corr :  integer or a list of integers, EFC modes !! Must be of the same size than Nbiter_corr !! ex 330, 340, 350.
@@ -240,6 +264,7 @@ Configuration of the loop. The loop is an estimation and a correction which send
 [SIMUconfig]
 ~~~~~~~~~~~~~~~~~~~~~~
 Finally the last parameter section is dependent on the experiement you are launching. Aberrations, noise, etc.
+
     - Name_Experiment : string use to save the results.
     
 Amplitude aberrations:
@@ -248,33 +273,39 @@ Amplitude aberrations:
     - set_random_ampl : Bool. If true we generate a new amplitude map each time. Else, we load the one in ampl_abb_filename.
     - ampl_abb_filename : if 'Amplitudebanc_200pix_center4pixels' take the amplitude of the testbed. If set_random_ampl = False and ampl_abb_filename = '', we take the last generated map of amplitude aberration.
     
-if set_random_ampl = True
+if set_random_ampl is True:
+
     - ampl_rms : float, amount in % in amplitude (not intensity) (between 0 and 100).
     - ampl_rhoc : float, parameter to multiply the power. See Bordé et al. 2006.
     - ampl_slope : float, power slope of the amplitude aberration.
     
 Upstream phase aberrations:
+
     - set_UPphase_abb : bool if true, add phase aberrations in the entrance pupil plane.
     - set_UPrandom_phase : Bool. If true we generate a new phase map each time. Else, we load the one in UPphase_abb_filename.
     - UPphase_abb_filename : string, Load a phase map with this fits name. If ampl_abb_filename = 'Amplitude_THD2' we load the THD2 amplitude map. If set_random_ampl = False and ampl_abb_filename = '', we take the last generated map of amplitude aberrations.
     
-if set_UPrandom_phase = True:
+if set_UPrandom_phase is True:
+
     - UPopd_rms: float phase rms (in meter).
     - UPphase_rhoc: parameter to multiply the power. See Bordé et al. 2006.
     - UPphase_slope power slope of the up phase aberration.
     
 Downstream phase aberrations:
+
     - set_DOphase_abb : bool if true, add phase aberrations in the Lyot pupil plane.
     - set_DOrandom_phase : Bool. If true we generate a new phase map each time. Else, we load the one in DOphase_abb_filename.
     - DOphase_abb_filename : string, Load a phase map with this fits name. If set_random_ampl = False and ampl_abb_filename = '', we take the last generated map of amplitude aberrations.
     
 
-if set_DOrandom_phase = True:
+if set_DOrandom_phase is True:
+
     - DOopd_rms: float phase rms (in meter).
     - DOphase_rhoc: parameter to multiply the power. See Bordé et al. 2006.
     - DOphase_slope power slope of the up phase aberrations.
 
 Photon Noise:
+
     - nb_photons : float, number of photons entering the telescope. If 0, no photon noise.
 
 
