@@ -28,7 +28,7 @@ class Pupil(optsy.OpticalSystem):
         Initialize a pupil object.
         TODO: include an SCC Lyot pupil function here !
         TODO: for now pupil .fits are monochromatic but the pupil propagation EF_through
-            use wavelenght as a parameter
+            use wavelength as a parameter
 
         AUTHOR : Johan Mazoyer
 

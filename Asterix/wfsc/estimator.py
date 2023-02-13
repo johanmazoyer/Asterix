@@ -64,7 +64,6 @@ class Estimator:
 
         self.technique = Estimationconfig["estimation"].lower()
         self.polychrom = Estimationconfig["polychromatic"].lower()
-        self.nb_wav_estim = Estimationconfig["nb_wav_estim"]
 
         # For now estimation central wl and simu central wl are the same
         wavelength_0_estim = testbed.wavelength_0
@@ -72,27 +71,39 @@ class Estimator:
         if len(testbed.wav_vec) == 1:
             self.polychrom = "centralwl"
 
-        if self.polychrom == 'multiwl' and self.nb_wav_estim > 1:
+        if self.polychrom == 'multiwl':
             # For now estimation BW and testbed BW are the same and can be easily changed.
             self.delta_wave_estim = testbed.Delta_wav
 
             self.delta_wav_estim_individual = Estimationconfig["delta_wav_estim_individual"]
 
-            # we measure the WL for each individual monochromatic channel.
-            if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
-                raise ValueError("Please set nb_wav_estim parameter to an odd number > 1")
+            estimation_wls = [float(x) for x in Estimationconfig["estimation_wls"]]
 
-            delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
-            self.wav_vec_estim = wavelength_0_estim + (np.arange(self.nb_wav_estim) -
-                                                       self.nb_wav_estim // 2) * delta_wav_estim_interval
+            if estimation_wls != []:
+                self.wav_vec_estim = np.asarray(estimation_wls)
+                self.nb_wav_estim = len(self.wav_vec_estim)
+
+            # we measure the WL for each individual monochromatic channel.
+            else:
+                self.nb_wav_estim = Estimationconfig["nb_wav_estim"]
+
+                if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
+                    raise ValueError(("In 'multiwl' estimation mode either hand pick 'estimation_wls' ",
+                                      "or 'set nb_wav_estim' parameter to an odd number > 1"))
+
+                delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
+                self.wav_vec_estim = wavelength_0_estim + (np.arange(self.nb_wav_estim) -
+                                                           self.nb_wav_estim // 2) * delta_wav_estim_interval
         else:
             self.wav_vec_estim = np.array([wavelength_0_estim])
             self.nb_wav_estim = 1
 
         for wavei in self.wav_vec_estim:
             if wavei not in testbed.wav_vec:
-                raise ValueError((f"{wavei} is not in testbed.wav_vec. 'nb_wav_estim' parameter",
-                                  "must be equal to, or a divisor, of 'nb_wav' parameter (both must be odd)"))
+                raise ValueError((f"{wavei} is not in testbed.wav_vec. If you added 'estimation_wls' manually, also",
+                                  "add them in as 'mandatory_wls' ([modelconfig] parameter). If you did not ",
+                                  "used 'estimation_wls' directly then 'nb_wav_estim' parameter must be equal to, or ",
+                                  "a divisor, of 'nb_wav' ([modelconfig] parameter) and both must be odd."))
 
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 
