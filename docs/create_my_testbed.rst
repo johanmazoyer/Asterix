@@ -91,7 +91,7 @@ we take the centers of each of these small bandwidths. The next Figure shows thi
 
     Determination of simulation wavelengths ``OpticalSystem.wav_vec``
 
-If ``mandatory_wls`` is notan empty list, for each mandatory wavelength, we find the closest wavelength in the list and replace it by a mandatory wavelength.
+If ``mandatory_wls`` is not an empty list, for each mandatory wavelength, we find the closest wavelength in the list and replace it by a mandatory wavelength.
 
 If  ``Delta_wav`` > 0 and ``nb_wav`` > 1, Asterix is automatically in polychromatic wavelength and the following code
 
