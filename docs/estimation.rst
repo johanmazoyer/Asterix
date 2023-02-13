@@ -102,7 +102,7 @@ Polychromatic Estimation
 ++++++++++++++++++++++++++++++
 
 We recall that polychromatic images are parametrized in [modelconfig]. We use ``nb_wav`` simulation wavelengths in ``Delta_wav``, centered on ``wavelength_0`` and then use the `Riemann sum <https://en.wikipedia.org/wiki/Riemann_sum>`_ to approximate the polychromatic image.
-If ``mandatory_wls`` is an empty list, these simulation wavelengths are evenly spaced.
+If ``mandatory_wls`` is an empty list (``mandatory_wls = ,``), these simulation wavelengths are evenly spaced.
 Polychromatic estimation and correction are linked so they are 
 both driven by the parameter  the ``[Estimationconfig]`` section, ``polychromatic``:
 
@@ -130,9 +130,9 @@ of simulation in blue and ``nb_wav_estim = 3`` for the wavelengths of estimation
     Determination of estimation wavelengths ``estimation.wav_vec_estim``
 
 
-*Method 2:* hand-pick selection. If ``estimation_wls`` parameter is not an empty list (``estimation_wls = ,``), this
+*Method 2:* hand-pick selection. If ``estimation_wls`` parameter is not an empty list, this
 parameter is used to individually hand pick the estimation / correction wavelengths. In this case, these wavelengths must also be added to the list of simulation wavelengths
-(parameter ``modelconfig['mandatory_wls']``). If ``polychromatic = 'singlewl'``, ``estimation_wls`` must ba a unique element. 
+(parameter ``modelconfig['mandatory_wls']``). If ``polychromatic = 'singlewl'``, ``estimation_wls`` must be a unique element. 
 
 If monochromatic images (``nb_wav = 1`` or ``Delta_wav = 0``), all ``polychromatic`` options are ignored.
 
