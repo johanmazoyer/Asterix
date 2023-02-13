@@ -144,8 +144,13 @@ class Coronagraph(optsy.OpticalSystem):
             if self.achrom_phase_coro:
                 self.string_os += '_' + "achrom"
 
+        if coroconfig["filename_instr_lyot"] == "RoundPup":
+            ratio_rad_lyot = coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m
+        else:
+            ratio_rad_lyot = 1
+
         self.lyot_pup = pupil.Pupil(modelconfig,
-                                    prad=self.prad * coroconfig["diam_lyot_in_m"] / self.diam_pup_in_m,
+                                    prad=self.prad * ratio_rad_lyot,
                                     PupType=coroconfig["filename_instr_lyot"],
                                     angle_rotation=coroconfig['lyot_pup_rotation'],
                                     Model_local_dir=Model_local_dir)
@@ -990,7 +995,7 @@ def prop_fpm_regional_sampling(pup,
     """
 
     if only_mat_mult and returnAAsBBs:
-            raise ValueError(f"Cannot have both returnAAsBBs = True and only_mat_mult = True.")
+        raise ValueError(f"Cannot have both returnAAsBBs = True and only_mat_mult = True.")
 
     dim_overpad_pupil = pup.shape[0]
 
