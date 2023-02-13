@@ -10,7 +10,8 @@ It contains 2 functions at least:
 
 - an initialization ``Estimator.__init__()`` The initialization will require previous initialization of the testbed (see previous section) and the [Estimationconfig] part of the parameter file.  It set up everything you need for the estimation (e.g. the PW matrix). 
 
-- an estimatation function itself with parameters:
+- an estimation function itself with parameters:
+
         - the entrance EF
         - DM voltages
 
@@ -105,13 +106,9 @@ If ``mandatory_wls`` is an empty list, these simulation wavelengths are evenly s
 Polychromatic estimation and correction are linked so they are 
 both driven by the parameter  the ``[Estimationconfig]`` section, ``polychromatic``:
 
-* ``'singlewl'``: only one wavelength is used for estimation / correction. Probes and PW / EFC matrices are measured at this wavelength.
-This parameter allows you to test the results of a monochromatic correction, applied to polychromatic light. 
-* ``'broadband_pwprobes'``: This is mostly like the previous case, but probes images used for PW are broadband (of bandwidth ``Delta_wav``). 
-Matrices are at central wavelength. This is what is currently done in `Potier et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.136P/abstract>`_  
-on SPHERE on sky for example. This mode is only relevant for PW estimation and will raise an error if use with perfect estimation.
-* ``'multiwl'``: several images at different wls are used for estimation and there are several matrices of estimation. This parameter is only for the estimation / correction. The bandwidth of the images are 
-still parametrized in [modelconfig](nb_wav, Delta_wav)
+- ``'singlewl'``: only one wavelength is used for estimation / correction. Probes and PW / EFC matrices are measured at this wavelength. This parameter allows you to test the results of a monochromatic correction, applied to polychromatic light. 
+- ``'broadband_pwprobes'``: This is mostly like the previous case, but probes images used for PW are broadband (of bandwidth ``Delta_wav``). Matrices are at central wavelength. This is what is currently done in `Potier et al. (2022) <https://ui.adsabs.harvard.edu/abs/2022A%26A...665A.136P/abstract>`_ on SPHERE on sky for example. This mode is only relevant for PW estimation and will raise an error if use with perfect estimation.
+- ``'multiwl'``: several images at different wls are used for estimation and there are several matrices of estimation. This parameter is only for the estimation / correction. The bandwidth of the images are still parametrized in [modelconfig](nb_wav, Delta_wav)
 
 We have 2 ways of defining the estimation / correction wavelengths. If ``polychromatic = 'broadband_pwprobes'``, the central wavelength and bandwidth are always used. For other case, you can use 2 different methods :
 

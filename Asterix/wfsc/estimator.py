@@ -18,7 +18,7 @@ class Estimator:
                     - saving directories
                 The estimator initialization requires previous initialization of the testbed.
 
-            - an estimatation function Estimator.estimate(), with parameters:
+            - an estimation function Estimator.estimate(), with parameters:
                     - the entrance EF
                     - DM voltages
                     - the wavelength
