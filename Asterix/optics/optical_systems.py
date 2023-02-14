@@ -447,8 +447,8 @@ class OpticalSystem:
                                                      grey_pup_bin_factor=self.grey_pup_bin_factor)
 
         # all parameters can be passed here, but in the case there is a coronagraph,
-        # we pass noFPM = True and no entrance Field by default. We only measure transmission at 
-        # the center wavelength and assume it is the same at all wavelengths
+        # we pass 'noFPM = True' and no entrance Field by default. We only measure transmission at
+        # the center wavelength and assume it is the same at all wavelengths.
         exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, wavelength=self.wavelength_0, **kwargs)
 
         transmission = np.sum(np.abs(exit_EF)**2) / np.sum(np.abs(clear_entrance_pupil)**2)
