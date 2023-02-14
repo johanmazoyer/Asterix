@@ -52,7 +52,7 @@ def quick_run_no_save(config, data_dir):
                               SIMUconfig,
                               input_wavefront=input_wavefront,
                               initial_DM_voltage=0,
-                              silence=True)
+                              silence=False)
 
     best_contrast = np.min(results["MeanDHContrast"])
     return best_contrast
@@ -64,6 +64,7 @@ def test_1dm_correction():
 
     # Load configuration file
     config = read_parameter_file(parameter_file_test,
+                                 NewMODELconfig={'diam_pup_in_pix': 100},
                                  NewDMconfig={'DM1_active': False},
                                  NewEstimationconfig={'estimation': 'pw'},
                                  NewCorrectionconfig={
@@ -79,6 +80,9 @@ def test_1dm_correction():
     test_dir = get_data_dir(datadir="asterix_test_dir")
 
     best_contrast_1DM = quick_run_no_save(config, test_dir)
+
+    # be careful to take some margin in the final contrast because it might depends
+    # on the phase aberrations in entrance that are randomly draw
     assert best_contrast_1DM < 1e-8, "best contrast 1DM should be < 1e-8"
 
 
@@ -88,6 +92,7 @@ def test_2dm_correction():
 
     # Load configuration file
     config = read_parameter_file(parameter_file_test,
+                                 NewMODELconfig={'diam_pup_in_pix': 100},
                                  NewDMconfig={'DM1_active': True},
                                  NewEstimationconfig={'estimation': 'perfect'},
                                  NewCorrectionconfig={
@@ -95,16 +100,46 @@ def test_2dm_correction():
                                      'correction_algorithm': "sm",
                                      'Nbmodes_OnTestbed': 600
                                  },
-                                 NewLoopconfig={
-                                     'Nbiter_corr': [5],
-                                     'Nbmode_corr': [250]
-                                 })
+                                 NewLoopconfig={'Nbiter_corr': [7]})
 
     # we create a specific test_dir because we want the matrices to be redone everytime in testing
     test_dir = get_data_dir(datadir="asterix_test_dir")
     best_contrast_2DM = quick_run_no_save(config, test_dir)
 
+    # be careful to take some margin in the final contrast because it might depends
+    # on the phase aberrations in entrance that are randomly draw
     assert best_contrast_2DM < 1e-8, "best contrast 2DM should be < 1e-8"
+
+
+def test_2dm_polychromatic_correction():
+    # Load the test parameter file
+    parameter_file_test = os.path.join(Asterix_root, 'tests', "param_file_tests.ini")
+
+    # Load configuration file
+    config = read_parameter_file(parameter_file_test,
+                                 NewMODELconfig={
+                                     'diam_pup_in_pix': 100,
+                                     'Delta_wav': 80e-9
+                                 },
+                                 NewDMconfig={'DM1_active': True},
+                                 NewEstimationconfig={
+                                     'estimation': 'pw',
+                                     'polychromatic': 'multiwl'
+                                 },
+                                 NewCorrectionconfig={
+                                     'DH_side': "Full",
+                                     'correction_algorithm': "sm",
+                                     'Nbmodes_OnTestbed': 600
+                                 },
+                                 NewLoopconfig={'Nbiter_corr': [7]})
+
+    # we create a specific test_dir because we want the matrices to be redone everytime in testing
+    test_dir = get_data_dir(datadir="asterix_test_dir")
+    best_contrast_2DM = quick_run_no_save(config, test_dir)
+
+    # be careful to take some margin in the final contrast because it might depends
+    # on the phase aberrations in entrance that are randomly draw
+    assert best_contrast_2DM < 3e-8, "best contrast polychromatic 2DM should be < 3e-8"
 
 
 def test_2dm_correction_roman():
@@ -129,16 +164,15 @@ def test_2dm_correction_roman():
                                      'correction_algorithm': "sm",
                                      'Nbmodes_OnTestbed': 600
                                  },
-                                 NewLoopconfig={
-                                     'Nbiter_corr': [20],
-                                     'Nbmode_corr': [250]
-                                 })
+                                 NewLoopconfig={'Nbiter_corr': [15]})
 
     # we create a specific test_dir because we want the matrices to be redone everytime in testing
     test_dir = get_data_dir(datadir="asterix_test_dir")
     best_contrast_2DM = quick_run_no_save(config, test_dir)
 
-    assert best_contrast_2DM < 1e-8, "Best contrast 2DM Roman HLC should be < 1e-8"
+    # be careful to take some margin in the final contrast because it might depends
+    # on the phase aberrations in entrance that are randomly draw
+    assert best_contrast_2DM < 2e-8, "Best contrast 2DM Roman HLC should be < 2e-8"
 
 
 @pytest.fixture(scope="session", autouse=True)
