@@ -27,7 +27,7 @@ def test_all_coronagraphs():
         # Create the coronagraph
         corono = Coronagraph(modelconfig, Coronaconfig)
         coro_psf = corono.todetector_intensity(in_contrast=True)
-        print(f"Attenuation of '{coro} is { np.max(coro_psf)}")
+        print(f"Attenuation of '{coro}' is { np.max(coro_psf)}")
 
         assert np.max(
             coro_psf) < expected_attenuation[i], f"Attenuation of '{coro}' not below expected {expected_attenuation[i]}."

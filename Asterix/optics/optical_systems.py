@@ -356,7 +356,7 @@ class OpticalSystem:
         # If you want a specific normalization for a subset of wavelengths, do it yourself with the todetector() function."
 
         for i, wav in enumerate(wavelength_vec):
-            if (wavelength_vec == self.wav_vec).all():
+            if (wavelength_vec == self.wav_vec).all() and len(self.wav_vec) > 1:
                 riemann_factor = self.riemannn_intervals_lengths[i] / self.Delta_wav
             else:
                 riemann_factor = 1
@@ -446,9 +446,10 @@ class OpticalSystem:
                                                      self.prad,
                                                      grey_pup_bin_factor=self.grey_pup_bin_factor)
 
-        # all parameter can be passed here, but in the case there is a coronagraph,
-        # we pass noFPM = True and noentrance Field by default
-        exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
+        # all parameters can be passed here, but in the case there is a coronagraph,
+        # we pass noFPM = True and no entrance Field by default. We only measure transmission at 
+        # the center wavelength and assume it is the same at all wavelengths
+        exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, wavelength=self.wavelength_0, **kwargs)
 
         transmission = np.sum(np.abs(exit_EF)**2) / np.sum(np.abs(clear_entrance_pupil)**2)
 
@@ -524,7 +525,7 @@ class OpticalSystem:
             norm_monochrom[i] = np.max(PSF_wl)
             sum_monochrom[i] = np.sum(PSF_wl)
 
-            if (wavelength_vec == self.wav_vec).all():
+            if (wavelength_vec == self.wav_vec).all() and len(self.wav_vec) > 1:
                 riemann_factor = self.riemannn_intervals_lengths[i] / self.Delta_wav
             else:
                 riemann_factor = 1
