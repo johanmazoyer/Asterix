@@ -2,7 +2,7 @@ import os
 import numpy as np
 from astropy.io import fits
 
-from Asterix.utils import resizing
+from Asterix.utils import resizing, save_plane_in_fits
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
 import Asterix.wfsc.wf_sensing_functions as wfs
@@ -113,9 +113,11 @@ class Estimator:
 
         for wavei in self.wav_vec_estim:
             if wavei not in testbed.wav_vec:
-                raise ValueError((f"{wavei} is not in testbed.wav_vec. If you added 'estimation_wls' manually, also",
-                                  "add them in as 'mandatory_wls' ([modelconfig] parameter). If you did not ",
-                                  "used 'estimation_wls' directly then 'nb_wav_estim' parameter must be equal to, or ",
+                raise ValueError((f"Wavelength {wavei} is in estimator.wav_vec_estim but not in ",
+                                  "testbed.wav_vec. If you added one or several ",
+                                  "'estimation_wls' manually, also add them in as 'mandatory_wls' ",
+                                  "([modelconfig] parameter). If you did not used 'estimation_wls' ",
+                                  "parameter then make sure 'nb_wav_estim' parameter must be equal to, or ",
                                   "a divisor, of 'nb_wav' ([modelconfig] parameter) and both must be odd."))
 
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
@@ -242,12 +244,24 @@ class Estimator:
                         voltage_vector=voltage_vector,
                         wavelength=wavei)
                     result_estim.append(resizing(resultatestimation, self.dimEstim))
+
+                    if 'dir_save_all_planes' in kwargs.keys():
+                        if kwargs['dir_save_all_planes'] is not None:
+                            name_plane = 'Perfect_estimate_multiwl' + f'_wl{int(wavei * 1e9)}'
+                            save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
+
             elif self.polychrom == 'singlewl':
                 resultatestimation = testbed.todetector(entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(
-                    testbed.wavelength_0)],
+                    self.wav_vec_estim[0])],
                                                         voltage_vector=voltage_vector,
-                                                        wavelength=testbed.wavelength_0)
+                                                        wavelength=self.wav_vec_estim[0])
                 result_estim.append(resizing(resultatestimation, self.dimEstim))
+
+                if 'dir_save_all_planes' in kwargs.keys():
+                    if kwargs['dir_save_all_planes'] is not None:
+                        name_plane = 'Perfect_estimate_singlewl' + f'_wl{int(self.wav_vec_estim[0] * 1e9)}'
+                        save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
+
             elif self.polychrom == 'broadband_pwprobes':
                 raise ValueError("cannot use polychrom='broadband_pwprobes' in perfect mode")
             else:
@@ -266,7 +280,7 @@ class Estimator:
                         kwargs['nb_photons'] = kwargs['nb_photons'] / testbed.Delta_wav * self.delta_wav_estim_individual
 
                 for i, wavei in enumerate(self.wav_vec_estim):
-                    Difference = wfs.simulate_pw_difference(entrance_EF[i],
+                    Difference = wfs.simulate_pw_difference(entrance_EF[testbed.wav_vec.tolist().index(wavei)],
                                                             testbed,
                                                             self.posprobes,
                                                             self.dimEstim,
@@ -277,8 +291,14 @@ class Estimator:
 
                     result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[i]))
 
+                    if 'dir_save_all_planes' in kwargs.keys():
+                        if kwargs['dir_save_all_planes'] is not None:
+                            name_plane = 'PW_estimate_multiwl' + f'_wl{int(wavei * 1e9)}'
+                            save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
+
             elif self.polychrom == 'singlewl':
-                Difference = wfs.simulate_pw_difference(entrance_EF,
+                Difference = wfs.simulate_pw_difference(entrance_EF[testbed.wav_vec.tolist().index(
+                    self.wav_vec_estim[0])],
                                                         testbed,
                                                         self.posprobes,
                                                         self.dimEstim,
@@ -288,6 +308,10 @@ class Estimator:
                                                         **kwargs)
 
                 result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0]))
+                if 'dir_save_all_planes' in kwargs.keys():
+                    if kwargs['dir_save_all_planes'] is not None:
+                        name_plane = 'PW_estimate_singlewl' + f'_wl{int(self.wav_vec_estim[0] * 1e9)}'
+                        save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
 
             elif self.polychrom == 'broadband_pwprobes':
                 Difference = wfs.simulate_pw_difference(entrance_EF,
@@ -300,6 +324,11 @@ class Estimator:
                                                         **kwargs)
 
                 result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0]))
+                if 'dir_save_all_planes' in kwargs.keys():
+                    if kwargs['dir_save_all_planes'] is not None:
+                        name_plane = 'PW_estimate_broadband_pwprobes' + f'_wl{int(testbed.wavelength_0 * 1e9)}_bw{testbed.Delta_wav * 1e9}'
+                        save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
+
             else:
                 raise ValueError(self.polychrom + " is not a valid polychromatic estimation/correction mode")
             return result_estim

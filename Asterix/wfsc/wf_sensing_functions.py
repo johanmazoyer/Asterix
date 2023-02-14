@@ -152,10 +152,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
 
     DM_probe: DeformableMirror = vars(testbed)[testbed.name_DM_to_probe_in_PW]
 
-    #### TODO Careful. right now, you can only do estimation at the wl that are in
-    ### the testbed.wav_vec vector. If you're not, you'll run into a bug in
-    ### testbed.todetector(wavelength=wavelength)
-    psi0 = testbed.todetector(wavelength=wavelength)
+    psi0 = testbed.todetector(wavelength=wavelength, in_contrast=True)
 
     k = 0
 
@@ -172,7 +169,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
         # **kwarg is here to send dir_save_all_planes
 
         deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, **kwargs) - psi0, dimEstim)
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, in_contrast=True, **kwargs) - psi0, dimEstim)
 
         k = k + 1
 
