@@ -93,7 +93,7 @@ class Estimator:
 
                 delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
                 self.wav_vec_estim = testbed.wavelength_0 + (np.arange(self.nb_wav_estim) -
-                                                           self.nb_wav_estim // 2) * delta_wav_estim_interval
+                                                             self.nb_wav_estim // 2) * delta_wav_estim_interval
         elif self.polychrom == 'singlewl':
             estimation_wls = [float(x) for x in Estimationconfig["estimation_wls"]]
             if estimation_wls != []:

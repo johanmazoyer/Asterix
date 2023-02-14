@@ -97,7 +97,7 @@ class OpticalSystem:
 
             # we calculate the Riemann intervals to calculate the focal plane polychromatic intensity using the
             # Riemann sum (https://en.wikipedia.org/wiki/riemann_sum) with the formula:
-            # I_poly = Sum(Imono[lambda_i] * riemannn_intervals_lengths[i])
+            # I_poly = Sum(Imono[lambda_i] * riemannn_intervals_lengths[i]) / Delta_wav
 
             # If there are no aditionnal "mandatory wavelengths" added, wavelengths are calculated so that the
             # riemann intervals are all the same lengths (self.Delta_wav / self.nb_wav) with the simulation wavelengths
@@ -349,7 +349,7 @@ class OpticalSystem:
 
         # We calculate the focal plane polychromatic intensity using the
         # Riemann sum (https://en.wikipedia.org/wiki/riemann_sum) with the formula:
-        # I_poly = Sum(Imono[lambda_i] * riemannn_intervals_lengths[i])
+        # I_poly = Sum(Imono[lambda_i] * riemannn_intervals_lengths[i]) / Delta_wav
         # We also normalize each monochromatic measurement to Delta_wav to avoid using very small numbers but
         # this does not change the normalized intensity since the non-coronagraphic PSF are also normalized the same way.
         # The Riemann sum only makes sense if done in all possible wavelengths in the bandwidths (wavelength_vec = self.wav_vec).
