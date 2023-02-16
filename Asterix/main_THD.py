@@ -17,7 +17,7 @@ class THD2(Testbed):
         A read-in .ini parameter file.
     """
 
-    def __init__(self, config, model_local_dir):
+    def __init__(self, config, model_local_dir, silence=False):
         """
         Parameters
         ----------
@@ -26,6 +26,8 @@ class THD2(Testbed):
             coronagraph ([Coronaconfig]) and DM(s) ([DMconfig]).
         Model_local_dir : string
             Directory output path for model-related files created on the file for later reuse.
+        silence : boolean, default False.
+            Whether to silence print outputs.
         """
 
         model_config = config["modelconfig"]
@@ -42,10 +44,11 @@ class THD2(Testbed):
         entrance_pupil = Pupil(model_config,
                                PupType=model_config["filename_instr_pup"],
                                angle_rotation=model_config["entrance_pup_rotation"],
-                               Model_local_dir=model_local_dir)
-        dm1 = DeformableMirror(model_config, dm_config, Name_DM="DM1", Model_local_dir=model_local_dir)
-        dm3 = DeformableMirror(model_config, dm_config, Name_DM="DM3", Model_local_dir=model_local_dir)
-        corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir)
+                               Model_local_dir=model_local_dir,
+                               silence=silence)
+        dm1 = DeformableMirror(model_config, dm_config, Name_DM="DM1", Model_local_dir=model_local_dir, silence=silence)
+        dm3 = DeformableMirror(model_config, dm_config, Name_DM="DM3", Model_local_dir=model_local_dir, silence=silence)
+        corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir, silence=silence)
 
         # Concatenate into the full testbed optical system
         super().__init__([entrance_pupil, dm1, dm3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
@@ -90,8 +93,8 @@ def runthd2(parameter_file_path,
         Can be used to directly change a parameter in the Correctionconfig section of the input parameter file.
     NewSIMUconfig : dict, optional
         Can be used to directly change a parameter in the SIMUconfig section of the input parameter file.
-    silence : boolean
-        Whether to silence correction loop outputs; default False.
+    silence : boolean, default False.
+        Whether to silence print outputs.
     """
 
     # Load configuration file
@@ -123,7 +126,7 @@ def runthd2(parameter_file_path,
                                create_experiment_dir(append=config["Coronaconfig"]["corona_type"]) + f"_{commit}")
 
     # Concatenate into the full testbed optical system
-    thd2 = THD2(config, model_local_dir)
+    thd2 = THD2(config, model_local_dir, silence=silence)
 
     # The following line can be used to change the DM which applies PW probes.
     # This can be used to use the DM out of the pupil plane as the PW DM.
@@ -135,7 +138,8 @@ def runthd2(parameter_file_path,
                           thd2,
                           matrix_dir=matrix_dir,
                           save_for_bench=onbench,
-                          realtestbed_dir=labview_dir)
+                          realtestbed_dir=labview_dir,
+                          silence=silence)
 
     # Initialize the DH masks
     mask_dh = MaskDH(Correctionconfig)
@@ -148,7 +152,8 @@ def runthd2(parameter_file_path,
                           estimator,
                           matrix_dir=matrix_dir,
                           save_for_bench=onbench,
-                          realtestbed_dir=labview_dir)
+                          realtestbed_dir=labview_dir,
+                          silence=silence)
 
     ### Write configfile to Labview-style matrix directory
     if onbench:
@@ -158,13 +163,19 @@ def runthd2(parameter_file_path,
 
     ### Set initial phase and amplitude
     # Phase upstream of the coronagraph (entrance pup)
-    phase_abb_up = thd2.generate_phase_aberr(SIMUconfig, up_or_down='up', Model_local_dir=model_local_dir)
+    phase_abb_up = thd2.generate_phase_aberr(SIMUconfig,
+                                             up_or_down='up',
+                                             Model_local_dir=model_local_dir,
+                                             silence=silence)
 
     # Phase downstream of the coronagraph (Lyot stop)
-    phase_abb_do = thd2.generate_phase_aberr(SIMUconfig, up_or_down='do', Model_local_dir=model_local_dir)
+    phase_abb_do = thd2.generate_phase_aberr(SIMUconfig,
+                                             up_or_down='do',
+                                             Model_local_dir=model_local_dir,
+                                             silence=silence)
 
     # Amplitude upstream of the coronagraph (entrance pup)
-    ampl_abb_up = thd2.generate_ampl_aberr(SIMUconfig, Model_local_dir=model_local_dir)
+    ampl_abb_up = thd2.generate_ampl_aberr(SIMUconfig, Model_local_dir=model_local_dir, silence=silence)
 
     ### Create the wavefronts including the phase and amplitude aberrations
     # WF in the testbed entrance pupil
@@ -186,4 +197,4 @@ def runthd2(parameter_file_path,
                               silence=silence,
                               **kwargs)
 
-    save_loop_results(results, config, thd2, science_mask_dh, result_dir)
+    save_loop_results(results, config, thd2, science_mask_dh, result_dir, silence=silence)

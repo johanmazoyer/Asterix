@@ -21,7 +21,7 @@ class DeformableMirror(optsy.OpticalSystem):
     AUTHOR : Johan Mazoyer
     """
 
-    def __init__(self, modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=None):
+    def __init__(self, modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=None, silence=False):
         """Initialize a deformable mirror object.
 
         AUTHOR : Johan Mazoyer
@@ -37,13 +37,16 @@ class DeformableMirror(optsy.OpticalSystem):
             we measure and save the pushact functions
         Model_local_dir : string
             Directory output path for model-related files created on the file for later reuse.
+        silence : boolean, default False.
+            Whether to silence print outputs.
         """
 
         # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
         if not os.path.exists(Model_local_dir):
-            print("Creating directory " + Model_local_dir + " ...")
+            if not silence:
+                print("Creating directory " + Model_local_dir + " ...")
             os.makedirs(Model_local_dir)
 
         self.Model_local_dir = Model_local_dir
@@ -84,7 +87,8 @@ class DeformableMirror(optsy.OpticalSystem):
             self.string_os += "Gen"
 
         if not self.active:
-            print(self.Name_DM + ' is not activated')
+            if not silence:
+                print(self.Name_DM + ' is not activated')
             return
 
         self.DMconfig = DMconfig
@@ -96,10 +100,10 @@ class DeformableMirror(optsy.OpticalSystem):
 
         # create the DM_pushact, surface of the DM for each individual act
         # DM_pushact is always in the DM plane
-        self.DM_pushact = self.creatingpushact(DMconfig)
+        self.DM_pushact = self.creatingpushact(DMconfig, silence=silence)
 
         # create or load 'which actuators are in pupil'
-        self.WhichInPupil = self.id_in_pupil_actuators()
+        self.WhichInPupil = self.id_in_pupil_actuators(silence=silence)
 
         self.misregistration = DMconfig[self.Name_DM + "_misregistration"]
         # now if we relaunch self.DM_pushact, and if misregistration = True
@@ -176,7 +180,7 @@ class DeformableMirror(optsy.OpticalSystem):
 
         return EF_after_DM
 
-    def creatingpushact(self, DMconfig):
+    def creatingpushact(self, DMconfig, silence=False):
         """OPD map induced in the DM plane for each actuator.
 
         This large array is initialized at the beginning and will be use
@@ -194,6 +198,8 @@ class DeformableMirror(optsy.OpticalSystem):
         ----------
         DMconfig : dict
             DM configuration parameters dictionary
+        silence : boolean, default False.
+            Whether to silence print outputs.
 
         Returns
         --------
@@ -212,10 +218,12 @@ class DeformableMirror(optsy.OpticalSystem):
         if (not self.misregistration) and (os.path.exists(os.path.join(self.Model_local_dir,
                                                                        Name_pushact_fits + '.fits'))):
             pushact3d = fits.getdata(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
-            print("Load " + Name_pushact_fits)
+            if not silence:
+                print("Load " + Name_pushact_fits)
             return pushact3d
 
-        print("Start " + Name_pushact_fits + " (wait a few seconds)")
+        if not silence:
+            print("Start " + Name_pushact_fits + " (wait a few seconds)")
 
         if self.misregistration:
             xerror = float(DMconfig[self.Name_DM + "_xerror"])
@@ -327,19 +335,22 @@ class DeformableMirror(optsy.OpticalSystem):
         if (not self.misregistration) and (not os.path.exists(
                 os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
             fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'), pushact3d)
-            print("Time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
+            if not silence:
+                print("Time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
 
         return pushact3d
 
-    def id_in_pupil_actuators(self):
+    def id_in_pupil_actuators(self, silence=False):
         """Create a vector with the index of all the actuators located in the entrance pupil.
 
         AUTHOR: Johan Mazoyer
 
         Returns
         --------
-        WhichInPupil: 1D array
+        WhichInPupil : 1D array
             Index of all the actuators located inside the pupil.
+        silence : boolean, default False.
+            Whether to silence print outputs.
         """
         start_time = time.time()
         Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
@@ -351,7 +362,8 @@ class DeformableMirror(optsy.OpticalSystem):
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(self.WhichInPup_threshold)
 
         if os.path.exists(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits')):
-            print("Load " + Name_WhichInPup_fits)
+            if not silence:
+                print("Load " + Name_WhichInPup_fits)
             return fits.getdata(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'))
 
         if self.z_position != 0:
@@ -376,7 +388,9 @@ class DeformableMirror(optsy.OpticalSystem):
         WhichInPupil = np.array(WhichInPupil)
 
         fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'), WhichInPupil, overwrite=True)
-        print("Time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time))
+
+        if not silence:
+            print("Time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time))
 
         return WhichInPupil
 
@@ -471,15 +485,17 @@ class DeformableMirror(optsy.OpticalSystem):
 
         return phase_on_DM
 
-    def create_DM_basis(self, basis_type='actuator'):
+    def create_DM_basis(self, basis_type='actuator', silence=False):
         """Create a DM basis. TODO do a zernike basis ?
 
         AUTHOR: Johan Mazoyer
 
         Parameters
         ----------
-        basis_type: string, default 'actuator'
+        basis_type : string, default 'actuator'
             the type of basis. 'fourier' or 'actuator'.
+        silence : boolean, default False.
+            Whether to silence print outputs.
 
         Returns
         --------
@@ -518,14 +534,16 @@ class DeformableMirror(optsy.OpticalSystem):
             if not os.path.exists(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits')):
                 start_time = time.time()
                 phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil, self.dim_overpad_pupil))
-                print("Start " + Name_FourrierBasis_fits + " (wait a few seconds)")
+                if not silence:
+                    print("Start " + Name_FourrierBasis_fits + " (wait a few seconds)")
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
                         progress(i, basis_size, status='')
                 fits.writeto(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits'), phasesFourrier)
-                print("")
-                print("Time for " + Name_FourrierBasis_fits + " (s):", round(time.time() - start_time))
+                if not silence:
+                    print("")
+                    print("Time for " + Name_FourrierBasis_fits + " (s):", round(time.time() - start_time))
 
         else:
             raise ValueError(basis_type + " is is not a valid basis_type")

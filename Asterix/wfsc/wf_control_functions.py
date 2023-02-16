@@ -23,6 +23,7 @@ def create_interaction_matrix(testbed: Testbed,
                               polychrom='singlewl',
                               wav_vec_estim=None,
                               dir_save_all_planes=None,
+                              silence=False,
                               visu=False):
     """Create the jacobian matrix for Electric Field Conjugation. The Matrix is
     not limited to the DH size but to the whole FP [dimEstim, dimEstim]. First
@@ -68,6 +69,8 @@ def create_interaction_matrix(testbed: Testbed,
     dir_save_all_planes : string or None, default None
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
+    silence : boolean, default False.
+        Whether to silence print outputs.
     visu : bool default false
         if true show the focal plane intensity in 2D for each mode
 
@@ -109,6 +112,7 @@ def create_interaction_matrix(testbed: Testbed,
                                                    wav_vec_estim[0])],
                                                MatrixType=MatrixType,
                                                dir_save_all_planes=dir_save_all_planes,
+                                               silence=silence,
                                                visu=visu))
     elif polychrom == 'broadband_pwprobes':
 
@@ -123,6 +127,7 @@ def create_interaction_matrix(testbed: Testbed,
                                                    testbed.wavelength_0)],
                                                MatrixType=MatrixType,
                                                dir_save_all_planes=dir_save_all_planes,
+                                               silence=silence,
                                                visu=visu))
 
     elif polychrom == 'multiwl':
@@ -138,6 +143,7 @@ def create_interaction_matrix(testbed: Testbed,
                                                    input_wavefront=input_wavefront[i],
                                                    MatrixType=MatrixType,
                                                    dir_save_all_planes=dir_save_all_planes,
+                                                   silence=silence,
                                                    visu=visu))
     else:
         raise ValueError(polychrom + "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
@@ -154,6 +160,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                        input_wavefront=1.,
                                        MatrixType='',
                                        dir_save_all_planes=None,
+                                       silence=False,
                                        visu=False):
     """Create the jacobian matrix for Electric Field Conjugation for one
     wavelength. The Matrix is not limited to the DH size but to the whole FP
@@ -194,8 +201,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     dir_save_all_planes : string, default None
         If not None, path to directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
+    silence : boolean, default False.
+        Whether to silence print outputs.
     visu : bool default false
-        if true show the focal plane intensity in 2D for each mode
+        if true, show the focal plane intensity in 2D for each mode.
 
     Returns
     --------
@@ -262,7 +271,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         # Matrix is saved/loaded for all the FP and then crop at the good size later
 
         if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage == 0.).all():
-            print("The matrix " + fileDirectMatrix + " already exists")
+            if not silence:
+                print("The matrix " + fileDirectMatrix + " already exists")
 
             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(
                 os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
@@ -277,13 +287,13 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 testbed.todetector(entrance_EF=input_wavefront,
                                    voltage_vector=initial_DM_voltage,
                                    dir_save_all_planes=dir_save_all_planes), dimEstim)
+            if not silence:
+                if (initial_DM_voltage == 0.).all():
+                    print("")
+                    print("The matrix " + fileDirectMatrix + " does not exists")
 
-            if (initial_DM_voltage == 0.).all():
-                print("")
-                print("The matrix " + fileDirectMatrix + " does not exists")
-
-            print("Start interaction Matrix " + DM_name + ' at ' + str(int(wavelength * 1e9)) +
-                  'nm (wait a few 10s of seconds)')
+                print("Start interaction Matrix " + DM_name + ' at ' + str(int(wavelength * 1e9)) +
+                      'nm (wait a few 10s of seconds)')
 
             # we measure the phases of the Basis we will apply on the DM.
             # In the case of the Fourier Basis, this is a bit long so we load an existing .fits file
@@ -459,8 +469,9 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             for i, phase_in_basis in enumerate(phasesBasis):
                 # for i in range(DM.basis_size):
 
-                if i % 10:
-                    progress(i, DM.basis_size, status='')
+                if not silence:
+                    if i % 10:
+                        progress(i, DM.basis_size, status='')
 
                 if MatrixType == 'perfect':
                     if DM.z_position == 0:
@@ -575,9 +586,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
                              InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size])
 
-            print("")
-            print("Time for interaction Matrix " + DM_name + " (s):", round(time.time() - start_time))
-            print("")
+            if not silence:
+                print("")
+                print("Time for interaction Matrix " + DM_name + " (s):", round(time.time() - start_time))
+                print("")
 
         pos_in_matrix += DM.basis_size
 
@@ -696,8 +708,14 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
     return testbed.basis_vector_to_act_vector(produit_mat)
 
 
-def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, DesiredContrast, last_best_alpha,
-                            testbed: Testbed):
+def calc_strokemin_solution(mask,
+                            Result_Estimate,
+                            Jacob_trans_Jacob,
+                            Jacobian,
+                            DesiredContrast,
+                            last_best_alpha,
+                            testbed: Testbed,
+                            silence=False):
     """Voltage to apply on the deformable mirror in order to minimize the
     speckle intensity in the dark hole region in the stroke min solution See
     Axel Potier Phd for notation and Mazoyer et al. 2018a for alpha search
@@ -723,6 +741,8 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
         Starting point for alpha.
     testbed : Testbed Optical_element
         Testbed with one or more DM.
+    silence : boolean, default False.
+        Whether to silence print outputs.
 
     Returns
     --------
@@ -780,9 +800,10 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
                 # this step is to check if the SM is divergeing too quickly
                 return "SMFailedTooManyTime", alpha
 
-            print(f"For alpha={np.log10(alpha):f}, " + f"Current Contrast:{np.log10(CurrentContrast):f}, " +
-                  f"Last Contrast:{np.log10(LastCurrentContrast):f}, " +
-                  f"Desired Contrast: {np.log10(DesiredContrast):f}")
+            if not silence:
+                print(f"For alpha={np.log10(alpha):f}, " + f"Current Contrast:{np.log10(CurrentContrast):f}, " +
+                      f"Last Contrast:{np.log10(LastCurrentContrast):f}, " +
+                      f"Desired Contrast: {np.log10(DesiredContrast):f}")
 
         if iteralpha == 0:
             # we must do at least 1 iteration (the SM found a solution that dig the contrast)
@@ -790,13 +811,14 @@ def calc_strokemin_solution(mask, Result_Estimate, Jacob_trans_Jacob, Jacobian, 
             TestSMfailed = True
             number_time_failed += 1
             last_best_alpha *= 10
-            print("SM failed, we increase alpha 10 times")
+            if not silence:
+                print("SM failed, we increase alpha 10 times")
             if number_time_failed > 20:
                 return "SMFailedTooManyTime", alpha
         else:
             TestSMfailed = False
-
-    print(f"Number of iterations in this stroke min (number of tested alpha): {iteralpha:d}")
+    if not silence:
+        print(f"Number of iterations in this stroke min (number of tested alpha): {iteralpha:d}")
     return testbed.basis_vector_to_act_vector(DMSurfaceCoeff), alpha
 
 

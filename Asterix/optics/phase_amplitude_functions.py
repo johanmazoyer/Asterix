@@ -141,9 +141,6 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 
     # create a circular pupil of the same radius of the given pupil
     # this will be the pupil over which phase rms = phaserms
-    # TODO if grey_pupils = True, this is not a grey_pupil like the others. To chance, we need to pass directly
-    # the pupil instead of the pupil radius, or to pass grey pupil.
-    # This is not very important because it will have a very small impact on the phase level (prob less that 1%)
 
     pup = roundpupil(dim_image, pupil_rad)
 
@@ -163,10 +160,6 @@ def random_phase_map(pupil_rad, dim_image, phaserms, rhoc, slope):
 def sine_cosine_basis(Nact1D):
     """
     For a given number of actuator across the DM, create coefficients for the sin/cos basis.
-
-    TODO Check with Pierre that this is equivalent to what is done on the testbed
-    TODO Ask Pierre what he thinks: is it possible to do the basis only for the actuators in the pup
-        in which case, the important number would be the number of act in the pup ?
 
     AUTHOR: Johan Mazoyer
 

@@ -7,7 +7,7 @@ from astropy.io import fits
 from Asterix.utils import invert_svd
 
 
-def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, number_wl_in_matrix=1):
+def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, number_wl_in_matrix=1, silence=False):
     """This code invert the matrix just in the case of THD testbed.
 
     The goal is to be able to invert the matrix directly on the RTC to be able to do it during correction.
@@ -51,6 +51,8 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
                         singular values are smoothed (low pass filter)
     number_wl_in_matrix : int, default 1
         number of wavelength in the direct matrix
+    silence : boolean, default False.
+        Whether to silence print outputs.
     """
 
     if name_active_DM in (13, 31):
@@ -73,8 +75,8 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
                                  Nbmodes,
                                  goal="c",
                                  regul=regularization,
-                                 visu=True,
-                                 filename_visu=os.path.join(matrix_directory, "SVD_Modes" + str(Nbmodes) + ".png"))
+                                 filename_eigen=os.path.join(matrix_directory, "SVD_Modes" + str(Nbmodes) + ".png"),
+                                 silence=silence)
 
     if name_active_DM in (13, 31):
         DM1_basis_size = DM1_basis.shape[0]

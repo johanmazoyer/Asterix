@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, filename_visu=None):
+def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", filename_eigen=None, silence=False):
     """Invert a matrix after a Singular Value Decomposition
     https://en.wikipedia.org/wiki/Singular_value_decomposition The inversion
     can be regularized. We return the inverse, the singular values, their
@@ -30,9 +30,11 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
                             singular values are truncated
             if 'tikhonov': when goal is set to 'c', the modes with the highest inverse
                             singular values are smoothed (low pass filter)
-    visu : boolean, default False
-            if True, plot and save the crescent inverse singular values,
+    filename_eigen : string, default None
+            if not None, plot and save the crescent inverse singular values,
                             before regularization
+    silence : boolean, default False.
+        Whether to silence print/show outputs
 
     Returns
     --------
@@ -50,14 +52,11 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
     InvS = np.linalg.inv(S)
     InvS_truncated = np.linalg.inv(S)
     # print(InvS)
-    if visu:
-        plt.figure()
-        plt.clf
+    if filename_eigen is not None:
         plt.plot(np.diag(InvS), "r.")
         plt.yscale("log")
-        plt.savefig(filename_visu)
+        plt.savefig(filename_eigen)
         plt.close()
-
     if goal == "e":
         InvS_truncated[np.where(InvS_truncated > cut)] = 0
         pseudoinverse = np.dot(np.dot(np.transpose(V), InvS_truncated), np.transpose(U))
@@ -67,7 +66,7 @@ def invert_svd(matrix_to_invert, cut, goal="e", regul="truncation", visu=False, 
             InvS_truncated[cut:] = 0
         if regul == "tikhonov":
             InvS_truncated = np.diag(s / (s**2 + s[cut]**2))
-            if visu:
+            if not silence:
                 plt.ion()
                 plt.plot(np.diag(InvS_truncated), "b.")
                 plt.yscale("log")

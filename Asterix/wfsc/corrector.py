@@ -37,7 +37,8 @@ class Corrector:
                  estimator: estimator_mod.Estimator,
                  matrix_dir=None,
                  save_for_bench=False,
-                 realtestbed_dir=''):
+                 realtestbed_dir='',
+                 silence=False):
         """Initialize the corrector. This is where you define the EFC matrix
         For all large files you should use a method of "save to fits" if it
         does not exist "load from fits" if it does, in matrix_dir.
@@ -63,9 +64,13 @@ class Corrector:
             should we save for the real testbed in realtestbed_dir
         realtestbed_dir : string
             path to directory to save all the files the real testbed need
+        silence : boolean, default False.
+            Whether to silence print outputs.
         """
+
         if not os.path.exists(matrix_dir):
-            print("Creating directory " + matrix_dir)
+            if not silence:
+                print("Creating directory " + matrix_dir)
             os.makedirs(matrix_dir)
 
         if not isinstance(testbed, OpticalSystem):
@@ -76,7 +81,7 @@ class Corrector:
 
         for DM_name in testbed.name_of_DMs:
             DM: DeformableMirror = vars(testbed)[DM_name]
-            DM.basis = DM.create_DM_basis(basis_type=basis_type)
+            DM.basis = DM.create_DM_basis(basis_type=basis_type, silence=silence)
             DM.basis_size = DM.basis.shape[0]
             self.total_number_modes += DM.basis_size
             DM.basis_type = basis_type
@@ -95,11 +100,12 @@ class Corrector:
         self.regularization = Correctionconfig["regularization"]
         self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim, estimator.Estim_sampling)
         self.matrix_dir = matrix_dir
-        self.update_matrices(testbed, estimator)
+        self.update_matrices(testbed, estimator, silence=silence)
 
         if self.correction_algorithm == "efc" and save_for_bench:
             if not os.path.exists(realtestbed_dir):
-                print("Creating directory " + realtestbed_dir)
+                if not silence:
+                    print("Creating directory " + realtestbed_dir)
                 os.makedirs(realtestbed_dir)
 
             if estimator.polychrom in ['singlewl', 'broadband_pwprobes']:
@@ -145,7 +151,8 @@ class Corrector:
                                               number_Active_testbeds,
                                               realtestbed_dir,
                                               self.regularization,
-                                              number_wl_in_matrix=number_wl_in_matrix)
+                                              number_wl_in_matrix=number_wl_in_matrix,
+                                              silence=silence)
 
             fits.writeto(os.path.join(realtestbed_dir, "DH_mask.fits"),
                          self.MaskEstim.astype(np.float32),
@@ -175,7 +182,8 @@ class Corrector:
                         testbed: Testbed,
                         estimator: estimator_mod.Estimator,
                         initial_DM_voltage=0.,
-                        input_wavefront=1.):
+                        input_wavefront=1.,
+                        silence=False):
         """Measure the interaction matrices needed for the correction Is launch
         once in the Correction initialization and then once each time we update
         the matrix.
@@ -192,6 +200,8 @@ class Corrector:
             initial DM voltages to measure the Matrix
         input_wavefront : float or 2d numpy array or 3d numpy array, default 1.
             initial wavefront to measure the Matrix
+        silence : boolean, default False.
+            Whether to silence print outputs.
         """
 
         if self.correction_algorithm in ["efc", "em", "steepest", "sm"]:
@@ -212,6 +222,7 @@ class Corrector:
                                                      polychrom=estimator.polychrom,
                                                      wav_vec_estim=estimator.wav_vec_estim,
                                                      dir_save_all_planes=None,
+                                                     silence=silence,
                                                      visu=False)
 
             self.Gmatrix = wfc.crop_interaction_matrix_to_dh(interMat, self.MaskEstim)
@@ -233,7 +244,7 @@ class Corrector:
         else:
             raise NotImplementedError("This correction algorithm is not yet implemented")
 
-    def toDM_voltage(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., **kwargs):
+    def toDM_voltage(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., silence=False, **kwargs):
         """Run a correction from a estimate, and return the DM voltage
         compatible with the testbed.
 
@@ -255,6 +266,8 @@ class Corrector:
         ActualCurrentContrast : float, defau,t 1.
             Use in StrokeMin to find a target contrast
             Contrast at the current iteration of the loop
+        silence : boolean, default False.
+            Whether to silence print outputs.
 
         Return
         ----------
@@ -266,7 +279,7 @@ class Corrector:
             if mode != self.previousmode:
                 self.previousmode = mode
                 # we only re-invert the matrix if it is different from last time
-                _, _, self.invertGDH = invert_svd(self.Gmatrix, mode, goal="c", visu=False, regul=self.regularization)
+                _, _, self.invertGDH = invert_svd(self.Gmatrix, mode, goal="c", regul=self.regularization, silence=True)
 
             solutionefc = wfc.calc_efc_solution(self.MaskEstim, estimate, self.invertGDH, testbed)
 
@@ -316,9 +329,14 @@ class Corrector:
 
             DesiredContrast = self.expected_gain_in_contrast * ActualCurrentContrast
 
-            solutionSM, self.last_best_alpha = wfc.calc_strokemin_solution(self.MaskEstim, estimate, self.M0, self.G,
-                                                                           DesiredContrast, self.last_best_alpha,
-                                                                           testbed)
+            solutionSM, self.last_best_alpha = wfc.calc_strokemin_solution(self.MaskEstim,
+                                                                           estimate,
+                                                                           self.M0,
+                                                                           self.G,
+                                                                           DesiredContrast,
+                                                                           self.last_best_alpha,
+                                                                           testbed,
+                                                                           silence=silence)
 
             if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (isinstance(
                     solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
@@ -326,8 +344,9 @@ class Corrector:
                 self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast) / 3
                 self.count_since_last_best = 0
                 self.last_best_alpha *= 20
-                print("we do not improve contrast anymore, we go back to last " +
-                      f"best and change the gain to {self.expected_gain_in_contrast:f}")
+                if not silence:
+                    print("we do not improve contrast anymore, we go back to last " +
+                          f"best and change the gain to {self.expected_gain_in_contrast:f}")
                 return "RebootTheLoop"
 
             # # gain_individual_DM = [1.,1.]
@@ -353,7 +372,7 @@ class Corrector:
 
             if mode != self.previousmode:
                 self.previousmode = mode
-                _, _, self.invertM0 = invert_svd(self.M0, mode, goal="c", visu=False, regul=self.regularization)
+                _, _, self.invertM0 = invert_svd(self.M0, mode, goal="c", regul=self.regularization, silence=True)
 
             return -self.amplitudeEFC * wfc.calc_em_solution(self.MaskEstim, estimate, self.invertM0, self.G, testbed)
 

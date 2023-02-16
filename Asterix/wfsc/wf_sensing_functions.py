@@ -16,6 +16,7 @@ def create_pw_matrix(testbed: Testbed,
                      matrix_dir,
                      polychrom,
                      wav_vec_estim=None,
+                     silence=False,
                      **kwargs):
     """Build the nbwl times interaction matrix for pair-wise probing.
 
@@ -44,6 +45,8 @@ def create_pw_matrix(testbed: Testbed,
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     wav_vec_estim : list of float, default None
         list of wavelengths to do the estimation, used in the case of polychrom == 'multiwl'
+    silence : boolean, default False.
+        Whether to silence print outputs.
 
     Returns
     --------
@@ -65,6 +68,7 @@ def create_pw_matrix(testbed: Testbed,
                                       cutsvd,
                                       matrix_dir,
                                       wavelength=wav_vec_estim[0],
+                                      silence=silence,
                                       **kwargs))
 
     elif polychrom == 'broadband_pwprobes':
@@ -76,6 +80,7 @@ def create_pw_matrix(testbed: Testbed,
                                       cutsvd,
                                       matrix_dir,
                                       wavelength=testbed.wavelength_0,
+                                      silence=silence,
                                       **kwargs))
 
     elif polychrom == 'multiwl':
@@ -88,6 +93,7 @@ def create_pw_matrix(testbed: Testbed,
                                           cutsvd,
                                           matrix_dir,
                                           wavelength=wave_i,
+                                          silence=silence,
                                           **kwargs))
     else:
         raise ValueError(polychrom + "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
@@ -95,7 +101,14 @@ def create_pw_matrix(testbed: Testbed,
     return return_matrix
 
 
-def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, matrix_dir, wavelength,
+def create_singlewl_pw_matrix(testbed: Testbed,
+                              amplitude,
+                              posprobes,
+                              dimEstim,
+                              cutsvd,
+                              matrix_dir,
+                              wavelength,
+                              silence=False,
                               **kwargs):
     """Build the interaction matrix for pair-wise probing at 1 WL.
 
@@ -120,6 +133,8 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
         path to directory to save all the matrices here
     wavelength : float
         wavelength in m.
+    silence : boolean, default False.
+        Whether to silence print outputs.
 
     Returns
     --------
@@ -135,15 +150,18 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
                     int(wavelength * 1e9))
 
     # Calculating and Saving PW matrix
-    print("")
+
     filePW = "MatPW_" + string_dims_PWMatrix
     if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
-        print("The PWmatrix " + filePW + " already exists")
+        if not silence:
+            print("")
+            print("The PWmatrix " + filePW + " already exists")
         return fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
 
     start_time = time.time()
-    print("The PWmatrix " + filePW + " does not exists")
-    print("Start PW matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
+    if not silence:
+        print("The PWmatrix " + filePW + " does not exists")
+        print("Start PW matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
 
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=complex)
@@ -183,7 +201,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
             matrix[:, 1] = np.imag(deltapsik[:, i, j])
 
             try:
-                inversion = invert_svd(matrix, cutsvd, visu=False)
+                inversion = invert_svd(matrix, cutsvd, silence=True)
                 SVD[:, i, j] = inversion[0]
                 PWMatrix[l_ind] = inversion[2]
             except Exception:
@@ -194,7 +212,8 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
     fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix))
     visuPWMap = "EigenPW_" + string_dims_PWMatrix
     fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]))
-    print("Time for PW Matrix (s): ", np.round(time.time() - start_time))
+    if not silence:
+        print("Time for PW Matrix (s): ", np.round(time.time() - start_time))
 
     return PWMatrix
 

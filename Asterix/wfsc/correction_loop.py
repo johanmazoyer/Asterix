@@ -60,8 +60,8 @@ def correction_loop(testbed: Testbed,
         Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
-    silence : boolean, default False
-        Whether to silence printing and plotting results as the loop runs.
+    silence : boolean, default False.
+        Whether to silence print outputs.
 
     Returns
     --------
@@ -107,7 +107,8 @@ def correction_loop(testbed: Testbed,
 
     no_aberr_FP = testbed.todetector_intensity()
     no_aberr_attenuation = np.max(no_aberr_FP)
-    print("Tesbed FP maximum contrast in the absence of aberrations: ", no_aberr_attenuation)
+    if not silence:
+        print("Tesbed FP maximum contrast in the absence of aberrations: ", no_aberr_attenuation)
 
     for i in range(Number_matrix):
 
@@ -133,12 +134,12 @@ def correction_loop(testbed: Testbed,
         min_contrast = min(CorrectionLoopResult["MeanDHContrast"])
         min_index = CorrectionLoopResult["MeanDHContrast"].index(min_contrast)
         initial_DM_voltage = Resultats_correction_loop["voltage_DMs"][min_index]
-
-        if i != Number_matrix - 1:
-            print("end Matrix ", i)
-            print("We will restart next matrix from contrast = ", min_contrast)
-        else:
-            print("End correction")
+        if not silence:
+            if i != Number_matrix - 1:
+                print("end Matrix ", i)
+                print("We will restart next matrix from contrast = ", min_contrast)
+            else:
+                print("End correction")
 
     return Resultats_correction_loop
 
@@ -203,8 +204,8 @@ def correction_loop_1matrix(testbed: Testbed,
             or 1D array of size testbed.number_act
     nb_photons : float, optional, default 0
         Number of photons entering the pupil. If 0, no photon noise.
-    silence : Boolean, default False
-        If False, print and plot results as the loop runs.
+    silence : boolean, default False.
+        Whether to silence print outputs.
 
     Returns
     --------
@@ -321,18 +322,21 @@ def correction_loop_1matrix(testbed: Testbed,
         solution = corrector.toDM_voltage(testbed,
                                           resultatestimation,
                                           mode=mode,
-                                          ActualCurrentContrast=thisloop_MeanDHContrast[-1])
+                                          ActualCurrentContrast=thisloop_MeanDHContrast[-1],
+                                          silence=silence)
 
         if isinstance(solution, str) and solution == "StopTheLoop":
             # for each correction algorithm, we can break the loop by
             # the string "StopTheLoop" instead of a correction vector
-            print("we stop the correction")
+            if not silence:
+                print("we stop the correction")
             break
 
         if isinstance(solution, str) and solution == "RebootTheLoop":
             # for each correction algorithm, we can break the loop by
             # the string "RebootTheLoop" instead of a correction vector
-            print("we go back to last best correction")
+            if not silence:
+                print("we go back to last best correction")
             ze_arg_of_ze_best = np.argmin(thisloop_MeanDHContrast)
             new_voltage = thisloop_voltages_DMs[ze_arg_of_ze_best]
 
@@ -388,14 +392,15 @@ def correction_loop_1matrix(testbed: Testbed,
             plt.ioff()
 
         if Linesearch:
-            print("Linesearch Mode. In this loop, we found the following modes to dig the contrast best:")
-            print(thisloop_actual_modes)
-            print("")
+            if not silence:
+                print("Linesearch Mode. In this loop, we found the following modes to dig the contrast best:")
+                print(thisloop_actual_modes)
+                print("")
 
         return CorrectionLoopResult
 
 
-def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir):
+def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir, silence=False):
     """Save the results from a correction loop into the directory 'result_dir'.
 
     All fits files have all parameters in their header. The configfile is also saved, to an .ini file.
@@ -414,10 +419,13 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
         Binary array of size [dimScience, dimScience]: dark hole mask.
     result_dir : string
         Directory to save the results to.
+    silence : boolean, default False.
+        Whether to silence print outputs.
     """
 
     if not os.path.exists(result_dir):
-        print("Creating directory " + result_dir)
+        if not silence:
+            print("Creating directory " + result_dir)
         os.makedirs(result_dir)
 
     FP_Intensities = CorrectionLoopResult["FP_Intensities"]

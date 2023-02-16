@@ -30,7 +30,13 @@ class Estimator:
     AUTHOR : Johan Mazoyer
     """
 
-    def __init__(self, Estimationconfig, testbed: Testbed, matrix_dir='', save_for_bench=False, realtestbed_dir=''):
+    def __init__(self,
+                 Estimationconfig,
+                 testbed: Testbed,
+                 matrix_dir='',
+                 save_for_bench=False,
+                 realtestbed_dir='',
+                 silence=False):
         """Initialize the estimator. This is where you define the pw matrix,
         the modified Lyot stop or the COFFEE gradiant...
 
@@ -54,9 +60,12 @@ class Estimator:
                 should we save for the real testbed in realtestbed_dir
         realtestbed_dir : string
             path to directory to save all the files the real thd2 testbed need to run your code
+        silence : boolean, default False.
+            Whether to silence print outputs.
         """
         if not os.path.exists(matrix_dir):
-            print("Creating directory " + matrix_dir)
+            if not silence:
+                print("Creating directory " + matrix_dir)
             os.makedirs(matrix_dir)
 
         if not isinstance(testbed, OpticalSystem):
@@ -166,14 +175,22 @@ class Estimator:
 
             testbed.name_DM_to_probe_in_PW = self.find_DM_to_probe(testbed)
 
-            self.PWMatrix = wfs.create_pw_matrix(testbed, self.amplitudePW, self.posprobes, self.dimEstim, cutsvdPW,
-                                                 matrix_dir, self.polychrom, self.wav_vec_estim)
+            self.PWMatrix = wfs.create_pw_matrix(testbed,
+                                                 self.amplitudePW,
+                                                 self.posprobes,
+                                                 self.dimEstim,
+                                                 cutsvdPW,
+                                                 matrix_dir,
+                                                 self.polychrom,
+                                                 self.wav_vec_estim,
+                                                 silence=silence)
 
             # Saving PW matrix in Labview directory
             if save_for_bench:
 
                 if not os.path.exists(realtestbed_dir):
-                    print("Creating directory: " + realtestbed_dir)
+                    if not silence:
+                        print("Creating directory: " + realtestbed_dir)
                     os.makedirs(realtestbed_dir)
 
                 if self.polychrom in ['broadband_pwprobes']:
