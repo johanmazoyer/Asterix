@@ -16,7 +16,7 @@ class Testbed(optsy.OpticalSystem):
     AUTHOR : Johan Mazoyer
     """
 
-    def __init__(self, list_os, list_os_names):
+    def __init__(self, list_os, list_os_names, silence=False):
         """This function allows you to concatenate OpticalSystem objects to
         create a testbed.
 
@@ -32,6 +32,8 @@ class Testbed(optsy.OpticalSystem):
         list_os_names:  list of string of the same size as list_os
             Name of the optical systems.
             They can then be accessed inside the Testbed object by os_#i = Testbed.list_os_names[i]
+        silence : boolean, default False.
+            Whether to silence print outputs.
 
         Returns
         --------
