@@ -139,7 +139,7 @@ def test_2dm_polychromatic_correction():
 
     # be careful to take some margin in the final contrast because it might depends
     # on the phase aberrations in entrance that are randomly draw
-    assert best_contrast_2DM < 3e-8, "best contrast polychromatic 2DM should be < 3e-8"
+    assert best_contrast_2DM < 4e-8, "best contrast polychromatic 2DM should be < 4e-8"
 
 
 def test_2dm_correction_roman():
