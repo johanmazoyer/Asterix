@@ -90,7 +90,7 @@ def create_pw_matrix(testbed: Testbed,
                                           wavelength=wave_i,
                                           **kwargs))
     else:
-        raise ValueError(polychrom + " is not a valid polychromatic estimation/correction mode")
+        raise ValueError(polychrom + "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
     return return_matrix
 
@@ -169,7 +169,8 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
         # **kwarg is here to send dir_save_all_planes
 
         deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, in_contrast=True, **kwargs) - psi0, dimEstim)
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, in_contrast=True, **kwargs) -
+            psi0, dimEstim)
 
         k = k + 1
 
@@ -329,8 +330,8 @@ def simulate_pw_difference(input_wavefront,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
         else:
-            raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand."
-                              " Code it yourself in simulate_pw_difference and be careful with the normalization"))
+            raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
+                              "Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
         Difference[count] = resizing(Ikplus - Ikmoins, dimimages)
 

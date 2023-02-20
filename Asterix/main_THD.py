@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 from Asterix.utils import create_experiment_dir, get_data_dir, get_git_description, read_parameter_file
 from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
@@ -30,6 +31,12 @@ class THD2(Testbed):
         model_config = config["modelconfig"]
         dm_config = config["DMconfig"]
         corona_config = config["Coronaconfig"]
+
+        # The following line is there to force the correction / estimation wavelength to be part of
+        # the wavelengths that are simulated for the testbed. We use numpy.unique to have only unique
+        # values from the List.
+        model_config['mandatory_wls'] = np.unique(
+            np.array(model_config['mandatory_wls'] + config["Estimationconfig"]["estimation_wls"])).tolist()
 
         # Create all optical elements of the THD
         entrance_pupil = Pupil(model_config,
@@ -118,8 +125,8 @@ def runthd2(parameter_file_path,
     # Concatenate into the full testbed optical system
     thd2 = THD2(config, model_local_dir)
 
-    # The following line can be used to change the DM which applies PW probes. This could be used to use the DM out of
-    # the pupil plane.
+    # The following line can be used to change the DM which applies PW probes.
+    # This can be used to use the DM out of the pupil plane as the PW DM.
     # This is an unusual option so not in the param file and not well documented.
     # thd2.name_DM_to_probe_in_PW = "DM1"
 

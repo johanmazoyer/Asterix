@@ -140,7 +140,7 @@ def create_interaction_matrix(testbed: Testbed,
                                                    dir_save_all_planes=dir_save_all_planes,
                                                    visu=visu))
     else:
-        raise ValueError(polychrom + " is not a valid polychromatic estimation/correction mode")
+        raise ValueError(polychrom + "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
     return return_matrix
 
@@ -232,7 +232,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     elif MatrixType == 'smallphase':
         headfile = "DirectMatSP"
     else:
-        raise ValueError("This Matrix type does not exist")
+        raise ValueError("This Matrix type does not exist ([Correctionconfig]['MatrixType'] parameter).")
 
     if DM.basis_type == 'fourier':
         basis_type_str = 'Four'
@@ -241,7 +241,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         basis_type_str = 'Actu'
         headfile += "_EFCampl" + str(amplitudeEFC)
     else:
-        raise ValueError("This basis type does not exist")
+        raise ValueError("This basis type does not exist ([Correctionconfig]['DM_basis'] parameter).")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0

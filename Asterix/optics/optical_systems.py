@@ -34,7 +34,7 @@ class OpticalSystem:
         """
 
         if modelconfig["diam_pup_in_pix"] % 2 == 1:
-            raise ValueError("Please set diam_pup_in_pix parameter to an even number.")
+            raise ValueError("Please set [modelconfig]['diam_pup_in_pix'] parameter to an even number.")
 
         # pupil in pixel
         self.prad = modelconfig["diam_pup_in_pix"] / 2
@@ -63,7 +63,7 @@ class OpticalSystem:
 
         if self.Delta_wav != 0:
             if (self.nb_wav % 2 == 0) or self.nb_wav < 2:
-                raise ValueError("please set nb_wav parameter to an odd number > 1")
+                raise ValueError("please set [modelconfig]['nb_wav'] parameter to an odd number > 1")
 
             delta_wav_interval = self.Delta_wav / self.nb_wav
             self.wav_vec = self.wavelength_0 + (np.arange(self.nb_wav) - self.nb_wav // 2) * delta_wav_interval
@@ -73,15 +73,17 @@ class OpticalSystem:
             if mandatory_wls != []:
 
                 if len(mandatory_wls) >= len(self.wav_vec):
-                    raise ValueError(("'nb_wav' must be greater than the number 'mandatory_wls'. Quite higher",
-                                      "('nb_wav' > 2*len('mandatory_wls')) would be better so that the",
+                    raise ValueError(("[modelconfig]['nb_wav'] parameter must be greater than the number "
+                                      "[modelconfig]['mandatory_wls']. Quite higher('nb_wav' > 2*len('mandatory_wls')) "
+                                      "is better so that the"
                                       "differences between each Riemann interval length are minimal."))
 
                 for new_wl in mandatory_wls:
 
                     if new_wl <= self.wavelength_0 - self.Delta_wav / 2 or new_wl >= self.wavelength_0 + self.Delta_wav / 2:
                         raise ValueError(
-                            f"'mandatory_wls' must be in the range ]wavelength_0 - Delta_wav / 2 , wavelength_0 + Delta_wav / 2[:,",
+                            f"All [modelconfig]['mandatory_wls'] element must be in the range "
+                            "]wavelength_0 - Delta_wav / 2 , wavelength_0 + Delta_wav / 2[: "
                             f"]{self.wavelength_0 - self.Delta_wav / 2},{self.wavelength_0 + self.Delta_wav / 2}[")
                     # for each mandatory wavelength, we find the closest wavelength and replace it by the mandatory wavelength
                     difference_array = np.absolute(self.wav_vec - new_wl)
@@ -207,7 +209,8 @@ class OpticalSystem:
 
         Parameters
         ----------
-        entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (entrance_EF is constant), default is 1. Electric field in the pupil plane a the entrance of the system.
+        entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (entrance_EF is constant), default is 1.
+            Electric field in the pupil plane a the entrance of the system.
         wavelength : float. Default is self.wavelength_0 the reference wavelength
             Current wavelength in m.
         in_contrast : bool, default True

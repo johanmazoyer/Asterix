@@ -68,6 +68,14 @@ class Estimator:
         # For now estimation central wl and simu central wl are the same
         # wavelength_0_estim = testbed.wavelength_0
 
+        if self.polychrom == "centralwl":
+            print("")
+            print(("DEPRECATED PARAMETER VALUE: use 'singlelw' instead of 'centralwl' "
+                   "in [Estimationconfig]['polychromatic'] parameter."
+                   "'centralwl' value for this parameter will not ne supported in the near future"))
+            print("")
+            self.polychrom = "singlewl"
+
         if len(testbed.wav_vec) == 1:
             self.polychrom = "singlewl"
 
@@ -88,8 +96,10 @@ class Estimator:
                 self.nb_wav_estim = Estimationconfig["nb_wav_estim"]
 
                 if (self.nb_wav_estim % 2 == 0) or self.nb_wav_estim < 2:
-                    raise ValueError(("In 'multiwl' estimation mode either hand pick 'estimation_wls' ",
-                                      "or 'set nb_wav_estim' parameter to an odd number > 1"))
+                    raise ValueError(("If [Estimationconfig]['polychromatic'] = 'multiwl' estimation mode "
+                                      "either hand pick wavelengths using [Estimationconfig]['estimation_wls'] "
+                                      "parameter, or set [Estimationconfig]['nb_wav_estim'] parameter to an odd "
+                                      "number > 1"))
 
                 delta_wav_estim_interval = self.delta_wave_estim / self.nb_wav_estim
                 self.wav_vec_estim = testbed.wavelength_0 + (np.arange(self.nb_wav_estim) -
@@ -98,9 +108,10 @@ class Estimator:
             estimation_wls = [float(x) for x in Estimationconfig["estimation_wls"]]
             if estimation_wls != []:
                 if len(estimation_wls) > 1:
-                    raise ValueError(("In 'singlewl' estimation mode, 'estimation_wls' list must be either an empty ",
-                                      "(and the estimtion / correction will be done at the central wavelength) ",
-                                      "or have no more than a single elements"))
+                    raise ValueError(("If [Estimationconfig]['polychromatic'] = 'singlewl' estimation mode, "
+                                      "[Estimationconfig]['estimation_wls'] list must be either an empty list "
+                                      "(in this case the estimtion will be done at the central wavelength "
+                                      "{testbed.wavelength_0} only) or have no more than a single element"))
                 self.wav_vec_estim = np.array(estimation_wls)
             else:
                 self.wav_vec_estim = np.array([testbed.wavelength_0])
@@ -109,21 +120,22 @@ class Estimator:
             self.wav_vec_estim = np.array([testbed.wavelength_0])
             self.nb_wav_estim = 1
         else:
-            raise ValueError(self.polychrom + "is not a valid polychromatic estimation/correction mode")
+            raise ValueError(self.polychrom + "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
         for wavei in self.wav_vec_estim:
             if wavei not in testbed.wav_vec:
-                raise ValueError((f"Wavelength {wavei} is in estimator.wav_vec_estim but not in ",
-                                  "testbed.wav_vec. If you added one or several ",
-                                  "'estimation_wls' manually, also add them in as 'mandatory_wls' ",
-                                  "([modelconfig] parameter). If you did not used 'estimation_wls' ",
-                                  "parameter then make sure 'nb_wav_estim' parameter must be equal to, or ",
-                                  "a divisor, of 'nb_wav' ([modelconfig] parameter) and both must be odd."))
+                raise ValueError((f"Wavelength {wavei} is in estimator.wav_vec_estim but not in "
+                                  "testbed.wav_vec. If you added one or several estimation wavelengths"
+                                  "([Estimationconfig]['estimation_wls'] parameter) manually, also add them in as "
+                                  "[modelconfig]['mandatory_wls'] parameter. If you did not used "
+                                  "[Estimationconfig]['estimation_wls'] parameter then make sure "
+                                  "([Estimationconfig]['nb_wav_estim'] parameter is equal to, "
+                                  "or a divisor, of [modelconfig]['nb_wav'] parameter and both must be odd."))
 
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 
         if self.Estim_sampling < 3:
-            raise ValueError("Estim_sampling must be > 3, please decrease Estim_bin_factor parameter")
+            raise ValueError("Estimator sampling must be >3, please decrease [Estimationconfig]['parameter'] parameter")
 
         # image size after binning. This is the size of the estimation !
         # we round and make it so we're always even size and slightly smaller than the ideal size
@@ -133,7 +145,7 @@ class Estimator:
             self.is_focal_plane = True
             self.is_complex = True
             if self.polychrom == 'broadband_pwprobes':
-                raise ValueError("cannot use polychrom='broadband_pwprobes' in perfect mode")
+                raise ValueError("Cannot use [Estimationconfig]['polychromatic']='broadband_pwprobes' in perfect mode.")
 
         elif self.technique in ["pairwise", "pw"]:
             self.is_focal_plane = True
@@ -263,9 +275,10 @@ class Estimator:
                         save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
 
             elif self.polychrom == 'broadband_pwprobes':
-                raise ValueError("cannot use polychrom='broadband_pwprobes' in perfect mode")
+                raise ValueError("cannot use [Estimationconfig]['polychromatic']='broadband_pwprobes' in perfect mode")
             else:
-                raise ValueError(self.polychrom + "is not a valid polychromatic estimation/correction mode")
+                raise ValueError(self.polychrom +
+                                 "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
             return result_estim
 
         elif self.technique in ["pairwise", "pw"]:
@@ -330,14 +343,13 @@ class Estimator:
                         save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
 
             else:
-                raise ValueError(self.polychrom + " is not a valid polychromatic estimation/correction mode")
+                raise ValueError(self.polychrom +
+                                 "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
             return result_estim
 
-        elif self.technique == 'coffee':
-            return np.zeros((self.dimEstim, self.dimEstim))
-
         else:
-            raise NotImplementedError("This estimation algorithm is not yet implemented")
+            raise NotImplementedError("This estimation algorithm is not yet implemented "
+                                      "([Estimationconfig]['estimation'] parameter)")
 
     def find_DM_to_probe(self, testbed: Testbed):
         """Find which DM to use for the PW probes.

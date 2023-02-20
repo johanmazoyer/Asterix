@@ -155,9 +155,8 @@ class Pupil(optsy.OpticalSystem):
                         find_divisors.append(i)
 
                 if int(2 * self.prad) not in find_divisors:
-                    raise ValueError(
-                        f"Choose an even divisor of the .fits file size ({pup_fits.shape[0]}) for diam_pup_in_pix parameter: {find_divisors}"
-                    )
+                    raise ValueError(f"Choose an even divisor of the .fits file size ({pup_fits.shape[0]}) for "
+                                     f"[modelconfig]['diam_pup_in_pix'] parameter: {find_divisors}")
 
                 pup_fits_right_size = rebin(pup_fits, int(pup_fits.shape[0] / (2 * self.prad)), center_on_pixel=False)
 
