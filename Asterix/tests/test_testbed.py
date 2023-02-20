@@ -43,4 +43,3 @@ def test_def_thd():
 
     assert np.allclose(testbed_psf, np.transpose(testbed_psf), rtol=0, atol=1e-14,
                        equal_nan=True), "PSF after testbed with no aberrration is not symmetric (transpose PSF != PSF)"
-

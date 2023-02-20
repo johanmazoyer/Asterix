@@ -56,9 +56,7 @@ main_THD.runthd2(parameter_file_path,
                      'DH_side': "Full",
                      'correction_algorithm': "sm",
                  },
-                 NewLoopconfig={
-                     'Nbiter_corr': [20]
-                 },
+                 NewLoopconfig={'Nbiter_corr': [20]},
                  NewSIMUconfig={'Name_Experiment': "My_third_experiment"})
 print('time correction 2DM perfect estim sm', time.time() - start_time)
 print("")

@@ -35,8 +35,8 @@ class THD2(Testbed):
         # The following line is there to force the correction / estimation wavelength to be part of
         # the wavelengths that are simulated for the testbed. We use numpy.unique to have only unique
         # values from the List.
-        model_config['mandatory_wls'] = np.unique(
-            np.array(model_config['mandatory_wls'] + config["Estimationconfig"]["estimation_wls"])).tolist()
+        model_config['mandatory_wls'] = sorted(
+            np.unique(np.array(model_config['mandatory_wls'] + config["Estimationconfig"]["estimation_wls"])).tolist())
 
         # Create all optical elements of the THD
         entrance_pupil = Pupil(model_config,
