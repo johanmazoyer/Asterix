@@ -1,5 +1,8 @@
 ..  _run-asterix-label:
 
+.. |_| unicode:: 0xA0 
+   :trim:
+
 Basic Asterix Tutorial with THD2 model
 -----------------------------------------------
 
@@ -98,7 +101,7 @@ This also defines the entrance pupil plane of the testbed.
     - ``wavelength_0`` : float, central wavelength (in meters).
     - ``Delta_wav`` : float, Spectral band (in meters).
     - ``nb_wav`` : int, Number of monochromatic images in the spectral band (must be odd number). Ignored if ``Delta_wav`` = 0.
-    - ``mandatory_wls`` : list of floats. Specific wavelengths that need to appear to simulate the polychromatic image, ignored if ``Delta_wav`` = 0. Must be in the range ``]wavelength_0 - Delta_wav / 2 , wavelength_0 + Delta_wav / 2[``. Default is an empty list (``mandatory_wls = ,``). In the case of an empty list case, the nb_wav simulation wavelengths are chosen to be well equally distributed in the Delta_wav. This is an advanced user parameter as it might break the polychromatic correction.
+    - ``mandatory_wls`` : list of floats. Specific wavelengths that need to appear to simulate the polychromatic image, ignored if ``Delta_wav`` = 0. Must be in the range ``]wavelength_0 - Delta_wav/2 , wavelength_0 + Delta_wav/2[``. Default is an empty list (``mandatory_wls = ,``). In the case of an empty list case, the nb_wav simulation wavelengths are chosen to be well equally distributed in the Delta_wav. This is an advanced user parameter as it might break the polychromatic correction.
     - ``dimScience`` : int, detector science image size (in pixels).
     - ``Science_sampling`` : float, Sampling in the detector science image lambda/Entrance_pupil_diameter (in pixels).
     - ``diam_pup_in_m`` : float, pupil diameter (in meters).
@@ -111,7 +114,7 @@ This also defines the entrance pupil plane of the testbed.
                                 - "RomanPup" for HLC Roman Pupil on THD
                                 - "RomanPupTHD2" for HLC Roman Pupil on THD (rotated by -0.9 degrees)
                                 - "VLTPup", the VLT pupil.
-                                - or you can use this parameter to put an existing full path .fits name that will be used to define the pupil (e.g. filename_instr_pup = "/myfullpath/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file are assumed to be at the dimesion of the pupil (no overpadding) and will automatically be rebined at ``2*prad``.
+                                - an existing full path to a .fits file that will be used to define the pupil (e.g. ``filename_instr_pup`` = "/path/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file is assumed to be at the dimension of the pupil (no overpadding) and will automatically be rebined at ``diam_pup_in_pix``.
     - ``entrance_pup_rotation`` : if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory.
     - ``grey_pupils`` : boolean. If True, all the pupils will be created 10x larger than ``diam_pup_in_pix`` and then rebinned to ``diam_pup_in_pix`` to avoid numerical error due to crenellation at the exception of pupils that are read from a .fits file, which are always rebinned from the sixe of the .fits.
    
@@ -159,20 +162,21 @@ The [Coronaconfig] section contains the coronagraph parameter.
                                 - "RoundPup" for a round pupil of radius ``diam_pup_in_m``.
                                 - "RomanPup" for HLC Roman Pupil on THD.
                                 - "RomanPupTHD2" for HLC Roman Pupil on THD (rotated by -0.9 degrees).
-                                - or you can use this parameter to put an existing full path .fits name that will be used to define the pupil (e.g. ``filename_instr_pup`` = "/myfullpath/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file are assumed to be at the dimesion of the pupil (no overpadding) and will automatically be rescaled at prad. If you want this pupil to be smaller than the entrance pupil you have to overpad your .fits file.
+                                - "SphereApod" for the current sphere apodizer.
+                                - an existing full path to a .fits file that will be used to define the pupil (e.g. ``filename_instr_apod`` = "/path/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file is assumed to be at the dimension of the pupil and will automatically be rebined at ``diam_pup_in_pix``. If you want this pupil to be smaller than the entrance pupil you have to overpad your .fits file.
     
     - ``apod_pup_rotation`` : float, if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory. 
     - ``filename_instr_lyot`` : string, Lyot pupil definition (pupil after the DMS at the entrance of the coronagraph in Roman). Several keywords are already defined:
 
                                 - "Clear" for no Lyot pupil at all (clear plane).
                                 - "RoundPup" for a round pupil of radius ``diam_pup_in_m``.
-                                - "RomanLyot" for HLC Roman Pupil.
-                                - "RomanLyotTHD2" for HLC Roman Lyot on THD (rescaled because of the lyot plane dezoom and rotated by -0.9 degrees).
-                                - "SphereApod" for SPHERE Lyot stop (currently dead actuators mask are not implemented).
-                                - or you can use this parameter to put an existing full path .fits name that will be used to define the pupil (e.g. ``filename_instr_pup`` = "/myfullpath/roman_pup_500pix_center4pixels.fits"). The pupil in the .fits file are assumed to be at the dimesion of the pupil (no overpadding) and will automatically be rescaled at the pupil radius. If you want this pupil to be smaller than the entrance pupil you have to overpad your .fits file.
+                                - "RomanLyot" for HLC Roman Pupil. ``diam_lyot_in_m`` is not used, the pupil radius to Lyot radius ratio is harcoded. 
+                                - "RomanLyotTHD2" for HLC Roman Lyot on THD (rescaled because of the lyot plane dezoom and rotated by -0.9 degrees). ``diam_lyot_in_m`` is not used, the pupil radius to Lyot radius ratio is harcoded. 
+                                - "SphereLyot" for SPHERE Lyot stop (currently dead actuators mask are not implemented). ``diam_lyot_in_m`` is not used, the pupil radius to Lyot radius ratio is harcoded. 
+                                - an existing full path to a .fits file that will be used to define the pupil (e.g. ``filename_instr_lyot`` = "/path/roman_lyot_500pix_center4pixels.fits"). The pupil in the .fits file is assumed to be at the dimension of the pupil and will automatically be rebined at ``diam_pup_in_pix``. If you want this pupil to be smaller than the entrance pupil you have to overpad your .fits file (``diam_lyot_in_m`` parameter will be ignored)
     
-    - ``lyot_pup_rotation`` : float, if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the Model_local/ directory. 
-    - ``diam_lyot_in_m`` : float, lyot diameter (in meters). Only use in the case of a RoundPup Lyot stop (filename_instr_lyot = "RoundPup"). Value for THD2 clear Lyot is 8.035mm = 8.1*0.97 (rayon Lyot * de-zoom entrance pupil plane / Lyopt plane).
+    - ``lyot_pup_rotation`` : float, if the pupil is not clear or round, you can rotate the pupil using this parameter. Angle in degrees in counter-clockwise direction. The rotated pupil will be used for matrix and correction. This will save the rotated pupil in the "Model_local/"" directory. 
+    - ``diam_lyot_in_m`` : float, lyot diameter (in meters). Only use in the case of a RoundPup Lyot stop (``filename_instr_lyot`` = "RoundPup"). Value for THD2 clear Lyot is 8.035mm = 8.1*0.97 (rayon Lyot * de-zoom entrance pupil plane / Lyopt plane).
     - ``corona_type`` : Can be 'fqpm' or 'knife', 'vortex', 'wrapped_vortex', 'classiclyot' or 'HLC'.
 
 If knife coronagraph:
@@ -186,8 +190,8 @@ If classiclyot or HLC:
 
 If HLC:
 
-    - ``transmission_fpm``: float, we define the transmission in intensity at vawelength0.
-    - ``phase_fpm`` : float, phase shift at vawelength0.
+    - ``transmission_fpm``: float, we define the transmission in intensity at ``vawelength_0``.
+    - ``phase_fpm`` : float, phase shift at ``vawelength_0``.
 
 If FQPM:
 
@@ -199,7 +203,7 @@ If Vortex :
 
 If phase coronagraph:
 
-    - ``achrom_phase_coro`` : bool. We can choose to use it in achromatic mode (the coronagraph diplays the same behavior for each wavelengths) or not (phase is introduced by material step and therefore chromatic behavior).
+    - ``achrom_phase_coro`` : bool. We can choose to use it in achromatic mode (the phase focal plane mask diplays the same behavior for each wavelengths) or not (phase is introduced by material step and therefore chromatic behavior).
 
 
 [Estimationconfig]
@@ -224,7 +228,7 @@ The [Correctionconfig] section contains the corrector parameters. An estimator r
 
 If ``DH_shape`` == 'square':
 
-    - ``corner_pos`` = list of float 2.7,11.7,-11.7,11.7 [xmin, xmax, ymin, ymax] Position of the corners of the DH in lambda/Entrance_pupil_diameter.
+    - ``corner_pos`` = list of float such as ``xmin, xmax, ymin, ymax``. Position of the corners of the DH in lambda/Entrance_pupil_diameter.
 
 If ``DH_shape`` == 'circle':
 
