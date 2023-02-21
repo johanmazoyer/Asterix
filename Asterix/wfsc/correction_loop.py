@@ -114,7 +114,7 @@ def correction_loop(testbed: Testbed,
 
         if i > 0:
             # the first matrix is done during initialization
-            corrector.update_matrices(testbed, estimator, initial_DM_voltage=initial_DM_voltage)
+            corrector.update_matrices(testbed, estimator, initial_DM_voltage=initial_DM_voltage, silence=silence)
 
         Resultats_correction_loop = correction_loop_1matrix(testbed,
                                                             estimator,
