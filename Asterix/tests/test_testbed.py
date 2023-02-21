@@ -10,6 +10,8 @@ from Asterix.optics import Testbed as Bench
 
 def test_def_thd():
 
+    silence = True
+
     parameter_file_test = os.path.join(Asterix_root, 'tests', "param_file_tests.ini")
     test_dir = get_data_dir(datadir="asterix_test_dir")
 
@@ -31,12 +33,13 @@ def test_def_thd():
     entrance_pupil = Pupil(model_config,
                            PupType=model_config["filename_instr_pup"],
                            angle_rotation=model_config["entrance_pup_rotation"],
-                           Model_local_dir=model_local_dir)
-    dm3 = DeformableMirror(model_config, dm_config, Name_DM="DM3", Model_local_dir=model_local_dir)
-    corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir)
+                           Model_local_dir=model_local_dir,
+                           silence=silence)
+    dm3 = DeformableMirror(model_config, dm_config, Name_DM="DM3", Model_local_dir=model_local_dir, silence=silence)
+    corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir, silence=silence)
 
     # Concatenate into the full testbed optical system
-    optical_bench = Bench([entrance_pupil, dm3, corono], ["entrancepupil", "DM3", "corono"])
+    optical_bench = Bench([entrance_pupil, dm3, corono], ["entrancepupil", "DM3", "corono"], silence=silence)
 
     testbed_psf = optical_bench.todetector_intensity()
     assert np.max(testbed_psf) < 5e-9, "PSF after wrapped vortex without aberrration should be better than 5e-9"

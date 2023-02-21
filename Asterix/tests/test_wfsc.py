@@ -10,6 +10,9 @@ from Asterix.wfsc import Estimator, Corrector, MaskDH, correction_loop
 
 
 def quick_run_no_save(config, data_dir):
+
+    silence = True
+
     Estimationconfig = config["Estimationconfig"]
     Correctionconfig = config["Correctionconfig"]
     Loopconfig = config["Loopconfig"]
@@ -20,17 +23,17 @@ def quick_run_no_save(config, data_dir):
     matrix_dir = os.path.join(data_dir, "Interaction_Matrices")
 
     # Concatenate into the full testbed optical system
-    thd2 = THD2(config, model_local_dir)
+    thd2 = THD2(config, model_local_dir, silence=silence)
 
     # Initialize the estimation
-    estimator = Estimator(Estimationconfig, thd2, matrix_dir=matrix_dir)
+    estimator = Estimator(Estimationconfig, thd2, matrix_dir=matrix_dir, silence=silence)
 
     # Initialize the DH masks
     mask_dh = MaskDH(Correctionconfig)
     science_mask_dh = mask_dh.creatingMaskDH(thd2.dimScience, thd2.Science_sampling)
 
     # Initialize the corrector
-    corrector = Corrector(Correctionconfig, thd2, mask_dh, estimator, matrix_dir=matrix_dir)
+    corrector = Corrector(Correctionconfig, thd2, mask_dh, estimator, matrix_dir=matrix_dir, silence=silence)
 
     ### Set initial phase and amplitude
     # Phase upstream of the coronagraph (entrance pup)
@@ -52,7 +55,7 @@ def quick_run_no_save(config, data_dir):
                               SIMUconfig,
                               input_wavefront=input_wavefront,
                               initial_DM_voltage=0,
-                              silence=True)
+                              silence=silence)
 
     best_contrast = np.min(results["MeanDHContrast"])
     return best_contrast
