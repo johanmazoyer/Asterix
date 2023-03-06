@@ -136,13 +136,16 @@ class Estimator:
                                   "([Estimationconfig]['nb_wav_estim'] parameter is equal to, "
                                   "or a divisor, of [modelconfig]['nb_wav'] parameter and both must be odd."))
 
+        # we measure the estimation sampling for the central wavelength wavelength_0.
         self.Estim_sampling = testbed.Science_sampling / Estimationconfig["Estim_bin_factor"]
 
-        if self.Estim_sampling < 3:
-            raise ValueError("Estimator sampling must be >3, please decrease [Estimationconfig]['parameter'] parameter")
+        for wavei in self.wav_vec_estim:
+            if self.Estim_sampling / testbed.wavelength_0 * wavei < 2.5:
+                raise ValueError(f"Estimator sampling must be >= 2.5 at all estimation wavelengths, "
+                                 "please decrease [Estimationconfig]['parameter'] parameter")
 
         # image size after binning. This is the size of the estimation !
-        # we round and make it so we're always even size and slightly smaller than the ideal size
+        # We round and make it so we're always even sized and slightly smaller than the ideal size.
         self.dimEstim = int(np.floor(self.Estim_sampling / testbed.Science_sampling * testbed.dimScience / 2) * 2)
 
         if self.technique == "perfect":
