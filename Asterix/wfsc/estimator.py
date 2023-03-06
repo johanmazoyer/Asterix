@@ -77,9 +77,12 @@ class Estimator:
             self.polychrom = "singlewl"
 
         if len(testbed.wav_vec) == 1:
+            # monochromatic simulation, polychromatic correction keywords are ignored
             self.polychrom = "singlewl"
+            self.wav_vec_estim = np.array([testbed.wavelength_0])
+            self.nb_wav_estim = 1
 
-        if self.polychrom == 'multiwl':
+        elif self.polychrom == 'multiwl':
             # For now estimation BW and testbed BW are the same and can be easily changed.
             self.delta_wave_estim = testbed.Delta_wav
 
@@ -105,6 +108,7 @@ class Estimator:
                 self.wav_vec_estim = testbed.wavelength_0 + (np.arange(self.nb_wav_estim) -
                                                              self.nb_wav_estim // 2) * delta_wav_estim_interval
         elif self.polychrom == 'singlewl':
+            # polychromatic simulation with 'singlewl' correction
             estimation_wls = [float(x) for x in Estimationconfig["estimation_wls"]]
             if estimation_wls != []:
                 if len(estimation_wls) > 1:
