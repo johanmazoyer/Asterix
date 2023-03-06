@@ -123,8 +123,7 @@ class OpticalSystem:
             self.riemannn_intervals_lengths = np.array([self.Delta_wav])
             self.nb_wav = 1
 
-        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_resFP" + str(round(
-            self.Science_sampling, 2)) + "_dimFP" + str(int(self.dimScience))
+        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_dimFP" + str(int(self.dimScience))
 
         grey_pup_bool = modelconfig["grey_pupils"]
         if grey_pup_bool:

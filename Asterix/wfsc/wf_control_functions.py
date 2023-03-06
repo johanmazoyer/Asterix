@@ -223,7 +223,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
         DM: DeformableMirror = vars(testbed)[DM_name]
         total_number_basis_modes += DM.basis_size
-        DM_small_str = "_" + "_".join(DM.string_os.split("_")[4:])
+        DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
 
     # Some string manips to name the matrix if we save it
@@ -249,11 +249,12 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     for DM_name in testbed.name_of_DMs:
 
         DM: DeformableMirror = vars(testbed)[DM_name]
-        DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
+        DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
 
         basis_str = DM_small_str + "_" + basis_type_str + "Basis" + str(DM.basis_size)
         fileDirectMatrix = headfile + basis_str + '_binEstim' + str(int(np.round(
-            testbed.dimScience / dimEstim))) + string_testbed_without_DMS + '_wl' + str(int(wavelength * 1e9))
+            testbed.dimScience / dimEstim))) + string_testbed_without_DMS + "_resFP" + str(
+                round(DM.Science_sampling / DM.wavelength_0 * wavelength, 2)) + '_wl' + str(int(wavelength * 1e9))
 
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch
