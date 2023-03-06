@@ -81,8 +81,8 @@ def test_1dm_correction():
 
     best_contrast_1DM = quick_run_no_save(config, test_dir)
 
-    # be careful to take some margin in the final contrast because it might depends
-    # on the phase aberrations in entrance that are randomly draw
+    # be careful to take some margin in the final contrast because it might depend
+    # on the phase aberrations in entrance that are randomly drawn
     assert best_contrast_1DM < 1e-8, "best contrast 1DM should be < 1e-8"
 
 
@@ -106,8 +106,8 @@ def test_2dm_correction():
     test_dir = get_data_dir(datadir="asterix_test_dir")
     best_contrast_2DM = quick_run_no_save(config, test_dir)
 
-    # be careful to take some margin in the final contrast because it might depends
-    # on the phase aberrations in entrance that are randomly draw
+    # be careful to take some margin in the final contrast because it might depend
+    # on the phase aberrations in entrance that are randomly drawn
     assert best_contrast_2DM < 1e-8, "best contrast 2DM should be < 1e-8"
 
 
@@ -137,8 +137,8 @@ def test_2dm_polychromatic_correction():
     test_dir = get_data_dir(datadir="asterix_test_dir")
     best_contrast_2DM = quick_run_no_save(config, test_dir)
 
-    # be careful to take some margin in the final contrast because it might depends
-    # on the phase aberrations in entrance that are randomly draw
+    # be careful to take some margin in the final contrast because it might depend
+    # on the phase aberrations in entrance that are randomly drawn
     assert best_contrast_2DM < 4e-8, "best contrast polychromatic 2DM should be < 4e-8"
 
 
@@ -170,8 +170,8 @@ def test_2dm_correction_roman():
     test_dir = get_data_dir(datadir="asterix_test_dir")
     best_contrast_2DM = quick_run_no_save(config, test_dir)
 
-    # be careful to take some margin in the final contrast because it might depends
-    # on the phase aberrations in entrance that are randomly draw
+    # be careful to take some margin in the final contrast because it might depend
+    # on the phase aberrations in entrance that are randomly drawn
     assert best_contrast_2DM < 2e-8, "Best contrast 2DM Roman HLC should be < 2e-8"
 
 

@@ -152,7 +152,7 @@ The ``correction_loop_1matrix()`` function is a loop running ``Nbiter_corr`` tim
 
 * estimation
 * correction
-* application on DM and measure of focal plane.
+* application on DM and measurement of focal plane.
 
 The results are stored in a dictionary and then sent to ``save_loop_results()`` for plotting and saving in the folder
 named '/Results/timestamp-Name_experiement' where ``Name_Experiment`` is a parameter from the configuration file. All saved .fits files have all parameters in their headers.
