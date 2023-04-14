@@ -144,7 +144,7 @@ def runthd2(parameter_file_path,
     # Initialize the DH masks
     mask_dh = MaskDH(Correctionconfig)
     if mask_dh.DH_shape.lower().endswith('.fits'):
-        science_mask_dh = np.ones((thd2.dimScience,thd2.dimScience))
+        science_mask_dh = np.ones((thd2.dimScience, thd2.dimScience))
     else:
         science_mask_dh = mask_dh.creatingMaskDH(thd2.dimScience, thd2.Science_sampling, **kwargs)
 
