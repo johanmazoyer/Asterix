@@ -141,8 +141,10 @@ class Estimator:
 
         for wavei in self.wav_vec_estim:
             if self.Estim_sampling / testbed.wavelength_0 * wavei < 2.5:
-                raise ValueError(f"Estimator sampling must be >= 2.5 at all estimation wavelengths, "
-                                 "please decrease [Estimationconfig]['parameter'] parameter")
+                raise ValueError(f"Estimator sampling must be >= 2.5 at all estimation wavelengths. "
+                                 f"For [Estimationconfig]['Estim_bin_factor'] = {Estimationconfig['Estim_bin_factor']}, "
+                                 f"the estimator sampling is {self.Estim_sampling} at wavelength {wavei*1e9} nm. "
+                                 "Please decrease [Estimationconfig]['Estim_bin_factor'] parameter.")
 
         # image size after binning. This is the size of the estimation !
         # We round and make it so we're always even sized and slightly smaller than the ideal size.
