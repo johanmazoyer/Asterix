@@ -209,7 +209,19 @@ class Estimator:
                                  self.dimEstim] = self.PWMatrix[k][:, 0, i].flatten()
                         vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
                                  self.dimEstim] = self.PWMatrix[k][:, 1, i].flatten()
-                    namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + '_wl' + str(int(wave_k * 1e9))
+
+                    # Because the exact laser WLs can change a bit quite often and labview reads a given
+                    # fits name, we name the PW matrix laser1, 2, 3 for a range of WL.
+
+                    string_laser = ''
+                    if  625 < wave_k * 1e9 < 645:
+                        string_laser = "_laser1" # ~635nm laser source
+                    if  695 < wave_k * 1e9 < 715:
+                        string_laser = "_laser2" # ~705nm laser source
+                    if  775 < wave_k * 1e9 < 795:
+                        string_laser = "_laser3" # ~785nm laser source
+
+                    namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + string_laser
                     fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
                                  probes,
                                  overwrite=True)
