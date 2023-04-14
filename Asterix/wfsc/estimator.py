@@ -214,12 +214,12 @@ class Estimator:
                     # fits name, we name the PW matrix laser1, 2, 3 for a range of WL.
 
                     string_laser = ''
-                    if  625 < wave_k * 1e9 < 645:
-                        string_laser = "_laser1" # ~635nm laser source
-                    if  695 < wave_k * 1e9 < 715:
-                        string_laser = "_laser2" # ~705nm laser source
-                    if  775 < wave_k * 1e9 < 795:
-                        string_laser = "_laser3" # ~785nm laser source
+                    if 625 < wave_k * 1e9 < 645:
+                        string_laser = "_laser1"  # ~635nm laser source
+                    if 695 < wave_k * 1e9 < 715:
+                        string_laser = "_laser2"  # ~705nm laser source
+                    if 775 < wave_k * 1e9 < 795:
+                        string_laser = "_laser3"  # ~785nm laser source
 
                     namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + string_laser
                     fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
