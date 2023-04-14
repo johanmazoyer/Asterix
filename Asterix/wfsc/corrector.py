@@ -114,7 +114,7 @@ class Corrector:
                 number_wl_in_matrix = estimator.nb_wav_estim
 
             if testbed.DM1.active & testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_wl{number_wl_in_matrix}.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
@@ -122,7 +122,7 @@ class Corrector:
                 number_Active_testbeds = 13
 
             elif testbed.DM1.active:
-                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM1only_wl{number_wl_in_matrix}.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM1only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
@@ -138,14 +138,14 @@ class Corrector:
 
             if testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] < 500:
-                    input(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+                    print(f"WARNING Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
                           " in inversion for THD is probably too low for 2DM. " +
-                          "This is just a warning, if you kown what your are doing, " + "press any key to continue")
+                          "This is just a warning, if you kown what your are doing, ignore.")
             if not testbed.DM1.active & testbed.DM3.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] > 500:
-                    input(f"Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
+                    print(f"WARNING Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
                           " in inversion for THD is probably too high for 1DM. " +
-                          "This is just a warning, if you kown what your are doing, " + "press any key to continue")
+                          "This is just a warning, if you kown what your are doing, ignore.")
 
             thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],
                                               number_Active_testbeds,
