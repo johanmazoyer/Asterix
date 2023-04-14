@@ -311,7 +311,6 @@ def correction_loop_1matrix(testbed: Testbed,
             else:
                 print("Iteration number " + corrector.correction_algorithm + ": ", iteration + 1)
 
-        # for now monochromatic estimation
         resultatestimation = estimator.estimate(testbed,
                                                 voltage_vector=thisloop_voltages_DMs[-1],
                                                 entrance_EF=input_wavefront,
