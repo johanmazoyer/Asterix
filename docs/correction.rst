@@ -4,8 +4,7 @@ Correction
 ---------------
 
 This section describes how to correct the electrical field in the focal plane in Asterix. Several correction modes
-are possible in Asterix. 
-
+are possible in Asterix:
 
 - an initialization (e.g. Jacobian matrix) ``Corrector.__init__`` : The initialization requires previous initialization of the testbed and of the estimator.
 - a matrix update function ``Corrector.update_matrices`` This function is called once during initialization and then each time we need to recompute the Jacobian in the middle of the correction using different DM voltages as the starting point.
@@ -34,7 +33,8 @@ and measure the string to save matrices.
 Several shapes are possible for the DH using the input parameter ``DH_shape``:
 
 - "square" DH. Size can be defined using the position of the corners in :math:`{\lambda}`/ D with the parameter ``corner_pos``: [xmin, xmax, ymin, ymax], with 0 being the star position. ``DH_side`` parameter is not used and the symmetry of the DH is only set using the corners positions.
-- "circle" DH Size can be defined using the parameters
+- "circle" DH Size can be defined using the parameters:
+
     - ``Sep_Min_Max`` : 2 element array [iwa, owa], inner and outer working angle of the dark hole
     - ``circ_offset`` : if half DH, we remove separations closer than circ_offset (in :math:`{\lambda}`/ D) from the DH 
     - ``circ_angle`` : if half DH, we remove the angles closer than circ_angle (in degrees) from the DH 
@@ -148,13 +148,11 @@ Correction loop
 ``Number_matrix`` of times , which updates the interaction matrix and runs ``correction_loop_1matrix()`` in each iteration.
 
 
-The ``correction_loop_1matrix()`` function is a loop running ``Nbiter_corr`` times that is basically doing:
+The ``correction_loop_1matrix()`` function is a loop running ``Nbiter_corr`` times. For each iteration, the following steps are done:
 
 * estimation
-
 * correction
-
-* application on DM and measure of DM
+* application on DM and measurement of focal plane.
 
 The results are stored in a dictionary and then sent to ``save_loop_results()`` for plotting and saving in the folder
 named '/Results/timestamp-Name_experiement' where ``Name_Experiment`` is a parameter from the configuration file. All saved .fits files have all parameters in their headers.

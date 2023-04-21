@@ -34,7 +34,7 @@ class OpticalSystem:
         """
 
         if modelconfig["diam_pup_in_pix"] % 2 == 1:
-            raise ValueError("Please set diam_pup_in_pix parameter to an even number.")
+            raise ValueError("Please set [modelconfig]['diam_pup_in_pix'] parameter to an even number.")
 
         # pupil in pixel
         self.prad = modelconfig["diam_pup_in_pix"] / 2
@@ -63,17 +63,67 @@ class OpticalSystem:
 
         if self.Delta_wav != 0:
             if (self.nb_wav % 2 == 0) or self.nb_wav < 2:
-                raise ValueError("please set nb_wav parameter to an odd number > 1")
+                raise ValueError("please set [modelconfig]['nb_wav'] parameter to an odd number > 1")
 
             delta_wav_interval = self.Delta_wav / self.nb_wav
             self.wav_vec = self.wavelength_0 + (np.arange(self.nb_wav) - self.nb_wav // 2) * delta_wav_interval
 
+            mandatory_wls = [float(x) for x in modelconfig["mandatory_wls"]]
+
+            if mandatory_wls != []:
+
+                if len(mandatory_wls) >= len(self.wav_vec):
+                    raise ValueError(("[modelconfig]['nb_wav'] parameter must be greater than the number "
+                                      "[modelconfig]['mandatory_wls']. Quite higher('nb_wav' > 2*len('mandatory_wls')) "
+                                      "is better so that the"
+                                      "differences between each Riemann interval length are minimal."))
+
+                for new_wl in mandatory_wls:
+
+                    if new_wl <= self.wavelength_0 - self.Delta_wav / 2 or new_wl >= self.wavelength_0 + self.Delta_wav / 2:
+                        raise ValueError(
+                            f"All [modelconfig]['mandatory_wls'] element must be in the range "
+                            "]wavelength_0 - Delta_wav / 2 , wavelength_0 + Delta_wav / 2[: "
+                            f"]{self.wavelength_0 - self.Delta_wav / 2},{self.wavelength_0 + self.Delta_wav / 2}[")
+                    # for each mandatory wavelength, we find the closest wavelength and replace it by the mandatory wavelength
+                    difference_array = np.absolute(self.wav_vec - new_wl)
+                    index_new_wave = difference_array.argmin()
+
+                    # we prevent the central wavelength to be replaced
+                    if self.wav_vec[index_new_wave] == self.wavelength_0 and new_wl < self.wavelength_0:
+                        index_new_wave -= 1
+                    if self.wav_vec[index_new_wave] == self.wavelength_0 and new_wl > self.wavelength_0:
+                        index_new_wave += 1
+
+                    self.wav_vec[index_new_wave] = new_wl
+
+            # we calculate the Riemann intervals to calculate the focal plane polychromatic intensity using the
+            # Riemann sum (https://en.wikipedia.org/wiki/riemann_sum) with the formula:
+            # I_poly = Sum(Imono[lambda_i] * riemannn_intervals_lengths[i]) / Delta_wav
+
+            # If there are no aditionnal "mandatory wavelengths" added, wavelengths are calculated so that the
+            # riemann intervals are all the same lengths (self.Delta_wav / self.nb_wav) with the simulation wavelengths
+            # centered on them. If we add one or more "mandatory wavelengths", the intervals are of different lengths
+            # and the simulation wavenlengths are not completely centered on them. It is preferable to use a high
+            # number of wavelengths in this case (nb_wav >= 7) so that the differences between each Riemann interval
+            # length are minimal.
+            riemann_interval_edges = np.zeros(self.nb_wav + 1)
+            riemann_interval_edges[0] = self.wavelength_0 - self.Delta_wav / 2
+            riemann_interval_edges[-1] = self.wavelength_0 + self.Delta_wav / 2
+
+            for i in range(self.nb_wav - 1):
+                riemann_interval_edges[i + 1] = (self.wav_vec[i] + self.wav_vec[i + 1]) / 2
+
+            self.riemannn_intervals_lengths = np.diff(riemann_interval_edges)
+
         else:
+            # If we are in the monochromatic case, we define self.wav_vec[0] = wavelength_0
+            # and riemannn_intervals_lengths[0] = 1 so we can apply the same formula.
             self.wav_vec = np.array([self.wavelength_0])
+            self.riemannn_intervals_lengths = np.array([self.Delta_wav])
             self.nb_wav = 1
 
-        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_resFP" + str(round(
-            self.Science_sampling, 2)) + "_dimFP" + str(int(self.dimScience))
+        self.string_os = '_dimPP' + str(int(self.dim_overpad_pupil)) + "_dimFP" + str(int(self.dimScience))
 
         grey_pup_bool = modelconfig["grey_pupils"]
         if grey_pup_bool:
@@ -158,7 +208,8 @@ class OpticalSystem:
 
         Parameters
         ----------
-        entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (entrance_EF is constant), default is 1. Electric field in the pupil plane a the entrance of the system.
+        entrance_EF : 2D complex array of size [self.dim_overpad_pupil, self.dim_overpad_pupil], or complex/float scalar (entrance_EF is constant), default is 1.
+            Electric field in the pupil plane a the entrance of the system.
         wavelength : float. Default is self.wavelength_0 the reference wavelength
             Current wavelength in m.
         in_contrast : bool, default True
@@ -298,20 +349,32 @@ class OpticalSystem:
 
         focal_plane_intensity = np.zeros((self.dimScience, self.dimScience))
 
+        # We calculate the focal plane polychromatic intensity using the
+        # Riemann sum (https://en.wikipedia.org/wiki/riemann_sum) with the formula:
+        # I_poly = Sum(Imono[lambda_i] * riemannn_intervals_lengths[i]) / Delta_wav
+        # We also normalize each monochromatic measurement to Delta_wav to avoid using very small numbers but
+        # this does not change the normalized intensity since the non-coronagraphic PSF are also normalized the same way.
+        # The Riemann sum only makes sense if done in all possible wavelengths in the bandwidths (wavelength_vec = self.wav_vec).
+        # If you want a specific normalization for a subset of wavelengths, do it yourself with the todetector() function."
+
         for i, wav in enumerate(wavelength_vec):
+            if (wavelength_vec == self.wav_vec).all() and len(self.wav_vec) > 1:
+                riemann_factor = self.riemannn_intervals_lengths[i] / self.Delta_wav
+            else:
+                riemann_factor = 1
             focal_plane_intensity += np.abs(
                 self.todetector(entrance_EF=entrance_EF[i],
                                 wavelength=wav,
                                 in_contrast=False,
                                 center_on_pixel=center_on_pixel,
                                 dir_save_all_planes=dir_save_all_planes,
-                                **kwargs))**2
+                                **kwargs))**2 * riemann_factor
 
         if in_contrast:
             if (wavelength_vec != self.wav_vec).all():
                 raise ValueError(("Careful: contrast normalization in todetector_intensity assumes "
-                                  "it is done in all possible BWs (wavelengths = self.wav_vec). If "
-                                  "you want a specific normalization for a subset of  wavelengths, "
+                                  "it is done in all possible Wavelengths (wavelengths = self.wav_vec). If "
+                                  "you want a specific normalization for a subset of wavelengths, "
                                   "use in_contrast=False and measure the PSF to normalize."))
 
             focal_plane_intensity /= self.norm_polychrom
@@ -385,9 +448,10 @@ class OpticalSystem:
                                                      self.prad,
                                                      grey_pup_bin_factor=self.grey_pup_bin_factor)
 
-        # all parameter can be passed here, but in the case there is a coronagraph,
-        # we pass noFPM = True and noentrance Field by default
-        exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, **kwargs)
+        # all parameters can be passed here, but in the case there is a coronagraph,
+        # we pass 'noFPM = True' and no entrance Field by default. We only measure transmission at
+        # the center wavelength and assume it is the same at all wavelengths.
+        exit_EF = self.EF_through(entrance_EF=1., noFPM=noFPM, wavelength=self.wavelength_0, **kwargs)
 
         transmission = np.sum(np.abs(exit_EF)**2) / np.sum(np.abs(clear_entrance_pupil)**2)
 
@@ -462,7 +526,13 @@ class OpticalSystem:
 
             norm_monochrom[i] = np.max(PSF_wl)
             sum_monochrom[i] = np.sum(PSF_wl)
-            PSF_bw += PSF_wl
+
+            if (wavelength_vec == self.wav_vec).all() and len(self.wav_vec) > 1:
+                riemann_factor = self.riemannn_intervals_lengths[i] / self.Delta_wav
+            else:
+                riemann_factor = 1
+
+            PSF_bw += PSF_wl * riemann_factor
 
         norm_polychrom = np.max(PSF_bw)
         sum_polychrom = np.sum(PSF_bw)

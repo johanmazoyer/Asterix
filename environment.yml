@@ -4,7 +4,7 @@ dependencies:
   - configobj
   - matplotlib
   - numpy
-  - python=>3.8
+  - python=>3.9
   - scikit-image
   - scipy
   - IPython

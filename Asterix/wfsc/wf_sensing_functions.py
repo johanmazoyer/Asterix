@@ -39,7 +39,7 @@ def create_pw_matrix(testbed: Testbed,
         path to directory to save all the matrices here
     polychrom : string
         For polychromatic estimation and correction:
-        - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
+        - 'singlewl': only a single wavelength is used for estimation / correction. 1 Interation Matrix
         - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     wav_vec_estim : list of float, default None
@@ -56,7 +56,18 @@ def create_pw_matrix(testbed: Testbed,
 
     return_matrix = []
 
-    if polychrom in ['centralwl', 'broadband_pwprobes']:
+    if polychrom == 'singlewl':
+        return_matrix.append(
+            create_singlewl_pw_matrix(testbed,
+                                      amplitude,
+                                      posprobes,
+                                      dimEstim,
+                                      cutsvd,
+                                      matrix_dir,
+                                      wavelength=wav_vec_estim[0],
+                                      **kwargs))
+
+    elif polychrom == 'broadband_pwprobes':
         return_matrix.append(
             create_singlewl_pw_matrix(testbed,
                                       amplitude,
@@ -79,7 +90,7 @@ def create_pw_matrix(testbed: Testbed,
                                           wavelength=wave_i,
                                           **kwargs))
     else:
-        raise ValueError(polychrom + " is not a valid polychromatic estimation/correction mode")
+        raise ValueError(polychrom + "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
     return return_matrix
 
@@ -119,7 +130,9 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
 
     string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
         int(amplitude)) + "_cut" + str(int(
-            cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + '_wl' + str(int(wavelength * 1e9))
+            cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + "_resFP" + str(
+                round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
+                    int(wavelength * 1e9))
 
     # Calculating and Saving PW matrix
     print("")
@@ -141,10 +154,7 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
 
     DM_probe: DeformableMirror = vars(testbed)[testbed.name_DM_to_probe_in_PW]
 
-    #### TODO Careful. right now, you can only do estimation at the wl that are in
-    ### the testbed.wav_vec vector. If you're not, you'll run into a bug in
-    ### testbed.todetector(wavelength=wavelength)
-    psi0 = testbed.todetector(wavelength=wavelength)
+    psi0 = testbed.todetector(wavelength=wavelength, in_contrast=True)
 
     k = 0
 
@@ -161,7 +171,8 @@ def create_singlewl_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, 
         # **kwarg is here to send dir_save_all_planes
 
         deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, **kwargs) - psi0, dimEstim)
+            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, in_contrast=True, **kwargs) -
+            psi0, dimEstim)
 
         k = k + 1
 
@@ -305,7 +316,7 @@ def simulate_pw_difference(input_wavefront,
 
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
-            # case polychromatic = 'centralwl' or polychromatic = 'multiwl'
+            # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
             Ikmoins = testbed.todetector_intensity(
                 entrance_EF=input_wavefront,
                 voltage_vector=voltage_vector - Voltage_probe,
@@ -321,8 +332,8 @@ def simulate_pw_difference(input_wavefront,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
         else:
-            raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand."
-                              " Code it yourself in simulate_pw_difference and be careful with the normalization"))
+            raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
+                              "Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
         Difference[count] = resizing(Ikplus - Ikmoins, dimimages)
 

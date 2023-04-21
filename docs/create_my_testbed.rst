@@ -75,13 +75,14 @@ Additional details can be found directly in :ref:`the code documentation <os-lab
 Polychromatic images
 +++++++++++++++++++++++
 
-To define the wavelengths of simulation, 3 parameters are used:
-- ``wavelength_0`` the central wavelength (in meters)
-- ``Delta_wav`` the width of Spectral band (in meters), centered on ``wavelength_0``
-- ``nb_wav`` Number of monochromatic images in the spectral band (must be odd integer)
-``nb_wav`` is ignored if ``Delta_wav`` = 0 and ``Delta_wav`` is ignored if ``nb_wav`` = 1
+To define the wavelengths of simulation, 4 parameters are used:
 
-Using these 3 parameters, we split the BW in small bandwidths of equal ``Delta_wav`` / ``nb_wav`` and 
+* ``wavelength_0`` the central wavelength (in meters)
+* ``Delta_wav`` the width of Spectral band (in meters), centered on ``wavelength_0``
+* ``nb_wav`` Number of monochromatic images in the spectral band (must be odd integer). ``nb_wav`` is ignored if ``Delta_wav`` = 0 and ``Delta_wav`` is ignored if ``nb_wav`` = 1
+* ``mandatory_wls`` Specific wavelengths that need to appear to simulate the polychromatic image (mostly useful if we sant to estimate or correct at specific wavelengths, please refer to the :ref:`relevant section <polychromaticestim-label>`). Ignored if ``Delta_wav`` = 0. Must be in the range ]wavelength_0 - Delta_wav / 2 , wavelength_0 + Delta_wav / 2[. Default is an empty list (``mandatory_wls = ,``). This is an advanced user parameter as it might break the polychromatic correction so usually it is hidden in the parameter file but can be access manually.
+
+In the case of an empty ``mandatory_wls`` list (``mandatory_wls = ,``), the BW is split in small bandwidths of equal ``Delta_wav`` / ``nb_wav`` and 
 we take the centers of each of these small bandwidths. The next Figure shows this in the case of ``nb_wav`` = 5.
 
 .. figure:: source_images/wl_simu.png
@@ -90,6 +91,8 @@ we take the centers of each of these small bandwidths. The next Figure shows thi
 
     Determination of simulation wavelengths ``OpticalSystem.wav_vec``
 
+If ``mandatory_wls`` is not an empty list, for each mandatory wavelength, we find the closest wavelength in the list and replace it by a mandatory wavelength.
+
 If  ``Delta_wav`` > 0 and ``nb_wav`` > 1, Asterix is automatically in polychromatic wavelength and the following code
 
 .. code-block:: python
@@ -97,12 +100,17 @@ If  ``Delta_wav`` > 0 and ``nb_wav`` > 1, Asterix is automatically in polychroma
     PSF = generic_os.todetector_intensity(entrance_EF = input_wavefront)
 
 will return a polychromatic PSF. By default, it is done in all possible simulated wavelengths
-(``wavelengths = OpticalSystem.wav_vec``). There is also a ``wavelengths`` parameter to select
-other wavelengths. These wavelength must be sub parts of the simulated wavelength because a lot
-of wavelength specific tools are defined during ``OpticalSystem`` initialization. Finally, the normalization in contrast
-is by default for the whole bandwidth. If you want other wavelengths, 
-use ``in_contrast=False`` and measure the PSF to normalize.
+(``wavelengths = OpticalSystem.wav_vec``), using the `Riemann sum <https://en.wikipedia.org/wiki/Riemann_sum>`_ to approximate the polychromatic image.
+There is also a ``wavelengths`` parameter to select other wavelengths. These wavelengths must be sub parts of the simulated wavelengths ``OpticalSystem.wav_vec``
+because a lot of wavelength specific tools are defined during ``OpticalSystem`` initialization. Finally, the normalization in contrast
+is by default for the whole bandwidth. If you want other wavelengths, use ``in_contrast=False`` and measure the PSF to normalize.
 
+
+.. figure:: source_images/riemann_sum.png
+    :scale: 30%
+    :align: center
+
+    Approximation of a coronagraphic polychromatic Intensity using monochromatic Intensities
 
 Pupil
 +++++++++++++++++++++++
@@ -143,13 +151,13 @@ Some specific aperture types are defined that you can access using the keyword `
 
     pup_roman = Pupil(modelconfig, PupType = "RomanPup")
 
-Currently supported ``PupType`` are : "RoundPup", "Clear" (empty pupil plane), "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2" (same as RomanPup and RomanLyot but with same rotation as on the testbed), "VLTPup", "SphereApod".
+Currently supported ``PupType`` are : "RoundPup", "Clear" (empty pupil plane), "RomanPup", "RomanLyot", "RomanPupTHD2", "RomanLyotTHD2" (same as RomanPup and RomanLyot but with same rotation as on the testbed), "VLTPup", "SphereApod",  "SphereLyot".
 
 You can finally defined your own pupils from a .fits using the same keyword if you put a full path. In this case, it will be assumed that the fits file 
 has the same physical size as the entrance pupil defined in the parameter file (``diam_pup_in_m``). 
 The keyword ``diam_lyot_in_m`` is only used in the case of a round Lyot Stop ("RoundPup") and is not use to scale the .fits files aperture.
 The pupil in the .fits file are automatically rescaled at 2*prad using binning. Therefore the code requires that the parameter 
-diam_pup_in_pix is a divisor of the .fits file dimension
+diam_pup_in_pix is a divisor of the .fits file dimension.
 
 Additional details can be found directly in :ref:`the code documentation <pupil-label>`.
 
@@ -210,7 +218,7 @@ of a deformable mirror (DM) system.
 You need to provide the influence function .fits file and the distance compared to the pupil plane ``DM1_z_position``
 In the case of a generic DM (``DM1_Generic = True``), we need only two more parameter to define the DM: the DM pitch ``DM_pitch`` in meters and the number of actuator ``N_act1D`` in one of its principal direction.
 We need ``N_act1D`` > ``diam_pup_in_m`` / ``DM_pitch``, so that the DM is larger than the pupil. For now we assume that DM_pitch is the same in both direction.
-The DM will then be automatically defined as squared with ``N_act1DxN_act1D`` actuators and the puil centered on this DM.
+The DM will then be automatically defined as squared with ``N_act1D`` x ``N_act1D`` actuators and the puil centered on this DM.
 We can also create a specific DM for a given testbed with a file with the relative position of actuators in the pupil
 and the position of one of them compared to the pupil. This file must have vertical and horizonthal pitch ("PitchV","PitchH") in the header to define the pitch.
 
@@ -225,7 +233,7 @@ Concatenate your Optical Systems
 
 This is a particular subclass of Optical System, because we do not know what is inside
 It can only be initialized by giving a list of Optical Systems and it will create a
-"testbed" with contains all the Optical Systems and associated EF_through functions.
+"testbed" with contains all the Optical Systems and associated ``EF_through`` functions.
 
 .. code-block:: python
     

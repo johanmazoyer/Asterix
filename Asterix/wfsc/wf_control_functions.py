@@ -20,7 +20,7 @@ def create_interaction_matrix(testbed: Testbed,
                               initial_DM_voltage=0.,
                               input_wavefront=1.,
                               MatrixType='',
-                              polychrom='centralwl',
+                              polychrom='singlewl',
                               wav_vec_estim=None,
                               dir_save_all_planes=None,
                               visu=False):
@@ -58,7 +58,7 @@ def create_interaction_matrix(testbed: Testbed,
         we do not make the small phase assumption for initial DM phase
     polychrom : string
         For polychromatic estimation and correction:
-        - 'centralwl': only the central wavelength is used for estimation / correction. 1 Interation Matrix
+        - 'singlewl': only a single wavelength is used for estimation / correction. 1 Interation Matrix
         - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     initial_DM_voltage : 1D-array real
@@ -96,7 +96,22 @@ def create_interaction_matrix(testbed: Testbed,
 
     return_matrix = []
 
-    if polychrom in ['centralwl', 'broadband_pwprobes']:
+    if polychrom == 'singlewl':
+
+        return_matrix.append(
+            create_singlewl_interaction_matrix(testbed,
+                                               dimEstim,
+                                               amplitudeEFC,
+                                               wav_vec_estim[0],
+                                               matrix_dir,
+                                               initial_DM_voltage=initial_DM_voltage,
+                                               input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(
+                                                   wav_vec_estim[0])],
+                                               MatrixType=MatrixType,
+                                               dir_save_all_planes=dir_save_all_planes,
+                                               visu=visu))
+    elif polychrom == 'broadband_pwprobes':
+
         return_matrix.append(
             create_singlewl_interaction_matrix(testbed,
                                                dimEstim,
@@ -125,7 +140,7 @@ def create_interaction_matrix(testbed: Testbed,
                                                    dir_save_all_planes=dir_save_all_planes,
                                                    visu=visu))
     else:
-        raise ValueError(polychrom + " is not a valid polychromatic estimation/correction mode")
+        raise ValueError(polychrom + "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
     return return_matrix
 
@@ -208,7 +223,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
         DM: DeformableMirror = vars(testbed)[DM_name]
         total_number_basis_modes += DM.basis_size
-        DM_small_str = "_" + "_".join(DM.string_os.split("_")[4:])
+        DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
 
     # Some string manips to name the matrix if we save it
@@ -217,7 +232,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     elif MatrixType == 'smallphase':
         headfile = "DirectMatSP"
     else:
-        raise ValueError("This Matrix type does not exist")
+        raise ValueError("This Matrix type does not exist ([Correctionconfig]['MatrixType'] parameter).")
 
     if DM.basis_type == 'fourier':
         basis_type_str = 'Four'
@@ -226,7 +241,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         basis_type_str = 'Actu'
         headfile += "_EFCampl" + str(amplitudeEFC)
     else:
-        raise ValueError("This basis type does not exist")
+        raise ValueError("This basis type does not exist ([Correctionconfig]['DM_basis'] parameter).")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
@@ -234,11 +249,12 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     for DM_name in testbed.name_of_DMs:
 
         DM: DeformableMirror = vars(testbed)[DM_name]
-        DM_small_str = "_" + "_".join(DM.string_os.split("_")[5:])
+        DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
 
         basis_str = DM_small_str + "_" + basis_type_str + "Basis" + str(DM.basis_size)
         fileDirectMatrix = headfile + basis_str + '_binEstim' + str(int(np.round(
-            testbed.dimScience / dimEstim))) + string_testbed_without_DMS + '_wl' + str(int(wavelength * 1e9))
+            testbed.dimScience / dimEstim))) + string_testbed_without_DMS + "_resFP" + str(
+                round(DM.Science_sampling / DM.wavelength_0 * wavelength, 2)) + '_wl' + str(int(wavelength * 1e9))
 
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch

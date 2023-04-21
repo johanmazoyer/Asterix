@@ -75,7 +75,8 @@ class Coronagraph(optsy.OpticalSystem):
         elif self.corona_type in ("vortex", "wrapped_vortex"):
             self.prop_apod2lyot = 'regional-sampling'
             if self.prad < 100:
-                raise ValueError(f"In regional-sampling mode, 'diam_pup_in_pix' must be > 200 to be most accurate")
+                raise ValueError("In regional-sampling mode, [modelconfig]['diam_pup_in_pix'] parameter must "
+                                 "be > 200 to be most accurate")
 
             # With 'diam_pup_in_pix' = 200 these parameter give ~2 10-9 for the wrapped vortex.
             # See Array in prop_fpm_regional_sampling function docstring for better
@@ -90,7 +91,8 @@ class Coronagraph(optsy.OpticalSystem):
             self.prop_apod2lyot = 'mft'
 
         else:
-            raise ValueError(f"The requested coronagraph mode '{self.corona_type}' does not exist.")
+            raise ValueError(f"The requested coronagraph mode '{self.corona_type}' does not exist "
+                             "([Coronaconfig]['corona_type'] parameter)")
 
         # In the case of the fft propagation, the size of the focal plane is directly linked to the size of
         # the pupil plane and depends on the WL.

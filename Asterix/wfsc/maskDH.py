@@ -35,7 +35,7 @@ class MaskDH:
         elif self.DH_shape in ["nodh", "custom"]:
             pass
         else:
-            raise ValueError(f"'{self.DH_shape}' is not a valid DH shape.")
+            raise ValueError(f"'{self.DH_shape}' is not a valid DH shape ([Correctionconfig]['DH_shape'] parameter).")
 
         self.string_mask = self.tostring()
 
