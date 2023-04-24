@@ -128,7 +128,7 @@ class Corrector:
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
                 number_Active_testbeds = 1
             elif testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM3only_wl{number_wl_in_matrix}.fits"),
+                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM3only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, overwrite=True)
