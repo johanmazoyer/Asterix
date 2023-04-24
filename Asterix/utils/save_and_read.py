@@ -278,6 +278,6 @@ def get_git_description():
         desc = get_output_wrapper('git rev-parse --short HEAD')
     except Exception:
         warnings.warn("Unable to get git description")
-        desc = 'unable to get git hash'
+        desc = 'no_git_hash'
 
     return desc
