@@ -389,6 +389,7 @@ class Estimator:
             raise NotImplementedError("This estimation algorithm is not yet implemented "
                                       "([Estimationconfig]['estimation'] parameter)")
 
+
 def find_DM_to_probe(testbed: Testbed):
     """Find which DM to use for the PW probes.
 
@@ -408,15 +409,15 @@ def find_DM_to_probe(testbed: Testbed):
     # we chose it already. We only check its existence
     if hasattr(testbed, 'name_DM_to_probe_in_PW'):
         if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
-            raise ValueError("Cannot use this DM for PW, this testbed has no DM named " +
-                                testbed.name_DM_to_probe_in_PW)
+            raise ValueError(f"Testbed has no DM '{testbed.name_DM_to_probe_in_PW}', choose another DM name "
+                             "for PW, using using 'testbed.name_DM_to_probe_in_PW'.")
         return testbed.name_DM_to_probe_in_PW
 
     # If name_DM_to_probe_in_PW is not already set,
     # automatically check which DM to use to probe in this case
     # this is only done once.
     if len(testbed.name_of_DMs) == 0:
-        raise ValueError("you need at least one activated DM to do PW")
+        raise ValueError("You need at least one activated DM to do PW.")
     # If only one DM, we use this one, independenlty of its position
     elif len(testbed.name_of_DMs) == 1:
         name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
@@ -431,10 +432,10 @@ def find_DM_to_probe(testbed: Testbed):
 
         # If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
         if number_DMs_in_PP > 1:
-            raise ValueError(
-                "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW")
+            raise ValueError("You have several DM in PP, choose manually one for "
+                             "the PW probes using 'testbed.name_DM_to_probe_in_PW'.")
         # Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
         if number_DMs_in_PP == 0:
-            raise ValueError(
-                "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW")
+            raise ValueError("You have several DMs, none in PP, choose manually one for "
+                             "the PW probes using 'testbed.name_DM_to_probe_in_PW'.")
     return name_DM_to_probe_in_PW
