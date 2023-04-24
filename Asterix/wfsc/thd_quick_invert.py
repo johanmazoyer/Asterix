@@ -56,16 +56,16 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
     """
 
     if name_active_DM in (13, 31):
-        Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_2DM_wl{number_wl_in_matrix}.fits"))
+        Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"))
         DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     elif name_active_DM == 1:
-        Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_DM1only_wl{number_wl_in_matrix}.fits"))
+        Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_DM1only_{number_wl_in_matrix}wl.fits"))
         DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
 
     elif name_active_DM == 3:
-        Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_DM3only_wl{number_wl_in_matrix}.fits"))
+        Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_DM3only_{number_wl_in_matrix}wl.fits"))
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     else:
