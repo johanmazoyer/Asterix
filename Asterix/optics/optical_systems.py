@@ -594,10 +594,66 @@ class OpticalSystem:
             return_phase = fits.getdata(os.path.join(Model_local_dir, phase_abb_filename + ".fits"))
 
         else:
-            phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
 
-            return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms, phase_rhoc,
+            percent_phaserms_polychrom = 10
+
+            if percent_phaserms_polychrom == 0:
+                phase_rms = 2 * np.pi * opd_rms / self.wavelength_0
+
+                return_phase = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms, phase_rhoc,
                                                        phase_slope)
+
+            else:
+
+                pup = phase_ampl.roundpupil(self.dim_overpad_pupil, self.prad)
+                
+                phase_rms_total = 2 * np.pi * opd_rms / self.wavelength_0
+                print("phase_rms_total",phase_rms_total)
+
+                phase_rms_commu = 2 * np.pi * opd_rms*(1-percent_phaserms_polychrom/100) / self.wavelength_0
+
+                return_phase = np.zeros((len(self.wav_vec), self.dim_overpad_pupil, self.dim_overpad_pupil))
+
+                phase_commu = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms_commu, phase_rhoc,
+                                                       phase_slope)
+                
+                return_phase = np.zeros((len(self.wav_vec), self.dim_overpad_pupil, self.dim_overpad_pupil))
+                
+
+                delta_phase_rms = 2 * np.pi * opd_rms*(percent_phaserms_polychrom/100) / self.wavelength_0
+                
+                for i, wavei in enumerate(self.wav_vec):
+                    
+                    phase_rms_commu_so_far = np.std(phase_commu[np.where(pup == 1.)])
+                    print("phase_rms_commu_so_far", i, phase_rms_commu_so_far)
+
+                    if i == 0:
+                        delta_phase_rms_commu = 0
+                    else:
+                        delta_phase_rms_commu = (wavei - self.wav_vec[0]) / (self.wav_vec[-1] - self.wav_vec[0]) * phase_rms_total -  + - phase_rms_commu_so_far
+                    print("delta_phase_rms_commu", i, delta_phase_rms_commu)
+
+                    phase_rms_ale = delta_phase_rms - delta_phase_rms_commu
+
+                    print("phase_rms_ale", i, phase_rms_commu_so_far)
+
+                    phase_commu = phase_commu +  phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, delta_phase_rms_commu, phase_rhoc,
+                                                       phase_slope)
+                
+                    phase_aleatoire = phase_ampl.random_phase_map(self.prad, self.dim_overpad_pupil, phase_rms_ale, phase_rhoc,
+                                                       phase_slope)
+
+                    return_phase[i] = phase_commu + phase_aleatoire
+                
+
+                # for i, wavei in enumerate(self.wav_vec):
+                #     toto = return_phase[i]
+                #     print(i, np.std(toto[np.where(pup == 1.)])) 
+
+
+                asd
+
+
             if Model_local_dir is not None:
                 fits.writeto(os.path.join(Model_local_dir, phase_abb_filename + ".fits"), return_phase, overwrite=True)
         return return_phase
@@ -725,12 +781,16 @@ class OpticalSystem:
 
         Parameters
         ----------
-        phase_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
-            Phase aberration at reference wavelength self.wavelength_0. if 0, no phase aberration (default)
+        phase_abb : scalar or numpy 2D array or numpy 3d array, real
+            Phase aberrationa :
+                0. if no phase aberration (default)
+                2D array, of size [self.dim_overpad_pupil, self.dim_overpad_pupil] achromatic aberration
+                    defined at self.wavelength_0.
+                3D array of size [self.nb_wav,self.dim_overpad_pupil, self.dim_overpad_pupil] chromatic aberr.
         ampl_abb : 2D array of size [self.dim_overpad_pupil, self.dim_overpad_pupil]. real
-             Amplitude aberration at reference wavelength self.wavelength_0. if 0, no amplitude aberration (default)
-        wavelengths : float or list of floats
-            Default is all the wl of the testbed self.wav_vec
+             Amplitude aberration at reference wavelength self.wavelength_0. if 0, no amplitude aberration (default).
+        wavelengths : float or list of floats.
+            Default is all the wl of the testbed self.wav_vec.
             wavelengths in m.
 
         Returns
@@ -757,10 +817,27 @@ class OpticalSystem:
                 wavelength_vec = [wavelengths]
         else:
             wavelength_vec = wavelengths
+        
+        if not isinstance(ampl_abb, (float, np.ndarray)):
+            print(ampl_abb)
+            raise TypeError("ampl_abb should be a float of a numpy array of floats")
 
+        if isinstance(phase_abb, (float, int)):
+            phase_abb = np.repeat(phase_abb, self.nb_wav)
+        elif phase_abb.shape == self.wav_vec.shape:
+            pass
+        elif len(phase_abb.shape) == 2 :
+            phase_abb = np.repeat(phase_abb[np.newaxis, ...], self.nb_wav, axis=0)
+        elif len(phase_abb.shape) == 3 and phase_abb.shape[0] == self.nb_wav:
+            pass
+        else:
+            raise TypeError(("phase_abb must be scalar (same for all WL), or a self.nb_wav scalars "
+                             "or a 2D array"
+                             "or a 3D array of size (self.nb_wav, xshape, yshape"))
+        
         entrance_EF = []
-        for wavelength in wavelength_vec:
-            entrance_EF.append((1 + ampl_abb) * np.exp(1j * phase_abb * self.wavelength_0 / wavelength))
+        for i, wavelength in enumerate(wavelength_vec):
+            entrance_EF.append((1 + ampl_abb) * np.exp(1j * phase_abb[i] * self.wavelength_0 / wavelength))
         entrance_EF = np.array(entrance_EF)
 
         if len(wavelength_vec) == 1:
