@@ -23,7 +23,7 @@ class Pupil(optsy.OpticalSystem):
     AUTHOR : Johan Mazoyer
     """
 
-    def __init__(self, modelconfig, prad=0., PupType=None, angle_rotation=0, Model_local_dir=None):
+    def __init__(self, modelconfig, prad=0., PupType=None, angle_rotation=0, Model_local_dir=None, silence=False):
         """
         Initialize a pupil object.
         TODO: include an SCC Lyot pupil function here !
@@ -54,12 +54,15 @@ class Pupil(optsy.OpticalSystem):
             this is only used if the pupil is not clear or empty
         Model_local_dir : string or None, default None
             Directory output path for model-related files created on the file for later reuse.
+        silence : boolean, default False.
+            Whether to silence print outputs.
         """
         # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
         if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
-            print("Creating directory " + Model_local_dir)
+            if not silence:
+                print("Creating directory " + Model_local_dir)
             os.makedirs(Model_local_dir)
 
         if prad == 0:

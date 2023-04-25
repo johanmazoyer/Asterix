@@ -134,12 +134,9 @@ class OpticalSystem:
         self.precalculate_mft_matrices = True
 
         if self.precalculate_mft_matrices:
-            # we measure the AA and BB matrix and norm0 for all MFTs used to go to final focal plane
-            # TODO in practice, those will be remeasured each time we initialize an OpticalSystem
-            # I am not sure this is a problem because we only do it a few times (~10 in thd2)
-            # Maybe there is a possibility to do it only once ?
-            # we can maybe pass AA,BB and norm0 as parameter in case of very internal definition
-            # when we just create a clear pupil we need for example
+            # We measure the AA and BB matrix and norm0 for all MFTs used to go to final focal plane.
+            # In practice, those will be remeasured each time we initialize an OpticalSystem (like an apodizer for example)
+            # This is a problem because we only do it a few times (~10 in thd2) and it takes a few 10s of milliseconds
 
             self.AA_direct_final = []
             self.BB_direct_final = []
@@ -539,7 +536,7 @@ class OpticalSystem:
 
         return norm_polychrom, sum_polychrom, norm_monochrom, sum_monochrom
 
-    def generate_phase_aberr(self, SIMUconfig, up_or_down='up', Model_local_dir=None):
+    def generate_phase_aberr(self, SIMUconfig, up_or_down='up', Model_local_dir=None, silence=False):
         """Generate and save  phase aberrations.
 
         AUTHOR : Johan Mazoyer
@@ -554,7 +551,8 @@ class OpticalSystem:
         Model_local_dir : string or None, default None
             Directory output path for model-related files created on the file for later reuse.
             In this case the phase aberrations is saved if Model_local_dir is not None
-
+        silence : boolean, default False.
+            Whether to silence print outputs.
         Returns
         --------
         return_phase : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
@@ -563,7 +561,8 @@ class OpticalSystem:
         if Model_local_dir is None:
             pass
         elif not os.path.exists(Model_local_dir):
-            print("Creating directory " + Model_local_dir)
+            if not silence:
+                print("Creating directory " + Model_local_dir)
             os.makedirs(Model_local_dir)
 
         if up_or_down == 'up':
@@ -603,7 +602,7 @@ class OpticalSystem:
                 fits.writeto(os.path.join(Model_local_dir, phase_abb_filename + ".fits"), return_phase, overwrite=True)
         return return_phase
 
-    def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None):
+    def generate_ampl_aberr(self, SIMUconfig, Model_local_dir=None, silence=False):
         """Generate and save amplitude aberations.
 
         AUTHOR : Johan Mazoyer
@@ -614,14 +613,16 @@ class OpticalSystem:
             Parameter of this simualtion (describing the amplitude)
         Model_local_dir : string or None, default None
             Directory output path for model-related files created on the file for later reuse.
-
+        silence : boolean, default False.
+            Whether to silence print outputs.
         Returns
         --------
         return_ampl : 2D array, real of size [self.dim_overpad_pupil, self.dim_overpad_pupil]
             Amplitude abberation
         """
         if not os.path.exists(Model_local_dir):
-            print("Creating directory " + Model_local_dir)
+            if not silence:
+                print("Creating directory " + Model_local_dir)
             os.makedirs(Model_local_dir)
 
         set_amplitude_abb = SIMUconfig["set_amplitude_abb"]

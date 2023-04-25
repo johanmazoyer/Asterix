@@ -15,7 +15,7 @@ class Coronagraph(optsy.OpticalSystem):
     AUTHOR : Johan Mazoyer
     """
 
-    def __init__(self, modelconfig, coroconfig, Model_local_dir=None):
+    def __init__(self, modelconfig, coroconfig, Model_local_dir=None, silence=False):
         """Initialize a coronagraph object.
 
         AUTHOR : Johan Mazoyer
@@ -28,13 +28,16 @@ class Coronagraph(optsy.OpticalSystem):
             coronagraph parameters
         Model_local_dir : string or None, default None
             Directory output path for model-related files created on the file for later reuse.
+        silence : boolean, default False.
+            Whether to silence print outputs.
         """
 
         # Initialize the OpticalSystem class and inherit properties
         super().__init__(modelconfig)
 
         if (Model_local_dir is not None) and not os.path.exists(Model_local_dir):
-            print("Creating directory " + Model_local_dir)
+            if not silence:
+                print("Creating directory " + Model_local_dir)
             os.makedirs(Model_local_dir)
 
         # Plane at the entrance of the coronagraph. In THD2, this is an empty plane.
@@ -497,13 +500,8 @@ class Coronagraph(optsy.OpticalSystem):
         # we add the downstream aberrations if we need them
         lyotplane_before_lyot *= EF_aberrations_introduced_in_LS
 
-        # crop to the dim_overpad_pupil expected size
-        # TODO I do not like this line. A random crop or pad is the best way to mask an error in coding
-        # if we made an error in dimenensions. We should make sure that our arrays are of the right dimensions at all times
-        lyotplane_before_lyot_crop = crop_or_pad_image(lyotplane_before_lyot, self.dim_overpad_pupil)
-
         # Field after filtering by Lyot stop
-        lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot_crop, wavelength=wavelength)
+        lyotplane_after_lyot = self.lyot_pup.EF_through(entrance_EF=lyotplane_before_lyot, wavelength=wavelength)
 
         if self.perfect_coro & (not noFPM):
             lyotplane_after_lyot = lyotplane_after_lyot - self.perfect_Lyot_pupil[self.wav_vec.tolist().index(
