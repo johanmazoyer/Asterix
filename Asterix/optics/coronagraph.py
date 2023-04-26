@@ -83,12 +83,8 @@ class Coronagraph(optsy.OpticalSystem):
 
             # With 'diam_pup_in_pix' = 200 these parameter give ~2 10-9 for the wrapped vortex.
             # See Array in prop_fpm_regional_sampling function docstring for better
-            self.dim_fpm = 250
-            self.nbrs_res_list = [12, 78]
-            # self.dim_fpm = 630
-            # self.nbrs_res_list = [3, 44]
-            # self.dim_fpm = 372
-            # self.nbrs_res_list = [5, 58]
+            self.dim_fpm = 300
+            self.nbrs_res_list = [10, 78]
 
         elif self.corona_type in ("fqpm", "knife"):
             self.prop_apod2lyot = 'mft'
@@ -963,10 +959,11 @@ def prop_fpm_regional_sampling(pup,
 
     The parameters of this function are very hard to optimize because it is not super reliable, increasing
     the number of pixels in PP or FP generally gives you better contrast but sometimes get you worse contrast.
-    Following array gives you some of the result I obtained for the wrapped vortex:
+    Following array gives you some of the result I obtained for the wrapped vortex. Careful this is also dependent on the
+    Lyot size:
         ______________________________________________________________________________________________________
         |     Dim pup    | Overpad PP factor | Actual PP size | FP size |     nbres    || Resulting contrast |
-        |       200      |        2.0        |      400       |   250   |    [12, 78]  ||       1.9e-09      |
+        |       200      |        2.0        |      400       |   300   |    [12, 78]  ||       1.2e-09      |
         |       214      |        2.0        |      428       |   358   |    [16 151]  ||       7.9e-10      |
         |       232      |        2.0        |      464       |   372   |    [5, 58]   ||       5.0e-10      |
         |       310      |        2.0        |      620       |   482   |    [14, 88]  ||       2.0e-10      |
