@@ -173,7 +173,7 @@ class Estimator:
             self.posprobes = list(Estimationconfig["posprobes"])
             cutsvdPW = Estimationconfig["cut"]
 
-            testbed.name_DM_to_probe_in_PW = self.find_DM_to_probe(testbed)
+            testbed.name_DM_to_probe_in_PW = find_DM_to_probe(testbed)
 
             self.PWMatrix = wfs.create_pw_matrix(testbed,
                                                  self.amplitudePW,
@@ -209,7 +209,19 @@ class Estimator:
                                  self.dimEstim] = self.PWMatrix[k][:, 0, i].flatten()
                         vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
                                  self.dimEstim] = self.PWMatrix[k][:, 1, i].flatten()
-                    namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + '_wl' + str(int(wave_k * 1e9))
+
+                    # Because the exact laser WLs can change a bit quite often and labview reads a given
+                    # fits name, we name the PW matrix laser1, 2, 3 for a range of WL.
+
+                    string_laser = ''
+                    if 625 < wave_k * 1e9 < 645:
+                        string_laser = "_laser1"  # ~635nm laser source
+                    if 695 < wave_k * 1e9 < 715:
+                        string_laser = "_laser2"  # ~705nm laser source
+                    if 775 < wave_k * 1e9 < 795:
+                        string_laser = "_laser3"  # ~785nm laser source
+
+                    namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + string_laser
                     fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
                                  probes,
                                  overwrite=True)
@@ -377,52 +389,53 @@ class Estimator:
             raise NotImplementedError("This estimation algorithm is not yet implemented "
                                       "([Estimationconfig]['estimation'] parameter)")
 
-    def find_DM_to_probe(self, testbed: Testbed):
-        """Find which DM to use for the PW probes.
 
-        AUTHOR : Johan Mazoyer
+def find_DM_to_probe(testbed: Testbed):
+    """Find which DM to use for the PW probes.
 
-        Parameters
-        ----------
-        testbed : OpticalSystem.Testbed
-            Testbed object which describe your testbed
+    AUTHOR : Johan Mazoyer
 
-        Returns
-        ------------
-        name_DM_to_probe_in_PW : string
-            name of the DM to probe in PW
-        """
+    Parameters
+    ----------
+    testbed : OpticalSystem.Testbed
+        Testbed object which describe your testbed
 
-        # we chose it already. We only check its existence
-        if hasattr(testbed, 'name_DM_to_probe_in_PW'):
-            if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
-                raise ValueError("Cannot use this DM for PW, this testbed has no DM named " +
-                                 testbed.name_DM_to_probe_in_PW)
-            return testbed.name_DM_to_probe_in_PW
+    Returns
+    ------------
+    name_DM_to_probe_in_PW : string
+        name of the DM to probe in PW
+    """
 
-        # If name_DM_to_probe_in_PW is not already set,
-        # automatically check which DM to use to probe in this case
-        # this is only done once.
-        if len(testbed.name_of_DMs) == 0:
-            raise ValueError("you need at least one activated DM to do PW")
-        # If only one DM, we use this one, independenlty of its position
-        elif len(testbed.name_of_DMs) == 1:
-            name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
-        else:
-            # If several DMs we check if there is at least one in PP
-            number_DMs_in_PP = 0
-            for DM_name in testbed.name_of_DMs:
-                DM: DeformableMirror = vars(testbed)[DM_name]
-                if DM.z_position == 0.:
-                    number_DMs_in_PP += 1
-                    name_DM_to_probe_in_PW = DM_name
+    # we chose it already. We only check its existence
+    if hasattr(testbed, 'name_DM_to_probe_in_PW'):
+        if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
+            raise ValueError(f"Testbed has no DM '{testbed.name_DM_to_probe_in_PW}', choose another DM name "
+                             "for PW, using using 'testbed.name_DM_to_probe_in_PW'.")
+        return testbed.name_DM_to_probe_in_PW
 
-            # If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
-            if number_DMs_in_PP > 1:
-                raise ValueError(
-                    "You have several DM in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW")
-            # Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
-            if number_DMs_in_PP == 0:
-                raise ValueError(
-                    "You have several DMs none in PP, choose one for the PW probes using testbed.name_DM_to_probe_in_PW")
-        return name_DM_to_probe_in_PW
+    # If name_DM_to_probe_in_PW is not already set,
+    # automatically check which DM to use to probe in this case
+    # this is only done once.
+    if len(testbed.name_of_DMs) == 0:
+        raise ValueError("You need at least one activated DM to do PW.")
+    # If only one DM, we use this one, independenlty of its position
+    elif len(testbed.name_of_DMs) == 1:
+        name_DM_to_probe_in_PW = testbed.name_of_DMs[0]
+    else:
+        # If several DMs we check if there is at least one in PP
+        number_DMs_in_PP = 0
+        for DM_name in testbed.name_of_DMs:
+            DM: DeformableMirror = vars(testbed)[DM_name]
+            if DM.z_position == 0.:
+                number_DMs_in_PP += 1
+                name_DM_to_probe_in_PW = DM_name
+
+        # If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
+        if number_DMs_in_PP > 1:
+            raise ValueError("You have several DM in PP, choose manually one for "
+                             "the PW probes using 'testbed.name_DM_to_probe_in_PW'.")
+        # Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
+        if number_DMs_in_PP == 0:
+            raise ValueError("You have several DMs, none in PP, choose manually one for "
+                             "the PW probes using 'testbed.name_DM_to_probe_in_PW'.")
+    return name_DM_to_probe_in_PW

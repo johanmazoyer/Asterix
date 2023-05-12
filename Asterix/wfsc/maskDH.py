@@ -1,6 +1,8 @@
+import os
 import platform
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+from astropy.io import fits
 from Asterix.utils import save_plane_in_fits
 
 
@@ -34,6 +36,11 @@ class MaskDH:
             self.circ_angle = Correctionconfig["circ_angle"]
         elif self.DH_shape in ["nodh", "custom"]:
             pass
+        elif self.DH_shape.endswith('.fits'):
+            self.DH_shape = Correctionconfig["DH_shape"]  # we take the right name without lower case
+            if not os.path.isfile(self.DH_shape):
+                raise ValueError(f"'{self.DH_shape}' file does not exists "
+                                 "([Correctionconfig]['DH_shape'] parameter).")
         else:
             raise ValueError(f"'{self.DH_shape}' is not a valid DH shape ([Correctionconfig]['DH_shape'] parameter).")
 
@@ -65,6 +72,13 @@ class MaskDH:
 
         if self.DH_shape == "nodh":
             return maskDH
+
+        elif self.DH_shape.lower().endswith('.fits'):
+            mask_fits = fits.getdata(self.DH_shape)
+            if mask_fits.shape != maskDH.shape:
+                raise ValueError(f"MaskDH fits file is not of the right dimension. It should be {maskDH.shape} "
+                                 f"but it's currently {mask_fits.shape} ([Correctionconfig]['DH_shape'] parameter).")
+            maskDH = mask_fits
 
         elif self.DH_shape == "custom":
             your_os = platform.system()
@@ -147,5 +161,7 @@ class MaskDH:
             stringdh = "CustomDHmask"
         elif self.DH_shape == "nodh":
             stringdh = "FullDH"
+        elif self.DH_shape.lower().endswith('.fits'):
+            stringdh = "fitsDHmask"
 
         return stringdh
