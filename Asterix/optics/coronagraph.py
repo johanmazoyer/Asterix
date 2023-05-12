@@ -75,7 +75,7 @@ class Coronagraph(optsy.OpticalSystem):
             rad_LyotFP_pix = self.rad_lyot_fpm * self.Lyot_fpm_sampling
             self.dim_fpm = 2 * int(2.2 * rad_LyotFP_pix / 2)
 
-        elif self.corona_type in ("vortex", "wrapped_vortex"):
+        elif self.corona_type == "wrapped_vortex":
             self.prop_apod2lyot = 'regional-sampling'
             if self.prad < 100:
                 raise ValueError("In regional-sampling mode, [modelconfig]['diam_pup_in_pix'] parameter must "
@@ -86,7 +86,7 @@ class Coronagraph(optsy.OpticalSystem):
             self.dim_fpm = 300
             self.nbrs_res_list = [10, 78]
 
-        elif self.corona_type in ("fqpm", "knife"):
+        elif self.corona_type in ("vortex", "fqpm", "knife"):
             self.prop_apod2lyot = 'mft'
 
         else:
@@ -138,7 +138,7 @@ class Coronagraph(optsy.OpticalSystem):
             vortex_charge = coroconfig["vortex_charge"]
             self.string_os += '_charge' + str(int(vortex_charge))
             self.FPmsk = self.Vortex(vortex_charge=vortex_charge)
-            self.perfect_coro = False
+            self.perfect_coro = True
             if self.achrom_phase_coro:
                 self.string_os += '_' + "achrom"
 
@@ -570,6 +570,8 @@ class Coronagraph(optsy.OpticalSystem):
 
         if self.prop_apod2lyot == "fft":
             maxdimension_array_fpm = np.max(self.dim_fp_fft)
+        elif self.prop_apod2lyot == "mft":
+            maxdimension_array_fpm = self.dimScience
         else:
             maxdimension_array_fpm = self.dim_fpm
 
@@ -583,6 +585,8 @@ class Coronagraph(optsy.OpticalSystem):
         for i, wav in enumerate(self.wav_vec):
             if self.prop_apod2lyot == "fft":
                 dim_fp = self.dim_fp_fft[i]
+            elif self.prop_apod2lyot == "mft":
+                dim_fp = self.dimScience
             else:
                 dim_fp = self.dim_fpm
 
