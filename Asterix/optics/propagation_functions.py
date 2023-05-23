@@ -481,6 +481,11 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward', dty
         if 'ortho' 1/sqrt(N) normalisation is done in both directions.
         Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
         The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
+    dtype_complex: string, default 'complex128'
+        bit number for the complex arrays in the exponential.
+        Can be 'complex128' or 'complex64'. The latter increases the speed of the exp but at the
+        cost of lower precision. Because numpy fft does not have a dtype parameter, the difference in speed
+        is probably minimum for this function.
 
     Returns
     --------
