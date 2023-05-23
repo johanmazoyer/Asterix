@@ -40,7 +40,7 @@ class THD2(Testbed):
         model_config['mandatory_wls'] = sorted(
             np.unique(np.array(model_config['mandatory_wls'] + config["Estimationconfig"]["estimation_wls"])).tolist())
 
-        # The following line can be added to change the precision of the complex number. complex64 is faster be can be 
+        # The following line can be added to change the precision of the complex number. complex64 is faster be can be
         # slightly different at the 10-10 contrast level.
         # model_config['complex_precision'] = 'complex128'
 
