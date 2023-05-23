@@ -436,7 +436,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2, dtype_complex='comple
     return np.fft.ifft2(angular * four, norm='ortho').astype(dtype_complex)
 
 
-def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward', dtype_complex="comple128"):
+def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward', dtype_complex="complx128"):
     """FFT Computation. IDL "FFT" routine uses coordinates origin at pixel.
 
     This function uses a coordinate origin at any pixel [k,l],
