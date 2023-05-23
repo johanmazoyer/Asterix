@@ -427,7 +427,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2, dtype_complex='comple
     Nfourier = int(gamma * diam_pup_in_pix)
     cycles = diam_pup_in_pix
 
-    four = np.fft.fft2(crop_or_pad_image(pup, Nfourier), norm='ortho')
+    four = np.fft.fft2(crop_or_pad_image(pup, Nfourier), norm='ortho').astype(dtype_complex)
     u, v = np.meshgrid(np.arange(Nfourier) - Nfourier / 2, np.arange(Nfourier) - Nfourier / 2)
 
     rho2D = np.fft.fftshift(np.hypot(v, u)) * (cycles / diam_pup_in_m) / Nfourier
@@ -436,7 +436,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2, dtype_complex='comple
     return np.fft.ifft2(angular * four, norm='ortho').astype(dtype_complex)
 
 
-def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
+def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward', dtype_complex="comple128"):
     """FFT Computation. IDL "FFT" routine uses coordinates origin at pixel.
 
     This function uses a coordinate origin at any pixel [k,l],
@@ -512,16 +512,18 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
 
     # shift in Fourier space, i.e. multiplication in direct space, and computation of FFT
     if not inverse:
-        farray = np.fft.fft2(image * np.exp((-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
-                             norm=norm)
+        farray = np.fft.fft2(image * np.exp(
+            (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny), dtype=dtype_complex),
+                             norm=norm).astype(dtype_complex)
     else:
-        farray = np.fft.ifft2(image * np.exp((-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny)),
-                              norm=norm)
+        farray = np.fft.ifft2(image * np.exp(
+            (-sens) * 2. * np.pi * 1j * (fourier[0] * X / Nx + fourier[1] * Y / Ny), dtype=dtype_complex),
+                              norm=norm).astype(dtype_complex)
 
     # shift in direct space, i.e. multiplication in fourier space, and computation of FFT
-    farray *= np.exp((-sens) * 2. * np.pi * 1j * (direct[0] * X / Nx + direct[1] * Y / Ny))
+    farray *= np.exp((-sens) * 2. * np.pi * 1j * (direct[0] * X / Nx + direct[1] * Y / Ny), dtype=dtype_complex)
 
     # normalisation
-    farray *= np.exp(sens * (2. * 1j * np.pi / np.sqrt(Nx * Ny)) * np.sum(direct * fourier))
+    farray *= np.exp(sens * (2. * 1j * np.pi / np.sqrt(Nx * Ny)) * np.sum(direct * fourier), dtype=dtype_complex)
 
     return farray
