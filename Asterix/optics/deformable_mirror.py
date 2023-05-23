@@ -369,8 +369,12 @@ class DeformableMirror(optsy.OpticalSystem):
         if self.z_position != 0:
 
             Pup_inDMplane = crop_or_pad_image(
-                prop.prop_angular_spectrum(self.clearpup.pup, self.wavelength_0, self.z_position, self.diam_pup_in_m / 2,
-                                           self.prad), self.dim_overpad_pupil)
+                prop.prop_angular_spectrum(self.clearpup.pup,
+                                           self.wavelength_0,
+                                           self.z_position,
+                                           self.diam_pup_in_m / 2,
+                                           self.prad,
+                                           dtype_complex=self.dtype_complex), self.dim_overpad_pupil)
         else:
             Pup_inDMplane = self.clearpup.pup
 
@@ -423,8 +427,12 @@ class DeformableMirror(optsy.OpticalSystem):
         """
 
         EF_inDMplane = crop_or_pad_image(
-            prop.prop_angular_spectrum(entrance_EF, wavelength, self.z_position, self.diam_pup_in_m / 2., self.prad),
-            self.dim_overpad_pupil)
+            prop.prop_angular_spectrum(entrance_EF,
+                                       wavelength,
+                                       self.z_position,
+                                       self.diam_pup_in_m / 2.,
+                                       self.prad,
+                                       dtype_complex=self.dtype_complex), self.dim_overpad_pupil)
 
         if dir_save_all_planes is not None:
             name_plane = 'EF_before_DM_in_' + self.Name_DM + f'plane_wl{int(wavelength * 1e9)}'
@@ -440,8 +448,12 @@ class DeformableMirror(optsy.OpticalSystem):
         # and propagate to next pupil plane
 
         EF_back_in_pup_plane = crop_or_pad_image(
-            prop.prop_angular_spectrum(EF_inDMplane_after_DM, wavelength, -self.z_position, self.diam_pup_in_m / 2.,
-                                       self.prad), self.dim_overpad_pupil)
+            prop.prop_angular_spectrum(EF_inDMplane_after_DM,
+                                       wavelength,
+                                       -self.z_position,
+                                       self.diam_pup_in_m / 2.,
+                                       self.prad,
+                                       dtype_complex=self.dtype_complex), self.dim_overpad_pupil)
 
         return EF_back_in_pup_plane
 

@@ -190,7 +190,8 @@ class Coronagraph(optsy.OpticalSystem):
                                    nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
                                    inverse=False,
                                    norm='ortho',
-                                   returnAABB=True)
+                                   returnAABB=True,
+                                   dtype_complex=self.dtype_complex)
                 self.AA_direct.append(a)
                 self.BB_direct.append(b)
                 self.norm0_direct.append(c)
@@ -201,7 +202,8 @@ class Coronagraph(optsy.OpticalSystem):
                                    nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
                                    inverse=True,
                                    norm='ortho',
-                                   returnAABB=True)
+                                   returnAABB=True,
+                                   dtype_complex=self.dtype_complex)
 
                 self.AA_inverse.append(a)
                 self.BB_inverse.append(b)
@@ -217,7 +219,8 @@ class Coronagraph(optsy.OpticalSystem):
                 returnAAsBBs=True,
                 shift=(0, 0),
                 filter_order=15,
-                alpha=1.5)
+                alpha=1.5,
+                dtype_complex=self.dtype_complex)
 
         if "bool_overwrite_perfect_coro" in coroconfig:
             if coroconfig["bool_overwrite_perfect_coro"]:
@@ -322,7 +325,8 @@ class Coronagraph(optsy.OpticalSystem):
             corono_focal_plane = prop.fft_choosecenter(input_wavefront_after_apod_pad,
                                                        inverse=False,
                                                        center_pos='bb',
-                                                       norm='ortho')
+                                                       norm='ortho',
+                                                       dtype_complex=self.dtype_complex)
 
             if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
@@ -347,7 +351,8 @@ class Coronagraph(optsy.OpticalSystem):
             lyotplane_before_lyot = prop.fft_choosecenter(corono_focal_plane * FPmsk,
                                                           inverse=True,
                                                           center_pos='bb',
-                                                          norm='ortho')
+                                                          norm='ortho',
+                                                          dtype_complex=self.dtype_complex)
 
         elif self.prop_apod2lyot == "mft-babinet":
             # Apod plane to focal plane
@@ -356,7 +361,8 @@ class Coronagraph(optsy.OpticalSystem):
                                               AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
                                               BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
                                               norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
-                                              only_mat_mult=True)
+                                              only_mat_mult=True,
+                                              dtype_complex=self.dtype_complex)
             else:
                 lambda_ratio = wavelength / self.wavelength_0
                 dim_science_here = self.dim_fpm
@@ -366,7 +372,8 @@ class Coronagraph(optsy.OpticalSystem):
                                               dim_output=dim_science_here,
                                               nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
                                               inverse=False,
-                                              norm='ortho')
+                                              norm='ortho',
+                                              dtype_complex=self.dtype_complex)
 
             if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
@@ -395,7 +402,8 @@ class Coronagraph(optsy.OpticalSystem):
                              AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
                              BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
                              norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
-                             only_mat_mult=True), self.dim_overpad_pupil)
+                             only_mat_mult=True,
+                             dtype_complex=self.dtype_complex), self.dim_overpad_pupil)
             else:
                 lyotplane_before_lyot_central_part = crop_or_pad_image(
                     prop.mft(corono_focal_plane * (1 - FPmsk),
@@ -403,7 +411,8 @@ class Coronagraph(optsy.OpticalSystem):
                              dim_output=int(2 * self.prad),
                              nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
                              inverse=True,
-                             norm='ortho'), self.dim_overpad_pupil)
+                             norm='ortho',
+                             dtype_complex=self.dtype_complex), self.dim_overpad_pupil)
 
             lyotplane_before_lyot = input_wavefront_after_apod - lyotplane_before_lyot_central_part
 
@@ -414,7 +423,8 @@ class Coronagraph(optsy.OpticalSystem):
                                               AA=self.AA_direct[self.wav_vec.tolist().index(wavelength)],
                                               BB=self.BB_direct[self.wav_vec.tolist().index(wavelength)],
                                               norm0=self.norm0_direct[self.wav_vec.tolist().index(wavelength)],
-                                              only_mat_mult=True)
+                                              only_mat_mult=True,
+                                              dtype_complex=self.dtype_complex)
             else:
                 dim_science_here = self.dimScience
                 fpm_sampling_here = self.Science_sampling
@@ -425,7 +435,8 @@ class Coronagraph(optsy.OpticalSystem):
                                               dim_output=dim_science_here,
                                               nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
                                               inverse=False,
-                                              norm='ortho')
+                                              norm='ortho',
+                                              dtype_complex=self.dtype_complex)
 
             if dir_save_all_planes is not None:
                 name_plane = 'EF_FP_before_FPM' + f'_wl{int(wavelength * 1e9)}'
@@ -450,7 +461,8 @@ class Coronagraph(optsy.OpticalSystem):
                              AA=self.AA_inverse[self.wav_vec.tolist().index(wavelength)],
                              BB=self.BB_inverse[self.wav_vec.tolist().index(wavelength)],
                              norm0=self.norm0_inverse[self.wav_vec.tolist().index(wavelength)],
-                             only_mat_mult=True), self.dim_overpad_pupil)
+                             only_mat_mult=True,
+                             dtype_complex=self.dtype_complex), self.dim_overpad_pupil)
             else:
                 lyotplane_before_lyot = crop_or_pad_image(
                     prop.mft(corono_focal_plane * FPmsk,
@@ -458,7 +470,8 @@ class Coronagraph(optsy.OpticalSystem):
                              dim_output=int(2 * self.prad),
                              nbres=dim_science_here / fpm_sampling_here / lambda_ratio,
                              inverse=True,
-                             norm='ortho'), self.dim_overpad_pupil)
+                             norm='ortho',
+                             dtype_complex=self.dtype_complex), self.dim_overpad_pupil)
 
         elif self.prop_apod2lyot == "regional-sampling":
             # Apod plane to Lyot plane
@@ -476,7 +489,8 @@ class Coronagraph(optsy.OpticalSystem):
                                                                    BBs_inverse=self.BBs_inverse,
                                                                    norm0s_direct=self.norm0s_direct,
                                                                    norm0s_inverse=self.norm0s_inverse,
-                                                                   butterworths=self.butterworths)
+                                                                   butterworths=self.butterworths,
+                                                                   dtype_complex=self.dtype_complex)
             else:
                 lyotplane_before_lyot = prop_fpm_regional_sampling(input_wavefront_after_apod,
                                                                    FPmsk,
@@ -484,7 +498,8 @@ class Coronagraph(optsy.OpticalSystem):
                                                                    real_dim_input=int(2 * self.prad),
                                                                    shift=(0, 0),
                                                                    filter_order=15,
-                                                                   alpha=1.5)
+                                                                   alpha=1.5,
+                                                                   dtype_complex=self.dtype_complex)
 
         else:
             raise ValueError(f"{self.prop_apod2lyot} is not a known `prop_apod2lyot` propagation method")
@@ -545,7 +560,7 @@ class Coronagraph(optsy.OpticalSystem):
             if self.achrom_phase_coro:
                 # If we want to do an achromatic fqpm, we do not include a variation
                 # of the phase with the wl.
-                fqpm.append(np.exp(1j * phase4q))
+                fqpm.append(np.exp(1j * phase4q, dtype=self.dtype_complex))
             else:
                 # In the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
                 fqpm.append(self.EF_from_phase_and_ampl(phase_abb=phase4q, wavelengths=wav))
@@ -595,7 +610,7 @@ class Coronagraph(optsy.OpticalSystem):
             if self.achrom_phase_coro:
                 # If we want to do an achromatic vortex, we do not include a variation
                 # of the phase with the wl.
-                vortex.append(np.exp(1j * phasevortex_cut))
+                vortex.append(np.exp(1j * phasevortex_cut, dtype=self.dtype_complex))
             else:
                 # In the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
                 vortex.append(self.EF_from_phase_and_ampl(phase_abb=phasevortex_cut, wavelengths=wav))
@@ -655,7 +670,7 @@ class Coronagraph(optsy.OpticalSystem):
             if self.achrom_phase_coro:
                 # If we want to do an achromatic vortex, we do not include a variation
                 # of the phase with the wl.
-                wrapped_vortex.append(np.exp(1j * phasevortex_cut))
+                wrapped_vortex.append(np.exp(1j * phasevortex_cut, dtype=self.dtype_complex))
             else:
                 # In the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
                 wrapped_vortex.append(self.EF_from_phase_and_ampl(phase_abb=phasevortex_cut, wavelengths=wav))
@@ -750,7 +765,7 @@ class Coronagraph(optsy.OpticalSystem):
             if self.achrom_phase_coro:
                 # If we want to do an achromatic hlc, we do not include a variation
                 # of the phase with the wl.
-                hlc_all_wl.append((1 + ampl_hlc) * np.exp(1j * phase_hlc))
+                hlc_all_wl.append((1 + ampl_hlc) * np.exp(1j * phase_hlc, dtype=self.dtype_complex))
             else:
                 # In the general case, we use the EF_from_phase_and_ampl which handle the phase chromaticity.
                 hlc_all_wl.append(self.EF_from_phase_and_ampl(ampl_abb=ampl_hlc, phase_abb=phase_hlc, wavelengths=wav))
@@ -951,6 +966,7 @@ def prop_fpm_regional_sampling(pup,
                                norm0s_inverse=None,
                                butterworths=None,
                                returnAAsBBs=False,
+                               dtype_complex="complex128",
                                dir_save_all_planes=None):
     """
     Calculate the coronagraphic electric field in the Lyot plane by using varying sampling in different parts of the FPM.
@@ -1032,6 +1048,10 @@ def prop_fpm_regional_sampling(pup,
         if False, the normal propagation image is returned
         if True, return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths
         that can be used for all the propagation when only_mat_mult is True.
+    dtype_complex: string, default 'complex128'
+            bit number for the complex arrays in the MFT matrices.
+            Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
+            cost of lower precision.
     dir_save_all_planes : string or None, default None
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
@@ -1127,7 +1147,8 @@ def prop_fpm_regional_sampling(pup,
                                      dim_output=dim_fpm,
                                      nbres=nbres[k],
                                      norm='ortho',
-                                     returnAABB=True)
+                                     returnAABB=True,
+                                     dtype_complex=dtype_complex)
             AAs_direct.append(AA)
             BBs_direct.append(BB)
             norm0s_direct.append(norm0)
@@ -1138,7 +1159,8 @@ def prop_fpm_regional_sampling(pup,
                                      nbres=nbres[k],
                                      inverse=True,
                                      norm='ortho',
-                                     returnAABB=True)
+                                     returnAABB=True,
+                                     dtype_complex=dtype_complex)
             AAs_inverse.append(AA)
             BBs_inverse.append(BB)
             norm0s_inverse.append(norm0)
@@ -1149,12 +1171,14 @@ def prop_fpm_regional_sampling(pup,
                                         only_mat_mult=True,
                                         AA=AAs_direct[k],
                                         BB=BBs_direct[k],
-                                        norm0=norm0s_direct[k])
+                                        norm0=norm0s_direct[k],
+                                        dtype_complex=dtype_complex)
             ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
                                            only_mat_mult=True,
                                            AA=AAs_inverse[k],
                                            BB=BBs_inverse[k],
-                                           norm0=norm0s_inverse[k])
+                                           norm0=norm0s_inverse[k],
+                                           dtype_complex=dtype_complex)
 
             if dir_save_all_planes is not None:
                 name_plane = f'FPbeforeFPM_number{k}'
@@ -1170,7 +1194,8 @@ def prop_fpm_regional_sampling(pup,
                                         nbres=nbres[k],
                                         norm='ortho',
                                         X_offset_output=shift[0] * samplings[k],
-                                        Y_offset_output=shift[1] * samplings[k])
+                                        Y_offset_output=shift[1] * samplings[k],
+                                        dtype_complex=dtype_complex)
             ef_pp_before_ls_reg = prop.mft(ef_fp_before_fpm * fpm * but_here,
                                            real_dim_input=dim_fpm,
                                            dim_output=real_dim_input,
@@ -1178,7 +1203,8 @@ def prop_fpm_regional_sampling(pup,
                                            inverse=True,
                                            norm='ortho',
                                            X_offset_input=shift[0] * samplings[k],
-                                           Y_offset_input=shift[1] * samplings[k])
+                                           Y_offset_input=shift[1] * samplings[k],
+                                           dtype_complex=dtype_complex)
 
             if dir_save_all_planes is not None:
                 name_plane = f'FPbeforeFPM_nbr{int(nbres[k])}_sampling{int(samplings[k])}'

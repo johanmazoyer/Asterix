@@ -36,6 +36,13 @@ class OpticalSystem:
         if modelconfig["diam_pup_in_pix"] % 2 == 1:
             raise ValueError("Please set [modelconfig]['diam_pup_in_pix'] parameter to an even number.")
 
+        if "complex_precision" in modelconfig.keys():
+            if modelconfig["complex_precision"] not in ['complex64', 'complex128']:
+                raise ValueError("[modelconfig]['complex_precision parameter'] must be 'complex64' or 'complex128'")
+            self.dtype_complex = modelconfig["complex_precision"]
+        else:
+            self.dtype_complex = "complex128"
+
         # pupil in pixel
         self.prad = modelconfig["diam_pup_in_pix"] / 2
 
@@ -152,7 +159,8 @@ class OpticalSystem:
                                    nbres=self.dimScience / self.Science_sampling / lambda_ratio,
                                    inverse=False,
                                    norm='ortho',
-                                   returnAABB=True)
+                                   returnAABB=True,
+                                   dtype_complex=self.dtype_complex)
 
                 self.AA_direct_final.append(a)
                 self.BB_direct_final.append(b)
@@ -254,7 +262,8 @@ class OpticalSystem:
                                       X_offset_output=Psf_offset[0],
                                       Y_offset_output=Psf_offset[1],
                                       inverse=False,
-                                      norm='ortho')
+                                      norm='ortho',
+                                      dtype_complex=self.dtype_complex)
         else:
             # most often we center in between 4 pixels. In this case we used the AA and BB already measured
             # and only do the multiplication matrix
@@ -262,7 +271,8 @@ class OpticalSystem:
                                       AA=self.AA_direct_final[self.wav_vec.tolist().index(wavelength)],
                                       BB=self.BB_direct_final[self.wav_vec.tolist().index(wavelength)],
                                       norm0=self.norm0_direct_final[self.wav_vec.tolist().index(wavelength)],
-                                      only_mat_mult=True)
+                                      only_mat_mult=True,
+                                      dtype_complex=self.dtype_complex)
 
         if in_contrast:
             focal_plane_EF /= np.sqrt(self.norm_monochrom[self.wav_vec.tolist().index(wavelength)])
@@ -713,7 +723,7 @@ class OpticalSystem:
         else:
             return 0.
 
-    def EF_from_phase_and_ampl(self, phase_abb=0., ampl_abb=0., wavelengths=-1., dtype_complex='complex128'):
+    def EF_from_phase_and_ampl(self, phase_abb=0., ampl_abb=0., wavelengths=-1.):
         """Create an electrical field from an phase and amplitude aberrations
         as follows:
 
@@ -732,10 +742,6 @@ class OpticalSystem:
         wavelengths : float or list of floats
             Default is all the wl of the testbed self.wav_vec
             wavelengths in m.
-        dtype_complex: string, default 'complex128'
-            bit number for the complex arrays in the exponential.
-            Can be 'complex128' or 'complex64'. The latter increases the speed of the exp but at the
-            cost of lower precision.
 
         Returns
         --------
@@ -764,8 +770,10 @@ class OpticalSystem:
 
         entrance_EF = []
         for wavelength in wavelength_vec:
-            entrance_EF.append((1 + np.asarray(ampl_abb).astype(dtype_complex)) *
-                                np.exp(1j * phase_abb * self.wavelength_0 / wavelength, dtype=dtype_complex))
+            entrance_EF.append(
+                np.asarray((1 + ampl_abb) *
+                           np.exp(1j * phase_abb * self.wavelength_0 / wavelength, dtype=self.dtype_complex)).astype(
+                               self.dtype_complex))
 
         entrance_EF = np.array(entrance_EF)
 
