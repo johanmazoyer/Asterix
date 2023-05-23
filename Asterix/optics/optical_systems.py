@@ -713,7 +713,7 @@ class OpticalSystem:
         else:
             return 0.
 
-    def EF_from_phase_and_ampl(self, phase_abb=0., ampl_abb=0., wavelengths=-1.):
+    def EF_from_phase_and_ampl(self, phase_abb=0., ampl_abb=0., wavelengths=-1., dtype_complex='complex128'):
         """Create an electrical field from an phase and amplitude aberrations
         as follows:
 
@@ -732,6 +732,10 @@ class OpticalSystem:
         wavelengths : float or list of floats
             Default is all the wl of the testbed self.wav_vec
             wavelengths in m.
+        dtype_complex: string, default 'complex128'
+            bit number for the complex arrays in the exponential.
+            Can be 'complex128' or 'complex64'. The latter increases the speed of the exp but at the
+            cost of lower precision.
 
         Returns
         --------
@@ -760,7 +764,9 @@ class OpticalSystem:
 
         entrance_EF = []
         for wavelength in wavelength_vec:
-            entrance_EF.append((1 + ampl_abb) * np.exp(1j * phase_abb * self.wavelength_0 / wavelength))
+            entrance_EF.append((1 + np.asarray(ampl_abb).astype(dtype_complex)) *
+                                np.exp(1j * phase_abb * self.wavelength_0 / wavelength, dtype=dtype_complex))
+
         entrance_EF = np.array(entrance_EF)
 
         if len(wavelength_vec) == 1:

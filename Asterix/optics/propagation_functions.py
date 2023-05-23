@@ -232,8 +232,8 @@ def mft(image,
             norm0 = np.sqrt(nbresx * nbresy / dim_input_x / dim_input_y / dim_output_x / dim_output_y)
         sign_exponential = 1
 
-    AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0)).astype(dtype_complex)
-    BB = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(xx1, uu1)).astype(dtype_complex)
+    AA = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(uu0, xx0), dtype=dtype_complex)
+    BB = np.exp(sign_exponential * 1j * 2 * np.pi * np.outer(xx1, uu1), dtype=dtype_complex)
 
     if returnAABB:
         return AA, BB, norm0
@@ -270,7 +270,7 @@ def mat_mult_mft(image, AA, BB, norm0):
     return norm0 * ((AA @ image) @ BB)
 
 
-def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
+def prop_fresnel(pup, lam, z, rad, prad, retscale=0, dtype_complex='complex128'):
     """Fresnel propagation of electric field along a distance z in a collimated
     beam and in free space.
 
@@ -303,6 +303,10 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
         of the input and output arrays
         if 0, the function returns the output
         electric field (see Returns)
+    dtype_complex: string, default 'complex128'
+        bit number for the complex arrays in the exponential.
+        Can be 'complex128' or 'complex64'. The latter increases the speed of the exp but at the
+        cost of lower precision.
 
     Returns
     --------
@@ -356,24 +360,29 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0):
     u, v = np.meshgrid(np.arange(dim) - dim / 2, np.arange(dim) - dim / 2)
     rho = np.hypot(v, u)
     # Fresnel factor that applies before Fourier transform
-    H = np.exp(1j * sign * np.pi * rho**2 / dim * dx / dxout)
+    H = np.exp(1j * sign * np.pi * rho**2 / dim * dx / dxout, dtype=dtype_complex)
 
     if np.abs(fac) > 1.2:
         print('need to increase lam or z or 1/dx')
         return -1
 
     # Fourier transform using MFT
-    result = mft(pup * H, real_dim_input=2 * prad, dim_output=dim, nbres=2 * prad * fac, inverse=inverse_mft)
+    result = mft(pup * H,
+                 real_dim_input=2 * prad,
+                 dim_output=dim,
+                 nbres=2 * prad * fac,
+                 inverse=inverse_mft,
+                 dtype=dtype_complex)
 
     # Fresnel factor that applies after Fourier transform
-    result = result * np.exp(1j * sign * np.pi * rho**2 / dim * dxout / dx)
+    result = result * np.exp(1j * sign * np.pi * rho**2 / dim * dxout / dx, dtype=dtype_complex)
 
     if sign == -1:
         result = result / fac**2
     return result, dxout
 
 
-def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
+def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2, dtype_complex='complex128'):
     """Angular spectrum propagation of electric field along a distance z in a
     collimated beam and in free space in close field (small z).
 
@@ -400,6 +409,10 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
         factor of oversizing in the fourier plane in diameter of the pupil
         (gamma*2*prad is the output dim)
         optional: default = 2
+    dtype_complex: string, default 'complex128'
+        bit number for the complex arrays in the exponential.
+        Can be 'complex128' or 'complex64'. The latter increases the speed of the exp but at the
+        cost of lower precision.
 
     Returns
     --------
@@ -419,8 +432,8 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2):
 
     rho2D = np.fft.fftshift(np.hypot(v, u)) * (cycles / diam_pup_in_m) / Nfourier
 
-    angular = np.exp(-1j * np.pi * z * lam * (rho2D**2))
-    return np.fft.ifft2(angular * four, norm='ortho')
+    angular = np.exp(-1j * np.pi * z * lam * (rho2D**2), dtype=dtype_complex)
+    return np.fft.ifft2(angular * four, norm='ortho').astype(dtype_complex)
 
 
 def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward'):
