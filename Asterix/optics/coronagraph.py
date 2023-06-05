@@ -1048,7 +1048,7 @@ def prop_fpm_regional_sampling(pup,
         if False, the normal propagation image is returned
         if True, return AAs_direct, AAs_inverse, BBs_direct, BBs_inverse, norm0s_direct, norm0s_inverse, butterworths
         that can be used for all the propagation when only_mat_mult is True.
-    dtype_complex: string, default 'complex128'
+    dtype_complex : string, default 'complex128'
             bit number for the complex arrays in the MFT matrices.
             Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
             cost of lower precision.

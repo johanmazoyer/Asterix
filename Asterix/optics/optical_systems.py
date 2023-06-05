@@ -36,7 +36,7 @@ class OpticalSystem:
         if modelconfig["diam_pup_in_pix"] % 2 == 1:
             raise ValueError("Please set [modelconfig]['diam_pup_in_pix'] parameter to an even number.")
 
-        if "complex_precision" in modelconfig.keys():
+        if "complex_precision" in modelconfig:
             if modelconfig["complex_precision"] not in ['complex64', 'complex128']:
                 raise ValueError("[modelconfig]['complex_precision parameter'] must be 'complex64' or 'complex128'")
             self.dtype_complex = modelconfig["complex_precision"]

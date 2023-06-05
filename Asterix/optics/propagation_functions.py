@@ -123,7 +123,7 @@ def mft(image,
         returnAABB: boolean, default False
             if False, the normal MFT(image is returned)
             if True, we return AA, BB, norm0 used to do norm0 * ((AA @ image) @ BB).
-        dtype_complex: string, default 'complex128'
+        dtype_complex : string, default 'complex128'
             bit number for the complex arrays in the MFT matrices.
             Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
             cost of lower precision.
@@ -303,7 +303,7 @@ def prop_fresnel(pup, lam, z, rad, prad, retscale=0, dtype_complex='complex128')
         of the input and output arrays
         if 0, the function returns the output
         electric field (see Returns)
-    dtype_complex: string, default 'complex128'
+    dtype_complex : string, default 'complex128'
         bit number for the complex arrays in the exponential.
         Can be 'complex128' or 'complex64'. The latter increases the speed of the exp but at the
         cost of lower precision.
@@ -409,7 +409,7 @@ def prop_angular_spectrum(pup, lam, z, rad, prad, gamma=2, dtype_complex='comple
         factor of oversizing in the fourier plane in diameter of the pupil
         (gamma*2*prad is the output dim)
         optional: default = 2
-    dtype_complex: string, default 'complex128'
+    dtype_complex : string, default 'complex128'
         bit number for the complex arrays in the exponential.
         Can be 'complex128' or 'complex64'. The latter increases the speed of the exp but at the
         cost of lower precision.
@@ -481,7 +481,7 @@ def fft_choosecenter(image, inverse=False, center_pos='bb', norm='backward', dty
         if 'ortho' 1/sqrt(N) normalisation is done in both directions.
         Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane
         The default is 'backward' to be consistent with numpy.fft.fft2 and numpy.fft.ifft2
-    dtype_complex: string, default 'complex128'
+    dtype_complex : string, default 'complex128'
         bit number for the complex arrays in the exponential.
         Can be 'complex128' or 'complex64'. The latter increases the speed of the exp but at the
         cost of lower precision. Because numpy fft does not have a dtype parameter, the difference in speed

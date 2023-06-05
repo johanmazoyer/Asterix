@@ -263,7 +263,7 @@ class Estimator:
             estimation of the Electrical field
         """
 
-        if 'wavelength' in kwargs.keys():
+        if 'wavelength' in kwargs:
             raise ValueError(("estimate() function is polychromatic, "
                               "do not use wavelength keyword. "
                               "Use 'wavelengths' keyword even for monochromatic intensity"))
