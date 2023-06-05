@@ -164,7 +164,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         print("Start PW matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
 
     numprobe = len(posprobes)
-    deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=complex)
+    deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=testbed.dtype_complex)
     probephase = np.zeros((numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
     matrix = np.zeros((numprobe, 2))
     PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
@@ -218,7 +218,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     return PWMatrix
 
 
-def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None):
+def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, dtype_complex='complex128'):
     """Calculate the focal plane electric field from the probe image
     differences and the modeled probe matrix.
 
@@ -233,6 +233,10 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None):
     dir_save_all_planes : string or None, default None
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
+    dtype_complex : string, default 'complex128'
+        bit number for the complex arrays in the PW matrices.
+        Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
+        cost of lower precision.
 
     Returns
     --------
@@ -244,7 +248,7 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None):
     dimimages = len(Difference[0])
     numprobe = len(Vectorprobes[0, 0])
     Differenceij = np.zeros((numprobe))
-    Resultat = np.zeros((dimimages, dimimages), dtype=complex)
+    Resultat = np.zeros((dimimages, dimimages), dtype=dtype_complex)
     l_ind = 0
     for i in np.arange(dimimages):
         for j in np.arange(dimimages):

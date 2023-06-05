@@ -340,7 +340,7 @@ class Estimator:
                                                             wavelengths=wavei,
                                                             **kwargs)
 
-                    result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[i]))
+                    result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[i],dtype_complex=testbed.dtype_complex))
 
                     if 'dir_save_all_planes' in kwargs.keys():
                         if kwargs['dir_save_all_planes'] is not None:
@@ -358,7 +358,7 @@ class Estimator:
                                                         wavelengths=self.wav_vec_estim[0],
                                                         **kwargs)
 
-                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0]))
+                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0],dtype_complex=testbed.dtype_complex))
                 if 'dir_save_all_planes' in kwargs.keys():
                     if kwargs['dir_save_all_planes'] is not None:
                         name_plane = 'PW_estimate_singlewl' + f'_wl{int(self.wav_vec_estim[0] * 1e9)}'
@@ -374,7 +374,7 @@ class Estimator:
                                                         wavelengths=testbed.wav_vec,
                                                         **kwargs)
 
-                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0]))
+                result_estim.append(wfs.calculate_pw_estimate(Difference, self.PWMatrix[0],dtype_complex=testbed.dtype_complex))
                 if 'dir_save_all_planes' in kwargs.keys():
                     if kwargs['dir_save_all_planes'] is not None:
                         name_plane = 'PW_estimate_broadband_pwprobes' + f'_wl{int(testbed.wavelength_0 * 1e9)}_bw{testbed.Delta_wav * 1e9}'

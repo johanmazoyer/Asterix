@@ -766,7 +766,7 @@ def calc_strokemin_solution(mask,
     pixel_in_mask = np.sum(mask)
 
     # With notations from Potier PhD eq 4.74 p78:
-    Eab = np.zeros(int(np.sum(mask)) * len(Result_Estimate), dtype=complex)
+    Eab = np.zeros(int(np.sum(mask)) * len(Result_Estimate), dtype=testbed.dtype_complex)
     for i_wave, estimate_at_this_wave in enumerate(Result_Estimate):
         Eab[i_wave * int(np.sum(mask)):(i_wave + 1) * int(np.sum(mask))] = estimate_at_this_wave[np.where(mask == 1)]
 

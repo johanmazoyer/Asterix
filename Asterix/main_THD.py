@@ -42,7 +42,7 @@ class THD2(Testbed):
 
         # The following line can be added to change the precision of the complex number. complex64 is faster but can be
         # slightly different at the 10-10 contrast level.
-        # model_config['complex_precision'] = 'complex128'
+        # model_config['complex_precision'] = 'complex64'
 
         # Create all optical elements of the THD
         entrance_pupil = Pupil(model_config,

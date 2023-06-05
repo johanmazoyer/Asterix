@@ -196,7 +196,10 @@ class OpticalSystem:
             print(entrance_EF)
             raise TypeError("entrance_EF should be a float of a numpy array of floats")
 
-        exit_EF = entrance_EF
+        if isinstance(entrance_EF, (np.ndarray)):
+            exit_EF = entrance_EF.astype(self.dtype_complex)
+        else:
+            exit_EF = entrance_EF
         return exit_EF
 
     def todetector(self,
