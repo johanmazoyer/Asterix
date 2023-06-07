@@ -40,6 +40,10 @@ class THD2(Testbed):
         model_config['mandatory_wls'] = sorted(
             np.unique(np.array(model_config['mandatory_wls'] + config["Estimationconfig"]["estimation_wls"])).tolist())
 
+        # The following line can be added to change the precision of the complex number. complex64 is faster but can be
+        # slightly different at the 10-10 contrast level.
+        # model_config['complex_precision'] = 'complex64'
+
         # Create all optical elements of the THD
         entrance_pupil = Pupil(model_config,
                                PupType=model_config["filename_instr_pup"],

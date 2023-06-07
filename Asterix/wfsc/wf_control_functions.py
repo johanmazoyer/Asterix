@@ -457,8 +457,12 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             if DM.z_position != 0:
 
                 wavefrontupstreaminDM = crop_or_pad_image(
-                    prop.prop_angular_spectrum(wavefrontupstream, wavelength, DM.z_position, DM.diam_pup_in_m / 2,
-                                               DM.prad), DM.dim_overpad_pupil)
+                    prop.prop_angular_spectrum(wavefrontupstream,
+                                               wavelength,
+                                               DM.z_position,
+                                               DM.diam_pup_in_m / 2,
+                                               DM.prad,
+                                               dtype_complex=testbed.dtype_complex), DM.dim_overpad_pupil)
 
             if visu:
                 plt.ion()
@@ -486,13 +490,16 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                                DM_phase_init[testbed.name_of_DMs.index(DM_name)])
 
                     else:
-
+                        efDMplane = wavefrontupstreaminDM * DM.EF_from_phase_and_ampl(
+                            phase_abb=phase_in_basis + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
+                            wavelengths=wavelength)
                         wavefront = crop_or_pad_image(
-                            prop.prop_angular_spectrum(
-                                wavefrontupstreaminDM * DM.EF_from_phase_and_ampl(
-                                    phase_abb=phase_in_basis + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
-                                    wavelengths=wavelength), wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad),
-                            DM.dim_overpad_pupil)
+                            prop.prop_angular_spectrum(efDMplane,
+                                                       wavelength,
+                                                       -DM.z_position,
+                                                       DM.diam_pup_in_m / 2,
+                                                       DM.prad,
+                                                       dtype_complex=testbed.dtype_complex), DM.dim_overpad_pupil)
 
                 if MatrixType == 'smallphase':
                     # TODO we added a 1+ which was initially in Axel's code and that was
@@ -501,12 +508,15 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                         wavefront = (1 + 1j * phase_in_basis) * wavefrontupstream * DM.EF_from_phase_and_ampl(
                             phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)], wavelengths=wavelength)
                     else:
-
+                        efDMplane = wavefrontupstreaminDM * (1 + 1j * phase_in_basis) * DM.EF_from_phase_and_ampl(
+                            phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)], wavelengths=wavelength)
                         wavefront = crop_or_pad_image(
-                            prop.prop_angular_spectrum(
-                                wavefrontupstreaminDM * (1 + 1j * phase_in_basis) * DM.EF_from_phase_and_ampl(
-                                    phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)], wavelengths=wavelength),
-                                wavelength, -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil)
+                            prop.prop_angular_spectrum(efDMplane,
+                                                       wavelength,
+                                                       -DM.z_position,
+                                                       DM.diam_pup_in_m / 2,
+                                                       DM.prad,
+                                                       dtype_complex=testbed.dtype_complex), DM.dim_overpad_pupil)
 
                 if dir_save_all_planes is not None:
                     name_plane = 'EF_PP_after_' + DM_name + f'_wl{int(wavelength * 1e9)}'
@@ -756,7 +766,7 @@ def calc_strokemin_solution(mask,
     pixel_in_mask = np.sum(mask)
 
     # With notations from Potier PhD eq 4.74 p78:
-    Eab = np.zeros(int(np.sum(mask)) * len(Result_Estimate), dtype=complex)
+    Eab = np.zeros(int(np.sum(mask)) * len(Result_Estimate), dtype=testbed.dtype_complex)
     for i_wave, estimate_at_this_wave in enumerate(Result_Estimate):
         Eab[i_wave * int(np.sum(mask)):(i_wave + 1) * int(np.sum(mask))] = estimate_at_this_wave[np.where(mask == 1)]
 

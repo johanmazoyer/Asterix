@@ -231,7 +231,7 @@ class Corrector:
                 pixel_in_mask = int(np.sum(self.MaskEstim))
                 number_wl_matrix = self.Gmatrix.shape[0] // (2 * pixel_in_mask)
 
-                self.G = np.zeros((number_wl_matrix * pixel_in_mask, self.Gmatrix.shape[1]), dtype=complex)
+                self.G = np.zeros((number_wl_matrix * pixel_in_mask, self.Gmatrix.shape[1]), dtype=testbed.dtype_complex)
 
                 for i in range(number_wl_matrix):
                     self.G[i * pixel_in_mask:(i + 1) * pixel_in_mask, :] = (

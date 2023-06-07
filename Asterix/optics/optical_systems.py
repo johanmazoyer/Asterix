@@ -36,6 +36,13 @@ class OpticalSystem:
         if modelconfig["diam_pup_in_pix"] % 2 == 1:
             raise ValueError("Please set [modelconfig]['diam_pup_in_pix'] parameter to an even number.")
 
+        if "complex_precision" in modelconfig:
+            if modelconfig["complex_precision"] not in ['complex64', 'complex128']:
+                raise ValueError("[modelconfig]['complex_precision parameter'] must be 'complex64' or 'complex128'")
+            self.dtype_complex = modelconfig["complex_precision"]
+        else:
+            self.dtype_complex = "complex128"
+
         # pupil in pixel
         self.prad = modelconfig["diam_pup_in_pix"] / 2
 
@@ -152,7 +159,8 @@ class OpticalSystem:
                                    nbres=self.dimScience / self.Science_sampling / lambda_ratio,
                                    inverse=False,
                                    norm='ortho',
-                                   returnAABB=True)
+                                   returnAABB=True,
+                                   dtype_complex=self.dtype_complex)
 
                 self.AA_direct_final.append(a)
                 self.BB_direct_final.append(b)
@@ -188,7 +196,10 @@ class OpticalSystem:
             print(entrance_EF)
             raise TypeError("entrance_EF should be a float of a numpy array of floats")
 
-        exit_EF = entrance_EF
+        if isinstance(entrance_EF, (np.ndarray)):
+            exit_EF = entrance_EF.astype(self.dtype_complex)
+        else:
+            exit_EF = entrance_EF
         return exit_EF
 
     def todetector(self,
@@ -254,7 +265,8 @@ class OpticalSystem:
                                       X_offset_output=Psf_offset[0],
                                       Y_offset_output=Psf_offset[1],
                                       inverse=False,
-                                      norm='ortho')
+                                      norm='ortho',
+                                      dtype_complex=self.dtype_complex)
         else:
             # most often we center in between 4 pixels. In this case we used the AA and BB already measured
             # and only do the multiplication matrix
@@ -262,7 +274,8 @@ class OpticalSystem:
                                       AA=self.AA_direct_final[self.wav_vec.tolist().index(wavelength)],
                                       BB=self.BB_direct_final[self.wav_vec.tolist().index(wavelength)],
                                       norm0=self.norm0_direct_final[self.wav_vec.tolist().index(wavelength)],
-                                      only_mat_mult=True)
+                                      only_mat_mult=True,
+                                      dtype_complex=self.dtype_complex)
 
         if in_contrast:
             focal_plane_EF /= np.sqrt(self.norm_monochrom[self.wav_vec.tolist().index(wavelength)])
@@ -760,7 +773,11 @@ class OpticalSystem:
 
         entrance_EF = []
         for wavelength in wavelength_vec:
-            entrance_EF.append((1 + ampl_abb) * np.exp(1j * phase_abb * self.wavelength_0 / wavelength))
+            entrance_EF.append(
+                np.asarray((1 + ampl_abb) *
+                           np.exp(1j * phase_abb * self.wavelength_0 / wavelength, dtype=self.dtype_complex)).astype(
+                               self.dtype_complex))
+
         entrance_EF = np.array(entrance_EF)
 
         if len(wavelength_vec) == 1:
