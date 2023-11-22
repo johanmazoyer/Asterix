@@ -91,7 +91,12 @@ class MaskDH:
                 raise OSError("The path to fonts is not implemented for your OS yet.")
             d = ImageDraw.Draw(img)
             d.text((int(dimFP / 4), int(dimFP / 4)), "C N \nR S", font=fnt, fill=1)
+
+            # For the correct orientation in simulation and in DS9 testbed data
             maskDH = np.flipud(np.asarray(img, dtype=float))
+
+            # For the correct orientation on the testbed labview screen for demo
+            # maskDH = np.flip(np.rot90(np.flipud(np.asarray(img, dtype=float))), axis=0)
 
         elif self.DH_shape == "square":
             maskDH[xx < self.corner_pos[0] * FP_sampling] = 0
