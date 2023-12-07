@@ -246,7 +246,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     pos_in_matrix = 0
 
     for DM_name in testbed.name_of_DMs:
-
+        header['DM_NAME'] = DM_name
         DM: DeformableMirror = vars(testbed)[DM_name]
         if not DM.active:
             continue
