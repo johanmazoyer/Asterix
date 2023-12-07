@@ -210,7 +210,10 @@ def create_singlewl_pw_matrix(testbed: Testbed,
                 PWMatrix[l_ind] = np.zeros((2, numprobe))
             l_ind = l_ind + 1
 
-    header = from_param_to_header(testbed.config_file)
+    if hasattr(testbed, 'config_file'):
+        header = from_param_to_header(testbed.config_file)
+    else:
+        header = fits.Header()
 
     fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix), header)
     visuPWMap = "EigenPW_" + string_dims_PWMatrix

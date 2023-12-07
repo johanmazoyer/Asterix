@@ -156,6 +156,9 @@ class Estimator:
         for wavei in self.wav_vec_estim:
             if self.Estim_sampling / testbed.wavelength_0 * wavei < 2.5:
                 raise ValueError(f"Estimator sampling must be >= 2.5 at all estimation wavelengths. "
+                    f"For [Estimationconfig]['Estim_bin_factor'] = {Estimationconfig['Estim_bin_factor']}, "
+                    f"the estimator sampling is {self.Estim_sampling} at wavelength {wavei*1e9} nm. "
+                    "Please decrease [Estimationconfig]['Estim_bin_factor'] parameter.")
                                  f"For [Estimationconfig]['Estim_bin_factor'] = {Estimationconfig['Estim_bin_factor']}, "
                                  f"the estimator sampling is {self.Estim_sampling} at wavelength {wavei * 1e9} nm. "
                                  "Please decrease [Estimationconfig]['Estim_bin_factor'] parameter.")
@@ -226,7 +229,10 @@ class Estimator:
                     if 775 < wave_k * 1e9 < 795:
                         string_laser = "_laser3"  # ~785nm laser source
 
-                    header = from_param_to_header(testbed.config_file)
+                    if hasattr(testbed, 'config_file'):
+                        header = from_param_to_header(testbed.config_file)
+                    else:
+                        header = fits.Header()
 
                     namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + string_laser
                     fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
