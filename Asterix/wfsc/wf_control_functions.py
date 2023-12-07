@@ -280,18 +280,14 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         # For 1DM test / 2DM test
         # Matrix is saved/loaded for all the FP and then crop at the good size later
 
-        # we save the DM basis
-        list_str = basis_str.split('_')
-        list_str.pop(2)
-        name_basis_fits = "Basis" + '_'.join(list_str) + ".fits"
-        fits.writeto(os.path.join(matrix_dir, name_basis_fits), DM.basis, header, overwrite=True)
-
         if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage == 0.).all():
             if not silence:
                 print("The matrix " + fileDirectMatrix + " already exists")
 
-            InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(
-                os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
+            InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(os.path.join(
+                matrix_dir, fileDirectMatrix + ".fits"),
+                                                                                    extname='MATRIX')
+            DM.basis = fits.getdata(os.path.join(matrix_dir, fileDirectMatrix + ".fits"), extname='BASIS')
 
         else:
             start_time = time.time()
@@ -609,8 +605,11 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 plt.ioff()
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
-                fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
-                             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size], header)
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
+                hdu_list.append(
+                    fits.ImageHDU(data=InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size], name='MATRIX'))
+                hdu_list.append(fits.ImageHDU(data=DM.basis, name='BASIS'))
+                hdu_list.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
 
             if not silence:
                 print("")
