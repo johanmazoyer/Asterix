@@ -4,7 +4,7 @@ import numpy as np
 
 from astropy.io import fits
 
-from Asterix.utils import resizing, invert_svd, save_plane_in_fits
+from Asterix.utils import resizing, invert_svd, save_plane_in_fits, from_param_to_header
 from Asterix.optics import DeformableMirror, Testbed
 
 
@@ -209,9 +209,12 @@ def create_singlewl_pw_matrix(testbed: Testbed,
                 SVD[:, i, j] = np.zeros(2)
                 PWMatrix[l_ind] = np.zeros((2, numprobe))
             l_ind = l_ind + 1
-    fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix))
+
+    header = from_param_to_header(testbed.config_file)
+
+    fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix), header)
     visuPWMap = "EigenPW_" + string_dims_PWMatrix
-    fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]))
+    fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]), header)
     if not silence:
         print("Time for PWP Matrix (s): ", np.round(time.time() - start_time))
 

@@ -2,7 +2,7 @@ import os
 import numpy as np
 from astropy.io import fits
 
-from Asterix.utils import resizing, save_plane_in_fits
+from Asterix.utils import resizing, save_plane_in_fits, from_param_to_header
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
 import Asterix.wfsc.wf_sensing_functions as wfs
@@ -226,12 +226,16 @@ class Estimator:
                     if 775 < wave_k * 1e9 < 795:
                         string_laser = "_laser3"  # ~785nm laser source
 
+                    header = from_param_to_header(testbed.config_file)
+
                     namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + string_laser
                     fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
                                  probes,
+                                 header,
                                  overwrite=True)
                     fits.writeto(os.path.join(realtestbed_dir, "Matr_mult_estim" + namepwmatrix + ".fits"),
                                  vectorPW,
+                                 header,
                                  overwrite=True)
 
         elif self.technique == 'coffee':

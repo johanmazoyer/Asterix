@@ -2,7 +2,7 @@ import os
 import numpy as np
 from astropy.io import fits
 
-from Asterix.utils import invert_svd
+from Asterix.utils import invert_svd, from_param_to_header
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
 import Asterix.wfsc.estimator as estimator_mod
@@ -114,25 +114,30 @@ class Corrector:
             else:
                 number_wl_in_matrix = estimator.nb_wav_estim
 
+            header = from_param_to_header(testbed.config_file)
+
             if testbed.DM1.active & testbed.DM3.active:
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
+                             header,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, header, overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, header, overwrite=True)
                 number_Active_testbeds = 13
 
             elif testbed.DM1.active:
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM1only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
+                             header,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, header, overwrite=True)
                 number_Active_testbeds = 1
             elif testbed.DM3.active:
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM3only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
+                             header,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, header, overwrite=True)
                 number_Active_testbeds = 3
             else:
                 raise ValueError("No active DMs")
@@ -155,11 +160,10 @@ class Corrector:
                                               number_wl_in_matrix=number_wl_in_matrix,
                                               silence=silence)
 
-            fits.writeto(os.path.join(realtestbed_dir, "DH_mask.fits"),
-                         self.MaskEstim.astype(np.float32),
-                         overwrite=True)
+            fits.writeto(os.path.join(realtestbed_dir, "DH_mask.fits"), self.MaskEstim.astype(np.float32), header, overwrite=True)
             fits.writeto(os.path.join(realtestbed_dir, "DH_mask_where_x_y.fits"),
                          np.array(np.where(self.MaskEstim == 1)).astype(np.float32),
+                         header,
                          overwrite=True)
 
         # Adding error on the DM model. Now that the matrix is measured, we can

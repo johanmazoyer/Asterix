@@ -8,7 +8,7 @@ if get_ipython() is None:  # this matplotlib option is just in non-notebook case
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress
+from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress, from_param_to_header
 import Asterix.optics.propagation_functions as prop
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
@@ -221,6 +221,9 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     # the initial phase for each DM
     DM_phase_init = testbed.voltage_to_phases(initial_DM_voltage)
 
+    # we load the configuration to save it in the fits
+    header = from_param_to_header(testbed.config_file)
+
     # First run throught the DMs to :
     #   - string matrix to create a name for the matrix
     #   - check total size of basis
@@ -278,7 +281,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         list_str = basis_str.split('_')
         list_str.pop(2)
         name_basis_fits = "Basis" + '_'.join(list_str) + ".fits"
-        fits.writeto(os.path.join(matrix_dir, name_basis_fits), DM.basis, overwrite=True)
+        fits.writeto(os.path.join(matrix_dir, name_basis_fits), DM.basis, header, overwrite=True)
 
         if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage == 0.).all():
             if not silence:
@@ -604,7 +607,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
                 fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
-                             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size])
+                             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size], header)
 
             if not silence:
                 print("")
