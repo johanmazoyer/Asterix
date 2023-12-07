@@ -222,7 +222,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     DM_phase_init = testbed.voltage_to_phases(initial_DM_voltage)
 
     # we load the configuration to save it in the fits
-    header = from_param_to_header(testbed.config_file)
+    if hasattr(testbed, 'config_file'):
+        header = from_param_to_header(testbed.config_file)
+    else:
+        header = fits.Header()
 
     # First run throught the DMs to :
     #   - string matrix to create a name for the matrix
