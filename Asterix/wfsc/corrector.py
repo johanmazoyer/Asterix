@@ -135,8 +135,8 @@ class Corrector:
                              overwrite=True)
                 number_Active_testbeds = 13
 
-                #thd_control_matrix
-                #careful, only work in monochromatic right now
+                # thd_control_matrix
+                # careful, only work in monochromatic right now
                 name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix[0]
                 name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix[0]
 
@@ -170,8 +170,8 @@ class Corrector:
                              overwrite=True)
                 number_Active_testbeds = 1
 
-                #thd_control_matrix
-                #careful, only work in monochromatic right now
+                # thd_control_matrix
+                # careful, only work in monochromatic right now
                 name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix[0]
 
                 fullmatrix_dm1 = fits.getdata(name_int_matrixDM1, extname='BOSTON')
@@ -198,8 +198,8 @@ class Corrector:
                              overwrite=True)
                 number_Active_testbeds = 3
 
-                #thd_control_matrix
-                #careful, only work in monochromatic right now
+                # hd_control_matrix
+                # careful, only work in monochromatic right now
                 name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix[0]
 
                 fullmatrix_dm3 = fits.getdata(name_int_matrixDM3, extname='MATRIX')
