@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 import numpy as np
 import matplotlib
 from IPython import get_ipython
@@ -8,7 +9,7 @@ if get_ipython() is None:  # this matplotlib option is just in non-notebook case
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress
+from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress, from_param_to_header
 import Asterix.optics.propagation_functions as prop
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
@@ -221,6 +222,12 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     # the initial phase for each DM
     DM_phase_init = testbed.voltage_to_phases(initial_DM_voltage)
 
+    # we load the configuration to save it in the fits
+    if hasattr(testbed, 'config_file'):
+        header = from_param_to_header(testbed.config_file)
+    else:
+        header = fits.Header()
+
     # First run throught the DMs to :
     #   - string matrix to create a name for the matrix
     #   - check total size of basis
@@ -256,7 +263,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     pos_in_matrix = 0
 
     for DM_name in testbed.name_of_DMs:
-
+        header['DM_NAME'] = DM_name
         DM: DeformableMirror = vars(testbed)[DM_name]
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
 
@@ -265,24 +272,20 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             testbed.dimScience / dimEstim))) + string_testbed_without_DMS + "_resFP" + str(
                 round(DM.Science_sampling / DM.wavelength_0 * wavelength, 2)) + '_wl' + str(int(wavelength * 1e9))
 
+        DM.fnameDirectMatrix.append(os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch
         # For 1DM test / 2DM test
         # Matrix is saved/loaded for all the FP and then crop at the good size later
 
-        # we save the DM basis
-        list_str = basis_str.split('_')
-        list_str.pop(2)
-        name_basis_fits = "Basis" + '_'.join(list_str) + ".fits"
-        fits.writeto(os.path.join(matrix_dir, name_basis_fits), DM.basis, overwrite=True)
-
-
         if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage == 0.).all():
             if not silence:
                 print("The matrix " + fileDirectMatrix + " already exists")
 
-            InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(
-                os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
+            InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(os.path.join(
+                matrix_dir, fileDirectMatrix + ".fits"),
+                                                                                    extname='MATRIX')
+            DM.basis = fits.getdata(os.path.join(matrix_dir, fileDirectMatrix + ".fits"), extname='BASIS')
 
         else:
             start_time = time.time()
@@ -600,8 +603,12 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 plt.ioff()
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
-                fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
-                             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size])
+                header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
+                hdu_list.append(
+                    fits.ImageHDU(data=InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size], name='MATRIX'))
+                hdu_list.append(fits.ImageHDU(data=DM.basis, name='BASIS'))
+                hdu_list.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
 
             if not silence:
                 print("")
