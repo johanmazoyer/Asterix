@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 import numpy as np
 from astropy.io import fits
 
@@ -85,7 +86,7 @@ class Corrector:
                 DM.basis = DM.create_DM_basis(basis_type=basis_type, silence=silence)
                 DM.basis_size = DM.basis.shape[0]
                 self.total_number_modes += DM.basis_size
-                DM.basis_type = basis_type
+            DM.fnameDirectMatrix = list()
 
         self.correction_algorithm = Correctionconfig["correction_algorithm"].lower()
         self.MatrixType = Correctionconfig["MatrixType"].lower()
@@ -134,6 +135,29 @@ class Corrector:
                              overwrite=True)
                 number_Active_testbeds = 13
 
+                #thd_control_matrix
+                #careful, only work in monochromatic right now
+                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix[0]
+                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix[0]
+
+                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1, extname='MATRIX')
+                basis_dm1 = fits.getdata(name_int_matrixDM1, extname='BASIS')
+
+                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3, extname='MATRIX')
+                basis_dm3 = fits.getdata(name_int_matrixDM3, extname='BASIS')
+
+                int_matrix = np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3)))
+                basis_dms = np.concatenate(basis_dm1, basis_dm3)
+
+                header = fits.getheader(name_int_matrixDM1)
+                header['DM_NAME'] = 'DM1+DM3'
+                header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
+                hdu_list.append(fits.ImageHDU(data=int_matrix, name='MATRIX'))
+                hdu_list.append(fits.ImageHDU(data=basis_dms, name='BASIS'))
+                hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
+
             elif testbed.DM1.active:
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM1only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
@@ -144,6 +168,25 @@ class Corrector:
                              header,
                              overwrite=True)
                 number_Active_testbeds = 1
+
+                #thd_control_matrix
+                #careful, only work in monochromatic right now
+                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix[0]
+
+                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1, extname='MATRIX')
+                basis_dm1 = fits.getdata(name_int_matrixDM1, extname='BASIS')
+
+                int_matrix = np.transpose(fullmatrix_dm1)
+                basis_dms = basis_dm1
+
+                header = fits.getheader(name_int_matrixDM1)
+                header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
+                hdu_list.append(fits.ImageHDU(data=int_matrix, name='MATRIX'))
+                hdu_list.append(fits.ImageHDU(data=basis_dms, name='BASIS'))
+                hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
+
             elif testbed.DM3.active:
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM3only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
@@ -154,6 +197,25 @@ class Corrector:
                              header,
                              overwrite=True)
                 number_Active_testbeds = 3
+
+                #thd_control_matrix
+                #careful, only work in monochromatic right now
+                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix[0]
+
+                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3, extname='MATRIX')
+                basis_dm3 = fits.getdata(name_int_matrixDM3, extname='BASIS')
+
+                int_matrix = np.transpose(fullmatrix_dm3)
+                basis_dms = basis_dm3
+
+                header = fits.getheader(name_int_matrixDM3)
+                header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
+                hdu_list.append(fits.ImageHDU(data=int_matrix, name='MATRIX'))
+                hdu_list.append(fits.ImageHDU(data=basis_dms, name='BASIS'))
+                hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
+
             else:
                 raise ValueError("No active DMs")
 
@@ -254,8 +316,7 @@ class Corrector:
                 pixel_in_mask = int(np.sum(self.MaskEstim))
                 number_wl_matrix = self.Gmatrix.shape[0] // (2 * pixel_in_mask)
 
-                self.G = np.zeros((number_wl_matrix * pixel_in_mask, self.Gmatrix.shape[1]),
-                                  dtype=testbed.dtype_complex)
+                self.G = np.zeros((number_wl_matrix * pixel_in_mask, self.Gmatrix.shape[1]), dtype=testbed.dtype_complex)
 
                 for i in range(number_wl_matrix):
                     self.G[i * pixel_in_mask:(i + 1) * pixel_in_mask, :] = (
