@@ -147,15 +147,16 @@ class Corrector:
                 basis_dm3 = fits.getdata(name_int_matrixDM3, extname='BASIS')
 
                 int_matrix = np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3)))
-                basis_dms = np.concatenate(basis_dm1, basis_dm3)
 
                 header = fits.getheader(name_int_matrixDM1)
                 header['DM_NAME'] = 'DM1+DM3'
                 header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
-                hdu_list.append(fits.ImageHDU(data=int_matrix, name='MATRIX'))
-                hdu_list.append(fits.ImageHDU(data=basis_dms, name='BASIS'))
+                hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
+                hdu_list.append(fits.ImageHDU(data=basis_dm1, name='BASISDM1'))
+                hdu_list.append(fits.ImageHDU(data=basis_dm3, name='BASISDM3'))
+
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
             elif testbed.DM1.active:
@@ -173,18 +174,17 @@ class Corrector:
                 #careful, only work in monochromatic right now
                 name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix[0]
 
-                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1, extname='MATRIX')
+                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1, extname='BOSTON')
                 basis_dm1 = fits.getdata(name_int_matrixDM1, extname='BASIS')
 
                 int_matrix = np.transpose(fullmatrix_dm1)
-                basis_dms = basis_dm1
 
                 header = fits.getheader(name_int_matrixDM1)
                 header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
-                hdu_list.append(fits.ImageHDU(data=int_matrix, name='MATRIX'))
-                hdu_list.append(fits.ImageHDU(data=basis_dms, name='BASIS'))
+                hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
+                hdu_list.append(fits.ImageHDU(data=basis_dm1, name='BASISDM1'))
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
             elif testbed.DM3.active:
@@ -206,14 +206,13 @@ class Corrector:
                 basis_dm3 = fits.getdata(name_int_matrixDM3, extname='BASIS')
 
                 int_matrix = np.transpose(fullmatrix_dm3)
-                basis_dms = basis_dm3
 
                 header = fits.getheader(name_int_matrixDM3)
                 header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
-                hdu_list.append(fits.ImageHDU(data=int_matrix, name='MATRIX'))
-                hdu_list.append(fits.ImageHDU(data=basis_dms, name='BASIS'))
+                hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
+                hdu_list.append(fits.ImageHDU(data=basis_dm3, name='BASISDM3'))
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
             else:
