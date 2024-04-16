@@ -3,12 +3,12 @@ Asterix: Simulate your High-Contrast Instruments
 =======================================================
 
 Asterix is a python based library for simulating high contrast instruments and testbeds with a strong
-focus on focal plane wavefront sensing and correction algorithms. 
+focus on focal plane wavefront sensing and correction algorithms.
 
 Asterix is publicaly available on `GitHub <https://github.com/johanmazoyer/Asterix>`_ and all contributions are welcome!
 
-The development of Asterix is led by Johan Mazoyer with major contributions Axel Potier, Iva Laginja, 
-and Raphaël Galicher from LESIA (Paris Observatory).
+The development of Asterix was led by Axel Potier (2017-2020) and Johan Mazoyer (since 2020)
+with major contributions from Iva Laginja, and Raphaël Galicher from LESIA (Paris Observatory).
 
 .. toctree::
     :maxdepth: 1
