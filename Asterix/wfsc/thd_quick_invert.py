@@ -59,14 +59,18 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
         Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"))
         DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
+        headerdm1 = fits.getheader(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
+        headerdm3 = fits.getheader(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     elif name_active_DM == 1:
         Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_DM1only_{number_wl_in_matrix}wl.fits"))
         DM1_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
+        headerdm1 = fits.getheader(os.path.join(matrix_directory, "Base_Matrix_DM1.fits"))
 
     elif name_active_DM == 3:
         Gmatrix = fits.getdata(os.path.join(matrix_directory, f"Direct_Matrix_DM3only_{number_wl_in_matrix}wl.fits"))
         DM3_basis = fits.getdata(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
+        headerdm3 = fits.getheader(os.path.join(matrix_directory, "Base_Matrix_DM3.fits"))
 
     else:
         raise ValueError("No active DMs")
@@ -85,24 +89,28 @@ def THD_quick_invert(Nbmodes, name_active_DM, matrix_directory, regularization, 
         EFCmatrix_DM1 = np.transpose(np.dot(np.transpose(DM1_basis), invertGDH_DM1))
         fits.writeto(os.path.join(matrix_directory, "Matrix_control_EFC_DM1.fits"),
                      EFCmatrix_DM1.astype(np.float32),
+                     headerdm1,
                      overwrite=True)
 
         invertGDH_DM3 = invertGDH[DM1_basis_size:]
         EFCmatrix_DM3 = np.transpose(np.dot(np.transpose(DM3_basis), invertGDH_DM3))
         fits.writeto(os.path.join(matrix_directory, "Matrix_control_EFC_DM3.fits"),
                      EFCmatrix_DM3.astype(np.float32),
+                     headerdm3,
                      overwrite=True)
     elif name_active_DM == 1:
         invertGDH_DM1 = invertGDH
         EFCmatrix_DM1 = np.transpose(np.dot(np.transpose(DM1_basis), invertGDH_DM1))
         fits.writeto(os.path.join(matrix_directory, "Matrix_control_EFC_DM1.fits"),
                      EFCmatrix_DM1.astype(np.float32),
+                     headerdm1,
                      overwrite=True)
     elif name_active_DM == 3:
         invertGDH_DM3 = invertGDH
         EFCmatrix_DM3 = np.transpose(np.dot(np.transpose(DM3_basis), invertGDH_DM3))
         fits.writeto(os.path.join(matrix_directory, "Matrix_control_EFC_DM3.fits"),
                      EFCmatrix_DM3.astype(np.float32),
+                     headerdm3,
                      overwrite=True)
     else:
         raise ValueError("No active DMs")

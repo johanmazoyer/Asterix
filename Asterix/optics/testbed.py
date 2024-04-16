@@ -11,7 +11,7 @@ class Testbed(optsy.OpticalSystem):
     subclass of Optical System, because we do not know what is inside It can
     only be initialized by giving a list of Optical Systems and it will create
     a "testbed" with contains all the Optical Systems and associated EF_through
-    functions and correct normlaization.
+    functions and correct normalization.
 
     AUTHOR : Johan Mazoyer
     """

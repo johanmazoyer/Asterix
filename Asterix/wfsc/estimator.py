@@ -2,7 +2,7 @@ import os
 import numpy as np
 from astropy.io import fits
 
-from Asterix.utils import resizing, save_plane_in_fits
+from Asterix.utils import resizing, save_plane_in_fits, from_param_to_header
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
 import Asterix.wfsc.wf_sensing_functions as wfs
@@ -150,10 +150,11 @@ class Estimator:
 
         for wavei in self.wav_vec_estim:
             if self.Estim_sampling / testbed.wavelength_0 * wavei < 2.5:
-                raise ValueError(f"Estimator sampling must be >= 2.5 at all estimation wavelengths. "
-                                 f"For [Estimationconfig]['Estim_bin_factor'] = {Estimationconfig['Estim_bin_factor']}, "
-                                 f"the estimator sampling is {self.Estim_sampling} at wavelength {wavei*1e9} nm. "
-                                 "Please decrease [Estimationconfig]['Estim_bin_factor'] parameter.")
+                raise ValueError(
+                    f"Estimator sampling must be >= 2.5 at all estimation wavelengths. "
+                    f"For [Estimationconfig]['Estim_bin_factor'] = {Estimationconfig['Estim_bin_factor']}, "
+                    f"the estimator sampling is {self.Estim_sampling} at wavelength {wavei*1e9} nm. "
+                    "Please decrease [Estimationconfig]['Estim_bin_factor'] parameter.")
 
         # image size after binning. This is the size of the estimation !
         # We round and make it so we're always even sized and slightly smaller than the ideal size.
@@ -221,12 +222,19 @@ class Estimator:
                     if 775 < wave_k * 1e9 < 795:
                         string_laser = "_laser3"  # ~785nm laser source
 
+                    if hasattr(testbed, 'config_file'):
+                        header = from_param_to_header(testbed.config_file)
+                    else:
+                        header = fits.Header()
+
                     namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + string_laser
                     fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
                                  probes,
+                                 header,
                                  overwrite=True)
                     fits.writeto(os.path.join(realtestbed_dir, "Matr_mult_estim" + namepwmatrix + ".fits"),
                                  vectorPW,
+                                 header,
                                  overwrite=True)
 
         elif self.technique == 'coffee':
@@ -328,7 +336,8 @@ class Estimator:
             if self.polychrom == 'multiwl':
                 if 'nb_photons' in kwargs.keys():
                     if kwargs['nb_photons'] > 0:
-                        kwargs['nb_photons'] = kwargs['nb_photons'] / testbed.Delta_wav * self.delta_wav_estim_individual
+                        kwargs[
+                            'nb_photons'] = kwargs['nb_photons'] / testbed.Delta_wav * self.delta_wav_estim_individual
 
                 for i, wavei in enumerate(self.wav_vec_estim):
                     Difference = wfs.simulate_pw_difference(entrance_EF[testbed.wav_vec.tolist().index(wavei)],
