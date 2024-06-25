@@ -4,7 +4,7 @@
 Quick install
 --------------------------
 
-If you know all about conda virtual envs and you only want to install asterix's latest version, just copy:
+If you know all about conda virtual environments and you only want to install asterix's latest version, just copy:
 
 .. code-block:: bash
 
