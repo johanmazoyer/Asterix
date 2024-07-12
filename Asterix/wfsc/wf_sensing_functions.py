@@ -41,7 +41,7 @@ def create_pw_matrix(testbed: Testbed,
     polychrom : string
         For polychromatic estimation and correction:
         - 'singlewl': only a single wavelength is used for estimation / correction. 1 Interation Matrix
-        - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
+        - 'broadband_pwprobes': probes images PWP are broadband but Matrices are at central wavelength: 1 PWP Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     wav_vec_estim : list of float, default None
         list of wavelengths to do the estimation, used in the case of polychrom == 'multiwl'
@@ -149,7 +149,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
                 round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
                     int(wavelength * 1e9))
 
-    # Calculating and Saving PW matrix
+    # Calculating and Saving PWP matrix
 
     filePW = "MatPW_" + string_dims_PWMatrix
     if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
@@ -161,7 +161,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     start_time = time.time()
     if not silence:
         print("The PWmatrix " + filePW + " does not exists")
-        print("Start PW matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
+        print("Start PWP matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
 
     numprobe = len(posprobes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=testbed.dtype_complex)
@@ -182,7 +182,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         Voltage_probe[i] = amplitude
         probephase[k] = DM_probe.voltage_to_phase(Voltage_probe)
 
-        # for PW the probes are not sent in the DM but at the entrance of the testbed.
+        # for PWP the probes are not sent in the DM but at the entrance of the testbed.
         # with an hypothesis of small phase.
         # I tried to remove "1+"". It breaks the code
         # (coronagraph does not "remove the 1 exactly")
@@ -213,7 +213,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     visuPWMap = "EigenPW_" + string_dims_PWMatrix
     fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]))
     if not silence:
-        print("Time for PW Matrix (s): ", np.round(time.time() - start_time))
+        print("Time for PWP Matrix (s): ", np.round(time.time() - start_time))
 
     return PWMatrix
 
@@ -244,7 +244,7 @@ def calculate_pw_estimate(Difference,
             'pw' Pair Wise Probing
             'btp+' Borde Traub Probing where the probe is pushed positevely
     dtype_complex : string, default 'complex128'
-        bit number for the complex arrays in the PW matrices.
+        bit number for the complex arrays in the PWP matrices.
         Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
         cost of lower precision.
 
@@ -274,7 +274,7 @@ def calculate_pw_estimate(Difference,
         name_plane = 'PW_Estimate'
         save_plane_in_fits(dir_save_all_planes, name_plane, Resultat / 4.)
 
-    if pwp_or_btp in ['pw', 'pairwise']:
+    if pwp_or_btp in ['pw', "pwp", 'pairwise']:
         return Resultat / 4.
     elif pwp_or_btp in ['btp+']:
         return Resultat / 2.
@@ -306,7 +306,7 @@ def simulate_pw_difference(input_wavefront,
     posprobes : 1D-array
         Index of the actuators to push and pull for pair-wise probing.
     amplitudePW : float
-        PW probes amplitude in nm.
+        PWP probes amplitude in nm.
     voltage_vector : 1D float array or float, default 0
         Vector of voltages vectors for each DMs arounf which we do the difference.
     wavelengths : float, default None
@@ -340,7 +340,7 @@ def simulate_pw_difference(input_wavefront,
 
             indice_acum_number_act += DM.number_act
 
-        if pwp_or_btp in ['pw', 'pairwise']:
+        if pwp_or_btp in ['pw', "pwp", 'pairwise']:
             Voltage_probe_value1 = +Voltage_probe
             Voltage_probe_value2 = -Voltage_probe
         elif pwp_or_btp == 'btp+':
@@ -399,7 +399,7 @@ def simulate_pw_difference(input_wavefront,
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
                               "Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
-        if pwp_or_btp in ['pw', 'pairwise']:
+        if pwp_or_btp in ['pw', "pwp", 'pairwise']:
             Difference[count] = resizing(Ikprobevalue1 - Ikprobevalue2, dimimages)
         elif pwp_or_btp in ['btp+']:
             Difference[count] = resizing(Ikprobevalue1 - Ikprobevalue2 - Int_fp_probe, dimimages)

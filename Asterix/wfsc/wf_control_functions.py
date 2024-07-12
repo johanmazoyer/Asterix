@@ -60,7 +60,7 @@ def create_interaction_matrix(testbed: Testbed,
     polychrom : string
         For polychromatic estimation and correction:
         - 'singlewl': only a single wavelength is used for estimation / correction. 1 Interation Matrix
-        - 'broadband_pwprobes': probes images PW are broadband but Matrices are at central wavelength: 1 PW Matrix and 1 Interation Matrix
+        - 'broadband_pwprobes': probes images PWP are broadband but Matrices are at central wavelength: 1 PWP Matrix and 1 Interation Matrix
         - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     initial_DM_voltage : 1D-array real
         initial DM voltage for all DMs
