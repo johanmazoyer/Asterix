@@ -218,7 +218,11 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     return PWMatrix
 
 
-def calculate_pw_estimate(Difference, Vectorprobes, dimimages, dir_save_all_planes=None, dtype_complex='complex128'):
+def calculate_pw_estimate(Difference,
+                          Vectorprobes,
+                          dir_save_all_planes=None,
+                          pwp_or_btp="pw",
+                          dtype_complex='complex128'):
     """Calculate the focal plane electric field from the probe image
     differences and the modeled probe matrix.
 
@@ -235,6 +239,10 @@ def calculate_pw_estimate(Difference, Vectorprobes, dimimages, dir_save_all_plan
     dir_save_all_planes : string or None, default None
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
+    pwp_or_btp : string, default 'pwp'
+        type of algorithm used, can be 
+            'pw' Pair Wise Probing
+            'btp+' Borde Traub Probing where the probe is pushed positevely
     dtype_complex : string, default 'complex128'
         bit number for the complex arrays in the PW matrices.
         Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
@@ -266,7 +274,13 @@ def calculate_pw_estimate(Difference, Vectorprobes, dimimages, dir_save_all_plan
         name_plane = 'PW_Estimate'
         save_plane_in_fits(dir_save_all_planes, name_plane, Resultat / 4.)
 
-    return Resultat / 4.
+    if pwp_or_btp in ['pw', 'pairwise']:
+        return Resultat / 4.
+    elif pwp_or_btp in ['btp+']:
+        return Resultat / 2.
+    else:
+        raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp' for Pair Wise Probing "
+                         "or 'btp+' for Borde Traub Probing")
 
 
 def simulate_pw_difference(input_wavefront,
@@ -275,13 +289,13 @@ def simulate_pw_difference(input_wavefront,
                            amplitudePW,
                            voltage_vector=0.,
                            wavelengths=None,
+                           pwp_or_btp="pw",
                            **kwargs):
     """Simulate the acquisition of probe images using Pair-wise.
 
-    and calculate the difference of images [I(+probe) - I(-probe)].
-    we use testbed.name_DM_to_probe_in_PW to do the probes.
-
-    AUTHOR : Axel Potier
+    and calculate the difference of images [I(+probe) - I(-probe)] (if pwp_or_btp = 'pw')
+    or [I(+probe) - I(0)] (if pwp_or_btp = 'btp+').
+    We use testbed.name_DM_to_probe_in_PW to do the probes.
 
     Parameters
     ----------
@@ -297,6 +311,10 @@ def simulate_pw_difference(input_wavefront,
         Vector of voltages vectors for each DMs arounf which we do the difference.
     wavelengths : float, default None
         Wavelength of the estimation in m.
+    pwp_or_btp : string, default 'pwp'
+        type of algorithm used, can be 
+            'pw' Pair Wise Probing
+            'btp+' Borde Traub Probing where the probe is pushed positevely
 
     Returns
     --------
@@ -318,8 +336,19 @@ def simulate_pw_difference(input_wavefront,
                 Voltage_probeDMprobe = np.zeros(DM.number_act)
                 Voltage_probeDMprobe[num_probe] = amplitudePW
                 Voltage_probe[indice_acum_number_act:indice_acum_number_act + DM.number_act] = Voltage_probeDMprobe
+                probephase = DM.voltage_to_phase(Voltage_probeDMprobe)
 
             indice_acum_number_act += DM.number_act
+
+        if pwp_or_btp in ['pw', 'pairwise']:
+            Voltage_probe_value1 = +Voltage_probe
+            Voltage_probe_value2 = -Voltage_probe
+        elif pwp_or_btp == 'btp+':
+            Voltage_probe_value1 = +Voltage_probe
+            Voltage_probe_value2 = 0
+        else:
+            raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp' for Pair Wise Probing "
+                             "or 'btp+' for Borde Traub Probing")
 
         # If we are in a polychromatic mode but we need monochromatic instensity
         # we have to be careful with the normalization, because
@@ -328,37 +357,51 @@ def simulate_pw_difference(input_wavefront,
             # easy case: we are monochromatic or polychromatic both for images and probes
             # It's either a monochromatic correction, or a polychromatic correction with
             # case polychromatic = 'broadband_pwprobes'
-            Ikmoins = testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                                   voltage_vector=voltage_vector - Voltage_probe,
-                                                   wavelengths=wavelengths,
-                                                   **kwargs)
 
-            Ikplus = testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                                  voltage_vector=voltage_vector + Voltage_probe,
-                                                  wavelengths=wavelengths,
-                                                  **kwargs)
+            Ikprobevalue1 = testbed.todetector_intensity(entrance_EF=input_wavefront,
+                                                         voltage_vector=voltage_vector + Voltage_probe_value1,
+                                                         wavelengths=wavelengths,
+                                                         **kwargs)
+
+            Ikprobevalue2 = testbed.todetector_intensity(entrance_EF=input_wavefront,
+                                                         voltage_vector=voltage_vector + Voltage_probe_value2,
+                                                         wavelengths=wavelengths,
+                                                         **kwargs)
+
+            if pwp_or_btp in ['btp+']:
+                Int_fp_probe = testbed.todetector_intensity(entrance_EF=1 + 1j * probephase,
+                                                            wavelengths=wavelengths,
+                                                            **kwargs)
 
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
             # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
-            Ikmoins = testbed.todetector_intensity(
+            Ikprobevalue1 = testbed.todetector_intensity(
                 entrance_EF=input_wavefront,
-                voltage_vector=voltage_vector - Voltage_probe,
+                voltage_vector=voltage_vector + Voltage_probe_value1,
                 wavelengths=wavelengths,
                 in_contrast=False,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
-            Ikplus = testbed.todetector_intensity(
+            Ikprobevalue2 = testbed.todetector_intensity(
                 entrance_EF=input_wavefront,
-                voltage_vector=voltage_vector + Voltage_probe,
+                voltage_vector=voltage_vector + Voltage_probe_value2,
                 wavelengths=wavelengths,
                 in_contrast=False,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
+
+            if pwp_or_btp in ['btp+']:
+                Int_fp_probe = testbed.todetector_intensity(
+                    entrance_EF=1 + 1j * probephase, wavelengths=wavelengths, in_contrast=False, **
+                    kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
         else:
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
                               "Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
-        Difference[count] = Ikplus - Ikmoins
+        if pwp_or_btp in ['pw', 'pairwise']:
+            Difference[count] = resizing(Ikprobevalue1 - Ikprobevalue2, dimimages)
+        elif pwp_or_btp in ['btp+']:
+            Difference[count] = resizing(Ikprobevalue1 - Ikprobevalue2 - Int_fp_probe, dimimages)
 
     return Difference

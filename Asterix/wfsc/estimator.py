@@ -170,7 +170,7 @@ class Estimator:
             if self.polychrom == 'broadband_pwprobes':
                 raise ValueError("Cannot use [Estimationconfig]['polychromatic']='broadband_pwprobes' in perfect mode.")
 
-        elif self.technique in ["pairwise", "pw"]:
+        elif self.technique in ["pairwise", "pw", "btp+"]:
             self.is_focal_plane = True
             self.is_complex = True
 
@@ -322,7 +322,7 @@ class Estimator:
                 raise ValueError(self.polychrom +
                                  "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
-        elif self.technique in ["pairwise", "pw"]:
+        elif self.technique in ["pairwise", "pw", "btp+"]:
 
             # nb_photons parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
             # case, we reduce it to self.delta_wav_estim_individual bandwidth
@@ -338,6 +338,7 @@ class Estimator:
                                                             self.amplitudePW,
                                                             voltage_vector=voltage_vector,
                                                             wavelengths=wavei,
+                                                            pwp_or_btp=self.technique,
                                                             **kwargs)
                     probed_fp_images.append(Difference)
 
@@ -349,6 +350,7 @@ class Estimator:
                                                         self.amplitudePW,
                                                         voltage_vector=voltage_vector,
                                                         wavelengths=self.wav_vec_estim[0],
+                                                        pwp_or_btp=self.technique,
                                                         **kwargs)
                 probed_fp_images.append(Difference)
 
@@ -359,6 +361,7 @@ class Estimator:
                                                         self.amplitudePW,
                                                         voltage_vector=voltage_vector,
                                                         wavelengths=testbed.wav_vec,
+                                                        pwp_or_btp=self.technique,
                                                         **kwargs)
                 probed_fp_images.append(Difference)
 
