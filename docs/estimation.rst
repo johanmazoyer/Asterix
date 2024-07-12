@@ -102,15 +102,23 @@ resized by the ``Estim_bin_factor``:
 All estimators are done this way (first obtains images in the focal plane at the ``Science_sampling`` and 
 then resizing) to ensure that the behavior is equivalent to what would be done on a real testbed
 
-Pair Wise Estimation
+Pair Wise Probing Estimation
 +++++++++++++++++++++++++
 
-The Pair wise estimation version we used is defined in 
+The Pair wise probing estimation version we used is defined in 
 `Potier et al. (2020) <http://adsabs.harvard.edu/abs/2020A%26A...635A.192P>`_ 
 The probe used are actuators, which can be chosen using ``posprobes`` parameter. If you choose 
 2 random actuators, it can be useful to check the .fits file starting in *EigenValPW* in 
 Interaction_Matrices directory. This is the map of the inverse singular values for each 
 pixels and it shows if all of the part of the DH are covered by the estimation (see Fig. 4 in Potier et al. 2020).
+
+Bordé & Traub Probing Estimation
++++++++++++++++++++++++++
+
+The Pair wise probing estimation version we used is defined in 
+`Bordé & Traub (2024) <http://iopscience.iop.org/0004-637X/638/1/488>`_ 
+The difference with Pair Wise Probing is that we do not do a difference between the positive and negative probes but only
+a difference between positive probe and the unprobed image. 
 
 ..  _polychromaticestim-label:
 Polychromatic Estimation
