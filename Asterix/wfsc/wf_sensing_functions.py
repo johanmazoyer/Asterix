@@ -240,7 +240,7 @@ def calculate_pw_estimate(Difference,
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
     pwp_or_btp : string, default 'pwp'
-        type of algorithm used, can be 
+        type of algorithm used, can be
             'pw' Pair Wise Probing
             'btp+' Borde Traub Probing where the probe is pushed positevely
     dtype_complex : string, default 'complex128'
@@ -312,7 +312,7 @@ def simulate_pw_difference(input_wavefront,
     wavelengths : float, default None
         Wavelength of the estimation in m.
     pwp_or_btp : string, default 'pwp'
-        type of algorithm used, can be 
+        type of algorithm used, can be
             'pw' Pair Wise Probing
             'btp+' Borde Traub Probing where the probe is pushed positevely
 
