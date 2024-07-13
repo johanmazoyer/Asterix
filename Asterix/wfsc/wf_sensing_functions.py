@@ -218,7 +218,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     return PWMatrix
 
 
-def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, dtype_complex='complex128'):
+def calculate_pw_estimate(Difference, Vectorprobes, dimimages, dir_save_all_planes=None, dtype_complex='complex128'):
     """Calculate the focal plane electric field from the probe image
     differences and the modeled probe matrix.
 
@@ -230,6 +230,8 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, dt
         Cube with image difference for each probes.
     Vectorprobes : 2D array
         Model probe matrix for the same probe as for difference.
+    dimimages : int
+        Size of the output image after resizing in pixels.
     dir_save_all_planes : string or None, default None
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
@@ -240,19 +242,21 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, dt
 
     Returns
     --------
-    Difference : 3D array
-        Cube with image difference for each probes.
-        Used for pair-wise probing.
+    EF_field : 2D array
+        PWP estimation of the electrical field in the focal plane.
     """
 
-    dimimages = len(Difference[0])
+    Difference_resized = np.zeros((Difference.shape[0], dimimages, dimimages))
+    for i in range(Difference.shape[0]):
+        Difference_resized[i] = resizing(Difference[i], dimimages)
+
     numprobe = len(Vectorprobes[0, 0])
     Differenceij = np.zeros((numprobe))
     Resultat = np.zeros((dimimages, dimimages), dtype=dtype_complex)
     l_ind = 0
     for i in np.arange(dimimages):
         for j in np.arange(dimimages):
-            Differenceij[:] = Difference[:, i, j]
+            Differenceij[:] = Difference_resized[:, i, j]
             Resultatbis = np.dot(Vectorprobes[l_ind], Differenceij)
             Resultat[i, j] = Resultatbis[0] + 1j * Resultatbis[1]
 
@@ -268,7 +272,6 @@ def calculate_pw_estimate(Difference, Vectorprobes, dir_save_all_planes=None, dt
 def simulate_pw_difference(input_wavefront,
                            testbed: Testbed,
                            posprobes,
-                           dimimages,
                            amplitudePW,
                            voltage_vector=0.,
                            wavelengths=None,
@@ -288,8 +291,6 @@ def simulate_pw_difference(input_wavefront,
         Testbed with one or more DM.
     posprobes : 1D-array
         Index of the actuators to push and pull for pair-wise probing.
-    dimimages : int
-        Size of the output image after resizing in pixels.
     amplitudePW : float
         PW probes amplitude in nm.
     voltage_vector : 1D float array or float, default 0
@@ -303,7 +304,7 @@ def simulate_pw_difference(input_wavefront,
         Cube with image difference for each probes. Use for pair-wise probing.
     """
 
-    Difference = np.zeros((len(posprobes), dimimages, dimimages))
+    Difference = np.zeros((len(posprobes), testbed.dimScience, testbed.dimScience))
 
     for count, num_probe in enumerate(posprobes):
 
@@ -358,6 +359,6 @@ def simulate_pw_difference(input_wavefront,
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
                               "Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
-        Difference[count] = resizing(Ikplus - Ikmoins, dimimages)
+        Difference[count] = Ikplus - Ikmoins
 
     return Difference

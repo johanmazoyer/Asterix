@@ -14,7 +14,7 @@ It contains 2 functions at least:
         - the entrance EF
         - DM voltages
         - the estimation wavelengths
-    It returns the probed images as a list (of length ``nb_wav_estim``) of 3d arrays (nprobes,dimEstim,dimEstim).
+    It returns the probed images as a list (of length ``nb_wav_estim``) of 3d arrays (nprobes,dimScience,dimScience).
 
 - an estimation function ``Estimator.estimate()``, with parameters:
     - the probed images
