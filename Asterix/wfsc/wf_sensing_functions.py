@@ -363,16 +363,6 @@ def simulate_pw_difference(input_wavefront,
 
             indice_acum_number_act += DM.number_act
 
-        if pwp_or_btp in ['pw', "pwp", 'pairwise']:
-            Voltage_probe_value1 = +Voltage_probe
-            Voltage_probe_value2 = -Voltage_probe
-        elif pwp_or_btp == 'btp+':
-            Voltage_probe_value1 = +Voltage_probe
-            Voltage_probe_value2 = 0
-        else:
-            raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp' for Pair Wise Probing "
-                             "or 'btp+' for Borde Traub Probing")
-
         # If we are in a polychromatic mode but we need monochromatic instensity
         # we have to be careful with the normalization, because
         # todetector_intensity is normalizing to polychromatic PSF by default
@@ -392,10 +382,13 @@ def simulate_pw_difference(input_wavefront,
                                                        wavelengths=wavelengths,
                                                        **kwargs)
 
-            if pwp_or_btp in ['btp+']:
+            elif pwp_or_btp in ['btp+']:
                 Int_fp_probe = testbed.todetector_intensity(entrance_EF=1 + 1j * probephase,
                                                             wavelengths=wavelengths,
                                                             **kwargs)
+            raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
+                             "Pair Wise Probing or 'btp+' for Borde Traub Probing")
+
 
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
@@ -415,10 +408,13 @@ def simulate_pw_difference(input_wavefront,
                     in_contrast=False,
                     **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
-            if pwp_or_btp in ['btp+']:
+            elif pwp_or_btp in ['btp+']:
                 Int_fp_probe = testbed.todetector_intensity(
                     entrance_EF=1 + 1j * probephase, wavelengths=wavelengths, in_contrast=False, **
                     kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
+            
+            raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
+                             "Pair Wise Probing or 'btp+' for Borde Traub Probing")
 
         else:
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
