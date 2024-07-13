@@ -370,7 +370,6 @@ def simulate_pw_difference(input_wavefront,
             # easy case: we are monochromatic or polychromatic both for images and probes
             # It's either a monochromatic correction, or a polychromatic correction with
             # case polychromatic = 'broadband_pwprobes'
-
             Ikplus = testbed.todetector_intensity(entrance_EF=input_wavefront,
                                                   voltage_vector=voltage_vector + Voltage_probe,
                                                   wavelengths=wavelengths,
