@@ -220,6 +220,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
 
 def calculate_pw_estimate(Difference,
                           Vectorprobes,
+                          dimimages,
                           dir_save_all_planes=None,
                           pwp_or_btp="pw",
                           dtype_complex='complex128'):
@@ -400,8 +401,8 @@ def simulate_pw_difference(input_wavefront,
                               "Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
         if pwp_or_btp in ['pw', "pwp", 'pairwise']:
-            Difference[count] = resizing(Ikprobevalue1 - Ikprobevalue2, dimimages)
+            Difference[count] = Ikprobevalue1 - Ikprobevalue2
         elif pwp_or_btp in ['btp+']:
-            Difference[count] = resizing(Ikprobevalue1 - Ikprobevalue2 - Int_fp_probe, dimimages)
+            Difference[count] = Ikprobevalue1 - Ikprobevalue2 - Int_fp_probe
 
     return Difference
