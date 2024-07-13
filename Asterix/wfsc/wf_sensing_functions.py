@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 import numpy as np
 
 from astropy.io import fits
@@ -215,6 +216,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     else:
         header = fits.Header()
 
+    header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
     fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix), header)
     visuPWMap = "EigenPW_" + string_dims_PWMatrix
     fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]), header)

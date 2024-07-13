@@ -150,7 +150,7 @@ class Corrector:
 
                 header = fits.getheader(name_int_matrixDM1)
                 header['DM_NAME'] = 'DM1+DM3'
-                header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
@@ -180,7 +180,7 @@ class Corrector:
                 int_matrix = np.transpose(fullmatrix_dm1)
 
                 header = fits.getheader(name_int_matrixDM1)
-                header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
@@ -208,7 +208,7 @@ class Corrector:
                 int_matrix = np.transpose(fullmatrix_dm3)
 
                 header = fits.getheader(name_int_matrixDM3)
-                header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))

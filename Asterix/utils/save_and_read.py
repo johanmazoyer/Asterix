@@ -193,7 +193,7 @@ def from_param_to_header(config):
     for sect in config.sections:
         # print(config[str(sect)])
         for scalar in config[str(sect)].scalars:
-            header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
+            header.set(str(scalar)[:8], str(config[str(sect)][str(scalar)]), str(scalar))
     return header
 
 

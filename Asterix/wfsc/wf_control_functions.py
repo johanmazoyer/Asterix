@@ -607,7 +607,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 plt.ioff()
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
-                header['CREATION'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
                 hdu_list.append(
                     fits.ImageHDU(data=InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size], name='MATRIX'))
