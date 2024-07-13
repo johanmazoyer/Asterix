@@ -325,6 +325,28 @@ def simulate_pw_difference(input_wavefront,
 
     Difference = np.zeros((len(posprobes), testbed.dimScience, testbed.dimScience))
 
+    if pwp_or_btp == 'btp+':
+        # If we are in a polychromatic mode but we need monochromatic instensity
+        # we have to be careful with the normalization, because
+        # todetector_intensity is normalizing to polychromatic PSF by default
+        if np.all(wavelengths == testbed.wav_vec):
+            # easy case: we are monochromatic or polychromatic both for images and probes
+            # It's either a monochromatic correction, or a polychromatic correction with
+            # case polychromatic = 'broadband_pwprobes'
+            Ik0 = testbed.todetector_intensity(entrance_EF=input_wavefront,
+                                               voltage_vector=voltage_vector,
+                                               wavelengths=wavelengths,
+                                               **kwargs)
+        elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
+            # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
+            # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
+            Ik0 = testbed.todetector_intensity(
+                entrance_EF=input_wavefront,
+                voltage_vector=voltage_vector,
+                wavelengths=wavelengths,
+                in_contrast=False,
+                **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
+
     for count, num_probe in enumerate(posprobes):
 
         Voltage_probe = np.zeros(testbed.number_act)
@@ -359,15 +381,16 @@ def simulate_pw_difference(input_wavefront,
             # It's either a monochromatic correction, or a polychromatic correction with
             # case polychromatic = 'broadband_pwprobes'
 
-            Ikprobevalue1 = testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                                         voltage_vector=voltage_vector + Voltage_probe_value1,
-                                                         wavelengths=wavelengths,
-                                                         **kwargs)
+            Ikplus = testbed.todetector_intensity(entrance_EF=input_wavefront,
+                                                  voltage_vector=voltage_vector + Voltage_probe,
+                                                  wavelengths=wavelengths,
+                                                  **kwargs)
 
-            Ikprobevalue2 = testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                                         voltage_vector=voltage_vector + Voltage_probe_value2,
-                                                         wavelengths=wavelengths,
-                                                         **kwargs)
+            if pwp_or_btp in ['pw', "pwp", 'pairwise']:
+                Ikmoins = testbed.todetector_intensity(entrance_EF=input_wavefront,
+                                                       voltage_vector=voltage_vector - Voltage_probe,
+                                                       wavelengths=wavelengths,
+                                                       **kwargs)
 
             if pwp_or_btp in ['btp+']:
                 Int_fp_probe = testbed.todetector_intensity(entrance_EF=1 + 1j * probephase,
@@ -377,19 +400,20 @@ def simulate_pw_difference(input_wavefront,
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
             # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
-            Ikprobevalue1 = testbed.todetector_intensity(
+            Ikplus = testbed.todetector_intensity(
                 entrance_EF=input_wavefront,
-                voltage_vector=voltage_vector + Voltage_probe_value1,
+                voltage_vector=voltage_vector + Voltage_probe,
                 wavelengths=wavelengths,
                 in_contrast=False,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
-            Ikprobevalue2 = testbed.todetector_intensity(
-                entrance_EF=input_wavefront,
-                voltage_vector=voltage_vector + Voltage_probe_value2,
-                wavelengths=wavelengths,
-                in_contrast=False,
-                **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
+            if pwp_or_btp in ['pw', "pwp", 'pairwise']:
+                Ikmoins = testbed.todetector_intensity(
+                    entrance_EF=input_wavefront,
+                    voltage_vector=voltage_vector - Voltage_probe,
+                    wavelengths=wavelengths,
+                    in_contrast=False,
+                    **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
             if pwp_or_btp in ['btp+']:
                 Int_fp_probe = testbed.todetector_intensity(
@@ -401,8 +425,8 @@ def simulate_pw_difference(input_wavefront,
                               "Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
         if pwp_or_btp in ['pw', "pwp", 'pairwise']:
-            Difference[count] = Ikprobevalue1 - Ikprobevalue2
+            Difference[count] = Ikplus - Ikmoins
         elif pwp_or_btp in ['btp+']:
-            Difference[count] = Ikprobevalue1 - Ikprobevalue2 - Int_fp_probe
+            Difference[count] = Ikplus - Ik0 - Int_fp_probe
 
     return Difference
