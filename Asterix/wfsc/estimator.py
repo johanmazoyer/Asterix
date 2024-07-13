@@ -335,7 +335,6 @@ class Estimator:
                     Difference = wfs.simulate_pw_difference(entrance_EF[testbed.wav_vec.tolist().index(wavei)],
                                                             testbed,
                                                             self.posprobes,
-                                                            self.dimEstim,
                                                             self.amplitudePW,
                                                             voltage_vector=voltage_vector,
                                                             wavelengths=wavei,
@@ -347,7 +346,6 @@ class Estimator:
                     self.wav_vec_estim[0])],
                                                         testbed,
                                                         self.posprobes,
-                                                        self.dimEstim,
                                                         self.amplitudePW,
                                                         voltage_vector=voltage_vector,
                                                         wavelengths=self.wav_vec_estim[0],
@@ -358,7 +356,6 @@ class Estimator:
                 Difference = wfs.simulate_pw_difference(entrance_EF,
                                                         testbed,
                                                         self.posprobes,
-                                                        self.dimEstim,
                                                         self.amplitudePW,
                                                         voltage_vector=voltage_vector,
                                                         wavelengths=testbed.wav_vec,
@@ -407,7 +404,10 @@ class Estimator:
 
                 for i, wavei in enumerate(self.wav_vec_estim):
                     result_estim.append(
-                        wfs.calculate_pw_estimate(probed_images[i], self.PWMatrix[i], dtype_complex=dtype_complex))
+                        wfs.calculate_pw_estimate(probed_images[i],
+                                                  self.PWMatrix[i],
+                                                  self.dimEstim,
+                                                  dtype_complex=dtype_complex))
 
                     if 'dir_save_all_planes' in kwargs.keys():
                         if kwargs['dir_save_all_planes'] is not None:
@@ -417,7 +417,10 @@ class Estimator:
             elif self.polychrom in ['singlewl', 'broadband_pwprobes']:
 
                 result_estim.append(
-                    wfs.calculate_pw_estimate(probed_images[0], self.PWMatrix[0], dtype_complex=dtype_complex))
+                    wfs.calculate_pw_estimate(probed_images[0],
+                                              self.PWMatrix[0],
+                                              self.dimEstim,
+                                              dtype_complex=dtype_complex))
 
                 if 'dir_save_all_planes' in kwargs.keys():
                     if kwargs['dir_save_all_planes'] is not None:
