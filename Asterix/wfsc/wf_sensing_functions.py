@@ -222,7 +222,7 @@ def calculate_pw_estimate(Difference,
                           Vectorprobes,
                           dimimages,
                           dir_save_all_planes=None,
-                          pwp_or_btp="pw",
+                          pwp_or_btp="pwp",
                           dtype_complex='complex128'):
     """Calculate the focal plane electric field from the probe image
     differences and the modeled probe matrix.
@@ -290,7 +290,7 @@ def simulate_pw_difference(input_wavefront,
                            amplitudePW,
                            voltage_vector=0.,
                            wavelengths=None,
-                           pwp_or_btp="pw",
+                           pwp_or_btp="pwp",
                            **kwargs):
     """Simulate the acquisition of probe images using Pair-wise.
 
