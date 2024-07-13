@@ -170,7 +170,7 @@ class Estimator:
             if self.polychrom == 'broadband_pwprobes':
                 raise ValueError("Cannot use [Estimationconfig]['polychromatic']='broadband_pwprobes' in perfect mode.")
 
-        elif self.technique in ["pairwise", "pw", "pwp", "btp+"]:
+        elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
             self.is_focal_plane = True
             self.is_complex = True
 
@@ -322,7 +322,7 @@ class Estimator:
                 raise ValueError(self.polychrom +
                                  "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
-        elif self.technique in ["pairwise", "pw", "pwp", "btp+"]:
+        elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
 
             # nb_photons parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
             # case, we reduce it to self.delta_wav_estim_individual bandwidth

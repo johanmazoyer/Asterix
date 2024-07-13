@@ -243,7 +243,7 @@ def calculate_pw_estimate(Difference,
     pwp_or_btp : string, default 'pwp'
         type of algorithm used, can be
             'pw' Pair Wise Probing
-            'btp+' Borde Traub Probing where the probe is pushed positevely
+            'btp' Borde Traub Probing where the probe is pushed positevely
     dtype_complex : string, default 'complex128'
         bit number for the complex arrays in the PWP matrices.
         Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
@@ -277,11 +277,11 @@ def calculate_pw_estimate(Difference,
 
     if pwp_or_btp in ['pw', "pwp", 'pairwise']:
         return Resultat / 4.
-    elif pwp_or_btp in ['btp+']:
+    elif pwp_or_btp in ['btp']:
         return Resultat / 2.
     else:
         raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp' for Pair Wise Probing "
-                         "or 'btp+' for Borde Traub Probing")
+                         "or 'btp' for Borde Traub Probing")
 
 
 def simulate_pw_difference(input_wavefront,
@@ -295,7 +295,7 @@ def simulate_pw_difference(input_wavefront,
     """Simulate the acquisition of probe images using Pair-wise.
 
     and calculate the difference of images [I(+probe) - I(-probe)] (if pwp_or_btp = 'pw')
-    or [I(+probe) - I(0)] (if pwp_or_btp = 'btp+').
+    or [I(+probe) - I(0)] (if pwp_or_btp = 'btp').
     We use testbed.name_DM_to_probe_in_PW to do the probes.
 
     Parameters
@@ -315,7 +315,7 @@ def simulate_pw_difference(input_wavefront,
     pwp_or_btp : string, default 'pwp'
         type of algorithm used, can be
             'pw' Pair Wise Probing
-            'btp+' Borde Traub Probing where the probe is pushed positevely
+            'btp' Borde Traub Probing where the probe is pushed positevely
 
     Returns
     --------
@@ -325,7 +325,7 @@ def simulate_pw_difference(input_wavefront,
 
     Difference = np.zeros((len(posprobes), testbed.dimScience, testbed.dimScience))
 
-    if pwp_or_btp == 'btp+':
+    if pwp_or_btp == 'btp':
         # If we are in a polychromatic mode but we need monochromatic instensity
         # we have to be careful with the normalization, because
         # todetector_intensity is normalizing to polychromatic PSF by default
@@ -381,12 +381,13 @@ def simulate_pw_difference(input_wavefront,
                                                        wavelengths=wavelengths,
                                                        **kwargs)
 
-            elif pwp_or_btp in ['btp+']:
+            elif pwp_or_btp in ['btp']:
                 Int_fp_probe = testbed.todetector_intensity(entrance_EF=1 + 1j * probephase,
                                                             wavelengths=wavelengths,
                                                             **kwargs)
-            raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
-                             "Pair Wise Probing or 'btp+' for Borde Traub Probing")
+            else:
+                raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
+                             "Pair Wise Probing or 'btp' for Borde Traub Probing")
 
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
@@ -406,13 +407,14 @@ def simulate_pw_difference(input_wavefront,
                     in_contrast=False,
                     **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
-            elif pwp_or_btp in ['btp+']:
+            elif pwp_or_btp in ['btp']:
                 Int_fp_probe = testbed.todetector_intensity(
                     entrance_EF=1 + 1j * probephase, wavelengths=wavelengths, in_contrast=False, **
                     kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
-            raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
-                             "Pair Wise Probing or 'btp+' for Borde Traub Probing")
+            else:
+                raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
+                             "Pair Wise Probing or 'btp' for Borde Traub Probing")
 
         else:
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
@@ -420,7 +422,7 @@ def simulate_pw_difference(input_wavefront,
 
         if pwp_or_btp in ['pw', "pwp", 'pairwise']:
             Difference[count] = Ikplus - Ikmoins
-        elif pwp_or_btp in ['btp+']:
+        elif pwp_or_btp in ['btp']:
             Difference[count] = Ikplus - Ik0 - Int_fp_probe
 
     return Difference

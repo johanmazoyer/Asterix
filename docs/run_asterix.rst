@@ -213,7 +213,7 @@ The [Estimationconfig] section contains the estimator parameters. An estimator i
     - ``estimation`` : string, FP WF sensing : 'perfect' or 'pwp'.
     - ``Estim_bin_factor`` : int, We bin the estimation images used for PWP / perfect estim by this factor. this way dimEstim = dimScience / Estim_bin_factor and  Estim_sampling = Science_sampling / Estim_bin_factor. Be careful, this raise an error if Estim_sampling < 3.
 
-If ``estimation`` = 'pwp' or 'btp+':
+If ``estimation`` = 'pwp' or 'btp':
 
     - ``amplitudePW`` : float, Amplitude of PWP probes or BTP (in nm).
     - ``posprobes`` : list of int, Actuators used for PWP or BTP (DM in pupil plane).
