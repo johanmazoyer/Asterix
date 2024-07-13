@@ -387,7 +387,7 @@ def simulate_pw_difference(input_wavefront,
                                                             **kwargs)
             else:
                 raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
-                             "Pair Wise Probing or 'btp' for Borde Traub Probing")
+                                 "Pair Wise Probing or 'btp' for Borde Traub Probing")
 
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
@@ -414,7 +414,7 @@ def simulate_pw_difference(input_wavefront,
 
             else:
                 raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
-                             "Pair Wise Probing or 'btp' for Borde Traub Probing")
+                                 "Pair Wise Probing or 'btp' for Borde Traub Probing")
 
         else:
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
