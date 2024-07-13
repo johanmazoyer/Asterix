@@ -271,14 +271,20 @@ def calculate_pw_estimate(Difference,
 
             l_ind = l_ind + 1
 
-    if dir_save_all_planes is not None:
-        name_plane = 'PW_Estimate'
-        save_plane_in_fits(dir_save_all_planes, name_plane, Resultat / 4.)
-
     if pwp_or_btp in ['pw', "pwp", 'pairwise']:
+        if dir_save_all_planes is not None:
+            name_plane = 'PWP_Estimate'
+            save_plane_in_fits(dir_save_all_planes, name_plane, Resultat / 4.)
+
         return Resultat / 4.
+
     elif pwp_or_btp in ['btp']:
+        if dir_save_all_planes is not None:
+            name_plane = 'BTP_Estimate'
+            save_plane_in_fits(dir_save_all_planes, name_plane, Resultat / 2.)
+
         return Resultat / 2.
+
     else:
         raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp' for Pair Wise Probing "
                          "or 'btp' for Borde Traub Probing")
