@@ -399,7 +399,7 @@ class Estimator:
         if (self.technique == "perfect") or (perfect_estimation):
             return probed_images
 
-        elif self.technique in ["pairwise", "pw"]:
+        elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
 
             result_estim = []
 
