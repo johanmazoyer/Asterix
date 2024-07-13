@@ -389,7 +389,6 @@ def simulate_pw_difference(input_wavefront,
             raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
                              "Pair Wise Probing or 'btp+' for Borde Traub Probing")
 
-
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
             # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
@@ -412,7 +411,7 @@ def simulate_pw_difference(input_wavefront,
                 Int_fp_probe = testbed.todetector_intensity(
                     entrance_EF=1 + 1j * probephase, wavelengths=wavelengths, in_contrast=False, **
                     kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
-            
+
             raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
                              "Pair Wise Probing or 'btp+' for Borde Traub Probing")
 
