@@ -155,11 +155,7 @@ class Estimator:
 
         for wavei in self.wav_vec_estim:
             if self.Estim_sampling / testbed.wavelength_0 * wavei < 2.5:
-                raise ValueError(
-                    f"Estimator sampling must be >= 2.5 at all estimation wavelengths. "
-                    f"For [Estimationconfig]['Estim_bin_factor'] = {Estimationconfig['Estim_bin_factor']}, "
-                    f"the estimator sampling is {self.Estim_sampling} at wavelength {wavei*1e9} nm. "
-                    "Please decrease [Estimationconfig]['Estim_bin_factor'] parameter.")
+                raise ValueError(f"Estimator sampling must be >= 2.5 at all estimation wavelengths. "
                                  f"For [Estimationconfig]['Estim_bin_factor'] = {Estimationconfig['Estim_bin_factor']}, "
                                  f"the estimator sampling is {self.Estim_sampling} at wavelength {wavei * 1e9} nm. "
                                  "Please decrease [Estimationconfig]['Estim_bin_factor'] parameter.")
@@ -340,8 +336,7 @@ class Estimator:
             if self.polychrom == 'multiwl':
                 if 'nb_photons' in kwargs.keys():
                     if kwargs['nb_photons'] > 0:
-                        kwargs[
-                            'nb_photons'] = kwargs['nb_photons'] / testbed.Delta_wav * self.delta_wav_estim_individual
+                        kwargs['nb_photons'] = kwargs['nb_photons'] / testbed.Delta_wav * self.delta_wav_estim_individual
 
                 for i, wavei in enumerate(self.wav_vec_estim):
                     Difference = wfs.simulate_pw_difference(entrance_EF[testbed.wav_vec.tolist().index(wavei)],
