@@ -10,13 +10,17 @@ It contains 2 functions at least:
 
 - an initialization ``Estimator.__init__()`` The initialization will require previous initialization of the testbed (see previous section) and the [Estimationconfig] part of the parameter file.  It set up everything you need for the estimation (e.g. the PW matrix). 
 
-- an estimation function itself with parameters:
-
+- an probe function ``Estimator.probe()``, with parameters:
         - the entrance EF
         - DM voltages
+        - the estimation wavelengths
+    It returns the probed images as a list (of length ``nb_wav_estim``) of 3d arrays (nprobes,dimEstim,dimEstim).
 
-It returns the estimation as a 2D complex array. The size in pixel of the output is 
-set by the ``Estim_bin_factor`` parameter and is ``dimScience`` / ``Estim_bin_factor``.
+- an estimation function ``Estimator.estimate()``, with parameters:
+    - the probed images
+    It returns the estimation as a list (of length ``nb_wav_estim``) of 2D arrays. The size
+    in pixel of the output is set by the ``Estim_bin_factor`` parameter and is 
+    ``dimScience`` / ``Estim_bin_factor``.
 
 .. code-block:: python
 
@@ -26,10 +30,12 @@ set by the ``Estim_bin_factor`` parameter and is ``dimScience`` / ``Estim_bin_fa
     Estimationconfig = config["Estimationconfig"]
 
     myestim = Estimator(Estimationconfig, testbed)
-    resultatestimation = myestim.estimate(testbed,
-                                          voltage_vector=init_voltage,
-                                          entrance_EF=input_wavefront)
 
+    probed_images = myestim.probe(testbed,
+                                    voltage_vector=init_voltage,
+                                    entrance_EF=input_wavefront,)
+
+    resultatestimation = myestim.estimate(probed_images)
 
 ``estimate`` function has been set up with a mode where each optical plane is saved to .fits file for debugging purposes.
 To use this option, set up the keyword ``dir_save_all_planes`` to an existing path directory.
@@ -37,8 +43,9 @@ To use this option, set up the keyword ``dir_save_all_planes`` to an existing pa
 Perfect Estimation
 +++++++++++++++++++++++
 
-This is a perfect estimation in focal plane of the electrical field in focal plane. You can use 
-this estimation by setting the parameter ``estimation='Perfect'`` before initialization. However, 
+This is a perfect estimation in focal plane of the electrical field in focal plane. In the case of
+a perfect estimation, both the probe and estimate function returns the electrical field in focal plane.
+You can use this estimation by setting the parameter ``estimation='Perfect'`` before initialization. However, 
 this estimation can be also done wihtout initialization or if another estimation have been initialized: 
 
 .. code-block:: python
@@ -51,20 +58,28 @@ this estimation can be also done wihtout initialization or if another estimation
     # we initialize in perfect mode
     Estimationconfig.update({'estimation': "Perfect"})
     myestim = Estimator(Estimationconfig, testbed)
-    resultatestimation = myestim.estimate(testbed,
-                                          voltage_vector=init_voltage,
-                                          entrance_EF=input_wavefront)
+    probed_images = myestim.probe(testbed,
+                                    voltage_vector=init_voltage,
+                                    entrance_EF=input_wavefront,)
+
+    resultatestimation = myestim.estimate(probed_images)
     # this is a perfect FP estimation
 
     # we re- initialize in pair-wise mode
     Estimationconfig.update({'estimation': "pw"})
     myestim = Estimator(Estimationconfig, testbed)
 
-    resultatestimation = myestim.estimate(testbed,
-                                          voltage_vector=init_voltage,
-                                          entrance_EF=input_wavefront)
+    probed_images = myestim.probe(testbed,
+                                    voltage_vector=init_voltage,
+                                    entrance_EF=input_wavefront)
+
+    resultatestimation = myestim.estimate(probed_images)
     # this is a pair-wise FP estimation
 
+    probed_images = myestim.probe(testbed,
+                                    voltage_vector=init_voltage,
+                                    entrance_EF=input_wavefront,
+                                    perfect_estimation=True)
     resultatestimation = myestim.estimate(testbed,
                                           voltage_vector=init_voltage,
                                           entrance_EF=input_wavefront,
@@ -85,7 +100,7 @@ resized by the ``Estim_bin_factor``:
 
 
 All estimators are done this way (first obtains images in the focal plane at the ``Science_sampling`` and 
-then resizing) to ensure that the behavior is equivalent to waht would be done on a real testbed
+then resizing) to ensure that the behavior is equivalent to what would be done on a real testbed
 
 Pair Wise Estimation
 +++++++++++++++++++++++++

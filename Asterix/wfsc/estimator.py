@@ -21,7 +21,7 @@ class Estimator:
             - an probe function Estimator.probe(), with parameters:
                     - the entrance EF
                     - DM voltages
-                    - the wavelength
+                    - the estimation wavelengths
                 It returns the probed images as a list (of length nb_wav_estim) of
                 3d arrays (nprobes,dimEstim,dimEstim).
 
