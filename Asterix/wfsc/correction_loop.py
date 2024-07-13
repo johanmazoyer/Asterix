@@ -311,11 +311,16 @@ def correction_loop_1matrix(testbed: Testbed,
             else:
                 print("Iteration number " + corrector.correction_algorithm + ": ", iteration + 1)
 
-        resultatestimation = estimator.estimate(testbed,
-                                                voltage_vector=thisloop_voltages_DMs[-1],
-                                                entrance_EF=input_wavefront,
+        probed_images = estimator.probe(testbed,
+                                        voltage_vector=thisloop_voltages_DMs[-1],
+                                        entrance_EF=input_wavefront,
+                                        perfect_estimation=Search_best_Mode,
+                                        nb_photons=nb_photons,
+                                        **kwargs)
+
+        resultatestimation = estimator.estimate(probed_images,
                                                 perfect_estimation=Search_best_Mode,
-                                                nb_photons=nb_photons,
+                                                dtype_complex=testbed.dtype_complex,
                                                 **kwargs)
 
         solution = corrector.toDM_voltage(testbed,

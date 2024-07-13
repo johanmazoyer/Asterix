@@ -18,14 +18,19 @@ class Estimator:
                     - saving directories
                 The estimator initialization requires previous initialization of the testbed.
 
-            - an estimation function Estimator.estimate(), with parameters:
+            - an probe function Estimator.probe(), with parameters:
                     - the entrance EF
                     - DM voltages
                     - the wavelength
-                It returns the estimation as a 2D array. In all generality, it can be pupil or focal plane,
-                complex or real with keywords (Estim.is_focal_plane = True, Estim.is_complex = True)
-                to explain the form of the output and potentially prevent wrongfull combination of
-                estim + correc.
+                It returns the probed images as a list (of length nb_wav_estim) of
+                3d arrays (nprobes,dimEstim,dimEstim).
+
+            - an estimation function Estimator.estimate(), with parameters:
+                - the probed images
+                It returns the estimation as a list (of length nb_wav_estim) of 2D arrays (dimEstim,dimEstim).
+                In all generality, it can be pupil or focal plane, complex or real with keywords
+                (Estim.is_focal_plane = True, Estim.is_complex = True) to explain the form of the output and
+                potentially prevent wrongfull combination of estim + correc.
 
     AUTHOR : Johan Mazoyer
     """
@@ -152,7 +157,7 @@ class Estimator:
             if self.Estim_sampling / testbed.wavelength_0 * wavei < 2.5:
                 raise ValueError(f"Estimator sampling must be >= 2.5 at all estimation wavelengths. "
                                  f"For [Estimationconfig]['Estim_bin_factor'] = {Estimationconfig['Estim_bin_factor']}, "
-                                 f"the estimator sampling is {self.Estim_sampling} at wavelength {wavei*1e9} nm. "
+                                 f"the estimator sampling is {self.Estim_sampling} at wavelength {wavei * 1e9} nm. "
                                  "Please decrease [Estimationconfig]['Estim_bin_factor'] parameter.")
 
         # image size after binning. This is the size of the estimation !
@@ -235,15 +240,15 @@ class Estimator:
         else:
             raise NotImplementedError("This estimation algorithm is not yet implemented")
 
-    def estimate(self, testbed: Testbed, entrance_EF=1., voltage_vector=0., perfect_estimation=False, **kwargs):
-        """Run an estimation from a testbed, with a given input wavefront and a
+    def probe(self, testbed: Testbed, entrance_EF=1., voltage_vector=0., perfect_estimation=False, **kwargs):
+        """Use the DM or the testbed to probe the aberrations with a given input wavefront and a
         state of the DMs.
 
         AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
-        testbed : OpticalSystem.Testbed
+                testbed : OpticalSystem.Testbed
                 Testbed object which describe your testbed
         entrance_EF : complex float or 2D array, default 1.
             initial EF field
@@ -257,14 +262,13 @@ class Estimator:
 
         Returns
         --------
-        estimation : list of 2D array
-            list is the number of wl in the estimation, usually 1 or testbed.nb_wav
-            Each arrays are of size of sixe [dimEstim, dimEstim].
-            estimation of the Electrical field
+        probed_fp_images : list of 2D or 3D array
+            list is the number of wl in the estimation, usually 1 or self.nb_wav_estim
+            Each arrays are of size of sixe [nprobes, dimEstim, dimEstim].
         """
 
         if 'wavelength' in kwargs:
-            raise ValueError(("estimate() function is polychromatic, "
+            raise ValueError(("probe() function is polychromatic, "
                               "do not use wavelength keyword. "
                               "Use 'wavelengths' keyword even for monochromatic intensity"))
 
@@ -282,10 +286,10 @@ class Estimator:
                  "or a2D array of size (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil) "
                  "or a 3D array of size(testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil)"))
 
-        if (self.technique == "perfect") or (perfect_estimation):
-            # If polychromatic, assume a perfect estimation at one wavelength
+        probed_fp_images = []
 
-            result_estim = []
+        if (self.technique == "perfect") or (perfect_estimation):
+            # in the perfect estimation case, we return the focal plane electric field as "probed" images
 
             if self.polychrom == 'multiwl':
                 for i, wavei in enumerate(self.wav_vec_estim):
@@ -293,35 +297,32 @@ class Estimator:
                         entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(wavei)],
                         voltage_vector=voltage_vector,
                         wavelength=wavei)
-                    result_estim.append(resizing(resultatestimation, self.dimEstim))
+                    probed_fp_images.append(resizing(resultatestimation, self.dimEstim))
 
                     if 'dir_save_all_planes' in kwargs.keys():
                         if kwargs['dir_save_all_planes'] is not None:
                             name_plane = 'Perfect_estimate_multiwl' + f'_wl{int(wavei * 1e9)}'
-                            save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
+                            save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, probed_fp_images[-1])
 
             elif self.polychrom == 'singlewl':
                 resultatestimation = testbed.todetector(entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(
                     self.wav_vec_estim[0])],
                                                         voltage_vector=voltage_vector,
                                                         wavelength=self.wav_vec_estim[0])
-                result_estim.append(resizing(resultatestimation, self.dimEstim))
+                probed_fp_images.append(resizing(resultatestimation, self.dimEstim))
 
                 if 'dir_save_all_planes' in kwargs.keys():
                     if kwargs['dir_save_all_planes'] is not None:
                         name_plane = 'Perfect_estimate_singlewl' + f'_wl{int(self.wav_vec_estim[0] * 1e9)}'
-                        save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
+                        save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, probed_fp_images[-1])
 
             elif self.polychrom == 'broadband_pwprobes':
                 raise ValueError("cannot use [Estimationconfig]['polychromatic']='broadband_pwprobes' in perfect mode")
             else:
                 raise ValueError(self.polychrom +
                                  "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
-            return result_estim
 
         elif self.technique in ["pairwise", "pw"]:
-
-            result_estim = []
 
             # nb_photons parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
             # case, we reduce it to self.delta_wav_estim_individual bandwidth
@@ -339,14 +340,7 @@ class Estimator:
                                                             voltage_vector=voltage_vector,
                                                             wavelengths=wavei,
                                                             **kwargs)
-
-                    result_estim.append(
-                        wfs.calculate_pw_estimate(Difference, self.PWMatrix[i], dtype_complex=testbed.dtype_complex))
-
-                    if 'dir_save_all_planes' in kwargs.keys():
-                        if kwargs['dir_save_all_planes'] is not None:
-                            name_plane = 'PW_estimate_multiwl' + f'_wl{int(wavei * 1e9)}'
-                            save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
+                    probed_fp_images.append(Difference)
 
             elif self.polychrom == 'singlewl':
                 Difference = wfs.simulate_pw_difference(entrance_EF[testbed.wav_vec.tolist().index(
@@ -358,13 +352,7 @@ class Estimator:
                                                         voltage_vector=voltage_vector,
                                                         wavelengths=self.wav_vec_estim[0],
                                                         **kwargs)
-
-                result_estim.append(
-                    wfs.calculate_pw_estimate(Difference, self.PWMatrix[0], dtype_complex=testbed.dtype_complex))
-                if 'dir_save_all_planes' in kwargs.keys():
-                    if kwargs['dir_save_all_planes'] is not None:
-                        name_plane = 'PW_estimate_singlewl' + f'_wl{int(self.wav_vec_estim[0] * 1e9)}'
-                        save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
+                probed_fp_images.append(Difference)
 
             elif self.polychrom == 'broadband_pwprobes':
                 Difference = wfs.simulate_pw_difference(entrance_EF,
@@ -375,12 +363,65 @@ class Estimator:
                                                         voltage_vector=voltage_vector,
                                                         wavelengths=testbed.wav_vec,
                                                         **kwargs)
+                probed_fp_images.append(Difference)
+
+        return probed_fp_images
+
+    def estimate(self, probed_images, perfect_estimation=False, dtype_complex='complex128', **kwargs):
+        """Run an estimation from a testbed, with a given input wavefront and a
+        state of the DMs.
+
+        AUTHOR : Johan Mazoyer
+
+        Parameters
+        ----------
+        probed_fp_images : list of 2D or 3D array
+            list is the number of wl in the estimation, usually 1 or self.nb_wav_estim
+            Each arrays are of size of sixe [nprobes, dimEstim, dimEstim].
+        perfect_estimation : bool, default = False
+            if true This is equivalent to have self.technique = "perfect"
+            but even if we are using another technique, we sometimes
+            need a perfect estimation and it avoid re-initialization of
+            the estimation.
+        dtype_complex : string, default 'complex128'
+            bit number for the complex arrays in the PW matrices.
+            Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
+            cost of lower precision.
+
+        Returns
+        --------
+        estimation : list of 2D array
+            list is the number of wl in the estimation, usually 1 or testbed.nb_wav
+            Each arrays are of size of sixe [dimEstim, dimEstim].
+            estimation of the Electrical field
+        """
+
+        if (self.technique == "perfect") or (perfect_estimation):
+            return probed_images
+
+        elif self.technique in ["pairwise", "pw"]:
+
+            result_estim = []
+
+            if self.polychrom == 'multiwl':
+
+                for i, wavei in enumerate(self.wav_vec_estim):
+                    result_estim.append(
+                        wfs.calculate_pw_estimate(probed_images[i], self.PWMatrix[i], dtype_complex=dtype_complex))
+
+                    if 'dir_save_all_planes' in kwargs.keys():
+                        if kwargs['dir_save_all_planes'] is not None:
+                            name_plane = 'PW_estimate_multiwl' + f'_wl{int(wavei * 1e9)}'
+                            save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
+
+            elif self.polychrom in ['singlewl', 'broadband_pwprobes']:
 
                 result_estim.append(
-                    wfs.calculate_pw_estimate(Difference, self.PWMatrix[0], dtype_complex=testbed.dtype_complex))
+                    wfs.calculate_pw_estimate(probed_images[0], self.PWMatrix[0], dtype_complex=dtype_complex))
+
                 if 'dir_save_all_planes' in kwargs.keys():
                     if kwargs['dir_save_all_planes'] is not None:
-                        name_plane = 'PW_estimate_broadband_pwprobes' + f'_wl{int(testbed.wavelength_0 * 1e9)}_bw{testbed.Delta_wav * 1e9}'
+                        name_plane = 'PW_estimate_singlewl' + f'_wl{int(self.wav_vec_estim[0] * 1e9)}'
                         save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
 
             else:
