@@ -8,7 +8,7 @@ If you know all about conda virtual environments and you only want to install as
 
 .. code-block:: bash
 
-    $pip install git+https://github.com/johanmazoyer/Asterix.git
+    $ pip install git+https://github.com/johanmazoyer/Asterix.git
 
 
 Conda envs

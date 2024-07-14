@@ -12,7 +12,7 @@ class Estimator:
     """Estimator Class allows you to define a WF estimator.
 
         It must contains 2 functions at least:
-            - an initialization (e.g. PW matrix) Estimator.__init__(), with parameters:
+            - an initialization (e.g. PWP matrix) Estimator.__init__(), with parameters:
                     - the testbed structure
                     - the estimation parameters
                     - saving directories
@@ -170,7 +170,7 @@ class Estimator:
             if self.polychrom == 'broadband_pwprobes':
                 raise ValueError("Cannot use [Estimationconfig]['polychromatic']='broadband_pwprobes' in perfect mode.")
 
-        elif self.technique in ["pairwise", "pw"]:
+        elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
             self.is_focal_plane = True
             self.is_complex = True
 
@@ -190,7 +190,7 @@ class Estimator:
                                                  self.wav_vec_estim,
                                                  silence=silence)
 
-            # Saving PW matrix in Labview directory
+            # Saving PWP matrix in Labview directory
             if save_for_bench:
 
                 if not os.path.exists(realtestbed_dir):
@@ -216,7 +216,7 @@ class Estimator:
                                  self.dimEstim] = self.PWMatrix[k][:, 1, i].flatten()
 
                     # Because the exact laser WLs can change a bit quite often and labview reads a given
-                    # fits name, we name the PW matrix laser1, 2, 3 for a range of WL.
+                    # fits name, we name the PWP matrix laser1, 2, 3 for a range of WL.
 
                     string_laser = ''
                     if 625 < wave_k * 1e9 < 645:
@@ -322,7 +322,7 @@ class Estimator:
                 raise ValueError(self.polychrom +
                                  "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
-        elif self.technique in ["pairwise", "pw"]:
+        elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
 
             # nb_photons parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
             # case, we reduce it to self.delta_wav_estim_individual bandwidth
@@ -338,6 +338,7 @@ class Estimator:
                                                             self.amplitudePW,
                                                             voltage_vector=voltage_vector,
                                                             wavelengths=wavei,
+                                                            pwp_or_btp=self.technique,
                                                             **kwargs)
                     probed_fp_images.append(Difference)
 
@@ -349,6 +350,7 @@ class Estimator:
                                                         self.amplitudePW,
                                                         voltage_vector=voltage_vector,
                                                         wavelengths=self.wav_vec_estim[0],
+                                                        pwp_or_btp=self.technique,
                                                         **kwargs)
                 probed_fp_images.append(Difference)
 
@@ -359,6 +361,7 @@ class Estimator:
                                                         self.amplitudePW,
                                                         voltage_vector=voltage_vector,
                                                         wavelengths=testbed.wav_vec,
+                                                        pwp_or_btp=self.technique,
                                                         **kwargs)
                 probed_fp_images.append(Difference)
 
@@ -396,7 +399,7 @@ class Estimator:
         if (self.technique == "perfect") or (perfect_estimation):
             return probed_images
 
-        elif self.technique in ["pairwise", "pw"]:
+        elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
 
             result_estim = []
 
@@ -438,7 +441,7 @@ class Estimator:
 
 
 def find_DM_to_probe(testbed: Testbed):
-    """Find which DM to use for the PW probes.
+    """Find which DM to use for the PWP/BTP probes.
 
     AUTHOR : Johan Mazoyer
 
@@ -450,14 +453,14 @@ def find_DM_to_probe(testbed: Testbed):
     Returns
     ------------
     name_DM_to_probe_in_PW : string
-        name of the DM to probe in PW
+        name of the DM to probe in PWP or BTP
     """
 
     # we chose it already. We only check its existence
     if hasattr(testbed, 'name_DM_to_probe_in_PW'):
         if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
             raise ValueError(f"Testbed has no DM '{testbed.name_DM_to_probe_in_PW}', choose another DM name "
-                             "for PW, using using 'testbed.name_DM_to_probe_in_PW'.")
+                             "for PWP, using using 'testbed.name_DM_to_probe_in_PW'.")
         return testbed.name_DM_to_probe_in_PW
 
     # If name_DM_to_probe_in_PW is not already set,
@@ -480,9 +483,9 @@ def find_DM_to_probe(testbed: Testbed):
         # If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
         if number_DMs_in_PP > 1:
             raise ValueError("You have several DM in PP, choose manually one for "
-                             "the PW probes using 'testbed.name_DM_to_probe_in_PW'.")
+                             "the PWP probes using 'testbed.name_DM_to_probe_in_PW'.")
         # Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
         if number_DMs_in_PP == 0:
             raise ValueError("You have several DMs, none in PP, choose manually one for "
-                             "the PW probes using 'testbed.name_DM_to_probe_in_PW'.")
+                             "the PWP probes using 'testbed.name_DM_to_probe_in_PW'.")
     return name_DM_to_probe_in_PW

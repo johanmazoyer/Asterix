@@ -71,14 +71,14 @@ Use with caution, as this can generate a lot of fits especially if in a loop. To
 What is saved if you activate this option in runthd2() was carefully thougth about, to avoid sending thousands of .fits files:
 
 * Dark Hole Mask
-* PW Estimate at each iteration.
+* PWP Estimate at each iteration.
 * 1 full run through testbed (~17 fits file for 1 DM testbed -one before and after each planes more or less-) at each iteration.
 
 What is not saved by default, but can be easily done by setting up the keyword ``dir_save_all_planes`` to an existing path directory, individually for these functions:
 
-* PW Matrix (nb_probes*17 fits for 1 DM testbed)
+* PWP Matrix (nb_probes*17 fits for 1 DM testbed)
 * EFC Matrix (nb_actuator*17 fits for 1 DM testbed)
-* PW difference (nb_probes x17 fits for 1 DM testbed), at each iteration
+* PWP difference (nb_probes x17 fits for 1 DM testbed), at each iteration
 
 
 Description of the parameter file
@@ -210,13 +210,13 @@ If phase coronagraph:
 ~~~~~~~~~~~~~~~~~~~~~~
 The [Estimationconfig] section contains the estimator parameters. An estimator is the thing that measure something you want to correct. 
 
-    - ``estimation`` : string, FP WF sensing : 'perfect' or 'pw'.
-    - ``Estim_bin_factor`` : int, We bin the estimation images used for PW / perfect estim by this factor. this way dimEstim = dimScience / Estim_bin_factor and  Estim_sampling = Science_sampling / Estim_bin_factor. Be careful, this raise an error if Estim_sampling < 3.
+    - ``estimation`` : string, FP WF sensing : 'perfect' or 'pwp'.
+    - ``Estim_bin_factor`` : int, We bin the estimation images used for PWP / perfect estim by this factor. this way dimEstim = dimScience / Estim_bin_factor and  Estim_sampling = Science_sampling / Estim_bin_factor. Be careful, this raise an error if Estim_sampling < 3.
 
-If ``estimation`` = 'PW':
+If ``estimation`` = 'pwp' or 'btp':
 
-    - ``amplitudePW`` : float, Amplitude of PW probes (in nm).
-    - ``posprobes`` : list of int, Actuators used for PW (DM in pupil plane).
+    - ``amplitudePW`` : float, Amplitude of PWP probes or BTP (in nm).
+    - ``posprobes`` : list of int, Actuators used for PWP or BTP (DM in pupil plane).
     - ``cut`` : float, Threshold to remove pixels with bad estimation of the electric field.
 
 
