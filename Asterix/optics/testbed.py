@@ -94,7 +94,6 @@ class Testbed(optsy.OpticalSystem):
                     # if the Dm is not active, we just add it to the testbed model
                     # but not to the EF_through function
                     vars(self)[list_os_names[num_optical_sys]] = list_os[num_optical_sys]
-                    continue
 
                 self.number_DMs += 1
                 self.number_act += list_os[num_optical_sys].number_act
@@ -169,8 +168,9 @@ class Testbed(optsy.OpticalSystem):
         for i, DM_name in enumerate(self.name_of_DMs):
 
             DM: deformable_mirror.DeformableMirror = vars(self)[DM_name]
-            actu_vect_DM = actu_vect[indice_acum_number_act:indice_acum_number_act + DM.number_act]
-            DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
+            if DM.active:
+                actu_vect_DM = actu_vect[indice_acum_number_act:indice_acum_number_act + DM.number_act]
+                DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
 
             indice_acum_number_act += DM.number_act
 
@@ -203,20 +203,20 @@ class Testbed(optsy.OpticalSystem):
 
             # we access each DM object individually
             DM: deformable_mirror.DeformableMirror = vars(self)[DM_name]
+            if DM.active:
+                # we extract the voltages for this one
+                # this voltages are in the DM basis
+                vector_basis_voltage_for_DM = vector_basis_voltage[indice_acum_basis_size:indice_acum_basis_size +
+                                                                   DM.basis_size]
 
-            # we extract the voltages for this one
-            # this voltages are in the DM basis
-            vector_basis_voltage_for_DM = vector_basis_voltage[indice_acum_basis_size:indice_acum_basis_size +
-                                                               DM.basis_size]
+                # we change to actuator basis
+                vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis), vector_basis_voltage_for_DM)
 
-            # we change to actuator basis
-            vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis), vector_basis_voltage_for_DM)
+                # we recreate a voltages vector, but for each actuator
+                vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
+                                        DM.number_act] = vector_actu_voltage_for_DM
 
-            # we recreate a voltages vector, but for each actuator
-            vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
-                                    DM.number_act] = vector_actu_voltage_for_DM
-
-            indice_acum_basis_size += DM.basis_size
+                indice_acum_basis_size += DM.basis_size
             indice_acum_number_act += DM.number_act
 
         return vector_actuator_voltage
