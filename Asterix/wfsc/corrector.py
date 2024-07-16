@@ -81,10 +81,11 @@ class Corrector:
 
         for DM_name in testbed.name_of_DMs:
             DM: DeformableMirror = vars(testbed)[DM_name]
-            DM.basis = DM.create_DM_basis(basis_type=basis_type, silence=silence)
-            DM.basis_size = DM.basis.shape[0]
-            self.total_number_modes += DM.basis_size
-            DM.basis_type = basis_type
+            if DM.active:
+                DM.basis = DM.create_DM_basis(basis_type=basis_type, silence=silence)
+                DM.basis_size = DM.basis.shape[0]
+                self.total_number_modes += DM.basis_size
+                DM.basis_type = basis_type
 
         self.correction_algorithm = Correctionconfig["correction_algorithm"].lower()
         self.MatrixType = Correctionconfig["MatrixType"].lower()

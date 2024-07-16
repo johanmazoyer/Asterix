@@ -482,6 +482,8 @@ class DeformableMirror(optsy.OpticalSystem):
         """
 
         where_non_zero_voltage = np.where(actu_vect != 0)
+        if len(where_non_zero_voltage[0]) == 0:
+            return np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil))
 
         # opd is in nanometer
         # DM_pushact is in opd nanometer

@@ -231,26 +231,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     for i, DM_name in enumerate(testbed.name_of_DMs):
 
         DM: DeformableMirror = vars(testbed)[DM_name]
-        total_number_basis_modes += DM.basis_size
+        if DM.active:
+            total_number_basis_modes += DM.basis_size
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
-
-    # Some string manips to name the matrix if we save it
-    if MatrixType == 'perfect':
-        headfile = "DirectMatPerf"
-    elif MatrixType == 'smallphase':
-        headfile = "DirectMatSP"
-    else:
-        raise ValueError("This Matrix type does not exist ([Correctionconfig]['MatrixType'] parameter).")
-
-    if DM.basis_type == 'fourier':
-        basis_type_str = 'Four'
-        pass
-    elif DM.basis_type == 'actuator':
-        basis_type_str = 'Actu'
-        headfile += "_EFCampl" + str(amplitudeEFC)
-    else:
-        raise ValueError("This basis type does not exist ([Correctionconfig]['DM_basis'] parameter).")
 
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
@@ -258,6 +242,26 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     for DM_name in testbed.name_of_DMs:
 
         DM: DeformableMirror = vars(testbed)[DM_name]
+        if not DM.active:
+            continue
+
+        # Some string manips to name the matrix if we save it
+        if MatrixType == 'perfect':
+            headfile = "DirectMatPerf"
+        elif MatrixType == 'smallphase':
+            headfile = "DirectMatSP"
+        else:
+            raise ValueError("This Matrix type does not exist ([Correctionconfig]['MatrixType'] parameter).")
+
+        if DM.basis_type == 'fourier':
+            basis_type_str = 'Four'
+            pass
+        elif DM.basis_type == 'actuator':
+            basis_type_str = 'Actu'
+            headfile += "_EFCampl" + str(amplitudeEFC)
+        else:
+            raise ValueError("This basis type does not exist ([Correctionconfig]['DM_basis'] parameter).")
+
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
 
         basis_str = DM_small_str + "_" + basis_type_str + "Basis" + str(DM.basis_size)
@@ -275,7 +279,6 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         list_str.pop(2)
         name_basis_fits = "Basis" + '_'.join(list_str) + ".fits"
         fits.writeto(os.path.join(matrix_dir, name_basis_fits), DM.basis, overwrite=True)
-
 
         if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage == 0.).all():
             if not silence:
