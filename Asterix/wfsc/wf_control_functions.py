@@ -268,8 +268,6 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         fileDirectMatrix = headfile + basis_str + '_binEstim' + str(int(np.round(
             testbed.dimScience / dimEstim))) + string_testbed_without_DMS + "_resFP" + str(
                 round(DM.Science_sampling / DM.wavelength_0 * wavelength, 2)) + '_wl' + str(int(wavelength * 1e9))
-        print(fileDirectMatrix)
-        asd
 
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch
