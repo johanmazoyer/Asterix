@@ -143,8 +143,7 @@ class Corrector:
                 fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
 
                 fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
-
-                int_matrix = np.concatenate((np.transpose(testbed.DM1.basis), np.transpose(testbed.DM3.basis)))
+                int_matrix = np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3)))
 
                 header = fits.getheader(name_int_matrixDM1)
                 header['DM_NAME'] = 'DM1+DM3'
