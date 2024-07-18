@@ -222,12 +222,6 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     # the initial phase for each DM
     DM_phase_init = testbed.voltage_to_phases(initial_DM_voltage)
 
-    # we load the configuration to save it in the fits
-    if hasattr(testbed, 'config_file'):
-        header = from_param_to_header(testbed.config_file)
-    else:
-        header = fits.Header()
-
     # First run throught the DMs to :
     #   - string matrix to create a name for the matrix
     #   - check total size of basis
@@ -247,7 +241,28 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     pos_in_matrix = 0
 
     for DM_name in testbed.name_of_DMs:
-        header['DM_NAME'] = DM_name
+
+        header = fits.Header()
+        header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
+        # we load the configuration to save it in the fits
+        if hasattr(testbed, 'config_file'):
+
+            necessary_correc_param = dict()
+            necessary_correc_param['DM4matrix'] = DM_name
+            necessary_correc_param['DM_basis'] = testbed.config_file["Correctionconfig"]["DM_basis"]
+            necessary_correc_param['MatrixType'] = testbed.config_file["Correctionconfig"]["MatrixType"]
+            header = from_param_to_header(necessary_correc_param, header)
+
+            necessary_estim_param = dict()
+            necessary_estim_param['Estim_bin_factor'] = testbed.config_file["Estimationconfig"]["Estim_bin_factor"]
+            necessary_estim_param['dimEstim'] = dimEstim
+            necessary_estim_param['Estim_wl'] = wavelength * 1e9
+            header = from_param_to_header(necessary_estim_param, header)
+
+            header = from_param_to_header(testbed.config_file["modelconfig"], header)
+            header = from_param_to_header(testbed.config_file["DMconfig"], header)
+            header = from_param_to_header(testbed.config_file["Coronaconfig"], header)
+
         DM: DeformableMirror = vars(testbed)[DM_name]
         if not DM.active:
             continue
@@ -605,7 +620,6 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 plt.ioff()
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
-                header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
                 fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
                              InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size],
                              header=header)

@@ -211,15 +211,23 @@ def create_singlewl_pw_matrix(testbed: Testbed,
                 PWMatrix[l_ind] = np.zeros((2, numprobe))
             l_ind = l_ind + 1
 
-    if hasattr(testbed, 'config_file'):
-        header = from_param_to_header(testbed.config_file)
-    else:
-        header = fits.Header()
-
+    header = fits.Header()
     header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
+    # we load the configuration to save it in the fits
+    if hasattr(testbed, 'config_file'):
+        necessary_estim_param = dict()
+        necessary_estim_param['dimEstim'] = dimEstim
+        necessary_estim_param['Estim_wl'] = wavelength * 1e9
+        header = from_param_to_header(necessary_estim_param, header)
+
+        header = from_param_to_header(testbed.config_file["Estimationconfig"], header)
+        header = from_param_to_header(testbed.config_file["modelconfig"], header)
+        header = from_param_to_header(testbed.config_file["DMconfig"], header)
+        header = from_param_to_header(testbed.config_file["Coronaconfig"], header)
+
     fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix), header)
     visuPWMap = "EigenPW_" + string_dims_PWMatrix
-    fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]), header)
+    fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]), header, overwrite=True)
     if not silence:
         print("Time for PWP Matrix (s): ", np.round(time.time() - start_time))
 

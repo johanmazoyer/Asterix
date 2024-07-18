@@ -115,41 +115,35 @@ class Corrector:
             else:
                 number_wl_in_matrix = estimator.nb_wav_estim
 
-            if hasattr(testbed, 'config_file'):
-                header = from_param_to_header(testbed.config_file)
-            else:
-                header = fits.Header()
+            name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
+            name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
 
+            headerdm1 = fits.getheader(name_int_matrixDM1)
+            headerdm3 = fits.getheader(name_int_matrixDM3)
+            headerdm1['DM_NAME'] = 'DM1+DM3'
             if testbed.DM1.active & testbed.DM3.active:
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
-                             header,
+                             headerdm1,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
                              testbed.DM1.basis,
-                             header,
+                             headerdm1,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
                              testbed.DM3.basis,
-                             header,
+                             headerdm3,
                              overwrite=True)
                 number_Active_testbeds = 13
 
                 # thd_control_matrix
                 # careful, only work in monochromatic right now
-                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
-                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
-
                 fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
 
                 fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
                 int_matrix = np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3)))
 
-                header = fits.getheader(name_int_matrixDM1)
-                header['DM_NAME'] = 'DM1+DM3'
-                header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
-
-                hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm1)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
                 hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
                 hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
@@ -157,13 +151,15 @@ class Corrector:
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
             elif testbed.DM1.active:
+                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
+                headerdm1 = fits.getheader(name_int_matrixDM1)
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM1only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
-                             header,
+                             headerdm1,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
                              testbed.DM1.basis,
-                             header,
+                             headerdm1,
                              overwrite=True)
                 number_Active_testbeds = 1
 
@@ -175,22 +171,21 @@ class Corrector:
 
                 int_matrix = np.transpose(fullmatrix_dm1)
 
-                header = fits.getheader(name_int_matrixDM1)
-                header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
-
-                hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm1)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
                 hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
             elif testbed.DM3.active:
+                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
+                headerdm3 = fits.getheader(name_int_matrixDM3)
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM3only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
-                             header,
+                             headerdm3,
                              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
                              testbed.DM3.basis,
-                             header,
+                             headerdm3,
                              overwrite=True)
                 number_Active_testbeds = 3
 
@@ -202,10 +197,7 @@ class Corrector:
 
                 int_matrix = np.transpose(fullmatrix_dm3)
 
-                header = fits.getheader(name_int_matrixDM3)
-                header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
-
-                hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm3)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
                 hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
@@ -233,11 +225,9 @@ class Corrector:
 
             fits.writeto(os.path.join(realtestbed_dir, "DH_mask.fits"),
                          self.MaskEstim.astype(np.float32),
-                         header,
                          overwrite=True)
             fits.writeto(os.path.join(realtestbed_dir, "DH_mask_where_x_y.fits"),
                          np.array(np.where(self.MaskEstim == 1)).astype(np.float32),
-                         header,
                          overwrite=True)
 
         # Adding error on the DM model. Now that the matrix is measured, we can

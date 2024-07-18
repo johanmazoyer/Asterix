@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 import numpy as np
 from astropy.io import fits
 
@@ -226,10 +227,10 @@ class Estimator:
                     if 775 < wave_k * 1e9 < 795:
                         string_laser = "_laser3"  # ~785nm laser source
 
+                    header = fits.Header()
                     if hasattr(testbed, 'config_file'):
-                        header = from_param_to_header(testbed.config_file)
-                    else:
-                        header = fits.Header()
+                        header = from_param_to_header(testbed.config_file, header)
+                    header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
 
                     namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + string_laser
                     fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
