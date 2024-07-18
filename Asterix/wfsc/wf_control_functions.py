@@ -276,7 +276,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             testbed.dimScience / dimEstim))) + string_testbed_without_DMS + "_resFP" + str(
                 round(DM.Science_sampling / DM.wavelength_0 * wavelength, 2)) + '_wl' + str(int(wavelength * 1e9))
 
-        DM.fnameDirectMatrix.append(os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
+        DM.fnameDirectMatrix = os.path.join(matrix_dir, fileDirectMatrix + ".fits")
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch
         # For 1DM test / 2DM test
@@ -286,10 +286,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             if not silence:
                 print("The matrix " + fileDirectMatrix + " already exists")
 
-            InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(os.path.join(
-                matrix_dir, fileDirectMatrix + ".fits"),
-                                                                                    extname='MATRIX')
-            DM.basis = fits.getdata(os.path.join(matrix_dir, fileDirectMatrix + ".fits"), extname='BASIS')
+            InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(
+                os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
 
         else:
             start_time = time.time()
@@ -608,11 +606,9 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
                 header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
-                hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
-                hdu_list.append(
-                    fits.ImageHDU(data=InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size], name='MATRIX'))
-                hdu_list.append(fits.ImageHDU(data=DM.basis, name='BASIS'))
-                hdu_list.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
+                fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
+                                 data=InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size],
+                                 header=header)
 
             if not silence:
                 print("")

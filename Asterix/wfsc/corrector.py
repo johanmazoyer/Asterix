@@ -137,16 +137,14 @@ class Corrector:
 
                 # thd_control_matrix
                 # careful, only work in monochromatic right now
-                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix[0]
-                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix[0]
+                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
+                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
 
-                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1, extname='MATRIX')
-                basis_dm1 = fits.getdata(name_int_matrixDM1, extname='BASIS')
+                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
 
-                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3, extname='MATRIX')
-                basis_dm3 = fits.getdata(name_int_matrixDM3, extname='BASIS')
+                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
 
-                int_matrix = np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3)))
+                int_matrix = np.concatenate((np.transpose(testbed.DM1.basis), np.transpose(testbed.DM3.basis)))
 
                 header = fits.getheader(name_int_matrixDM1)
                 header['DM_NAME'] = 'DM1+DM3'
@@ -154,8 +152,8 @@ class Corrector:
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
-                hdu_list.append(fits.ImageHDU(data=basis_dm1, name='BASISDM1'))
-                hdu_list.append(fits.ImageHDU(data=basis_dm3, name='BASISDM3'))
+                hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
+                hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
 
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
@@ -172,10 +170,9 @@ class Corrector:
 
                 # thd_control_matrix
                 # careful, only work in monochromatic right now
-                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix[0]
+                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
 
-                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1, extname='BOSTON')
-                basis_dm1 = fits.getdata(name_int_matrixDM1, extname='BASIS')
+                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
 
                 int_matrix = np.transpose(fullmatrix_dm1)
 
@@ -184,7 +181,7 @@ class Corrector:
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
-                hdu_list.append(fits.ImageHDU(data=basis_dm1, name='BASISDM1'))
+                hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
             elif testbed.DM3.active:
@@ -200,10 +197,9 @@ class Corrector:
 
                 # hd_control_matrix
                 # careful, only work in monochromatic right now
-                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix[0]
+                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
 
-                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3, extname='MATRIX')
-                basis_dm3 = fits.getdata(name_int_matrixDM3, extname='BASIS')
+                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
 
                 int_matrix = np.transpose(fullmatrix_dm3)
 
@@ -212,7 +208,7 @@ class Corrector:
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=header)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
-                hdu_list.append(fits.ImageHDU(data=basis_dm3, name='BASISDM3'))
+                hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
             else:
