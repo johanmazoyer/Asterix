@@ -204,15 +204,15 @@ class Testbed(optsy.OpticalSystem):
             # we access each DM object individually
             DM: deformable_mirror.DeformableMirror = vars(self)[DM_name]
             if DM.active:
-                # we extract the voltages for this one
+                # we extract the voltages for this DM
                 # this voltages are in the DM basis
                 vector_basis_voltage_for_DM = vector_basis_voltage[indice_acum_basis_size:indice_acum_basis_size +
                                                                    DM.basis_size]
 
-                # we change to actuator basis
+                # we change to the actuator basis
                 vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis), vector_basis_voltage_for_DM)
 
-                # we recreate a voltages vector, but for each actuator
+                # we concatenate DM voltages to obtain a single vector of voltages, but for the testbed
                 vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
                                         DM.number_act] = vector_actu_voltage_for_DM
 
