@@ -607,8 +607,8 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             if (initial_DM_voltage == 0.).all():
                 header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
                 fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
-                                 data=InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size],
-                                 header=header)
+                             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size],
+                             header=header)
 
             if not silence:
                 print("")
