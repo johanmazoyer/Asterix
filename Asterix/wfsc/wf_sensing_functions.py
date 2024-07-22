@@ -144,7 +144,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         matrix in order to retrieve the focal plane electric field
     """
 
-    filePW, header_expected, bool_already_existing_matrix = name_header_pw_matrix(testbed, amplitude, posprobes,
+    filePW, header_expected, bool_already_existing_matrix = name_header_pwp_matrix(testbed, amplitude, posprobes,
                                                                                   dimEstim, cutsvd, wavelength,
                                                                                   matrix_dir)
 
@@ -218,7 +218,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     return PWMatrix
 
 
-def name_header_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength, matrix_dir):
+def name_header_pwp_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength, matrix_dir):
     """ Create the name of the file and header of the PW matrix that will be used to
     identify precisely parameter used in the calcul of this matrix and recalculate if need be.
     We then load a potential matrix and compare the header to the one existing.
