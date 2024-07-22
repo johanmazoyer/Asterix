@@ -66,7 +66,7 @@ def runthd2(parameter_file_path,
             NewCorrectionconfig={},
             NewLoopconfig={},
             NewSIMUconfig={},
-            silence=True,
+            silence=False,
             **kwargs):
     """
     Run a simulation of a correction loop for the THD2 testbed.
