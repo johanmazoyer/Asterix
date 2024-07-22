@@ -1,9 +1,8 @@
 import os
-from datetime import datetime
 import numpy as np
 from astropy.io import fits
 
-from Asterix.utils import invert_svd, from_param_to_header
+from Asterix.utils import invert_svd
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
 import Asterix.wfsc.estimator as estimator_mod

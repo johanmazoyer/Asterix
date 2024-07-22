@@ -281,7 +281,13 @@ def name_header_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cuts
         header = from_param_to_header(additional_model_param, header)
 
         header = from_param_to_header(testbed.config_file["modelconfig"], header)
-        header = from_param_to_header(testbed.config_file["DMconfig"], header)
+
+        necessary_dm_param = dict()
+        for paramdmkey in testbed.config_file["DMconfig"].scalars:
+            if testbed.name_DM_to_probe_in_PW in paramdmkey:
+                necessary_dm_param[paramdmkey] = testbed.config_file["DMconfig"][paramdmkey]
+        header = from_param_to_header(necessary_dm_param, header)
+
         header = from_param_to_header(testbed.config_file["Coronaconfig"], header)
 
         # Loading any existing matrix and comparing their headers to make sure they are created

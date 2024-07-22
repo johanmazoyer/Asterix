@@ -600,7 +600,7 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
     """ Create the name of the file and header of the EFC matrix that will be used to
     identify precisely parameters used in the calcul of this matrix.
     We then load a potential matrix and compare the header to the one existing and return a false boolean
-    if theyneed to be recalculated. 
+    if they need to be recalculated.
 
     AUTHOR : Johan Mazoyer
 
@@ -681,7 +681,13 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
         header = from_param_to_header(additional_model_param, header)
 
         header = from_param_to_header(testbed.config_file["modelconfig"], header)
-        header = from_param_to_header(testbed.config_file["DMconfig"], header)
+
+        necessary_dm_param = dict()
+        for paramdmkey in testbed.config_file["DMconfig"].scalars:
+            if DM.Name_DM in paramdmkey:
+                necessary_dm_param[paramdmkey] = testbed.config_file["DMconfig"][paramdmkey]
+        header = from_param_to_header(necessary_dm_param, header)
+
         header = from_param_to_header(testbed.config_file["Coronaconfig"], header)
 
         # Loading any existing matrix and comparing their headers to make sure they are created
