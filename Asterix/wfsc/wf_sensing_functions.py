@@ -144,21 +144,19 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         matrix in order to retrieve the focal plane electric field
     """
 
-    string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
-        int(amplitude)) + "_cut" + str(int(
-            cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + "_resFP" + str(
-                round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
-                    int(wavelength * 1e9))
+    filePW, header_expected, bool_already_existing_matrix = name_header_pw_matrix(testbed, amplitude, posprobes,
+                                                                                  dimEstim, cutsvd, wavelength,
+                                                                                  matrix_dir)
 
-    # Calculating and Saving PWP matrix
-
-    filePW = "MatPW_" + string_dims_PWMatrix
-    if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
+    if bool_already_existing_matrix:
+        # there is already a really identical matrix calculated, we just load the old matrix fits file.
         if not silence:
             print("")
             print("The PWmatrix " + filePW + " already exists")
+
         return fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
 
+    # there is no matrix measured with the same parameters, we recalculate
     start_time = time.time()
     if not silence:
         print("The PWmatrix " + filePW + " does not exists")
@@ -211,27 +209,98 @@ def create_singlewl_pw_matrix(testbed: Testbed,
                 PWMatrix[l_ind] = np.zeros((2, numprobe))
             l_ind = l_ind + 1
 
-    header = fits.Header()
-    header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
-    # we load the configuration to save it in the fits
-    if hasattr(testbed, 'config_file'):
-        necessary_estim_param = dict()
-        necessary_estim_param['dimEstim'] = dimEstim
-        necessary_estim_param['Estim_wl'] = wavelength * 1e9
-        header = from_param_to_header(necessary_estim_param, header)
-
-        header = from_param_to_header(testbed.config_file["Estimationconfig"], header)
-        header = from_param_to_header(testbed.config_file["modelconfig"], header)
-        header = from_param_to_header(testbed.config_file["DMconfig"], header)
-        header = from_param_to_header(testbed.config_file["Coronaconfig"], header)
-
-    fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix), header)
-    visuPWMap = "EigenPW_" + string_dims_PWMatrix
-    fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]), header, overwrite=True)
+    fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix), header_expected, overwrite=True)
+    visuPWMap = filePW.replace("MatPW_", "EigenPW_")
+    fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]), header_expected, overwrite=True)
     if not silence:
         print("Time for PWP Matrix (s): ", np.round(time.time() - start_time))
 
     return PWMatrix
+
+
+def name_header_pw_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength, matrix_dir):
+    """ Create the name of the file and header of the PW matrix that will be used to
+    identify precisely parameter used in the calcul of this matrix and recalculate if need be.
+    We then load a potential matrix and compare the header to the one existing.
+
+    AUTHOR : Johan Mazoyer
+
+    Parameters
+    ----------
+    testbed : Testbed Optical_element
+        a testbed with one or more DM
+    amplitude : float
+        amplitude of the actuator pokes for pair(wise probing in nm
+    posprobes : 1D-array
+        index of the actuators to push and pull for pair-wise probing
+    dimEstim : int
+        size of the output image after resizing in pixels
+    cutsvd : float
+        value not to exceed for the inverse eigeinvalues at each pixels
+    wavelength : float
+        wavelength in m.
+    matrix_dir : string
+        path to directory to save all the matrices.
+
+    Returns
+    --------
+    filePW : string
+        file name of the pw/btp matrix. If there is no identical matrix already measured in fits file, None.
+    header : fits.Header() Object
+        header of the pw/btp matrix
+    bool_already_existing_matrix :bool
+        If there is no identical matrix already saved in fits file.
+    """
+
+    string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
+        int(amplitude)) + "_cut" + str(int(
+            cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + "_resFP" + str(
+                round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
+                    int(wavelength * 1e9))
+
+    filePW = "MatPW_" + string_dims_PWMatrix
+
+    header = fits.Header()
+    header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
+    # we load the configuration to save it in the fits
+    if hasattr(testbed, 'config_file'):
+
+        necessary_estim_param = dict()
+        necessary_estim_param['Estim_wl'] = wavelength * 1e9
+        necessary_estim_param['DM4Probes'] = testbed.name_DM_to_probe_in_PW
+        necessary_estim_param['dimEstim'] = dimEstim
+        necessary_estim_param['Estim_bin_factor'] = testbed.config_file["Estimationconfig"]["Estim_bin_factor"]
+        necessary_estim_param['amplitudePW'] = amplitude
+        necessary_estim_param['posprobes'] = posprobes
+        necessary_estim_param['cutsvd'] = cutsvd
+
+        header = from_param_to_header(necessary_estim_param, header)
+
+        additional_model_param = dict()
+        additional_model_param['dtype_complex'] = testbed.dtype_complex
+        header = from_param_to_header(additional_model_param, header)
+
+        header = from_param_to_header(testbed.config_file["modelconfig"], header)
+        header = from_param_to_header(testbed.config_file["DMconfig"], header)
+        header = from_param_to_header(testbed.config_file["Coronaconfig"], header)
+
+        # Loading any existing matrix and comparing their headers to make sure they are created
+        # using the same set of parameters
+        if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
+            header_existing = fits.getheader(os.path.join(matrix_dir, filePW + ".fits"))
+            # remove the basis kw created automatically  when saving the fits file
+            for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:
+                header_existing.remove(keyw)
+            # we comapre the header (ignoring the date)
+            bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
+                                                           ignore_keywords=['DATE_MAT']).identical
+        else:
+            bool_already_existing_matrix = False
+
+        if bool_already_existing_matrix:
+            return filePW, header, bool_already_existing_matrix
+        else:
+            return filePW, header, bool_already_existing_matrix
 
 
 def calculate_pw_estimate(Difference,

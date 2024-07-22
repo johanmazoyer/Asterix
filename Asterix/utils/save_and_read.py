@@ -197,13 +197,13 @@ def from_param_to_header(config, header=fits.Header()):
     if isinstance(config, ConfigObj):
         for sect in config.sections:
             for scalar in config[str(sect)].scalars:
-                header.set(str(scalar), str(config[str(sect)][str(scalar)]), str(scalar))
+                header.set(str(scalar), str(config[str(sect)][str(scalar)]))
     elif isinstance(config, Section):
         for scalar in config.scalars:
-            header.set(str(scalar), str(config[str(scalar)]), str(scalar))
+            header.set(str(scalar), str(config[str(scalar)]))
     elif isinstance(config, dict):
         for key in config.keys():
-            header.set(str(key), str(config[str(key)]), str(key))
+            header.set(str(key), str(config[str(key)]))
     else:
         raise TypeError("Input must be a ConfigObj object, a Section object or a dict")
 

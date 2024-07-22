@@ -115,13 +115,16 @@ class Corrector:
             else:
                 number_wl_in_matrix = estimator.nb_wav_estim
 
-            name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
-            name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
 
-            headerdm1 = fits.getheader(name_int_matrixDM1)
-            headerdm3 = fits.getheader(name_int_matrixDM3)
-            headerdm1['DM_NAME'] = 'DM1+DM3'
             if testbed.DM1.active & testbed.DM3.active:
+
+                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
+                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
+
+                headerdm1 = fits.getheader(name_int_matrixDM1)
+                headerdm3 = fits.getheader(name_int_matrixDM3)
+                headerdm1['DM_NAME'] = 'DM1+DM3'
+
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
                              headerdm1,
