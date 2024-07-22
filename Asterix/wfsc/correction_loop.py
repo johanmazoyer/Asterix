@@ -456,6 +456,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     print("Final contrast in DH: ", meancontrast[-1])
 
     fits.writeto(os.path.join(result_dir, "Mean_Contrast_DH.fits"), np.array(meancontrast), header, overwrite=True)
+    print("Final contrast in DH: ", meancontrast[-1])
 
     fits.writeto(os.path.join(result_dir, "estimationFP_RE.fits"), np.real(np.array(EF_estim)), header, overwrite=True)
 

@@ -690,23 +690,19 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
 
         header = from_param_to_header(testbed.config_file["Coronaconfig"], header)
 
-        # Loading any existing matrix and comparing their headers to make sure they are created
-        # using the same set of parameters
-        if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")):
-            header_existing = fits.getheader(os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
-            # remove the basis kw created automatically  when saving the fits file
-            for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2']:
-                header_existing.remove(keyw)
-            # we comapre the header (ignoring the date)
-            bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
-                                                           ignore_keywords=['DATE_MAT']).identical
-        else:
-            bool_already_existing_matrix = False
-
-        if bool_already_existing_matrix:
-            return fileDirectMatrix, header, bool_already_existing_matrix
-        else:
-            return fileDirectMatrix, header, bool_already_existing_matrix
+    # Loading any existing matrix and comparing their headers to make sure they are created
+    # using the same set of parameters
+    if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")):
+        header_existing = fits.getheader(os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
+        # remove the basis kw created automatically  when saving the fits file
+        for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2']:
+            header_existing.remove(keyw)
+        # we comapre the header (ignoring the date)
+        bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
+                                                        ignore_keywords=['DATE_MAT']).identical
+    else:
+        bool_already_existing_matrix = False
+    return fileDirectMatrix, header, bool_already_existing_matrix
 
 
 def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.ndarray):

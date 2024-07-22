@@ -145,8 +145,8 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     """
 
     filePW, header_expected, bool_already_existing_matrix = name_header_pwp_matrix(testbed, amplitude, posprobes,
-                                                                                  dimEstim, cutsvd, wavelength,
-                                                                                  matrix_dir)
+                                                                                   dimEstim, cutsvd, wavelength,
+                                                                                   matrix_dir)
 
     if bool_already_existing_matrix:
         # there is already a really identical matrix calculated, we just load the old matrix fits file.
@@ -290,23 +290,19 @@ def name_header_pwp_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cut
 
         header = from_param_to_header(testbed.config_file["Coronaconfig"], header)
 
-        # Loading any existing matrix and comparing their headers to make sure they are created
-        # using the same set of parameters
-        if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
-            header_existing = fits.getheader(os.path.join(matrix_dir, filePW + ".fits"))
-            # remove the basis kw created automatically  when saving the fits file
-            for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:
-                header_existing.remove(keyw)
-            # we comapre the header (ignoring the date)
-            bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
-                                                           ignore_keywords=['DATE_MAT']).identical
-        else:
-            bool_already_existing_matrix = False
+    # Loading any existing matrix and comparing their headers to make sure they are created
+    # using the same set of parameters
+    if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
+        header_existing = fits.getheader(os.path.join(matrix_dir, filePW + ".fits"))
+        # remove the basis kw created automatically  when saving the fits file
+        for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:
+            header_existing.remove(keyw)
+        # we comapre the header (ignoring the date)
+        bool_already_existing_matrix = fits.HeaderDiff(header_existing, header, ignore_keywords=['DATE_MAT']).identical
+    else:
+        bool_already_existing_matrix = False
 
-        if bool_already_existing_matrix:
-            return filePW, header, bool_already_existing_matrix
-        else:
-            return filePW, header, bool_already_existing_matrix
+    return filePW, header, bool_already_existing_matrix
 
 
 def calculate_pw_estimate(Difference,
