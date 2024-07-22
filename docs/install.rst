@@ -4,7 +4,7 @@
 Quick install
 --------------------------
 
-If you know all about conda virtual environments and you only want to install asterix's latest version, just copy:
+If you know all about conda virtual environments and you only want to install Asterix's latest version, just copy:
 
 .. code-block:: bash
 
@@ -24,7 +24,7 @@ switches between environments.
 
 By creating clean python environments for each of your projects (especially packages in continuous
 development by non developers like Asterix), you minimize the risk of of creating conflicts which
-will hinder the use of Asterx and/or on your other projects.
+will hinder the use of Asterix and/or of your other projects.
 
 First download and install miniconda3:
 https://docs.conda.io/en/latest/miniconda.html

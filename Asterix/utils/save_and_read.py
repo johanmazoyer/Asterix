@@ -9,7 +9,8 @@ import datetime
 import numpy as np
 
 from astropy.io import fits
-from configobj import ConfigObj
+from astropy.io.fits.verify import VerifyWarning
+from configobj import ConfigObj, Section
 from validate import Validator
 
 from Asterix import Asterix_root
@@ -42,7 +43,7 @@ def save_plane_in_fits(dir_save_fits, name_plane, image):
         return
 
     if np.iscomplexobj(image):
-        tofits_array = np.zeros((2, ) + image.shape)
+        tofits_array = np.zeros((2,) + image.shape)
         tofits_array[0] = np.real(image)
         tofits_array[1] = np.imag(image)
         fits.writeto(os.path.join(dir_save_fits, name_fits + '_RE_and_IM.fits'), tofits_array, overwrite=True)
@@ -173,7 +174,7 @@ def read_parameter_file(parameter_file,
     return config
 
 
-def from_param_to_header(config):
+def from_param_to_header(config, header=fits.Header()):
     """
     Convert ConfigObj parameters to fits header type list
     AUTHOR: Axel Potier
@@ -182,18 +183,30 @@ def from_param_to_header(config):
     ----------
     config : dict
         Config object.
+    header : fits.Header() object, optional, default empty header
+        fits header object to which the parameters will be added.
 
     Returns
     --------
-    header : dict
-        List of parameters.
+    header : fits.Header() object
+        header with list of parameters.
 
     """
-    header = fits.Header()
-    for sect in config.sections:
-        # print(config[str(sect)])
-        for scalar in config[str(sect)].scalars:
-            header[str(scalar)[:8]] = str(config[str(sect)][str(scalar)])
+    warnings.simplefilter('ignore', category=VerifyWarning)
+
+    if isinstance(config, ConfigObj):
+        for sect in config.sections:
+            for scalar in config[str(sect)].scalars:
+                header.set(str(scalar), str(config[str(sect)][str(scalar)]))
+    elif isinstance(config, Section):
+        for scalar in config.scalars:
+            header.set(str(scalar), str(config[str(scalar)]))
+    elif isinstance(config, dict):
+        for key in config.keys():
+            header.set(str(key), str(config[str(key)]))
+    else:
+        raise TypeError("Input must be a ConfigObj object, a Section object or a dict")
+
     return header
 
 

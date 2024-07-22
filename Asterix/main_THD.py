@@ -132,6 +132,9 @@ def runthd2(parameter_file_path,
     # Concatenate into the full testbed optical system
     thd2 = THD2(config, model_local_dir, silence=silence)
 
+    config["modelconfig"]["MODELSIM"] = 'asterix'
+    thd2.config_file = config
+
     # The following line can be used to change the DM which applies PWP probes.
     # This can be used to use the DM out of the pupil plane as the PWP DM.
     # This is an unusual option so not in the param file and not well documented.

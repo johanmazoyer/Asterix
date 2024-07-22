@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 import numpy as np
 import matplotlib
 from IPython import get_ipython
@@ -8,7 +9,7 @@ if get_ipython() is None:  # this matplotlib option is just in non-notebook case
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
-from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress
+from Asterix.utils import resizing, crop_or_pad_image, save_plane_in_fits, progress, from_param_to_header
 import Asterix.optics.propagation_functions as prop
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
@@ -236,51 +237,27 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
         string_testbed_without_DMS = string_testbed_without_DMS.replace(DM_small_str, '')
 
+    testbed.string_testbed_without_DMS = string_testbed_without_DMS
+
     InterMat = np.zeros((2 * int(dimEstim**2), total_number_basis_modes))
     pos_in_matrix = 0
 
     for DM_name in testbed.name_of_DMs:
-
         DM: DeformableMirror = vars(testbed)[DM_name]
         if not DM.active:
             continue
 
-        # Some string manips to name the matrix if we save it
-        if MatrixType == 'perfect':
-            headfile = "DirectMatPerf"
-        elif MatrixType == 'smallphase':
-            headfile = "DirectMatSP"
-        else:
-            raise ValueError("This Matrix type does not exist ([Correctionconfig]['MatrixType'] parameter).")
+        fileDirectMatrix, header_expected, bool_already_existing_matrix = name_header_efc_matrix(
+            testbed, DM, amplitudeEFC, MatrixType, dimEstim, wavelength, matrix_dir)
 
-        if DM.basis_type == 'fourier':
-            basis_type_str = 'Four'
-            pass
-        elif DM.basis_type == 'actuator':
-            basis_type_str = 'Actu'
-            headfile += "_EFCampl" + str(amplitudeEFC)
-        else:
-            raise ValueError("This basis type does not exist ([Correctionconfig]['DM_basis'] parameter).")
-
-        DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
-
-        basis_str = DM_small_str + "_" + basis_type_str + "Basis" + str(DM.basis_size)
-        fileDirectMatrix = headfile + basis_str + '_binEstim' + str(int(np.round(
-            testbed.dimScience / dimEstim))) + string_testbed_without_DMS + "_resFP" + str(
-                round(DM.Science_sampling / DM.wavelength_0 * wavelength, 2)) + '_wl' + str(int(wavelength * 1e9))
+        DM.fnameDirectMatrix = os.path.join(matrix_dir, fileDirectMatrix + ".fits")
 
         # We only save the 'first' matrix meaning the one with no initial DM voltages
         # Matrix is saved/loaded for each DM independetly which allow quick switch
         # For 1DM test / 2DM test
         # Matrix is saved/loaded for all the FP and then crop at the good size later
 
-        # we save the DM basis
-        list_str = basis_str.split('_')
-        list_str.pop(2)
-        name_basis_fits = "Basis" + '_'.join(list_str) + ".fits"
-        fits.writeto(os.path.join(matrix_dir, name_basis_fits), DM.basis, overwrite=True)
-
-        if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage == 0.).all():
+        if bool_already_existing_matrix and (initial_DM_voltage == 0.).all():
             if not silence:
                 print("The matrix " + fileDirectMatrix + " already exists")
 
@@ -604,7 +581,9 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             # We save the interaction matrix:
             if (initial_DM_voltage == 0.).all():
                 fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
-                             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size])
+                             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size],
+                             header=header_expected,
+                             overwrite=True)
 
             if not silence:
                 print("")
@@ -614,6 +593,116 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         pos_in_matrix += DM.basis_size
 
     return InterMat
+
+
+def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC, MatrixType, dimEstim, wavelength,
+                           matrix_dir):
+    """ Create the name of the file and header of the EFC matrix that will be used to
+    identify precisely parameters used in the calcul of this matrix.
+    We then load a potential matrix and compare the header to the one existing and return a false boolean
+    if they need to be recalculated.
+
+    AUTHOR : Johan Mazoyer
+
+    Parameters
+    ----------
+    testbed : Testbed Optical_element
+        a testbed with one or more DM
+    DM : DM Optical_element
+        the DM used to create the matrix
+
+    amplitudeEFC: float
+        amplitude of the EFC probe on the DM
+    MatrixType: string
+        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi)
+        or 'perfect' (we keep exp(i phi)).
+        in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
+        we do not make the small phase assumption for initial DM phase
+    dimEstim: int
+        size of the output image in teh estimator
+    wavelength : float
+        wavelength in m.
+    matrix_dir : string
+        path to directory to save all the matrices here
+
+    Returns
+    --------
+    filePW : string
+        file name of the efc matrix. If there is no identical matrix already measured in fits file, None.
+    header : fits.Header() Object
+        header of the efc matrix
+    bool_already_existing_matrix :bool
+        If there is no identical matrix already saved in fits file.
+    """
+
+    # Some string manips to name the matrix if we save it
+    if MatrixType == 'perfect':
+        headfile = "DirectMatPerf"
+    elif MatrixType == 'smallphase':
+        headfile = "DirectMatSP"
+    else:
+        raise ValueError("This Matrix type does not exist ([Correctionconfig]['MatrixType'] parameter).")
+
+    if DM.basis_type == 'fourier':
+        basis_type_str = 'Four'
+        pass
+    elif DM.basis_type == 'actuator':
+        basis_type_str = 'Actu'
+        headfile += "_EFCampl" + str(amplitudeEFC)
+    else:
+        raise ValueError("This basis type does not exist ([Correctionconfig]['DM_basis'] parameter).")
+
+    DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
+    basis_str = DM_small_str + "_" + basis_type_str + "Basis" + str(DM.basis_size)
+    fileDirectMatrix = headfile + basis_str + '_binEstim' + str(int(np.round(
+        testbed.dimScience / dimEstim))) + testbed.string_testbed_without_DMS + "_resFP" + str(
+            round(DM.Science_sampling / DM.wavelength_0 * wavelength, 2)) + '_wl' + str(int(wavelength * 1e9))
+
+    header = fits.Header()
+    header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
+    # we load the configuration to save it in the fits
+    if hasattr(testbed, 'config_file'):
+
+        necessary_correc_param = dict()
+        necessary_correc_param['DM4matrix'] = DM.Name_DM
+        necessary_correc_param['DM_basis'] = DM.basis_type
+        necessary_correc_param['MatrixType'] = MatrixType
+        necessary_correc_param['amplitudeEFC'] = amplitudeEFC
+        header = from_param_to_header(necessary_correc_param, header)
+
+        necessary_estim_param = dict()
+        necessary_estim_param['Estim_bin_factor'] = testbed.config_file["Estimationconfig"]["Estim_bin_factor"]
+        necessary_estim_param['dimEstim'] = dimEstim
+        necessary_estim_param['Estim_wl'] = wavelength * 1e9
+        header = from_param_to_header(necessary_estim_param, header)
+
+        additional_model_param = dict()
+        additional_model_param['dtype_complex'] = testbed.dtype_complex
+        header = from_param_to_header(additional_model_param, header)
+
+        header = from_param_to_header(testbed.config_file["modelconfig"], header)
+
+        necessary_dm_param = dict()
+        for paramdmkey in testbed.config_file["DMconfig"].scalars:
+            if DM.Name_DM in paramdmkey:
+                necessary_dm_param[paramdmkey] = testbed.config_file["DMconfig"][paramdmkey]
+        header = from_param_to_header(necessary_dm_param, header)
+
+        header = from_param_to_header(testbed.config_file["Coronaconfig"], header)
+
+    # Loading any existing matrix and comparing their headers to make sure they are created
+    # using the same set of parameters
+    if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")):
+        header_existing = fits.getheader(os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
+        # remove the basis kw created automatically  when saving the fits file
+        for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2']:
+            header_existing.remove(keyw)
+        # we comapre the header (ignoring the date)
+        bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
+                                                        ignore_keywords=['DATE_MAT']).identical
+    else:
+        bool_already_existing_matrix = False
+    return fileDirectMatrix, header, bool_already_existing_matrix
 
 
 def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.ndarray):

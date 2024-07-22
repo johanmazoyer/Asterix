@@ -86,6 +86,7 @@ class Corrector:
                 DM.basis_size = DM.basis.shape[0]
                 self.total_number_modes += DM.basis_size
                 DM.basis_type = basis_type
+            DM.fnameDirectMatrix = list()
 
         self.correction_algorithm = Correctionconfig["correction_algorithm"].lower()
         self.MatrixType = Correctionconfig["MatrixType"].lower()
@@ -114,26 +115,96 @@ class Corrector:
             else:
                 number_wl_in_matrix = estimator.nb_wav_estim
 
+
             if testbed.DM1.active & testbed.DM3.active:
+
+                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
+                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
+
+                headerdm1 = fits.getheader(name_int_matrixDM1)
+                headerdm3 = fits.getheader(name_int_matrixDM3)
+                headerdm1['DM_NAME'] = 'DM1+DM3'
+
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
+                             headerdm1,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
+                             testbed.DM1.basis,
+                             headerdm1,
+                             overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
+                             testbed.DM3.basis,
+                             headerdm3,
+                             overwrite=True)
                 number_Active_testbeds = 13
 
+                # thd_control_matrix
+                # careful, only work in monochromatic right now
+                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
+
+                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
+                int_matrix = np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3)))
+
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm1)])
+                hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
+                hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
+                hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
+
+                hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
+
             elif testbed.DM1.active:
+                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
+                headerdm1 = fits.getheader(name_int_matrixDM1)
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM1only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
+                             headerdm1,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"),
+                             testbed.DM1.basis,
+                             headerdm1,
+                             overwrite=True)
                 number_Active_testbeds = 1
+
+                # thd_control_matrix
+                # careful, only work in monochromatic right now
+                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
+
+                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
+
+                int_matrix = np.transpose(fullmatrix_dm1)
+
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm1)])
+                hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
+                hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
+                hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
+
             elif testbed.DM3.active:
+                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
+                headerdm3 = fits.getheader(name_int_matrixDM3)
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM3only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
+                             headerdm3,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, overwrite=True)
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
+                             testbed.DM3.basis,
+                             headerdm3,
+                             overwrite=True)
                 number_Active_testbeds = 3
+
+                # hd_control_matrix
+                # careful, only work in monochromatic right now
+                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
+
+                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
+
+                int_matrix = np.transpose(fullmatrix_dm3)
+
+                hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm3)])
+                hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
+                hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
+                hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
+
             else:
                 raise ValueError("No active DMs")
 
