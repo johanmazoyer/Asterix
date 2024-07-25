@@ -21,7 +21,6 @@ def create_interaction_matrix(testbed: Testbed,
                               initial_DM_voltage=0.,
                               input_wavefront=1.,
                               MatrixType='',
-                              polychrom='singlewl',
                               wav_vec_estim=None,
                               dir_save_all_planes=None,
                               silence=False,
@@ -58,11 +57,8 @@ def create_interaction_matrix(testbed: Testbed,
         or 'perfect' (we keep exp(i phi)).
         in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
-    polychrom : string
-        For polychromatic estimation and correction:
-        - 'singlewl': only a single wavelength is used for estimation / correction. 1 Interation Matrix
-        - 'broadband_pwprobes': probes images PWP are broadband but Matrices are at central wavelength: 1 PWP Matrix and 1 Interation Matrix
-        - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
+    wav_vec_estim : list of wavelengths, default: [testbed.wavelength_0]
+            vector of wavelengths for polychromatic correction
     initial_DM_voltage : 1D-array real
         initial DM voltage for all DMs
     input_wavefront : complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
@@ -96,44 +92,11 @@ def create_interaction_matrix(testbed: Testbed,
                          "(nb_wav, dim_overpad_pupil, dim_overpad_pupil)"))
 
     if wav_vec_estim is None:
-        wav_vec_estim = testbed.wav_vec
+        wav_vec_estim = np.array([testbed.wavelength_0])
 
     return_matrix = []
 
-    if polychrom == 'singlewl':
-
-        return_matrix.append(
-            create_singlewl_interaction_matrix(testbed,
-                                               dimEstim,
-                                               amplitudeEFC,
-                                               wav_vec_estim[0],
-                                               matrix_dir,
-                                               initial_DM_voltage=initial_DM_voltage,
-                                               input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(
-                                                   wav_vec_estim[0])],
-                                               MatrixType=MatrixType,
-                                               dir_save_all_planes=dir_save_all_planes,
-                                               silence=silence,
-                                               visu=visu))
-    elif polychrom == 'broadband_pwprobes':
-
-        return_matrix.append(
-            create_singlewl_interaction_matrix(testbed,
-                                               dimEstim,
-                                               amplitudeEFC,
-                                               testbed.wavelength_0,
-                                               matrix_dir,
-                                               initial_DM_voltage=initial_DM_voltage,
-                                               input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(
-                                                   testbed.wavelength_0)],
-                                               MatrixType=MatrixType,
-                                               dir_save_all_planes=dir_save_all_planes,
-                                               silence=silence,
-                                               visu=visu))
-
-    elif polychrom == 'multiwl':
-
-        for i, wave_i in enumerate(wav_vec_estim):
+    for wave_i in wav_vec_estim:
             return_matrix.append(
                 create_singlewl_interaction_matrix(testbed,
                                                    dimEstim,
@@ -141,14 +104,11 @@ def create_interaction_matrix(testbed: Testbed,
                                                    wave_i,
                                                    matrix_dir,
                                                    initial_DM_voltage=initial_DM_voltage,
-                                                   input_wavefront=input_wavefront[i],
+                                                   input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(wave_i)],
                                                    MatrixType=MatrixType,
                                                    dir_save_all_planes=dir_save_all_planes,
                                                    silence=silence,
                                                    visu=visu))
-    else:
-        raise ValueError(polychrom + "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
-
     return return_matrix
 
 
