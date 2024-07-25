@@ -104,16 +104,21 @@ class Corrector:
 
         self.regularization = Correctionconfig["regularization"]
 
+        # we make the dimension of the estimation and the wavelengths attributes of the correction also.
+        self.dimEstim = dimEstim
+
+        if wav_vec_estim is not None:
+            self.wav_vec_estim = wav_vec_estim
+        else:
+            self.wav_vec_estim = np.array([testbed.wavelength_0])
+
         if maskEstim is not None:
             self.MaskEstim = maskEstim
         else:
-            self.MaskEstim = np.zeros((dimEstim, dimEstim))
-
-        if wav_vec_estim is None:
-            wav_vec_estim = np.array([testbed.wavelength_0])
+            self.MaskEstim = np.zeros((self.dimEstim, self.dimEstim))
 
         self.matrix_dir = matrix_dir
-        self.update_matrices(testbed, dimEstim, wav_vec_estim, silence=silence)
+        self.update_matrices(testbed, silence=silence)
 
         if self.correction_algorithm == "efc" and save_for_bench:
             if not os.path.exists(realtestbed_dir):
@@ -259,8 +264,7 @@ class Corrector:
 
     def update_matrices(self,
                         testbed: Testbed,
-                        dimEstim,
-                        wav_vec_estim,
+                        maskEstim=None,
                         initial_DM_voltage=0.,
                         input_wavefront=1.,
                         silence=False):
@@ -274,15 +278,19 @@ class Corrector:
         ----------
         testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
-        dimEstim : int
-            size of the output image [dimEstimxdimEstim] in the estimator
-        wav_vec_estim : list of wavelengths, default: [testbed.wavelength_0]
-            vector of wavelengths for polychromatic correction
+        maskEstim : 2d numpy array
+            binary array of size [dimEstim, dimEstim] : dark hole mask. If undefined, it
+            will use the self.MaskEstim attribute defined in the Corrector initialization.
         input_wavefront : float or 2d numpy array or 3d numpy array, default 1.
             initial wavefront to measure the Matrix
         silence : boolean, default False.
             Whether to silence print outputs.
         """
+
+        if maskEstim is None:
+            maskEstim = self.MaskEstim
+        else:
+            self.MaskEstim = maskEstim
 
         if self.correction_algorithm in ["efc", "em", "steepest", "sm"]:
 
@@ -293,13 +301,13 @@ class Corrector:
             self.FirstIterNewMat = True
 
             interMat = wfc.create_interaction_matrix(testbed,
-                                                     dimEstim,
+                                                     self.dimEstim,
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
                                                      initial_DM_voltage=initial_DM_voltage,
                                                      input_wavefront=input_wavefront,
                                                      MatrixType=self.MatrixType,
-                                                     wav_vec_estim=wav_vec_estim,
+                                                     wav_vec_estim=self.wav_vec_estim,
                                                      dir_save_all_planes=None,
                                                      silence=silence,
                                                      visu=False)
