@@ -30,10 +30,17 @@ def quick_run_no_save(config, data_dir):
 
     # Initialize the DH masks
     mask_dh = MaskDH(Correctionconfig)
+    maskEstim = mask_dh.creatingMaskDH(estimator.dimEstim, estimator.Estim_sampling)
     science_mask_dh = mask_dh.creatingMaskDH(thd2.dimScience, thd2.Science_sampling)
 
     # Initialize the corrector
-    corrector = Corrector(Correctionconfig, thd2, mask_dh, estimator, matrix_dir=matrix_dir, silence=silence)
+    corrector = Corrector(Correctionconfig,
+                          thd2,
+                          estimator.dimEstim,
+                          maskEstim=maskEstim,
+                          wav_vec_estim=estimator.wav_vec_estim,
+                          matrix_dir=matrix_dir,
+                          silence=silence)
 
     ### Set initial phase and amplitude
     # Phase upstream of the coronagraph (entrance pup)

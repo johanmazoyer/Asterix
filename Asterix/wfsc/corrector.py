@@ -5,7 +5,6 @@ from astropy.io import fits
 from Asterix.utils import invert_svd
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
-import Asterix.wfsc.estimator as estimator_mod
 import Asterix.wfsc.thd_quick_invert as thd_quick_invert
 import Asterix.wfsc.wf_control_functions as wfc
 
@@ -16,7 +15,7 @@ class Corrector:
     Corrector is a class which takes as parameter:
         - the testbed structure
         - the correction parameters
-        - the estimator
+        - the size of the estimation array
 
     It must contains 2 functions at least:
         - an initialization (e.g. Jacobian matrix) Corrector.__init__
@@ -33,8 +32,9 @@ class Corrector:
     def __init__(self,
                  Correctionconfig,
                  testbed: Testbed,
-                 MaskDH,
-                 estimator: estimator_mod.Estimator,
+                 dimEstim,
+                 maskEstim=None,
+                 wav_vec_estim=None,
                  matrix_dir=None,
                  save_for_bench=False,
                  realtestbed_dir='',
@@ -54,10 +54,12 @@ class Corrector:
             general correction parameters
         testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
-        MaskDH : 2d numpy array
+        dimEstim : int
+            size of the output image [dimEstimxdimEstim] in the estimator
+        maskEstim : 2d numpy array, default: np.zeros([dimEstim, dimEstim])
             binary array of size [dimEstim, dimEstim] : dark hole mask
-        estimator : Estimator
-            an estimator object. This contains all information about the estimation
+        wav_vec_estim : list of wavelengths, default: [testbed.wavelength_0]
+            vector of wavelengths for polychromatic correction
         matrix_dir : string, default: None
             path to directory to save interraction matrices
         save_for_bench : bool default: false
@@ -100,9 +102,22 @@ class Corrector:
             self.expected_gain_in_contrast = 0.1
 
         self.regularization = Correctionconfig["regularization"]
-        self.MaskEstim = MaskDH.creatingMaskDH(estimator.dimEstim, estimator.Estim_sampling)
+
+        # we make the dimension of the estimation and the wavelengths attributes of the correction also.
+        self.dimEstim = dimEstim
+
+        if wav_vec_estim is not None:
+            self.wav_vec_estim = wav_vec_estim
+        else:
+            self.wav_vec_estim = np.array([testbed.wavelength_0])
+
+        if maskEstim is not None:
+            self.MaskEstim = maskEstim
+        else:
+            self.MaskEstim = np.zeros((self.dimEstim, self.dimEstim))
+
         self.matrix_dir = matrix_dir
-        self.update_matrices(testbed, estimator, silence=silence)
+        self.update_matrices(testbed, silence=silence)
 
         if self.correction_algorithm == "efc" and save_for_bench:
             if not os.path.exists(realtestbed_dir):
@@ -110,11 +125,7 @@ class Corrector:
                     print("Creating directory " + realtestbed_dir)
                 os.makedirs(realtestbed_dir)
 
-            if estimator.polychrom in ['singlewl', 'broadband_pwprobes']:
-                number_wl_in_matrix = 1
-            else:
-                number_wl_in_matrix = estimator.nb_wav_estim
-
+            number_wl_in_matrix = len(wav_vec_estim)
 
             if testbed.DM1.active & testbed.DM3.active:
 
@@ -252,7 +263,7 @@ class Corrector:
 
     def update_matrices(self,
                         testbed: Testbed,
-                        estimator: estimator_mod.Estimator,
+                        maskEstim=None,
                         initial_DM_voltage=0.,
                         input_wavefront=1.,
                         silence=False):
@@ -266,15 +277,19 @@ class Corrector:
         ----------
         testbed : OpticalSystem.Testbed
             Testbed object which describe your testbed
-        estimator : Estimator
-            an estimator object. This contains all information about the estimation
-        initial_DM_voltage : float or 1d numpy array, default 0.
-            initial DM voltages to measure the Matrix
+        maskEstim : 2d numpy array
+            binary array of size [dimEstim, dimEstim] : dark hole mask. If undefined, it
+            will use the self.MaskEstim attribute defined in the Corrector initialization.
         input_wavefront : float or 2d numpy array or 3d numpy array, default 1.
             initial wavefront to measure the Matrix
         silence : boolean, default False.
             Whether to silence print outputs.
         """
+
+        if maskEstim is None:
+            maskEstim = self.MaskEstim
+        else:
+            self.MaskEstim = maskEstim
 
         if self.correction_algorithm in ["efc", "em", "steepest", "sm"]:
 
@@ -285,14 +300,13 @@ class Corrector:
             self.FirstIterNewMat = True
 
             interMat = wfc.create_interaction_matrix(testbed,
-                                                     estimator.dimEstim,
+                                                     self.dimEstim,
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
                                                      initial_DM_voltage=initial_DM_voltage,
                                                      input_wavefront=input_wavefront,
                                                      MatrixType=self.MatrixType,
-                                                     polychrom=estimator.polychrom,
-                                                     wav_vec_estim=estimator.wav_vec_estim,
+                                                     wav_vec_estim=self.wav_vec_estim,
                                                      dir_save_all_planes=None,
                                                      silence=silence,
                                                      visu=False)

@@ -7,7 +7,7 @@ This section describes how to correct the electrical field in the focal plane in
 are possible in Asterix:
 
 - an initialization (e.g. Jacobian matrix) ``Corrector.__init__`` : The initialization requires previous initialization of the testbed and of the estimator.
-- a matrix update function ``Corrector.update_matrices`` This function is called once during initialization and then each time we need to recompute the Jacobian in the middle of the correction using different DM voltages as the starting point.
+- a matrix update function ``Corrector.update_matrices`` This function is called once during initialization and then each time we need to recompute the Jacobian in the middle of the correction using different DM voltages as the starting point. It can also be used to update the dark-hole mask.
 - a correction function ``Corrector.toDM_voltage`` which takes the results of an estimation and returns the DM voltages.
 
 Dark Hole Mask Definition
@@ -82,12 +82,13 @@ The Matrix calculation is done during initialization:
     Correctionconfig = config["Correctionconfig"]
 
     mask_dh = MaskDH(Correctionconfig)
-
-    #initalize the corrector
-    correc = Corrector(Correctionconfig,
-                       testbed,
-                       mask_dh,
-                       estimator)
+    maskEstim = mask_dh.creatingMaskDH(estimator.dimEstim, estimator.Estim_sampling)
+    
+    # Initialize the corrector
+    corrector = Corrector(Correctionconfig,
+                          thd2,
+                          estimator.dimEstim,
+                          maskEstim=maskEstim)
 
 
 Once you have initialized, you can update the matrix during the correction wihtout re-initializing using : 
@@ -95,12 +96,18 @@ Once you have initialized, you can update the matrix during the correction wihto
 .. code-block:: python
     
     corrector.update_matrices(testbed,
-                              estimator,
-                              initial_DM_voltage=initial_DM_voltage,
-                              input_wavefront=1.)
+                              initial_DM_voltage=some_DM_voltage,
+                              input_wavefront=some_input_wavefront)
 
+This can be useful to recalculate the jacobian around a non zero DM voltage or if you want to crop the matrix with another dark-hole:
 
-This can be useful if the strokes are too high and makes the algorithm not as efficient. 
+.. code-block:: python
+
+    mask_dh2 = MaskDH(Correctionconfig)
+    maskEstim2 = mask_dh2.creatingMaskDH(estimator.dimEstim, estimator.Estim_sampling)
+    
+    corrector.update_matrices(testbed,
+                              maskEstim=maskEstim2)
 
 
 Correction mode

@@ -12,13 +12,12 @@ from Asterix.optics import DeformableMirror, Testbed
 
 import Asterix.wfsc.corrector as corrector_mod
 import Asterix.wfsc.estimator as estimator_mod
-import Asterix.wfsc.maskDH as maskDH
 
 
 def correction_loop(testbed: Testbed,
                     estimator: estimator_mod.Estimator,
                     corrector: corrector_mod.Corrector,
-                    mask_dh: maskDH.MaskDH,
+                    mask_dh,
                     Loopconfig,
                     SIMUconfig,
                     input_wavefront=1.,
@@ -113,8 +112,7 @@ def correction_loop(testbed: Testbed,
     for i in range(Number_matrix):
 
         if i > 0:
-            # the first matrix is done during initialization
-            corrector.update_matrices(testbed, estimator, initial_DM_voltage=initial_DM_voltage, silence=silence)
+            corrector.update_matrices(testbed, initial_DM_voltage=initial_DM_voltage, silence=silence)
 
         Resultats_correction_loop = correction_loop_1matrix(testbed,
                                                             estimator,
@@ -147,7 +145,7 @@ def correction_loop(testbed: Testbed,
 def correction_loop_1matrix(testbed: Testbed,
                             estimator: estimator_mod.Estimator,
                             corrector: corrector_mod.Corrector,
-                            mask_dh: maskDH.MaskDH,
+                            mask_dh,
                             Nbiter_corr,
                             CorrectionLoopResult,
                             gain=0.1,

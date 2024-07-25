@@ -80,17 +80,6 @@ class Estimator:
         self.technique = Estimationconfig["estimation"].lower()
         self.polychrom = Estimationconfig["polychromatic"].lower()
 
-        # For now estimation central wl and simu central wl are the same
-        # wavelength_0_estim = testbed.wavelength_0
-
-        if self.polychrom == "centralwl":
-            print("")
-            print(("DEPRECATED PARAMETER VALUE: use 'singlelw' instead of 'centralwl' "
-                   "in [Estimationconfig]['polychromatic'] parameter."
-                   "'centralwl' value for this parameter will not ne supported in the near future"))
-            print("")
-            self.polychrom = "singlewl"
-
         if len(testbed.wav_vec) == 1:
             # monochromatic simulation, polychromatic correction keywords are ignored
             self.polychrom = "singlewl"
