@@ -5,7 +5,6 @@ from astropy.io import fits
 from Asterix.utils import invert_svd
 from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
 
-import Asterix.wfsc.estimator as estimator_mod
 import Asterix.wfsc.thd_quick_invert as thd_quick_invert
 import Asterix.wfsc.wf_control_functions as wfc
 

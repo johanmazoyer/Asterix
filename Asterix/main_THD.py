@@ -150,17 +150,23 @@ def runthd2(parameter_file_path,
 
     # Initialize the DH masks
     mask_dh = MaskDH(Correctionconfig)
+
+    # mask for the estimation used in correction loop
+    estim_mask_dh = mask_dh.creatingMaskDH(estimator.dimEstim, estimator.Estim_sampling)
+
+    # Mask in science detector size for contrast estimation at each iteration.
+    # if we used a fits file to do the dh mask, the fits must be of dimEstim size and
+    # we do not use a science dark-hole mask.
     if mask_dh.DH_shape.lower().endswith('.fits'):
         science_mask_dh = np.ones((thd2.dimScience, thd2.dimScience))
     else:
         science_mask_dh = mask_dh.creatingMaskDH(thd2.dimScience, thd2.Science_sampling, **kwargs)
 
-    maskEstim = mask_dh.creatingMaskDH(estimator.dimEstim, estimator.Estim_sampling)
     # Initialize the corrector
     corrector = Corrector(Correctionconfig,
                           thd2,
                           estimator.dimEstim,
-                          maskEstim=maskEstim,
+                          maskEstim=estim_mask_dh,
                           wav_vec_estim=estimator.wav_vec_estim,
                           matrix_dir=matrix_dir,
                           save_for_bench=onbench,
