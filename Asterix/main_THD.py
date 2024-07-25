@@ -155,11 +155,13 @@ def runthd2(parameter_file_path,
     else:
         science_mask_dh = mask_dh.creatingMaskDH(thd2.dimScience, thd2.Science_sampling, **kwargs)
 
+    maskEstim = mask_dh.creatingMaskDH(estimator.dimEstim, estimator.Estim_sampling)
     # Initialize the corrector
     corrector = Corrector(Correctionconfig,
                           thd2,
-                          mask_dh,
-                          estimator,
+                          estimator.dimEstim,
+                          maskEstim=maskEstim,
+                          wav_vec_estim=estimator.wav_vec_estim,
                           matrix_dir=matrix_dir,
                           save_for_bench=onbench,
                           realtestbed_dir=labview_dir,
