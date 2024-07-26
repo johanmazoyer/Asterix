@@ -138,7 +138,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     for voltage_probe in voltage_probe:
 
         # we find the DM used to probe
-        for DM_name in testbed.DM_names:
+        for DM_name in testbed.name_of_DMs:
             DM: DeformableMirror = vars(testbed)[DM_name]
             DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
             if DMvoltage.all() == 0:
@@ -513,7 +513,7 @@ def btp_difference(Probed_images, testbed: Testbed, voltage_probes, wavelengths=
     for count, voltage_probe in enumerate(voltage_probes):
 
         # we find the DM used to probe
-        for DM_name in testbed.DM_names:
+        for DM_name in testbed.name_of_DMs:
             DM: DeformableMirror = vars(testbed)[DM_name]
             DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
             if DMvoltage.all() == 0:
