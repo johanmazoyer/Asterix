@@ -142,7 +142,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
             DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
             if (DMvoltage == 0).all():
                 continue
-            else: 
+            else:
                 probephase = DM.voltage_to_phase(DMvoltage)
                 break
 
@@ -212,9 +212,10 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, wavelength, matrix_dir):
 
     amplitude = testbed.config_file["Estimationconfig"]["amplitudePW"]
     posprobes = testbed.config_file["Estimationconfig"]["posprobes"]
+    name_DM_to_probe_in_PW = testbed.config_file["Estimationconfig"]["name_DM_to_probe_in_PW"]
     cutsvd = testbed.config_file["Estimationconfig"]["cut"]
 
-    string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
+    string_dims_PWMatrix = name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
         int(amplitude)) + "_cut" + str(int(
             cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + "_resFP" + str(
                 round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
@@ -229,7 +230,7 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, wavelength, matrix_dir):
 
         necessary_estim_param = dict()
         necessary_estim_param['Estim_wl'] = wavelength * 1e9
-        necessary_estim_param['DM4Probes'] = testbed.name_DM_to_probe_in_PW
+        necessary_estim_param['name_DM_to_probe_in_PW'] = name_DM_to_probe_in_PW
         necessary_estim_param['dimEstim'] = dimEstim
         necessary_estim_param['Estim_bin_factor'] = testbed.config_file["Estimationconfig"]["Estim_bin_factor"]
         necessary_estim_param['amplitudePW'] = amplitude
@@ -246,7 +247,7 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, wavelength, matrix_dir):
 
         necessary_dm_param = dict()
         for paramdmkey in testbed.config_file["DMconfig"].scalars:
-            if testbed.name_DM_to_probe_in_PW in paramdmkey:
+            if name_DM_to_probe_in_PW in paramdmkey:
                 necessary_dm_param[paramdmkey] = testbed.config_file["DMconfig"][paramdmkey]
         header = from_param_to_header(necessary_dm_param, header)
 
