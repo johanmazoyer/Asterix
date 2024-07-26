@@ -221,6 +221,80 @@ class Testbed(optsy.OpticalSystem):
 
         return vector_actuator_voltage
 
+    def indiv_DM_voltage_to_testbed_voltage(self, voltage_indiv, DM_name):
+        """Transform a vector of voltages on a single DM vector
+            of voltages of the actuators of the tesbted using zeros on the other DMs.
+
+        Parameters:
+        --------
+        voltage_indiv : 1D-array real
+            the individual DM voltage vector.
+        DM_name : string
+            The name of the DM you which to apply the voltages to.
+
+        Returns
+        --------
+        testbed_voltage : 1D-array real of dim testbed.number_act
+            the vector of voltages on the testbed with voltage_indiv at the
+            position of DM DM_name and zero elsewhere.
+        """
+
+        if DM_name not in self.name_of_DMs:
+            raise ValueError("DM_name must be in the list of DMs")
+
+        testbed_voltage = np.zeros(self.number_act)
+        indice_acum_number_act = 0
+        for DM_name_here in self.name_of_DMs:
+
+            # we access each DM object individually
+            DM: deformable_mirror.DeformableMirror = vars(self)[DM_name_here]
+
+            if DM_name_here == DM_name:
+                if not DM.active:
+                    raise ValueError("DM_name must be active to send commands.")
+
+                if len(voltage_indiv) != DM.number_act:
+                    raise ValueError(f"voltage_indiv must be of size the number_act of DM {DM_name} : {DM.number_act}")
+
+                testbed_voltage[indice_acum_number_act:indice_acum_number_act + DM.number_act] = voltage_indiv
+                return testbed_voltage
+            else:
+                indice_acum_number_act += DM.number_act
+
+    def testbed_voltage_to_indiv_DM_voltage(self, testbed_voltage, DM_name):
+        """Extract the voltage of DM DM_name from a vector of voltages of the full tesbted.
+
+        Parameters:
+        --------
+        Testbed_voltage : 1D-array real of dim testbed.number_act
+            the vector of voltages on the testbed
+        DM_name : string
+            The name of the DM to which you want to exctract the individual voltage.
+
+        Returns
+        --------
+        voltage_indiv : 1D-array real
+            the individual DM voltage vector.
+
+        """
+        indice_acum_number_act = 0
+        if DM_name not in self.name_of_DMs:
+            raise ValueError("DM_name must be in the list of DMs")
+
+        for DM_name_here in self.name_of_DMs:
+            # we access each DM object individually
+            DM: deformable_mirror.DeformableMirror = vars(self)[DM_name_here]
+
+            if DM_name_here == DM_name:
+                if not DM.active:
+                    raise ValueError("DM_name must be active to retrieve commands.")
+
+                voltage_indiv = testbed_voltage[indice_acum_number_act:indice_acum_number_act + DM.number_act]
+                return voltage_indiv
+
+            else:
+                indice_acum_number_act += DM.number_act
+
 
 # Some internal functions to properly concatenate the EF_through functions
 def _swap_DMphase_name(DM_EF_through_function, name_var):
