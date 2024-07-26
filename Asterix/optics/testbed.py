@@ -286,9 +286,6 @@ class Testbed(optsy.OpticalSystem):
             DM: deformable_mirror.DeformableMirror = vars(self)[DM_name_here]
 
             if DM_name_here == DM_name:
-                if not DM.active:
-                    raise ValueError("DM_name must be active to retrieve commands.")
-
                 voltage_indiv = testbed_voltage[indice_acum_number_act:indice_acum_number_act + DM.number_act]
                 return voltage_indiv
 
