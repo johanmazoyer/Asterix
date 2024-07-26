@@ -341,23 +341,24 @@ class Estimator:
                     probed_fp_images.append(probed_fp_images_i)
 
             elif self.polychrom == 'singlewl':
-                probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF[testbed.wav_vec.tolist().index(self.wav_vec_estim[0])],
-                                                    testbed,
-                                                    self.voltage_probe,
-                                                    voltage_vector=voltage_vector,
-                                                    wavelengths=self.wav_vec_estim[0],
-                                                    pwp_or_btp=self.technique,
-                                                    **kwargs)
+                probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF[testbed.wav_vec.tolist().index(
+                    self.wav_vec_estim[0])],
+                                                            testbed,
+                                                            self.voltage_probe,
+                                                            voltage_vector=voltage_vector,
+                                                            wavelengths=self.wav_vec_estim[0],
+                                                            pwp_or_btp=self.technique,
+                                                            **kwargs)
                 probed_fp_images.append(probed_fp_images_i)
 
             elif self.polychrom == 'broadband_pwprobes':
                 probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF,
-                                                    testbed,
-                                                    self.voltage_probe,
-                                                    voltage_vector=voltage_vector,
-                                                    wavelengths=testbed.wav_vec_estim[0],
-                                                    pwp_or_btp=self.technique,
-                                                    **kwargs)
+                                                            testbed,
+                                                            self.voltage_probe,
+                                                            voltage_vector=voltage_vector,
+                                                            wavelengths=testbed.wav_vec_estim[0],
+                                                            pwp_or_btp=self.technique,
+                                                            **kwargs)
                 probed_fp_images_i.append(probed_fp_images_i)
 
         return probed_fp_images
@@ -425,10 +426,7 @@ class Estimator:
                     differences = wfs.pw_difference(probed_fp_images[0])
 
                 result_estim.append(
-                    wfs.calculate_pw_estimate(differences,
-                                              self.PWMatrix[0],
-                                              self.dimEstim,
-                                              dtype_complex=dtype_complex))
+                    wfs.calculate_pw_estimate(differences, self.PWMatrix[0], self.dimEstim, dtype_complex=dtype_complex))
 
                 if 'dir_save_all_planes' in kwargs.keys():
                     if kwargs['dir_save_all_planes'] is not None:
