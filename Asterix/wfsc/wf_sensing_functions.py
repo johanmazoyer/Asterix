@@ -220,7 +220,6 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, w
     for voltage_probe in voltage_probes:
         # we find the DM used to probe
         for DM_name in testbed.name_of_DMs:
-            DM: DeformableMirror = vars(testbed)[DM_name]
             DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
             if (DMvoltage == 0).all():
                 continue

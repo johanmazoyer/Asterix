@@ -171,7 +171,7 @@ class Estimator:
             name_DM_to_probe_in_PW = Estimationconfig["name_DM_to_probe_in_PW"]
 
             self.voltage_probes = wfs.generate_actu_probe_voltages(testbed, posprobes, amplitudePW,
-                                                                  name_DM_to_probe_in_PW)
+                                                                   name_DM_to_probe_in_PW)
 
             self.PWMatrix = wfs.create_pw_matrix(testbed,
                                                  self.voltage_probes,
