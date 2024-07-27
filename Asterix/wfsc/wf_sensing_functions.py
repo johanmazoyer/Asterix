@@ -38,7 +38,7 @@ def create_pw_matrix(testbed: Testbed,
     matrix_dir : string
         path to directory to save all the matrices here
     wav_vec_estim : list of float, default None
-        list of wavelengths to do the estimation, used in the case of polychrom == 'multiwl'
+        list of wavelengths to do the estimations.
     silence : boolean, default False.
         Whether to silence print outputs.
 
@@ -390,8 +390,8 @@ def simulate_pw_probes(input_wavefront,
         Array of voltages vectors for each probes
     voltage_vector : 1D float array or float, default 0
         Vector of voltages vectors for each DMs arounf which we do the difference.
-    wavelengths : float, default None
-        Wavelength of the estimation in m.
+    wavelengths : float or list of floats, default None
+        Wavelengths of the probes in m.
     pwp_or_btp : string, default 'pwp'
         type of algorithm used, can be
             'pw' Pair Wise Probing
@@ -402,6 +402,8 @@ def simulate_pw_probes(input_wavefront,
     Probed_images : 3D array
         Cube with all probed images. Use for pair-wise probing.
     """
+    if wav_vec_estim is None:
+        wav_vec_estim = np.array([testbed.wavelength_0])
 
     number_probes = len(voltage_probes)
 

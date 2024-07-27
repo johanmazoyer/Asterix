@@ -357,7 +357,7 @@ class Estimator:
                                                             testbed,
                                                             self.voltage_probe,
                                                             voltage_vector=voltage_vector,
-                                                            wavelengths=self.wav_vec_estim[0],
+                                                            wavelengths=testbed.wav_vec,
                                                             pwp_or_btp=self.technique,
                                                             **kwargs)
                 probed_fp_images.append(probed_fp_images_i)
