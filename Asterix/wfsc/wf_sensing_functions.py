@@ -402,8 +402,6 @@ def simulate_pw_probes(input_wavefront,
     Probed_images : 3D array
         Cube with all probed images. Use for pair-wise probing.
     """
-    if wav_vec_estim is None:
-        wav_vec_estim = np.array([testbed.wavelength_0])
 
     number_probes = len(voltage_probes)
 
