@@ -266,10 +266,10 @@ class Testbed(optsy.OpticalSystem):
 
         Parameters:
         --------
-        Testbed_voltage : 1D-array real of dim testbed.number_act
-            the vector of voltages on the testbed
+        testbed_voltage : 1D-array of dim testbed.number_act
+            the testbed voltage vector (all DMs voltage vectors concatenated)
         DM_name : string
-            The name of the DM to which you want to exctract the individual voltage.
+            The name of the DM to which you want to extract the individual voltage.
 
         Returns
         --------
