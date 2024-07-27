@@ -170,11 +170,11 @@ class Estimator:
 
             name_DM_to_probe_in_PW = Estimationconfig["name_DM_to_probe_in_PW"]
 
-            self.voltage_probe = wfs.generate_actu_probe_voltages(testbed, posprobes, amplitudePW,
+            self.voltage_probes = wfs.generate_actu_probe_voltages(testbed, posprobes, amplitudePW,
                                                                   name_DM_to_probe_in_PW)
 
             self.PWMatrix = wfs.create_pw_matrix(testbed,
-                                                 self.voltage_probe,
+                                                 self.voltage_probes,
                                                  self.dimEstim,
                                                  cutsvdPW,
                                                  matrix_dir,
@@ -334,7 +334,7 @@ class Estimator:
                 for i, wavei in enumerate(self.wav_vec_estim):
                     probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF[testbed.wav_vec.tolist().index(wavei)],
                                                                 testbed,
-                                                                self.voltage_probe,
+                                                                self.voltage_probes,
                                                                 voltage_vector=voltage_vector,
                                                                 wavelengths=wavei,
                                                                 pwp_or_btp=self.technique,
@@ -345,7 +345,7 @@ class Estimator:
                 probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF[testbed.wav_vec.tolist().index(
                     self.wav_vec_estim[0])],
                                                             testbed,
-                                                            self.voltage_probe,
+                                                            self.voltage_probes,
                                                             voltage_vector=voltage_vector,
                                                             wavelengths=self.wav_vec_estim[0],
                                                             pwp_or_btp=self.technique,
@@ -355,7 +355,7 @@ class Estimator:
             elif self.polychrom == 'broadband_pwprobes':
                 probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF,
                                                             testbed,
-                                                            self.voltage_probe,
+                                                            self.voltage_probes,
                                                             voltage_vector=voltage_vector,
                                                             wavelengths=testbed.wav_vec,
                                                             pwp_or_btp=self.technique,

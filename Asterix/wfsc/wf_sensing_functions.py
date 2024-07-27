@@ -10,7 +10,7 @@ from Asterix.optics import DeformableMirror, Testbed
 
 
 def create_pw_matrix(testbed: Testbed,
-                     voltage_probe,
+                     voltage_probes,
                      dimEstim,
                      cutsvd,
                      matrix_dir,
@@ -29,8 +29,8 @@ def create_pw_matrix(testbed: Testbed,
         a testbed with one or more DM
     amplitude : float
         amplitude of the actuator pokes for pair(wise probing in nm
-    posprobes : 1D-array
-        index of the actuators to push and pull for pair-wise probing
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
     dimEstim :  int
         size of the output image after resizing in pixels
     cutsvd : float
@@ -56,7 +56,7 @@ def create_pw_matrix(testbed: Testbed,
     for wave_i in wav_vec_estim:
         return_matrix.append(
             create_singlewl_pw_matrix(testbed,
-                                      voltage_probe,
+                                      voltage_probes,
                                       dimEstim,
                                       cutsvd,
                                       matrix_dir,
@@ -68,7 +68,7 @@ def create_pw_matrix(testbed: Testbed,
 
 
 def create_singlewl_pw_matrix(testbed: Testbed,
-                              voltage_probe,
+                              voltage_probes,
                               dimEstim,
                               cutsvd,
                               matrix_dir,
@@ -88,8 +88,8 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         a testbed with one or more DM
     amplitude : float
         amplitude of the actuator pokes for pair(wise probing in nm
-    posprobes : 1D-array
-        index of the actuators to push and pull for pair-wise probing
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
     dimEstim : int
         size of the output image after resizing in pixels
     cutsvd : float
@@ -108,8 +108,8 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         matrix in order to retrieve the focal plane electric field
     """
 
-    filePW, header_expected, bool_already_existing_matrix = name_header_pwp_matrix(testbed, dimEstim, wavelength,
-                                                                                   matrix_dir)
+    filePW, header_expected, bool_already_existing_matrix = name_header_pwp_matrix(testbed, dimEstim, voltage_probes,
+                                                                                   cutsvd, wavelength, matrix_dir)
 
     if bool_already_existing_matrix:
         # there is already a really identical matrix calculated, we just load the old matrix fits file.
@@ -125,7 +125,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         print("The PWmatrix " + filePW + " does not exists")
         print("Start PWP matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
 
-    numprobe = len(voltage_probe)
+    numprobe = len(voltage_probes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=testbed.dtype_complex)
     matrix = np.zeros((numprobe, 2))
     PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
@@ -135,7 +135,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
 
     k = 0
 
-    for voltage_probe in voltage_probe:
+    for voltage_probe in voltage_probes:
         # we find the DM used to probe
         for DM_name in testbed.name_of_DMs:
             DM: DeformableMirror = vars(testbed)[DM_name]
@@ -182,7 +182,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     return PWMatrix
 
 
-def name_header_pwp_matrix(testbed: Testbed, dimEstim, wavelength, matrix_dir):
+def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, wavelength, matrix_dir):
     """ Create the name of the file and header of the PW matrix that will be used to
     identify precisely parameter used in the calcul of this matrix and recalculate if need be.
     We then load a potential matrix and compare the header to the one existing.
@@ -193,6 +193,10 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, wavelength, matrix_dir):
     ----------
     testbed : Testbed Optical_element
         a testbed with one or more DM
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
+    cutsvd : float
+        value not to exceed for the inverse eigeinvalues at each pixels
     dimEstim : int
         size of the output image after resizing in pixels
     wavelength : float
@@ -209,11 +213,21 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, wavelength, matrix_dir):
     bool_already_existing_matrix :bool
         If there is no identical matrix already saved in fits file.
     """
+    posprobes = []
 
-    amplitude = testbed.config_file["Estimationconfig"]["amplitudePW"]
-    posprobes = testbed.config_file["Estimationconfig"]["posprobes"]
-    name_DM_to_probe_in_PW = testbed.config_file["Estimationconfig"]["name_DM_to_probe_in_PW"]
-    cutsvd = testbed.config_file["Estimationconfig"]["cut"]
+    # we identify the position and amplitude of the probes
+
+    for voltage_probe in voltage_probes:
+        # we find the DM used to probe
+        for DM_name in testbed.name_of_DMs:
+            DM: DeformableMirror = vars(testbed)[DM_name]
+            DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
+            if (DMvoltage == 0).all():
+                continue
+            else:
+                name_DM_to_probe_in_PW = DM_name
+                amplitude = np.max(DMvoltage)
+                posprobes.append(np.where(DMvoltage > 0)[0][0])
 
     string_dims_PWMatrix = name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
         int(amplitude)) + "_cut" + str(int(
