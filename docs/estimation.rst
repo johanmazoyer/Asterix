@@ -6,15 +6,16 @@ Estimation
 This section describes how to estimate the electrical field in focal plane in Asterix. Several estimation mode 
 are possible in Asterix. Additional details can be found directly in :ref:`the code documentation <estimationfiles-label>`.
 
-It contains 2 functions at least:
+It contains 3 functions at least:
 
-- an initialization ``Estimator.__init__()`` The initialization will require previous initialization of the testbed (see previous section) and the [Estimationconfig] part of the parameter file.  It set up everything you need for the estimation (e.g. the PWP matrix). 
+- an initialization ``Estimator.__init__()`` The initialization will require previous initialization of the testbed (see previous section) and the [Estimationconfig] part of the parameter file.  
+It set up everything you need for the estimation (e.g. the probes voltages and the PWP matrix). 
 
 - an probe function ``Estimator.probe()``, with parameters:
         - the entrance EF
         - DM voltages
         - the estimation wavelengths
-    It returns the probed images as a list (of length ``nb_wav_estim``) of 3d arrays (nprobes,dimScience,dimScience).
+    It returns the probed images as a list (of length ``nb_wav_estim``) of 3d arrays ([2*nprobes,dimScience,dimScience] if PWP or [1+nprobes,dimScience,dimScience] if BTP).
 
 - an estimation function ``Estimator.estimate()``, with parameters:
     - the probed images

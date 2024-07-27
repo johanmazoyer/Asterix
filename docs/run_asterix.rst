@@ -215,6 +215,7 @@ The [Estimationconfig] section contains the estimator parameters. An estimator i
 
 If ``estimation`` = 'pwp' or 'btp':
 
+    - ``name_DM_to_probe_in_PW`` : str, Name of the DM used for PWP.
     - ``amplitudePW`` : float, Amplitude of PWP probes or BTP (in nm).
     - ``posprobes`` : list of int, Actuators used for PWP or BTP (DM in pupil plane).
     - ``cut`` : float, Threshold to remove pixels with bad estimation of the electric field.
