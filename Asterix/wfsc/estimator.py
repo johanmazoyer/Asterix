@@ -4,7 +4,7 @@ import numpy as np
 from astropy.io import fits
 
 from Asterix.utils import resizing, save_plane_in_fits, from_param_to_header
-from Asterix.optics import OpticalSystem, DeformableMirror, Testbed
+from Asterix.optics import OpticalSystem, Testbed
 
 import Asterix.wfsc.wf_sensing_functions as wfs
 
@@ -25,6 +25,7 @@ class Estimator:
                     - the estimation wavelengths
                 It returns the probed images as a list (of length nb_wav_estim) of
                 3d arrays (nprobes,dimEstim,dimEstim).
+                For perfect estimation, it resturns the electrical field.
 
             - an estimation function Estimator.estimate(), with parameters:
                 - the probed images
@@ -164,19 +165,20 @@ class Estimator:
             self.is_focal_plane = True
             self.is_complex = True
 
-            self.amplitudePW = Estimationconfig["amplitudePW"]
-            self.posprobes = list(Estimationconfig["posprobes"])
+            amplitudePW = Estimationconfig["amplitudePW"]
+            posprobes = list(Estimationconfig["posprobes"])
             cutsvdPW = Estimationconfig["cut"]
 
-            testbed.name_DM_to_probe_in_PW = find_DM_to_probe(testbed)
+            name_DM_to_probe_in_PW = Estimationconfig["name_DM_to_probe_in_PW"]
+
+            self.voltage_probes = wfs.generate_actu_probe_voltages(testbed, posprobes, amplitudePW,
+                                                                   name_DM_to_probe_in_PW)
 
             self.PWMatrix = wfs.create_pw_matrix(testbed,
-                                                 self.amplitudePW,
-                                                 self.posprobes,
+                                                 self.voltage_probes,
                                                  self.dimEstim,
                                                  cutsvdPW,
                                                  matrix_dir,
-                                                 self.polychrom,
                                                  self.wav_vec_estim,
                                                  silence=silence)
 
@@ -194,12 +196,12 @@ class Estimator:
                     wl_in_pw_matrix = self.wav_vec_estim
 
                 for k, wave_k in enumerate(wl_in_pw_matrix):
-                    probes = np.zeros((len(self.posprobes), testbed.DM3.number_act), dtype=np.float32)
-                    vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(self.posprobes)), dtype=np.float32)
+                    probes = np.zeros((len(posprobes), testbed.DM3.number_act), dtype=np.float32)
+                    vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(posprobes)), dtype=np.float32)
 
-                    for i in np.arange(len(self.posprobes)):
+                    for i in np.arange(len(posprobes)):
                         # TODO WTH is the hardcoded 17. @Raphael @Axel
-                        probes[i, self.posprobes[i]] = self.amplitudePW / 17
+                        probes[i, posprobes[i]] = amplitudePW / 17
                         vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
                                  self.dimEstim] = self.PWMatrix[k][:, 0, i].flatten()
                         vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
@@ -221,7 +223,7 @@ class Estimator:
                         header = from_param_to_header(testbed.config_file, header)
                     header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
 
-                    namepwmatrix = '_PW_' + testbed.name_DM_to_probe_in_PW + string_laser
+                    namepwmatrix = '_PW_' + name_DM_to_probe_in_PW + string_laser
                     fits.writeto(os.path.join(realtestbed_dir, "Probes" + namepwmatrix + ".fits"),
                                  probes,
                                  header,
@@ -245,7 +247,7 @@ class Estimator:
 
         Parameters
         ----------
-                testbed : OpticalSystem.Testbed
+        testbed : OpticalSystem.Testbed
                 Testbed object which describe your testbed
         entrance_EF : complex float or 2D array, default 1.
             initial EF field
@@ -259,9 +261,11 @@ class Estimator:
 
         Returns
         --------
-        probed_fp_images : list of 2D or 3D array
-            list is the number of wl in the estimation, usually 1 or self.nb_wav_estim
-            Each arrays are of size of sixe [nprobes, dimEstim, dimEstim].
+        probed_fp_images : list of 3D arrays
+            Probed images for each wavelengths.
+            Each arrays are of size of sixe [2*nprobes, dimEstim, dimEstim] if PWP
+            or [1 + nprobes, dimEstim, dimEstim] if BTP.
+
         """
 
         if 'wavelength' in kwargs:
@@ -329,52 +333,50 @@ class Estimator:
                         kwargs['nb_photons'] = kwargs['nb_photons'] / testbed.Delta_wav * self.delta_wav_estim_individual
 
                 for i, wavei in enumerate(self.wav_vec_estim):
-                    Difference = wfs.simulate_pw_difference(entrance_EF[testbed.wav_vec.tolist().index(wavei)],
-                                                            testbed,
-                                                            self.posprobes,
-                                                            self.amplitudePW,
-                                                            voltage_vector=voltage_vector,
-                                                            wavelengths=wavei,
-                                                            pwp_or_btp=self.technique,
-                                                            **kwargs)
-                    probed_fp_images.append(Difference)
+                    probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF[testbed.wav_vec.tolist().index(wavei)],
+                                                                testbed,
+                                                                self.voltage_probes,
+                                                                voltage_vector=voltage_vector,
+                                                                wavelengths=wavei,
+                                                                pwp_or_btp=self.technique,
+                                                                **kwargs)
+                    probed_fp_images.append(probed_fp_images_i)
 
             elif self.polychrom == 'singlewl':
-                Difference = wfs.simulate_pw_difference(entrance_EF[testbed.wav_vec.tolist().index(
+                probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF[testbed.wav_vec.tolist().index(
                     self.wav_vec_estim[0])],
-                                                        testbed,
-                                                        self.posprobes,
-                                                        self.amplitudePW,
-                                                        voltage_vector=voltage_vector,
-                                                        wavelengths=self.wav_vec_estim[0],
-                                                        pwp_or_btp=self.technique,
-                                                        **kwargs)
-                probed_fp_images.append(Difference)
+                                                            testbed,
+                                                            self.voltage_probes,
+                                                            voltage_vector=voltage_vector,
+                                                            wavelengths=self.wav_vec_estim[0],
+                                                            pwp_or_btp=self.technique,
+                                                            **kwargs)
+                probed_fp_images.append(probed_fp_images_i)
 
             elif self.polychrom == 'broadband_pwprobes':
-                Difference = wfs.simulate_pw_difference(entrance_EF,
-                                                        testbed,
-                                                        self.posprobes,
-                                                        self.amplitudePW,
-                                                        voltage_vector=voltage_vector,
-                                                        wavelengths=testbed.wav_vec,
-                                                        pwp_or_btp=self.technique,
-                                                        **kwargs)
-                probed_fp_images.append(Difference)
+                probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF,
+                                                            testbed,
+                                                            self.voltage_probes,
+                                                            voltage_vector=voltage_vector,
+                                                            wavelengths=testbed.wav_vec,
+                                                            pwp_or_btp=self.technique,
+                                                            **kwargs)
+                probed_fp_images.append(probed_fp_images_i)
 
         return probed_fp_images
 
-    def estimate(self, probed_images, perfect_estimation=False, dtype_complex='complex128', **kwargs):
-        """Run an estimation from a testbed, with a given input wavefront and a
-        state of the DMs.
+    def estimate(self, probed_fp_images, perfect_estimation=False, dtype_complex='complex128', testbed=None, **kwargs):
+        """Run an estimation from a testbed, with a given input the probed images.
+        For some estimation algorithms (btp) we need to use a model of the testbed.
 
         AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
-        probed_fp_images : list of 2D or 3D array
-            list is the number of wl in the estimation, usually 1 or self.nb_wav_estim
-            Each arrays are of size of sixe [nprobes, dimEstim, dimEstim].
+        probed_fp_images : list of 3D arrays
+            Probed images for each probes.
+            Each arrays are of size of sixe [2*nprobes, dimEstim, dimEstim] if PWP
+            or [1 + nprobes, dimEstim, dimEstim] if BTP.
         perfect_estimation : bool, default = False
             if true This is equivalent to have self.technique = "perfect"
             but even if we are using another technique, we sometimes
@@ -384,6 +386,8 @@ class Estimator:
             bit number for the complex arrays in the PW matrices.
             Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
             cost of lower precision.
+        testbed : testbed object, default = None
+            testbed object for btp which requires a testbed model.
 
         Returns
         --------
@@ -394,17 +398,21 @@ class Estimator:
         """
 
         if (self.technique == "perfect") or (perfect_estimation):
-            return probed_images
+            return probed_fp_images
 
         elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
-
             result_estim = []
 
             if self.polychrom == 'multiwl':
 
                 for i, wavei in enumerate(self.wav_vec_estim):
+                    if self.technique in ["btp"]:
+                        differences = wfs.btp_difference(probed_fp_images[i], testbed, self.voltage_probes, wavei)
+                    else:
+                        differences = wfs.pw_difference(probed_fp_images[i])
+
                     result_estim.append(
-                        wfs.calculate_pw_estimate(probed_images[i],
+                        wfs.calculate_pw_estimate(differences,
                                                   self.PWMatrix[i],
                                                   self.dimEstim,
                                                   dtype_complex=dtype_complex))
@@ -415,12 +423,14 @@ class Estimator:
                             save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
 
             elif self.polychrom in ['singlewl', 'broadband_pwprobes']:
+                if self.technique in ["btp"]:
+                    differences = wfs.btp_difference(probed_fp_images[0], testbed, self.voltage_probes,
+                                                     self.wav_vec_estim[0])
+                else:
+                    differences = wfs.pw_difference(probed_fp_images[0])
 
                 result_estim.append(
-                    wfs.calculate_pw_estimate(probed_images[0],
-                                              self.PWMatrix[0],
-                                              self.dimEstim,
-                                              dtype_complex=dtype_complex))
+                    wfs.calculate_pw_estimate(differences, self.PWMatrix[0], self.dimEstim, dtype_complex=dtype_complex))
 
                 if 'dir_save_all_planes' in kwargs.keys():
                     if kwargs['dir_save_all_planes'] is not None:
@@ -435,66 +445,3 @@ class Estimator:
         else:
             raise NotImplementedError("This estimation algorithm is not yet implemented "
                                       "([Estimationconfig]['estimation'] parameter)")
-
-
-def find_DM_to_probe(testbed: Testbed):
-    """Find which DM to use for the PWP/BTP probes.
-
-    AUTHOR : Johan Mazoyer
-
-    Parameters
-    ----------
-    testbed : OpticalSystem.Testbed
-        Testbed object which describe your testbed
-
-    Returns
-    ------------
-    name_DM_to_probe_in_PW : string
-        name of the DM to probe in PWP or BTP
-    """
-
-    # we chose it already. We only check its existence
-    if hasattr(testbed, 'name_DM_to_probe_in_PW'):
-        if testbed.name_DM_to_probe_in_PW not in testbed.name_of_DMs:
-            raise ValueError(f"Testbed has no DM '{testbed.name_DM_to_probe_in_PW}', choose another DM name "
-                             "for PWP, using using 'testbed.name_DM_to_probe_in_PW'.")
-        return testbed.name_DM_to_probe_in_PW
-
-    # If name_DM_to_probe_in_PW is not already set,
-    # automatically check which DM to use to probe in this case
-    # this is only done once.
-
-    # If several DMs we check if there is at least one active
-    number_DMs_activated = 0
-    for DM_name in testbed.name_of_DMs:
-        DM: DeformableMirror = vars(testbed)[DM_name]
-        if DM.active:
-            number_DMs_activated += 1
-
-    if number_DMs_activated == 0:
-        raise ValueError("You need at least one activated DM to do PW.")
-
-    # If only one DM, we use this one, independenlty of its position
-    elif number_DMs_activated == 1:
-        for DM_name in testbed.name_of_DMs:
-            DM: DeformableMirror = vars(testbed)[DM_name]
-            if DM.active:
-                name_DM_to_probe_in_PW = DM_name
-    else:
-        # If several active DMs, we check if there is at least one in PP
-        number_active_DMs_in_PP = 0
-        for DM_name in testbed.name_of_DMs:
-            DM: DeformableMirror = vars(testbed)[DM_name]
-            if DM.z_position == 0. and DM.active:
-                number_active_DMs_in_PP += 1
-                name_DM_to_probe_in_PW = DM_name
-
-        # If there are several DMs in PP, error, you need to set name_DM_to_probe_in_PW
-        if number_active_DMs_in_PP > 1:
-            raise ValueError("You have several active DMs in PP, choose manually one for "
-                             "the PWP probes using 'testbed.name_DM_to_probe_in_PW'.")
-        # Several DMS, none in PP, error, you need to set name_DM_to_probe_in_PW
-        if number_active_DMs_in_PP == 0:
-            raise ValueError("You have several active DMs, none in PP, choose manually one for "
-                             "the PWP probes using 'testbed.name_DM_to_probe_in_PW'.")
-    return name_DM_to_probe_in_PW

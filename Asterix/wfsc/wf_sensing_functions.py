@@ -10,12 +10,10 @@ from Asterix.optics import DeformableMirror, Testbed
 
 
 def create_pw_matrix(testbed: Testbed,
-                     amplitude,
-                     posprobes,
+                     voltage_probes,
                      dimEstim,
                      cutsvd,
                      matrix_dir,
-                     polychrom,
                      wav_vec_estim=None,
                      silence=False,
                      **kwargs):
@@ -31,21 +29,16 @@ def create_pw_matrix(testbed: Testbed,
         a testbed with one or more DM
     amplitude : float
         amplitude of the actuator pokes for pair(wise probing in nm
-    posprobes : 1D-array
-        index of the actuators to push and pull for pair-wise probing
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
     dimEstim :  int
         size of the output image after resizing in pixels
     cutsvd : float
         value not to exceed for the inverse eigeinvalues at each pixels
     matrix_dir : string
         path to directory to save all the matrices here
-    polychrom : string
-        For polychromatic estimation and correction:
-        - 'singlewl': only a single wavelength is used for estimation / correction. 1 Interation Matrix
-        - 'broadband_pwprobes': probes images PWP are broadband but Matrices are at central wavelength: 1 PWP Matrix and 1 Interation Matrix
-        - 'multiwl': nb_wav images are used for estimation and there are nb_wav matrices of estimation and nb_wav matrices for correction
     wav_vec_estim : list of float, default None
-        list of wavelengths to do the estimation, used in the case of polychrom == 'multiwl'
+        list of wavelengths to do the estimations.
     silence : boolean, default False.
         Whether to silence print outputs.
 
@@ -56,55 +49,26 @@ def create_pw_matrix(testbed: Testbed,
                 matrix in order to retrieve the focal plane electric field
     """
     if wav_vec_estim is None:
-        wav_vec_estim = testbed.wav_vec
+        wav_vec_estim = np.array([testbed.wavelength_0])
 
     return_matrix = []
 
-    if polychrom == 'singlewl':
+    for wave_i in wav_vec_estim:
         return_matrix.append(
             create_singlewl_pw_matrix(testbed,
-                                      amplitude,
-                                      posprobes,
+                                      voltage_probes,
                                       dimEstim,
                                       cutsvd,
                                       matrix_dir,
-                                      wavelength=wav_vec_estim[0],
+                                      wavelength=wave_i,
                                       silence=silence,
                                       **kwargs))
-
-    elif polychrom == 'broadband_pwprobes':
-        return_matrix.append(
-            create_singlewl_pw_matrix(testbed,
-                                      amplitude,
-                                      posprobes,
-                                      dimEstim,
-                                      cutsvd,
-                                      matrix_dir,
-                                      wavelength=testbed.wavelength_0,
-                                      silence=silence,
-                                      **kwargs))
-
-    elif polychrom == 'multiwl':
-        for wave_i in wav_vec_estim:
-            return_matrix.append(
-                create_singlewl_pw_matrix(testbed,
-                                          amplitude,
-                                          posprobes,
-                                          dimEstim,
-                                          cutsvd,
-                                          matrix_dir,
-                                          wavelength=wave_i,
-                                          silence=silence,
-                                          **kwargs))
-    else:
-        raise ValueError(polychrom + "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
     return return_matrix
 
 
 def create_singlewl_pw_matrix(testbed: Testbed,
-                              amplitude,
-                              posprobes,
+                              voltage_probes,
                               dimEstim,
                               cutsvd,
                               matrix_dir,
@@ -124,8 +88,8 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         a testbed with one or more DM
     amplitude : float
         amplitude of the actuator pokes for pair(wise probing in nm
-    posprobes : 1D-array
-        index of the actuators to push and pull for pair-wise probing
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
     dimEstim : int
         size of the output image after resizing in pixels
     cutsvd : float
@@ -144,9 +108,8 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         matrix in order to retrieve the focal plane electric field
     """
 
-    filePW, header_expected, bool_already_existing_matrix = name_header_pwp_matrix(testbed, amplitude, posprobes,
-                                                                                   dimEstim, cutsvd, wavelength,
-                                                                                   matrix_dir)
+    filePW, header_expected, bool_already_existing_matrix = name_header_pwp_matrix(testbed, dimEstim, voltage_probes,
+                                                                                   cutsvd, wavelength, matrix_dir)
 
     if bool_already_existing_matrix:
         # there is already a really identical matrix calculated, we just load the old matrix fits file.
@@ -162,33 +125,34 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         print("The PWmatrix " + filePW + " does not exists")
         print("Start PWP matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
 
-    numprobe = len(posprobes)
+    numprobe = len(voltage_probes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=testbed.dtype_complex)
-    probephase = np.zeros((numprobe, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
     matrix = np.zeros((numprobe, 2))
     PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
-
-    DM_probe: DeformableMirror = vars(testbed)[testbed.name_DM_to_probe_in_PW]
 
     psi0 = testbed.todetector(wavelength=wavelength, in_contrast=True)
 
     k = 0
 
-    for i in posprobes:
-
-        Voltage_probe = np.zeros(DM_probe.number_act)
-        Voltage_probe[i] = amplitude
-        probephase[k] = DM_probe.voltage_to_phase(Voltage_probe)
+    for voltage_probe in voltage_probes:
+        # we find the DM used to probe
+        for DM_name in testbed.name_of_DMs:
+            DM: DeformableMirror = vars(testbed)[DM_name]
+            DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
+            if (DMvoltage == 0).all():
+                continue
+            else:
+                probephase = DM.voltage_to_phase(DMvoltage)
+                break
 
         # for PWP the probes are not sent in the DM but at the entrance of the testbed.
         # with an hypothesis of small phase.
         # I tried to remove "1+"". It breaks the code
         # (coronagraph does not "remove the 1 exactly")
         # **kwarg is here to send dir_save_all_planes
-
         deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, in_contrast=True, **kwargs) -
+            testbed.todetector(entrance_EF=1 + 1j * probephase, wavelength=wavelength, in_contrast=True, **kwargs) -
             psi0, dimEstim)
 
         k = k + 1
@@ -218,7 +182,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     return PWMatrix
 
 
-def name_header_pwp_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cutsvd, wavelength, matrix_dir):
+def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, wavelength, matrix_dir):
     """ Create the name of the file and header of the PW matrix that will be used to
     identify precisely parameter used in the calcul of this matrix and recalculate if need be.
     We then load a potential matrix and compare the header to the one existing.
@@ -229,14 +193,12 @@ def name_header_pwp_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cut
     ----------
     testbed : Testbed Optical_element
         a testbed with one or more DM
-    amplitude : float
-        amplitude of the actuator pokes for pair(wise probing in nm
-    posprobes : 1D-array
-        index of the actuators to push and pull for pair-wise probing
-    dimEstim : int
-        size of the output image after resizing in pixels
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
     cutsvd : float
         value not to exceed for the inverse eigeinvalues at each pixels
+    dimEstim : int
+        size of the output image after resizing in pixels
     wavelength : float
         wavelength in m.
     matrix_dir : string
@@ -251,8 +213,22 @@ def name_header_pwp_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cut
     bool_already_existing_matrix :bool
         If there is no identical matrix already saved in fits file.
     """
+    posprobes = []
 
-    string_dims_PWMatrix = testbed.name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
+    # we identify the position and amplitude of the probes
+
+    for voltage_probe in voltage_probes:
+        # we find the DM used to probe
+        for DM_name in testbed.name_of_DMs:
+            DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
+            if (DMvoltage == 0).all():
+                continue
+            else:
+                name_DM_to_probe_in_PW = DM_name
+                amplitude = np.max(DMvoltage)
+                posprobes.append(np.where(DMvoltage > 0)[0][0])
+
+    string_dims_PWMatrix = name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
         int(amplitude)) + "_cut" + str(int(
             cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + "_resFP" + str(
                 round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
@@ -267,7 +243,7 @@ def name_header_pwp_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cut
 
         necessary_estim_param = dict()
         necessary_estim_param['Estim_wl'] = wavelength * 1e9
-        necessary_estim_param['DM4Probes'] = testbed.name_DM_to_probe_in_PW
+        necessary_estim_param['name_DM_to_probe_in_PW'] = name_DM_to_probe_in_PW
         necessary_estim_param['dimEstim'] = dimEstim
         necessary_estim_param['Estim_bin_factor'] = testbed.config_file["Estimationconfig"]["Estim_bin_factor"]
         necessary_estim_param['amplitudePW'] = amplitude
@@ -284,7 +260,7 @@ def name_header_pwp_matrix(testbed: Testbed, amplitude, posprobes, dimEstim, cut
 
         necessary_dm_param = dict()
         for paramdmkey in testbed.config_file["DMconfig"].scalars:
-            if testbed.name_DM_to_probe_in_PW in paramdmkey:
+            if name_DM_to_probe_in_PW in paramdmkey:
                 necessary_dm_param[paramdmkey] = testbed.config_file["DMconfig"][paramdmkey]
         header = from_param_to_header(necessary_dm_param, header)
 
@@ -377,19 +353,45 @@ def calculate_pw_estimate(Difference,
                          "or 'btp' for Borde Traub Probing")
 
 
-def simulate_pw_difference(input_wavefront,
-                           testbed: Testbed,
-                           posprobes,
-                           amplitudePW,
-                           voltage_vector=0.,
-                           wavelengths=None,
-                           pwp_or_btp="pwp",
-                           **kwargs):
-    """Simulate the acquisition of probe images using Pair-wise.
+def generate_actu_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to_probe_in_PW):
+    """Generate the DM commands for each actuator probes.
 
-    and calculate the difference of images [I(+probe) - I(-probe)] (if pwp_or_btp = 'pw')
-    or [I(+probe) - I(0)] (if pwp_or_btp = 'btp').
-    We use testbed.name_DM_to_probe_in_PW to do the probes.
+    Parameters
+    ----------
+    testbed : Testbed Optical_element
+        Testbed with one or more DM.
+    posprobes : 1D-array
+        list of index of the number actuators probes.
+    amplitudePW : float
+        PWP probes amplitude in nm.
+
+    Returns
+    --------
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
+    """
+
+    voltage_probes = np.zeros((len(posprobes), testbed.number_act))
+    DM_probe: DeformableMirror = vars(testbed)[name_DM_to_probe_in_PW]
+
+    for count, num_probe in enumerate(posprobes):
+        Voltage_probe_indiv_DM = np.zeros(DM_probe.number_act)
+        Voltage_probe_indiv_DM[num_probe] = amplitudePW
+
+        voltage_probes[count] = testbed.indiv_DM_voltage_to_testbed_voltage(Voltage_probe_indiv_DM,
+                                                                            name_DM_to_probe_in_PW)
+
+    return voltage_probes
+
+
+def simulate_pw_probes(input_wavefront,
+                       testbed: Testbed,
+                       voltage_probes,
+                       voltage_vector=0.,
+                       wavelengths=None,
+                       pwp_or_btp="pwp",
+                       **kwargs):
+    """Simulate the acquisition of probe images using Pair-wise.
 
     Parameters
     ----------
@@ -397,14 +399,12 @@ def simulate_pw_difference(input_wavefront,
         Input wavefront in pupil plane.
     testbed : Testbed Optical_element
         Testbed with one or more DM.
-    posprobes : 1D-array
-        Index of the actuators to push and pull for pair-wise probing.
-    amplitudePW : float
-        PWP probes amplitude in nm.
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
     voltage_vector : 1D float array or float, default 0
         Vector of voltages vectors for each DMs arounf which we do the difference.
-    wavelengths : float, default None
-        Wavelength of the estimation in m.
+    wavelengths : float or list of floats, default None
+        Wavelengths of the probes in m.
     pwp_or_btp : string, default 'pwp'
         type of algorithm used, can be
             'pw' Pair Wise Probing
@@ -412,13 +412,15 @@ def simulate_pw_difference(input_wavefront,
 
     Returns
     --------
-    Difference : 3D array
-        Cube with image difference for each probes. Use for pair-wise probing.
+    Probed_images : 3D array
+        Cube with all probed images. Use for pair-wise probing.
     """
 
-    Difference = np.zeros((len(posprobes), testbed.dimScience, testbed.dimScience))
+    number_probes = len(voltage_probes)
 
     if pwp_or_btp == 'btp':
+        Probed_images = np.zeros((1 + number_probes, testbed.dimScience, testbed.dimScience))
+
         # If we are in a polychromatic mode but we need monochromatic instensity
         # we have to be careful with the normalization, because
         # todetector_intensity is normalizing to polychromatic PSF by default
@@ -439,22 +441,15 @@ def simulate_pw_difference(input_wavefront,
                 wavelengths=wavelengths,
                 in_contrast=False,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
+        Probed_images[0] = Ik0
 
-    for count, num_probe in enumerate(posprobes):
+    elif pwp_or_btp in ['pw', "pwp", 'pairwise']:
+        Probed_images = np.zeros((2 * number_probes, testbed.dimScience, testbed.dimScience))
+    else:
+        raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
+                         "Pair Wise Probing or 'btp' for Borde Traub Probing")
 
-        Voltage_probe = np.zeros(testbed.number_act)
-        indice_acum_number_act = 0
-
-        for DM_name in testbed.name_of_DMs:
-            DM: DeformableMirror = vars(testbed)[DM_name]
-
-            if DM_name == testbed.name_DM_to_probe_in_PW:
-                Voltage_probeDMprobe = np.zeros(DM.number_act)
-                Voltage_probeDMprobe[num_probe] = amplitudePW
-                Voltage_probe[indice_acum_number_act:indice_acum_number_act + DM.number_act] = Voltage_probeDMprobe
-                probephase = DM.voltage_to_phase(Voltage_probeDMprobe)
-
-            indice_acum_number_act += DM.number_act
+    for count, Voltage_probe in enumerate(voltage_probes):
 
         # If we are in a polychromatic mode but we need monochromatic instensity
         # we have to be careful with the normalization, because
@@ -474,14 +469,6 @@ def simulate_pw_difference(input_wavefront,
                                                        wavelengths=wavelengths,
                                                        **kwargs)
 
-            elif pwp_or_btp in ['btp']:
-                Int_fp_probe = testbed.todetector_intensity(entrance_EF=1 + 1j * probephase,
-                                                            wavelengths=wavelengths,
-                                                            **kwargs)
-            else:
-                raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
-                                 "Pair Wise Probing or 'btp' for Borde Traub Probing")
-
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
             # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
@@ -500,22 +487,96 @@ def simulate_pw_difference(input_wavefront,
                     in_contrast=False,
                     **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
-            elif pwp_or_btp in ['btp']:
-                Int_fp_probe = testbed.todetector_intensity(
-                    entrance_EF=1 + 1j * probephase, wavelengths=wavelengths, in_contrast=False, **
-                    kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
-
-            else:
-                raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
-                                 "Pair Wise Probing or 'btp' for Borde Traub Probing")
-
         else:
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
-                              "Code it yourself in simulate_pw_difference and be careful with the normalization"))
+                              "Code it yourself in simulate_pw_probes and be careful with the normalization"))
 
         if pwp_or_btp in ['pw', "pwp", 'pairwise']:
-            Difference[count] = Ikplus - Ikmoins
-        elif pwp_or_btp in ['btp']:
-            Difference[count] = Ikplus - Ik0 - Int_fp_probe
+            Probed_images[2 * count] = Ikplus
+            Probed_images[2 * count + 1] = Ikmoins
+
+        if pwp_or_btp == 'btp':
+            Probed_images[count + 1] = Ikplus
+
+    return Probed_images
+
+
+def btp_difference(Probed_images, testbed: Testbed, voltage_probes, wavelengths=None):
+    """ make the difference [I(+probe) - I(0) - psi_k_model] for borde and traub probing.
+
+    Parameters
+    ----------
+    testbed : Testbed Optical_element
+        Testbed with one or more DM.
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
+    voltage_vector : 1D float array or float, default 0
+        Vector of voltages vectors for each DMs arounf which we do the difference.
+    wavelengths : float, default None
+        Wavelength of the estimation in m.
+
+    Returns
+    --------
+    Difference : 3D array
+        Cube with image difference for each probes. Use for pair-wise probing.
+    """
+
+    Difference = np.zeros((len(voltage_probes), testbed.dimScience, testbed.dimScience))
+
+    for count, voltage_probe in enumerate(voltage_probes):
+
+        # we find the DM used to probe
+        for DM_name in testbed.name_of_DMs:
+            DM: DeformableMirror = vars(testbed)[DM_name]
+            DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
+            if (DMvoltage == 0).all():
+                continue
+            else:
+                probephase = DM.voltage_to_phase(DMvoltage)
+                break
+
+        # If we are in a polychromatic mode but we need monochromatic instensity
+        # we have to be careful with the normalization, because
+        # todetector_intensity is normalizing to polychromatic PSF by default
+        if np.all(wavelengths == testbed.wav_vec):
+            # easy case: we are monochromatic or polychromatic both for images and probes
+            # It's either a monochromatic correction, or a polychromatic correction with
+            # case polychromatic = 'broadband_pwprobes'
+
+            Int_fp_probe = testbed.todetector_intensity(entrance_EF=1 + 1j * probephase, wavelengths=wavelengths)
+
+        elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
+            # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
+            # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
+
+            Int_fp_probe = testbed.todetector_intensity(
+                entrance_EF=1 + 1j * probephase, wavelengths=wavelengths,
+                in_contrast=False) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
+
+        # Ikplus - Ik0 - psi_k_model
+        Difference[count] = Probed_images[count + 1] - Probed_images[0] - Int_fp_probe
+
+    return Difference
+
+
+def pw_difference(Probed_images):
+    """ Calculate the difference of images [I(+probe) - I(-probe)]
+
+    Parameters
+    ----------
+    Probed_images
+
+    Returns
+    --------
+    Difference : 3D array
+        Cube with image difference for each probes. Use for pair-wise probing.
+    """
+    nb_probes = Probed_images.shape[0] // 2
+
+    Difference = np.zeros((nb_probes, Probed_images.shape[1], Probed_images.shape[2]))
+
+    for count in range(nb_probes):
+        # kplus - Ikmoins
+        Difference[count] = Probed_images[2 * count] - Probed_images[2 * count + 1]
 
     return Difference

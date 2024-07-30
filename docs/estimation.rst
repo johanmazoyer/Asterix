@@ -6,15 +6,16 @@ Estimation
 This section describes how to estimate the electrical field in focal plane in Asterix. Several estimation mode 
 are possible in Asterix. Additional details can be found directly in :ref:`the code documentation <estimationfiles-label>`.
 
-It contains 2 functions at least:
+It contains 3 functions at least:
 
-- an initialization ``Estimator.__init__()`` The initialization will require previous initialization of the testbed (see previous section) and the [Estimationconfig] part of the parameter file.  It set up everything you need for the estimation (e.g. the PWP matrix). 
+- an initialization ``Estimator.__init__()`` The initialization will require previous initialization of the testbed (see previous section) and the [Estimationconfig] part of the parameter file.  
+It set up everything you need for the estimation (e.g. the probes voltages and the PWP matrix). 
 
 - an probe function ``Estimator.probe()``, with parameters:
         - the entrance EF
         - DM voltages
         - the estimation wavelengths
-    It returns the probed images as a list (of length ``nb_wav_estim``) of 3d arrays (nprobes,dimScience,dimScience).
+    It returns the probed images as a list (of length ``nb_wav_estim``) of 3d arrays ([2*nprobes,dimScience,dimScience] if PWP or [1+nprobes,dimScience,dimScience] if BTP).
 
 - an estimation function ``Estimator.estimate()``, with parameters:
     - the probed images
@@ -80,8 +81,7 @@ this estimation can be also done wihtout initialization or if another estimation
                                     voltage_vector=init_voltage,
                                     entrance_EF=input_wavefront,
                                     perfect_estimation=True)
-    resultatestimation = myestim.estimate(testbed,
-                                          voltage_vector=init_voltage,
+    resultatestimation = myestim.estimate(voltage_vector=init_voltage,
                                           entrance_EF=input_wavefront,
                                           perfect_estimation=True)
     # this is also a perfect FP estimation, without 
@@ -118,7 +118,17 @@ Bordé & Traub Probing (BTP) Estimation
 The Pair wise probing estimation version we used is defined in
 `Bordé & Traub (2024) <http://iopscience.iop.org/0004-637X/638/1/488>`_
 The difference with Pair Wise Probing is that we do not do a difference between the positive and negative probes but only
-a difference between positive probe (BTP+) and the unprobed image.
+a difference between positive probe and the unprobed image. For this estimator, we need a model of the testbed in the estimate function. 
+
+.. code-block:: python
+
+    myestim = Estimator(Estimationconfig, testbed)
+
+    probed_images = myestim.probe(testbed,
+                                    voltage_vector=init_voltage,
+                                    entrance_EF=input_wavefront)
+
+    resultatestimation = myestim.estimate(probed_images, testbed=testbed)
 
 ..  _polychromaticestim-label:
 Polychromatic Estimation

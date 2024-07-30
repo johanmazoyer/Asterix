@@ -24,7 +24,7 @@ main_THD.runthd2(parameter_file_path,
                  NewSIMUconfig={'Name_Experiment': "My_first_experiment"},
                  dir_save_all_planes=None)
 
-print('time correction 1DM perfect estim efc', time.time() - start_time)
+print('time correction 1DM pwp estim efc', time.time() - start_time)
 print("")
 print("")
 print("")
