@@ -319,6 +319,7 @@ def correction_loop_1matrix(testbed: Testbed,
         resultatestimation = estimator.estimate(probed_images,
                                                 perfect_estimation=Search_best_Mode,
                                                 dtype_complex=testbed.dtype_complex,
+                                                testbed=testbed,
                                                 **kwargs)
 
         solution = corrector.toDM_voltage(testbed,

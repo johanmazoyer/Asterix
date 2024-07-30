@@ -25,6 +25,7 @@ class Estimator:
                     - the estimation wavelengths
                 It returns the probed images as a list (of length nb_wav_estim) of
                 3d arrays (nprobes,dimEstim,dimEstim).
+                For perfect estimation, it resturns the electrical field.
 
             - an estimation function Estimator.estimate(), with parameters:
                 - the probed images
@@ -365,8 +366,8 @@ class Estimator:
         return probed_fp_images
 
     def estimate(self, probed_fp_images, perfect_estimation=False, dtype_complex='complex128', testbed=None, **kwargs):
-        """Run an estimation from a testbed, with a given input wavefront and a
-        state of the DMs.
+        """Run an estimation from a testbed, with a given input the probed images.
+        For some estimation algorithms (btp) we need to use a model of the testbed.
 
         AUTHOR : Johan Mazoyer
 
@@ -385,6 +386,8 @@ class Estimator:
             bit number for the complex arrays in the PW matrices.
             Can be 'complex128' or 'complex64'. The latter increases the speed of the mft but at the
             cost of lower precision.
+        testbed : testbed object, default = None
+            testbed object for btp which requires a testbed model.
 
         Returns
         --------
@@ -404,7 +407,7 @@ class Estimator:
 
                 for i, wavei in enumerate(self.wav_vec_estim):
                     if self.technique in ["btp"]:
-                        differences = wfs.btp_difference(probed_fp_images[i], testbed, self.probes_vector, wavei)
+                        differences = wfs.btp_difference(probed_fp_images[i], testbed, self.voltage_probes, wavei)
                     else:
                         differences = wfs.pw_difference(probed_fp_images[i])
 
@@ -421,7 +424,7 @@ class Estimator:
 
             elif self.polychrom in ['singlewl', 'broadband_pwprobes']:
                 if self.technique in ["btp"]:
-                    differences = wfs.btp_difference(probed_fp_images, testbed, self.probes_vector,
+                    differences = wfs.btp_difference(probed_fp_images[0], testbed, self.voltage_probes,
                                                      self.wav_vec_estim[0])
                 else:
                     differences = wfs.pw_difference(probed_fp_images[0])

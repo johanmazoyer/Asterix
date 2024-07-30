@@ -419,7 +419,7 @@ def simulate_pw_probes(input_wavefront,
     number_probes = len(voltage_probes)
 
     if pwp_or_btp == 'btp':
-        Probed_images = np.zeros((1 + number_probes, testbed.dimimages, testbed.dimimages))
+        Probed_images = np.zeros((1 + number_probes, testbed.dimScience, testbed.dimScience))
 
         # If we are in a polychromatic mode but we need monochromatic instensity
         # we have to be careful with the normalization, because
@@ -443,7 +443,7 @@ def simulate_pw_probes(input_wavefront,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
         Probed_images[0] = Ik0
 
-    if pwp_or_btp in ['pw', "pwp", 'pairwise']:
+    elif pwp_or_btp in ['pw', "pwp", 'pairwise']:
         Probed_images = np.zeros((2 * number_probes, testbed.dimScience, testbed.dimScience))
     else:
         raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
