@@ -357,14 +357,6 @@ class DeformableMirror(optsy.OpticalSystem):
         if self.DMconfig[self.Name_DM + "_Generic"]:
             Name_WhichInPup_fits += "Gen"
 
-        Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
-            self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(self.WhichInPup_threshold)
-
-        if os.path.exists(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits')):
-            if not silence:
-                print("Load " + Name_WhichInPup_fits)
-            return fits.getdata(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'))
-
         if self.z_position != 0:
 
             Pup_inDMplane = crop_or_pad_image(
@@ -390,10 +382,13 @@ class DeformableMirror(optsy.OpticalSystem):
 
         WhichInPupil = np.array(WhichInPupil)
 
+        Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
+            self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(self.WhichInPup_threshold)
+
         fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'), WhichInPupil, overwrite=True)
 
         if not silence:
-            print("Time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time))
+            print("Time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time, 3))
 
         return WhichInPupil
 
