@@ -2,22 +2,17 @@ import os
 import time
 from datetime import datetime
 import numpy as np
-
-import warnings
 from astropy.io import fits
-from astropy.io.fits.verify import VerifyWarning
 
 from Asterix import model_dir
 
 import Asterix.utils.gaussians as gauss
-from Asterix.utils import save_plane_in_fits, progress, ft_subpixel_shift, ft_zoom_out, crop_or_pad_image
+from Asterix.utils import save_plane_in_fits, progress, ft_subpixel_shift, ft_zoom_out, crop_or_pad_image, from_param_to_header
 
 import Asterix.optics.optical_systems as optsy
 import Asterix.optics.pupil as pupil
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
-
-warnings.simplefilter('ignore', category=VerifyWarning)
 
 
 class DeformableMirror(optsy.OpticalSystem):
@@ -222,10 +217,15 @@ class DeformableMirror(optsy.OpticalSystem):
 
         header = fits.Header()
         header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "pushact creation date"))
+
+        necessary_dm_param = dict()
         for key in self.DMconfig:
             if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key) and ('z_position'
                                                                                                       not in key):
-                header[key] = self.DMconfig[key]
+                necessary_dm_param[key] = self.DMconfig[key]
+        necessary_dm_param["prad"] = str(self.prad)
+        necessary_dm_param["dim_overpad_pupil"] = str(int(self.dim_overpad_pupil))
+        header = from_param_to_header(necessary_dm_param, header)
 
         # Loading any existing matrix and comparing their headers to make sure they are created
         # using the same set of parameters
@@ -235,7 +235,7 @@ class DeformableMirror(optsy.OpticalSystem):
             # remove the basic kw created automatically  when saving the fits file
             for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:
                 header_existing.remove(keyw)
-            # we comapre the header (ignoring the date)
+            # we compare the header (ignoring the date)
             bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
                                                            ignore_keywords=['DATE_MAT']).identical
 
@@ -413,10 +413,16 @@ class DeformableMirror(optsy.OpticalSystem):
 
         header = fits.Header()
         header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "whichinpup creation date"))
+
+        necessary_dm_param = dict()
         for key in self.DMconfig:
             if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key):
-                header[key] = self.DMconfig[key]
-        header["MinimumSurfaceRatioInThePupil"] = self.DMconfig["MinimumSurfaceRatioInThePupil"]
+                necessary_dm_param[key] = self.DMconfig[key]
+        necessary_dm_param["MinimumSurfaceRatioInThePupil"] = self.DMconfig["MinimumSurfaceRatioInThePupil"]
+        necessary_dm_param["prad"] = str(self.prad)
+        necessary_dm_param["dim_overpad_pupil"] = str(int(self.dim_overpad_pupil))
+        header = from_param_to_header(necessary_dm_param, header)
+
         fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'),
                      WhichInPupil,
                      header,
@@ -574,14 +580,17 @@ class DeformableMirror(optsy.OpticalSystem):
                 self.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
 
             header = fits.Header()
-            header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "pushact creation date"))
+            header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "fourier basis creation date"))
+
+            necessary_dm_param = dict()
             for key in self.DMconfig:
                 if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key) and ('z_position'
                                                                                                           not in key):
                     header[key] = self.DMconfig[key]
-            header["MinimumSurfaceRatioInThePupil"] = self.DMconfig["MinimumSurfaceRatioInThePupil"]
-            header["prad"] = str(self.prad)
-            header["dim_overpad_pupil"] = str(int(self.dim_overpad_pupil))
+                    necessary_dm_param[key] = self.DMconfig[key]
+            necessary_dm_param["prad"] = str(self.prad)
+            necessary_dm_param["dim_overpad_pupil"] = str(int(self.dim_overpad_pupil))
+            header = from_param_to_header(necessary_dm_param, header)
 
             # Loading any existing matrix and comparing their headers to make sure they are created
             # using the same set of parameters
