@@ -115,7 +115,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         # there is already a really identical matrix calculated, we just load the old matrix fits file.
         if not silence:
             print("")
-            print("The PWmatrix " + filePW + " already exists")
+            print("Load " + filePW + ".fits file")
 
         return fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
 

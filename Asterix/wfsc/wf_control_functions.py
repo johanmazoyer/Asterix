@@ -97,18 +97,18 @@ def create_interaction_matrix(testbed: Testbed,
     return_matrix = []
 
     for wave_i in wav_vec_estim:
-            return_matrix.append(
-                create_singlewl_interaction_matrix(testbed,
-                                                   dimEstim,
-                                                   amplitudeEFC,
-                                                   wave_i,
-                                                   matrix_dir,
-                                                   initial_DM_voltage=initial_DM_voltage,
-                                                   input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(wave_i)],
-                                                   MatrixType=MatrixType,
-                                                   dir_save_all_planes=dir_save_all_planes,
-                                                   silence=silence,
-                                                   visu=visu))
+        return_matrix.append(
+            create_singlewl_interaction_matrix(testbed,
+                                               dimEstim,
+                                               amplitudeEFC,
+                                               wave_i,
+                                               matrix_dir,
+                                               initial_DM_voltage=initial_DM_voltage,
+                                               input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(wave_i)],
+                                               MatrixType=MatrixType,
+                                               dir_save_all_planes=dir_save_all_planes,
+                                               silence=silence,
+                                               visu=visu))
     return return_matrix
 
 
@@ -219,7 +219,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
         if bool_already_existing_matrix and (initial_DM_voltage == 0.).all():
             if not silence:
-                print("The matrix " + fileDirectMatrix + " already exists")
+                print("Load " + fileDirectMatrix + ".fits file")
 
             InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size] = fits.getdata(
                 os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
@@ -246,7 +246,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             # In the case of the Fourier Basis, this is a bit long so we load an existing .fits file
             if DM.basis_type == 'fourier':
                 sqrtnbract = int(np.sqrt(DM.total_act))
-                Name_FourrierBasis_fits = "Fourier_basis_" + DM.Name_DM + '_prad' + str(
+                Name_FourrierBasis_fits = "Fourier_phases_" + DM.Name_DM + '_prad' + str(
                     DM.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
                 phasesBasis = fits.getdata(os.path.join(DM.Model_local_dir, Name_FourrierBasis_fits + '.fits'))
 
@@ -658,8 +658,7 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
         for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2']:
             header_existing.remove(keyw)
         # we comapre the header (ignoring the date)
-        bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
-                                                        ignore_keywords=['DATE_MAT']).identical
+        bool_already_existing_matrix = fits.HeaderDiff(header_existing, header, ignore_keywords=['DATE_MAT']).identical
     else:
         bool_already_existing_matrix = False
     return fileDirectMatrix, header, bool_already_existing_matrix
