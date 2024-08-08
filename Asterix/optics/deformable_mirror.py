@@ -63,22 +63,21 @@ class DeformableMirror(optsy.OpticalSystem):
 
         if DMconfig[self.Name_DM + "_Generic"]:
             self.total_act = DMconfig[self.Name_DM + "_Nact1D"]**2
-            self.number_act = self.total_act
-            self.active_actuators = np.arange(self.number_act)
+
         else:
             # first thing we do is to open filename_grid_actu to check the number of
             # actuator of this DM. We need the number of act to read and load pushact .fits
             self.total_act = fits.getdata(os.path.join(model_dir,
                                                        DMconfig[self.Name_DM + "_filename_grid_actu"])).shape[1]
 
-            if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
-                self.active_actuators = fits.getdata(
-                    os.path.join(model_dir, DMconfig[self.Name_DM + "_filename_active_actu"])).astype(int)
-                self.number_act = len(self.active_actuators)
+        if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
+            self.active_actuators = fits.getdata(
+                os.path.join(model_dir, DMconfig[self.Name_DM + "_filename_active_actu"])).astype(int)
+            self.number_act = len(self.active_actuators)
 
-            else:
-                self.number_act = self.total_act
-                self.active_actuators = np.arange(self.number_act)
+        else:
+            self.number_act = self.total_act
+            self.active_actuators = np.arange(self.number_act)
 
         self.string_os += '_' + self.Name_DM + "_z" + str(int(self.z_position * 1000)) + "_Nact" + str(
             int(self.number_act))
