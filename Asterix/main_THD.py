@@ -54,6 +54,8 @@ class THD2(Testbed):
         dm3 = DeformableMirror(model_config, dm_config, Name_DM="DM3", Model_local_dir=model_local_dir, silence=silence)
         corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir, silence=silence)
 
+        self.config_file = config
+
         # Concatenate into the full testbed optical system
         super().__init__([entrance_pupil, dm1, dm3, corono], ["entrancepupil", "DM1", "DM3", "corono"])
 
@@ -131,9 +133,6 @@ def runthd2(parameter_file_path,
 
     # Concatenate into the full testbed optical system
     thd2 = THD2(config, model_local_dir, silence=silence)
-
-    config["modelconfig"]["MODELSIM"] = 'asterix'
-    thd2.config_file = config
 
     # Initialize the estimation
     estimator = Estimator(Estimationconfig,
