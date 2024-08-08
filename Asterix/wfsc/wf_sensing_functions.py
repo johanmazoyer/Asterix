@@ -115,7 +115,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         # there is already a really identical matrix calculated, we just load the old matrix fits file.
         if not silence:
             print("")
-            print("The PWmatrix " + filePW + " already exists")
+            print("Load " + filePW + ".fits file")
 
         return fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
 
@@ -270,7 +270,7 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, w
     # using the same set of parameters
     if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
         header_existing = fits.getheader(os.path.join(matrix_dir, filePW + ".fits"))
-        # remove the basis kw created automatically  when saving the fits file
+        # remove the basic kw created automatically  when saving the fits file
         for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:
             header_existing.remove(keyw)
         # we comapre the header (ignoring the date)

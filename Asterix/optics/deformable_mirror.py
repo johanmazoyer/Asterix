@@ -1,7 +1,11 @@
 import os
 import time
+from datetime import datetime
 import numpy as np
+
+import warnings
 from astropy.io import fits
+from astropy.io.fits.verify import VerifyWarning
 
 from Asterix import model_dir
 
@@ -12,6 +16,8 @@ import Asterix.optics.optical_systems as optsy
 import Asterix.optics.pupil as pupil
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
+
+warnings.simplefilter('ignore', category=VerifyWarning)
 
 
 class DeformableMirror(optsy.OpticalSystem):
@@ -63,22 +69,21 @@ class DeformableMirror(optsy.OpticalSystem):
 
         if DMconfig[self.Name_DM + "_Generic"]:
             self.total_act = DMconfig[self.Name_DM + "_Nact1D"]**2
-            self.number_act = self.total_act
-            self.active_actuators = np.arange(self.number_act)
+
         else:
             # first thing we do is to open filename_grid_actu to check the number of
             # actuator of this DM. We need the number of act to read and load pushact .fits
             self.total_act = fits.getdata(os.path.join(model_dir,
                                                        DMconfig[self.Name_DM + "_filename_grid_actu"])).shape[1]
 
-            if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
-                self.active_actuators = fits.getdata(
-                    os.path.join(model_dir, DMconfig[self.Name_DM + "_filename_active_actu"])).astype(int)
-                self.number_act = len(self.active_actuators)
+        if DMconfig[self.Name_DM + "_filename_active_actu"] != "":
+            self.active_actuators = fits.getdata(
+                os.path.join(model_dir, DMconfig[self.Name_DM + "_filename_active_actu"])).astype(int)
+            self.number_act = len(self.active_actuators)
 
-            else:
-                self.number_act = self.total_act
-                self.active_actuators = np.arange(self.number_act)
+        else:
+            self.number_act = self.total_act
+            self.active_actuators = np.arange(self.number_act)
 
         self.string_os += '_' + self.Name_DM + "_z" + str(int(self.z_position * 1000)) + "_Nact" + str(
             int(self.number_act))
@@ -215,11 +220,29 @@ class DeformableMirror(optsy.OpticalSystem):
         Name_pushact_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
-        if (not self.misregistration) and (os.path.exists(os.path.join(self.Model_local_dir,
-                                                                       Name_pushact_fits + '.fits'))):
+        header = fits.Header()
+        header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "pushact creation date"))
+        for key in self.DMconfig:
+            if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key) and ('z_position'
+                                                                                                      not in key):
+                header[key] = self.DMconfig[key]
+
+        # Loading any existing matrix and comparing their headers to make sure they are created
+        # using the same set of parameters
+        bool_already_existing_matrix = False
+        if os.path.exists(os.path.join(self.Model_local_dir, Name_pushact_fits + ".fits")):
+            header_existing = fits.getheader(os.path.join(self.Model_local_dir, Name_pushact_fits + ".fits"))
+            # remove the basic kw created automatically  when saving the fits file
+            for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:
+                header_existing.remove(keyw)
+            # we comapre the header (ignoring the date)
+            bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
+                                                           ignore_keywords=['DATE_MAT']).identical
+
+        if (not self.misregistration) and (bool_already_existing_matrix):
             pushact3d = fits.getdata(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
             if not silence:
-                print("Load " + Name_pushact_fits)
+                print("Load " + Name_pushact_fits + ".fits file")
             return pushact3d
 
         if not silence:
@@ -332,9 +355,12 @@ class DeformableMirror(optsy.OpticalSystem):
         # we exclude the actuators non active
         pushact3d = pushact3d[self.active_actuators]
 
-        if (not self.misregistration) and (not os.path.exists(
-                os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
-            fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'), pushact3d)
+        if (not self.misregistration) and (not bool_already_existing_matrix):
+
+            fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'),
+                         pushact3d,
+                         header,
+                         overwrite=True)
             if not silence:
                 print("Time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
 
@@ -352,19 +378,6 @@ class DeformableMirror(optsy.OpticalSystem):
         silence : boolean, default False.
             Whether to silence print outputs.
         """
-        start_time = time.time()
-        Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
-
-        if self.DMconfig[self.Name_DM + "_Generic"]:
-            Name_WhichInPup_fits += "Gen"
-
-        Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
-            self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(self.WhichInPup_threshold)
-
-        if os.path.exists(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits')):
-            if not silence:
-                print("Load " + Name_WhichInPup_fits)
-            return fits.getdata(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'))
 
         if self.z_position != 0:
 
@@ -391,15 +404,28 @@ class DeformableMirror(optsy.OpticalSystem):
 
         WhichInPupil = np.array(WhichInPupil)
 
-        fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'), WhichInPupil, overwrite=True)
+        # Save the WhichInPupil vector in a fits with correct header and name
+        Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
+        if self.DMconfig[self.Name_DM + "_Generic"]:
+            Name_WhichInPup_fits += "Gen"
+        Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
+            self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(self.WhichInPup_threshold)
 
-        if not silence:
-            print("Time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time))
+        header = fits.Header()
+        header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "whichinpup creation date"))
+        for key in self.DMconfig:
+            if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key):
+                header[key] = self.DMconfig[key]
+        header["MinimumSurfaceRatioInThePupil"] = self.DMconfig["MinimumSurfaceRatioInThePupil"]
+        fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'),
+                     WhichInPupil,
+                     header,
+                     overwrite=True)
 
         return WhichInPupil
 
     def prop_pup_to_DM_and_back(self, entrance_EF, phase_DM, wavelength, dir_save_all_planes=None):
-        """Propagate the field towards an out-of-pupil plane , add the DM
+        """Propagate the fied towards an out-of-pupil plane , add the DM
         phase, and propagate to the next pupil plane.
 
         AUTHOR : Raphaël Galicher, Johan Mazoyer
@@ -526,11 +552,8 @@ class DeformableMirror(optsy.OpticalSystem):
 
         elif basis_type == 'fourier':
             start_time = time.time()
-            # activeact = [value for value in self.active_actuators]
 
             sqrtnbract = int(np.sqrt(self.total_act))
-            Name_FourrierBasis_fits = "Fourier_basis_" + self.Name_DM + '_prad' + str(
-                self.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
 
             cossinbasis = phase_ampl.sine_cosine_basis(sqrtnbract)
 
@@ -544,20 +567,53 @@ class DeformableMirror(optsy.OpticalSystem):
             # This is a very time consuming part of the code.
             # from N voltage vectors with the sine and cosine value, we go N times through the
             # voltage_to_phase functions. For this reason we save the Fourrier base 2D phases on each DMs
-            # in a specific .fits file
-            if not os.path.exists(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits')):
+            # in a specific .fits file that is read during the creation of the matrix in
+            # wf_control_functions.create_singlewl_interaction_matrix.py
+
+            Name_FourrierBasis_fits = "Fourier_phases_" + self.Name_DM + '_prad' + str(
+                self.prad) + '_nact' + str(sqrtnbract) + 'x' + str(sqrtnbract)
+
+            header = fits.Header()
+            header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "pushact creation date"))
+            for key in self.DMconfig:
+                if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key) and ('z_position'
+                                                                                                          not in key):
+                    header[key] = self.DMconfig[key]
+            header["MinimumSurfaceRatioInThePupil"] = self.DMconfig["MinimumSurfaceRatioInThePupil"]
+            header["prad"] = str(self.prad)
+            header["dim_overpad_pupil"] = str(int(self.dim_overpad_pupil))
+
+            # Loading any existing matrix and comparing their headers to make sure they are created
+            # using the same set of parameters
+            bool_already_existing_matrix = False
+            if os.path.exists(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + ".fits")):
+                header_existing = fits.getheader(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + ".fits"))
+                # remove the basic kw created automatically  when saving the fits file
+                for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:
+                    header_existing.remove(keyw)
+                # we comapre the header (ignoring the date)
+                bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
+                                                               ignore_keywords=['DATE_MAT']).identical
+
+            if not bool_already_existing_matrix:
                 start_time = time.time()
                 phasesFourrier = np.zeros((basis_size, self.dim_overpad_pupil, self.dim_overpad_pupil))
                 if not silence:
-                    print("Start " + Name_FourrierBasis_fits + " (wait a few seconds)")
+                    print("Start " + Name_FourrierBasis_fits + " (wait a few 10s of seconds)")
                 for i in range(basis_size):
                     phasesFourrier[i] = self.voltage_to_phase(basis[i])
                     if i % 10:
                         progress(i, basis_size, status='')
-                fits.writeto(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits'), phasesFourrier)
+                fits.writeto(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits'),
+                             phasesFourrier,
+                             header,
+                             overwrite=True)
                 if not silence:
                     print("")
                     print("Time for " + Name_FourrierBasis_fits + " (s):", round(time.time() - start_time))
+            else:
+                if not silence:
+                    print(Name_FourrierBasis_fits + ".fits file already exists.")
 
         else:
             raise ValueError(basis_type + " is is not a valid basis_type")
