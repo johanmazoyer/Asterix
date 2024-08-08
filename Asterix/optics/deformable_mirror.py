@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 import numpy as np
 from astropy.io import fits
 
@@ -351,11 +352,6 @@ class DeformableMirror(optsy.OpticalSystem):
         silence : boolean, default False.
             Whether to silence print outputs.
         """
-        start_time = time.time()
-        Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
-
-        if self.DMconfig[self.Name_DM + "_Generic"]:
-            Name_WhichInPup_fits += "Gen"
 
         if self.z_position != 0:
 
@@ -382,18 +378,28 @@ class DeformableMirror(optsy.OpticalSystem):
 
         WhichInPupil = np.array(WhichInPupil)
 
+        # Save the WhichInPupil vector in a fits with correct header and name
+        Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
+        if self.DMconfig[self.Name_DM + "_Generic"]:
+            Name_WhichInPup_fits += "Gen"
         Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(self.WhichInPup_threshold)
 
-        fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'), WhichInPupil, overwrite=True)
-
-        if not silence:
-            print("Time for " + Name_WhichInPup_fits + " (s):", round(time.time() - start_time, 3))
+        header = fits.Header()
+        header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
+        for key in self.DMconfig:
+            if self.Name_DM in key:
+                header[key] = self.DMconfig[key]
+        header["MinimumSurfaceRatioInThePupil"] = self.DMconfig["MinimumSurfaceRatioInThePupil"]
+        fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'),
+                     WhichInPupil,
+                     header,
+                     overwrite=True)
 
         return WhichInPupil
 
     def prop_pup_to_DM_and_back(self, entrance_EF, phase_DM, wavelength, dir_save_all_planes=None):
-        """Propagate the field towards an out-of-pupil plane , add the DM
+        """Propagate the fied towards an out-of-pupil plane , add the DM
         phase, and propagate to the next pupil plane.
 
         AUTHOR : Raphaël Galicher, Johan Mazoyer
