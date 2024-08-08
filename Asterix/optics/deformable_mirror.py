@@ -223,8 +223,8 @@ class DeformableMirror(optsy.OpticalSystem):
             if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key) and ('z_position'
                                                                                                       not in key):
                 necessary_dm_param[key] = self.DMconfig[key]
-        necessary_dm_param["prad"] = str(self.prad)
-        necessary_dm_param["dim_overpad_pupil"] = str(int(self.dim_overpad_pupil))
+        necessary_dm_param["prad"] = self.prad
+        necessary_dm_param["dim_overpad_pupil"] = self.dim_overpad_pupil
         header = from_param_to_header(necessary_dm_param, header)
 
         # Loading any existing matrix and comparing their headers to make sure they are created
@@ -419,8 +419,8 @@ class DeformableMirror(optsy.OpticalSystem):
             if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key):
                 necessary_dm_param[key] = self.DMconfig[key]
         necessary_dm_param["MinimumSurfaceRatioInThePupil"] = self.DMconfig["MinimumSurfaceRatioInThePupil"]
-        necessary_dm_param["prad"] = str(self.prad)
-        necessary_dm_param["dim_overpad_pupil"] = str(int(self.dim_overpad_pupil))
+        necessary_dm_param["prad"] = self.prad
+        necessary_dm_param["dim_overpad_pupil"] = self.dim_overpad_pupil
         header = from_param_to_header(necessary_dm_param, header)
 
         fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'),
@@ -588,8 +588,8 @@ class DeformableMirror(optsy.OpticalSystem):
                                                                                                           not in key):
                     header[key] = self.DMconfig[key]
                     necessary_dm_param[key] = self.DMconfig[key]
-            necessary_dm_param["prad"] = str(self.prad)
-            necessary_dm_param["dim_overpad_pupil"] = str(int(self.dim_overpad_pupil))
+            necessary_dm_param["prad"] = self.prad
+            necessary_dm_param["dim_overpad_pupil"] = self.dim_overpad_pupil
             header = from_param_to_header(necessary_dm_param, header)
 
             # Loading any existing matrix and comparing their headers to make sure they are created
