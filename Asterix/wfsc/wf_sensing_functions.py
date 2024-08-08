@@ -270,7 +270,7 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, w
     # using the same set of parameters
     if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
         header_existing = fits.getheader(os.path.join(matrix_dir, filePW + ".fits"))
-        # remove the basis kw created automatically  when saving the fits file
+        # remove the basic kw created automatically  when saving the fits file
         for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:
             header_existing.remove(keyw)
         # we comapre the header (ignoring the date)

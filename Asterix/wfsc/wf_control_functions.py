@@ -654,7 +654,7 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
     # using the same set of parameters
     if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")):
         header_existing = fits.getheader(os.path.join(matrix_dir, fileDirectMatrix + ".fits"))
-        # remove the basis kw created automatically  when saving the fits file
+        # remove the basic kw created automatically  when saving the fits file
         for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2']:
             header_existing.remove(keyw)
         # we comapre the header (ignoring the date)

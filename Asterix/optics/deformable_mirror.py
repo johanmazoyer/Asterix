@@ -2,7 +2,10 @@ import os
 import time
 from datetime import datetime
 import numpy as np
+
+import warnings
 from astropy.io import fits
+from astropy.io.fits.verify import VerifyWarning
 
 from Asterix import model_dir
 
@@ -13,6 +16,8 @@ import Asterix.optics.optical_systems as optsy
 import Asterix.optics.pupil as pupil
 import Asterix.optics.propagation_functions as prop
 import Asterix.optics.phase_amplitude_functions as phase_ampl
+
+warnings.simplefilter('ignore', category=VerifyWarning)
 
 
 class DeformableMirror(optsy.OpticalSystem):
@@ -215,8 +220,26 @@ class DeformableMirror(optsy.OpticalSystem):
         Name_pushact_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad))
 
-        if (not self.misregistration) and (os.path.exists(os.path.join(self.Model_local_dir,
-                                                                       Name_pushact_fits + '.fits'))):
+        header = fits.Header()
+        header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "pushact creation date"))
+        for key in self.DMconfig:
+            if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key) and ('z_position'
+                                                                                                      not in key):
+                header[key] = self.DMconfig[key]
+
+        # Loading any existing matrix and comparing their headers to make sure they are created
+        # using the same set of parameters
+        bool_already_existing_matrix = False
+        if os.path.exists(os.path.join(self.Model_local_dir, Name_pushact_fits + ".fits")):
+            header_existing = fits.getheader(os.path.join(self.Model_local_dir, Name_pushact_fits + ".fits"))
+            # remove the basic kw created automatically  when saving the fits file
+            for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:
+                header_existing.remove(keyw)
+            # we comapre the header (ignoring the date)
+            bool_already_existing_matrix = fits.HeaderDiff(header_existing, header,
+                                                           ignore_keywords=['DATE_MAT']).identical
+
+        if (not self.misregistration) and (bool_already_existing_matrix):
             pushact3d = fits.getdata(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))
             if not silence:
                 print("Load " + Name_pushact_fits)
@@ -332,9 +355,12 @@ class DeformableMirror(optsy.OpticalSystem):
         # we exclude the actuators non active
         pushact3d = pushact3d[self.active_actuators]
 
-        if (not self.misregistration) and (not os.path.exists(
-                os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'))):
-            fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'), pushact3d)
+        if (not self.misregistration) and (not bool_already_existing_matrix):
+
+            fits.writeto(os.path.join(self.Model_local_dir, Name_pushact_fits + '.fits'),
+                         pushact3d,
+                         header,
+                         overwrite=True)
             if not silence:
                 print("Time for " + Name_pushact_fits + " (s):", round(time.time() - start_time))
 
@@ -386,9 +412,9 @@ class DeformableMirror(optsy.OpticalSystem):
             self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(self.WhichInPup_threshold)
 
         header = fits.Header()
-        header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
+        header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "whichinpup creation date"))
         for key in self.DMconfig:
-            if self.Name_DM in key:
+            if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key):
                 header[key] = self.DMconfig[key]
         header["MinimumSurfaceRatioInThePupil"] = self.DMconfig["MinimumSurfaceRatioInThePupil"]
         fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'),
