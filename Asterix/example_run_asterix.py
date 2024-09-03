@@ -4,7 +4,7 @@ from Asterix import main_THD, Asterix_root
 
 # please replace with your own parameter file
 your_directory = Asterix_root
-your_parameter_file_name = 'Example_param_file.ini'
+your_parameter_file_name = 'thd2_setups/Example_param_file_10jul24.ini'
 
 parameter_file_path = os.path.join(your_directory, your_parameter_file_name)
 
