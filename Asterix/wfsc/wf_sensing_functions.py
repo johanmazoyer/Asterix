@@ -173,6 +173,11 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     DM_probe: DeformableMirror = vars(testbed)[testbed.name_DM_to_probe_in_PW]
 
     psi0 = testbed.todetector(wavelength=wavelength, in_contrast=True)
+    # Save true Efield to disk
+    tofits_array = np.zeros((2,) + psi0.shape)
+    tofits_array[0] = np.real(psi0)
+    tofits_array[1] = np.imag(psi0)
+    fits.writeto(os.path.join(matrix_dir, "true_Efield.fits"), tofits_array)
 
     k = 0
 
