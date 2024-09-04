@@ -92,6 +92,7 @@ for pair in actuator_pairs:
                          'Nbiter_corr': [50],
                          'Nbmode_corr': [modesnb]
                      },
-                     NewSIMUconfig={'Name_Experiment': f"HLC_783nm_{pair[0]}-{pair[1]}"})
+                     NewSIMUconfig={'Name_Experiment': f"HLC_783nm_{pair[0]}-{pair[1]}"},
+                     silence=True)
     print('time correction 2DM pw efc', time.time() - start_time)
     print("")
