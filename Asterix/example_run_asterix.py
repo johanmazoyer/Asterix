@@ -89,7 +89,7 @@ for pair in actuator_pairs:
                          'Nbmodes_OnTestbed': modesnb
                      },
                      NewLoopconfig={
-                         'Nbiter_corr': [50],
+                         'Nbiter_corr': [1],
                          'Nbmode_corr': [modesnb]
                      },
                      NewSIMUconfig={'Name_Experiment': f"HLC_783nm_{pair[0]}-{pair[1]}"},
