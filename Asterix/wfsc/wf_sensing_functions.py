@@ -178,7 +178,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     tofits_array = np.zeros((2,) + psi0_binned.shape)
     tofits_array[0] = np.real(psi0_binned)
     tofits_array[1] = np.imag(psi0_binned)
-    fits.writeto(os.path.join(matrix_dir, "true_Efield.fits"), tofits_array)
+    # fits.writeto(os.path.join(matrix_dir, "true_Efield.fits"), tofits_array)
 
     k = 0
 
