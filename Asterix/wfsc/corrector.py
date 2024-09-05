@@ -114,9 +114,9 @@ class Corrector:
                 number_wl_in_matrix = estimator.nb_wav_estim
 
             if testbed.DM1.active & testbed.DM3.active:
-                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"),
-                             self.Gmatrix,
-                             overwrite=True)
+                # fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"),
+                #              self.Gmatrix,
+                #              overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM1.fits"), testbed.DM1.basis, overwrite=True)
                 fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"), testbed.DM3.basis, overwrite=True)
                 number_Active_testbeds = 13
@@ -147,12 +147,12 @@ class Corrector:
                           " in inversion for THD is probably too high for 1DM. " +
                           "This is just a warning, if you kown what your are doing, ignore.")
 
-            thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],
-                                              number_Active_testbeds,
-                                              realtestbed_dir,
-                                              self.regularization,
-                                              number_wl_in_matrix=number_wl_in_matrix,
-                                              silence=silence)
+            # thd_quick_invert.THD_quick_invert(Correctionconfig["Nbmodes_OnTestbed"],
+            #                                   number_Active_testbeds,
+            #                                   realtestbed_dir,
+            #                                   self.regularization,
+            #                                   number_wl_in_matrix=number_wl_in_matrix,
+            #                                   silence=silence)
 
             fits.writeto(os.path.join(realtestbed_dir, "DH_mask.fits"),
                          self.MaskEstim.astype(np.float32),
