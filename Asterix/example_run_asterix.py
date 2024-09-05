@@ -5,6 +5,9 @@ from astropy.io import fits
 import numpy as np
 from Asterix import main_THD, Asterix_root
 
+import matplotlib
+matplotlib.use('Agg')
+
 # please replace with your own parameter file
 your_directory = Asterix_root
 your_parameter_file_name = 'thd2_setups/Example_param_file_10jul24.ini'
