@@ -472,27 +472,27 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     DMstrokes = DM_phases * testbed.wavelength_0 / (2 * np.pi * 1e-9) / 2
 
     indice_acum_number_act = 0
-    plt.figure()
+    #plt.figure()
 
     for j, DM_name in enumerate(testbed.name_of_DMs):
-        fits.writeto(os.path.join(result_dir, f"{DM_name}_phases.fits"), DM_phases[j], header, overwrite=True)
+        #fits.writeto(os.path.join(result_dir, f"{DM_name}_phases.fits"), DM_phases[j], header, overwrite=True)
 
-        fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"), DMstrokes[j], header, overwrite=True)
+        #fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"), DMstrokes[j], header, overwrite=True)
 
         DM: DeformableMirror = vars(testbed)[DM_name]
         voltage_DMs_tosave = voltage_DMs_nparray[:, indice_acum_number_act:indice_acum_number_act + DM.number_act]
         indice_acum_number_act += DM.number_act
 
-        fits.writeto(os.path.join(result_dir, f"{DM_name}_voltages.fits"), voltage_DMs_tosave, header, overwrite=True)
+        #fits.writeto(os.path.join(result_dir, f"{DM_name}_voltages.fits"), voltage_DMs_tosave, header, overwrite=True)
 
-        plt.plot(np.std(DMstrokes[j], axis=(1, 2)), label=DM_name + " RMS")
-        plt.plot(np.max(DMstrokes[j], axis=(1, 2)) - np.min(DMstrokes[j], axis=(1, 2)), label=DM_name + " PV")
+        #plt.plot(np.std(DMstrokes[j], axis=(1, 2)), label=DM_name + " RMS")
+        #plt.plot(np.max(DMstrokes[j], axis=(1, 2)) - np.min(DMstrokes[j], axis=(1, 2)), label=DM_name + " PV")
 
-    plt.xlabel("Number of iterations")
-    plt.ylabel("DM Strokes (nm)")
-    plt.legend()
-    plt.savefig(os.path.join(result_dir, "DM_Strokes" + ".pdf"))
-    plt.close()
+    #plt.xlabel("Number of iterations")
+    #plt.ylabel("DM Strokes (nm)")
+    #plt.legend()
+    #plt.savefig(os.path.join(result_dir, "DM_Strokes" + ".pdf"))
+    #plt.close()
 
     config.filename = os.path.join(result_dir, "Simulation_parameters.ini")
     config.write()
