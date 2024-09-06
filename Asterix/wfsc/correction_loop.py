@@ -497,16 +497,16 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     config.filename = os.path.join(result_dir, "Simulation_parameters.ini")
     config.write()
 
-    plt.figure()
-    plt.plot(meancontrast)
-    plt.yscale("log")
-    plt.xlabel("Number of iterations")
-    plt.ylabel("Mean contrast in Dark Hole")
-    plt.savefig(os.path.join(result_dir, "Mean_Contrast_DH.pdf"))
-    plt.close()
-    plot_contrast_curves(np.asarray(FP_Intensities),
-                         delta_raddii=3,
-                         numberofpix_per_loD=config["modelconfig"]["Science_sampling"],
-                         type_of_contrast='mean',
-                         mask_DH=MaskScience,
-                         path=result_dir)
+    # plt.figure()
+    # plt.plot(meancontrast)
+    # plt.yscale("log")
+    # plt.xlabel("Number of iterations")
+    # plt.ylabel("Mean contrast in Dark Hole")
+    # plt.savefig(os.path.join(result_dir, "Mean_Contrast_DH.pdf"))
+    # plt.close()
+    # plot_contrast_curves(np.asarray(FP_Intensities),
+    #                      delta_raddii=3,
+    #                      numberofpix_per_loD=config["modelconfig"]["Science_sampling"],
+    #                      type_of_contrast='mean',
+    #                      mask_DH=MaskScience,
+    #                      path=result_dir)
