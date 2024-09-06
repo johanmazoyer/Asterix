@@ -274,7 +274,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         list_str = basis_str.split('_')
         list_str.pop(2)
         name_basis_fits = "Basis" + '_'.join(list_str) + ".fits"
-        fits.writeto(os.path.join(matrix_dir, name_basis_fits), DM.basis, overwrite=True)
+        # fits.writeto(os.path.join(matrix_dir, name_basis_fits), DM.basis, overwrite=True)
 
 
         if os.path.exists(os.path.join(matrix_dir, fileDirectMatrix + ".fits")) and (initial_DM_voltage == 0.).all():
