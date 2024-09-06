@@ -1,7 +1,10 @@
 import matplotlib
 from IPython import get_ipython
 if get_ipython() is None:  # this matplotlib option is just in non-notebook case
-    matplotlib.use('TkAgg')
+    try:
+        matplotlib.use('TkAgg')
+    except ImportError:
+        matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
