@@ -185,7 +185,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     # Read the probe files here and put into a list
     probe_arrays = []
     for i in posprobes:
-        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes/rot90', f'probe_{i}.fits'))
+        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes', f'probe_{i}.fits'))
         probe_arrays.append(probe.ravel())
 
     for i, num_p in enumerate(posprobes):
@@ -319,7 +319,7 @@ def simulate_pw_difference(input_wavefront,
     # Read the probe files here and put into a list
     probe_arrays = []
     for i in posprobes:
-        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes/rot90', f'probe_{i}.fits'))
+        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes', f'probe_{i}.fits'))
         probe_arrays.append(probe.ravel())
 
     for count, num_probe in enumerate(posprobes):
