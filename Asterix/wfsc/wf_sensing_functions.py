@@ -182,10 +182,15 @@ def create_singlewl_pw_matrix(testbed: Testbed,
 
     k = 0
 
+    # Read the probe files here and put into a list
+    probe_arrays = []
     for i in posprobes:
+        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes/rot90', f'probe_{i}.fits'))
+        probe_arrays.append(probe.ravel())
 
-        Voltage_probe = np.zeros(DM_probe.number_act)
-        Voltage_probe[i] = amplitude
+    for i, num_p in enumerate(posprobes):
+
+        Voltage_probe = probe_arrays[i] * amplitude
         probephase[k] = DM_probe.voltage_to_phase(Voltage_probe)
 
         # for PW the probes are not sent in the DM but at the entrance of the testbed.
@@ -311,6 +316,12 @@ def simulate_pw_difference(input_wavefront,
 
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
+    # Read the probe files here and put into a list
+    probe_arrays = []
+    for i in posprobes:
+        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes/rot90', f'probe_{i}.fits'))
+        probe_arrays.append(probe.ravel())
+
     for count, num_probe in enumerate(posprobes):
 
         Voltage_probe = np.zeros(testbed.number_act)
@@ -320,8 +331,7 @@ def simulate_pw_difference(input_wavefront,
             DM: DeformableMirror = vars(testbed)[DM_name]
 
             if DM_name == testbed.name_DM_to_probe_in_PW:
-                Voltage_probeDMprobe = np.zeros(DM.number_act)
-                Voltage_probeDMprobe[num_probe] = amplitudePW
+                Voltage_probeDMprobe = probe_arrays[count] * amplitudePW
                 Voltage_probe[indice_acum_number_act:indice_acum_number_act + DM.number_act] = Voltage_probeDMprobe
 
             indice_acum_number_act += DM.number_act
