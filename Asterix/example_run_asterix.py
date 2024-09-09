@@ -5,8 +5,8 @@ from astropy.io import fits
 import numpy as np
 from Asterix import main_THD, Asterix_root
 
-import matplotlib
-matplotlib.use('Agg')
+#import matplotlib
+#matplotlib.use('Agg')
 
 # please replace with your own parameter file
 your_directory = Asterix_root
@@ -16,6 +16,29 @@ parameter_file_path = os.path.join(your_directory, your_parameter_file_name)
 
 modesnb = 400  # 1587
 
+
+### SINGLE  RUN
+start_time = time.time()
+main_THD.runthd2(parameter_file_path,
+                 NewDMconfig={'DM1_active': True},
+                 NewEstimationconfig={'estimation': 'pw'},
+                 NewCorrectionconfig={
+                     'DH_side': "Full",
+                     'correction_algorithm': "efc",
+                     'Nbmodes_OnTestbed': modesnb
+                 },
+                 NewLoopconfig={
+                     'Nbiter_corr': [10],
+                     'Nbmode_corr': [modesnb]
+                 },
+                 NewSIMUconfig={'Name_Experiment': "HLC_783nm_sinc"},
+                 silence=False)
+                 # dir_save_all_planes='/Users/ilaginja/asterix_data/Results/all_planes')
+print('time correction 2DM pw efc', time.time() - start_time)
+print("")
+
+### LOOP RUN
+"""
 # Read actuator list from file
 # dm3_actuators_array = fits.getdata('/Users/ilaginja/asterix_data/Labview/20240903_16-34-07_HLC_fb06a12d/Base_Matrix_DM3.fits')
 # dm3_act_list = np.sum(dm3_actuators_array, axis=0)
@@ -101,7 +124,7 @@ for pair in actuator_pairs:
     print("")
 
 
-all_actuators = np.array([44, 45,  46,  47,  48,  49,  50,  51,  74,  75,  76,  77,  78,
+all_actuators = np.array([77,  78,
                             79,  80,  81,  82,  83,  84,  85, 104, 105, 106, 107, 108, 109,
                            110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 135, 136, 137,
                            138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150,
@@ -153,3 +176,4 @@ all_actuators = np.array([44, 45,  46,  47,  48,  49,  50,  51,  74,  75,  76,  
                            875, 876, 877, 878, 879, 880, 881, 882, 883, 884, 885, 886, 887,
                            888, 905, 906, 907, 908, 909, 910, 911, 912, 913, 914, 915, 916,
                            917, 918, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948])
+"""
