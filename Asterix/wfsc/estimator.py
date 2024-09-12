@@ -203,8 +203,10 @@ class Estimator:
                     vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(self.posprobes)), dtype=np.float32)
 
                     for i in np.arange(len(self.posprobes)):
+                        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes', f'probe_{i}_sinc-freq1-22_sinc-freq2-10_sine-freq5.fits')).ravel()
+
                         # TODO WTH is the hardcoded 17. @Raphael @Axel
-                        probes[i, self.posprobes[i]] = self.amplitudePW / 17
+                        probes[i] = probe * self.amplitudePW / 17
                         vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
                                  self.dimEstim] = self.PWMatrix[k][:, 0, i].flatten()
                         vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
