@@ -77,28 +77,48 @@ active_actuators = np.array([50,  51,  74,  75,  76,  77,  78,
                            917, 918, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948])
 actuator_pairs = itertools.combinations_with_replacement(active_actuators, r=2)
 
-for pair in actuator_pairs:
-    print(f"Actuator pair: {pair}")
-    print(f'{pair[0]},{pair[1]}')
+### SINGLE  RUN
+start_time = time.time()
+main_THD.runthd2(parameter_file_path,
+                 NewDMconfig={'DM1_active': True},
+                 NewEstimationconfig={'estimation': 'pw'},
+                 NewCorrectionconfig={
+                     'DH_side': "Full",
+                     'correction_algorithm': "efc",
+                     'Nbmodes_OnTestbed': modesnb
+                 },
+                 NewLoopconfig={
+                     'Nbiter_corr': [20],
+                     'Nbmode_corr': [modesnb]
+                 },
+                 NewSIMUconfig={'Name_Experiment': "HLC_783nm_518-519"})
+                 # dir_save_all_planes='/Users/ilaginja/asterix_data/Results/all_planes')
+print('time correction 2DM pw efc', time.time() - start_time)
+print("")
 
-    start_time = time.time()
-    main_THD.runthd2(parameter_file_path,
-                     NewDMconfig={'DM1_active': True},
-                     NewEstimationconfig={'estimation': 'pw',
-                                          'posprobes': (pair[0], pair[1])},
-                     NewCorrectionconfig={
-                         'DH_side': "Full",
-                         'correction_algorithm': "efc",
-                         'Nbmodes_OnTestbed': modesnb
-                     },
-                     NewLoopconfig={
-                         'Nbiter_corr': [1],
-                         'Nbmode_corr': [modesnb]
-                     },
-                     NewSIMUconfig={'Name_Experiment': f"HLC_783nm_{pair[0]}-{pair[1]}"},
-                     silence=True)
-    print('time correction 2DM pw efc', time.time() - start_time)
-    print("")
+### LOOP RUN
+# for pair in actuator_pairs:
+#     print(f"Actuator pair: {pair}")
+#     print(f'{pair[0]},{pair[1]}')
+#
+#     start_time = time.time()
+#     main_THD.runthd2(parameter_file_path,
+#                      NewDMconfig={'DM1_active': True},
+#                      NewEstimationconfig={'estimation': 'pw',
+#                                           'posprobes': (pair[0], pair[1])},
+#                      NewCorrectionconfig={
+#                          'DH_side': "Full",
+#                          'correction_algorithm': "efc",
+#                          'Nbmodes_OnTestbed': modesnb
+#                      },
+#                      NewLoopconfig={
+#                          'Nbiter_corr': [1],
+#                          'Nbmode_corr': [modesnb]
+#                      },
+#                      NewSIMUconfig={'Name_Experiment': f"HLC_783nm_{pair[0]}-{pair[1]}"},
+#                      silence=True)
+#     print('time correction 2DM pw efc', time.time() - start_time)
+#     print("")
 
 
 all_actuators = np.array([44, 45,  46,  47,  48,  49,  50,  51,  74,  75,  76,  77,  78,
