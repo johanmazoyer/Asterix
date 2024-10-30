@@ -28,10 +28,10 @@ main_THD.runthd2(parameter_file_path,
                      'Nbmodes_OnTestbed': modesnb
                  },
                  NewLoopconfig={
-                     'Nbiter_corr': [10],
+                     'Nbiter_corr': [50],
                      'Nbmode_corr': [modesnb]
                  },
-                 NewSIMUconfig={'Name_Experiment': "HLC_637nm_sinc"},
+                 NewSIMUconfig={'Name_Experiment': "HLC_637nm_sinc_22-10-5"},
                  silence=False)
                  # dir_save_all_planes='/Users/ilaginja/asterix_data/Results/all_planes')
 print('time correction 2DM pw efc', time.time() - start_time)
