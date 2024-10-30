@@ -28,7 +28,7 @@ main_THD.runthd2(parameter_file_path,
                      'Nbmodes_OnTestbed': modesnb
                  },
                  NewLoopconfig={
-                     'Nbiter_corr': [50],
+                     'Nbiter_corr': [20],
                      'Nbmode_corr': [modesnb]
                  },
                  NewSIMUconfig={'Name_Experiment': "HLC_637nm_sinc_22-10-5"},
