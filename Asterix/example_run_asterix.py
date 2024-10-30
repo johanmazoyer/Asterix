@@ -10,7 +10,7 @@ from Asterix import main_THD, Asterix_root
 
 # please replace with your own parameter file
 your_directory = Asterix_root
-your_parameter_file_name = 'thd2_setups/Example_param_file_10jul24.ini'
+your_parameter_file_name = 'thd2_setups/roman_637nm.ini'
 
 parameter_file_path = os.path.join(your_directory, your_parameter_file_name)
 
@@ -31,7 +31,7 @@ main_THD.runthd2(parameter_file_path,
                      'Nbiter_corr': [10],
                      'Nbmode_corr': [modesnb]
                  },
-                 NewSIMUconfig={'Name_Experiment': "HLC_783nm_sinc"},
+                 NewSIMUconfig={'Name_Experiment': "HLC_637nm_sinc"},
                  silence=False)
                  # dir_save_all_planes='/Users/ilaginja/asterix_data/Results/all_planes')
 print('time correction 2DM pw efc', time.time() - start_time)
