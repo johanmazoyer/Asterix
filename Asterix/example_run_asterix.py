@@ -11,7 +11,7 @@ parameter_file_path = os.path.join(your_directory, your_parameter_file_name)
 start_time = time.time()
 main_THD.runthd2(parameter_file_path,
                  NewDMconfig={'DM1_active': False},
-                 NewEstimationconfig={'estimation': 'pwp'},
+                 NewEstimationconfig={'estimation': 'nlpwp'},
                  NewCorrectionconfig={
                      'DH_side': "Right",
                      'correction_algorithm': "efc",

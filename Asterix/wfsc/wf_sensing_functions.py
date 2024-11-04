@@ -443,7 +443,7 @@ def simulate_pw_probes(input_wavefront,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
         Probed_images[0] = Ik0
 
-    elif pwp_or_btp in ['pw', "pwp", 'pairwise']:
+    elif pwp_or_btp in ['pw', "pwp", 'pairwise', "nlpwp"]:
         Probed_images = np.zeros((2 * number_probes, testbed.dimScience, testbed.dimScience))
     else:
         raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp', 'pairwise' for"
@@ -463,7 +463,7 @@ def simulate_pw_probes(input_wavefront,
                                                   wavelengths=wavelengths,
                                                   **kwargs)
 
-            if pwp_or_btp in ['pw', "pwp", 'pairwise']:
+            if pwp_or_btp in ['pw', "pwp", 'pairwise', "nlpwp"]:
                 Ikmoins = testbed.todetector_intensity(entrance_EF=input_wavefront,
                                                        voltage_vector=voltage_vector - Voltage_probe,
                                                        wavelengths=wavelengths,
@@ -479,7 +479,7 @@ def simulate_pw_probes(input_wavefront,
                 in_contrast=False,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
 
-            if pwp_or_btp in ['pw', "pwp", 'pairwise']:
+            if pwp_or_btp in ['pw', "pwp", 'pairwise', 'nlpwp']:
                 Ikmoins = testbed.todetector_intensity(
                     entrance_EF=input_wavefront,
                     voltage_vector=voltage_vector - Voltage_probe,
@@ -491,7 +491,7 @@ def simulate_pw_probes(input_wavefront,
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
                               "Code it yourself in simulate_pw_probes and be careful with the normalization"))
 
-        if pwp_or_btp in ['pw', "pwp", 'pairwise']:
+        if pwp_or_btp in ['pw', "pwp", 'pairwise', 'nlpwp']:
             Probed_images[2 * count] = Ikplus
             Probed_images[2 * count + 1] = Ikmoins
 
@@ -500,6 +500,62 @@ def simulate_pw_probes(input_wavefront,
 
     return Probed_images
 
+
+def nlpwp_difference(Probed_images, testbed: Testbed, voltage_probes, wavelengths=None):
+    """ make the difference [I(+probe) - I(-probe) - 2RE[C[probe], C[probe**2]]]
+
+    Parameters
+    ----------
+    testbed : Testbed Optical_element
+        Testbed with one or more DM.
+    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
+        Array of voltages vectors for each probes
+    voltage_vector : 1D float array or float, default 0
+        Vector of voltages vectors for each DMs arounf which we do the difference.
+    wavelengths : float, default None
+        Wavelength of the estimation in m.
+
+    Returns
+    --------
+    Difference : 3D array
+        Cube with image difference for each probes. Use for pair-wise probing.
+    """
+
+    Difference = np.zeros((len(voltage_probes), testbed.dimScience, testbed.dimScience))
+
+    for count, voltage_probe in enumerate(voltage_probes):
+
+        # we find the DM used to probe
+        for DM_name in testbed.name_of_DMs:
+            DM: DeformableMirror = vars(testbed)[DM_name]
+            DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
+            if (DMvoltage == 0).all():
+                continue
+            else:
+                probephase = DM.voltage_to_phase(DMvoltage)
+                break
+
+        # If we are in a polychromatic mode but we need monochromatic instensity
+        # we have to be careful with the normalization, because
+        # todetector_intensity is normalizing to polychromatic PSF by default
+        if np.all(wavelengths == testbed.wav_vec):
+            # easy case: we are monochromatic or polychromatic both for images and probes
+            # It's either a monochromatic correction, or a polychromatic correction with
+            # case polychromatic = 'broadband_pwprobes'
+
+            fp_probe = testbed.todetector(entrance_EF=1 + 1j * probephase)
+            fp_probe_carre = testbed.todetector(entrance_EF= probephase**2)
+
+
+        elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
+            # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
+            # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
+            raise Exception("nlpwp not coded yet")
+
+        # kplus - Ikmoins
+        Difference[count] = Probed_images[2 * count] - Probed_images[2 * count + 1] - 2*np.real(fp_probe*np.conjugate(fp_probe_carre))
+
+    return Difference
 
 def btp_difference(Probed_images, testbed: Testbed, voltage_probes, wavelengths=None):
     """ make the difference [I(+probe) - I(0) - psi_k_model] for borde and traub probing.

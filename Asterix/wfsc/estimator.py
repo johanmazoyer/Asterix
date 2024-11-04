@@ -161,7 +161,7 @@ class Estimator:
             if self.polychrom == 'broadband_pwprobes':
                 raise ValueError("Cannot use [Estimationconfig]['polychromatic']='broadband_pwprobes' in perfect mode.")
 
-        elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
+        elif self.technique in ["pairwise", "pw", "pwp", "btp", "nlpwp"]:
             self.is_focal_plane = True
             self.is_complex = True
 
@@ -323,7 +323,7 @@ class Estimator:
                 raise ValueError(self.polychrom +
                                  "is not a valid value for [Estimationconfig]['polychromatic'] parameter.")
 
-        elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
+        elif self.technique in ["pairwise", "pw", "pwp", "btp", "nlpwp"]:
 
             # nb_photons parameter is normally for the whole bandwidth (testbed.Delta_wav). For this
             # case, we reduce it to self.delta_wav_estim_individual bandwidth
@@ -400,7 +400,7 @@ class Estimator:
         if (self.technique == "perfect") or (perfect_estimation):
             return probed_fp_images
 
-        elif self.technique in ["pairwise", "pw", "pwp", "btp"]:
+        elif self.technique in ["pairwise", "pw", "pwp", "btp", "nlpwp"]:
             result_estim = []
 
             if self.polychrom == 'multiwl':
@@ -408,6 +408,8 @@ class Estimator:
                 for i, wavei in enumerate(self.wav_vec_estim):
                     if self.technique in ["btp"]:
                         differences = wfs.btp_difference(probed_fp_images[i], testbed, self.voltage_probes, wavei)
+                    if self.technique in ["nlpwp"]: 
+                        differences = wfs.nlpwp_difference(probed_fp_images[i], testbed, self.voltage_probes, wavei)   
                     else:
                         differences = wfs.pw_difference(probed_fp_images[i])
 
@@ -419,6 +421,8 @@ class Estimator:
 
                     if 'dir_save_all_planes' in kwargs.keys():
                         if kwargs['dir_save_all_planes'] is not None:
+                            name_plane = 'Difference_probes_multiwl' + f'_wl{int(wavei * 1e9)}'
+                            save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, differences)
                             name_plane = 'PW_estimate_multiwl' + f'_wl{int(wavei * 1e9)}'
                             save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
 
@@ -426,6 +430,8 @@ class Estimator:
                 if self.technique in ["btp"]:
                     differences = wfs.btp_difference(probed_fp_images[0], testbed, self.voltage_probes,
                                                      self.wav_vec_estim[0])
+                if self.technique in ["nlpwp"]: 
+                        differences = wfs.nlpwp_difference(probed_fp_images[0], testbed, self.voltage_probes,self.wav_vec_estim[0]) 
                 else:
                     differences = wfs.pw_difference(probed_fp_images[0])
 
@@ -434,6 +440,8 @@ class Estimator:
 
                 if 'dir_save_all_planes' in kwargs.keys():
                     if kwargs['dir_save_all_planes'] is not None:
+                        name_plane = 'Difference_probes_singlewl' + f'_wl{int(self.wav_vec_estim[0] * 1e9)}'
+                        save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, differences)
                         name_plane = 'PW_estimate_singlewl' + f'_wl{int(self.wav_vec_estim[0] * 1e9)}'
                         save_plane_in_fits(kwargs['dir_save_all_planes'], name_plane, result_estim[-1])
 
