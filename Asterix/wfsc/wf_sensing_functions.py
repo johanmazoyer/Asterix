@@ -543,8 +543,11 @@ def nlpwp_difference(Probed_images, testbed: Testbed, voltage_probes, wavelength
             # It's either a monochromatic correction, or a polychromatic correction with
             # case polychromatic = 'broadband_pwprobes'
 
-            fp_probe = testbed.todetector(entrance_EF=1 + 1j * probephase)
-            fp_probe_carre = testbed.todetector(entrance_EF= probephase**2)
+            fp_probe = testbed.todetector(entrance_EF= 1 + 1j * probephase) #1j * probephase avec lyot ?#1 + 1j * probephase avec fqpm
+            fp_probe_carre = testbed.todetector(entrance_EF= 1 + probephase**2) #probephase**2 avec lyot ?# 1+ probephase**2 avec fqpm
+            fp_probe_cube = testbed.todetector(entrance_EF= 1 + 1j*probephase**3)
+            fp_probe_fourth = testbed.todetector(entrance_EF= 1 + probephase**4)
+
 
 
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
@@ -553,8 +556,12 @@ def nlpwp_difference(Probed_images, testbed: Testbed, voltage_probes, wavelength
             raise Exception("nlpwp not coded yet")
 
         # kplus - Ikmoins
-        Difference[count] = Probed_images[2 * count] - Probed_images[2 * count + 1] - 2*np.real(fp_probe*np.conjugate(fp_probe_carre))
-
+        Difference[count] = Probed_images[2 * count] - Probed_images[2 * count + 1] 
+        Difference[count] = Difference[count] + 2*np.real(fp_probe*np.conjugate(fp_probe_carre))
+        Difference[count] = Difference[count] + 1/3*np.real(fp_probe_carre*np.conjugate(fp_probe_cube))
+        #Difference[count] = Difference[count] + 1/6*np.real(fp_probe*np.conjugate(fp_probe_fourth)) #Not working yet
+        #fits.writeto('/Users/apoitier/Documents/Research/Asterix_results/test_nl.fits', 2*np.real(fp_probe*(fp_probe_carre)),overwrite=True)
+        #fits.writeto('/Users/apoitier/Documents/Research/Asterix_results/test_nl.fits', Probed_images[2 * count] - Probed_images[2 * count + 1],overwrite=True)
     return Difference
 
 def btp_difference(Probed_images, testbed: Testbed, voltage_probes, wavelengths=None):
