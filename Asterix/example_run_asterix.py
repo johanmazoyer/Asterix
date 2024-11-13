@@ -5,8 +5,6 @@ from astropy.io import fits
 import numpy as np
 from Asterix import main_THD, Asterix_root
 
-import matplotlib
-matplotlib.use('Agg')
 
 # please replace with your own parameter file
 your_directory = Asterix_root
