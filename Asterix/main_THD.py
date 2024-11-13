@@ -46,10 +46,10 @@ class THD2(Testbed):
 
         # Create all optical elements of the THD
         self.entrance_pupil = Pupil(model_config,
-                               PupType=model_config["filename_instr_pup"],
-                               angle_rotation=model_config["entrance_pup_rotation"],
-                               Model_local_dir=model_local_dir,
-                               silence=silence)
+                                    PupType=model_config["filename_instr_pup"],
+                                    angle_rotation=model_config["entrance_pup_rotation"],
+                                    Model_local_dir=model_local_dir,
+                                    silence=silence)
         self.dm1 = DeformableMirror(model_config, dm_config, Name_DM="DM1", Model_local_dir=model_local_dir, silence=silence)
         self.dm2 = DeformableMirror(model_config, dm_config, Name_DM="DM2", Model_local_dir=model_local_dir, silence=silence)
         self.corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir, silence=silence)
