@@ -45,19 +45,19 @@ class THD2(Testbed):
         # model_config['complex_precision'] = 'complex64'
 
         # Create all optical elements of the THD
-        entrance_pupil = Pupil(model_config,
+        self.entrance_pupil = Pupil(model_config,
                                PupType=model_config["filename_instr_pup"],
                                angle_rotation=model_config["entrance_pup_rotation"],
                                Model_local_dir=model_local_dir,
                                silence=silence)
-        dm1 = DeformableMirror(model_config, dm_config, Name_DM="DM1", Model_local_dir=model_local_dir, silence=silence)
-        dm2 = DeformableMirror(model_config, dm_config, Name_DM="DM2", Model_local_dir=model_local_dir, silence=silence)
-        corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir, silence=silence)
+        self.dm1 = DeformableMirror(model_config, dm_config, Name_DM="DM1", Model_local_dir=model_local_dir, silence=silence)
+        self.dm2 = DeformableMirror(model_config, dm_config, Name_DM="DM2", Model_local_dir=model_local_dir, silence=silence)
+        self.corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir, silence=silence)
 
         self.config_file = config
 
         # Concatenate into the full testbed optical system
-        super().__init__([entrance_pupil, dm1, dm2, corono], ["entrancepupil", "DM1", "DM2", "corono"])
+        super().__init__([self.entrance_pupil, self.dm1, self.dm2, self.corono], ["entrancepupil", "DM1", "DM2", "corono"])
 
 
 def runthd2(parameter_file_path,
