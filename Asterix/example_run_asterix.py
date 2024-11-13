@@ -21,7 +21,8 @@ modesnb = 400  # 1587
 start_time = time.time()
 main_THD.runthd2(parameter_file_path,
                  NewDMconfig={'DM1_active': True},
-                 NewEstimationconfig={'estimation': 'pw'},
+                 NewEstimationconfig={'estimation': 'pw',
+                                      'posprobes': (0, 1, 2)},
                  NewCorrectionconfig={
                      'DH_side': "Full",
                      'correction_algorithm': "efc",
