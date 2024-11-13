@@ -4,7 +4,7 @@ import numpy as np
 
 from astropy.io import fits
 
-from Asterix.utils import resizing, invert_svd, save_plane_in_fits
+from Asterix.utils import resizing, invert_svd, save_plane_in_fits, plot_eigenvalues
 from Asterix.optics import DeformableMirror, Testbed
 
 
@@ -223,6 +223,10 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     fits.writeto(os.path.join(matrix_dir, filePW + ".fits"), np.array(PWMatrix))
     visuPWMap = "EigenPW_" + string_dims_PWMatrix
     fits.writeto(os.path.join(matrix_dir, visuPWMap + ".fits"), np.array(SVD[1]))
+
+    dh_mask = fits.getdata('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/simulation_results/DH_mask_3-9.7lamD_637nm.fits')
+    plot_eigenvalues(np.array(SVD[1]), dh_mask)
+
     if not silence:
         print("Time for PW Matrix (s): ", np.round(time.time() - start_time))
 

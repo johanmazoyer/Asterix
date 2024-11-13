@@ -250,3 +250,14 @@ def contrast_curves(reduced_data, xcen=None, ycen=None, delta_raddii=3, type_of_
     contrast_curve = np.asarray(contrast_curve)
     contrast_curve[np.where(contrast_curve == 0)] = np.nan
     return contrast_curve
+
+
+def plot_eigenvalues(eigenvalues, dh_mask):
+    """Plot the eigenvalues of the interaction matrix in the dark hole."""
+    dh_mask = dh_mask.astype('bool')
+    dh_mask = np.ma.masked_array(dh_mask, mask=~dh_mask)
+
+    plt.figure(figsize=(10, 10))
+    plt.imshow(eigenvalues * dh_mask, origin='lower', cmap='inferno', norm=matplotlib.colors.LogNorm())
+    plt.colorbar()
+    plt.savefig('/Users/ilaginja/eigenvalues_dh.pdf')
