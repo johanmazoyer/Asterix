@@ -258,6 +258,6 @@ def plot_eigenvalues(eigenvalues, dh_mask):
     dh_mask = np.ma.masked_array(dh_mask, mask=~dh_mask)
 
     plt.figure(figsize=(10, 10))
-    plt.imshow(eigenvalues * dh_mask, origin='lower', cmap='inferno', norm=matplotlib.colors.LogNorm())
+    plt.imshow(eigenvalues * dh_mask, origin='lower', cmap='inferno', norm=matplotlib.colors.LogNorm(vmin=1e2, vmax=1e4))
     plt.colorbar()
     plt.savefig('/Users/ilaginja/eigenvalues_dh.pdf')
