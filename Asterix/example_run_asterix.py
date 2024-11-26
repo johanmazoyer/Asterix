@@ -79,7 +79,8 @@ actuator_pairs = itertools.combinations_with_replacement(active_actuators, r=2)
 start_time = time.time()
 main_THD.runthd2(parameter_file_path,
                  NewDMconfig={'DM1_active': True},
-                 NewEstimationconfig={'estimation': 'pw'},
+                 NewEstimationconfig={'estimation': 'pw',
+                                      'posprobes': (518, 519, 551)},
                  NewCorrectionconfig={
                      'DH_side': "Full",
                      'correction_algorithm': "efc",
@@ -89,7 +90,7 @@ main_THD.runthd2(parameter_file_path,
                      'Nbiter_corr': [20],
                      'Nbmode_corr': [modesnb]
                  },
-                 NewSIMUconfig={'Name_Experiment': "HLC_637nm_518-519"})
+                 NewSIMUconfig={'Name_Experiment': f"HLC_637nm_actuators_0-11DH_{modesnb}modes"})
                  # dir_save_all_planes='/Users/ilaginja/asterix_data/Results/all_planes')
 print('time correction 2DM pw efc', time.time() - start_time)
 print("")
