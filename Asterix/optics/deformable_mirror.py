@@ -313,11 +313,8 @@ class DeformableMirror(optsy.OpticalSystem):
         # Fill an array with the influence functions of all actuators
         pushact3d = np.zeros((simu_grid.shape[1], dim_array, dim_array))
 
-        # do the first FT only once
-        ft_actu = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(actshapeinpupil), norm="ortho"))
 
         for i in np.arange(pushact3d.shape[0]):
-
             # Add an error on the orientation of the grid
             if angerror != 0:
                 simu_grid[
@@ -327,10 +324,9 @@ class DeformableMirror(optsy.OpticalSystem):
                     0,
                     i] = simu_grid[1, i] * np.sin(np.radians(angerror)) + simu_grid[0, i] * np.cos(np.radians(angerror))
 
-            Psivector = ft_subpixel_shift(ft_actu,
+            Psivector = ft_subpixel_shift(actshapeinpupil,
                                           xshift=simu_grid[1, i] - xycenttmp + xerror * pitch_actshape,
                                           yshift=simu_grid[0, i] - xycenttmp + yerror * pitch_actshape,
-                                          fourier=True,
                                           norm="ortho")
 
             if gausserror != 0:
@@ -402,33 +398,7 @@ class DeformableMirror(optsy.OpticalSystem):
             if Sum_actu_with_pup[num_actu] > Max_val * self.WhichInPup_threshold:
                 WhichInPupil.append(num_actu)
 
-        WhichInPupil = np.array(WhichInPupil)
-
-        # Save the WhichInPupil vector in a fits with correct header and name
-        Name_WhichInPup_fits = "WhichInPup_" + self.Name_DM
-        if self.DMconfig[self.Name_DM + "_Generic"]:
-            Name_WhichInPup_fits += "Gen"
-        Name_WhichInPup_fits += "_Nact" + str(int(self.number_act)) + '_dimPP' + str(int(
-            self.dim_overpad_pupil)) + '_prad' + str(int(self.prad)) + "_thres" + str(self.WhichInPup_threshold)
-
-        header = fits.Header()
-        header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "whichinpup creation date"))
-
-        necessary_dm_param = dict()
-        for key in self.DMconfig:
-            if (self.Name_DM in key) and ('error' not in key) and ('misregistration' not in key):
-                necessary_dm_param[key] = self.DMconfig[key]
-        necessary_dm_param["MinimumSurfaceRatioInThePupil"] = self.DMconfig["MinimumSurfaceRatioInThePupil"]
-        necessary_dm_param["prad"] = self.prad
-        necessary_dm_param["dim_overpad_pupil"] = self.dim_overpad_pupil
-        header = from_param_to_header(necessary_dm_param, header)
-
-        fits.writeto(os.path.join(self.Model_local_dir, Name_WhichInPup_fits + '.fits'),
-                     WhichInPupil,
-                     header,
-                     overwrite=True)
-
-        return WhichInPupil
+        return np.array(WhichInPupil)
 
     def prop_pup_to_DM_and_back(self, entrance_EF, phase_DM, wavelength, dir_save_all_planes=None):
         """Propagate the fied towards an out-of-pupil plane , add the DM

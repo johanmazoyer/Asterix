@@ -57,7 +57,10 @@ def cropimage(img, ctr_x, ctr_y, newsizeimg):
         Squared image cropped into new dimensions.
     """
     newimgs2 = newsizeimg / 2
-    return img[int(ctr_x - newimgs2):int(ctr_x + newimgs2), int(ctr_y - newimgs2):int(ctr_y + newimgs2), ]
+    return img[
+        int(ctr_x - newimgs2):int(ctr_x + newimgs2),
+        int(ctr_y - newimgs2):int(ctr_y + newimgs2),
+    ]
 
 
 def crop_or_pad_image(image, dimout):
@@ -180,7 +183,7 @@ def resize_crop_bin(image, new_dim, center_on_pixel=False):
     return return_image
 
 
-def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False, norm="backward"):
+def ft_subpixel_shift(image, xshift, yshift, complex_image=False, norm="backward", avoid_wrapping=True):
     """This function returns an image shifted by a non-integer amount via a
     Fourier-domain computation.
 
@@ -194,6 +197,7 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
     05/09/2022 : we invert xshift and yshift to be in agreement with np.roll (integer shift in numpy) Mazoyer
     06/09/2022 : added integer shift if we can Mazoyer
     06/09/2022 : works for non-square array / non even dimensions array Mazoyer
+    29/11/2024 : added avoid_wrapping param Mazoyer
 
     Parameters
     ----------
@@ -203,9 +207,6 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
         Amount of desired shift in X direction.
     yshift : float
         Amount of desired shift in Y direction.
-    fourier : bool (optional, default False)
-        If True, then the input image is assumed to be already Fourier
-        transformed, i.e. the input is FFT^-1(image).
     complex_image : bool (optional, default False)
         If "False", then the output array will be
         assumed to be real. If you want to shift a complex array, use complex_image = True.
@@ -217,6 +218,9 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
         If 'ortho' 1/sqrt(N) normalisation is done in both directions.
         Note that norm = 'ortho' allows you to conserve energy between a focal plane and pupil plane.
         The default is 'backward' to be consistent with numpy.fft.fft2() and numpy.fft.ifft2().
+    avoid_wrapping: bool (optional, default True)
+        If True, the image is padded with zeros to avoid wrapping.
+        If False, the image is not padded with zeros and the shift is done with wrapping.
 
     Returns
     --------
@@ -227,13 +231,15 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
     NP = sz[0]
     NL = sz[1]
 
-    if (not fourier) and float(xshift).is_integer() and float(yshift).is_integer():
-        return np.roll(image, (xshift, yshift), axis=(0, 1))
+    pad_x = NP // 2
+    pad_y = NL // 2
 
-    if fourier:
-        ft_image = image
-    else:
-        ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(image), norm=norm))
+    if avoid_wrapping:
+        image = np.pad(image, ((pad_x, pad_x), (pad_y, pad_y)), mode='constant', constant_values=0)
+        NP = 2 * NP
+        NL = 2 * NL
+
+    ft_image = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(image), norm=norm))
 
     xshift_odd = 0
     if NP % 2 == 1:
@@ -253,6 +259,9 @@ def ft_subpixel_shift(image, xshift, yshift, fourier=False, complex_image=False,
     shift = np.cos(tilt) + 1j * np.sin(tilt)
     # inverse FFT to go back to the initial space
     shifted_image = np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(ft_image * shift), norm=norm))
+
+    if avoid_wrapping:
+        shifted_image = shifted_image[pad_x:pad_x + sz[0], pad_y:pad_y + sz[1]]
 
     # if the initial data is real, we take the real part
     if not complex_image:
