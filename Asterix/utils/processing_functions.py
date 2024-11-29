@@ -206,7 +206,7 @@ def ft_subpixel_shift(image, xshift, yshift, complex_image=False, norm="backward
     xshift : float
         Amount of desired shift in X direction.
     yshift : float
-        Amount of desired shift in Y direction. 
+        Amount of desired shift in Y direction.
     complex_image : bool (optional, default False)
         If "False", then the output array will be
         assumed to be real. If you want to shift a complex array, use complex_image = True.
