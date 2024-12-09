@@ -185,7 +185,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     # Read the probe files here and put into a list
     probe_arrays = []
     for i in posprobes:
-        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes', f'probe_{i}_sinc-freq1-22_sinc-freq2-10_sine-freq5.fits'))
+        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes', f'2024-11-14_12_cgi-like/probe_{i}_sinc-freq1-12_sinc-freq2-24_sine-freq6_cgi-like.fits'))
         probe_arrays.append(probe.ravel())
 
     for i, num_p in enumerate(posprobes):
@@ -323,7 +323,7 @@ def simulate_pw_difference(input_wavefront,
     # Read the probe files here and put into a list
     probe_arrays = []
     for i in posprobes:
-        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes', f'probe_{i}_sinc-freq1-22_sinc-freq2-10_sine-freq5.fits'))
+        probe = fits.getdata(os.path.join('/Users/ilaginja/Documents/LESIA/THD/Roman_probes/sinc_probes', f'2024-11-14_12_cgi-like/probe_{i}_sinc-freq1-12_sinc-freq2-24_sine-freq6_cgi-like.fits'))
         probe_arrays.append(probe.ravel())
 
     for count, num_probe in enumerate(posprobes):
