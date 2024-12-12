@@ -204,7 +204,7 @@ class Estimator:
 
                     for i in np.arange(len(self.posprobes)):
                         # TODO WTH is the hardcoded 17. @Raphael @Axel
-                        probes[i, self.posprobes[i]] = self.amplitudePW / 17
+                        probes[i, self.posprobes[i]] = self.amplitudePW / 30.6
                         vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
                                  self.dimEstim] = self.PWMatrix[k][:, 0, i].flatten()
                         vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
