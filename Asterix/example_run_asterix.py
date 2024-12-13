@@ -19,7 +19,8 @@ start_time = time.time()
 main_THD.runthd2(parameter_file_path,
                  NewDMconfig={'DM1_active': True},
                  NewEstimationconfig={'estimation': 'pw',
-                                      'posprobes': (297, 298, 266)},
+                                      'posprobes': (297, 298, 266),
+                                      'amplitudePW': 24},
                  NewCorrectionconfig={
                      'DH_side': "Full",
                      'correction_algorithm': "efc",
