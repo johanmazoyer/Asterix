@@ -30,7 +30,7 @@ main_THD.runthd2(parameter_file_path,
                      'Nbiter_corr': [50],
                      'Nbmode_corr': [modesnb]
                  },
-                 NewSIMUconfig={'Name_Experiment': f"HLC_783nm_actuators-shifted_0-10DH_{modesnb}modes"})
+                 NewSIMUconfig={'Name_Experiment': f"HLC_783nm_actuators-shifted_{modesnb}modes"})
                  # dir_save_all_planes='/Users/ilaginja/asterix_data/Results/all_planes')
 print('time correction 2DM pw efc', time.time() - start_time)
 print("")
