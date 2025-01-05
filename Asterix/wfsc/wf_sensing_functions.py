@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import time
 import numpy as np
@@ -199,8 +200,9 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         # (coronagraph does not "remove the 1 exactly")
         # **kwarg is here to send dir_save_all_planes
 
+        wf = testbed.EF_from_phase_and_ampl(phase_abb=probephase[k])
         deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=1 + 1j * probephase[k], wavelength=wavelength, in_contrast=True, **kwargs) -
+            testbed.todetector(entrance_EF=wf, wavelength=wavelength, in_contrast=True, **kwargs) -
             psi0, dimEstim)
 
         k = k + 1
@@ -317,7 +319,6 @@ def simulate_pw_difference(input_wavefront,
     Difference : 3D array
         Cube with image difference for each probes. Use for pair-wise probing.
     """
-
     Difference = np.zeros((len(posprobes), dimimages, dimimages))
 
     # Read the probe files here and put into a list
@@ -337,6 +338,8 @@ def simulate_pw_difference(input_wavefront,
             if DM_name == testbed.name_DM_to_probe_in_PW:
                 Voltage_probeDMprobe = probe_arrays[count] * amplitudePW
                 Voltage_probe[indice_acum_number_act:indice_acum_number_act + DM.number_act] = Voltage_probeDMprobe
+                DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(Voltage_probe, DM_name)
+                probephase_nl = DM.voltage_to_phase(DMvoltage)
 
             indice_acum_number_act += DM.number_act
 
@@ -379,5 +382,27 @@ def simulate_pw_difference(input_wavefront,
                               "Code it yourself in simulate_pw_difference and be careful with the normalization"))
 
         Difference[count] = resizing(Ikplus - Ikmoins, dimimages)
+
+        sim_efield = testbed.todetector(entrance_EF=input_wavefront, voltage_vector=voltage_vector, wavelength=wavelengths[0], **kwargs)
+        fp_probe = testbed.todetector(entrance_EF=1 + 1j * probephase_nl)
+        fp_probe_carre = testbed.todetector(entrance_EF=1 + probephase_nl ** 2)
+        fp_probe_cube = testbed.todetector(entrance_EF=1 + 1j * probephase_nl ** 3)
+        fp_probe_fourth = testbed.todetector(entrance_EF=1 + probephase_nl ** 4)
+
+        now = datetime.now()
+        prepend = f'{now:%H-%M-%S-%f}'
+        fpath = '/Users/ilaginja/Documents/LESIA/THD/Roman_probes/non_linear_calcs/terms_in_loop/sharp_sincs_40nm'
+
+        fits.writeto(os.path.join(fpath, f'{prepend}_sim_efield_real_{count}.fits'), np.real(sim_efield), overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_sim_efield_imag_{count}.fits'), np.imag(sim_efield), overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_delta_I_{count}.fits'), Ikplus - Ikmoins, overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_Aterm_real_{count}.fits'), np.real(fp_probe), overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_Aterm_imag_{count}.fits'), np.imag(fp_probe), overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_Bterm_real_{count}.fits'), np.real(fp_probe_carre), overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_Bterm_imag_{count}.fits'), np.imag(fp_probe_carre), overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_Cterm_real_{count}.fits'), np.real(fp_probe_cube), overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_Cterm_imag_{count}.fits'), np.imag(fp_probe_cube), overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_Dterm_real_{count}.fits'), np.real(fp_probe_fourth), overwrite=True)
+        fits.writeto(os.path.join(fpath, f'{prepend}_Dterm_imag_{count}.fits'), np.imag(fp_probe_fourth), overwrite=True)
 
     return Difference
