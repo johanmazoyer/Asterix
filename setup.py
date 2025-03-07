@@ -30,7 +30,7 @@ setup(
     ],
     keywords='Exoplanets imaging high-contrast coronagraphy',
     install_requires=[
-        "astropy",
+        "astropy=>7.0",
         "configobj",
         "ipython",
         "matplotlib",

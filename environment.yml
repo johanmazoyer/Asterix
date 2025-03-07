@@ -1,6 +1,6 @@
 name: asterix
 dependencies:
-  - astropy
+  - astropy=>7.0
   - configobj
   - matplotlib
   - numpy
