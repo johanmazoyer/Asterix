@@ -225,6 +225,7 @@ class DeformableMirror(optsy.OpticalSystem):
                 necessary_dm_param[key] = self.DMconfig[key]
         necessary_dm_param["prad"] = self.prad
         necessary_dm_param["dim_overpad_pupil"] = self.dim_overpad_pupil
+        necessary_dm_param["diam_pup_in_m"] = self.diam_pup_in_m
         header = from_param_to_header(necessary_dm_param, header)
 
         # Loading any existing matrix and comparing their headers to make sure they are created

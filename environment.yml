@@ -1,10 +1,10 @@
 name: asterix
 dependencies:
-  - astropy
+  - astropy>=7.0
   - configobj
   - matplotlib
   - numpy
-  - python=>3.9
+  - python>=3.9
   - scikit-image
   - scipy
   - IPython
