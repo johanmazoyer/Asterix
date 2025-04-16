@@ -322,6 +322,10 @@ def calculate_pw_estimate(Difference,
     for i in range(Difference.shape[0]):
         Difference_resized[i] = resizing(Difference[i], dimimages)
 
+    # Replaces the previous pixel-by-pixel loop: for each pixel, this multiplies the probe response matrix
+    # of shape (2,nb_probes) by the probe difference vector of shape (nb_probes,), yielding the real and imaginary parts
+    # of the electric field (2,). The einsum performs the matrix multiplication in a vectorized way, for all pixels at
+    # once.
     Difference_resized = Difference_resized.reshape((Difference.shape[0], dimimages ** 2))
     Resultat_ = np.einsum('ijk,ik->ij', Vectorprobes, Difference_resized.T)
     Resultat = Resultat_[:, 0] + 1j * Resultat_[:, 1]
