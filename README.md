@@ -1,6 +1,6 @@
 # Asterix
 
-Asterix is a package to simulate high-contrast imaging correction algorithms with various coronagraphs, developed at LESIA / Paris Observatory.
+Asterix is a package to simulate high-contrast imaging correction algorithms with various coronagraphs, developed at LIRA / Paris Observatory.
 
 Please find the latest documentation and installation procedure on our webpage: https://asterix-hci.readthedocs.io/
 
