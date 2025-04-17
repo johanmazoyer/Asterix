@@ -8,7 +8,7 @@ focus on focal plane wavefront sensing and correction algorithms.
 Asterix is publicaly available on `GitHub <https://github.com/johanmazoyer/Asterix>`_ and all contributions are welcome!
 
 The development of Asterix was led by Axel Potier (2017-2020) and Johan Mazoyer (since 2020)
-with major contributions from Iva Laginja, and Raphaël Galicher from LESIA (Paris Observatory).
+with major contributions from Iva Laginja, Yann Gutierrez and Raphaël Galicher from LIRA (Paris Observatory).
 
 .. toctree::
     :maxdepth: 1
