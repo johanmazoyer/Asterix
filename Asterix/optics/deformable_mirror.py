@@ -376,6 +376,9 @@ class DeformableMirror(optsy.OpticalSystem):
             Whether to silence print outputs.
         """
 
+        if self.WhichInPup_threshold <= 0:
+            return np.arange(self.number_act)
+
         if self.z_position != 0:
 
             Pup_inDMplane = crop_or_pad_image(
