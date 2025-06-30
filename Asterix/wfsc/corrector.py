@@ -153,16 +153,21 @@ class Corrector:
                 # thd_control_matrix
                 # careful, only work in monochromatic right now
                 fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
-
                 fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
-                int_matrix = np.flip(np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3))), axis = 1)
+                int_matrix = np.flip(np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3))),
+                                     axis=1)
 
-                int_matrix_transpose_indiv =  np.zeros(int_matrix.shape)
+                int_matrix_transpose_indiv = np.zeros(int_matrix.shape)
 
                 for actu_i in range(1976):
-                    image = np.reshape(int_matrix[actu_i,:80000//2], (200,200)) + 1j*np.reshape(int_matrix[actu_i, 80000//2:], (200,200))
-                    int_matrix_transpose_indiv[actu_i,:80000//2] = np.real(np.transpose(image).flatten())
-                    int_matrix_transpose_indiv[actu_i,80000//2:] = np.imag(np.transpose(image).flatten())
+                    image = np.reshape(
+                        int_matrix[actu_i, :int_matrix.shape[1] // 2],
+                        (dimEstim, dimEstim)) + 1j * np.reshape(int_matrix[actu_i, int_matrix.shape[1] // 2:],
+                                                                (dimEstim, dimEstim))
+                    int_matrix_transpose_indiv[actu_i, :int_matrix.shape[1] // 2] = np.real(
+                        np.transpose(image).flatten())
+                    int_matrix_transpose_indiv[actu_i,
+                                               int_matrix.shape[1] // 2:] = np.imag(np.transpose(image).flatten())
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm1)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix_transpose_indiv, name='BOSTON'))
@@ -183,7 +188,6 @@ class Corrector:
                              headerdm1,
                              overwrite=True)
                 number_Active_testbeds = 1
-
 
             elif testbed.DM3.active:
                 name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix

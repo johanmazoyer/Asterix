@@ -129,7 +129,7 @@ def runthd2(parameter_file_path,
     # Get git commit hash
     commit = get_git_description()
     hardware_dir = os.path.join(data_dir, "Hardware_mat",
-                               create_experiment_dir(append=config["Coronaconfig"]["corona_type"]) + f"_{commit}")
+                                create_experiment_dir(append=config["Coronaconfig"]["corona_type"]) + f"_{commit}")
 
     # Concatenate into the full testbed optical system
     thd2 = THD2(config, model_local_dir, silence=silence)
