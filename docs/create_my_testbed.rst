@@ -247,30 +247,30 @@ It can only be initialized by giving a list of Optical Systems and it will creat
 
     pup_round = Pupil(modelconfig)
 
-    DM34act = DeformableMirror(modelconfig,
+    DM24act = DeformableMirror(modelconfig,
                                DMconfig,
                                Name_DM='DM1',
                                Model_local_dir=Model_local_dir)
 
-    DM32act = DeformableMirror(modelconfig,
+    DM22act = DeformableMirror(modelconfig,
                                DMconfig,
-                               Name_DM='DM3',
+                               Name_DM='DM2',
                                Model_local_dir=Model_local_dir)
 
     corono = Coronagraph(modelconfig, Coronaconfig)
     # and then just concatenate
-    testbed = Testbed([pup_round, DM34act, DM32act, corono],
-                      ["entrancepupil", "DM1", "DM3", "corono"])
+    testbed = Testbed([pup_round, DM24act, DM22act, corono],
+                      ["entrancepupil", "DM1", "DM2", "corono"])
 
 
 
-The whole point of this system is that it can be easily changed. For example, we can add another DM32act DM
+The whole point of this system is that it can be easily changed. For example, we can add another DM22act DM
 just like that:
 
 .. code-block:: python
 
-    testbed = Testbed([pup_round, DM34act, DM32act, DM32act, corono],
-                      ["entrancepupil", "DM1", "DM3", "DM4", "corono"])
+    testbed = Testbed([pup_round, DM24act, DM22act, DM22act, corono],
+                      ["entrancepupil", "DM1", "DM2", "DM4", "corono"])
 
 
 or a specific pupil in the entrance plane of the coronagraph (e.g. like the Roman configuration).
@@ -278,7 +278,7 @@ or a specific pupil in the entrance plane of the coronagraph (e.g. like the Roma
 .. code-block:: python
 
     pup_roman = Pupil(modelconfig, PupType = "RomanPup")
-    testbed = Testbed([pup_round, DM34act, DM32act,pup_roman, corono],
-                      ["entrancepupil", "DM1", "DM3", "romanpupil" , "corono"])
+    testbed = Testbed([pup_round, DM24act, DM22act,pup_roman, corono],
+                      ["entrancepupil", "DM1", "DM2", "romanpupil" , "corono"])
     
 Additional details can be found directly in :ref:`the code documentation <testbed-label>`.

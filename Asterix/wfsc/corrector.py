@@ -127,14 +127,14 @@ class Corrector:
 
             number_wl_in_matrix = len(wav_vec_estim)
 
-            if testbed.DM1.active & testbed.DM3.active:
+            if testbed.DM1.active & testbed.DM2.active:
 
                 name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
-                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
+                name_int_matrixDM2 = testbed.DM2.fnameDirectMatrix
 
                 headerdm1 = fits.getheader(name_int_matrixDM1)
-                headerdm3 = fits.getheader(name_int_matrixDM3)
-                headerdm1['DM_NAME'] = 'DM1+DM3'
+                headerdm2 = fits.getheader(name_int_matrixDM2)
+                headerdm1['DM_NAME'] = 'DM1+DM2'
 
                 fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_2DM_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
@@ -144,17 +144,17 @@ class Corrector:
                              testbed.DM1.basis,
                              headerdm1,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
-                             testbed.DM3.basis,
-                             headerdm3,
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM2.fits"),
+                             testbed.DM2.basis,
+                             headerdm2,
                              overwrite=True)
                 number_Active_testbeds = 13
 
                 # thd_control_matrix
                 # careful, only work in monochromatic right now
                 fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
-                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
-                int_matrix = np.flip(np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3))),
+                fullmatrix_dm2 = fits.getdata(name_int_matrixDM2)
+                int_matrix = np.flip(np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm2))),
                                      axis=1)
 
                 int_matrix_transpose_indiv = np.zeros(int_matrix.shape)
@@ -172,7 +172,7 @@ class Corrector:
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm1)])
                 hdu_list.append(fits.ImageHDU(data=int_matrix_transpose_indiv, name='BOSTON'))
                 # hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
-                # hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
+                # hdu_list.append(fits.ImageHDU(data=testbed.DM2.basis, name='BASISDM2'))
 
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
@@ -189,28 +189,28 @@ class Corrector:
                              overwrite=True)
                 number_Active_testbeds = 1
 
-            elif testbed.DM3.active:
-                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
-                headerdm3 = fits.getheader(name_int_matrixDM3)
-                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM3only_{number_wl_in_matrix}wl.fits"),
+            elif testbed.DM2.active:
+                name_int_matrixDM2 = testbed.DM2.fnameDirectMatrix
+                headerdm2 = fits.getheader(name_int_matrixDM2)
+                fits.writeto(os.path.join(realtestbed_dir, f"Direct_Matrix_DM2only_{number_wl_in_matrix}wl.fits"),
                              self.Gmatrix,
-                             headerdm3,
+                             headerdm2,
                              overwrite=True)
-                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM3.fits"),
-                             testbed.DM3.basis,
-                             headerdm3,
+                fits.writeto(os.path.join(realtestbed_dir, "Base_Matrix_DM2.fits"),
+                             testbed.DM2.basis,
+                             headerdm2,
                              overwrite=True)
                 number_Active_testbeds = 3
 
             else:
                 raise ValueError("No active DMs")
 
-            if testbed.DM1.active & testbed.DM3.active:
+            if testbed.DM1.active & testbed.DM2.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] < 500:
                     print(f"WARNING Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
                           " in inversion for THD is probably too low for 2DM. " +
                           "This is just a warning, if you kown what your are doing, ignore.")
-            if not testbed.DM1.active & testbed.DM3.active:
+            if not testbed.DM1.active & testbed.DM2.active:
                 if Correctionconfig["Nbmodes_OnTestbed"] > 500:
                     print(f"WARNING Nbmodes_OnTestbed ({Correctionconfig['Nbmodes_OnTestbed']})" +
                           " in inversion for THD is probably too high for 1DM. " +

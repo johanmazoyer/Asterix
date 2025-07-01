@@ -196,7 +196,7 @@ class Estimator:
                     wl_in_pw_matrix = self.wav_vec_estim
 
                 for k, wave_k in enumerate(wl_in_pw_matrix):
-                    probes = np.zeros((len(posprobes), testbed.DM3.number_act), dtype=np.float32)
+                    probes = np.zeros((len(posprobes), vars(testbed)[name_DM_to_probe_in_PW]), dtype=np.float32)
                     vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(posprobes)), dtype=np.float32)
 
                     for i in np.arange(len(posprobes)):
