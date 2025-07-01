@@ -128,8 +128,8 @@ def runthd2(parameter_file_path,
 
     # Get git commit hash
     commit = get_git_description()
-    labview_dir = os.path.join(data_dir, "Labview",
-                               create_experiment_dir(append=config["Coronaconfig"]["corona_type"]) + f"_{commit}")
+    hardware_dir = os.path.join(data_dir, "Hardware_mat",
+                                create_experiment_dir(append=config["Coronaconfig"]["corona_type"]) + f"_{commit}")
 
     # Concatenate into the full testbed optical system
     thd2 = THD2(config, model_local_dir, silence=silence)
@@ -139,7 +139,7 @@ def runthd2(parameter_file_path,
                           thd2,
                           matrix_dir=matrix_dir,
                           save_for_bench=onbench,
-                          realtestbed_dir=labview_dir,
+                          realtestbed_dir=hardware_dir,
                           silence=silence)
 
     # Initialize the DH masks
@@ -164,13 +164,13 @@ def runthd2(parameter_file_path,
                           wav_vec_estim=estimator.wav_vec_estim,
                           matrix_dir=matrix_dir,
                           save_for_bench=onbench,
-                          realtestbed_dir=labview_dir,
+                          realtestbed_dir=hardware_dir,
                           silence=silence)
 
     ### Write configfile to Labview-style matrix directory
     if onbench:
-        os.makedirs(labview_dir, exist_ok=True)
-        config.filename = os.path.join(labview_dir, "Simulation_parameters.ini")
+        os.makedirs(hardware_dir, exist_ok=True)
+        config.filename = os.path.join(hardware_dir, "Simulation_parameters.ini")
         config.write()
 
     ### Set initial phase and amplitude

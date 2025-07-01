@@ -153,14 +153,26 @@ class Corrector:
                 # thd_control_matrix
                 # careful, only work in monochromatic right now
                 fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
-
                 fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
-                int_matrix = np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3)))
+                int_matrix = np.flip(np.concatenate((np.transpose(fullmatrix_dm1), np.transpose(fullmatrix_dm3))),
+                                     axis=1)
+
+                int_matrix_transpose_indiv = np.zeros(int_matrix.shape)
+
+                for actu_i in range(1976):
+                    image = np.reshape(
+                        int_matrix[actu_i, :int_matrix.shape[1] // 2],
+                        (dimEstim, dimEstim)) + 1j * np.reshape(int_matrix[actu_i, int_matrix.shape[1] // 2:],
+                                                                (dimEstim, dimEstim))
+                    int_matrix_transpose_indiv[actu_i, :int_matrix.shape[1] // 2] = np.real(
+                        np.transpose(image).flatten())
+                    int_matrix_transpose_indiv[actu_i,
+                                               int_matrix.shape[1] // 2:] = np.imag(np.transpose(image).flatten())
 
                 hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm1)])
-                hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
-                hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
-                hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
+                hdu_list.append(fits.ImageHDU(data=int_matrix_transpose_indiv, name='BOSTON'))
+                # hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
+                # hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
 
                 hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
@@ -177,19 +189,6 @@ class Corrector:
                              overwrite=True)
                 number_Active_testbeds = 1
 
-                # thd_control_matrix
-                # careful, only work in monochromatic right now
-                name_int_matrixDM1 = testbed.DM1.fnameDirectMatrix
-
-                fullmatrix_dm1 = fits.getdata(name_int_matrixDM1)
-
-                int_matrix = np.transpose(fullmatrix_dm1)
-
-                hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm1)])
-                hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
-                hdu_list.append(fits.ImageHDU(data=testbed.DM1.basis, name='BASISDM1'))
-                hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
-
             elif testbed.DM3.active:
                 name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
                 headerdm3 = fits.getheader(name_int_matrixDM3)
@@ -202,19 +201,6 @@ class Corrector:
                              headerdm3,
                              overwrite=True)
                 number_Active_testbeds = 3
-
-                # hd_control_matrix
-                # careful, only work in monochromatic right now
-                name_int_matrixDM3 = testbed.DM3.fnameDirectMatrix
-
-                fullmatrix_dm3 = fits.getdata(name_int_matrixDM3)
-
-                int_matrix = np.transpose(fullmatrix_dm3)
-
-                hdu_list = fits.HDUList([fits.PrimaryHDU(header=headerdm3)])
-                hdu_list.append(fits.ImageHDU(data=int_matrix, name='BOSTON'))
-                hdu_list.append(fits.ImageHDU(data=testbed.DM3.basis, name='BASISDM3'))
-                hdu_list.writeto(os.path.join(realtestbed_dir, "thd-control-jacobians.fits"))
 
             else:
                 raise ValueError("No active DMs")
