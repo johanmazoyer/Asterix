@@ -159,7 +159,7 @@ class Corrector:
 
                 int_matrix_transpose_indiv = np.zeros(int_matrix.shape)
 
-                for actu_i in range(1976):
+                for actu_i in range(int_matrix.shape[0]):
                     image = np.reshape(
                         int_matrix[actu_i, :int_matrix.shape[1] // 2],
                         (dimEstim, dimEstim)) + 1j * np.reshape(int_matrix[actu_i, int_matrix.shape[1] // 2:],
