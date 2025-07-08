@@ -16,7 +16,7 @@ parameter_file_path = os.path.join(your_directory, your_parameter_file_name)
 
 modesnb = 300  # 1587
 
-amp = 40
+amp = 14
 
 ### SINGLE  RUN
 start_time = time.time()
