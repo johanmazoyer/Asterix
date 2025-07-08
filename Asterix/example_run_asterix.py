@@ -14,13 +14,15 @@ parameter_file_path = os.path.join(your_directory, your_parameter_file_name)
 
 modesnb = 300  # 1587
 
+amp = 24
+
 ### SINGLE  RUN
 start_time = time.time()
 main_THD.runthd2(parameter_file_path,
                  NewDMconfig={'DM1_active': True},
                  NewEstimationconfig={'estimation': 'pw',
                                       'posprobes': (297, 298, 266),
-                                      'amplitudePW': 24},
+                                      'amplitudePW': amp},
                  NewCorrectionconfig={
                      'DH_side': "Full",
                      'correction_algorithm': "efc",
@@ -30,7 +32,7 @@ main_THD.runthd2(parameter_file_path,
                      'Nbiter_corr': [50],
                      'Nbmode_corr': [modesnb]
                  },
-                 NewSIMUconfig={'Name_Experiment': f"HLC_783nm_actuators-shifted_{modesnb}modes"})
+                 NewSIMUconfig={'Name_Experiment': f"HLC_783nm_actuators-shifted_{modesnb}modes_{amp}"})
                  # dir_save_all_planes='/Users/ilaginja/asterix_data/Results/all_planes')
 print('time correction 2DM pw efc', time.time() - start_time)
 print("")
