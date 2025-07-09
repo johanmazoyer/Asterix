@@ -383,7 +383,7 @@ def simulate_pw_difference(input_wavefront,
 
         Difference[count] = resizing(Ikplus - Ikmoins, dimimages)
 
-        sim_efield = testbed.todetector(entrance_EF=input_wavefront, voltage_vector=voltage_vector, wavelength=wavelengths[0], **kwargs)
+        sim_efield = testbed.todetector(entrance_EF=input_wavefront, voltage_vector=voltage_vector, wavelength=wavelengths, **kwargs)
         fp_probe = testbed.todetector(entrance_EF=1 + 1j * probephase_nl)
         fp_probe_carre = testbed.todetector(entrance_EF=1 + probephase_nl ** 2)
         fp_probe_cube = testbed.todetector(entrance_EF=1 + 1j * probephase_nl ** 3)
