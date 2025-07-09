@@ -22,7 +22,7 @@ class DeformableMirror(optsy.OpticalSystem):
     AUTHOR : Johan Mazoyer
     """
 
-    def __init__(self, modelconfig, DMconfig, Name_DM='DM3', Model_local_dir=None, silence=False):
+    def __init__(self, modelconfig, DMconfig, Name_DM='DM2', Model_local_dir=None, silence=False):
         """Initialize a deformable mirror object.
 
         AUTHOR : Johan Mazoyer
@@ -611,7 +611,7 @@ def generic_actuator_position(Nact1D, pitchDM, diam_pup_in_m, diam_pup_in_pix):
 
     We need N_act1D > diam_pup_in_m / DM_pitch, so that the DM is larger than the pupil.
 
-    at the end compare to the result of actuator_position in case of DM3, it
+    at the end compare to the result of actuator_position in case of DM2, it
     should be relatively close. If we can, we should try that actu 0 is
     relatively at the same pos. Test with huge DM pitch (2 actus in the pup)
 
