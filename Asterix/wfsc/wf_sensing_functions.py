@@ -321,7 +321,7 @@ def simulate_pw_difference(input_wavefront,
     dm3_voltage = fits.getdata(
         '/Users/ilaginja/asterix_data/Results/20241210_19-18-19_HLC_783nm_classic_sinc_300modes_no_aberration/DM3_voltages.fits')[-1]
 
-    dh_voltages = np.concatenate([dm1_voltage, dm3_voltage])
+    dh_voltages = 0  #np.concatenate([dm1_voltage, dm3_voltage])
 
     for count, num_probe in enumerate(posprobes):
 
@@ -354,8 +354,7 @@ def simulate_pw_difference(input_wavefront,
                                                   voltage_vector=voltage_vector + Voltage_probe + dh_voltages,
                                                   wavelengths=wavelengths,
                                                   **kwargs)
-            fits.writeto(f'/Users/ilaginja/Documents/LESIA/THD/Roman_probes/probe_modulation/probe_{num_probe}.fits',
-                     Ikplus)
+            # fits.writeto(f'/Users/ilaginja/Documents/LESIA/THD/Roman_probes/probe_modulation/probe_{num_probe}.fits', Ikplus)
         elif isinstance(wavelengths, (float, int)) and wavelengths in testbed.wav_vec:
             # hard case : we are monochromatic for the probes, but polychromatic for the rest of images
             # case polychromatic = 'singlewl' or polychromatic = 'multiwl'
@@ -372,7 +371,7 @@ def simulate_pw_difference(input_wavefront,
                 wavelengths=wavelengths,
                 in_contrast=False,
                 **kwargs) / testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelengths)]
-            fits.writeto(f'/Users/ilaginja/Documents/LESIA/THD/Roman_probes/probe_modulation/probe_{num_probe}.fits', Ikplus)
+            # fits.writeto(f'/Users/ilaginja/Documents/LESIA/THD/Roman_probes/probe_modulation/probe_{num_probe}.fits', Ikplus)
         else:
             raise ValueError(("You are trying to do a pw_difference with wavelength parameters I don't understand. "
                               "Code it yourself in simulate_pw_difference and be careful with the normalization"))
