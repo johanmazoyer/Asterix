@@ -393,16 +393,16 @@ def simulate_pw_difference(input_wavefront,
         prepend = f'{now:%H-%M-%S-%f}'
         fpath = '/Users/ilaginja/Documents/LESIA/THD/Roman_probes/non_linear_calcs/terms_in_loop/sharp_sincs_40nm'
 
-        fits.writeto(os.path.join(fpath, f'{prepend}_sim_efield_real_{count}.fits'), np.real(sim_efield), overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_sim_efield_imag_{count}.fits'), np.imag(sim_efield), overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_delta_I_{count}.fits'), Ikplus - Ikmoins, overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_Aterm_real_{count}.fits'), np.real(fp_probe), overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_Aterm_imag_{count}.fits'), np.imag(fp_probe), overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_Bterm_real_{count}.fits'), np.real(fp_probe_carre), overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_Bterm_imag_{count}.fits'), np.imag(fp_probe_carre), overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_Cterm_real_{count}.fits'), np.real(fp_probe_cube), overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_Cterm_imag_{count}.fits'), np.imag(fp_probe_cube), overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_Dterm_real_{count}.fits'), np.real(fp_probe_fourth), overwrite=True)
-        fits.writeto(os.path.join(fpath, f'{prepend}_Dterm_imag_{count}.fits'), np.imag(fp_probe_fourth), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_sim_efield_real_{count}.fits'), np.real(sim_efield), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_sim_efield_imag_{count}.fits'), np.imag(sim_efield), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_delta_I_{count}.fits'), Ikplus - Ikmoins, overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_Aterm_real_{count}.fits'), np.real(fp_probe), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_Aterm_imag_{count}.fits'), np.imag(fp_probe), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_Bterm_real_{count}.fits'), np.real(fp_probe_carre), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_Bterm_imag_{count}.fits'), np.imag(fp_probe_carre), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_Cterm_real_{count}.fits'), np.real(fp_probe_cube), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_Cterm_imag_{count}.fits'), np.imag(fp_probe_cube), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_Dterm_real_{count}.fits'), np.real(fp_probe_fourth), overwrite=True)
+        # fits.writeto(os.path.join(fpath, f'{prepend}_Dterm_imag_{count}.fits'), np.imag(fp_probe_fourth), overwrite=True)
 
     return Difference
