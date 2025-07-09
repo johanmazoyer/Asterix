@@ -13,7 +13,7 @@ Perform all the tests in the table below and make sure the results are satisfact
 tests you ran successfully.
 -->
 
-|              | FDH, 2-DM control<br>600 modes | FDH, DM3 control<br>300 modes | HDH, DM3 control<br>300 modes |
+|              | FDH, 2-DM control<br>600 modes | FDH, DM2 control<br>300 modes | HDH, DM2 control<br>300 modes |
 |--------------|--------------------------------|-------------------------------|-------------------------------|
 | **FQPM** sim |                                |                               |                               |
 | **FQPM** hw  |                                |                               |                               |
@@ -24,7 +24,7 @@ FQPM ... four-quadrant phase-mask coronagraph
 WV ... wrapped vortex coronagraph  
 hw ... hardware -> on the THD2 testbed  
 sim ... simulations  
-DM3 ... the in-pupil DM
+DM2 ... the in-pupil DM
 
 ✅ ... tested
 🟡 ... untested
@@ -49,9 +49,9 @@ Please fill in the matrix file names you used for the tests above and save them 
 
 FDH, 2-DM control: `20XX_please-fill-in`
 
-FDH, DM3 control: `20XX_please-fill-in`
+FDH, DM2 control: `20XX_please-fill-in`
 
-HDH, DM3 control: `20XX_please-fill-in`
+HDH, DM2 control: `20XX_please-fill-in`
 
 ## Preparation on hardware
 
@@ -63,10 +63,10 @@ HDH, DM3 control: `20XX_please-fill-in`
 
 Empty cells mean repeating values.
 
-|                                | FDH, 2-DM control<br>600 modes | FDH, DM3 control<br>300 modes | HDH, DM3 control<br>300 modes |
+|                                | FDH, 2-DM control<br>600 modes | FDH, DM2 control<br>300 modes | HDH, DM2 control<br>300 modes |
 |--------------------------------|--------------------------------|-------------------------------|-------------------------------|
 | Exposure time science camera   |                                |                               |                               |
-| Gain DM3 (in-pupil DM)         |                                |                               |                               |
+| Gain DM2 (in-pupil DM)         |                                |                               |                               |
 | Gain DM1 (out-of-pupil DM)     |                                |                               |                               |
 | Normalization data             |                                |                               |                               |
 | Flux                           |                                |                               |                               |

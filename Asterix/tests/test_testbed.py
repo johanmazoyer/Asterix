@@ -24,7 +24,7 @@ def test_def_thd():
     model_config = config["modelconfig"]
     dm_config = config["DMconfig"]
     corona_config = config["Coronaconfig"]
-    dm_config['DM3_active'] = True
+    dm_config['DM2_active'] = True
 
     # wrapped vortex coronagraph
     corona_config["corona_type"] = 'wrapped_vortex'
@@ -35,11 +35,11 @@ def test_def_thd():
                            angle_rotation=model_config["entrance_pup_rotation"],
                            Model_local_dir=model_local_dir,
                            silence=silence)
-    dm3 = DeformableMirror(model_config, dm_config, Name_DM="DM3", Model_local_dir=model_local_dir, silence=silence)
+    dm2 = DeformableMirror(model_config, dm_config, Name_DM="DM2", Model_local_dir=model_local_dir, silence=silence)
     corono = Coronagraph(model_config, corona_config, Model_local_dir=model_local_dir, silence=silence)
 
     # Concatenate into the full testbed optical system
-    optical_bench = Bench([entrance_pupil, dm3, corono], ["entrancepupil", "DM3", "corono"], silence=silence)
+    optical_bench = Bench([entrance_pupil, dm2, corono], ["entrancepupil", "DM2", "corono"], silence=silence)
 
     testbed_psf = optical_bench.todetector_intensity()
     assert np.max(testbed_psf) < 5e-9, "PSF after wrapped vortex without aberrration should be better than 5e-9"
