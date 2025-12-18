@@ -213,23 +213,16 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, w
     bool_already_existing_matrix :bool
         If there is no identical matrix already saved in fits file.
     """
-    posprobes = []
-
+    
     # we identify the position and amplitude of the probes
+    
+    probe_type = testbed.config_file["Estimationconfig"]["probes_shape"]
+    posprobes = testbed.config_file["Estimationconfig"]["posprobes"]
+    name_DM_to_probe_in_PW = testbed.config_file["Estimationconfig"]["name_DM_to_probe_in_PW"]
+    amplitudePW = testbed.config_file["Estimationconfig"]["amplitudePW"]
 
-    for voltage_probe in voltage_probes:
-        # we find the DM used to probe
-        for DM_name in testbed.name_of_DMs:
-            DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
-            if (DMvoltage == 0).all():
-                continue
-            else:
-                name_DM_to_probe_in_PW = DM_name
-                amplitude = np.max(DMvoltage)
-                posprobes.append(np.where(DMvoltage > 0)[0][0])
-
-    string_dims_PWMatrix = name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
-        int(amplitude)) + "_cut" + str(int(
+    string_dims_PWMatrix = name_DM_to_probe_in_PW + "Prob_" + probe_type + "_" + "_".join(map(str, posprobes)) + "_PWampl" + str(
+        int(amplitudePW)) + "_cut" + str(int(
             cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + "_resFP" + str(
                 round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
                     int(wavelength * 1e9))
@@ -246,7 +239,7 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, w
         necessary_estim_param['name_DM_to_probe_in_PW'] = name_DM_to_probe_in_PW
         necessary_estim_param['dimEstim'] = dimEstim
         necessary_estim_param['Estim_bin_factor'] = testbed.config_file["Estimationconfig"]["Estim_bin_factor"]
-        necessary_estim_param['amplitudePW'] = amplitude
+        necessary_estim_param['amplitudePW'] = amplitudePW
         necessary_estim_param['posprobes'] = posprobes
         necessary_estim_param['cutsvd'] = cutsvd
 
