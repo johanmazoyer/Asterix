@@ -349,39 +349,8 @@ def calculate_pw_estimate(Difference,
         raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp' for Pair Wise Probing "
                          "or 'btp' for Borde Traub Probing")
 
-
-def generate_actu_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to_probe_in_PW):
-    """Generate the DM commands for each actuator probes.
-
-    Parameters
-    ----------
-    testbed : Testbed Optical_element
-        Testbed with one or more DM.
-    posprobes : 1D-array
-        list of index of the number actuators probes.
-    amplitudePW : float
-        PWP probes amplitude in nm.
-
-    Returns
-    --------
-    voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
-        Array of voltages vectors for each probes
-    """
-
-    voltage_probes = np.zeros((len(posprobes), testbed.number_act))
-    DM_probe: DeformableMirror = vars(testbed)[name_DM_to_probe_in_PW]
-
-    for count, num_probe in enumerate(posprobes):
-        Voltage_probe_indiv_DM = np.zeros(DM_probe.number_act)
-        Voltage_probe_indiv_DM[num_probe] = amplitudePW
-
-        voltage_probes[count] = testbed.indiv_DM_voltage_to_testbed_voltage(Voltage_probe_indiv_DM,
-                                                                            name_DM_to_probe_in_PW)
-
-    return voltage_probes
-
-def generate_sinc_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to_probe_in_PW):
-    """Generate the DM commands for each actuator probes.
+def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to_probe_in_PW):
+    """Generate the DM commands for each probes.
 
     Parameters
     ----------
@@ -397,67 +366,77 @@ def generate_sinc_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_
     voltage_probes : 2D float array of size [len(posprobes), testbed.number_actuators]
         Array of voltages vectors for each probes
     """
-    # Rough cut and paste of Iva's code
-    #########################################################################
-    act = 1 / 32
+        
+    #Checking which type of probes is used
+    probe_type = testbed.config_file["Estimationconfig"]["probes_shape"]
+    match probe_type:
+        case "actu":
+            DM_probe: DeformableMirror = vars(testbed)[name_DM_to_probe_in_PW]
 
-    shift_x_A = 7 * act
-    shift_y_A = -5 * act
+            probes_flatten = np.zeros((len(posprobes), DM_probe.number_act))
+            probes_flatten[np.arange(len(posprobes)), posprobes] = amplitudePW
 
-    shift_x_B = 7 * act
-    shift_y_B = -5 * act
+        case "gaussian":  
+            Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW+"_Nact1D"]
+            sigma_probe = float(testbed.config_file["Estimationconfig"]["sigma_probe"])
+            # Euclidian distance to 0,0
+            y, x = np.ogrid[:Nact_across, :Nact_across]
+            cy, cx = Nact_across // 2, Nact_across // 2
+            dist0 = np.sqrt((x - cx)**2 + (y - cy)**2)
+            
+            # Gaussian calculation
+            gaussian0 = np.exp(-(dist0**2) / (2 * sigma_probe**2)) * amplitudePW
 
-    shift_x_C = 7 * act
-    shift_y_C = -5 * act
+            probes_flatten = []
+            for count, num_probe in enumerate(posprobes):
+                ypos, xpos = np.unravel_index(num_probe, dist0.shape)
+                # shifting of to a given position
+                shifted_gaussian = np.roll(gaussian0, shift=(ypos-cy, xpos-cx), axis=(0, 1))
+                probes_flatten.append(shifted_gaussian.flatten())
 
-    acts_across = 32
-    sinc_freq1 = 12   # cycles per DM --> OWA-IWA
-    sinc_freq2 = 24   #  cycles per DM --> left-right in DH space and independent of sine --> ideally 2 * OWA + margin, but our DMs cannot do that   
-    sine_freq = 6     # cycles per DM --> (OWA + IWA) / 2
-    thetas = [2 * np.pi, 4 * np.pi / 3, 2 * np.pi / 3]
-    amp_ptv = 1   # nm
+        case "sinc":
+            Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW+"_Nact1D"]
+            
+            # defining the position of the actuators from the number in vector position.
+            shape2d = (Nact_across, Nact_across)
+            ypos0, xpos0 = np.array(np.unravel_index(posprobes[0], shape2d)) / Nact_across - 0.5
+            vect1d = np.arange(Nact_across) / Nact_across - 0.5
+            xpos = vect1d - xpos0
+            ypos = vect1d - ypos0
 
-    xvals_sinc_A = (np.arange(acts_across) / acts_across - 0.5 - shift_x_A) * sinc_freq1
-    yvals_sinc_A = (np.arange(acts_across) / acts_across - 0.5 - shift_y_A) * sinc_freq2
-    xx_A, yy_A = np.meshgrid(xvals_sinc_A, yvals_sinc_A)
+            sinc_freq1 = 6   # cycles per DM --> OWA-IWA
+            sinc_freq2 = 18   #  cycles per DM --> left-right in DH space and independent of sine --> ideally 2 * OWA + margin, but our DMs cannot do that   
+            sine_freq = 6     # cycles per DM --> (OWA + IWA) / 2
+            
+            xx_A, yy_A = np.meshgrid(xpos * sinc_freq1, ypos * sinc_freq2)
+            xx_B, yy_B = np.meshgrid(xpos * sinc_freq2, ypos * sinc_freq2)
+            xx_C, yy_C = np.meshgrid(xpos * sinc_freq2, ypos * sinc_freq1)
 
-    xvals_sinc_B = (np.arange(acts_across) / acts_across - 0.5 - shift_x_B) * sinc_freq2
-    yvals_sinc_B = (np.arange(acts_across) / acts_across - 0.5 - shift_y_B) * sinc_freq2
-    xx_B, yy_B = np.meshgrid(xvals_sinc_B, yvals_sinc_B)
+            xx_sine, yy_sine = np.meshgrid(vect1d * 2 * np.pi * sine_freq, vect1d * 2 * np.pi * sine_freq)
 
-    xvals_sinc_C = (np.arange(acts_across) / acts_across - 0.5 - shift_x_C) * sinc_freq2
-    yvals_sinc_C = (np.arange(acts_across) / acts_across - 0.5 - shift_y_C) * sinc_freq1
-    xx_C, yy_C = np.meshgrid(xvals_sinc_C, yvals_sinc_C)
+            probe1 = amplitudePW * np.sinc(xx_A) * np.sinc(yy_A) * np.sin(xx_sine + 1 * np.pi / 4)
+            probe2 = amplitudePW * np.sinc(xx_B) * np.sinc(yy_B) #* np.cos(yy_sine + 2 * np.pi / 3)
+            probe3 = amplitudePW * np.sinc(xx_C) * np.sinc(yy_C) * np.sin(yy_sine + 3 * np.pi / 4)
+            
+            probes_flatten = []
 
-    xvals_sine = (np.arange(acts_across) / acts_across - 0.5 - 0) * 2 * np.pi * sine_freq
-    yvals_sine = (np.arange(acts_across) / acts_across - 0.5 - 0) * 2 * np.pi * sine_freq
-    xx_sine, yy_sine = np.meshgrid(xvals_sine, yvals_sine)
+            probes_flatten.append(probe1.flatten()) 
+            probes_flatten.append(probe2.flatten())
+            probes_flatten.append(probe3.flatten())
 
-    probes_ROMAN = []
-
-    probe1 = amplitudePW * np.sinc(xx_A) * np.sinc(yy_A) * np.sin(xx_sine + 1 * np.pi / 4)
-    probe2 = amplitudePW * np.sinc(xx_B) * np.sinc(yy_B) #* np.cos(yy_sine + 2 * np.pi / 3)
-    probe3 = amplitudePW * np.sinc(xx_C) * np.sinc(yy_C) * np.sin(yy_sine + 3 * np.pi / 4)
-
-    probes_ROMAN.append(np.rot90(probe1).flatten())  # Rotation to make consistent with Asterix
-    probes_ROMAN.append(np.rot90(probe2).flatten())
-    probes_ROMAN.append(np.rot90(probe3).flatten())
-    hdu = fits.PrimaryHDU(probes_ROMAN)
-    hdu.writeto("/Users/pierre/asterix_data/Results/roman_probes.fits", overwrite=True)
-    #########################################################################
-
+        case _:
+            raise ValueError(f"Probe type: "+probe_type+" => does not exist")
+    
     voltage_probes = np.zeros((len(posprobes), testbed.number_act))
-    DM_probe: DeformableMirror = vars(testbed)[name_DM_to_probe_in_PW]
-
     for count, num_probe in enumerate(posprobes):
-        Voltage_probe_indiv_DM = np.zeros(DM_probe.number_act)
-        Voltage_probe_indiv_DM = np.array(probes_ROMAN[count])
-
-        voltage_probes[count] = testbed.indiv_DM_voltage_to_testbed_voltage(Voltage_probe_indiv_DM,
+        voltage_probes[count] = testbed.indiv_DM_voltage_to_testbed_voltage(probes_flatten[count],
                                                                             name_DM_to_probe_in_PW)
-    hdu = fits.PrimaryHDU(voltage_probes)
-    hdu.writeto("/Users/pierre/asterix_data/Results/roman_probes_2.fits", overwrite=True)
+
+    hdu = fits.PrimaryHDU(probes_flatten)
+    hdu.writeto("/Users/pierre/asterix_data/Results/"+probe_type+"_probes.fits", overwrite=True)
+    
     return voltage_probes
+
 
 
 def simulate_pw_probes(input_wavefront,
