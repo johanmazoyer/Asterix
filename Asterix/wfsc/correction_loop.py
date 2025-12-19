@@ -328,9 +328,9 @@ def correction_loop_1matrix(testbed: Testbed,
                                                 dtype_complex=testbed.dtype_complex,
                                                 testbed=testbed,
                                                 **kwargs)
-        
+
         # saving probe images, estimates and perfect field
-        if probe_dir != None: 
+        if probe_dir is not None:
             thisloop_Probes_images.append(probed_images)
 
             perf_probed_images = estimator.probe(testbed,
@@ -488,7 +488,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
     fits.writeto(os.path.join(result_dir, "estimationFP_RE.fits"), np.squeeze(np.real(np.array(EF_estim))), header, overwrite=True)
 
     fits.writeto(os.path.join(result_dir, "estimationFP_IM.fits"), np.squeeze(np.imag(np.array(EF_estim))), header, overwrite=True)
-   
+
     if probe_dir is not None:
         fits.writeto(os.path.join(probe_dir, "probes.fits"), np.squeeze(np.array(Probe_images)), header, overwrite=True)
 

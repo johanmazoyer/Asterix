@@ -265,8 +265,8 @@ def plot_err_probe_curve(Err_estim, config, probe_dir):
     """
 
     numberofpix_per_loD = config["modelconfig"]["Science_sampling"]
-    height, width = config["modelconfig"]["dimScience"] , config["modelconfig"]["dimScience"]
-    cx, cy = width // 2 , height // 2
+    height, width = config["modelconfig"]["dimScience"], config["modelconfig"]["dimScience"]
+    cx, cy = width // 2, height // 2
     # Define DH zone in pixel (1 pixel of margin)
     dh_val = config["Correctionconfig"]["Sep_Min_Max"]
     r_inner, r_outer = round(dh_val[0] * numberofpix_per_loD + 1), round(dh_val[1] * numberofpix_per_loD - 1)
