@@ -156,8 +156,6 @@ def create_singlewl_pw_matrix(testbed: Testbed,
             psi0, dimEstim)
 
         k = k + 1
-        hdu = fits.PrimaryHDU(probephase)
-        hdu.writeto(f"/Users/pierre/asterix_data/Probes_TMP/Phase_probes_iter={k:03d}.fits", overwrite=True)
 
     l_ind = 0
     for i in np.arange(dimEstim):
@@ -426,9 +424,6 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
     for count, num_probe in enumerate(posprobes):
         voltage_probes[count] = testbed.indiv_DM_voltage_to_testbed_voltage(probes_flatten[count],
                                                                             name_DM_to_probe_in_PW)
-
-    hdu = fits.PrimaryHDU(probes_flatten)
-    hdu.writeto("/Users/pierre/asterix_data/Results/" + probe_type + "_probes.fits", overwrite=True)
 
     return voltage_probes
 
