@@ -127,7 +127,7 @@ def runthd2(parameter_file_path,
     matrix_dir = os.path.join(data_dir, "Interaction_Matrices")
     result_dir = os.path.join(data_dir, "Results", name_experiment)
 
-    if save_probe == True:
+    if save_probe:
         if not os.path.exists(result_dir):
             if not silence:
                 print("Creating directory " + result_dir)
@@ -224,4 +224,4 @@ def runthd2(parameter_file_path,
                               probe_dir=probe_dir,
                               **kwargs)
 
-    save_loop_results(results, config, thd2, science_mask_dh, result_dir, silence=silence,probe_dir=probe_dir)
+    save_loop_results(results, config, thd2, science_mask_dh, result_dir, silence=silence, probe_dir=probe_dir)

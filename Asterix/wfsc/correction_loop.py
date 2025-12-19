@@ -334,12 +334,12 @@ def correction_loop_1matrix(testbed: Testbed,
             thisloop_Probes_images.append(probed_images)
 
             perf_probed_images = estimator.probe(testbed,
-                                                voltage_vector=thisloop_voltages_DMs[-1],
-                                                entrance_EF=input_wavefront,
-                                                perfect_estimation=True,
-                                                nb_photons=nb_photons,
-                                                **kwargs)
-            
+                                                 voltage_vector=thisloop_voltages_DMs[-1],
+                                                 entrance_EF=input_wavefront,
+                                                 perfect_estimation=True,
+                                                 nb_photons=nb_photons,
+                                                 **kwargs)
+
             perfestimation = estimator.estimate(perf_probed_images,
                                                 perfect_estimation=True,
                                                 dtype_complex=testbed.dtype_complex,
@@ -416,7 +416,7 @@ def correction_loop_1matrix(testbed: Testbed,
         CorrectionLoopResult["MeanDHContrast"].extend(thisloop_MeanDHContrast)
         CorrectionLoopResult["EF_simul"].extend(thisloop_EF)
         CorrectionLoopResult["Probes_images"].extend(thisloop_Probes_images)
- 
+
         if not silence:
             plt.close()
             plt.ioff()
@@ -489,7 +489,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
 
     fits.writeto(os.path.join(result_dir, "estimationFP_IM.fits"), np.squeeze(np.imag(np.array(EF_estim))), header, overwrite=True)
    
-    if probe_dir != None: 
+    if probe_dir is not None:
         fits.writeto(os.path.join(probe_dir, "probes.fits"), np.squeeze(np.array(Probe_images)), header, overwrite=True)
 
         fits.writeto(os.path.join(probe_dir, "EF_FP_RE.fits"), np.squeeze(np.real(np.array(EF_simul))), header, overwrite=True)
@@ -556,6 +556,6 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                          mask_DH=MaskScience,
                          path=result_dir)
 
-    if probe_dir != None:
-        Err_estim = np.squeeze(np.array(EF_simul)-np.array(EF_estim))
-        plot_err_probe_curve(Err_estim,config,probe_dir)
+    if probe_dir is not None:
+        Err_estim = np.squeeze(np.array(EF_simul) - np.array(EF_estim))
+        plot_err_probe_curve(Err_estim, config, probe_dir)

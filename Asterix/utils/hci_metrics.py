@@ -261,15 +261,15 @@ def plot_err_probe_curve(Err_estim, config, probe_dir):
     ----------
     Err_estim: cube of estimation error
     config: configuration
-    probe_dir: directory where the estimates are written 
+    probe_dir: directory where the estimates are written
     """
 
-    numberofpix_per_loD=config["modelconfig"]["Science_sampling"]
+    numberofpix_per_loD = config["modelconfig"]["Science_sampling"]
     height, width = config["modelconfig"]["dimScience"] , config["modelconfig"]["dimScience"]
-    cx, cy = width // 2, height // 2
+    cx, cy = width // 2 , height // 2
     # Define DH zone in pixel (1 pixel of margin)
-    dh_val=config["Correctionconfig"]["Sep_Min_Max"]
-    r_inner, r_outer = round(dh_val[0] * numberofpix_per_loD + 1),round(dh_val[1] * numberofpix_per_loD - 1)
+    dh_val = config["Correctionconfig"]["Sep_Min_Max"]
+    r_inner, r_outer = round(dh_val[0] * numberofpix_per_loD + 1), round(dh_val[1] * numberofpix_per_loD - 1)
     # Create coordinate grid
     y, x = np.ogrid[:height, :width]
     distance = np.sqrt((x - cx)**2 + (y - cy)**2)
@@ -279,11 +279,10 @@ def plot_err_probe_curve(Err_estim, config, probe_dir):
     mask = mask.astype(np.uint8)
 
     # Note that it might not work for multiple Jacobian matrix recalculation...
-    Niteration=np.sum(config["Loopconfig"]["Nbiter_corr"])
-    print(Err_estim.shape[0],Err_estim.shape[1],Err_estim.shape[2],Niteration)
+    Niteration = Err_estim.shape[0]
     var_err_probe_DH = []
     for iteration in range(Niteration):
-        var_err_probe_DH.append(np.var(Err_estim[iteration].real[mask != 0])+np.var(Err_estim[iteration].imag[mask != 0]))
+        var_err_probe_DH.append(np.var(Err_estim[iteration].real[mask != 0]) + np.var(Err_estim[iteration].imag[mask != 0]))
 
     plt.figure()
     plt.plot(np.array(var_err_probe_DH))
