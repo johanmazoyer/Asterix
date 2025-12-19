@@ -124,7 +124,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     if not silence:
         print("The PWmatrix " + filePW + " does not exists")
         print("Start PWP matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
-    
+
     numprobe = len(voltage_probes)
     deltapsik = np.zeros((numprobe, dimEstim, dimEstim), dtype=testbed.dtype_complex)
     matrix = np.zeros((numprobe, 2))
@@ -215,9 +215,9 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, w
     bool_already_existing_matrix :bool
         If there is no identical matrix already saved in fits file.
     """
-    
+
     # we identify the position and amplitude of the probes
-    
+
     probe_type = testbed.config_file["Estimationconfig"]["probes_shape"]
     posprobes = testbed.config_file["Estimationconfig"]["posprobes"]
     name_DM_to_probe_in_PW = testbed.config_file["Estimationconfig"]["name_DM_to_probe_in_PW"]
@@ -371,14 +371,14 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
         probes_flatten = np.zeros((len(posprobes), DM_probe.number_act))
         probes_flatten[np.arange(len(posprobes)), posprobes] = amplitudePW
 
-    if probe_type == "gaussian":  
-        Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW+"_Nact1D"]
+    if probe_type == "gaussian": 
+        Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW + "_Nact1D"]
         sigma_probe = float(testbed.config_file["Estimationconfig"]["sigma_probe"])
         # Euclidian distance to 0,0
         y, x = np.ogrid[:Nact_across, :Nact_across]
         cy, cx = Nact_across // 2, Nact_across // 2
         dist0 = np.sqrt((x - cx)**2 + (y - cy)**2)
-  
+
         # Gaussian calculation
         gaussian0 = np.exp(-(dist0**2) / (2 * sigma_probe**2)) * amplitudePW
 
@@ -386,12 +386,12 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
         for count, num_probe in enumerate(posprobes):
             ypos, xpos = np.unravel_index(num_probe, dist0.shape)
             # shifting of to a given position
-            shifted_gaussian = np.roll(gaussian0, shift=(ypos-cy, xpos-cx), axis=(0, 1))
+            shifted_gaussian = np.roll(gaussian0, shift=(ypos - cy, xpos - cx), axis=(0, 1))
             probes_flatten.append(shifted_gaussian.flatten())
 
     if probe_type == "sinc":
-        Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW+"_Nact1D"]
- 
+        Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW + "_Nact1D"]
+
         # defining the position of the actuators from the number in vector position.
         shape2d = (Nact_across, Nact_across)
         ypos0, xpos0 = np.array(np.unravel_index(posprobes[0], shape2d)) / Nact_across - 0.5
@@ -400,8 +400,8 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
         ypos = vect1d - ypos0
 
         sinc_freq1 = 6   # cycles per DM --> OWA-IWA
-        sinc_freq2 = 18   #  cycles per DM --> left-right in DH space and independent of sine --> ideally 2 * OWA + margin, but our DMs cannot do that   
-        sine_freq = 6     # cycles per DM --> (OWA + IWA) / 2
+        sinc_freq2 = 18  # cycles per DM --> left-right in DH space and independent of sine --> ideally 2 * OWA + margin, but our DMs cannot do that
+        sine_freq = 6    # cycles per DM --> (OWA + IWA) / 2
 
         xx_A, yy_A = np.meshgrid(xpos * sinc_freq1, ypos * sinc_freq2)
         xx_B, yy_B = np.meshgrid(xpos * sinc_freq2, ypos * sinc_freq2)
@@ -410,26 +410,26 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
         xx_sine, yy_sine = np.meshgrid(vect1d * 2 * np.pi * sine_freq, vect1d * 2 * np.pi * sine_freq)
 
         probe1 = amplitudePW * np.sinc(xx_A) * np.sinc(yy_A) * np.sin(xx_sine + 1 * np.pi / 4)
-        probe2 = amplitudePW * np.sinc(xx_B) * np.sinc(yy_B) #* np.cos(yy_sine + 2 * np.pi / 3)
+        probe2 = amplitudePW * np.sinc(xx_B) * np.sinc(yy_B) # * np.cos(yy_sine + 2 * np.pi / 3)
         probe3 = amplitudePW * np.sinc(xx_C) * np.sinc(yy_C) * np.sin(yy_sine + 3 * np.pi / 4)
 
         probes_flatten = []
 
-        probes_flatten.append(probe1.flatten()) 
+        probes_flatten.append(probe1.flatten())
         probes_flatten.append(probe2.flatten())
         probes_flatten.append(probe3.flatten())
 
     else:
-        raise ValueError(f"Probe type: "+probe_type+" => does not exist")
-    
+        raise ValueError(f"Probe type: " + probe_type + " => does not exist")
+
     voltage_probes = np.zeros((len(posprobes), testbed.number_act))
     for count, num_probe in enumerate(posprobes):
         voltage_probes[count] = testbed.indiv_DM_voltage_to_testbed_voltage(probes_flatten[count],
                                                                             name_DM_to_probe_in_PW)
 
     hdu = fits.PrimaryHDU(probes_flatten)
-    hdu.writeto("/Users/pierre/asterix_data/Results/"+probe_type+"_probes.fits", overwrite=True)
-    
+    hdu.writeto("/Users/pierre/asterix_data/Results/" + probe_type + "_probes.fits", overwrite=True)
+
     return voltage_probes
 
 
