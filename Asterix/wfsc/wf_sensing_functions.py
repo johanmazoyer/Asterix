@@ -371,7 +371,7 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
         probes_flatten = np.zeros((len(posprobes), DM_probe.number_act))
         probes_flatten[np.arange(len(posprobes)), posprobes] = amplitudePW
 
-    if probe_type == "gaussian": 
+    elif probe_type == "gaussian":
         Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW + "_Nact1D"]
         sigma_probe = float(testbed.config_file["Estimationconfig"]["sigma_probe"])
         # Euclidian distance to 0,0
@@ -389,7 +389,7 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
             shifted_gaussian = np.roll(gaussian0, shift=(ypos - cy, xpos - cx), axis=(0, 1))
             probes_flatten.append(shifted_gaussian.flatten())
 
-    if probe_type == "sinc":
+    elif probe_type == "sinc":
         Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW + "_Nact1D"]
 
         # defining the position of the actuators from the number in vector position.
@@ -410,7 +410,7 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
         xx_sine, yy_sine = np.meshgrid(vect1d * 2 * np.pi * sine_freq, vect1d * 2 * np.pi * sine_freq)
 
         probe1 = amplitudePW * np.sinc(xx_A) * np.sinc(yy_A) * np.sin(xx_sine + 1 * np.pi / 4)
-        probe2 = amplitudePW * np.sinc(xx_B) * np.sinc(yy_B) # * np.cos(yy_sine + 2 * np.pi / 3)
+        probe2 = amplitudePW * np.sinc(xx_B) * np.sinc(yy_B)  # * np.cos(yy_sine + 2 * np.pi / 3)
         probe3 = amplitudePW * np.sinc(xx_C) * np.sinc(yy_C) * np.sin(yy_sine + 3 * np.pi / 4)
 
         probes_flatten = []
