@@ -128,15 +128,7 @@ def runthd2(parameter_file_path,
     result_dir = os.path.join(data_dir, "Results", name_experiment)
 
     if save_probe:
-        if not os.path.exists(result_dir):
-            if not silence:
-                print("Creating directory " + result_dir)
-            os.makedirs(result_dir)
         probe_dir = os.path.join(result_dir, "Probes")
-        if not os.path.exists(probe_dir):
-            if not silence:
-                print("Creating directory " + probe_dir)
-            os.makedirs(probe_dir)
     else:
         probe_dir = None
 
