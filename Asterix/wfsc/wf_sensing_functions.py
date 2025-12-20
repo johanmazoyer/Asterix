@@ -397,9 +397,10 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
         xpos = vect1d - xpos0
         ypos = vect1d - ypos0
 
-        sinc_freq1 = 6   # cycles per DM --> OWA-IWA
-        sinc_freq2 = 18  # cycles per DM --> left-right in DH space and independent of sine --> ideally 2 * OWA + margin, but our DMs cannot do that
-        sine_freq = 6    # cycles per DM --> (OWA + IWA) / 2
+        IWA, OWA = testbed.config_file["Correctionconfig"]["Sep_Min_Max"]
+        sinc_freq1 = (OWA-IWA) * 1.05   # cycles per DM --> OWA-IWA + margin
+        sinc_freq2 = min(2.1 * OWA, Nact_across)  # cycles per DM --> left-right in DH space and independent of sine --> ideally 2 * OWA + margin, but our DMs cannot do that
+        sine_freq = (IWA+OWA) / 2 * 1.05    # cycles per DM --> (OWA + IWA) / 2 + margin
 
         xx_A, yy_A = np.meshgrid(xpos * sinc_freq1, ypos * sinc_freq2)
         xx_B, yy_B = np.meshgrid(xpos * sinc_freq2, ypos * sinc_freq2)
