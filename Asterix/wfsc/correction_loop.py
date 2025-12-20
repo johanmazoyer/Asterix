@@ -246,7 +246,7 @@ def correction_loop_1matrix(testbed: Testbed,
     thisloop_actual_modes = []
     thisloop_EF = []
     thisloop_Probes_images = []
-    thisloop_Var_Err_estim =[]
+    thisloop_Var_Err_estim = []
 
     thisloop_voltages_DMs.append(initial_DM_voltage)
     thisloop_FP_Intensities.append(initialFP)
@@ -464,7 +464,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
         if not silence:
             print("Creating directory " + result_dir)
         os.makedirs(result_dir)
-    if probe_dir != None:
+    if probe_dir is not None:
         os.makedirs(probe_dir)
 
     FP_Intensities = CorrectionLoopResult["FP_Intensities"]
