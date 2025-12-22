@@ -332,7 +332,7 @@ def correction_loop_1matrix(testbed: Testbed,
                                                 **kwargs)
 
         # saving probe images, estimates and perfect field
-        if probe_dir is not None:
+        if probe_dir is not None and estimator.technique != "Perfect":
             thisloop_Probes_images.append(probed_images)
 
             perf_probed_images = estimator.probe(testbed,
@@ -378,7 +378,7 @@ def correction_loop_1matrix(testbed: Testbed,
         thisloop_FP_Intensities_phot.append(testbed.add_photon_noise(thisloop_FP_Intensities[-1], nb_photons))
         thisloop_EF_estim.append(resultatestimation)
 
-        if probe_dir is not None:
+        if probe_dir is not None and estimator.technique != "Perfect":
             thisloop_EF.append(perfestimation)
             Err_estim = np.squeeze(np.array(resultatestimation) - np.array(perfestimation))
             thisloop_Var_Err_estim.append(np.var(Err_estim[np.where(mask_dh != 0)]))
@@ -499,7 +499,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
 
     fits.writeto(os.path.join(result_dir, "estimationFP_IM.fits"), np.squeeze(np.imag(np.array(EF_estim))), header, overwrite=True)
 
-    if probe_dir is not None:
+    if probe_dir is not None and config["Estimationconfig"]["estimation"] != "Perfect":
         fits.writeto(os.path.join(probe_dir, "probes.fits"), np.squeeze(np.array(Probe_images)), header, overwrite=True)
 
         fits.writeto(os.path.join(probe_dir, "EF_FP_RE.fits"), np.squeeze(np.real(np.array(EF_simul))), header, overwrite=True)
@@ -566,7 +566,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                          mask_DH=MaskScience,
                          path=result_dir)
 
-    if probe_dir is not None:
+    if probe_dir is not None and config["Estimationconfig"]["estimation"] != "Perfect":
         plt.figure()
         plt.plot(Var_Err_EF)
         plt.yscale("log")
