@@ -393,25 +393,25 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
         # defining the position of the actuators from the number in vector position.
         shape2d = (Nact_across, Nact_across)
         ypos0, xpos0 = np.array(np.unravel_index(posprobes[0], shape2d)) / Nact_across - 0.5
-        vect1d = np.arange(Nact_across) / Nact_across - 0.5
+        vect1d = (np.arange(Nact_across) + 0.5) / Nact_across - 0.5  # get a centered value between actuators
         xpos = vect1d - xpos0
         ypos = vect1d - ypos0
 
-        IWA, OWA = testbed.config_file["Correctionconfig"]["Sep_Min_Max"]
-        sinc_freq1 = (OWA - IWA) * 1.05   # cycles per DM --> OWA-IWA + margin
-        sinc_freq2 = min(2.1 * OWA, Nact_across)  # cycles per DM --> left-right in DH space and independent of sine --> ideally 2 * OWA + margin, but our DMs cannot do that
-        sine_freq = (IWA + OWA) / 2 * 1.05    # cycles per DM --> (OWA + IWA) / 2 + margin
+        _, OWA = testbed.config_file["Correctionconfig"]["Sep_Min_Max"]
+        IWA = 0.  # forced to zero according to Cady et al. 2025
+        sinc_freq1 = (OWA - IWA) * 1.1   # cycles per DM --> OWA-IWA + margin (half-DH box size)
+        sinc_freq2 = min(2.2 * OWA, Nact_across)  # cycles per DM --> (large width box size)
+        sine_freq = (OWA + IWA) / 2 * 1.1    # cycles per DM --> (OWA + IWA) / 2 + margin (shifting vector of the HDH boxes)
 
         xx_A, yy_A = np.meshgrid(xpos * sinc_freq1, ypos * sinc_freq2)
         xx_B, yy_B = np.meshgrid(xpos * sinc_freq2, ypos * sinc_freq2)
         xx_C, yy_C = np.meshgrid(xpos * sinc_freq2, ypos * sinc_freq1)
 
-        xx_sine, yy_sine = np.meshgrid(vect1d * 2 * np.pi * sine_freq, vect1d * 2 * np.pi * sine_freq)
+        xx_sine, yy_sine = np.meshgrid(xpos * 2 * np.pi * sine_freq, ypos * 2 * np.pi * sine_freq)
 
-        probe1 = amplitudePW * np.sinc(xx_A) * np.sinc(yy_A) * np.sin(xx_sine + 1 * np.pi / 4)
-        probe2 = amplitudePW * np.sinc(xx_B) * np.sinc(yy_B)  # * np.cos(yy_sine + 2 * np.pi / 3)
-        probe3 = amplitudePW * np.sinc(xx_C) * np.sinc(yy_C) * np.sin(yy_sine + 3 * np.pi / 4)
-
+        probe1 = amplitudePW * np.sinc(xx_A) * np.sinc(yy_A) * np.sin(xx_sine)
+        probe2 = amplitudePW * np.sinc(xx_B) * np.sinc(yy_B)
+        probe3 = amplitudePW * np.sinc(xx_C) * np.sinc(yy_C) * np.sin(yy_sine)
         probes_flatten = []
 
         probes_flatten.append(probe1.flatten())
