@@ -371,7 +371,7 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
 
     elif probe_type == "gaussian":
         Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW + "_Nact1D"]
-        sigma_probe = float(testbed.config_file["Estimationconfig"]["sigma_probe"])
+        sigma_probe = float(testbed.config_file["Estimationconfig"]["Sigma_probe"])
         # Euclidian distance to 0,0
         y, x = np.ogrid[:Nact_across, :Nact_across]
         cy, cx = Nact_across // 2, Nact_across // 2
