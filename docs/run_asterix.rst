@@ -243,7 +243,9 @@ If ``DH_shape`` == 'circle':
 Matrix parameters:
 
     - ``DM_basis`` : string, Actuator basis. Currently 'fourier' or 'actuator'. Same parameter for all DMs. Not case sensitive.
-    - ``MatrixType`` : string, Type of matrix : Either 'Perfect' Matrix (``exp(i.(phi_DM+phi))``) or a 'SmallPhase' aberration matrix (``phi_DM.exp(i.phi)``). Not totally sure what change. Not case sensitive.
+    - ``SmallPhaseHypEFCEFC`` : Bool, small phase hypothesis. If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi_basis) = 1+ i.phi_basis
+                          If False we keep exp(i phi_basis).
+                        In both case, if the DMs are not initially flat (non zero initial_DM_voltage), we do not make the small phase assumption for initial DM phase.
     - ``correction_algorithm`` : 'efc' for Electric Field Conjugation, 'em' for Energy Minimization, 'sm' for Stroke Minimization, or 'steepest'. Not case sensitive.
 
 If EFC:

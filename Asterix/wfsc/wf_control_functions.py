@@ -20,7 +20,7 @@ def create_interaction_matrix(testbed: Testbed,
                               matrix_dir,
                               initial_DM_voltage=0.,
                               initial_estimated_wavefront=1.,
-                              MatrixType='',
+                              SmallPhaseHypEFC=True,
                               wav_vec_estim=None,
                               dir_save_all_planes=None,
                               silence=False,
@@ -52,16 +52,16 @@ def create_interaction_matrix(testbed: Testbed,
         amplitude of the EFC probe on the DM
     matrix_dir : string
         path to directory to save all the matrices here
-    MatrixType : string
-        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi)
-        or 'perfect' (we keep exp(i phi)).
-        in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
+    SmallPhaseHypEFC : Bool, default True
+        If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
+        If False 'perfect' (we keep exp(i phi)).
+        In both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
     wav_vec_estim : list of wavelengths, default: [testbed.wavelength_0]
             vector of wavelengths for polychromatic correction
-    initial_DM_voltage : 1D-array real
+    initial_DM_voltage : 1D-array real, default 1.0 (flat WF)
         a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
-    initial_estimated_wavefront : complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
+    initial_estimated_wavefront : complex scalar or 2d complex array or 3d complex array.
         a wavefront in pupil plane (likely estimated using some phase diversity) around
         which the basis modes will be pushed to create the matrix.
     dir_save_all_planes : string or None, default None
@@ -107,7 +107,7 @@ def create_interaction_matrix(testbed: Testbed,
                 matrix_dir,
                 initial_DM_voltage=initial_DM_voltage,
                 initial_estimated_wavefront=initial_estimated_wavefront[testbed.wav_vec.tolist().index(wave_i)],
-                MatrixType=MatrixType,
+                SmallPhaseHypEFC=SmallPhaseHypEFC,
                 dir_save_all_planes=dir_save_all_planes,
                 silence=silence,
                 visu=visu))
@@ -121,7 +121,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                        matrix_dir,
                                        initial_DM_voltage=0.,
                                        initial_estimated_wavefront=1.,
-                                       MatrixType='',
+                                       SmallPhaseHypEFC=True,
                                        dir_save_all_planes=None,
                                        silence=False,
                                        visu=False):
@@ -152,10 +152,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         wavelength in m.
     matrix_dir : string
         path to directory to save all the matrices here
-    MatrixType: string
-        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi)
-        or 'perfect' (we keep exp(i phi)).
-        in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
+    SmallPhaseHypEFC : Bool, default True
+        If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
+        If False 'perfect' (we keep exp(i phi)).
+        In both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
     initial_DM_voltage : 1D-array real
         a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
@@ -211,7 +211,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             continue
 
         fileDirectMatrix, header_expected, bool_already_existing_matrix = name_header_efc_matrix(
-            testbed, DM, amplitudeEFC, MatrixType, dimEstim, wavelength, matrix_dir)
+            testbed, DM, amplitudeEFC, SmallPhaseHypEFC, dimEstim, wavelength, matrix_dir)
 
         DM.fnameDirectMatrix = os.path.join(matrix_dir, fileDirectMatrix + ".fits")
 
@@ -336,7 +336,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                     if i % 10:
                         progress(i, DM.basis_size, status='')
 
-                if MatrixType == 'perfect':
+                if not SmallPhaseHypEFC:
                     if DM.z_position == 0:
 
                         wavefront = wavefrontupstream * DM.EF_from_phase_and_ampl(
@@ -360,7 +360,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                                        DM.prad,
                                                        dtype_complex=testbed.dtype_complex), DM.dim_overpad_pupil)
 
-                if MatrixType == 'smallphase':
+                if SmallPhaseHypEFC:
                     # TODO we added a 1+ which was initially in Axel's code and that was
                     # removed. Need to be tested with and without on the testbed
                     if DM.z_position == 0:
@@ -467,7 +467,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     return InterMat
 
 
-def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC, MatrixType, dimEstim, wavelength,
+def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC, SmallPhaseHypEFC, dimEstim, wavelength,
                            matrix_dir):
     """ Create the name of the file and header of the EFC matrix that will be used to
     identify precisely parameters used in the calcul of this matrix.
@@ -485,11 +485,9 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
 
     amplitudeEFC: float
         amplitude of the EFC probe on the DM
-    MatrixType: string
-        'smallphase' (when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi)
-        or 'perfect' (we keep exp(i phi)).
-        in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
-        we do not make the small phase assumption for initial DM phase
+    SmallPhaseHypEFC : Bool, default True
+        If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
+        If False 'perfect' (we keep exp(i phi)).
     dimEstim: int
         size of the output image in teh estimator
     wavelength : float
@@ -508,12 +506,12 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
     """
 
     # Some string manips to name the matrix if we save it
-    if MatrixType == 'perfect':
-        headfile = "DirectMatPerf"
-    elif MatrixType == 'smallphase':
-        headfile = "DirectMatSP"
+    if not SmallPhaseHypEFC == 'perfect':
+        headfile = "DirectMat"
+    elif SmallPhaseHypEFC :
+        headfile = "DirectMat_SmallPha"
     else:
-        raise ValueError("This Matrix type does not exist ([Correctionconfig]['MatrixType'] parameter).")
+        raise ValueError("Small Hypothesis is True or False([Correctionconfig]['SmallPhaseHypEFC'] parameter).")
 
     if DM.basis_type == 'fourier':
         basis_type_str = 'Four'
@@ -538,7 +536,7 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
         necessary_correc_param = dict()
         necessary_correc_param['DM4matrix'] = DM.Name_DM
         necessary_correc_param['DM_basis'] = DM.basis_type
-        necessary_correc_param['MatrixType'] = MatrixType
+        necessary_correc_param['SmallPhaseHypEFC'] = SmallPhaseHypEFC
         necessary_correc_param['amplitudeEFC'] = amplitudeEFC
         header = from_param_to_header(necessary_correc_param, header)
 

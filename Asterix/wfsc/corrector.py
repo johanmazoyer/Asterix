@@ -91,7 +91,7 @@ class Corrector:
             DM.fnameDirectMatrix = list()
 
         self.correction_algorithm = Correctionconfig["correction_algorithm"].lower()
-        self.MatrixType = Correctionconfig["MatrixType"].lower()
+        self.SmallPhaseHypEFC = Correctionconfig["SmallPhaseHypEFC"]
 
         if basis_type == 'actuator':
             self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
@@ -294,7 +294,7 @@ class Corrector:
                                                      self.matrix_dir,
                                                      initial_DM_voltage=initial_DM_voltage,
                                                      initial_estimated_wavefront=initial_estimated_wavefront,
-                                                     MatrixType=self.MatrixType,
+                                                     SmallPhaseHypEFC=self.SmallPhaseHypEFC,
                                                      wav_vec_estim=self.wav_vec_estim,
                                                      dir_save_all_planes=None,
                                                      silence=silence,
