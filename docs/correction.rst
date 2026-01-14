@@ -91,15 +91,20 @@ The Matrix calculation is done during initialization:
                           maskEstim=maskEstim)
 
 
-Once you have initialized, you can update the matrix during the correction wihtout re-initializing using : 
+Once you have initialized, you can update the matrix during the correction
+wihtout re-initializing using ``update_matrices``.
+This can be useful to recalculate the jacobian by pushing the basis mode around a
+non zero DM voltage or an estimated a wavefront in pupil plane (likely estimated using
+some phase diversity):
 
 .. code-block:: python
     
     corrector.update_matrices(testbed,
                               initial_DM_voltage=some_DM_voltage,
-                              input_wavefront=some_input_wavefront)
+                              initial_estimated_wavefront=some_estimated_wavefront)
 
-This can be useful to recalculate the jacobian around a non zero DM voltage or if you want to crop the matrix with another dark-hole:
+
+or if you want to crop the matrix with another dark-hole:
 
 .. code-block:: python
 

@@ -19,7 +19,7 @@ def create_interaction_matrix(testbed: Testbed,
                               amplitudeEFC,
                               matrix_dir,
                               initial_DM_voltage=0.,
-                              input_wavefront=1.,
+                              initial_estimated_wavefront=1.,
                               MatrixType='',
                               wav_vec_estim=None,
                               dir_save_all_planes=None,
@@ -60,9 +60,10 @@ def create_interaction_matrix(testbed: Testbed,
     wav_vec_estim : list of wavelengths, default: [testbed.wavelength_0]
             vector of wavelengths for polychromatic correction
     initial_DM_voltage : 1D-array real
-        initial DM voltage for all DMs
-    input_wavefront : complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
-        Input wavefront in pupil plane
+        a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
+    initial_estimated_wavefront : complex scalar or 2d complex array or 3d complex array. Default is 1 (flat WF)
+        a wavefront in pupil plane (likely estimated using some phase diversity) around
+        which the basis modes will be pushed to create the matrix.
     dir_save_all_planes : string or None, default None
         If not None, absolute directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
@@ -78,16 +79,16 @@ def create_interaction_matrix(testbed: Testbed,
     """
 
     ## careful here if we do not want the matrix done exactly at the same wl as the testbed
-    if isinstance(input_wavefront, (float, int)):
-        input_wavefront = np.repeat(input_wavefront, testbed.nb_wav)
-    elif input_wavefront.shape == testbed.wav_vec.shape:
+    if isinstance(initial_estimated_wavefront, (float, int)):
+        initial_estimated_wavefront = np.repeat(initial_estimated_wavefront, testbed.nb_wav)
+    elif initial_estimated_wavefront.shape == testbed.wav_vec.shape:
         pass
-    elif input_wavefront.shape == (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
-        input_wavefront = np.repeat(input_wavefront[np.newaxis, ...], testbed.nb_wav, axis=0)
-    elif input_wavefront.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
+    elif initial_estimated_wavefront.shape == (testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
+        initial_estimated_wavefront = np.repeat(initial_estimated_wavefront[np.newaxis, ...], testbed.nb_wav, axis=0)
+    elif initial_estimated_wavefront.shape == (testbed.nb_wav, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil):
         pass
     else:
-        raise TypeError(("input_wavefront must be scalar (same for all WL), or a nb_wav scalars or a "
+        raise TypeError(("initial_estimated_wavefront must be scalar (same for all WL), or a nb_wav scalars or a "
                          "2D array of size (dim_overpad_pupil, dim_overpad_pupil) or a 3D array of size "
                          "(nb_wav, dim_overpad_pupil, dim_overpad_pupil)"))
 
@@ -98,17 +99,18 @@ def create_interaction_matrix(testbed: Testbed,
 
     for wave_i in wav_vec_estim:
         return_matrix.append(
-            create_singlewl_interaction_matrix(testbed,
-                                               dimEstim,
-                                               amplitudeEFC,
-                                               wave_i,
-                                               matrix_dir,
-                                               initial_DM_voltage=initial_DM_voltage,
-                                               input_wavefront=input_wavefront[testbed.wav_vec.tolist().index(wave_i)],
-                                               MatrixType=MatrixType,
-                                               dir_save_all_planes=dir_save_all_planes,
-                                               silence=silence,
-                                               visu=visu))
+            create_singlewl_interaction_matrix(
+                testbed,
+                dimEstim,
+                amplitudeEFC,
+                wave_i,
+                matrix_dir,
+                initial_DM_voltage=initial_DM_voltage,
+                initial_estimated_wavefront=initial_estimated_wavefront[testbed.wav_vec.tolist().index(wave_i)],
+                MatrixType=MatrixType,
+                dir_save_all_planes=dir_save_all_planes,
+                silence=silence,
+                visu=visu))
     return return_matrix
 
 
@@ -118,7 +120,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                        wavelength,
                                        matrix_dir,
                                        initial_DM_voltage=0.,
-                                       input_wavefront=1.,
+                                       initial_estimated_wavefront=1.,
                                        MatrixType='',
                                        dir_save_all_planes=None,
                                        silence=False,
@@ -156,9 +158,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         in both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
     initial_DM_voltage : 1D-array real
-        initial DM voltage for all DMs
-    input_wavefront : 2D complex array or complex scalar. Default is 1 (flat WF)
-        Input wavefront in pupil plane
+        a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
+    initial_estimated_wavefront : 2D complex array or complex scalar. Default is 1 (flat WF)
+        a wavefront in pupil plane (likely estimated using some phase diversity) around
+        which the basis modes will be pushed to create the matrix.
     dir_save_all_planes : string, default None
         If not None, path to directory to save all planes in fits for debugging purposes.
         This can generate a lot of fits especially if in a loop, use with caution.
@@ -231,7 +234,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             # Be careful because todetector automatically normalized to contrast with the full testbed
             # We checked that this is the same normalization as in Gvector
             G0 = resizing(
-                testbed.todetector(entrance_EF=input_wavefront,
+                testbed.todetector(entrance_EF=initial_estimated_wavefront,
                                    voltage_vector=initial_DM_voltage,
                                    dir_save_all_planes=dir_save_all_planes), dimEstim)
             if not silence:
@@ -269,103 +272,12 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             OpticSysNameBefore = testbed.subsystems[:positioonDMintestbed]
             OpticSysNameAfter = testbed.subsystems[positioonDMintestbed + 1:]
 
-            # I tried something different to be able to parralellize the function, but it did not
-            # allow multi matrix (which requires non flat DM initially) and it did not work because
-            # functions have to be defined outside of the function to be pickable. However, this is a
-            # very compact way to do that so I think this is interresting sop I keep it here for now.
-
-            # OpticSysbefore = []
-            # for osname in OpticSysNameBefore:
-            #     OpticSysbefore.append(vars(testbed)[osname])
-            # testbed_upstream = Testbed(OpticSysbefore, OpticSysNameBefore)
-
-            # OpticSysafter = []
-            # for osname in OpticSysNameAfter:
-            #     OpticSysafter.append(vars(testbed)[osname])
-            # testbed_downstream = Testbed(OpticSysafter, OpticSysNameAfter)
-
-            # # we go through all subsystems of the testbed
-
-            # # First before the DM we want to actuate (aperture, other DMs, etc).
-            # # This ones, we only do once !
-            # wavefrontupstream = input_wavefront
-
-            # wavefrontupstream = testbed_upstream.EF_through(entrance_EF=wavefrontupstream, wavelength=wavelength)
-
-            # if DM.z_position != 0:
-
-            #     wavefrontupstreaminDM = crop_or_pad_image(
-            #         prop.prop_angular_spectrum(wavefrontupstream, wavelength, DM.z_position, DM.diam_pup_in_m / 2,
-            #                                    DM.prad), DM.dim_overpad_pupil)
-
-            # if MatrixType == 'perfect':
-            #     if DM.z_position == 0:
-
-            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
-            #             map(
-            #                 concat_flat_real_imag(
-            #                     resizing(
-            #                         testbed_downstream.todetector(
-            #                             entrance_EF=wavefrontupstream * DM.EF_from_phase_and_ampl(
-            #                                 phase_abb=phase_in_basis + DM_phase_init[testbed.name_of_DMs.index(DM_name)],
-            #                                 wavelengths=wavelength),
-            #                             wavelength=wavelength,
-            #                             in_contrast=False) / normalisation_testbed_EF_contrast, dimEstim) - G0),
-            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
-            #     else:
-            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
-            #             map(
-            #                 concat_flat_real_imag(
-            #                     resizing(
-            #                         testbed_downstream.todetector(entrance_EF=crop_or_pad_image(
-            #                             prop.prop_angular_spectrum(
-            #                                 wavefrontupstreaminDM *
-            #                                 DM.EF_from_phase_and_ampl(phase_abb=phase_in_basis +
-            #                                                           DM_phase_init[testbed.name_of_DMs.index(DM_name)],
-            #                                                           wavelengths=wavelength), wavelength,
-            #                                 -DM.z_position, DM.diam_pup_in_m / 2, DM.prad), DM.dim_overpad_pupil),
-            #                                                       wavelength=wavelength,
-            #                                                       in_contrast=False) /
-            #                         normalisation_testbed_EF_contrast, dimEstim) - G0),
-            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
-
-            # if MatrixType == 'smallphase':
-            #     if DM.z_position == 0:
-            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
-            #             map(
-            #                 concat_flat_real_imag(
-            #                     resizing(
-            #                         testbed_downstream.todetector(entrance_EF=(
-            #                             1 + 1j * phase_in_basis) * wavefrontupstream * DM.EF_from_phase_and_ampl(
-            #                                 phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)],
-            #                                 wavelengths=wavelength),
-            #                                                       wavelength=wavelength,
-            #                                                       in_contrast=False) /
-            #                         normalisation_testbed_EF_contrast, dimEstim) - G0),
-            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
-
-            #     else:
-            #         InterMat[:, pos_in_matrix + DM.basis_size] = np.array(
-            #             map(
-            #                 concat_flat_real_imag(
-            #                     resizing(
-            #                         testbed_downstream.todetector(entrance_EF=crop_or_pad_image(
-            #                             prop.prop_angular_spectrum(
-            #                                 wavefrontupstreaminDM *
-            #                                 (1 + 1j * phase_in_basis) * DM.EF_from_phase_and_ampl(
-            #                                     phase_abb=DM_phase_init[testbed.name_of_DMs.index(DM_name)],
-            #                                     wavelengths=wavelength), wavelength, -DM.z_position, DM.diam_pup_in_m /
-            #                                 2, DM.prad), DM.dim_overpad_pupil),
-            #                                                       wavelength=wavelength,
-            #                                                       in_contrast=False) /
-            #                         normalisation_testbed_EF_contrast, dimEstim) - G0),
-            #                 [phase_in_basis for phase_in_basis in phasesBasis]))
-
             # we go through all subsystems of the testbed
 
-            # First before the DM we want to actuate (aperture, other DMs, etc).
-            # This ones, we only do once !
-            wavefrontupstream = input_wavefront
+            # First all the subsystem located before the DM we want to actuate
+            # (initial_estimated_wavefront, aperture, apod, other DMs, etc).
+            # These systems, we only go through once !
+            wavefrontupstream = initial_estimated_wavefront
             for osname in OpticSysNameBefore:
                 OpticSysbefore: OpticalSystem = vars(testbed)[osname]
 

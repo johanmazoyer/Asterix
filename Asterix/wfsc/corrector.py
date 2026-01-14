@@ -251,7 +251,7 @@ class Corrector:
                         testbed: Testbed,
                         maskEstim=None,
                         initial_DM_voltage=0.,
-                        input_wavefront=1.,
+                        initial_estimated_wavefront=1.,
                         silence=False):
         """Measure the interaction matrices needed for the correction Is launch
         once in the Correction initialization and then once each time we update
@@ -266,8 +266,11 @@ class Corrector:
         maskEstim : 2d numpy array
             binary array of size [dimEstim, dimEstim] : dark hole mask. If undefined, it
             will use the self.MaskEstim attribute defined in the Corrector initialization.
-        input_wavefront : float or 2d numpy array or 3d numpy array, default 1.
-            initial wavefront to measure the Matrix
+        initial_DM_voltage : 1D-array real
+            a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
+        initial_estimated_wavefront : 2D complex array or complex scalar. Default is 1 (flat WF)        
+            a wavefront in pupil plane (likely estimated using some phase diversity) around
+            which the basis modes will be pushed to create the matrix.
         silence : boolean, default False.
             Whether to silence print outputs.
         """
@@ -290,7 +293,7 @@ class Corrector:
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
                                                      initial_DM_voltage=initial_DM_voltage,
-                                                     input_wavefront=input_wavefront,
+                                                     initial_estimated_wavefront=initial_estimated_wavefront,
                                                      MatrixType=self.MatrixType,
                                                      wav_vec_estim=self.wav_vec_estim,
                                                      dir_save_all_planes=None,
@@ -303,7 +306,8 @@ class Corrector:
                 pixel_in_mask = int(np.sum(self.MaskEstim))
                 number_wl_matrix = self.Gmatrix.shape[0] // (2 * pixel_in_mask)
 
-                self.G = np.zeros((number_wl_matrix * pixel_in_mask, self.Gmatrix.shape[1]), dtype=testbed.dtype_complex)
+                self.G = np.zeros((number_wl_matrix * pixel_in_mask, self.Gmatrix.shape[1]),
+                                  dtype=testbed.dtype_complex)
 
                 for i in range(number_wl_matrix):
                     self.G[i * pixel_in_mask:(i + 1) * pixel_in_mask, :] = (
