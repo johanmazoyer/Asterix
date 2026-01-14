@@ -23,6 +23,7 @@ def correction_loop(testbed: Testbed,
                     input_wavefront=1.,
                     initial_DM_voltage=0.,
                     silence=False,
+                    probe_dir=None,
                     **kwargs):
     """Run a full loop for several matrices.
 
@@ -76,6 +77,9 @@ def correction_loop(testbed: Testbed,
     CorrectionLoopResult["EF_estim"] = []
     CorrectionLoopResult["MeanDHContrast"] = []
     CorrectionLoopResult["SVDmodes"] = []
+    CorrectionLoopResult["EF_simul"] = []
+    CorrectionLoopResult["Probes_images"] = []
+    CorrectionLoopResult["Var_Err_EF"] = []
 
     # reading the simulation parameter files
     nb_photons = SIMUconfig["nb_photons"]
@@ -127,6 +131,7 @@ def correction_loop(testbed: Testbed,
                                                             initial_DM_voltage=initial_DM_voltage,
                                                             nb_photons=nb_photons,
                                                             silence=silence,
+                                                            probe_dir=probe_dir,
                                                             **kwargs)
 
         min_contrast = min(CorrectionLoopResult["MeanDHContrast"])
@@ -156,6 +161,7 @@ def correction_loop_1matrix(testbed: Testbed,
                             initial_DM_voltage=0.,
                             nb_photons=0,
                             silence=False,
+                            probe_dir=None,
                             **kwargs):
     """Run a loop for a given interaction matrix.
 
@@ -238,6 +244,9 @@ def correction_loop_1matrix(testbed: Testbed,
     thisloop_MeanDHContrast = []
     thisloop_EF_estim = []
     thisloop_actual_modes = []
+    thisloop_EF = []
+    thisloop_Probes_images = []
+    thisloop_Var_Err_estim = []
 
     thisloop_voltages_DMs.append(initial_DM_voltage)
     thisloop_FP_Intensities.append(initialFP)
@@ -322,6 +331,23 @@ def correction_loop_1matrix(testbed: Testbed,
                                                 testbed=testbed,
                                                 **kwargs)
 
+        # saving probe images, estimates and perfect field
+        if probe_dir is not None and estimator.technique != "Perfect":
+            thisloop_Probes_images.append(probed_images)
+
+            perf_probed_images = estimator.probe(testbed,
+                                                 voltage_vector=thisloop_voltages_DMs[-1],
+                                                 entrance_EF=input_wavefront,
+                                                 perfect_estimation=True,
+                                                 nb_photons=nb_photons,
+                                                 **kwargs)
+
+            perfestimation = estimator.estimate(perf_probed_images,
+                                                perfect_estimation=True,
+                                                dtype_complex=testbed.dtype_complex,
+                                                testbed=testbed,
+                                                **kwargs)
+
         solution = corrector.toDM_voltage(testbed,
                                           resultatestimation,
                                           mode=mode,
@@ -351,6 +377,11 @@ def correction_loop_1matrix(testbed: Testbed,
                                          **kwargs))
         thisloop_FP_Intensities_phot.append(testbed.add_photon_noise(thisloop_FP_Intensities[-1], nb_photons))
         thisloop_EF_estim.append(resultatestimation)
+
+        if probe_dir is not None and estimator.technique != "Perfect":
+            thisloop_EF.append(perfestimation)
+            Err_estim = np.squeeze(np.array(resultatestimation) - np.array(perfestimation))
+            thisloop_Var_Err_estim.append(np.var(Err_estim[np.where(mask_dh != 0)]))
 
         # the contrast cannot be measured on a photon noise image, because at some point a lot of values
         # are at 0 and it will artificially lower the contrast. Photon noise is only used for the pw images.
@@ -389,6 +420,9 @@ def correction_loop_1matrix(testbed: Testbed,
             CorrectionLoopResult["FP_Intensities_phot"].extend(thisloop_FP_Intensities_phot)
         CorrectionLoopResult["EF_estim"].extend(thisloop_EF_estim)
         CorrectionLoopResult["MeanDHContrast"].extend(thisloop_MeanDHContrast)
+        CorrectionLoopResult["EF_simul"].extend(thisloop_EF)
+        CorrectionLoopResult["Probes_images"].extend(thisloop_Probes_images)
+        CorrectionLoopResult["Var_Err_EF"].extend(thisloop_Var_Err_estim)
 
         if not silence:
             plt.close()
@@ -403,7 +437,7 @@ def correction_loop_1matrix(testbed: Testbed,
         return CorrectionLoopResult
 
 
-def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir, silence=False):
+def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScience, result_dir, silence=False, probe_dir=None):
     """Save the results from a correction loop into the directory 'result_dir'.
 
     All fits files have all parameters in their header. The configfile is also saved, to an .ini file.
@@ -430,12 +464,17 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
         if not silence:
             print("Creating directory " + result_dir)
         os.makedirs(result_dir)
+    if probe_dir is not None:
+        os.makedirs(probe_dir)
 
     FP_Intensities = CorrectionLoopResult["FP_Intensities"]
     meancontrast = CorrectionLoopResult["MeanDHContrast"]
     voltage_DMs = CorrectionLoopResult["voltage_DMs"]
     nb_total_iter = CorrectionLoopResult["nb_total_iter"]
     EF_estim = CorrectionLoopResult["EF_estim"]
+    EF_simul = CorrectionLoopResult["EF_simul"]
+    Probe_images = CorrectionLoopResult["Probes_images"]
+    Var_Err_EF = CorrectionLoopResult["Var_Err_EF"]
 
     # SAVING...
     header = from_param_to_header(config)
@@ -456,9 +495,16 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
 
     fits.writeto(os.path.join(result_dir, "Mean_Contrast_DH.fits"), np.array(meancontrast), header, overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, "estimationFP_RE.fits"), np.real(np.array(EF_estim)), header, overwrite=True)
+    fits.writeto(os.path.join(result_dir, "estimationFP_RE.fits"), np.squeeze(np.real(np.array(EF_estim))), header, overwrite=True)
 
-    fits.writeto(os.path.join(result_dir, "estimationFP_IM.fits"), np.imag(np.array(EF_estim)), header, overwrite=True)
+    fits.writeto(os.path.join(result_dir, "estimationFP_IM.fits"), np.squeeze(np.imag(np.array(EF_estim))), header, overwrite=True)
+
+    if probe_dir is not None and config["Estimationconfig"]["estimation"] != "Perfect":
+        fits.writeto(os.path.join(probe_dir, "probes.fits"), np.squeeze(np.array(Probe_images)), header, overwrite=True)
+
+        fits.writeto(os.path.join(probe_dir, "EF_FP_RE.fits"), np.squeeze(np.real(np.array(EF_simul))), header, overwrite=True)
+
+        fits.writeto(os.path.join(probe_dir, "EF_FP_IM.fits"), np.squeeze(np.imag(np.array(EF_simul))), header, overwrite=True)
 
     voltage_DMs_nparray = np.zeros((nb_total_iter, testbed.number_act))
 
@@ -519,3 +565,12 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                          type_of_contrast='mean',
                          mask_DH=MaskScience,
                          path=result_dir)
+
+    if probe_dir is not None and config["Estimationconfig"]["estimation"] != "Perfect":
+        plt.figure()
+        plt.plot(Var_Err_EF)
+        plt.yscale("log")
+        plt.xlabel("Number of iterations")
+        plt.ylabel("Variance error on estimated field ")
+        plt.savefig(os.path.join(probe_dir, "Probe_error_estim_in_DH.pdf"))
+        plt.close()

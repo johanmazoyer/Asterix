@@ -69,6 +69,7 @@ def runthd2(parameter_file_path,
             NewLoopconfig={},
             NewSIMUconfig={},
             silence=False,
+            save_probe=False,
             **kwargs):
     """
     Run a simulation of a correction loop for the THD2 testbed.
@@ -125,6 +126,11 @@ def runthd2(parameter_file_path,
     model_local_dir = os.path.join(data_dir, "Model_local")
     matrix_dir = os.path.join(data_dir, "Interaction_Matrices")
     result_dir = os.path.join(data_dir, "Results", name_experiment)
+
+    if save_probe:
+        probe_dir = os.path.join(result_dir, "Probes")
+    else:
+        probe_dir = None
 
     # Get git commit hash
     commit = get_git_description()
@@ -207,6 +213,7 @@ def runthd2(parameter_file_path,
                               EF_aberrations_introduced_in_LS=wavefront_in_LS,
                               initial_DM_voltage=0,
                               silence=silence,
+                              probe_dir=probe_dir,
                               **kwargs)
 
-    save_loop_results(results, config, thd2, science_mask_dh, result_dir, silence=silence)
+    save_loop_results(results, config, thd2, science_mask_dh, result_dir, silence=silence, probe_dir=probe_dir)

@@ -171,7 +171,7 @@ class Estimator:
 
             name_DM_to_probe_in_PW = Estimationconfig["name_DM_to_probe_in_PW"]
 
-            self.voltage_probes = wfs.generate_actu_probe_voltages(testbed, posprobes, amplitudePW,
+            self.voltage_probes = wfs.generate_probe_voltages(testbed, posprobes, amplitudePW,
                                                                    name_DM_to_probe_in_PW)
 
             self.PWMatrix = wfs.create_pw_matrix(testbed,
@@ -201,7 +201,10 @@ class Estimator:
 
                     for i in np.arange(len(posprobes)):
                         # TODO WTH is the hardcoded 17. @Raphael @Axel
-                        probes[i, posprobes[i]] = amplitudePW / 17
+                        if name_DM_to_probe_in_PW == 'DM1':
+                            probes[i, :] = self.voltage_probes[i][0:952] / 17
+                        if name_DM_to_probe_in_PW == 'DM2':
+                            probes[i, :] = self.voltage_probes[i][952:] / 17
                         vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
                                  self.dimEstim] = self.PWMatrix[k][:, 0, i].flatten()
                         vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *

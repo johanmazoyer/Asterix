@@ -107,9 +107,15 @@ Pair Wise Probing (PWP) Estimation
 
 The Pair wise probing estimation version we used is defined in 
 `Potier et al. (2020) <http://adsabs.harvard.edu/abs/2020A%26A...635A.192P>`_ 
-The probe used are actuators, which can be chosen using ``posprobes`` parameter. If you choose 
-2 random actuators, it can be useful to check the .fits file starting in *EigenValPW* in 
-Interaction_Matrices directory. This is the map of the inverse singular values for each 
+
+``probes_shape`` parameter allows the changement of the probe shape: "actu", "sinc", "gaussian".
+If gaussian, thw width of the gaussian can be changed usgin the parameter ``Sigma_probe``.
+
+The position of the probes (number of the actuator on which is centered the probe)
+can be chosen using ``posprobes`` parameter.
+
+It can be useful to check the .fits file starting in *EigenValPW* in
+Interaction_Matrices directory. This is the map of the inverse singular values for each
 pixels and it shows if all of the part of the DH are covered by the estimation (see Fig. 4 in Potier et al. 2020).
 
 Bordé & Traub Probing (BTP) Estimation

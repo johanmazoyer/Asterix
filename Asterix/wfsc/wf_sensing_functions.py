@@ -213,23 +213,16 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, w
     bool_already_existing_matrix :bool
         If there is no identical matrix already saved in fits file.
     """
-    posprobes = []
 
     # we identify the position and amplitude of the probes
 
-    for voltage_probe in voltage_probes:
-        # we find the DM used to probe
-        for DM_name in testbed.name_of_DMs:
-            DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
-            if (DMvoltage == 0).all():
-                continue
-            else:
-                name_DM_to_probe_in_PW = DM_name
-                amplitude = np.max(DMvoltage)
-                posprobes.append(np.where(DMvoltage > 0)[0][0])
+    probe_type = testbed.config_file["Estimationconfig"]["probes_shape"]
+    posprobes = testbed.config_file["Estimationconfig"]["posprobes"]
+    name_DM_to_probe_in_PW = testbed.config_file["Estimationconfig"]["name_DM_to_probe_in_PW"]
+    amplitudePW = testbed.config_file["Estimationconfig"]["amplitudePW"]
 
-    string_dims_PWMatrix = name_DM_to_probe_in_PW + "Prob" + "_".join(map(str, posprobes)) + "_PWampl" + str(
-        int(amplitude)) + "_cut" + str(int(
+    string_dims_PWMatrix = name_DM_to_probe_in_PW + "Prob_" + probe_type + "_" + "_".join(map(str, posprobes)) + "_PWampl" + str(
+        int(amplitudePW)) + "_cut" + str(int(
             cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + "_resFP" + str(
                 round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
                     int(wavelength * 1e9))
@@ -246,7 +239,7 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, voltage_probes, cutsvd, w
         necessary_estim_param['name_DM_to_probe_in_PW'] = name_DM_to_probe_in_PW
         necessary_estim_param['dimEstim'] = dimEstim
         necessary_estim_param['Estim_bin_factor'] = testbed.config_file["Estimationconfig"]["Estim_bin_factor"]
-        necessary_estim_param['amplitudePW'] = amplitude
+        necessary_estim_param['amplitudePW'] = amplitudePW
         necessary_estim_param['posprobes'] = posprobes
         necessary_estim_param['cutsvd'] = cutsvd
 
@@ -349,9 +342,8 @@ def calculate_pw_estimate(Difference,
         raise ValueError("pwp_or_btp parameter can only take 2 values 'pwp' for Pair Wise Probing "
                          "or 'btp' for Borde Traub Probing")
 
-
-def generate_actu_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to_probe_in_PW):
-    """Generate the DM commands for each actuator probes.
+def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to_probe_in_PW):
+    """Generate the DM commands for each probes.
 
     Parameters
     ----------
@@ -368,17 +360,74 @@ def generate_actu_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_
         Array of voltages vectors for each probes
     """
 
+    # Checking which type of probes is used
+    probe_type = testbed.config_file["Estimationconfig"]["probes_shape"]
+
+    if probe_type == "actu":
+        DM_probe: DeformableMirror = vars(testbed)[name_DM_to_probe_in_PW]
+
+        probes_flatten = np.zeros((len(posprobes), DM_probe.number_act))
+        probes_flatten[np.arange(len(posprobes)), posprobes] = amplitudePW
+
+    elif probe_type == "gaussian":
+        Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW + "_Nact1D"]
+        sigma_probe = float(testbed.config_file["Estimationconfig"]["Sigma_probe"])
+        # Euclidian distance to 0,0
+        y, x = np.ogrid[:Nact_across, :Nact_across]
+        cy, cx = Nact_across // 2, Nact_across // 2
+        dist0 = np.sqrt((x - cx)**2 + (y - cy)**2)
+
+        # Gaussian calculation
+        gaussian0 = np.exp(-(dist0**2) / (2 * sigma_probe**2)) * amplitudePW
+
+        probes_flatten = []
+        for count, num_probe in enumerate(posprobes):
+            ypos, xpos = np.unravel_index(num_probe, dist0.shape)
+            # shifting of to a given position
+            shifted_gaussian = np.roll(gaussian0, shift=(ypos - cy, xpos - cx), axis=(0, 1))
+            probes_flatten.append(shifted_gaussian.flatten())
+
+    elif probe_type == "sinc":
+        Nact_across = testbed.config_file["DMconfig"][name_DM_to_probe_in_PW + "_Nact1D"]
+
+        # defining the position of the actuators from the number in vector position.
+        shape2d = (Nact_across, Nact_across)
+        ypos0, xpos0 = np.array(np.unravel_index(posprobes[0], shape2d)) / Nact_across - 0.5
+        vect1d = (np.arange(Nact_across) + 0.5) / Nact_across - 0.5  # get a centered value between actuators
+        xpos = vect1d - xpos0
+        ypos = vect1d - ypos0
+
+        _, OWA = testbed.config_file["Correctionconfig"]["Sep_Min_Max"]
+        IWA = 0.  # forced to zero according to Cady et al. 2025
+        sinc_freq1 = (OWA - IWA) * 1.1   # cycles per DM --> OWA-IWA + margin (half-DH box size)
+        sinc_freq2 = min(2.2 * OWA, Nact_across)  # cycles per DM --> (large width box size)
+        sine_freq = (OWA + IWA) / 2 * 1.1    # cycles per DM --> (OWA + IWA) / 2 + margin (shifting vector of the HDH boxes)
+
+        xx_A, yy_A = np.meshgrid(xpos * sinc_freq1, ypos * sinc_freq2)
+        xx_B, yy_B = np.meshgrid(xpos * sinc_freq2, ypos * sinc_freq2)
+        xx_C, yy_C = np.meshgrid(xpos * sinc_freq2, ypos * sinc_freq1)
+
+        xx_sine, yy_sine = np.meshgrid(xpos * 2 * np.pi * sine_freq, ypos * 2 * np.pi * sine_freq)
+
+        probe1 = amplitudePW * np.sinc(xx_A) * np.sinc(yy_A) * np.sin(xx_sine)
+        probe2 = amplitudePW * np.sinc(xx_B) * np.sinc(yy_B)
+        probe3 = amplitudePW * np.sinc(xx_C) * np.sinc(yy_C) * np.sin(yy_sine)
+        probes_flatten = []
+
+        probes_flatten.append(probe1.flatten())
+        probes_flatten.append(probe2.flatten())
+        probes_flatten.append(probe3.flatten())
+
+    else:
+        raise ValueError(f"Probe type: " + probe_type + " => does not exist")
+
     voltage_probes = np.zeros((len(posprobes), testbed.number_act))
-    DM_probe: DeformableMirror = vars(testbed)[name_DM_to_probe_in_PW]
-
     for count, num_probe in enumerate(posprobes):
-        Voltage_probe_indiv_DM = np.zeros(DM_probe.number_act)
-        Voltage_probe_indiv_DM[num_probe] = amplitudePW
-
-        voltage_probes[count] = testbed.indiv_DM_voltage_to_testbed_voltage(Voltage_probe_indiv_DM,
+        voltage_probes[count] = testbed.indiv_DM_voltage_to_testbed_voltage(probes_flatten[count],
                                                                             name_DM_to_probe_in_PW)
 
     return voltage_probes
+
 
 
 def simulate_pw_probes(input_wavefront,
