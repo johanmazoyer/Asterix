@@ -508,7 +508,7 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
     # Some string manips to name the matrix if we save it
     if not SmallPhaseHypEFC == 'perfect':
         headfile = "DirectMat"
-    elif SmallPhaseHypEFC :
+    elif SmallPhaseHypEFC:
         headfile = "DirectMat_SmallPha"
     else:
         raise ValueError("Small Hypothesis is True or False([Correctionconfig]['SmallPhaseHypEFC'] parameter).")

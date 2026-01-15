@@ -268,7 +268,7 @@ class Corrector:
             will use the self.MaskEstim attribute defined in the Corrector initialization.
         initial_DM_voltage : 1D-array real
             a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
-        initial_estimated_wavefront : 2D complex array or complex scalar. Default is 1 (flat WF)        
+        initial_estimated_wavefront : 2D complex array or complex scalar. Default is 1 (flat WF)
             a wavefront in pupil plane (likely estimated using some phase diversity) around
             which the basis modes will be pushed to create the matrix.
         silence : boolean, default False.
