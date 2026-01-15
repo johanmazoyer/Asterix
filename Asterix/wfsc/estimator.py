@@ -167,7 +167,7 @@ class Estimator:
 
             amplitudePW = Estimationconfig["amplitudePW"]
             posprobes = list(Estimationconfig["posprobes"])
-            cutsvdPW = Estimationconfig["cut"]
+            self.cutsvdPW = Estimationconfig["cut"]
 
             name_DM_to_probe_in_PW = Estimationconfig["name_DM_to_probe_in_PW"]
 
@@ -177,9 +177,9 @@ class Estimator:
             self.PWMatrix = wfs.create_pw_matrix(testbed,
                                                  self.voltage_probes,
                                                  self.dimEstim,
-                                                 cutsvdPW,
-                                                 matrix_dir,
-                                                 self.wav_vec_estim,
+                                                 self.cutsvdPW,
+                                                 wav_vec_estim=self.wav_vec_estim,
+                                                 matrix_dir=matrix_dir,
                                                  silence=silence)
 
             # Saving PWP matrix in Labview directory
