@@ -5,9 +5,9 @@ import numpy as np
 
 from astropy.io import fits
 
-from Asterix.utils import resizing, invert_svd, save_plane_in_fits, from_param_to_header
+from Asterix.utils import resizing, invert_svd, save_plane_in_fits, from_param_to_header, crop_or_pad_image
 from Asterix.optics import DeformableMirror, Testbed
-
+import Asterix.optics.propagation_functions as prop
 
 def create_pw_matrix(testbed: Testbed,
                      voltage_probes,
@@ -160,6 +160,19 @@ def create_singlewl_pw_matrix(testbed: Testbed,
                 continue
             else:
                 probephase = DM.voltage_to_phase(DMvoltage)
+                if DM.z_position == 0:
+                    wf_DM = 1 + 1j * probephase
+                else:
+                    # we can introduce a phase on the out of plane DM,
+                    # but there is really no simple way to introduce an EF in this plane
+                    # with the current formalism unless we recode the prop_angular_spectrum
+                    wf_DM = crop_or_pad_image(
+                        prop.prop_angular_spectrum(1 + 1j * probephase,
+                                       wavelength,
+                                       -DM.z_position,
+                                       DM.diam_pup_in_m / 2.,
+                                       DM.prad,
+                                       dtype_complex=DM.dtype_complex), DM.dim_overpad_pupil)
                 break
 
         # for PWP the probes are not sent in the DM but at the entrance of the testbed.
@@ -168,7 +181,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         # (coronagraph does not "remove the 1 exactly")
         # **kwarg is here to send dir_save_all_planes
         deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=initial_estimated_wavefront * (1 + 1j * probephase),
+            testbed.todetector(entrance_EF=initial_estimated_wavefront * wf_DM,
                                voltage_vector=initial_DM_voltage,
                                wavelength=wavelength,
                                in_contrast=True,
@@ -281,7 +294,7 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, cutsvd, wavelength, matri
     # using the same set of parameters
     if matrix_dir is None:
         bool_already_existing_matrix = False
-    if os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
+    elif os.path.exists(os.path.join(matrix_dir, filePW + ".fits")):
         header_existing = fits.getheader(os.path.join(matrix_dir, filePW + ".fits"))
         # remove the basic kw created automatically  when saving the fits file
         for keyw in ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2', 'NAXIS3']:

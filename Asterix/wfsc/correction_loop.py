@@ -118,13 +118,15 @@ def correction_loop(testbed: Testbed,
 
         if i > 0:
             corrector.update_matrices(testbed, initial_DM_voltage=initial_DM_voltage, silence=silence)
-            estimator.PWMatrix = wfs.create_pw_matrix(testbed,
-                                                      estimator.voltage_probes,
-                                                      estimator.dimEstim,
-                                                      estimator.cutsvdPW,
-                                                      estimator.wav_vec_estim,
-                                                      initial_DM_voltage=initial_DM_voltage,
-                                                      silence=silence)
+
+            if estimator.technique in ["pairwise", "pw", "pwp", "btp"]:
+                estimator.PWMatrix = wfs.create_pw_matrix(testbed,
+                                                        estimator.voltage_probes,
+                                                        estimator.dimEstim,
+                                                        estimator.cutsvdPW,
+                                                        estimator.wav_vec_estim,
+                                                        initial_DM_voltage=initial_DM_voltage,
+                                                        silence=silence)
 
         Resultats_correction_loop = correction_loop_1matrix(testbed,
                                                             estimator,
