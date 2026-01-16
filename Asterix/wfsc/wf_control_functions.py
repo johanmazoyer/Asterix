@@ -54,7 +54,7 @@ def create_interaction_matrix(testbed: Testbed,
         path to directory to save all the matrices here
     SmallPhaseHypEFC : Bool, default True
         If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
-        If False 'perfect' (we keep exp(i phi)).
+        If False we keep exp(i phi).
         In both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
     wav_vec_estim : list of wavelengths, default: [testbed.wavelength_0]
@@ -154,7 +154,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
         path to directory to save all the matrices here
     SmallPhaseHypEFC : Bool, default True
         If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
-        If False 'perfect' (we keep exp(i phi)).
+        If False we keep exp(i phi).
         In both case, if the DMs are not initially flat (non zero initial_DM_voltage),
         we do not make the small phase assumption for initial DM phase
     initial_DM_voltage : 1D-array real
@@ -487,7 +487,7 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
         amplitude of the EFC probe on the DM
     SmallPhaseHypEFC : Bool, default True
         If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
-        If False 'perfect' (we keep exp(i phi)).
+        If False : we keep exp(i phi).
     dimEstim: int
         size of the output image in teh estimator
     wavelength : float
@@ -506,7 +506,7 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
     """
 
     # Some string manips to name the matrix if we save it
-    if not SmallPhaseHypEFC == 'perfect':
+    if not SmallPhaseHypEFC:
         headfile = "DirectMat"
     elif SmallPhaseHypEFC:
         headfile = "DirectMat_SmallPha"

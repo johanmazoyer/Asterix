@@ -166,6 +166,7 @@ class Estimator:
             self.is_complex = True
 
             amplitudePW = Estimationconfig["amplitudePW"]
+            SmallPhaseHypPWP = Estimationconfig["SmallPhaseHypPWP"]
             posprobes = list(Estimationconfig["posprobes"])
             self.cutsvdPW = Estimationconfig["cut"]
 
@@ -180,6 +181,7 @@ class Estimator:
                                                  self.cutsvdPW,
                                                  wav_vec_estim=self.wav_vec_estim,
                                                  matrix_dir=matrix_dir,
+                                                 SmallPhaseHypPWP=SmallPhaseHypPWP,
                                                  silence=silence)
 
             # Saving PWP matrix in Labview directory

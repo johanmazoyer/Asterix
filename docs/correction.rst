@@ -70,7 +70,7 @@ There are two main parameters for this part:
 - ``DM_basis`` define the actuator basis that you use to describe the DM movement when building the matrix. It can currenlty takes 2 modes: "actuator" (all actuators are pushed one after another) and "fourier",  where we use sine and cosine. Finally, there is a ``amplitudeEFC`` parameter in "actuator" mode which set the level to which you can push the actuators.
 - ``SmallPhaseHypEFC`` is defining the if we do the small phase hypothesis for the basis vectors in the EFC matrix. 
     If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
-    If False 'perfect' (we keep exp(i phi)).
+    If False : we keep exp(i phi).
     In both case, if the DMs are not initially flat (non zero initial_DM_voltage),
     we do not make the small phase assumption for initial DM phase
 

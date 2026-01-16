@@ -9,6 +9,7 @@ from Asterix.utils import resizing, invert_svd, save_plane_in_fits, from_param_t
 from Asterix.optics import DeformableMirror, Testbed
 import Asterix.optics.propagation_functions as prop
 
+
 def create_pw_matrix(testbed: Testbed,
                      voltage_probes,
                      dimEstim,
@@ -17,6 +18,7 @@ def create_pw_matrix(testbed: Testbed,
                      matrix_dir=None,
                      initial_DM_voltage=0.,
                      initial_estimated_wavefront=1.,
+                     SmallPhaseHypPWP=True,
                      silence=False,
                      **kwargs):
     """Build the nbwl times interaction matrix for pair-wise probing.
@@ -46,6 +48,11 @@ def create_pw_matrix(testbed: Testbed,
         which the probes will be pushed to create the matrix.
     wav_vec_estim : list of float, default None
         list of wavelengths to do the estimations.
+    SmallPhaseHypPWP : Bool, default True
+        If True : when applying probe on the DMs we, do a small phase assumption : exp(i phi_probe) = 1+ i.phi_probe
+        If False (we keep exp(i phi_probe)).
+        In both case, if the DMs are not initially flat (non zero initial_DM_voltage/initial_estimated_wavefront),
+        we do not make the small phase assumption for initial DM phase
     silence : boolean, default False.
         Whether to silence print outputs.
 
@@ -70,6 +77,7 @@ def create_pw_matrix(testbed: Testbed,
                                       matrix_dir=matrix_dir,
                                       initial_DM_voltage=initial_DM_voltage,
                                       initial_estimated_wavefront=initial_estimated_wavefront,
+                                      SmallPhaseHypPWP=SmallPhaseHypPWP,
                                       silence=silence,
                                       **kwargs))
 
@@ -84,6 +92,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
                               matrix_dir=None,
                               initial_DM_voltage=0.,
                               initial_estimated_wavefront=1.,
+                              SmallPhaseHypPWP=True,
                               silence=False,
                               **kwargs):
     """Build the interaction matrix for pair-wise probing at 1 WL.
@@ -114,6 +123,11 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     initial_estimated_wavefront : complex scalar or 2d complex array or 3d complex array.
         a wavefront in pupil plane (likely estimated using some phase diversity) around
         which the probes will be pushed to create the matrix.
+    SmallPhaseHypPWP : Bool, default True
+        If True : when applying probe on the DMs we, do a small phase assumption : exp(i phi_probe) = 1+ i.phi_probe
+        If False (we keep exp(i phi_probe)).
+        In both case, if the DMs are not initially flat (non zero initial_DM_voltage/initial_estimated_wavefront),
+        we do not make the small phase assumption for initial DM phase
     silence : boolean, default False.
         Whether to silence print outputs.
 
@@ -124,8 +138,8 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         matrix in order to retrieve the focal plane electric field
     """
 
-    filePW, header_expected, bool_already_existing_matrix = name_header_pwp_matrix(testbed, dimEstim,
-                                                                                    cutsvd, wavelength, matrix_dir)
+    filePW, header_expected, bool_already_existing_matrix = name_header_pwp_matrix(testbed, dimEstim, cutsvd,
+                                                                                   wavelength, matrix_dir)
 
     if bool_already_existing_matrix:
         # there is already a really identical matrix calculated, we just load the old matrix fits file.
@@ -147,39 +161,55 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     PWMatrix = np.zeros((dimEstim**2, 2, numprobe))
     SVD = np.zeros((2, dimEstim, dimEstim))
 
-    psi0 = testbed.todetector(entrance_EF=initial_estimated_wavefront, wavelength=wavelength, voltage_vector=initial_DM_voltage, in_contrast=True)
+    psi0 = testbed.todetector(entrance_EF=initial_estimated_wavefront,
+                              wavelength=wavelength,
+                              voltage_vector=initial_DM_voltage,
+                              in_contrast=True)
 
     k = 0
 
     for voltage_probe in voltage_probes:
-        # we find the DM used to probe
+
+        if not SmallPhaseHypPWP:
+            # easy case, we just send the probe phase to the DM by changeing the
+            # testbed voltage.
+            # **kwarg is here to send dir_save_all_planes
+            deltapsik[k] = resizing(
+                testbed.todetector(entrance_EF=initial_estimated_wavefront,
+                                   voltage_vector=initial_DM_voltage + voltage_probe,
+                                   wavelength=wavelength,
+                                   in_contrast=True,
+                                   **kwargs) - psi0, dimEstim)
+            continue
+        # If we want to introduce the probe with small phase hypothesis, we need
+        # to identify the right plane and therefore the DM used to probe
         for DM_name in testbed.name_of_DMs:
             DM: DeformableMirror = vars(testbed)[DM_name]
             DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
             if (DMvoltage == 0).all():
+                # this is not the probing DM, going to next DM
                 continue
             else:
+                # this is the probing DM
                 probephase = DM.voltage_to_phase(DMvoltage)
                 if DM.z_position == 0:
+                    # DM is in PP, easy
+                    # I tried to remove "1+"". It breaks the code
+                    # (coronagraph does not "remove the 1 exactly")
                     wf_DM = 1 + 1j * probephase
                 else:
                     # we can introduce a phase on the out of plane DM,
                     # but there is really no simple way to introduce an EF in this plane
-                    # with the current formalism unless we recode the prop_angular_spectrum
+                    # with the current formalism, unless we use the fresnel prop directly
                     wf_DM = crop_or_pad_image(
                         prop.prop_angular_spectrum(1 + 1j * probephase,
-                                       wavelength,
-                                       -DM.z_position,
-                                       DM.diam_pup_in_m / 2.,
-                                       DM.prad,
-                                       dtype_complex=DM.dtype_complex), DM.dim_overpad_pupil)
+                                                   wavelength,
+                                                   -DM.z_position,
+                                                   DM.diam_pup_in_m / 2.,
+                                                   DM.prad,
+                                                   dtype_complex=DM.dtype_complex), DM.dim_overpad_pupil)
                 break
-
-        # for PWP the probes are not sent in the DM but at the entrance of the testbed.
-        # with an hypothesis of small phase.
-        # I tried to remove "1+"". It breaks the code
-        # (coronagraph does not "remove the 1 exactly")
-        # **kwarg is here to send dir_save_all_planes
+            # WF is then put at the testbed entrance
         deltapsik[k] = resizing(
             testbed.todetector(entrance_EF=initial_estimated_wavefront * wf_DM,
                                voltage_vector=initial_DM_voltage,
@@ -435,7 +465,8 @@ def generate_probe_voltages(testbed: Testbed, posprobes, amplitudePW, name_DM_to
         IWA = 0.  # forced to zero according to Cady et al. 2025
         sinc_freq1 = (OWA - IWA) * 1.1  # cycles per DM --> OWA-IWA + margin (half-DH box size)
         sinc_freq2 = min(2.2 * OWA, Nact_across)  # cycles per DM --> (large width box size)
-        sine_freq = (OWA + IWA) / 2 * 1.1  # cycles per DM --> (OWA + IWA) / 2 + margin (shifting vector of the HDH boxes)
+        sine_freq = (OWA +
+                     IWA) / 2 * 1.1  # cycles per DM --> (OWA + IWA) / 2 + margin (shifting vector of the HDH boxes)
 
         xx_A, yy_A = np.meshgrid(xpos * sinc_freq1, ypos * sinc_freq2)
         xx_B, yy_B = np.meshgrid(xpos * sinc_freq2, ypos * sinc_freq2)
