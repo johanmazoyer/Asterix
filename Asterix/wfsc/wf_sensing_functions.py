@@ -138,21 +138,12 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         matrix in order to retrieve the focal plane electric field
     """
 
-    filePW, header_expected, bool_already_existing_matrix = name_header_pwp_matrix(testbed, dimEstim, cutsvd,
-                                                                                   wavelength, matrix_dir)
+    filePW, header_expected, _ = name_header_pwp_matrix(testbed, dimEstim, cutsvd, wavelength, matrix_dir)
 
-    if bool_already_existing_matrix:
-        # there is already a really identical matrix calculated, we just load the old matrix fits file.
-        if not silence:
-            print("")
-            print("Load " + filePW + ".fits file")
-
-        return fits.getdata(os.path.join(matrix_dir, filePW + ".fits"))
-
-    # there is no matrix measured with the same parameters, we recalculate
+    # PWP matrix is so short, we always recalculate
     start_time = time.time()
     if not silence:
-        print("The PWmatrix " + filePW + " does not exists")
+        print("The PWmatrix " + filePW)
         print("Start PWP matrix" + ' at ' + str(int(wavelength * 1e9)) + "nm (wait a few seconds)")
 
     numprobe = len(voltage_probes)
@@ -281,6 +272,7 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, cutsvd, wavelength, matri
     posprobes = testbed.config_file["Estimationconfig"]["posprobes"]
     name_DM_to_probe_in_PW = testbed.config_file["Estimationconfig"]["name_DM_to_probe_in_PW"]
     amplitudePW = testbed.config_file["Estimationconfig"]["amplitudePW"]
+    SmallPhaseHypPWP = testbed.config_file["Estimationconfig"]["SmallPhaseHypPWP"]
 
     string_dims_PWMatrix = name_DM_to_probe_in_PW + "Prob_" + probe_type + "_" + "_".join(map(
         str, posprobes)) + "_PWampl" + str(int(amplitudePW)) + "_cut" + str(int(
@@ -288,7 +280,10 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, cutsvd, wavelength, matri
                 round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
                     int(wavelength * 1e9))
 
-    filePW = "MatPW_" + string_dims_PWMatrix
+    if SmallPhaseHypPWP:
+        filePW = "MatPW_SmallPha_" + string_dims_PWMatrix
+    else:
+        filePW = "MatPW_" + string_dims_PWMatrix
 
     header = fits.Header()
     header.insert(0, ('date_mat', datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "matrix creation date"))
