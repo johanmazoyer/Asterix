@@ -109,7 +109,7 @@ The Pair wise probing estimation version we used is defined in
 `Potier et al. (2020) <http://adsabs.harvard.edu/abs/2020A%26A...635A.192P>`_ 
 
 ``probes_shape`` parameter allows the changement of the probe shape: "actu", "sinc", "gaussian".
-If gaussian, thw width of the gaussian can be changed usgin the parameter ``Sigma_probe``.
+If gaussian, thw width of the gaussian can be changed usgin the parameter ``sigma_probe``.
 
 The position of the probes (number of the actuator on which is centered the probe)
 can be chosen using ``posprobes`` parameter.

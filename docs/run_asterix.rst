@@ -217,7 +217,7 @@ If ``estimation`` = 'pwp' or 'btp':
 
     - ``name_DM_to_probe_in_PW`` : str, Name of the DM used for PWP.
     - ``probes_shape`` : str, shape of the probes. can be "actu", "sinc", "gaussian"
-    - ``Sigma_probe`` : float, Sigma value in pitch value of the gaussian (if probes_shape = "gaussian")
+    - ``sigma_probe`` : float, Sigma value in pitch value of the gaussian (if probes_shape = "gaussian")
     - ``amplitudePW`` : float, Amplitude of PWP probes or BTP (in nm).
     - ``posprobes`` : list of int, Actuators used for PWP or BTP (DM in pupil plane).
     - ``cut`` : float, Threshold to remove pixels with bad estimation of the electric field.
