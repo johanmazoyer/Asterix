@@ -117,7 +117,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     wavelength : float
         wavelength in m.
     matrix_dir : string, default None
-        path to directory to save all the matrices here. If None, matrix is not saved
+        path to directory to save all the matrices here. If None, matrix is not saved.
     initial_DM_voltage : 1D-array real, default 1.0 (flat WF)
         a vector voltage (for all DMs) around which the probes will be pushed to create the matrix.
     initial_estimated_wavefront : complex scalar (uniform WF) or 2d complex array (monochromatic) or 3d complex array (polychromatic), default 1.
@@ -176,37 +176,52 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         # to identify the right plane and therefore the DM used to probe
         for DM_name in testbed.name_of_DMs:
             DM: DeformableMirror = vars(testbed)[DM_name]
-            DMvoltage = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
-            if (DMvoltage == 0).all():
+            indiv_DM_voltage_probe = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_probe, DM_name)
+            if (indiv_DM_voltage_probe == 0).all():
                 # this is not the probing DM, going to next DM
                 continue
             else:
                 # this is the probing DM
-                probephase = DM.voltage_to_phase(DMvoltage)
+                indiv_DM_phase_probe = DM.voltage_to_phase(indiv_DM_voltage_probe)
                 if DM.z_position == 0:
                     # DM is in PP, easy
                     # I tried to remove "1+"". It breaks the code
                     # (coronagraph does not "remove the 1 exactly")
-                    wf_DM = 1 + 1j * probephase
+                    deltapsik[k] = resizing(
+                        testbed.todetector(entrance_EF=(1 + 1j * indiv_DM_phase_probe) * initial_estimated_wavefront,
+                                           voltage_vector=initial_DM_voltage,
+                                           wavelength=wavelength,
+                                           in_contrast=True,
+                                           **kwargs) - psi0, dimEstim)
                 else:
                     # we can introduce a phase on the out of plane DM,
                     # but there is really no simple way to introduce an EF in this plane
-                    # with the current formalism, unless we use the fresnel prop directly
-                    wf_DM = crop_or_pad_image(
-                        prop.prop_angular_spectrum(1 + 1j * probephase,
-                                                   wavelength,
-                                                   -DM.z_position,
-                                                   DM.diam_pup_in_m / 2.,
-                                                   DM.prad,
-                                                   dtype_complex=DM.dtype_complex), DM.dim_overpad_pupil)
+                    # with the current formalism, unless we use the fresnel prop directly.
+
+                    # we isolate the phase introduced by the probing DM initial voltage
+                    initial_probingDM_voltage = testbed.testbed_voltage_to_indiv_DM_voltage(initial_DM_voltage, DM_name)
+                    initial_probingDM_phase = DM.voltage_to_phase(initial_probingDM_voltage)
+
+                    wf_probing_DM = crop_or_pad_image(
+                        prop.prop_angular_spectrum(
+                            (1 + 1j * indiv_DM_phase_probe) *
+                            DM.EF_from_phase_and_ampl(phase_abb=initial_probingDM_phase, wavelengths=wavelength),
+                            wavelength,
+                            -DM.z_position,
+                            DM.diam_pup_in_m / 2.,
+                            DM.prad,
+                            dtype_complex=DM.dtype_complex), DM.dim_overpad_pupil)
+
+                    # We propagate but remove from initial_DM_voltage the part that was already introduced by the probing DM
+                    deltapsik[k] = resizing(
+                        testbed.todetector(
+                            entrance_EF=initial_estimated_wavefront * wf_probing_DM,
+                            voltage_vector=initial_DM_voltage -
+                            testbed.indiv_DM_voltage_to_testbed_voltage(initial_probingDM_voltage, DM_name),
+                            wavelength=wavelength,
+                            in_contrast=True,
+                            **kwargs) - psi0, dimEstim)
                 break
-            # WF is then put at the testbed entrance
-        deltapsik[k] = resizing(
-            testbed.todetector(entrance_EF=initial_estimated_wavefront * wf_DM,
-                               voltage_vector=initial_DM_voltage,
-                               wavelength=wavelength,
-                               in_contrast=True,
-                               **kwargs) - psi0, dimEstim)
 
         k = k + 1
 
