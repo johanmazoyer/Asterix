@@ -43,7 +43,7 @@ def create_pw_matrix(testbed: Testbed,
         path to directory to save all the matrices here. If None, matrix is not saved.
     initial_DM_voltage : 1D-array real, default 1.0 (flat WF)
         a vector voltage (for all DMs) around which the probes will be pushed to create the matrix.
-    initial_estimated_wavefront : complex scalar or 2d complex array or 3d complex array.
+    initial_estimated_wavefront : complex scalar (uniform WF) or 2d complex array (monochromatic) or 3d complex array (polychromatic), default 1.
         a wavefront in pupil plane (likely estimated using some phase diversity) around
         which the probes will be pushed to create the matrix.
     wav_vec_estim : list of float, default None
@@ -120,7 +120,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
         path to directory to save all the matrices here. If None, matrix is not saved
     initial_DM_voltage : 1D-array real, default 1.0 (flat WF)
         a vector voltage (for all DMs) around which the probes will be pushed to create the matrix.
-    initial_estimated_wavefront : complex scalar or 2d complex array or 3d complex array.
+    initial_estimated_wavefront : complex scalar (uniform WF) or 2d complex array (monochromatic) or 3d complex array (polychromatic), default 1.
         a wavefront in pupil plane (likely estimated using some phase diversity) around
         which the probes will be pushed to create the matrix.
     SmallPhaseHypPWP : Bool, default True
@@ -162,7 +162,7 @@ def create_singlewl_pw_matrix(testbed: Testbed,
     for voltage_probe in voltage_probes:
 
         if not SmallPhaseHypPWP:
-            # easy case, we just send the probe phase to the DM by changeing the
+            # easy case, we just send the probe phase to the DM by changing the
             # testbed voltage.
             # **kwarg is here to send dir_save_all_planes
             deltapsik[k] = resizing(
@@ -500,7 +500,7 @@ def simulate_pw_probes(input_wavefront,
 
     Parameters
     ----------
-    input_wavefront : complex scalar or 2d complex array or 3d complex array, default is 1 (flat WF)
+    input_wavefront : complex scalar (uniform WF) or 2d complex array (monochromatic) or 3d complex array (polychromatic)
         Input wavefront in pupil plane.
     testbed : Testbed Optical_element
         Testbed with one or more DM.

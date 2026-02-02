@@ -231,8 +231,8 @@ class Corrector:
                          overwrite=True)
 
         # Adding error on the DM model. Now that the matrix is measured, we can
-        # introduce a small movememnt on one DM or the other. By changeing DM_pushact
-        # we are changeing the position of the actuator and therfore the phase of the
+        # introduce a small movememnt on one DM or the other. By changing DM_pushact
+        # we are changing the position of the actuator and therfore the phase of the
         # DM for a given voltage when using DM.voltage_to_phase
 
         for DM_name in testbed.name_of_DMs:

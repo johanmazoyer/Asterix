@@ -61,7 +61,7 @@ def create_interaction_matrix(testbed: Testbed,
             vector of wavelengths for polychromatic correction
     initial_DM_voltage : 1D-array real, default 1.0 (flat WF)
         a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
-    initial_estimated_wavefront : complex scalar or 2d complex array or 3d complex array.
+    initial_estimated_wavefront : complex scalar (uniform WF) or 2d complex array (monochromatic) or 3d complex array (polychromatic), default 1.
         a wavefront in pupil plane (likely estimated using some phase diversity) around
         which the basis modes will be pushed to create the matrix.
     dir_save_all_planes : string or None, default None
@@ -445,7 +445,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 InterMat[:dimEstim**2, pos_in_matrix + i] = np.real(Gvector).flatten()
                 InterMat[dimEstim**2:, pos_in_matrix + i] = np.imag(Gvector).flatten()
                 # Note that we do not crop to DH. This is done after so that we can change DH more easily
-                # without changeing the matrix
+                # without changing the matrix
 
             if visu:
                 plt.close()
