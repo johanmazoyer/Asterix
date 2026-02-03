@@ -360,7 +360,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                                        DM.prad,
                                                        dtype_complex=testbed.dtype_complex), DM.dim_overpad_pupil)
 
-                if SmallPhaseHypEFC:
+                else:
                     # TODO we added a 1+ which was initially in Axel's code and that was
                     # removed. Need to be tested with and without on the testbed
                     if DM.z_position == 0:
