@@ -199,7 +199,10 @@ def create_singlewl_pw_matrix(testbed: Testbed,
                     # with the current formalism, unless we use the fresnel prop directly.
 
                     # we isolate the phase introduced by the probing DM initial voltage
-                    initial_probingDM_voltage = testbed.testbed_voltage_to_indiv_DM_voltage(initial_DM_voltage, DM_name)
+                    if isinstance(initial_DM_voltage, (int, float)):
+                        initial_probingDM_voltage = np.zeros(DM.number_act) + float(initial_DM_voltage)
+                    else: 
+                        initial_probingDM_voltage =testbed.testbed_voltage_to_indiv_DM_voltage(initial_DM_voltage, DM_name)
                     initial_probingDM_phase = DM.voltage_to_phase(initial_probingDM_voltage)
 
                     wf_probing_DM = crop_or_pad_image(
