@@ -219,6 +219,7 @@ If ``estimation`` = 'pwp' or 'btp':
     - ``probes_shape`` : str, shape of the probes. can be "actu", "sinc", "gaussian"
     - ``sigma_probe`` : float, Sigma value in pitch value of the gaussian (if probes_shape = "gaussian")
     - ``amplitudePW`` : float, Amplitude of PWP probes or BTP (in nm).
+    - ``SmallPhaseHypPWP`` : Small phase hypothesis in the pwp matrix. If True in PWP exp(i phi_probe) = 1+ i.phi_probe. Else  exp(i.phi_probe).
     - ``posprobes`` : list of int, Actuators used for PWP or BTP (DM in pupil plane).
     - ``cut`` : float, Threshold to remove pixels with bad estimation of the electric field.
 
@@ -243,7 +244,8 @@ If ``DH_shape`` == 'circle':
 Matrix parameters:
 
     - ``DM_basis`` : string, Actuator basis. Currently 'fourier' or 'actuator'. Same parameter for all DMs. Not case sensitive.
-    - ``MatrixType`` : string, Type of matrix : Either 'Perfect' Matrix (``exp(i.(phi_DM+phi))``) or a 'SmallPhase' aberration matrix (``phi_DM.exp(i.phi)``). Not totally sure what change. Not case sensitive.
+    - ``SmallPhaseHypEFCEFC`` : Bool, small phase hypothesis. If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi_basis) = 1+ i.phi_basis. If False we keep exp(i phi_basis).
+                        In both case, if the DMs are not initially flat (non zero initial_DM_voltage), we do not make the small phase assumption for initial DM phase.
     - ``correction_algorithm`` : 'efc' for Electric Field Conjugation, 'em' for Energy Minimization, 'sm' for Stroke Minimization, or 'steepest'. Not case sensitive.
 
 If EFC:

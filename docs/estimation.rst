@@ -112,7 +112,8 @@ The Pair wise probing estimation version we used is defined in
 If gaussian, thw width of the gaussian can be changed usgin the parameter ``sigma_probe``.
 
 The position of the probes (number of the actuator on which is centered the probe)
-can be chosen using ``posprobes`` parameter.
+can be chosen using ``posprobes`` parameter. Finally we can choose to linearaize the probe or not
+by using the boolen ``SmallPhaseHypPWP`` parameter.
 
 It can be useful to check the .fits file starting in *EigenValPW* in
 Interaction_Matrices directory. This is the map of the inverse singular values for each
