@@ -518,13 +518,13 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
         pass
     elif DM.basis_type == 'actuator':
         basis_type_str = 'Actu'
-        headfile += "_EFCampl" + str(amplitudeEFC)
+        headfile += "_Ampl" + str(amplitudeEFC)
     else:
         raise ValueError("This basis type does not exist ([Correctionconfig]['DM_basis'] parameter).")
 
     DM_small_str = "_" + "_".join(DM.string_os.split("_")[3:])
-    basis_str = DM_small_str + "_" + basis_type_str + "Basis" + str(DM.basis_size)
-    fileDirectMatrix = headfile + basis_str + '_binEstim' + str(int(np.round(
+    basis_str = DM_small_str + "_" + basis_type_str + "Bas" + str(DM.basis_size)
+    fileDirectMatrix = headfile + basis_str + '_bin' + str(int(np.round(
         testbed.dimScience / dimEstim))) + testbed.string_testbed_without_DMS + "_resFP" + str(
             round(DM.Science_sampling / DM.wavelength_0 * wavelength, 2)) + '_wl' + str(int(wavelength * 1e9))
 

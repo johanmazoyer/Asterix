@@ -74,43 +74,43 @@ class Pupil(optsy.OpticalSystem):
             self.pup = phase_ampl.roundpupil(self.dim_overpad_pupil, prad, grey_pup_bin_factor=self.grey_pup_bin_factor)
             angle_rotation = 0
             if isinstance(prad, int) or prad.is_integer():
-                self.string_os += '_RoundPup' + str(int(prad))
+                self.string_os += '_RoPup' + str(int(prad))
             else:
-                self.string_os += '_RoundPup' + str(round(prad, 1))
+                self.string_os += '_RoPup' + str(round(prad, 1))
 
         # Clear (in case we want to define an empty pupil plane)
         elif PupType == "Clear":
             self.pup = np.ones((self.dim_overpad_pupil, self.dim_overpad_pupil))
             angle_rotation = 0
-            self.string_os += '_ClearPlane'
+            self.string_os += '_Clear'
 
         elif PupType == "VLTPup":
             self.pup = phase_ampl.make_VLT_pup(self.dim_overpad_pupil, prad, pupangle=angle_rotation, spiders=True)
             self.string_os += '_VLTPup'
         elif PupType == "SphereLyot":
             self.pup = phase_ampl.make_sphere_lyot(self.dim_overpad_pupil, prad, pupangle=angle_rotation, spiders=True)
-            self.string_os += '_SphereLyot'
+            self.string_os += '_SphereLS'
         elif PupType == "SphereApod":
             self.pup = phase_ampl.make_sphere_apodizer(self.dim_overpad_pupil, prad)
-            self.string_os += '_SphereApod'
+            self.string_os += '_SphereAp'
         else:
             # In those cases, we are using a fits to create the pupil
             # in these first cases, we use a known .fits with hardcoded file name
             if PupType == "RomanPup":
                 pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_500pix_center4pixels.fits"))
-                self.string_os += '_RomanPup' + str(int(prad))
+                self.string_os += '_RomanP' + str(int(prad))
 
-            elif PupType == "RomanPupTHD2":
+            elif PupType == "RomanPTHD2":
                 pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_thd2_500pix_center4pixels.fits"))
-                self.string_os += '_RomanPupTHD2' + str(int(prad))
+                self.string_os += '_RomanPTHD2' + str(int(prad))
 
             elif PupType == "RomanLyot":
                 pup_fits = fits.getdata(os.path.join(model_dir, "roman_lyot_500pix_center4pixels.fits"))
-                self.string_os += '_RomanLyot'
+                self.string_os += '_RomanLS'
 
             elif PupType == "RomanLyotTHD2":
                 pup_fits = fits.getdata(os.path.join(model_dir, "roman_lyot_thd2_500pix_center4pixels.fits"))
-                self.string_os += '_RomanLyotTHD2'
+                self.string_os += '_RomanLSTHD2'
 
             # finally in this last case, we use an unknown .fits defined by user
             else:
@@ -170,8 +170,6 @@ class Pupil(optsy.OpticalSystem):
 
             self.pup = crop_or_pad_image(pup_fits_right_size, self.dim_overpad_pupil)
 
-        if self.grey_pup_bin_factor > 1 and (not PupType == "Clear"):
-            self.string_os += 'grey'
 
         # initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
