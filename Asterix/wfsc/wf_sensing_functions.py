@@ -294,9 +294,8 @@ def name_header_pwp_matrix(testbed: Testbed, dimEstim, cutsvd, wavelength, matri
     amplitudePW = testbed.config_file["Estimationconfig"]["amplitudePW"]
     SmallPhaseHypPWP = testbed.config_file["Estimationconfig"]["SmallPhaseHypPWP"]
 
-    string_dims_PWMatrix = name_DM_to_probe_in_PW + "Prob_" + probe_type + "_" + "_".join(map(
-        str, posprobes)) + "_PWampl" + str(int(amplitudePW)) + "_cut" + str(int(
-            cutsvd // 1000)) + "k_dimEstim" + str(dimEstim) + testbed.string_os + "_resFP" + str(
+    string_dims_PWMatrix = name_DM_to_probe_in_PW + "_" + probe_type + "_" + "_".join(map(
+        str, posprobes)) + "_Ampl" + str(int(amplitudePW)) + "_Estim" + str(dimEstim) + testbed.string_os + "_resFP" + str(
                 round(testbed.Science_sampling / testbed.wavelength_0 * wavelength, 2)) + '_wl' + str(
                     int(wavelength * 1e9))
 
