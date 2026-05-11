@@ -115,14 +115,12 @@ class Coronagraph(optsy.OpticalSystem):
 
         elif self.corona_type in ("classiclyot", "hlc"):
 
-            self.string_os += '_' + "iwa" + str(round(self.rad_lyot_fpm, 2))
             self.perfect_coro = False
             if self.corona_type == "classiclyot":
                 self.FPmsk = self.ClassicalLyot()
             else:
                 self.transmission_fpm = coroconfig["transmission_fpm"]
                 self.phase_fpm = coroconfig["phase_fpm"]
-                self.string_os += '_' + f"trans{self.transmission_fpm:.1e}_pha{round(self.phase_fpm, 2)}"
                 self.FPmsk = self.HLC()
                 if self.achrom_phase_coro:
                     self.string_os += '_' + "achrom"
@@ -131,7 +129,7 @@ class Coronagraph(optsy.OpticalSystem):
             self.coro_position = coroconfig["knife_coro_position"].lower()
             self.knife_coro_offset = coroconfig["knife_coro_offset"]
             self.FPmsk = self.KnifeEdgeCoro()
-            self.string_os += '_' + self.coro_position + "_iwa" + str(round(self.knife_coro_offset, 2))
+            self.string_os += '_' + self.coro_position
             self.perfect_coro = False
 
         elif self.corona_type == "vortex":
