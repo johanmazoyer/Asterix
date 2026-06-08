@@ -186,7 +186,7 @@ of a coronagraph system (from apodization plane at the entrance of the coronagra
     PSF = corono.todetector_intensity() #  Intensity in the next focal plane
 
 Type of coronagraph can be changed with ``corona_type`` parameter.  Currently supported ``corona_type`` 
-are 'fqpm' or 'knife', 'classiclyot' or 'HLC'. Focal plane functions are automatically normalized in contrast
+are 'perfect', 'fqpm' or 'knife', 'classiclyot' or 'HLC'. Focal plane functions are automatically normalized in contrast
 by default. For details about the way to normalize in polychromatic light, see ``measure_normalization`` 
 and ``todetector_intensity`` documentation in the docs. 
 
