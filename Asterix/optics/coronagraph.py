@@ -47,15 +47,15 @@ class Coronagraph(optsy.OpticalSystem):
         # we skip all definition as this coronagraph doe not have the normal attribute of a coronagraph
         # (no apodizer, no focal plane mask, no Lyot stop).
         if self.corona_type == "perfect":
-            if modelconfig["filename_instr_pup"] != "Clear":
+            if modelconfig['filename_instr_pup'] == "Clear":
                 raise ValueError("Cannot have a perfect coronagraph without a pupil: set modelconfig['filename_instr_pup'] to something not 'Clear'.")
 
-            if modelconfig["grey_pupils"]:
+            if modelconfig['grey_pupils']:
                 raise ValueError("Avoid grey pupils for a perfect coronagraph: : set modelconfig['grey_pupils'] to False.")
 
             self.string_os += '_' + "perfcoro"
 
-            self.pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad, PupType=coroconfig["filename_instr_pup"])
+            self.pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad, PupType=modelconfig["filename_instr_pup"])
 
             # Initialize the max and sum of PSFs for the normalization to contrast
             self.measure_normalization()
