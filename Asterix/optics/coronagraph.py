@@ -48,7 +48,7 @@ class Coronagraph(optsy.OpticalSystem):
         # (no apodizer, no focal plane mask, no Lyot stop).
         if self.corona_type == "perfect":
             if modelconfig["filename_instr_pup"] != "Clear":
-                raise ValueError("Cannot have a perfect coronagrpah without a pupil: set modelconfig['filename_instr_pup'] to something not 'Clear'.")
+                raise ValueError("Cannot have a perfect coronagraph without a pupil: set modelconfig['filename_instr_pup'] to something not 'Clear'.")
 
             if modelconfig["grey_pupils"]:
                 raise ValueError("Avoid grey pupils for a perfect coronagraph: : set modelconfig['grey_pupils'] to False.")
