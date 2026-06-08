@@ -52,7 +52,7 @@ class Coronagraph(optsy.OpticalSystem):
 
             self.string_os += '_' + "perfcoro"
 
-            self.pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad)
+            self.pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad, PupType=coroconfig["filename_instr_pup"])
 
             # Initialize the max and sum of PSFs for the normalization to contrast
             self.measure_normalization()
@@ -253,7 +253,7 @@ class Coronagraph(optsy.OpticalSystem):
                 # of the coronagraph to a round pupil to remove it
                 # THIS IS NOT THE ENTRANCE PUPIL,
                 # this is a round pupil of the same size
-                pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad, PupType=coroconfig["filename_instr_pup"])
+                pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad)
 
                 # do a propagation once with self.perfect_Lyot_pupil = 0 to
                 # measure the Lyot pupil that will be removed after
