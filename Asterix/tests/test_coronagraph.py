@@ -25,7 +25,7 @@ def test_all_coronagraphs():
         Coronaconfig.update({"corona_type": coro})
         if coro == "perfect":
             # for the last coronagraph of the list, we modify the modelconfig to be compatible
-            # with a perfect coronagraph, which requires a round pupil and no grey pupils.
+            # with a perfect coronagraph, which requires no grey pupils.
             modelconfig.update({"grey_pupils": False})
 
         # Create the coronagraph
