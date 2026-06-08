@@ -52,7 +52,7 @@ class Coronagraph(optsy.OpticalSystem):
             if modelconfig["grey_pupils"]:
                 raise ValueError("Avoid grey pupils for a perfect coronagraph: : set modelconfig['grey_pupils'] to False.")
 
-            self.string_os += '_' + self.corona_type
+            self.string_os += '_' + "perfcoro"
 
             self.pup_for_perfect_coro = pupil.Pupil(modelconfig, prad=self.prad)
 
