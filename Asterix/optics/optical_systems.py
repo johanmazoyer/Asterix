@@ -387,7 +387,7 @@ class OpticalSystem:
         if in_photons & in_contrast:
                  raise ValueError("Only choose in_contrast = True or in_photons = True, not both.")
 
-        if in_photons & nb_photons < 0:
+        if in_photons & (nb_photons < 0):
             raise ValueError("Cannot set intensity in photons if in_photons not defined to a positive value.")
 
         if in_contrast:
