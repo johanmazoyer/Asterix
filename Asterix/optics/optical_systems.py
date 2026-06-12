@@ -400,7 +400,7 @@ class OpticalSystem:
             focal_plane_intensity /= self.norm_polychrom
 
         if in_photons:
-            focal_plane_intensity = focal_plane_intensity * self.normPupto1 * nb_photons
+            focal_plane_intensity = np.floor(focal_plane_intensity * self.normPupto1 * nb_photons)
 
         if nb_photons > 0:
             focal_plane_intensity = self.add_photon_noise(focal_plane_intensity, nb_photons, in_contrast=in_contrast, in_photons=in_photons)
