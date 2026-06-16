@@ -60,6 +60,8 @@ Finally, for all optical system, you can use generic functions like to creaet an
     PSF = generic_os.todetector_intensity(entrance_EF = input_wavefront)
 
 ``todetector_intensity``'s keyword "in_contrast" can be used to normalized the PSF in contrast or not. 
+``todetector_intensity``'s keyword "in_photons" can be used to have the PSF in number of photons instead of contrast.
+                            Cannot be True if in_contrast is True. Requires nb_photons > 0.
 ``center_on_pixel`` can be used to center the PSF in the center of a pixel or not (False by default).
 
 In the later sections, we will present the existing ``OpticalSystem`` subclasses (``Pupil``,

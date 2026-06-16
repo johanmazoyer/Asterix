@@ -291,6 +291,7 @@ class OpticalSystem:
                              entrance_EF=1.,
                              wavelengths=None,
                              in_contrast=True,
+                             in_photons = False,
                              center_on_pixel=False,
                              nb_photons=0,
                              dir_save_all_planes=None,
@@ -310,6 +311,9 @@ class OpticalSystem:
             Default is all wavelenthg in self.wav_vec
         in_contrast : bool, default True. normalize to
             self.norm_polychrom (see self.measure_normalization)
+        in_photons : bool, default False
+            If True, the data are in number of photons. Cannot be True if in_contrast is True.
+            Requires nb_photons > 0.
         center_on_pixel : bool Default False
             If True, the PSF will be centered on a pixel
             If False, the PSF will be centered between 4 pixels
@@ -380,6 +384,12 @@ class OpticalSystem:
                                 dir_save_all_planes=dir_save_all_planes,
                                 **kwargs))**2 * riemann_factor
 
+        if in_photons & in_contrast:
+                 raise ValueError("Only choose in_contrast = True or in_photons = True, not both.")
+
+        if in_photons & (nb_photons < 1):
+            raise ValueError("Cannot set intensity in photons if in_photons is not > 0.")
+
         if in_contrast:
             if (wavelength_vec != self.wav_vec).all():
                 raise ValueError(("Careful: contrast normalization in todetector_intensity assumes "
@@ -389,8 +399,11 @@ class OpticalSystem:
 
             focal_plane_intensity /= self.norm_polychrom
 
+        if in_photons:
+            focal_plane_intensity = np.floor(focal_plane_intensity * self.normPupto1_nocontrast * nb_photons)
+
         if nb_photons > 0:
-            focal_plane_intensity = self.add_photon_noise(focal_plane_intensity, nb_photons, in_contrast=in_contrast)
+            focal_plane_intensity = self.add_photon_noise(focal_plane_intensity, nb_photons, in_contrast=in_contrast, in_photons=in_photons)
 
         if dir_save_all_planes is not None:
             who_called_me = self.__class__.__name__
@@ -399,7 +412,7 @@ class OpticalSystem:
 
         return focal_plane_intensity
 
-    def add_photon_noise(self, focal_plane_intensity, nb_photons, in_contrast=True):
+    def add_photon_noise(self, focal_plane_intensity, nb_photons, in_contrast=True, in_photons=False):
         """Add photon noise to an image in contrast.
 
         This is only applied to images for which the normalization
@@ -417,16 +430,23 @@ class OpticalSystem:
             Number of photons entering the pupil.
         in_contrast : bool, default True.
             If True, the data are normalized in contrast
+        in_photons : bool, default False
+            If True, the data are in number of photons. Cannot be True if in_contrast is True.
 
         Returns
         --------
         focal_plane_intensity : numpy array of shape (self.dimScience,self.dimScience)
             the focal plane intensity, with photon noise, normalized in contrast
         """
+        if in_photons & in_contrast:
+            raise ValueError("Only choose in_contrast = True or in_photons = True, not both.")
+
         if nb_photons > 0:
             if in_contrast:
                 return np.random.poisson(
                     focal_plane_intensity * self.normPupto1 * nb_photons) / (self.normPupto1 * nb_photons)
+            elif in_photons:
+                return np.random.poisson(focal_plane_intensity)
             else:
                 return np.random.poisson(focal_plane_intensity * self.normPupto1_nocontrast *
                                          nb_photons) / (self.normPupto1_nocontrast * nb_photons)
