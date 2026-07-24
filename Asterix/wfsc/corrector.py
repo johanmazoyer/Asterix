@@ -22,7 +22,7 @@ class Corrector:
             The initialization requires previous initialization of
             the testbed and of the estimator.
 
-        - a correction function Corrector.toDM_voltage(estimation), which returns the DM Voltage vector
+        - a correction function Corrector.toDM_command(estimation), which returns the DM command
             using as parameter the estimation (2D array or 3D for polychromatic correction).
             It can one DM or more, depending on the testbed.
 
@@ -233,7 +233,7 @@ class Corrector:
         # Adding error on the DM model. Now that the matrix is measured, we can
         # introduce a small movememnt on one DM or the other. By changing DM_pushact
         # we are changing the position of the actuator and therfore the phase of the
-        # DM for a given voltage when using DM.voltage_to_phase
+        # DM for a given command when using DM.dmcommand_to_phase
 
         for DM_name in testbed.name_of_DMs:
             DM: DeformableMirror = vars(testbed)[DM_name]
@@ -250,7 +250,7 @@ class Corrector:
     def update_matrices(self,
                         testbed: Testbed,
                         maskEstim=None,
-                        initial_DM_voltage=0.,
+                        initial_DM_command=0.,
                         initial_estimated_wavefront=1.,
                         silence=False):
         """Measure the interaction matrices needed for the correction Is launch
@@ -266,8 +266,8 @@ class Corrector:
         maskEstim : 2d numpy array
             binary array of size [dimEstim, dimEstim] : dark hole mask. If undefined, it
             will use the self.MaskEstim attribute defined in the Corrector initialization.
-        initial_DM_voltage : 1D-array real
-            a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
+        initial_DM_command : 1D-array real
+            a command (for all DMs) around which the basis modes will be pushed to create the matrix.
         initial_estimated_wavefront : 2D complex array or complex scalar. Default is 1 (flat WF)
             a wavefront in pupil plane (likely estimated using some phase diversity) around
             which the basis modes will be pushed to create the matrix.
@@ -292,7 +292,7 @@ class Corrector:
                                                      self.dimEstim,
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
-                                                     initial_DM_voltage=initial_DM_voltage,
+                                                     initial_DM_command=initial_DM_command,
                                                      initial_estimated_wavefront=initial_estimated_wavefront,
                                                      SmallPhaseHypEFC=self.SmallPhaseHypEFC,
                                                      wav_vec_estim=self.wav_vec_estim,
@@ -320,8 +320,8 @@ class Corrector:
         else:
             raise NotImplementedError("This correction algorithm is not yet implemented")
 
-    def toDM_voltage(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., silence=False, **kwargs):
-        """Run a correction from a estimate, and return the DM voltage
+    def toDM_command(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., silence=False, **kwargs):
+        """Run a correction from a estimate, and return the DM command
         compatible with the testbed.
 
         AUTHOR : Johan Mazoyer
@@ -348,7 +348,7 @@ class Corrector:
         Return
         ----------
         solution : 1d numpy real float array
-            a voltage vector to be applied to the testbed
+            a command to be applied to the DMS of the testbed.
         """
 
         if self.correction_algorithm == "efc":

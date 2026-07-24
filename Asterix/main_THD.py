@@ -211,7 +211,7 @@ def runthd2(parameter_file_path,
                               SIMUconfig,
                               input_wavefront=input_wavefront,
                               EF_aberrations_introduced_in_LS=wavefront_in_LS,
-                              initial_DM_voltage=0,
+                              initial_DM_command=0,
                               silence=silence,
                               probe_dir=probe_dir,
                               **kwargs)

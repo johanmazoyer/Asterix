@@ -186,7 +186,7 @@ class DeformableMirror(optsy.OpticalSystem):
         Influence functions of each actuator are normalized to 1 before supixel shift.
 
         This large array is initialized at the beginning and will be use
-        to transform a DM vector in nm into a DM opd for each DM. This is saved
+        to transform a DM command in nm into a DM opd for each DM. This is saved
         in .fits to save times if the parameter have not changed
 
         In case of "misregistration = True" we measure it once for
@@ -467,7 +467,7 @@ class DeformableMirror(optsy.OpticalSystem):
 
         return EF_back_in_pup_plane
 
-    def voltage_to_phase(self, actu_vect, einstein_sum=False):
+    def dmcommand_to_phase(self, dm_command, einstein_sum=False):
         """Generate the phase applied on one DM for a given vector of actuator
         amplitude in nm. We decided to do it without matrix multiplication to save
         time because a lot of the time we have lot of zeros in it.
@@ -478,10 +478,10 @@ class DeformableMirror(optsy.OpticalSystem):
 
         Parameters
         ----------
-        actu_vect : 1D array
+        dm_command : 1D array
             Values of the amplitudes for each actuator in nm.
         einstein_sum : boolean, default false
-            Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
+            Use numpy Einstein sum to sum the pushact[i]*dm_command[i]
             gives the same results as normal sum. Seems ot be faster for unique actuator
             but slower for more complex phases.
 
@@ -491,21 +491,21 @@ class DeformableMirror(optsy.OpticalSystem):
             phase map in radians.
         """
 
-        where_non_zero_voltage = np.where(actu_vect != 0)
-        if len(where_non_zero_voltage[0]) == 0:
+        where_non_zero_actu = np.where(dm_command != 0)
+        if len(where_non_zero_actu[0]) == 0:
             return np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil))
 
-        # actu_vect are in nanometer
+        # dm_command are in nanometer
         # DM_pushact are influence functions normalized to 1.
         opd_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
 
-        if einstein_sum or len(where_non_zero_voltage[0]) < 3:
-            phase_on_DM = np.einsum('i,ijk->jk', actu_vect[where_non_zero_voltage],
-                                    self.DM_pushact[where_non_zero_voltage]) * opd_to_phase
+        if einstein_sum or len(where_non_zero_actu[0]) < 3:
+            phase_on_DM = np.einsum('i,ijk->jk', dm_command[where_non_zero_actu],
+                                    self.DM_pushact[where_non_zero_actu]) * opd_to_phase
         else:
             phase_on_DM = np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil))
-            for i in where_non_zero_voltage[0]:
-                phase_on_DM += self.DM_pushact[i, :, :] * actu_vect[i] * opd_to_phase
+            for i in where_non_zero_actu[0]:
+                phase_on_DM += self.DM_pushact[i, :, :] * dm_command[i] * opd_to_phase
 
         return phase_on_DM
 
@@ -549,8 +549,8 @@ class DeformableMirror(optsy.OpticalSystem):
                 basis[i] = vec
 
             # This is a very time consuming part of the code.
-            # from N voltage vectors with the sine and cosine value, we go N times through the
-            # voltage_to_phase functions. For this reason we save the Fourrier base 2D phases on each DMs
+            # from N DM commands with the sine and cosine value, we go N times through the
+            # dmcommand_to_phase function. For this reason we save the Fourrier base 2D phases on each DMs
             # in a specific .fits file that is read during the creation of the matrix in
             # wf_control_functions.create_singlewl_interaction_matrix.py
 
@@ -588,7 +588,7 @@ class DeformableMirror(optsy.OpticalSystem):
                 if not silence:
                     print("Start " + Name_FourrierBasis_fits + " (wait a few 10s of seconds)")
                 for i in range(basis_size):
-                    phasesFourrier[i] = self.voltage_to_phase(basis[i])
+                    phasesFourrier[i] = self.dmcommand_to_phase(basis[i])
                     if i % 10:
                         progress(i, basis_size, status='')
                 fits.writeto(os.path.join(self.Model_local_dir, Name_FourrierBasis_fits + '.fits'),

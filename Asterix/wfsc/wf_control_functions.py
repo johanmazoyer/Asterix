@@ -18,7 +18,7 @@ def create_interaction_matrix(testbed: Testbed,
                               dimEstim,
                               amplitudeEFC,
                               matrix_dir,
-                              initial_DM_voltage=0.,
+                              initial_DM_command=0.,
                               initial_estimated_wavefront=1.,
                               SmallPhaseHypEFC=True,
                               wav_vec_estim=None,
@@ -55,12 +55,12 @@ def create_interaction_matrix(testbed: Testbed,
     SmallPhaseHypEFC : Bool, default True
         If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
         If False we keep exp(i phi).
-        In both case, if the DMs are not initially flat (non zero initial_DM_voltage),
+        In both case, if the DMs are not initially flat (non zero initial_DM_command),
         we do not make the small phase assumption for initial DM phase
     wav_vec_estim : list of wavelengths, default: [testbed.wavelength_0]
             vector of wavelengths for polychromatic correction
-    initial_DM_voltage : 1D-array real, default 1.0 (flat WF)
-        a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
+    initial_DM_command : 1D-array real, default 1.0 (flat WF)
+        a command (for all DMs in testbed) around which the basis modes will be pushed to create the matrix.
     initial_estimated_wavefront : complex scalar (uniform WF) or 2d complex array (monochromatic) or 3d complex array (polychromatic), default 1.
         a wavefront in pupil plane (likely estimated using some phase diversity) around
         which the basis modes will be pushed to create the matrix.
@@ -105,7 +105,7 @@ def create_interaction_matrix(testbed: Testbed,
                 amplitudeEFC,
                 wave_i,
                 matrix_dir,
-                initial_DM_voltage=initial_DM_voltage,
+                initial_DM_command=initial_DM_command,
                 initial_estimated_wavefront=initial_estimated_wavefront[testbed.wav_vec.tolist().index(wave_i)],
                 SmallPhaseHypEFC=SmallPhaseHypEFC,
                 dir_save_all_planes=dir_save_all_planes,
@@ -119,7 +119,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                                        amplitudeEFC,
                                        wavelength,
                                        matrix_dir,
-                                       initial_DM_voltage=0.,
+                                       initial_DM_command=0.,
                                        initial_estimated_wavefront=1.,
                                        SmallPhaseHypEFC=True,
                                        dir_save_all_planes=None,
@@ -155,10 +155,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     SmallPhaseHypEFC : Bool, default True
         If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
         If False we keep exp(i phi).
-        In both case, if the DMs are not initially flat (non zero initial_DM_voltage),
+        In both case, if the DMs are not initially flat (non zero initial_DM_command),
         we do not make the small phase assumption for initial DM phase
-    initial_DM_voltage : 1D-array real
-        a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
+    initial_DM_command : 1D-array real
+        a command (for all DMs in testbed) around which the basis modes will be pushed to create the matrix.
     initial_estimated_wavefront : 2D complex array or complex scalar. Default is 1 (flat WF)
         a wavefront in pupil plane (likely estimated using some phase diversity) around
         which the basis modes will be pushed to create the matrix.
@@ -175,15 +175,15 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     InterMat : 2D array of size [total(DM.basis_size), 2*dimEstim^2]
         jacobian matrix for Electric Field Conjugation.
     """
-    if isinstance(initial_DM_voltage, (int, float)):
-        initial_DM_voltage = np.zeros(testbed.number_act) + float(initial_DM_voltage)
+    if isinstance(initial_DM_command, (int, float)):
+        initial_DM_command = np.zeros(testbed.number_act) + float(initial_DM_command)
 
     # wavelength = testbed.wavelength_0
     normalisation_testbed_EF_contrast = np.sqrt(testbed.norm_monochrom[testbed.wav_vec.tolist().index(wavelength)])
 
-    # This is for the case we take a non zero DM vectors already, we need to calculate
+    # This is for the case we take a non zero DM command already, we need to calculate
     # the initial phase for each DM
-    DM_phase_init = testbed.voltage_to_phases(initial_DM_voltage)
+    DM_phase_init = testbed.dmcommands_to_phases(initial_DM_command)
 
     # First run throught the DMs to :
     #   - string matrix to create a name for the matrix
@@ -215,12 +215,12 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
         DM.fnameDirectMatrix = os.path.join(matrix_dir, fileDirectMatrix + ".fits")
 
-        # We only save the 'first' matrix meaning the one with no initial DM voltages
-        # Matrix is saved/loaded for each DM independetly which allow quick switch
+        # We only save the 'first' matrix meaning the one with no initial DM command
+        # Matrix is saved/loaded for each DM independently which allow quick switch
         # For 1DM test / 2DM test
         # Matrix is saved/loaded for all the FP and then crop at the good size later
 
-        if bool_already_existing_matrix and (initial_DM_voltage == 0.).all():
+        if bool_already_existing_matrix and (initial_DM_command == 0.).all():
             if not silence:
                 print("Load " + fileDirectMatrix + ".fits file")
 
@@ -235,10 +235,10 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             # We checked that this is the same normalization as in Gvector
             G0 = resizing(
                 testbed.todetector(entrance_EF=initial_estimated_wavefront,
-                                   voltage_vector=initial_DM_voltage,
+                                   dm_command=initial_DM_command,
                                    dir_save_all_planes=dir_save_all_planes), dimEstim)
             if not silence:
-                if (initial_DM_voltage == 0.).all():
+                if (initial_DM_command == 0.).all():
                     print("")
                     print("The matrix " + fileDirectMatrix + " does not exists")
 
@@ -256,7 +256,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             else:
                 phasesBasis = np.zeros((DM.basis_size, DM.dim_overpad_pupil, DM.dim_overpad_pupil))
                 for i in range(DM.basis_size):
-                    phasesBasis[i] = DM.voltage_to_phase(DM.basis[i]) * amplitudeEFC
+                    phasesBasis[i] = DM.dmcommand_to_phase(DM.basis[i]) * amplitudeEFC
 
             if dir_save_all_planes is not None:
                 # save the basis phase to check what is happening
@@ -427,7 +427,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
 
                 # TODO Should we remove the intial FP field G0 in all casese ? For ideal
                 # corono and flat DMs, this is 0, but it's not for non ideal coronagraph
-                # or if we have a strong initial DM voltages. This needs
+                # or if we have a strong initial DM command. This needs
                 # to be investigated, in simulation and on the testbed
                 Gvector = Gvector - G0
 
@@ -451,7 +451,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 plt.close()
                 plt.ioff()
             # We save the interaction matrix:
-            if (initial_DM_voltage == 0.).all():
+            if (initial_DM_command == 0.).all():
                 fits.writeto(os.path.join(matrix_dir, fileDirectMatrix + ".fits"),
                              InterMat[:, pos_in_matrix:pos_in_matrix + DM.basis_size],
                              header=header_expected,
@@ -612,7 +612,7 @@ def crop_interaction_matrix_to_dh(FullInteractionMatrix: np.ndarray, mask: np.nd
 
 
 def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed):
-    """Voltages to apply on the deformable mirrors in order to minimize the
+    """Command to apply on the deformable mirrors in order to minimize the
     speckle intensity in the dark hole region.
 
     AUTHOR : Axel Potier
@@ -633,7 +633,7 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
     Returns
     --------
     solution : 1D array
-        voltage to apply on each deformable mirror actuator
+        command to apply on the deformable mirrors (nm)
     """
     EF_vector = np.zeros(2 * int(np.sum(mask)) * len(Result_Estimate))
 
@@ -646,11 +646,11 @@ def calc_efc_solution(mask, Result_Estimate, inversed_jacobian, testbed: Testbed
 
     produit_mat = np.dot(inversed_jacobian, EF_vector)
 
-    return testbed.basis_vector_to_act_vector(produit_mat)
+    return testbed.basis_vector_to_dmcommand(produit_mat)
 
 
 def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: Testbed):
-    """Voltage to apply on the deformable mirror in order to minimize the
+    """Command to apply on the deformable mirrors in order to minimize the
     speckle intensity in the dark hole region.
 
     AUTHOR : Axel Potier
@@ -673,7 +673,7 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
     Returns
     --------
     solution : 1D array
-        Voltage to apply on each deformable mirror actuator.
+        Command to apply on the deformable mirrors (nm).
     """
     if len(Result_Estimate) > 1:
         raise ValueError("EM correction is not working in polychromatic mode.")
@@ -683,7 +683,7 @@ def calc_em_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: T
     realb0 = np.real(np.dot(np.transpose(np.conjugate(Jacobian)), Eab)).flatten()
     produit_mat = np.dot(Hessian_Matrix, realb0)
 
-    return testbed.basis_vector_to_act_vector(produit_mat)
+    return testbed.basis_vector_to_dmcommand(produit_mat)
 
 
 def calc_strokemin_solution(mask,
@@ -694,7 +694,7 @@ def calc_strokemin_solution(mask,
                             last_best_alpha,
                             testbed: Testbed,
                             silence=False):
-    """Voltage to apply on the deformable mirror in order to minimize the
+    """Command to apply on the deformable mirrors in order to minimize the
     speckle intensity in the dark hole region in the stroke min solution See
     Axel Potier Phd for notation and Mazoyer et al. 2018a for alpha search
     improvement.
@@ -725,7 +725,7 @@ def calc_strokemin_solution(mask,
     Returns
     --------
     solution : 1D array
-        Voltage to apply on each deformable mirror actuator.
+        Command to apply on the deformable mirrors (nm).
     lasbestalpha : float
         The last best alpha. This avoid to recalculate the best alpha from scratch
         at each iteration since it's often a very close value.
@@ -797,11 +797,11 @@ def calc_strokemin_solution(mask,
             TestSMfailed = False
     if not silence:
         print(f"Number of iterations in this stroke min (number of tested alpha): {iteralpha:d}")
-    return testbed.basis_vector_to_act_vector(DMSurfaceCoeff), alpha
+    return testbed.basis_vector_to_dmcommand(DMSurfaceCoeff), alpha
 
 
 def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, testbed: Testbed):
-    """Voltage to apply on the deformable mirror in order to minimize the
+    """Command to apply on the deformable mirrors in order to minimize the
     speckle intensity in the dark hole region.
 
     AUTHOR : Axel Potier
@@ -824,7 +824,7 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
     Returns
     --------
     solution : 1D array
-        Voltage to apply on each deformable mirror actuator.
+        Command to apply on the deformable mirrors (nm).
     """
     if len(Result_Estimate) > 1:
         raise ValueError("Steepest correction is not working in polychromatic mode.")
@@ -835,7 +835,7 @@ def calc_steepest_solution(mask, Result_Estimate, Hessian_Matrix, Jacobian, test
     pas = 2e3
     solution = pas * 2 * Eab
 
-    return testbed.basis_vector_to_act_vector(solution)
+    return testbed.basis_vector_to_dmcommand(solution)
 
 
 # def concat_flat_real_imag(complex_arr):

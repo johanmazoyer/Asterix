@@ -22,7 +22,7 @@ def correction_loop(testbed: Testbed,
                     Loopconfig,
                     SIMUconfig,
                     input_wavefront=1.,
-                    initial_DM_voltage=0.,
+                    initial_DM_command=0.,
                     silence=False,
                     probe_dir=None,
                     **kwargs):
@@ -56,8 +56,8 @@ def correction_loop(testbed: Testbed,
             method inside the Corrector allows it. Currently, each matrix is measured with a flat field in
             the entrance of the testbed (input_wavefront = 1).
             'input_wavefront' is only used in the loop once the matrix is calculated. This can be changed but be careful.
-    initial_DM_voltage : float or 1D array
-        Initial DM voltages at the beginning of this loop. The Matrix is measured using these initial DM voltages.
+    initial_DM_command : float or 1D array
+        Initial DM command at the beginning of this loop. The Matrix is measured using the initial DM command.
         Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
@@ -73,7 +73,7 @@ def correction_loop(testbed: Testbed,
     CorrectionLoopResult = dict()
     CorrectionLoopResult["nb_total_iter"] = 0
     CorrectionLoopResult["Nb_iter_per_mat"] = []
-    CorrectionLoopResult["voltage_DMs"] = []
+    CorrectionLoopResult["command_DMs"] = []
     CorrectionLoopResult["FP_Intensities"] = []
     CorrectionLoopResult["EF_estim"] = []
     CorrectionLoopResult["MeanDHContrast"] = []
@@ -117,15 +117,15 @@ def correction_loop(testbed: Testbed,
     for i in range(Number_matrix):
 
         if i > 0:
-            corrector.update_matrices(testbed, initial_DM_voltage=initial_DM_voltage, silence=silence)
+            corrector.update_matrices(testbed, initial_DM_command=initial_DM_command, silence=silence)
 
             if estimator.technique in ["pairwise", "pw", "pwp", "btp"]:
                 estimator.PWMatrix = wfs.create_pw_matrix(testbed,
-                                                          estimator.voltage_probes,
+                                                          estimator.dmcommand_probes,
                                                           estimator.dimEstim,
                                                           estimator.cutsvdPW,
                                                           estimator.wav_vec_estim,
-                                                          initial_DM_voltage=initial_DM_voltage,
+                                                          initial_DM_command=initial_DM_command,
                                                           silence=silence)
 
         Resultats_correction_loop = correction_loop_1matrix(testbed,
@@ -138,7 +138,7 @@ def correction_loop(testbed: Testbed,
                                                             Nbmode_corr=Nbmode_corr,
                                                             Linesearch=Linesearch,
                                                             input_wavefront=input_wavefront,
-                                                            initial_DM_voltage=initial_DM_voltage,
+                                                            initial_DM_command=initial_DM_command,
                                                             nb_photons=nb_photons,
                                                             silence=silence,
                                                             probe_dir=probe_dir,
@@ -146,7 +146,7 @@ def correction_loop(testbed: Testbed,
 
         min_contrast = min(CorrectionLoopResult["MeanDHContrast"])
         min_index = CorrectionLoopResult["MeanDHContrast"].index(min_contrast)
-        initial_DM_voltage = Resultats_correction_loop["voltage_DMs"][min_index]
+        initial_DM_command = Resultats_correction_loop["command_DMs"][min_index]
         if not silence:
             if i != Number_matrix - 1:
                 print("end Matrix ", i)
@@ -168,7 +168,7 @@ def correction_loop_1matrix(testbed: Testbed,
                             Linesearch=False,
                             Search_best_Mode=False,
                             input_wavefront=1.,
-                            initial_DM_voltage=0.,
+                            initial_DM_command=0.,
                             nb_photons=0,
                             silence=False,
                             probe_dir=None,
@@ -211,8 +211,8 @@ def correction_loop_1matrix(testbed: Testbed,
             float=1 if no phase/amplitude aberrations present (default)
             2D complex array, of size phase_abb.shape if monochromatic
             or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic
-    initial_DM_voltage : float or 1D array
-        Initial DM voltages at the beginning of this loop. The Matrix is measured using this initial DM voltages.
+    initial_DM_command : float or 1D array
+        Initial DM command at the beginning of this loop. The Matrix is measured using this initial DM command.
         Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
@@ -242,13 +242,13 @@ def correction_loop_1matrix(testbed: Testbed,
                 modevector = modevector + [Nbmode_corr[i]] * Nbiter_corr[i]
 
     initialFP = testbed.todetector_intensity(entrance_EF=input_wavefront,
-                                             voltage_vector=initial_DM_voltage,
+                                             dm_command=initial_DM_command,
                                              nb_photons=0,
                                              **kwargs)
 
     initialFP_contrast = np.mean(initialFP[np.where(mask_dh != 0)])
 
-    thisloop_voltages_DMs = []
+    thisloop_command_DMs = []
     thisloop_FP_Intensities = []
     thisloop_FP_Intensities_phot = []
     thisloop_MeanDHContrast = []
@@ -258,7 +258,7 @@ def correction_loop_1matrix(testbed: Testbed,
     thisloop_Probes_images = []
     thisloop_Var_Err_estim = []
 
-    thisloop_voltages_DMs.append(initial_DM_voltage)
+    thisloop_command_DMs.append(initial_DM_command)
     thisloop_FP_Intensities.append(initialFP)
     thisloop_MeanDHContrast.append(initialFP_contrast)
 
@@ -302,7 +302,7 @@ def correction_loop_1matrix(testbed: Testbed,
                                                                  Search_best_Mode=True,
                                                                  nb_photons=0,
                                                                  input_wavefront=input_wavefront,
-                                                                 initial_DM_voltage=thisloop_voltages_DMs[iteration],
+                                                                 initial_DM_command=thisloop_command_DMs[iteration],
                                                                  silence=silence,
                                                                  **kwargs)
 
@@ -329,7 +329,7 @@ def correction_loop_1matrix(testbed: Testbed,
                 print("Iteration number " + corrector.correction_algorithm + ": ", iteration + 1)
 
         probed_images = estimator.probe(testbed,
-                                        voltage_vector=thisloop_voltages_DMs[-1],
+                                        dm_command=thisloop_command_DMs[-1],
                                         entrance_EF=input_wavefront,
                                         perfect_estimation=Search_best_Mode,
                                         nb_photons=nb_photons,
@@ -346,7 +346,7 @@ def correction_loop_1matrix(testbed: Testbed,
             thisloop_Probes_images.append(probed_images)
 
             perf_probed_images = estimator.probe(testbed,
-                                                 voltage_vector=thisloop_voltages_DMs[-1],
+                                                 dm_command=thisloop_command_DMs[-1],
                                                  entrance_EF=input_wavefront,
                                                  perfect_estimation=True,
                                                  nb_photons=nb_photons,
@@ -358,7 +358,7 @@ def correction_loop_1matrix(testbed: Testbed,
                                                 testbed=testbed,
                                                 **kwargs)
 
-        solution = corrector.toDM_voltage(testbed,
+        solution = corrector.toDM_command(testbed,
                                           resultatestimation,
                                           mode=mode,
                                           ActualCurrentContrast=thisloop_MeanDHContrast[-1],
@@ -366,24 +366,24 @@ def correction_loop_1matrix(testbed: Testbed,
 
         if isinstance(solution, str) and solution == "StopTheLoop":
             # for each correction algorithm, we can break the loop by
-            # the string "StopTheLoop" instead of a correction vector
+            # the string "StopTheLoop" instead of a correction command
             if not silence:
                 print("we stop the correction")
             break
 
         if isinstance(solution, str) and solution == "RebootTheLoop":
             # for each correction algorithm, we can break the loop by
-            # the string "RebootTheLoop" instead of a correction vector
+            # the string "RebootTheLoop" instead of a correction command
             if not silence:
                 print("we go back to last best correction")
             ze_arg_of_ze_best = np.argmin(thisloop_MeanDHContrast)
-            new_voltage = thisloop_voltages_DMs[ze_arg_of_ze_best]
+            new_dmcommand = thisloop_command_DMs[ze_arg_of_ze_best]
 
         else:
-            new_voltage = thisloop_voltages_DMs[-1] + gain * solution
+            new_dmcommand = thisloop_command_DMs[-1] + gain * solution
 
         thisloop_FP_Intensities.append(
-            testbed.todetector_intensity(entrance_EF=input_wavefront, voltage_vector=new_voltage, nb_photons=0,
+            testbed.todetector_intensity(entrance_EF=input_wavefront, dm_command=new_dmcommand, nb_photons=0,
                                          **kwargs))
         thisloop_FP_Intensities_phot.append(testbed.add_photon_noise(thisloop_FP_Intensities[-1], nb_photons))
         thisloop_EF_estim.append(resultatestimation)
@@ -400,7 +400,7 @@ def correction_loop_1matrix(testbed: Testbed,
         if not Search_best_Mode:
             # if we are only looking for the best mode, we do not update the DM shape
             # for the next iteration
-            thisloop_voltages_DMs.append(new_voltage)
+            thisloop_command_DMs.append(new_dmcommand)
 
         iteration_number += 1
         if not silence:
@@ -424,7 +424,7 @@ def correction_loop_1matrix(testbed: Testbed,
 
         CorrectionLoopResult["SVDmodes"].append(thisloop_actual_modes)
 
-        CorrectionLoopResult["voltage_DMs"].extend(thisloop_voltages_DMs)
+        CorrectionLoopResult["command_DMs"].extend(thisloop_command_DMs)
         CorrectionLoopResult["FP_Intensities"].extend(thisloop_FP_Intensities)
         if nb_photons > 1:
             CorrectionLoopResult["FP_Intensities_phot"].extend(thisloop_FP_Intensities_phot)
@@ -479,7 +479,7 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
 
     FP_Intensities = CorrectionLoopResult["FP_Intensities"]
     meancontrast = CorrectionLoopResult["MeanDHContrast"]
-    voltage_DMs = CorrectionLoopResult["voltage_DMs"]
+    command_DMs = CorrectionLoopResult["command_DMs"]
     nb_total_iter = CorrectionLoopResult["nb_total_iter"]
     EF_estim = CorrectionLoopResult["EF_estim"]
     EF_simul = CorrectionLoopResult["EF_simul"]
@@ -516,17 +516,17 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
 
         fits.writeto(os.path.join(probe_dir, "EF_FP_IM.fits"), np.squeeze(np.imag(np.array(EF_simul))), header, overwrite=True)
 
-    voltage_DMs_nparray = np.zeros((nb_total_iter, testbed.number_act))
+    command_DMs_nparray = np.zeros((nb_total_iter, testbed.number_act))
 
     DM_phases = np.zeros((len(testbed.name_of_DMs), nb_total_iter, testbed.dim_overpad_pupil, testbed.dim_overpad_pupil))
 
-    for i in range(len(voltage_DMs)):
-        allDMphases = testbed.voltage_to_phases(voltage_DMs[i])
+    for i in range(len(command_DMs)):
+        allDMphases = testbed.dmcommands_to_phases(command_DMs[i])
 
-        if isinstance(voltage_DMs[i], (int, float)):
-            voltage_DMs_nparray[i, :] += float(voltage_DMs[i])
+        if isinstance(command_DMs[i], (int, float)):
+            command_DMs_nparray[i, :] += float(command_DMs[i])
         else:
-            voltage_DMs_nparray[i, :] = voltage_DMs[i]
+            command_DMs_nparray[i, :] = command_DMs[i]
 
         for j, DM_name in enumerate(testbed.name_of_DMs):
             DM_phases[j, i, :, :] = allDMphases[j]
@@ -543,10 +543,10 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
 
             fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"), DMstrokes[j], header, overwrite=True)
 
-            voltage_DMs_tosave = testbed.testbed_voltage_to_indiv_DM_voltage(voltage_DMs_nparray, DM_name)
+            command_DMs_tosave = testbed.testbed_command_to_indiv_DM_command(command_DMs_nparray, DM_name)
 
-            fits.writeto(os.path.join(result_dir, f"{DM_name}_voltages.fits"),
-                         voltage_DMs_tosave,
+            fits.writeto(os.path.join(result_dir, f"{DM_name}_command.fits"),
+                         command_DMs_tosave,
                          header,
                          overwrite=True)
 

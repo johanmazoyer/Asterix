@@ -7,8 +7,8 @@ This section describes how to correct the electrical field in the focal plane in
 are possible in Asterix:
 
 - an initialization (e.g. Jacobian matrix) ``Corrector.__init__`` : The initialization requires previous initialization of the testbed and of the estimator.
-- a matrix update function ``Corrector.update_matrices`` This function is called once during initialization and then each time we need to recompute the Jacobian in the middle of the correction using different DM voltages as the starting point. It can also be used to update the dark-hole mask.
-- a correction function ``Corrector.toDM_voltage`` which takes the results of an estimation and returns the DM voltages.
+- a matrix update function ``Corrector.update_matrices`` This function is called once during initialization and then each time we need to recompute the Jacobian in the middle of the correction using different DM command as the starting point. It can also be used to update the dark-hole mask.
+- a correction function ``Corrector.toDM_command`` which takes the results of an estimation and returns the DM command (in nm).
 
 Dark Hole Mask Definition
 +++++++++++++++++++++++++++++++
@@ -71,7 +71,7 @@ There are two main parameters for this part:
 - ``SmallPhaseHypEFC`` is defining the if we do the small phase hypothesis for the basis vectors in the EFC matrix. 
     If True : when applying modes on the DMs we, do a small phase assumption : exp(i phi) = 1+ i.phi
     If False : we keep exp(i phi).
-    In both case, if the DMs are not initially flat (non zero initial_DM_voltage),
+    In both case, if the DMs are not initially flat (non zero initial_DM_command),
     we do not make the small phase assumption for initial DM phase
 
 The Matrix calculation is done during initialization:
@@ -97,13 +97,13 @@ The Matrix calculation is done during initialization:
 Once you have initialized, you can update the matrix during the correction
 wihtout re-initializing using ``update_matrices``.
 This can be useful to recalculate the jacobian by pushing the basis mode around a
-non zero DM voltage or an estimated a wavefront in pupil plane (likely estimated using
+non zero DM command or an estimated a wavefront in pupil plane (likely estimated using
 some phase diversity):
 
 .. code-block:: python
     
     corrector.update_matrices(testbed,
-                              initial_DM_voltage=some_DM_voltage,
+                              initial_DM_command=some_DM_command,
                               initial_estimated_wavefront=some_estimated_wavefront)
 
 
