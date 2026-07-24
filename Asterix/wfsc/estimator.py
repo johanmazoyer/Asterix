@@ -202,11 +202,11 @@ class Estimator:
                     vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(posprobes)), dtype=np.float32)
 
                     for i in np.arange(len(posprobes)):
-                        # TODO WTH is the hardcoded 17. @Raphael @Axel
+
                         if name_DM_to_probe_in_PW == 'DM1':
-                            probes[i, :] = self.dmcommand_probes[i][0:952] / 17
+                            probes[i, :] = self.dmcommand_probes[i][0:952]
                         if name_DM_to_probe_in_PW == 'DM2':
-                            probes[i, :] = self.dmcommand_probes[i][952:] / 17
+                            probes[i, :] = self.dmcommand_probes[i][952:]
                         vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
                                  self.dimEstim] = self.PWMatrix[k][:, 0, i].flatten()
                         vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
