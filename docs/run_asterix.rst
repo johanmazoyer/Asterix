@@ -250,7 +250,7 @@ Matrix parameters:
 
 If EFC:
 
-    - ``amplitudeEFC`` : float, in nm the value by which actuator is pusched. 
+    - ``amplitudeEFC`` : float, in nm the value by which actuator is pushed when creating the EFC basis. 
     - ``regularization`` : string, regularization when truncated modes in the inversion 'truncation' or 'tikhonov'.
 
 if ``onbench`` is True:

@@ -49,7 +49,7 @@ def create_interaction_matrix(testbed: Testbed,
     dimEstim : int
         size of the output image in teh estimator
     amplitudeEFC : float
-        amplitude of the EFC probe on the DM
+        amplitude of the DM basis vector maximum during EFC matrix measure (nm).
     matrix_dir : string
         path to directory to save all the matrices here
     SmallPhaseHypEFC : Bool, default True
@@ -147,7 +147,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
     dimEstim: int
         size of the output image in teh estimator
     amplitudeEFC: float
-        amplitude of the EFC probe on the DM
+        amplitude of the DM basis vector maximum during EFC matrix measure (nm).
     wavelength : float
         wavelength in m.
     matrix_dir : string
@@ -256,7 +256,7 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
             else:
                 phasesBasis = np.zeros((DM.basis_size, DM.dim_overpad_pupil, DM.dim_overpad_pupil))
                 for i in range(DM.basis_size):
-                    phasesBasis[i] = DM.dmcommand_to_phase(DM.basis[i]) * amplitudeEFC
+                    phasesBasis[i] = DM.dmcommand_to_phase(DM.basis[i] * amplitudeEFC)
 
             if dir_save_all_planes is not None:
                 # save the basis phase to check what is happening
@@ -429,7 +429,9 @@ def create_singlewl_interaction_matrix(testbed: Testbed,
                 # corono and flat DMs, this is 0, but it's not for non ideal coronagraph
                 # or if we have a strong initial DM command. This needs
                 # to be investigated, in simulation and on the testbed
-                Gvector = Gvector - G0
+                # normalise the matrix by the amplitude of the push so that the resulting
+                # dm command are in nm.
+                Gvector = (Gvector - G0) / amplitudeEFC
 
                 if dir_save_all_planes is not None:
                     name_plane = 'Gvector_in_matrix_' + osname + f'_wl{int(wavelength * 1e9)}'

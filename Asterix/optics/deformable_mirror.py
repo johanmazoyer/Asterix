@@ -525,6 +525,7 @@ class DeformableMirror(optsy.OpticalSystem):
         --------
         basis: 2d numpy array
             Basis [Size basis, Number of active act in the DM].
+            All basis vector must be normalized to 1 (nm).
         """
         if basis_type == 'actuator':
             # no need to remove the inactive actuators,
@@ -546,7 +547,7 @@ class DeformableMirror(optsy.OpticalSystem):
 
             for i in range(basis_size):
                 vec = cossinbasis[i].flatten()[self.active_actuators]
-                basis[i] = vec
+                basis[i] = vec / np.max(vec)
 
             # This is a very time consuming part of the code.
             # from N DM commands with the sine and cosine value, we go N times through the

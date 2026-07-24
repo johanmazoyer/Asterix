@@ -93,10 +93,7 @@ class Corrector:
         self.correction_algorithm = Correctionconfig["correction_algorithm"].lower()
         self.SmallPhaseHypEFC = Correctionconfig["SmallPhaseHypEFC"]
 
-        if basis_type == 'actuator':
-            self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
-        else:
-            self.amplitudeEFC = 1.
+        self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
 
         if self.correction_algorithm == "sm":
             self.expected_gain_in_contrast = 0.1
@@ -376,7 +373,7 @@ class Corrector:
 
             #     indice_acum_number_act += DM.number_act
 
-            return -self.amplitudeEFC * solutionefc
+            return - solutionefc
 
         if self.correction_algorithm == "sm":
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
@@ -442,7 +439,7 @@ class Corrector:
 
             #     indice_acum_number_act += DM.number_act
 
-            return -self.amplitudeEFC * solutionSM
+            return - solutionSM
 
         if self.correction_algorithm == "em":
 
@@ -450,10 +447,10 @@ class Corrector:
                 self.previousmode = mode
                 _, _, self.invertM0 = invert_svd(self.M0, mode, goal="c", regul=self.regularization, silence=True)
 
-            return -self.amplitudeEFC * wfc.calc_em_solution(self.MaskEstim, estimate, self.invertM0, self.G, testbed)
+            return - wfc.calc_em_solution(self.MaskEstim, estimate, self.invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return -self.amplitudeEFC * wfc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G, testbed)
+            return - wfc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
             raise NotImplementedError("This correction algorithm is not yet implemented")
