@@ -181,12 +181,12 @@ class DeformableMirror(optsy.OpticalSystem):
         return EF_after_DM
 
     def creatingpushact(self, DMconfig, silence=False):
-        """OPD map induced in the DM plane for each actuator (i.e. actuator influence
+        """OPD maps in the DM plane for each actuator (i.e. actuator influence
         function rescaled to the right size and shifted at each actuator position).
         Influence functions of each actuator are normalized to 1 before supixel shift.
 
         This large array is initialized at the beginning and will be use
-        to transform a DM command in nm into a DM opd for each DM. This is saved
+        to transform a DM command in nm into a DM opd in nm for each DM. This is saved
         in .fits to save times if the parameter have not changed
 
         In case of "misregistration = True" we measure it once for
@@ -206,7 +206,7 @@ class DeformableMirror(optsy.OpticalSystem):
         Returns
         --------
         pushact : 3D numpy arrayof size [self.number_act, self.dim_overpad_pupil, self.dim_overpad_pupil]
-            DM OPD maps induced in the DM plane for each actuator.
+            OPD maps in the DM plane for each actuator.
         """
         start_time = time.time()
         Name_pushact_fits = "PushAct_" + self.Name_DM
