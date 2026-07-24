@@ -181,10 +181,12 @@ class DeformableMirror(optsy.OpticalSystem):
         return EF_after_DM
 
     def creatingpushact(self, DMconfig, silence=False):
-        """OPD map induced in the DM plane for each actuator.
+        """OPD map induced in the DM plane for each actuator (i.e. actuator influence
+        function rescaled to the right size and shifted at each actuator position).
+        Influence functions of each actuator are normalized to 1 before supixel shift.
 
         This large array is initialized at the beginning and will be use
-        to transorm a voltage into a phase for each DM. This is saved
+        to transform a DM vector in nm into a DM opd for each DM. This is saved
         in .fits to save times if the parameter have not changed
 
         In case of "misregistration = True" we measure it once for
@@ -297,15 +299,17 @@ class DeformableMirror(optsy.OpticalSystem):
         dim_even = int(np.ceil(np.max(resizeactshape.shape) / 2 + 1)) * 2
         resizeactshape = crop_or_pad_image(resizeactshape, dim_even)
 
+        # Normalize infl function to 1 nm
+        resizeactshape = resizeactshape / np.amax(resizeactshape)
+
         # Gauss2Dfit for centering the rescaled influence function
         Gaussian_fit_param = gauss.gauss2Dfit(resizeactshape)
         dx = Gaussian_fit_param[3]
         dy = Gaussian_fit_param[4]
         xycent = len(resizeactshape) / 2
 
-        # Center the actuator shape on a pixel and normalize
-        resizeactshape = ft_subpixel_shift(resizeactshape, xshift=xycent - dx,
-                                           yshift=xycent - dy) / np.amax(resizeactshape)
+        # Center the actuator shape on a pixel
+        resizeactshape = ft_subpixel_shift(resizeactshape, xshift=xycent - dx, yshift=xycent - dy)
 
         # Put the centered influence function inside an array (self.dim_overpad_pupil x self.dim_overpad_pupil)
         actshapeinpupil = crop_or_pad_image(resizeactshape, dim_array)
@@ -464,8 +468,8 @@ class DeformableMirror(optsy.OpticalSystem):
         return EF_back_in_pup_plane
 
     def voltage_to_phase(self, actu_vect, einstein_sum=False):
-        """Generate the phase applied on one DM for a give vector of actuator
-        amplitude We decided to do it without matrix multiplication to save
+        """Generate the phase applied on one DM for a given vector of actuator
+        amplitude in nm. We decided to do it without matrix multiplication to save
         time because a lot of the time we have lot of zeros in it.
 
         The phase is define at the reference wl and multiply by wl_ratio in DM.EF_through
@@ -475,7 +479,7 @@ class DeformableMirror(optsy.OpticalSystem):
         Parameters
         ----------
         actu_vect : 1D array
-            Values of the amplitudes for each actuator.
+            Values of the amplitudes for each actuator in nm.
         einstein_sum : boolean, default false
             Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
             gives the same results as normal sum. Seems ot be faster for unique actuator
@@ -484,15 +488,15 @@ class DeformableMirror(optsy.OpticalSystem):
         Returns
         --------
         DM_phase: 2D array
-            phase map in the same unit as actu_vect * DM_pushact.
+            phase map in radians.
         """
 
         where_non_zero_voltage = np.where(actu_vect != 0)
         if len(where_non_zero_voltage[0]) == 0:
             return np.zeros((self.dim_overpad_pupil, self.dim_overpad_pupil))
 
-        # opd is in nanometer
-        # DM_pushact is in opd nanometer
+        # actu_vect are in nanometer
+        # DM_pushact are influence functions normalized to 1.
         opd_to_phase = 2 * np.pi * 1e-9 / self.wavelength_0
 
         if einstein_sum or len(where_non_zero_voltage[0]) < 3:
