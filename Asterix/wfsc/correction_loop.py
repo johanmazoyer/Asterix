@@ -552,6 +552,11 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                          header,
                          overwrite=True)
 
+            fits.writeto(os.path.join(result_dir, f"{DM_name}_lastcommand.fits"),
+                                     command_DMs_tosave[-1],
+                                     header,
+                                     overwrite=True)
+
             plt.plot(np.std(DMstrokes[j], axis=(1, 2)), label=DM_name + " RMS")
             plt.plot(np.max(DMstrokes[j], axis=(1, 2)) - np.min(DMstrokes[j], axis=(1, 2)), label=DM_name + " PV")
 
