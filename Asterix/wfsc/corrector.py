@@ -318,8 +318,7 @@ class Corrector:
             raise NotImplementedError("This correction algorithm is not yet implemented")
 
     def toDM_command(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., silence=False, **kwargs):
-        """Run a correction from a estimate, and return the DM command
-        compatible with the testbed.
+        """ Measure and return appropriate tesbed DM command from an estimate.
 
         AUTHOR : Johan Mazoyer
 
