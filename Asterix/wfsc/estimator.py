@@ -20,8 +20,8 @@ class Estimator:
                 The estimator initialization requires previous initialization of the testbed.
 
             - an probe function Estimator.probe(), with parameters:
-                    - the entrance EF
-                    - DM voltages
+                    - the entrance EF at the time ot probing
+                    - the tesbed DM command at the time ot probing
                     - the estimation wavelengths
                 It returns the probed images as a list (of length nb_wav_estim) of
                 3d arrays (nprobes,dimEstim,dimEstim).
@@ -172,11 +172,11 @@ class Estimator:
 
             name_DM_to_probe_in_PW = Estimationconfig["name_DM_to_probe_in_PW"]
 
-            self.voltage_probes = wfs.generate_probe_voltages(testbed, posprobes, amplitudePW,
+            self.dmcommand_probes = wfs.generate_probe_command(testbed, posprobes, amplitudePW,
                                                                    name_DM_to_probe_in_PW)
 
             self.PWMatrix = wfs.create_pw_matrix(testbed,
-                                                 self.voltage_probes,
+                                                 self.dmcommand_probes,
                                                  self.dimEstim,
                                                  self.cutsvdPW,
                                                  wav_vec_estim=self.wav_vec_estim,
@@ -202,11 +202,11 @@ class Estimator:
                     vectorPW = np.zeros((2, self.dimEstim * self.dimEstim * len(posprobes)), dtype=np.float32)
 
                     for i in np.arange(len(posprobes)):
-                        # TODO WTH is the hardcoded 17. @Raphael @Axel
+
                         if name_DM_to_probe_in_PW == 'DM1':
-                            probes[i, :] = self.voltage_probes[i][0:952] / 17
+                            probes[i, :] = self.dmcommand_probes[i][0:952]
                         if name_DM_to_probe_in_PW == 'DM2':
-                            probes[i, :] = self.voltage_probes[i][952:] / 17
+                            probes[i, :] = self.dmcommand_probes[i][952:]
                         vectorPW[0, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
                                  self.dimEstim] = self.PWMatrix[k][:, 0, i].flatten()
                         vectorPW[1, i * self.dimEstim * self.dimEstim:(i + 1) * self.dimEstim *
@@ -244,7 +244,7 @@ class Estimator:
         else:
             raise NotImplementedError("This estimation algorithm is not yet implemented")
 
-    def probe(self, testbed: Testbed, entrance_EF=1., voltage_vector=0., perfect_estimation=False, **kwargs):
+    def probe(self, testbed: Testbed, entrance_EF=1., dm_command=0., perfect_estimation=False, **kwargs):
         """Use the DM or the testbed to probe the aberrations with a given input wavefront and a
         state of the DMs.
 
@@ -256,8 +256,8 @@ class Estimator:
                 Testbed object which describe your testbed
         entrance_EF : complex float or 2D array, default 1.
             initial EF field
-        voltage_vector : 1D float array
-            vector of voltages vectors for each DMs
+        dm_command : 1D float array
+            dm_commands for the testbed DMs when probing
         perfect_estimation : bool, default = False
             if true This is equivalent to have self.technique = "perfect"
             but even if we are using another technique, we sometimes
@@ -301,7 +301,7 @@ class Estimator:
                 for i, wavei in enumerate(self.wav_vec_estim):
                     resultatestimation = testbed.todetector(
                         entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(wavei)],
-                        voltage_vector=voltage_vector,
+                        dm_command=dm_command,
                         wavelength=wavei)
                     probed_fp_images.append(resizing(resultatestimation, self.dimEstim))
 
@@ -313,7 +313,7 @@ class Estimator:
             elif self.polychrom == 'singlewl':
                 resultatestimation = testbed.todetector(entrance_EF=entrance_EF[testbed.wav_vec.tolist().index(
                     self.wav_vec_estim[0])],
-                                                        voltage_vector=voltage_vector,
+                                                        dm_command=dm_command,
                                                         wavelength=self.wav_vec_estim[0])
                 probed_fp_images.append(resizing(resultatestimation, self.dimEstim))
 
@@ -340,8 +340,8 @@ class Estimator:
                 for i, wavei in enumerate(self.wav_vec_estim):
                     probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF[testbed.wav_vec.tolist().index(wavei)],
                                                                 testbed,
-                                                                self.voltage_probes,
-                                                                voltage_vector=voltage_vector,
+                                                                self.dmcommand_probes,
+                                                                dm_command=dm_command,
                                                                 wavelengths=wavei,
                                                                 pwp_or_btp=self.technique,
                                                                 **kwargs)
@@ -351,8 +351,8 @@ class Estimator:
                 probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF[testbed.wav_vec.tolist().index(
                     self.wav_vec_estim[0])],
                                                             testbed,
-                                                            self.voltage_probes,
-                                                            voltage_vector=voltage_vector,
+                                                            self.dmcommand_probes,
+                                                            dm_command=dm_command,
                                                             wavelengths=self.wav_vec_estim[0],
                                                             pwp_or_btp=self.technique,
                                                             **kwargs)
@@ -361,8 +361,8 @@ class Estimator:
             elif self.polychrom == 'broadband_pwprobes':
                 probed_fp_images_i = wfs.simulate_pw_probes(entrance_EF,
                                                             testbed,
-                                                            self.voltage_probes,
-                                                            voltage_vector=voltage_vector,
+                                                            self.dmcommand_probes,
+                                                            dm_command=dm_command,
                                                             wavelengths=testbed.wav_vec,
                                                             pwp_or_btp=self.technique,
                                                             **kwargs)
@@ -371,7 +371,7 @@ class Estimator:
         return probed_fp_images
 
     def estimate(self, probed_fp_images, perfect_estimation=False, dtype_complex='complex128', testbed=None, **kwargs):
-        """Run an estimation from a testbed, with a given input the probed images.
+        """Measure an estimation from a testbed, with a given input the probed images.
         For some estimation algorithms (btp) we need to use a model of the testbed.
 
         AUTHOR : Johan Mazoyer
@@ -412,7 +412,7 @@ class Estimator:
 
                 for i, wavei in enumerate(self.wav_vec_estim):
                     if self.technique in ["btp"]:
-                        differences = wfs.btp_difference(probed_fp_images[i], testbed, self.voltage_probes, wavei)
+                        differences = wfs.btp_difference(probed_fp_images[i], testbed, self.dmcommand_probes, wavei)
                     else:
                         differences = wfs.pw_difference(probed_fp_images[i])
 
@@ -429,7 +429,7 @@ class Estimator:
 
             elif self.polychrom in ['singlewl', 'broadband_pwprobes']:
                 if self.technique in ["btp"]:
-                    differences = wfs.btp_difference(probed_fp_images[0], testbed, self.voltage_probes,
+                    differences = wfs.btp_difference(probed_fp_images[0], testbed, self.dmcommand_probes,
                                                      self.wav_vec_estim[0])
                 else:
                     differences = wfs.pw_difference(probed_fp_images[0])

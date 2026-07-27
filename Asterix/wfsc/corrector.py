@@ -22,7 +22,7 @@ class Corrector:
             The initialization requires previous initialization of
             the testbed and of the estimator.
 
-        - a correction function Corrector.toDM_voltage(estimation), which returns the DM Voltage vector
+        - a correction function Corrector.toDM_command(estimation), which returns the DM command
             using as parameter the estimation (2D array or 3D for polychromatic correction).
             It can one DM or more, depending on the testbed.
 
@@ -65,7 +65,7 @@ class Corrector:
         save_for_bench : bool default: false
             should we save for the real testbed in realtestbed_dir
         realtestbed_dir : string
-            path to directory to save all the files the real testbed need
+            path to directory to save all the files the real testbed needs
         silence : boolean, default False.
             Whether to silence print outputs.
         """
@@ -93,10 +93,7 @@ class Corrector:
         self.correction_algorithm = Correctionconfig["correction_algorithm"].lower()
         self.SmallPhaseHypEFC = Correctionconfig["SmallPhaseHypEFC"]
 
-        if basis_type == 'actuator':
-            self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
-        else:
-            self.amplitudeEFC = 1.
+        self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
 
         if self.correction_algorithm == "sm":
             self.expected_gain_in_contrast = 0.1
@@ -233,7 +230,7 @@ class Corrector:
         # Adding error on the DM model. Now that the matrix is measured, we can
         # introduce a small movememnt on one DM or the other. By changing DM_pushact
         # we are changing the position of the actuator and therfore the phase of the
-        # DM for a given voltage when using DM.voltage_to_phase
+        # DM for a given command when using DM.dmcommand_to_phase
 
         for DM_name in testbed.name_of_DMs:
             DM: DeformableMirror = vars(testbed)[DM_name]
@@ -250,7 +247,7 @@ class Corrector:
     def update_matrices(self,
                         testbed: Testbed,
                         maskEstim=None,
-                        initial_DM_voltage=0.,
+                        initial_DM_command=0.,
                         initial_estimated_wavefront=1.,
                         silence=False):
         """Measure the interaction matrices needed for the correction Is launch
@@ -266,8 +263,8 @@ class Corrector:
         maskEstim : 2d numpy array
             binary array of size [dimEstim, dimEstim] : dark hole mask. If undefined, it
             will use the self.MaskEstim attribute defined in the Corrector initialization.
-        initial_DM_voltage : 1D-array real
-            a vector voltage (for all DMs) around which the basis modes will be pushed to create the matrix.
+        initial_DM_command : 1D-array real
+            a command (for all testbed DMs) around which the basis modes will be pushed to create the matrix.
         initial_estimated_wavefront : 2D complex array or complex scalar. Default is 1 (flat WF)
             a wavefront in pupil plane (likely estimated using some phase diversity) around
             which the basis modes will be pushed to create the matrix.
@@ -292,7 +289,7 @@ class Corrector:
                                                      self.dimEstim,
                                                      self.amplitudeEFC,
                                                      self.matrix_dir,
-                                                     initial_DM_voltage=initial_DM_voltage,
+                                                     initial_DM_command=initial_DM_command,
                                                      initial_estimated_wavefront=initial_estimated_wavefront,
                                                      SmallPhaseHypEFC=self.SmallPhaseHypEFC,
                                                      wav_vec_estim=self.wav_vec_estim,
@@ -320,16 +317,15 @@ class Corrector:
         else:
             raise NotImplementedError("This correction algorithm is not yet implemented")
 
-    def toDM_voltage(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., silence=False, **kwargs):
-        """Run a correction from a estimate, and return the DM voltage
-        compatible with the testbed.
+    def toDM_command(self, testbed: Testbed, estimate, mode=1, ActualCurrentContrast=1., silence=False, **kwargs):
+        """ Measure and return appropriate tesbed DM command from an estimate.
 
         AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
         testbed : OpticalSystem.Testbed
-            Testbed object which describe your testbed
+            Testbed object which describes your testbed
         estimate : list of 2D complex array
             list is the number of wl in the estimation, usually 1 or testbed.nb_wav
             Each arrays are of size of sixe [dimEstim, dimEstim].
@@ -348,7 +344,7 @@ class Corrector:
         Return
         ----------
         solution : 1d numpy real float array
-            a voltage vector to be applied to the testbed
+            a command to be applied to the DMS of the testbed.
         """
 
         if self.correction_algorithm == "efc":
@@ -376,7 +372,7 @@ class Corrector:
 
             #     indice_acum_number_act += DM.number_act
 
-            return -self.amplitudeEFC * solutionefc
+            return - solutionefc
 
         if self.correction_algorithm == "sm":
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
@@ -442,7 +438,7 @@ class Corrector:
 
             #     indice_acum_number_act += DM.number_act
 
-            return -self.amplitudeEFC * solutionSM
+            return - solutionSM
 
         if self.correction_algorithm == "em":
 
@@ -450,10 +446,10 @@ class Corrector:
                 self.previousmode = mode
                 _, _, self.invertM0 = invert_svd(self.M0, mode, goal="c", regul=self.regularization, silence=True)
 
-            return -self.amplitudeEFC * wfc.calc_em_solution(self.MaskEstim, estimate, self.invertM0, self.G, testbed)
+            return - wfc.calc_em_solution(self.MaskEstim, estimate, self.invertM0, self.G, testbed)
 
         if self.correction_algorithm == "steepest":
 
-            return -self.amplitudeEFC * wfc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G, testbed)
+            return - wfc.calc_steepest_solution(self.MaskEstim, estimate, self.M0, self.G, testbed)
         else:
             raise NotImplementedError("This correction algorithm is not yet implemented")

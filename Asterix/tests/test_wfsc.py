@@ -61,7 +61,7 @@ def quick_run_no_save(config, data_dir):
                               Loopconfig,
                               SIMUconfig,
                               input_wavefront=input_wavefront,
-                              initial_DM_voltage=0,
+                              initial_DM_command=0,
                               silence=silence)
 
     best_contrast = np.min(results["MeanDHContrast"])

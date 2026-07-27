@@ -122,9 +122,9 @@ class Testbed(optsy.OpticalSystem):
         if 'DMphase' in known_keywords:
             known_keywords.remove('DMphase')
         if self.number_DMs > 0:
-            # there is at least a DM, we add voltage_vector as an authorize kw
-            known_keywords.append('voltage_vector')
-            self.EF_through = _control_testbed_with_voltages(self, self.EF_through)
+            # there is at least a DM, we add dm_command as an authorize kw
+            known_keywords.append('dm_command')
+            self.EF_through = _control_testbed_with_dmcommands(self, self.EF_through)
 
         # to avoid mis-use we only use specific keywords.
         known_keywords.remove('kwargs')
@@ -134,115 +134,113 @@ class Testbed(optsy.OpticalSystem):
         # initialize the max and sum of PSFs for the normalization to contrast
         self.measure_normalization()
 
-    def voltage_to_phases(self, actu_vect, einstein_sum=False):
+    def dmcommands_to_phases(self, dm_command, einstein_sum=False):
         """Generate the phase applied on each DMs of the testbed from a given
-        vector of actuator amplitude. I split theactu_vect and  then for each
-        DM, it uses DM.voltage_to_phase (no s)
+        dm command for the testbed. I split the dm_command into individual DM dm_command
+        then for each DM, it uses DM.dmcommand_to_phase (no s)
 
         AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
-        actu_vect : float or 1D array of size testbed.number_act
-            Values of the amplitudes for each actuator and each DM.
+        dm_command : float or 1D array of size testbed.number_act
+            Values of the amplitudes for each actuator and each DM in nm.
         einstein_sum : boolean. default False
-            Use numpy Einstein sum to sum the pushact[i]*actu_vect[i]
+            Use numpy Einstein sum to sum the pushact[i]*dm_command[i]
             gives the same results as normal sum. Seems ot be faster for unique actuator
             but slower for more complex phases.
 
         Returns
         --------
         phases : 3D array of size [testbed.number_DMs, testbed.dim_overpad_pupil,testbed.dim_overpad_pupil]
-            Phase maps for each DMs by order of light path in the same unit as actu_vect * DM_pushact.
+            Phase maps for each DMs by order of light path in radians.
         """
         DMphases = np.zeros((self.number_DMs, self.dim_overpad_pupil, self.dim_overpad_pupil))
         indice_acum_number_act = 0
 
-        if isinstance(actu_vect, (int, float)):
-            return np.zeros(self.number_DMs) + float(actu_vect)
+        if isinstance(dm_command, (int, float)):
+            return np.zeros(self.number_DMs) + float(dm_command)
 
-        if len(actu_vect) != self.number_act:
-            raise ValueError("voltage vector must be 0 or array of dimension testbed.number_act," +
+        if len(dm_command) != self.number_act:
+            raise ValueError("dm_command must be 0 or array of dimension testbed.number_act," +
                              "sum of all DM.number_act")
 
         for i, DM_name in enumerate(self.name_of_DMs):
 
             DM: deformable_mirror.DeformableMirror = vars(self)[DM_name]
             if DM.active:
-                actu_vect_DM = actu_vect[indice_acum_number_act:indice_acum_number_act + DM.number_act]
-                DMphases[i] = DM.voltage_to_phase(actu_vect_DM, einstein_sum=einstein_sum)
+                dm_command_DM = dm_command[indice_acum_number_act:indice_acum_number_act + DM.number_act]
+                DMphases[i] = DM.dmcommand_to_phase(dm_command_DM, einstein_sum=einstein_sum)
 
             indice_acum_number_act += DM.number_act
 
         return DMphases
 
-    def basis_vector_to_act_vector(self, vector_basis_voltage):
-        """transform a vector of voltages on the mode of a basis in a  vector
-        of voltages of the actuators of the DMs of the system.
+    def basis_vector_to_dmcommand(self, vector_basis_command):
+        """transform a vector of command on the modes of a basis in a command
+        of the DMs of the testbed.
 
         AUTHOR : Johan Mazoyer
 
         Parameters
         ----------
-        vector_basis_voltage : 1D-array real
-            Vector of voltages of size (total(basisDM sizes)) on the mode of the basis for all
-            DMs by order of the light path.
+        vector_basis_command : 1D-array real
+            Command of size (total(basisDM sizes)) on the mode of the basis.
 
         Returns
         --------
-        vector_actuator_voltage : 1D-array real
-            Vector of base coefficients for all actuators of the DMs by order of the light path
-            size (total(DM actuators)).
+        dm_command : 1D-array real
+            dm command in nm by order of the light path (size :total(DM actuators)).
         """
 
         indice_acum_basis_size = 0
         indice_acum_number_act = 0
 
-        vector_actuator_voltage = np.zeros(self.number_act)
+        dm_command = np.zeros(self.number_act)
         for DM_name in self.name_of_DMs:
 
             # we access each DM object individually
             DM: deformable_mirror.DeformableMirror = vars(self)[DM_name]
             if DM.active:
-                # we extract the voltages for this DM
-                # this voltages are in the DM basis
-                vector_basis_voltage_for_DM = vector_basis_voltage[indice_acum_basis_size:indice_acum_basis_size +
+                # we extract the command for this DM
+                # this command are in the DM basis
+                vector_basis_command_for_DM = vector_basis_command[indice_acum_basis_size:indice_acum_basis_size +
                                                                    DM.basis_size]
 
                 # we change to the actuator basis
-                vector_actu_voltage_for_DM = np.dot(np.transpose(DM.basis), vector_basis_voltage_for_DM)
+                command_for_DM = np.dot(np.transpose(DM.basis), vector_basis_command_for_DM)
 
-                # we concatenate DM voltages to obtain a single vector of voltages, but for the testbed
-                vector_actuator_voltage[indice_acum_number_act:indice_acum_number_act +
-                                        DM.number_act] = vector_actu_voltage_for_DM
+                # we concatenate DM commands to obtain a single command for the testbed
+                dm_command[indice_acum_number_act:indice_acum_number_act +
+                                        DM.number_act] = command_for_DM
 
                 indice_acum_basis_size += DM.basis_size
             indice_acum_number_act += DM.number_act
 
-        return vector_actuator_voltage
+        return dm_command
 
-    def indiv_DM_voltage_to_testbed_voltage(self, voltage_indiv, DM_name):
-        """Transform a vector of voltages on a single DM vector
-            of voltages of the actuators of the tesbted using zeros on the other DMs.
+    def indiv_DM_command_to_testbed_command(self, dmcommand_indiv, DM_name):
+        """Transform a command on a single DM to command of all
+        tesbted DMs using zeros on the other DMs.
 
         Parameters:
         --------
-        voltage_indiv : 1D-array real
-            the individual DM voltage vector.
+        dmcommand_indiv : 1D-array real
+            the individual DM command in nm.
         DM_name : string
-            The name of the DM you which to apply the voltages to.
+            The name of the DM you which to apply the command to.
 
         Returns
         --------
-        testbed_voltage : 1D-array real of dim testbed.number_act
-            the vector of voltages on the testbed with voltage_indiv at the
+        testbed_command : 1D-array real of dim testbed.number_act
+            the commands of the testbed DM with dmcommand_indiv at the
             position of DM DM_name and zero elsewhere.
         """
 
         if DM_name not in self.name_of_DMs:
             raise ValueError("DM_name must be in the list of DMs")
 
-        testbed_voltage = np.zeros(self.number_act)
+        testbed_command = np.zeros(self.number_act)
         indice_acum_number_act = 0
         for DM_name_here in self.name_of_DMs:
 
@@ -253,28 +251,28 @@ class Testbed(optsy.OpticalSystem):
                 if not DM.active:
                     raise ValueError("DM_name must be active to send commands.")
 
-                if len(voltage_indiv) != DM.number_act:
-                    raise ValueError(f"voltage_indiv must be of size the number_act of DM {DM_name} : {DM.number_act}")
+                if len(dmcommand_indiv) != DM.number_act:
+                    raise ValueError(f"dmcommand_indiv must be of size the number_act of DM {DM_name} : {DM.number_act}")
 
-                testbed_voltage[indice_acum_number_act:indice_acum_number_act + DM.number_act] = voltage_indiv
-                return testbed_voltage
+                testbed_command[indice_acum_number_act:indice_acum_number_act + DM.number_act] = dmcommand_indiv
+                return testbed_command
             else:
                 indice_acum_number_act += DM.number_act
 
-    def testbed_voltage_to_indiv_DM_voltage(self, testbed_voltage, DM_name):
-        """Extract the voltage of DM DM_name from a vector of voltages of the full tesbted.
+    def testbed_command_to_indiv_DM_command(self, testbed_command, DM_name):
+        """Extract the commands of DM DM_name from a command of the full tesbted.
 
         Parameters:
         --------
-        testbed_voltage : 1D-array of dim testbed.number_act
-            the testbed voltage vector (all DMs voltage vectors concatenated)
+        testbed_command : 1D-array of dim testbed.number_act
+            the testbed command (all DM commands concatenated)
         DM_name : string
-            The name of the DM to which you want to extract the individual voltage.
+            The name of the DM to which you want to extract the individual command.
 
         Returns
         --------
-        voltage_indiv : 1D-array real
-            the individual DM voltage vector.
+        dmcommand_indiv : 1D-array real
+            the individual DM command.
 
         """
         indice_acum_number_act = 0
@@ -286,8 +284,8 @@ class Testbed(optsy.OpticalSystem):
             DM: deformable_mirror.DeformableMirror = vars(self)[DM_name_here]
 
             if DM_name_here == DM_name:
-                voltage_indiv = testbed_voltage[indice_acum_number_act:indice_acum_number_act + DM.number_act]
-                return voltage_indiv
+                dmcommand_indiv = testbed_command[indice_acum_number_act:indice_acum_number_act + DM.number_act]
+                return dmcommand_indiv
 
             else:
                 indice_acum_number_act += DM.number_act
@@ -387,16 +385,16 @@ def _clean_EF_through(testbed_EF_through, known_keywords):
     return wrapper
 
 
-def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
+def _control_testbed_with_dmcommands(testbed: Testbed, testbed_EF_through):
     """A function to go from a testbed_EF_through with several DMXX_phase
     parameters (one for each DM), to a testbed_EF_through with a unique
-    voltage_vector parameter of size testbed.number_act (or a single float,
+    dm_command parameter of size testbed.number_act (or a single float,
     like 0.)
 
     the problem with DMXX_phase parameters is that it cannot be automated since it requires
     to know the name/number of the DMs in advance.
 
-    DMXX_phase parameters can still be used, but are overridden by voltage_vector parameter
+    DMXX_phase parameters can still be used, but are overridden by dm_command parameter
     if present.
 
     AUTHOR : Johan Mazoyer
@@ -411,13 +409,13 @@ def _control_testbed_with_voltages(testbed: Testbed, testbed_EF_through):
     Returns
     --------
     the_new_function : function
-        the EF_through function with voltage_vector as a parameters
+        the EF_through function with dm_command as a parameters
     """
 
     def wrapper(**kwargs):
-        if 'voltage_vector' in kwargs:
-            voltage_vector = kwargs['voltage_vector']
-            DM_phase = testbed.voltage_to_phases(voltage_vector)
+        if 'dm_command' in kwargs:
+            dm_command = kwargs['dm_command']
+            DM_phase = testbed.dmcommands_to_phases(dm_command)
             for i, DM_name in enumerate(testbed.name_of_DMs):
                 name_phase = DM_name + "phase"
                 kwargs[name_phase] = DM_phase[i]

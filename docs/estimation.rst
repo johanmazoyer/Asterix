@@ -9,11 +9,11 @@ are possible in Asterix. Additional details can be found directly in :ref:`the c
 It contains 3 functions at least:
 
 - an initialization ``Estimator.__init__()`` The initialization will require previous initialization of the testbed (see previous section) and the [Estimationconfig] part of the parameter file.  
-It set up everything you need for the estimation (e.g. the probes voltages and the PWP matrix). 
+It set up everything you need for the estimation (e.g. the probes commands and the PWP matrix). 
 
 - an probe function ``Estimator.probe()``, with parameters:
-        - the entrance EF
-        - DM voltages
+        - the entrance EF at the time of probing
+        - DM commands at the time of probing
         - the estimation wavelengths
     It returns the probed images as a list (of length ``nb_wav_estim``) of 3d arrays ([2*nprobes,dimScience,dimScience] if PWP or [1+nprobes,dimScience,dimScience] if BTP).
 
@@ -33,7 +33,7 @@ It set up everything you need for the estimation (e.g. the probes voltages and t
     myestim = Estimator(Estimationconfig, testbed)
 
     probed_images = myestim.probe(testbed,
-                                    voltage_vector=init_voltage,
+                                    dm_command=init_dmcommand,
                                     entrance_EF=input_wavefront,)
 
     resultatestimation = myestim.estimate(probed_images)
@@ -60,7 +60,7 @@ this estimation can be also done wihtout initialization or if another estimation
     Estimationconfig.update({'estimation': "Perfect"})
     myestim = Estimator(Estimationconfig, testbed)
     probed_images = myestim.probe(testbed,
-                                    voltage_vector=init_voltage,
+                                    dm_command=init_dmcommand,
                                     entrance_EF=input_wavefront,)
 
     resultatestimation = myestim.estimate(probed_images)
@@ -71,17 +71,17 @@ this estimation can be also done wihtout initialization or if another estimation
     myestim = Estimator(Estimationconfig, testbed)
 
     probed_images = myestim.probe(testbed,
-                                    voltage_vector=init_voltage,
+                                    dm_command=init_dmcommand,
                                     entrance_EF=input_wavefront)
 
     resultatestimation = myestim.estimate(probed_images)
     # this is a pair-wise FP estimation
 
     probed_images = myestim.probe(testbed,
-                                    voltage_vector=init_voltage,
+                                    dm_command=init_dmcommand,
                                     entrance_EF=input_wavefront,
                                     perfect_estimation=True)
-    resultatestimation = myestim.estimate(voltage_vector=init_voltage,
+    resultatestimation = myestim.estimate(dm_command=init_dmcommand,
                                           entrance_EF=input_wavefront,
                                           perfect_estimation=True)
     # this is also a perfect FP estimation, without 
@@ -95,7 +95,7 @@ resized by the ``Estim_bin_factor``:
     from Asterix.utils import resizing
     # testbed is previously defined
 
-    resultatestimation = resizing(testbed.todetector(voltage_vector=init_voltage,
+    resultatestimation = resizing(testbed.todetector(dm_command=init_dmcommand,
                                   entrance_EF=input_wavefront),myestim.dimEstim) 
 
 
@@ -132,7 +132,7 @@ a difference between positive probe and the unprobed image. For this estimator, 
     myestim = Estimator(Estimationconfig, testbed)
 
     probed_images = myestim.probe(testbed,
-                                    voltage_vector=init_voltage,
+                                    dm_command=init_dmcommand,
                                     entrance_EF=input_wavefront)
 
     resultatestimation = myestim.estimate(probed_images, testbed=testbed)
