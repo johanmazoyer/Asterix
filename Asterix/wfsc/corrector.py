@@ -65,7 +65,7 @@ class Corrector:
         save_for_bench : bool default: false
             should we save for the real testbed in realtestbed_dir
         realtestbed_dir : string
-            path to directory to save all the files the real testbed need
+            path to directory to save all the files the real testbed needs
         silence : boolean, default False.
             Whether to silence print outputs.
         """
@@ -264,7 +264,7 @@ class Corrector:
             binary array of size [dimEstim, dimEstim] : dark hole mask. If undefined, it
             will use the self.MaskEstim attribute defined in the Corrector initialization.
         initial_DM_command : 1D-array real
-            a command (for all DMs) around which the basis modes will be pushed to create the matrix.
+            a command (for all testbed DMs) around which the basis modes will be pushed to create the matrix.
         initial_estimated_wavefront : 2D complex array or complex scalar. Default is 1 (flat WF)
             a wavefront in pupil plane (likely estimated using some phase diversity) around
             which the basis modes will be pushed to create the matrix.
@@ -325,7 +325,7 @@ class Corrector:
         Parameters
         ----------
         testbed : OpticalSystem.Testbed
-            Testbed object which describe your testbed
+            Testbed object which describes your testbed
         estimate : list of 2D complex array
             list is the number of wl in the estimation, usually 1 or testbed.nb_wav
             Each arrays are of size of sixe [dimEstim, dimEstim].

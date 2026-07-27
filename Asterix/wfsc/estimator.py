@@ -21,7 +21,7 @@ class Estimator:
 
             - an probe function Estimator.probe(), with parameters:
                     - the entrance EF at the time ot probing
-                    - the DM command at the time ot probing
+                    - the tesbed DM command at the time ot probing
                     - the estimation wavelengths
                 It returns the probed images as a list (of length nb_wav_estim) of
                 3d arrays (nprobes,dimEstim,dimEstim).
@@ -257,7 +257,7 @@ class Estimator:
         entrance_EF : complex float or 2D array, default 1.
             initial EF field
         dm_command : 1D float array
-            dm_commands for the testbed when probing
+            dm_commands for the testbed DMs when probing
         perfect_estimation : bool, default = False
             if true This is equivalent to have self.technique = "perfect"
             but even if we are using another technique, we sometimes
@@ -371,7 +371,7 @@ class Estimator:
         return probed_fp_images
 
     def estimate(self, probed_fp_images, perfect_estimation=False, dtype_complex='complex128', testbed=None, **kwargs):
-        """Run an estimation from a testbed, with a given input the probed images.
+        """Measure an estimation from a testbed, with a given input the probed images.
         For some estimation algorithms (btp) we need to use a model of the testbed.
 
         AUTHOR : Johan Mazoyer
