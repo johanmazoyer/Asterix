@@ -132,7 +132,7 @@ class Corrector:
 
         self.matrix_dir = matrix_dir
         self.update_matrices(testbed,
-                             initial_DM_voltage=initial_DM_command,
+                             initial_DM_command=initial_DM_command,
                              initial_estimated_wavefront=initial_estimated_wavefront,
                              silence=silence)
 
