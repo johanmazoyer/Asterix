@@ -146,7 +146,7 @@ def runthd2(parameter_file_path,
     for DM_name in thd2.name_of_DMs:
         if thd2.config_file["DMconfig"][DM_name + "_filename_initcommand"] != "":
             thisDM_initcommand = fits.getdata(config["DMconfig"][DM_name + "_filename_initcommand"])
-            DMs_initcommand += thd2.testbed_command_to_indiv_DM_command(thisDM_initcommand, DM_name)
+            DMs_initcommand += thd2.indiv_DM_command_to_testbed_command(thisDM_initcommand, DM_name)
 
     # Initialize the estimation
     estimator = Estimator(Estimationconfig,
