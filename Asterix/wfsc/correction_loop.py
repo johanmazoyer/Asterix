@@ -23,8 +23,9 @@ def correction_loop(testbed: Testbed,
                     SIMUconfig,
                     input_wavefront=1.,
                     initial_DM_command=0.,
-                    silence=False,
+                    result_dir=None,
                     probe_dir=None,
+                    silence=False,
                     **kwargs):
     """Run a full loop for several matrices.
 
@@ -61,6 +62,10 @@ def correction_loop(testbed: Testbed,
         Can be:
             float 0 if flat DMs (default)
             or 1D array of size testbed.number_act
+    result_dir : string
+        Directory to save the results to.
+    probe_dir : string
+        Directory to save the probes.
     silence : boolean, default False.
         Whether to silence print outputs.
 
@@ -82,6 +87,11 @@ def correction_loop(testbed: Testbed,
     CorrectionLoopResult["Probes_images"] = []
     CorrectionLoopResult["Var_Err_EF"] = []
 
+    if not os.path.exists(result_dir):
+        if not silence:
+            print("Creating directory " + result_dir)
+        os.makedirs(result_dir)
+
     # reading the simulation parameter files
     nb_photons = SIMUconfig["nb_photons"]
 
@@ -91,6 +101,8 @@ def correction_loop(testbed: Testbed,
     # reading the loop parameter files
     Nbiter_corr = list(Loopconfig["Nbiter_corr"])
     Number_matrix = Loopconfig["Number_matrix"]
+
+    initial_DM_command_thisloop = np.copy(initial_DM_command)
 
     Nbmode_corr = []
     if corrector.correction_algorithm in ['efc', 'em', 'steepest']:
@@ -117,7 +129,7 @@ def correction_loop(testbed: Testbed,
     for i in range(Number_matrix):
 
         if i > 0:
-            corrector.update_matrices(testbed, initial_DM_command=initial_DM_command, silence=silence)
+            corrector.update_matrices(testbed, initial_DM_command=initial_DM_command_thisloop, silence=silence)
 
             if estimator.technique in ["pairwise", "pw", "pwp", "btp"]:
                 estimator.PWMatrix = wfs.create_pw_matrix(testbed,
@@ -125,7 +137,7 @@ def correction_loop(testbed: Testbed,
                                                           estimator.dimEstim,
                                                           estimator.cutsvdPW,
                                                           estimator.wav_vec_estim,
-                                                          initial_DM_command=initial_DM_command,
+                                                          initial_DM_command=initial_DM_command_thisloop,
                                                           silence=silence)
 
         Resultats_correction_loop = correction_loop_1matrix(testbed,
@@ -138,15 +150,24 @@ def correction_loop(testbed: Testbed,
                                                             Nbmode_corr=Nbmode_corr,
                                                             Linesearch=Linesearch,
                                                             input_wavefront=input_wavefront,
-                                                            initial_DM_command=initial_DM_command,
+                                                            initial_DM_command=initial_DM_command_thisloop,
                                                             nb_photons=nb_photons,
                                                             silence=silence,
                                                             probe_dir=probe_dir,
                                                             **kwargs)
 
-        min_contrast = min(CorrectionLoopResult["MeanDHContrast"])
-        min_index = CorrectionLoopResult["MeanDHContrast"].index(min_contrast)
-        initial_DM_command = Resultats_correction_loop["command_DMs"][min_index]
+        min_contrast = min(Resultats_correction_loop["MeanDHContrast"])
+        min_index = Resultats_correction_loop["MeanDHContrast"].index(min_contrast)
+        initial_DM_command_thisloop = Resultats_correction_loop["command_DMs"][min_index]
+
+        for DM_name in testbed.name_of_DMs:
+            DM: DeformableMirror = vars(testbed)[DM_name]
+            if DM.active:
+                bestcommand_thisDM_tosave = testbed.testbed_command_to_indiv_DM_command(initial_DM_command_thisloop, DM_name)
+                fits.writeto(os.path.join(result_dir, f"{DM_name}_bestcommand_mat{i}.fits"),
+                                        bestcommand_thisDM_tosave,
+                                        overwrite=True)
+        
         if not silence:
             if i != Number_matrix - 1:
                 print("end Matrix ", i)
@@ -466,6 +487,8 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
         Binary array of size [dimScience, dimScience]: dark hole mask.
     result_dir : string
         Directory to save the results to.
+    probe_dir : string
+        Directory to save the probes.
     silence : boolean, default False.
         Whether to silence print outputs.
     """
@@ -501,7 +524,11 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
                      header,
                      overwrite=True)
 
-    print("Final contrast in DH: ", meancontrast[-1])
+    min_contrast = min(meancontrast)
+    min_index = meancontrast.index(min_contrast)
+    best_DM_command = command_DMs[min_index]
+
+    print("Minimum contrast in DH: ", min_contrast)
 
     fits.writeto(os.path.join(result_dir, "Mean_Contrast_DH.fits"), np.array(meancontrast), header, overwrite=True)
 
@@ -543,17 +570,18 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
 
             fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"), DMstrokes[j], header, overwrite=True)
 
-            command_DMs_tosave = np.zeros((nb_total_iter, DM.number_act))
+            command_thisDM_tosave = np.zeros((nb_total_iter, DM.number_act))
             for i in np.arange(nb_total_iter):
-                command_DMs_tosave[i] = testbed.testbed_command_to_indiv_DM_command(command_DMs_nparray[i], DM_name)
+                command_thisDM_tosave[i] = testbed.testbed_command_to_indiv_DM_command(command_DMs_nparray[i], DM_name)
 
             fits.writeto(os.path.join(result_dir, f"{DM_name}_command.fits"),
-                         command_DMs_tosave,
+                         command_thisDM_tosave,
                          header,
                          overwrite=True)
 
-            fits.writeto(os.path.join(result_dir, f"{DM_name}_lastcommand.fits"),
-                                     command_DMs_tosave[-1],
+            bestcommand_thisDM_tosave = testbed.testbed_command_to_indiv_DM_command(best_DM_command, DM_name)
+            fits.writeto(os.path.join(result_dir, f"{DM_name}_bestcommand.fits"),
+                                     bestcommand_thisDM_tosave,
                                      header,
                                      overwrite=True)
 

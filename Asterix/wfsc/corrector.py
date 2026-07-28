@@ -112,9 +112,6 @@ class Corrector:
 
         self.amplitudeEFC = Correctionconfig["amplitudeEFC"]
 
-        if self.correction_algorithm == "sm":
-            self.expected_gain_in_contrast = 0.1
-
         self.regularization = Correctionconfig["regularization"]
 
         # we make the dimension of the estimation and the wavelengths attributes of the correction also.
@@ -398,11 +395,13 @@ class Corrector:
             # see Mazoyer et al 2018 ACAD-OSM I paper to understand algorithm
             if self.FirstIterNewMat:
                 # This is the first time
-                self.last_best_alpha = 1
+                self.last_best_alpha = 1e-6
                 self.last_best_contrast = ActualCurrentContrast
                 self.times_we_lowered_gain = 0
                 self.count_since_last_best = 0
                 self.FirstIterNewMat = False
+                self.expected_gain_in_contrast = 0.9
+                print(f"Restart with gain to {self.expected_gain_in_contrast:f}")
 
             if self.last_best_contrast < ActualCurrentContrast:
                 # problem: the algorithm did not actually improved contrast at the last last iteration
@@ -413,7 +412,7 @@ class Corrector:
                 self.count_since_last_best = 0
                 self.last_best_contrast = ActualCurrentContrast
 
-            if self.times_we_lowered_gain == 3:
+            if self.times_we_lowered_gain == 2:
                 # it's been too long we have not increased
                 # or we're so far off linearity that SM is actually heavily degrading contrast
                 # It's time to stop !
@@ -430,7 +429,7 @@ class Corrector:
                                                                            testbed,
                                                                            silence=silence)
 
-            if self.count_since_last_best > 5 or ActualCurrentContrast > 2 * self.last_best_contrast or (isinstance(
+            if self.count_since_last_best > 10 or ActualCurrentContrast > 2 * self.last_best_contrast or (isinstance(
                     solutionSM, str) and solutionSM == "SMFailedTooManyTime"):
                 self.times_we_lowered_gain += 1
                 self.expected_gain_in_contrast = 1 - (1 - self.expected_gain_in_contrast) / 3

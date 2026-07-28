@@ -760,7 +760,7 @@ def calc_strokemin_solution(mask,
         CurrentContrast = ResidualEnergy
         iteralpha = 0
 
-        while CurrentContrast > DesiredContrast and alpha > 1e-12:
+        while CurrentContrast > DesiredContrast and alpha > 1e-14:
 
             # if this counter is not even incremented once, it means that our initial
             # alpha is probably too big
