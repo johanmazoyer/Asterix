@@ -520,7 +520,6 @@ def name_header_efc_matrix(testbed: Testbed, DM: DeformableMirror, amplitudeEFC,
         pass
     elif DM.basis_type == 'actuator':
         basis_type_str = 'Actu'
-        headfile += "_Ampl" + str(amplitudeEFC)
     else:
         raise ValueError("This basis type does not exist ([Correctionconfig]['DM_basis'] parameter).")
 
