@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from astropy.io import fits
 
 from Asterix.utils import create_experiment_dir, get_data_dir, get_git_description, read_parameter_file
 from Asterix.optics import Pupil, Coronagraph, DeformableMirror, Testbed
@@ -140,6 +141,13 @@ def runthd2(parameter_file_path,
     # Concatenate into the full testbed optical system
     thd2 = THD2(config, model_local_dir, silence=silence)
 
+    # Read if there was DM initial command
+    DMs_initcommand = np.zeros(thd2.number_act)
+    for DM_name in thd2.name_of_DMs:
+        if thd2.config_file["DMconfig"][DM_name + "_filename_initcommand"] != "":
+            thisDM_initcommand = fits.getdata(config["DMconfig"][DM_name + "_filename_initcommand"])
+            DMs_initcommand += thd2.indiv_DM_command_to_testbed_command(thisDM_initcommand, DM_name)
+
     # Initialize the estimation
     estimator = Estimator(Estimationconfig,
                           thd2,
@@ -168,6 +176,8 @@ def runthd2(parameter_file_path,
                           estimator.dimEstim,
                           maskEstim=estim_mask_dh,
                           wav_vec_estim=estimator.wav_vec_estim,
+                          initial_estimated_wavefront=1.,
+                          initial_DM_command=DMs_initcommand,
                           matrix_dir=matrix_dir,
                           save_for_bench=onbench,
                           realtestbed_dir=hardware_dir,
@@ -211,7 +221,7 @@ def runthd2(parameter_file_path,
                               SIMUconfig,
                               input_wavefront=input_wavefront,
                               EF_aberrations_introduced_in_LS=wavefront_in_LS,
-                              initial_DM_command=0,
+                              initial_DM_command=DMs_initcommand,
                               silence=silence,
                               probe_dir=probe_dir,
                               **kwargs)

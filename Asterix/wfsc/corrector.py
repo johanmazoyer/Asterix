@@ -35,6 +35,8 @@ class Corrector:
                  dimEstim,
                  maskEstim=None,
                  wav_vec_estim=None,
+                 initial_estimated_wavefront=1.,
+                 initial_DM_command=0.,
                  matrix_dir=None,
                  save_for_bench=False,
                  realtestbed_dir='',
@@ -60,6 +62,21 @@ class Corrector:
             binary array of size [dimEstim, dimEstim] : dark hole mask
         wav_vec_estim : list of wavelengths, default: [testbed.wavelength_0]
             vector of wavelengths for polychromatic correction
+        input_wavefront : float or 2d complex array or 3d complex array
+            Initial wavefront at the beginning of this loop.
+            Electrical Field which can be a:
+                float=1 if there are no phase/amplitude aberrations (default)
+                2D complex array, of size phase_abb.shape if monochromatic
+                or 3D complex array of size [self.nb_wav,phase_abb.shape] if polychromatic
+            !!CAREFUL!!: Right now we do not use this wf to measure the matrix, although the update_matrices()
+                method inside the Corrector allows it. Currently, each matrix is measured with a flat field in
+                the entrance of the testbed (input_wavefront = 1).
+                'input_wavefront' is only used in the loop once the matrix is calculated. This can be changed but be careful.
+        initial_DM_command : float or 1D array
+            Initial DM command at the beginning of this loop. The Matrix is measured using the initial DM command.
+            Can be:
+                float 0 if flat DMs (default)
+                or 1D array of size testbed.number_act
         matrix_dir : string, default: None
             path to directory to save interraction matrices
         save_for_bench : bool default: false
@@ -114,7 +131,10 @@ class Corrector:
             self.MaskEstim = np.zeros((self.dimEstim, self.dimEstim))
 
         self.matrix_dir = matrix_dir
-        self.update_matrices(testbed, silence=silence)
+        self.update_matrices(testbed,
+                             initial_DM_command=initial_DM_command,
+                             initial_estimated_wavefront=initial_estimated_wavefront,
+                             silence=silence)
 
         if self.correction_algorithm == "efc" and save_for_bench:
             if not os.path.exists(realtestbed_dir):

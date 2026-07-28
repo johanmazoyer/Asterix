@@ -543,12 +543,19 @@ def save_loop_results(CorrectionLoopResult, config, testbed: Testbed, MaskScienc
 
             fits.writeto(os.path.join(result_dir, f"{DM_name}_strokes.fits"), DMstrokes[j], header, overwrite=True)
 
-            command_DMs_tosave = testbed.testbed_command_to_indiv_DM_command(command_DMs_nparray, DM_name)
+            command_DMs_tosave = np.zeros((nb_total_iter, DM.number_act))
+            for i in np.arange(nb_total_iter):
+                command_DMs_tosave[i] = testbed.testbed_command_to_indiv_DM_command(command_DMs_nparray[i], DM_name)
 
             fits.writeto(os.path.join(result_dir, f"{DM_name}_command.fits"),
                          command_DMs_tosave,
                          header,
                          overwrite=True)
+
+            fits.writeto(os.path.join(result_dir, f"{DM_name}_lastcommand.fits"),
+                                     command_DMs_tosave[-1],
+                                     header,
+                                     overwrite=True)
 
             plt.plot(np.std(DMstrokes[j], axis=(1, 2)), label=DM_name + " RMS")
             plt.plot(np.max(DMstrokes[j], axis=(1, 2)) - np.min(DMstrokes[j], axis=(1, 2)), label=DM_name + " PV")
