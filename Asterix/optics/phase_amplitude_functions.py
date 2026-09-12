@@ -676,3 +676,82 @@ def butterworth_circle(dim, size_filter, order=5, xshift=0, yshift=0):
     butterworth = 1 / np.sqrt(1 + (np.sqrt(xx**2 + yy**2) / np.abs(size_filter) * 2)**(2. * order))
 
     return butterworth
+
+
+def roundpupil_shifted(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
+    """Create a circular pupil at an arbitrary, possibly subpixel position.
+
+    Like roundpupil, first create a larger binary pupil and rebin it when
+    grey_pup_bin_factor > 1. Otherwise, directly threshold the radial distance
+    from the requested center.
+
+    Parameters
+    ----------
+    dim_pp : int
+        Side length of the output array in pixels.
+    prad : float
+        Pupil radius (not diameter) in output pixels.
+    grey_pup_bin_factor : int, default 1
+        Positive number of samples per output pixel along each axis. Values
+        greater than one produce grey edges by averaging subpixel samples.
+        Both odd and even factors and array dimensions are supported.
+    center_pos : {'b', 'p'} or pair of floats, default 'b'
+        'p' centers on pixel dim_pp // 2; 'b' centers at dim_pp // 2 - 0.5,
+        matching roundpupil. A pair specifies absolute (x, y) coordinates in
+        output pixels, with (0, 0) at the center of the first pixel. Increasing
+        x moves along columns and increasing y along rows. For an offset
+        (dx, dy) from 'b', use (dim_pp // 2 - 0.5 + dx,
+        dim_pp // 2 - 0.5 + dy).
+
+    Returns
+    -------
+    pupil : 2D ndarray of float
+        Circular aperture with values in [0, 1]. Parts outside the output
+        array are clipped. Choose sufficient padding to contain the pupil.
+
+    Examples
+    --------
+    >>> pupil = roundpupil_shifted(84, 40, 10, center_pos=(41.8, 41.3))
+    >>> pupil.shape
+    (84, 84)
+    """
+
+    if isinstance(center_pos, str):
+        if center_pos.lower() == 'b':
+            center_x = center_y = dim_pp // 2 - 0.5
+        elif center_pos.lower() == 'p':
+            center_x = center_y = dim_pp // 2
+    else:
+        center_x, center_y = center_pos
+
+    if grey_pup_bin_factor > 1:
+        # Keep the full output field instead of a tight box around the pupil,
+        # so an off-center pupil is not clipped before rebinning.
+        dimpp_pup_large = dim_pp * grey_pup_bin_factor
+
+        # Output pixel x corresponds to the center of a block of fine pixels:
+        # x_large = factor * x + (factor - 1) / 2 (and likewise for y).
+        center_pos_large = (grey_pup_bin_factor * center_x + (grey_pup_bin_factor - 1) / 2,
+                            grey_pup_bin_factor * center_y + (grey_pup_bin_factor - 1) / 2)
+        pup_large = roundpupil_shifted(dimpp_pup_large,
+                                      grey_pup_bin_factor * prad,
+                                      grey_pup_bin_factor=1,
+                                      center_pos=center_pos_large)
+
+        # Direct block averaging: the center was already placed on the fine
+        # grid above, so no fftshift is needed in rebin.
+        return rebin(pup_large, factor=grey_pup_bin_factor, center_on_pixel=True)
+
+    else:
+        xx, yy = np.meshgrid(np.arange(dim_pp) - dim_pp // 2, np.arange(dim_pp) - dim_pp // 2)
+
+        # roundpupil adds 1/2 for 'b' and zero for 'p'. Here the same
+        # subtraction also allows an arbitrary center (center_x, center_y).
+        xx = xx + dim_pp // 2 - center_x
+        yy = yy + dim_pp // 2 - center_y
+        rr = np.hypot(yy, xx)
+
+        pupilnormal = np.zeros((dim_pp, dim_pp))
+        pupilnormal[rr <= prad] = 1.0
+
+        return pupilnormal
