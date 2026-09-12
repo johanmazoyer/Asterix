@@ -731,12 +731,16 @@ def roundpupil_shifted(dim_pp, prad, grey_pup_bin_factor=1, center_pos='b'):
 
         # Output pixel x corresponds to the center of a block of fine pixels:
         # x_large = factor * x + (factor - 1) / 2 (and likewise for y).
-        center_pos_large = (grey_pup_bin_factor * center_x + (grey_pup_bin_factor - 1) / 2,
-                            grey_pup_bin_factor * center_y + (grey_pup_bin_factor - 1) / 2)
-        pup_large = roundpupil_shifted(dimpp_pup_large,
-                                      grey_pup_bin_factor * prad,
-                                      grey_pup_bin_factor=1,
-                                      center_pos=center_pos_large)
+        center_pos_large = (
+            grey_pup_bin_factor * center_x + (grey_pup_bin_factor - 1) / 2,
+            grey_pup_bin_factor * center_y + (grey_pup_bin_factor - 1) / 2,
+        )
+        pup_large = roundpupil_shifted(
+            dimpp_pup_large,
+            grey_pup_bin_factor * prad,
+            grey_pup_bin_factor=1,
+            center_pos=center_pos_large,
+        )
 
         # Direct block averaging: the center was already placed on the fine
         # grid above, so no fftshift is needed in rebin.
