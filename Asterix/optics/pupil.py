@@ -100,7 +100,7 @@ class Pupil(optsy.OpticalSystem):
                 pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_500pix_center4pixels.fits"))
                 self.string_os += '_RomanP' + str(int(prad))
 
-            elif PupType == "RomanPTHD2":
+            elif PupType == "RomanPupTHD2":
                 pup_fits = fits.getdata(os.path.join(model_dir, "roman_pup_thd2_500pix_center4pixels.fits"))
                 self.string_os += '_RomanPTHD2' + str(int(prad))
 
