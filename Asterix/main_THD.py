@@ -141,6 +141,15 @@ def runthd2(parameter_file_path,
     # Concatenate into the full testbed optical system
     thd2 = THD2(config, model_local_dir, silence=silence)
 
+    pupil = thd2.entrancepupil.pup
+    dm2_pushact = thd2.DM2.DM_pushact
+
+    dm2_poke_roman = np.zeros(dm2_pushact.shape)
+    header = fits.Header()
+
+    for i in range (1024):
+        dm2_poke_roman[i] = pupil*dm2_pushact[i]
+
     # Read if there was DM initial command
     DMs_initcommand = np.zeros(thd2.number_act)
     for DM_name in thd2.name_of_DMs:
@@ -227,3 +236,7 @@ def runthd2(parameter_file_path,
                               **kwargs)
 
     save_loop_results(results, config, thd2, science_mask_dh, result_dir, silence=silence, probe_dir=probe_dir)
+
+    
+    fits.writeto(os.path.join(result_dir, "roman_pushactpupil.fits"), dm2_poke_roman,header = fits.Header())
+
